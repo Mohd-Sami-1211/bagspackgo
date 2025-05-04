@@ -1,0 +1,24 @@
+{
+    "destinations": [
+      { "value": "kashmir", "label": "Kashmir" },
+      { "value": "uttarakhand", "label": "Uttarakhand" },
+      { "value": "goa", "label": "Goa" },
+      { "value": "himachal", "label": "Himachal Pradesh" },
+      { "value": "rajasthan", "label": "Rajasthan" },
+      { "value": "kerala", "label": "Kerala" },
+      { "value": "sikkim", "label": "Sikkim" },
+      { "value": "andaman", "label": "Andaman & Nicobar" },
+      { "value": "ladakh", "label": "Ladakh" },
+      { "value": "arunachal", "label": "Arunachal Pradesh" },
+      { "value": "meghalaya", "label": "Meghalaya" },
+      { "value": "assam", "label": "Assam" },
+      { "value": "madhya", "label": "Madhya Pradesh" },
+      { "value": "tamilnadu", "label": "Tamil Nadu" },
+      { "value": "maharashtra", "label": "Maharashtra" }
+    ],
+    "categories": [
+      { "value": "individual", "label": "Individual" },
+      { "value": "couple", "label": "Couple" }
+    ]
+  }
+  

@@ -1,0 +1,96 @@
+<svg viewBox="0 0 1920 500" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="skyGradient" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#d7fbe9"/>
+      <stop offset="100%" stop-color="#eafff5"/>
+    </linearGradient>
+    <linearGradient id="mountainGradient" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#a4e4b3"/>
+      <stop offset="100%" stop-color="#6fcf97"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Sky -->
+  <rect width="1920" height="500" fill="url(#skyGradient)" y="0"/>
+
+  <!-- Distant Mountains -->
+  <path d="M0 200 Q 300 50 600 200 T 1200 200 T 1920 200 L1920 500 L0 500 Z" fill="#b9f3c5" />
+
+  <!-- Mid Mountains -->
+  <path d="M0 250 Q 400 100 800 250 T 1600 250 T 1920 250 L1920 500 L0 500 Z" fill="url(#mountainGradient)" />
+
+  <!-- Random Trees on Distant Mountains -->
+  <g fill="#3ba668">
+    <!-- Left side trees (random placement) -->
+    <polygon points="150,220 170,180 190,220" />
+    <rect x="165" y="220" width="10" height="20" fill="#5e3023"/>
+    
+    <polygon points="350,230 370,190 390,230" />
+    <rect x="365" y="230" width="10" height="20" fill="#5e3023"/>
+    
+    <!-- Right side trees (different quantity) -->
+    <polygon points="1300,210 1320,170 1340,210" />
+    <rect x="1315" y="210" width="10" height="20" fill="#5e3023"/>
+    
+    <polygon points="1450,220 1470,180 1490,220" />
+    <rect x="1465" y="220" width="10" height="20" fill="#5e3023"/>
+    
+    <polygon points="1750,230 1770,190 1790,230" />
+    <rect x="1765" y="230" width="10" height="20" fill="#5e3023"/>
+  </g>
+
+  <!-- Camping Elements (asymmetrical) -->
+  <g>
+    <!-- Single tent on left -->
+    <polygon points="450,270 480,210 510,270" fill="#f9c74f" />
+    <line x1="450" y1="270" x2="510" y2="270" stroke="#000" stroke-width="2" />
+    
+    <!-- Backpack near tent -->
+    <rect x="420" y="280" width="25" height="35" rx="4" fill="#577590"/>
+    <circle cx="432" cy="290" r="3" fill="#fff"/>
+    
+    <!-- Random rocks -->
+    <path d="M500 300 Q 510 290 520 300 Z" fill="#7a7a7a" opacity="0.8"/>
+    <path d="M1600 280 Q 1610 270 1620 280 Z" fill="#7a7a7a" opacity="0.8"/>
+  </g>
+
+  <!-- Grass tufts -->
+  <g fill="#5fd38d">
+    <path d="M600 300 Q 605 290 610 300 Z"/>
+    <path d="M800 310 Q 805 300 810 310 Z"/>
+    <path d="M1100 290 Q 1105 280 1110 290 Z"/>
+    <path d="M1400 300 Q 1405 290 1410 300 Z"/>
+  </g>
+
+  <!-- Plane in sky -->
+  <g transform="translate(300,80)">
+    <path d="M0,0 L30,0 L25,5 L5,5 Z" fill="#fff"/>
+    <path d="M25,0 L35,-5 L40,0 L30,5 Z" fill="#ddd"/>
+  </g>
+
+  <!-- River -->
+  <path d="M0 320 Q 400 340 800 320 Q 1200 300 1600 320 L1920 320 L1920 500 L0 500 Z" fill="#7ec8e3" opacity="0.8"/>
+
+  <!-- Vehicle on right side only -->
+  <g transform="translate(1400,280)">
+    <rect x="-20" y="-12" width="40" height="24" rx="4" fill="#4a6fa5"/>
+    <circle cx="-12" cy="12" r="6" fill="#333"/>
+    <circle cx="12" cy="12" r="6" fill="#333"/>
+  </g>
+
+  <!-- Foreground Hills -->
+  <path d="M0 400 Q 600 250 1200 400 T 1920 400 L1920 500 L0 500 Z" fill="#5fd38d" />
+
+  <!-- Birds (random placement) -->
+  <path d="M200,50 Q210,40 220,50" stroke="#444" stroke-width="2" fill="none" />
+  <path d="M500,70 Q510,60 520,70" stroke="#444" stroke-width="2" fill="none" />
+  <path d="M1500,40 Q1510,30 1520,40" stroke="#444" stroke-width="2" fill="none" />
+
+  <!-- Clouds (asymmetrical) -->
+  <g fill="#fff" opacity="0.8">
+    <circle cx="300" cy="50" r="25" />
+    <circle cx="330" cy="40" r="20" />
+    <circle cx="1200" cy="60" r="15" />
+    <circle cx="1700" cy="30" r="20" />
+  </g>
+</svg>
