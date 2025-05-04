@@ -3,8 +3,9 @@ import Image from 'next/image';
 import { CalendarCheck, Headphones } from 'lucide-react';
 import SecondaryNav from '@/components/common/SecondaryNav';
 import AnimatedButton from '@/components/common/AnimatedButton';
-import MainContent from '../../../components/common/mainContent';
+import MainContent from '../../../components/common/MainContent'; //renmaed the file in components/common/MainComponent
 //changed the path to deploy
+
 export default function TripLayout({ children }) {
   return (
     <>
