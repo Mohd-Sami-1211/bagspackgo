@@ -3,10 +3,8 @@ import Image from 'next/image';
 import { CalendarCheck, Headphones } from 'lucide-react';
 import SecondaryNav from '@/components/common/SecondaryNav';
 import AnimatedButton from '@/components/common/AnimatedButton';
-import MainContent from '../../../components/common/MainContent';
-
- 
-
+import MainContent from '../../../components/common/mainContent';
+//changed the path to deploy
 export default function TripLayout({ children }) {
   return (
     <>
@@ -42,7 +40,7 @@ export default function TripLayout({ children }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {children}
           <div className="">
-            <MainContent /> {/* Added here - appears below page content */}
+            <MainContent /> 
           </div>
         </div>
       </main>
