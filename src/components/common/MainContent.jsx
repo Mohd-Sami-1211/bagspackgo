@@ -372,7 +372,6 @@ const AdventureCard = ({ adventure, isFlipped, onClick }) => {
     </div>
   );
 };
-
 // Destination Slider Component
 const DestinationSlider = ({ places, categoryColor, textColor }) => {
   const [currentIndices, setCurrentIndices] = useState(places.map(() => 0));
@@ -987,4 +986,4 @@ export default function MainContent() {
       <AdventureSlider />
     </>
   );
-}
+} //Now add fAQ's here and then About section
