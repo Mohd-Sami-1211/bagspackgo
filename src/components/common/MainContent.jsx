@@ -51,7 +51,7 @@ const promotions = [
 const destinations = [
   {
     category: "Mountain Valleys",
-    color: "from-blue-600 to-blue-800",
+    color: "from-emerald-600 to-emerald-800",
     textColor: "text-blue-50",
     places: [
       {
@@ -105,7 +105,7 @@ const destinations = [
   },
   {
     category: "Cultural Gems",
-    color: "from-purple-600 to-purple-800",
+    color: "from-emerald-600 to-emerald-800",
     textColor: "text-purple-50",
     places: [
       {
@@ -229,7 +229,7 @@ const DestinationCard = ({ place, isFlipped, onClick, bgColor, textColor }) => {
             initial={{ rotateY: 0 }}
             animate={{ rotateY: 0 }}
             exit={{ rotateY: -90, opacity: 0 }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
             className="absolute inset-0"
           >
             <div className="relative h-full w-full overflow-hidden rounded-xl shadow-lg">
@@ -252,25 +252,11 @@ const DestinationCard = ({ place, isFlipped, onClick, bgColor, textColor }) => {
             initial={{ rotateY: 90, opacity: 0 }}
             animate={{ rotateY: 0, opacity: 1 }}
             exit={{ rotateY: 90, opacity: 0 }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
             className={`absolute inset-0 bg-gradient-to-br ${bgColor} ${textColor} p-6 rounded-xl shadow-lg overflow-y-auto`}
           >
-            <motion.h3 
-              className="text-2xl font-bold mb-4"
-              initial={{ y: -20 }}
-              animate={{ y: 0 }}
-              transition={{ delay: 0.1 }}
-            >
-              {place.name}
-            </motion.h3>
-            <motion.p 
-              className=""
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
-            >
-              {place.description}
-            </motion.p>
+            <h3 className="text-2xl font-bold mb-4">{place.name}</h3>
+            <p>{place.description}</p>
           </motion.div>
         )}
       </AnimatePresence>
@@ -278,9 +264,7 @@ const DestinationCard = ({ place, isFlipped, onClick, bgColor, textColor }) => {
   );
 };
 
-// Adventure Card Component
 const AdventureCard = ({ adventure, isFlipped, onClick }) => {
-  // Determine media type
   const isVideo = adventure.media?.type === 'video' || 
                  (adventure.image && adventure.image.match(/\.(mp4|webm|mov)$/i));
 
@@ -301,8 +285,6 @@ const AdventureCard = ({ adventure, isFlipped, onClick }) => {
               <div className="absolute bottom-4 left-4 z-20">
                 <h3 className="text-2xl font-bold text-white">{adventure.name}</h3>
               </div>
-              
-              {/* Media Renderer */}
               {isVideo ? (
                 <video
                   src={adventure.media?.src || adventure.image}
@@ -312,7 +294,6 @@ const AdventureCard = ({ adventure, isFlipped, onClick }) => {
                   loop
                   muted
                   playsInline
-                  onError={(e) => console.error("Video failed to load", e)}
                 />
               ) : (
                 <Image
@@ -321,10 +302,6 @@ const AdventureCard = ({ adventure, isFlipped, onClick }) => {
                   fill
                   className="object-cover"
                   priority
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                    console.error("Image failed to load", adventure.image);
-                  }}
                 />
               )}
             </div>
@@ -338,34 +315,14 @@ const AdventureCard = ({ adventure, isFlipped, onClick }) => {
             transition={{ duration: 0.3 }}
             className={`absolute inset-0 bg-gradient-to-br ${adventure.color} ${adventure.textColor} p-6 rounded-xl shadow-lg overflow-y-auto`}
           >
-            <motion.h3 
-              className="text-2xl font-bold mb-4"
-              initial={{ y: -20 }}
-              animate={{ y: 0 }}
-              transition={{ delay: 0.1 }}
-            >
-              {adventure.name}
-            </motion.h3>
-            <motion.p 
-              className="mb-4"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
-            >
-              {adventure.description}
-            </motion.p>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-            >
-              <h4 className="font-semibold mb-2">Popular Locations:</h4>
-              <ul className="list-disc pl-5 space-y-1">
-                {adventure.locations.map((location, index) => (
-                  <li key={index}>{location}</li>
-                ))}
-              </ul>
-            </motion.div>
+            <h3 className="text-2xl font-bold mb-4">{adventure.name}</h3>
+            <p className="mb-4">{adventure.description}</p>
+            <h4 className="font-semibold mb-2">Popular Locations:</h4>
+            <ul className="list-disc pl-5 space-y-1">
+              {adventure.locations.map((location, index) => (
+                <li key={index}>{location}</li>
+              ))}
+            </ul>
           </motion.div>
         )}
       </AnimatePresence>
@@ -423,29 +380,10 @@ const DestinationSlider = ({ places, categoryColor, textColor }) => {
   }, [autoSlide, flippedCards]);
 
   return (
-    <motion.div
-      ref={ref}
-      initial={{ opacity: 0, y: 50 }}
-      animate={isInView ? { 
-        opacity: 1, 
-        y: 0,
-        transition: { 
-          duration: 0.8,
-          ease: [0.16, 1, 0.3, 1]
-        }
-      } : { opacity: 0, y: 50 }}
-      className="grid grid-cols-1 md:grid-cols-2 gap-6"
-    >
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {places.map((place, index) => (
-        <motion.div
+        <div 
           key={place.name}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          transition={{ 
-            type: "spring", 
-            stiffness: 300,
-            damping: 15
-          }}
           className="relative h-64 rounded-xl overflow-hidden group"
         >
           <DestinationCard 
@@ -458,45 +396,29 @@ const DestinationSlider = ({ places, categoryColor, textColor }) => {
 
           {!flippedCards[index] && (
             <>
-              <motion.button
+              <button
                 onClick={(e) => prevSlide(index, e)}
                 className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/30 p-2 rounded-full z-30 opacity-0 group-hover:opacity-100 transition-opacity"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
               >
                 <ChevronLeft className="text-white" size={20} />
-              </motion.button>
-              <motion.button
+              </button>
+              <button
                 onClick={(e) => nextSlide(index, e)}
                 className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/30 p-2 rounded-full z-30 opacity-0 group-hover:opacity-100 transition-opacity"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
               >
                 <ChevronRight className="text-white" size={20} />
-              </motion.button>
+              </button>
               
-              <motion.div 
-                className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-2 z-30"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
-              >
+              <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-2 z-30">
                 {place.images.map((_, imgIndex) => (
-                  <motion.div
+                  <div
                     key={imgIndex}
                     className={`w-2 h-2 rounded-full transition-all ${currentIndices[index] === imgIndex ? 'bg-white' : 'bg-white/50'}`}
-                    whileHover={{ scale: 1.5 }}
                   />
                 ))}
-              </motion.div>
+              </div>
 
-              <motion.div 
-                className="absolute inset-0"
-                key={currentIndices[index]}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.5 }}
-              >
+              <div className="absolute inset-0">
                 <Image
                   src={place.images[currentIndices[index]]}
                   alt={place.name}
@@ -504,14 +426,15 @@ const DestinationSlider = ({ places, categoryColor, textColor }) => {
                   className="object-cover"
                   priority
                 />
-              </motion.div>
+              </div>
             </>
           )}
-        </motion.div>
+        </div>
       ))}
-    </motion.div>
+    </div>
   );
 };
+
 
 // Updated Adventure Slider Component
 const AdventureSlider = () => {
@@ -573,199 +496,81 @@ const AdventureSlider = () => {
 
   return (
     <>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="max-w-7xl mx-auto px-4 mb-6 text-center"
-      >
-        <motion.h2 
-          className="text-2xl md:text-3xl font-bold text-gray-800 mb-2"
-          initial={{ scale: 0.9 }}
-          whileInView={{ scale: 1 }}
-          transition={{ 
-            duration: 0.5, 
-            delay: 0.2,
-            type: "spring",
-            stiffness: 100
-          }}
-        >
+      <div className="max-w-7xl mx-auto px-4 mb-6 text-center">
+        <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2">
           Thrill Seeker's Paradise
-        </motion.h2>
-        <motion.div 
-          className="h-1 bg-gradient-to-r from-amber-400 to-amber-600 mx-auto w-20 rounded-full"
-          initial={{ width: 0 }}
-          whileInView={{ width: 80 }}
-          transition={{ 
-            duration: 0.8, 
-            delay: 0.3,
-            type: "spring",
-            stiffness: 50
-          }}
-        />
-      </motion.div>
+        </h2>
+        <div className="h-1 bg-gradient-to-r from-amber-400 to-amber-600 mx-auto w-20 rounded-full"/>
+      </div>
 
-      {/* Full-width container with negative margins */}
-      <section 
-        ref={containerRef}
-        className="w-screen bg-gradient-to-r from-[#bdf8e293] to-[#5df3bc93] py-6 relative left-1/2 right-1/2 -mx-[50vw]"
-      >
-        <motion.div
-          ref={sliderRef}
-          initial={{ opacity: 0, y: 50 }}
-          animate={isInView ? { 
-            opacity: 1, 
-            y: 0,
-            transition: { 
-              duration: 0.8,
-              ease: [0.16, 1, 0.3, 1]
-            }
-          } : { opacity: 0, y: 50 }}
-          className="max-w-7xl mx-auto px-4"
-        >
+      <section className="w-[calc(100%-1px)] bg-gradient-to-r from-[#bdf8e293] to-[#5df3bc93] py-6 relative left-0">
+        <div className="max-w-7xl mx-auto px-4">
           <div className="relative">
-            <AnimatePresence custom={direction} mode="wait">
-              <motion.div
-                key={currentIndex}
-                custom={direction}
-                initial={{ x: direction > 0 ? 300 : -300, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                exit={{ x: direction > 0 ? -300 : 300, opacity: 0 }}
-                transition={{ type: "spring", damping: 20, stiffness: 100 }}
-                className="grid grid-cols-1 md:grid-cols-2 gap-6 px-2"
-              >
-                {visibleAdventures.map((adventure, index) => (
-                  <motion.div
-                    key={adventure.id}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    transition={{ 
-                      type: "spring", 
-                      stiffness: 300,
-                      damping: 15
-                    }}
-                    className="relative h-52 rounded-xl overflow-hidden group"
-                  >
-                    <AdventureCard 
-                      adventure={adventure}
-                      isFlipped={flippedCards[adventure.id - 1]} 
-                      onClick={() => toggleFlip(adventure.id - 1)}
-                    />
-                  </motion.div>
-                ))}
-              </motion.div>
-            </AnimatePresence>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 px-2">
+              {visibleAdventures.map((adventure) => (
+                <div
+                  key={adventure.id}
+                  className="relative h-52 rounded-xl overflow-hidden group"
+                >
+                  <AdventureCard 
+                    adventure={adventure}
+                    isFlipped={flippedCards[adventure.id - 1]} 
+                    onClick={() => toggleFlip(adventure.id - 1)}
+                  />
+                </div>
+              ))}
+            </div>
 
             {/* Navigation Arrows */}
-            <motion.button
+            <button
               onClick={prevSlide}
               className="absolute left-0 top-1/2 -translate-y-1/2 bg-black/20 p-2 rounded-full z-20 hidden md:block"
-              initial={{ opacity: 0, x: -10 }}
-              whileHover={{ 
-                opacity: 1, 
-                x: 0,
-                backgroundColor: "rgba(0,0,0,0.4)"
-              }}
-              whileTap={{ scale: 0.9 }}
             >
               <ChevronLeft className="text-white" size={32} />
-            </motion.button>
-            <motion.button
+            </button>
+            <button
               onClick={nextSlide}
               className="absolute right-0 top-1/2 -translate-y-1/2 bg-black/20 p-2 rounded-full z-20 hidden md:block"
-              initial={{ opacity: 0, x: 10 }}
-              whileHover={{ 
-                opacity: 1, 
-                x: 0,
-                backgroundColor: "rgba(0,0,0,0.4)"
-              }}
-              whileTap={{ scale: 0.9 }}
             >
               <ChevronRight className="text-white" size={32} />
-            </motion.button>
+            </button>
 
             {/* Navigation Dots */}
             <div className="flex justify-center mt-4 space-x-3">
               {adventures.map((_, index) => (
-                <motion.div
+                <button
                   key={index}
                   onClick={() => setCurrentIndex(index % (adventures.length - 1))}
                   className={`w-2.5 h-2.5 rounded-full cursor-pointer transition-all ${
                     index === currentIndex || index === currentIndex + 1 ? 'bg-white scale-125' : 'bg-white/50'
                   }`}
-                  whileHover={{ scale: 1.2 }}
-                  whileTap={{ scale: 0.9 }}
                 />
               ))}
             </div>
           </div>
-        </motion.div>
+        </div>
       </section>
     </>
   );
 };
 
-// Popular Destinations Component
 function PopularDestinations() {
   return (
     <section className="px-4 py-12 md:py-16 max-w-7xl mx-auto">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        viewport={{ once: false }}
-        className="mb-12 text-center"
-      >
-        <motion.h2 
-          className="text-3xl md:text-4xl font-bold text-gray-800 mb-2"
-          initial={{ scale: 0.9 }}
-          whileInView={{ scale: 1 }}
-          transition={{ 
-            duration: 0.5, 
-            delay: 0.2,
-            type: "spring",
-            stiffness: 100
-          }}
-        >
+      <div className="mb-12 text-center">
+        <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-2">
           Kashmir's Crown Jewels
-        </motion.h2>
-        <motion.div 
-          className="h-1 bg-gradient-to-r from-amber-400 to-amber-600 mx-auto w-24 rounded-full"
-          initial={{ width: 0 }}
-          whileInView={{ width: 96 }}
-          transition={{ 
-            duration: 0.8, 
-            delay: 0.3,
-            type: "spring",
-            stiffness: 50
-          }}
-        />
-      </motion.div>
+        </h2>
+        <div className="h-1 bg-gradient-to-r from-amber-400 to-amber-600 mx-auto w-24 rounded-full"/>
+      </div>
       
-      <motion.div 
-        className="bg-[#bdf8e293] rounded-3xl p-6 md:p-8 backdrop-blur-sm border border-green-100 shadow-sm"
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        transition={{ duration: 0.6 }}
-        viewport={{ once: false }}
-      >
+      <div className="bg-[#bdf8e293] rounded-3xl p-6 md:p-8 backdrop-blur-sm border border-green-100 shadow-sm">
         <div className="space-y-16">
           {destinations.map((category) => (
             <div key={category.category} className="space-y-6">
-              <motion.h3
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                transition={{ 
-                  duration: 0.5, 
-                  delay: 0.2,
-                  type: "spring",
-                  stiffness: 100
-                }}
-                viewport={{ once: false }}
-                className={`text-2xl font-semibold ${category.textColor} bg-gradient-to-r ${category.color} py-2 px-4 rounded-lg inline-block shadow-md`}
-              >
+              <h3 className={`text-2xl font-semibold ${category.textColor} bg-gradient-to-r ${category.color} py-2 px-4 rounded-lg inline-block shadow-md`}>
                 {category.category}
-              </motion.h3>
+              </h3>
               <DestinationSlider 
                 places={category.places} 
                 categoryColor={category.color}
@@ -774,10 +579,11 @@ function PopularDestinations() {
             </div>
           ))}
         </div>
-      </motion.div>
+      </div>
     </section>
   );
 }
+
 
 // Main Component
 export default function MainContent() {
@@ -986,4 +792,4 @@ export default function MainContent() {
       <AdventureSlider />
     </>
   );
-} //Now add fAQ's here and then About section
+} 

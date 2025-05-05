@@ -4,6 +4,7 @@ import { CalendarCheck, Headphones } from 'lucide-react';
 import SecondaryNav from '@/components/common/SecondaryNav';
 import AnimatedButton from '@/components/common/AnimatedButton';
 import MainContent from '@/components/common/MainContent'; 
+import LowerMain from "@/components/common/LowerMain";
 //changed the path to deploy
 
 export default function TripLayout({ children }) {
@@ -40,10 +41,10 @@ export default function TripLayout({ children }) {
       <main className="bg-[#F2FFFC] bg-[url('/images/hero.svg')] bg-no-repeat min-h-screen">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {children}
-          <div className="">
-            <MainContent /> 
-          </div>
+
         </div>
+            <MainContent />
+          <LowerMain />
       </main>
     </>
   );

@@ -15,7 +15,8 @@
     "react": "^19.0.0",
     "react-datepicker": "^8.3.0",
     "react-dom": "^19.0.0",
-    "react-select": "^5.10.1"
+    "react-select": "^5.10.1",
+    "styled-components": "^6.1.17"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
