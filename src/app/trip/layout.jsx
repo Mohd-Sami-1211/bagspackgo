@@ -5,6 +5,7 @@ import SecondaryNav from '@/components/common/SecondaryNav';
 import AnimatedButton from '@/components/common/AnimatedButton';
 import MainContent from '@/components/common/MainContent'; 
 import LowerMain from "@/components/common/LowerMain";
+import Footer from '@/components/common/Footer';
 //changed the path to deploy
 
 export default function TripLayout({ children }) {
@@ -46,6 +47,7 @@ export default function TripLayout({ children }) {
             <MainContent />
           <LowerMain />
       </main>
+      <Footer />
     </>
   );
 }

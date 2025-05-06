@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 
+
 const LowerMain = () => {
   const [activeIndex, setActiveIndex] = useState(null);
 
@@ -307,6 +308,7 @@ const LowerMain = () => {
           </div>
         </div>
       </motion.div>
+      
     </div>
   );
 };
