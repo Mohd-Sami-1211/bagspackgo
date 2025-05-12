@@ -1,50 +1,79 @@
+// components/common/SecondaryNav.jsx
 'use client';
-import { useState, useRef, useEffect } from 'react';
 import { Mountain, Globe, Hotel, Plane, Globe2 } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { motion } from 'framer-motion';
 
 const tabs = [
-  { label: 'Trip', icon: <Globe size={18} /> },
-  { label: 'Trek', icon: <Mountain size={18} /> },
-  { label: 'Hotels', icon: <Hotel size={18} /> },
-  { label: 'Flights', icon: <Plane size={18} /> },
-  { label: 'Merger', icon: <Globe2 size={18} /> },
+  { label: 'Trip', icon: <Globe size={18} />, path: '/trip' },
+  { label: 'Trek', icon: <Mountain size={18} />, path: '/trek' },
+  { label: 'Hotels', icon: <Hotel size={18} />, path: '/hotels' },
+  { label: 'Flights', icon: <Plane size={18} />, path: '/flights' },
+  { label: 'Merger', icon: <Globe2 size={18} />, path: '/merger' },
 ];
 
 export default function SecondaryNav() {
-  const [active, setActive] = useState('Trip');
-  const [underlineStyle, setUnderlineStyle] = useState({});
-  const tabRefs = useRef([]);
-
-  useEffect(() => {
-    const currentIndex = tabs.findIndex((tab) => tab.label === active);
-    const currentRef = tabRefs.current[currentIndex];
-    if (currentRef) {
-      setUnderlineStyle({
-        width: currentRef.offsetWidth,
-        left: currentRef.offsetLeft
-      });
-    }
-  }, [active]);
+  const pathname = usePathname();
+  const activeIndex = tabs.findIndex(tab => pathname?.startsWith(tab.path));
 
   return (
     <div className="relative bg-white/50 shadow-sm">
       <div className="relative flex justify-center space-x-16 px-12 text-gray-700 font-medium text-lg">
-        <span
-          className="absolute bottom-0 h-1 bg-green-500 transition-all duration-300"
-          style={underlineStyle}
-        />
+        {/* Animated underline - now using layoutId for smooth transition */}
+        {activeIndex >= 0 && (
+          <motion.div
+            layoutId="underline"
+            className="absolute bottom-0 h-1 bg-green-500 rounded-full"
+            initial={false}
+            transition={{
+              type: 'spring',
+              stiffness: 300,
+              damping: 25,
+              mass: 0.5
+            }}
+            style={{
+              width: 'auto', // Width will be calculated automatically
+            }}
+          />
+        )}
         
-        {tabs.map((tab, idx) => (
-          <button
-            key={tab.label}
-            ref={(el) => (tabRefs.current[idx] = el)}
-            onClick={() => setActive(tab.label)}
-            className="relative py-4 flex items-center gap-2 hover:text-green-600 transition-colors"
-          >
-            {tab.icon}
-            {tab.label}
-          </button>
-        ))}
+        {tabs.map((tab, idx) => {
+          const isActive = pathname?.startsWith(tab.path);
+          return (
+            <Link
+              key={tab.label}
+              href={tab.path}
+              className={`relative py-4 flex items-center gap-2 ${
+                isActive ? 'text-green-600 font-semibold' : 'hover:text-green-500'
+              }`}
+            >
+              {isActive && (
+                <motion.span
+                  layoutId="underline"
+                  className="absolute bottom-0 left-0 right-0 h-1 bg-green-500 rounded-full"
+                  transition={{
+                    type: 'spring',
+                    stiffness: 300,
+                    damping: 25,
+                    mass: 0.5
+                  }}
+                />
+              )}
+              <motion.span
+                animate={{
+                  scale: isActive ? 1.05 : 1,
+                  color: isActive ? '#16a34a' : '#374151'
+                }}
+                transition={{ type: 'spring', stiffness: 500 }}
+                className="flex items-center gap-2"
+              >
+                {tab.icon}
+                {tab.label}
+              </motion.span>
+            </Link>
+          );
+        })}
       </div>
     </div>
   );

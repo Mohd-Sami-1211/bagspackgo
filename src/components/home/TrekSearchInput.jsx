@@ -7,39 +7,70 @@ import { CalendarCheck, Search, RefreshCcw } from 'lucide-react';
 import data from '../../data/data.json';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const SearchInput = forwardRef((props, ref) => {
-  const [days, setDays] = useState(1);
+const TrekSearchInput = forwardRef((props, ref) => {
   const [count, setCount] = useState(1);
-  const [selectedCategory, setSelectedCategory] = useState('individual');
   const [selectedDestination, setSelectedDestination] = useState(null);
+  const [selectedTrek, setSelectedTrek] = useState(null);
   const [startDate, setStartDate] = useState(null);
   const [dateInput, setDateInput] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  const [trekOptions, setTrekOptions] = useState([]);
+  const [trekError, setTrekError] = useState('');
 
-  // Expose reset functionality via ref
   useImperativeHandle(ref, () => ({
     reset: handleReset,
     getSearchParams: () => ({
       destination: selectedDestination,
-      category: selectedCategory,
+      trek: selectedTrek,
       date: startDate,
-      days,
       count,
     }),
   }));
 
-  // Internal reset handler with animation
   const handleReset = () => {
     setIsSearching(true);
     setTimeout(() => {
-      setDays(1);
       setCount(1);
       setStartDate(null);
       setDateInput('');
-      setSelectedCategory('individual');
       setSelectedDestination(null);
+      setSelectedTrek(null);
+      setTrekOptions([]);
+      setTrekError('');
       setIsSearching(false);
     }, 300);
+  };
+
+  const handleDestinationChange = (destination) => {
+    setSelectedDestination(destination);
+    setSelectedTrek(null);
+    setTrekError('');
+    
+    if (destination) {
+      // Ensure data.treks exists and has the expected structure
+      if (data?.treks && Array.isArray(data.treks)) {
+        const filteredTreks = data.treks.filter(trek => 
+          trek.destinationId && trek.destinationId.toString() === destination.value.toString()
+        );
+        setTrekOptions(
+          filteredTreks.map(trek => ({
+            value: trek.id,
+            label: trek.name,
+            ...trek
+          }))
+        );
+      }
+    } else {
+      setTrekOptions([]);
+    }
+  };
+  const handleTrekChange = (trek) => {
+    if (!selectedDestination) {
+      setTrekError('Please select a destination first');
+      return;
+    }
+    setTrekError('');
+    setSelectedTrek(trek);
   };
 
   const handleInputChange = (e) => {
@@ -76,12 +107,16 @@ const SearchInput = forwardRef((props, ref) => {
   };
 
   const handleSearch = () => {
+    if (!selectedDestination && selectedTrek) {
+      setTrekError('Please select a destination first');
+      return;
+    }
+
     setIsSearching(true);
     const params = {
       destination: selectedDestination,
-      category: selectedCategory,
+      trek: selectedTrek,
       date: startDate,
-      days,
       count,
     };
     console.log('Search params:', params);
@@ -154,15 +189,55 @@ const SearchInput = forwardRef((props, ref) => {
           variants={itemVariants}
           className="flex-[1.2] bg-[#C3EFE6] rounded-xl p-3 space-y-3"
         >
-          <DestinationSelect 
-            selectedDestination={selectedDestination}
-            setSelectedDestination={setSelectedDestination}
-          />
-          
-          <CategorySelect 
-            selectedCategory={selectedCategory}
-            setSelectedCategory={setSelectedCategory}
-          />
+          <div className="relative z-[1000]">
+            <label className="block text-sm font-semibold text-gray-800 mb-1">Select Destination</label>
+            <Select
+              options={data.destinations.map(dest => ({
+                value: dest.value,
+                label: dest.label
+              }))}
+              value={selectedDestination}
+              onChange={handleDestinationChange}
+              placeholder="Choose a destination"
+              classNamePrefix="react-select"
+              isClearable
+              styles={selectStyles}
+              menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
+              menuPosition="fixed"
+            />
+          </div>
+
+          <div className="relative z-[999]">
+            <label className="block text-sm font-semibold text-gray-800 mb-1">Choose Trek</label>
+            <Select
+              options={trekOptions}
+              value={selectedTrek}
+              onChange={handleTrekChange}
+              placeholder={selectedDestination ? "Select a trek" : "Select destination first"}
+              classNamePrefix="react-select"
+              isClearable
+              styles={{
+                ...selectStyles,
+                control: (provided, state) => ({
+                  ...selectStyles.control(provided, state),
+                  borderColor: trekError ? '#ef4444' : state.isFocused ? '#10b981' : '#d1d5db',
+                  boxShadow: trekError ? '0 0 0 1px #ef4444' : state.isFocused ? '0 0 0 1px #10b981' : null,
+                })
+              }}
+              menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
+              menuPosition="fixed"
+              isDisabled={!selectedDestination}
+            />
+            {trekError && (
+              <motion.p 
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-red-500 text-xs mt-1"
+              >
+                {trekError}
+              </motion.p>
+            )}
+          </div>
         </motion.div>
 
         {/* Right Section */}
@@ -170,20 +245,10 @@ const SearchInput = forwardRef((props, ref) => {
           variants={itemVariants}
           className="flex-[2] bg-[#C3EFE6] rounded-xl p-3 flex flex-col justify-between"
         >
-          <CountersSection 
-            days={days}
-            setDays={setDays}
-            count={count}
-            setCount={setCount}
-            selectedCategory={selectedCategory}
-          />
-          
-          <div className="flex gap-4 items-end">
-            <motion.div 
-              variants={itemVariants}
-              className="flex-1 relative z-[60]"
-            >
-              <label className="block text-sm font-semibold text-gray-800 mb-1">Enter Date</label>
+          <div className="flex gap-4">
+            {/* Date Picker */}
+            <div className="flex-1">
+              <label className="block text-sm font-semibold text-gray-800 mb-1">Start Date</label>
               <DatePicker
                 selected={startDate}
                 onChange={handleDateChange}
@@ -215,52 +280,64 @@ const SearchInput = forwardRef((props, ref) => {
                 calendarClassName="border-green-200 rounded-md shadow-xl bg-white"
                 wrapperClassName="w-full"
               />
-            </motion.div>
-
-            <div className="flex-1 flex justify-end gap-3 items-center">
-              <AnimatePresence mode="wait">
-                {isSearching ? (
-                  <motion.div
-                    key="searching"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="w-32 flex justify-center"
-                  >
-                    <motion.div
-                      className="h-9 w-9 rounded-full border-2 border-green-500 border-t-transparent"
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                    />
-                  </motion.div>
-                ) : (
-                  <motion.button
-                    key="search"
-                    variants={buttonVariants}
-                    initial="rest"
-                    whileHover="hover"
-                    whileTap="tap"
-                    onClick={handleSearch}
-                    className="flex items-center justify-center gap-2 px-6 py-1.5 bg-[#28A745] hover:bg-green-600 text-white text-base rounded-md transition w-32"
-                  >
-                    <Search size={16} />
-                    Search
-                  </motion.button>
-                )}
-              </AnimatePresence>
-
-              <motion.button
-                variants={buttonVariants}
-                initial="rest"
-                whileHover="hover"
-                whileTap="tap"
-                onClick={handleReset}
-                className="flex items-center justify-center gap-1 px-4 py-1.5 bg-[#A6D8BA] hover:bg-red-500 hover:text-white text-sm rounded-md transition w-24"
-              >
-                <RefreshCcw size={14} />
-                Reset
-              </motion.button>
             </div>
+
+            {/* Counter */}
+            <div className="flex-1">
+              <Counter 
+                label="No. of Individuals"
+                value={count}
+                onIncrement={() => setCount(prev => prev + 1)}
+                onDecrement={() => setCount(prev => Math.max(1, prev - 1))}
+                onChange={(e) => setCount(Math.max(1, parseInt(e.target.value) || 1))}
+              />
+            </div>
+          </div>
+
+          {/* Buttons */}
+          <div className="flex justify-end gap-3 items-center mt-3">
+            <AnimatePresence mode="wait">
+              {isSearching ? (
+                <motion.div
+                  key="searching"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="w-32 flex justify-center"
+                >
+                  <motion.div
+                    className="h-9 w-9 rounded-full border-2 border-green-500 border-t-transparent"
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  />
+                </motion.div>
+              ) : (
+                <motion.button
+                  key="search"
+                  variants={buttonVariants}
+                  initial="rest"
+                  whileHover="hover"
+                  whileTap="tap"
+                  onClick={handleSearch}
+                  className="flex items-center justify-center gap-2 px-6 py-1.5 bg-[#28A745] hover:bg-green-600 text-white text-base rounded-md transition w-32"
+                >
+                  <Search size={16} />
+                  Search
+                </motion.button>
+              )}
+            </AnimatePresence>
+
+            <motion.button
+              variants={buttonVariants}
+              initial="rest"
+              whileHover="hover"
+              whileTap="tap"
+              onClick={handleReset}
+              className="flex items-center justify-center gap-1 px-4 py-1.5 bg-[#A6D8BA] hover:bg-red-500 hover:text-white text-sm rounded-md transition w-24"
+            >
+              <RefreshCcw size={14} />
+              Reset
+            </motion.button>
           </div>
         </motion.div>
       </motion.div>
@@ -268,82 +345,9 @@ const SearchInput = forwardRef((props, ref) => {
   );
 });
 
-// Enhanced Select components with animations
-const DestinationSelect = ({ selectedDestination, setSelectedDestination }) => (
-  <motion.div 
-    className="relative z-[1000]"
-    initial={{ opacity: 0, x: -10 }}
-    whileInView={{ opacity: 1, x: 0 }}
-    viewport={{ once: true, margin: "-50px" }}
-    transition={{ duration: 0.3, delay: 0.2 }}
-  >
-    <label className="block text-sm font-semibold text-gray-800 mb-1">Select Destination</label>
-    <Select
-      options={data.destinations}
-      value={selectedDestination}
-      onChange={setSelectedDestination}
-      placeholder="Enter Place to Search"
-      classNamePrefix="react-select"
-      isClearable
-      styles={selectStyles}
-      menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
-      menuPosition="fixed"
-    />
-  </motion.div>
-);
-
-const CategorySelect = ({ selectedCategory, setSelectedCategory }) => (
-  <motion.div 
-    className="relative z-[1000]"
-    initial={{ opacity: 0, x: -10 }}
-    whileInView={{ opacity: 1, x: 0 }}
-    viewport={{ once: true, margin: "-50px" }}
-    transition={{ duration: 0.3, delay: 0.3 }}
-  >
-    <label className="block text-sm font-semibold text-gray-800 mb-1">Choose Category</label>
-    <Select
-      options={data.categories}
-      value={data.categories.find(cat => cat.value === selectedCategory)}
-      onChange={(option) => setSelectedCategory(option.value)}
-      placeholder="Select Type"
-      classNamePrefix="react-select"
-      isClearable={false}
-      styles={selectStyles}
-    />
-  </motion.div>
-);
-
-// Animated CountersSection
-const CountersSection = ({ days, setDays, count, setCount, selectedCategory }) => (
-  <motion.div 
-    className="flex gap-4"
-    initial={{ opacity: 0 }}
-    whileInView={{ opacity: 1 }}
-    viewport={{ once: true, margin: "-50px" }}
-    transition={{ staggerChildren: 0.1 }}
-  >
-    <Counter 
-      label="No. of Days"
-      value={days}
-      onIncrement={() => setDays(prev => prev + 1)}
-      onDecrement={() => setDays(prev => Math.max(1, prev - 1))}
-      onChange={(e) => setDays(Math.max(1, parseInt(e.target.value) || 1))}
-    />
-    
-    <Counter 
-      label={selectedCategory === 'couple' ? 'No. of Couples' : 'No. of Individuals'}
-      value={count}
-      onIncrement={() => setCount(prev => prev + 1)}
-      onDecrement={() => setCount(prev => Math.max(1, prev - 1))}
-      onChange={(e) => setCount(Math.max(1, parseInt(e.target.value) || 1))}
-    />
-  </motion.div>
-);
-
-// Animated Counter
 const Counter = ({ label, value, onIncrement, onDecrement, onChange }) => (
   <motion.div 
-    className="flex-1"
+    className="w-full"
     initial={{ opacity: 0, y: 10 }}
     whileInView={{ opacity: 1, y: 0 }}
     viewport={{ once: true, margin: "-30px" }}
@@ -426,5 +430,5 @@ const selectStyles = {
   }),
 };
 
-SearchInput.displayName = 'SearchInput';
-export default SearchInput;
+TrekSearchInput.displayName = 'TrekSearchInput';
+export default TrekSearchInput;

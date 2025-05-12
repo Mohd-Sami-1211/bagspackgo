@@ -1,6 +1,6 @@
 'use client';
 
-import SearchInput from '@/components/home/SearchInput';
+import SearchInput from '@/components/home/TripSearchInput';
 
 
 export default function TripPage() {

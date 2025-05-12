@@ -1,53 +1,49 @@
+// src/app/trip/layout.jsx
 'use client';
-import Image from 'next/image';
-import { CalendarCheck, Headphones } from 'lucide-react';
-import SecondaryNav from '@/components/common/SecondaryNav';
-import AnimatedButton from '@/components/common/AnimatedButton';
-import MainContent from '@/components/common/MainContent'; 
+import { motion } from 'framer-motion';
+import SharedLayout from '../SharedLayout';
+import MainContent from '@/components/common/MainContent';
 import LowerMain from "@/components/common/LowerMain";
-import Footer from '@/components/common/Footer';
-//changed the path to deploy
+import PageTransition from '@/components/common/PageTransition';
+import { usePathname } from 'next/navigation';
 
 export default function TripLayout({ children }) {
+  const pathname = usePathname();
+
   return (
-    <>
-      <nav className="flex items-center justify-between px-6 py-4 bg-green-400 shadow-md">
-        <div className="flex items-center">
-          <a href="/" className="inline-block w-[150px] h-[40px] overflow-hidden relative rounded-3xl bg-white">
-            <Image 
-              src="/images/logo.svg" 
-              alt="Logo" 
-              fill 
-              className="object-contain" 
-              priority 
-            />
-          </a>
-        </div>
+    <SharedLayout>
+      <motion.main
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+        className="bg-[#F2FFFC] bg-[url('/images/hero.svg')] bg-no-repeat min-h-screen"
+      >
+        <div className="max-w-7xl mx-auto">
+          {/* Page Content with Transition */}
+          <PageTransition key={pathname}>
+            <div className="px-4 sm:px-6 lg:px-8 py-8">
+              {children}
+            </div>
+          </PageTransition>
 
-        <div className="flex items-center space-x-4 text-white/90 text-[15px] font-semibold">
-          <a href="/bookings" className="flex items-center gap-1 px-2 py-1 rounded hover:bg-white/20 hover:text-black transition-colors">
-            <CalendarCheck size={16} />
-            Bookings
-          </a>
-          <a href="/help" className="flex items-center gap-1 px-2 py-1 rounded hover:bg-white/20 hover:text-black transition-colors">
-            <Headphones size={16} />
-            Help
-          </a>
-          <AnimatedButton />
-        </div>
-      </nav>
-
-      <SecondaryNav />
-
-      <main className="bg-[#F2FFFC] bg-[url('/images/hero.svg')] bg-no-repeat min-h-screen">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {children}
-
-        </div>
+          {/* Animated Sections */}
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.2 }}
+          >
             <MainContent />
-          <LowerMain />
-      </main>
-      <Footer />
-    </>
+          </motion.div>
+
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.3 }}
+          >
+            <LowerMain />
+          </motion.div>
+        </div>
+      </motion.main>
+    </SharedLayout>
   );
 }
