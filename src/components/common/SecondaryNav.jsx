@@ -20,24 +20,6 @@ export default function SecondaryNav() {
   return (
     <div className="relative bg-white/50 shadow-sm">
       <div className="relative flex justify-center space-x-16 px-12 text-gray-700 font-medium text-lg">
-        {/* Animated underline - now using layoutId for smooth transition */}
-        {activeIndex >= 0 && (
-          <motion.div
-            layoutId="underline"
-            className="absolute bottom-0 h-1 bg-green-500 rounded-full"
-            initial={false}
-            transition={{
-              type: 'spring',
-              stiffness: 300,
-              damping: 25,
-              mass: 0.5
-            }}
-            style={{
-              width: 'auto', // Width will be calculated automatically
-            }}
-          />
-        )}
-        
         {tabs.map((tab, idx) => {
           const isActive = pathname?.startsWith(tab.path);
           return (
@@ -48,18 +30,6 @@ export default function SecondaryNav() {
                 isActive ? 'text-green-600 font-semibold' : 'hover:text-green-500'
               }`}
             >
-              {isActive && (
-                <motion.span
-                  layoutId="underline"
-                  className="absolute bottom-0 left-0 right-0 h-1 bg-green-500 rounded-full"
-                  transition={{
-                    type: 'spring',
-                    stiffness: 300,
-                    damping: 25,
-                    mass: 0.5
-                  }}
-                />
-              )}
               <motion.span
                 animate={{
                   scale: isActive ? 1.05 : 1,
@@ -71,6 +41,19 @@ export default function SecondaryNav() {
                 {tab.icon}
                 {tab.label}
               </motion.span>
+              
+              {isActive && (
+                <motion.div
+                  layoutId="underline"
+                  className="absolute bottom-0 left-0 right-0 h-1 bg-green-500 rounded-full"
+                  transition={{
+                    type: 'spring',
+                    stiffness: 300,
+                    damping: 25,
+                    mass: 0.5
+                  }}
+                />
+              )}
             </Link>
           );
         })}
