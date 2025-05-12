@@ -2,8 +2,7 @@
 'use client';
 import { motion } from 'framer-motion';
 import SharedLayout from '../SharedLayout';
-import MainContent from '@/components/common/MainContent';
-import LowerMain from "@/components/common/LowerMain";
+import TripMainContent from '@/components/home/TripSection/TripMainContent';
 import PageTransition from '@/components/common/PageTransition';
 import { usePathname } from 'next/navigation';
 
@@ -18,31 +17,21 @@ export default function TripLayout({ children }) {
         transition={{ duration: 0.3 }}
         className="bg-[#F2FFFC] bg-[url('/images/hero.svg')] bg-no-repeat min-h-screen"
       >
-        <div className="max-w-7xl mx-auto">
-          {/* Page Content with Transition */}
+        {/* Children (constrained width) */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <PageTransition key={pathname}>
-            <div className="px-4 sm:px-6 lg:px-8 py-8">
-              {children}
-            </div>
+            {children}
           </PageTransition>
-
-          {/* Animated Sections */}
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.2 }}
-          >
-            <MainContent />
-          </motion.div>
-
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.3 }}
-          >
-            <LowerMain />
-          </motion.div>
         </div>
+
+        {/* Full-width sections (no max-w container) */}
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.2 }}
+        >
+          <TripMainContent /> {/* Now handles its own width */}
+        </motion.div>
       </motion.main>
     </SharedLayout>
   );
