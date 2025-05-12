@@ -4,6 +4,7 @@ import { Mountain, Globe, Hotel, Plane, Globe2 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { useRef, useState, useEffect } from 'react';
 
 const tabs = [
   { label: 'Trip', icon: <Globe size={18} />, path: '/trip' },
@@ -15,48 +16,63 @@ const tabs = [
 
 export default function SecondaryNav() {
   const pathname = usePathname();
-  const activeIndex = tabs.findIndex(tab => pathname?.startsWith(tab.path));
+  const [underlineWidth, setUnderlineWidth] = useState(0);
+  const [underlineLeft, setUnderlineLeft] = useState(0);
+  const tabRefs = useRef([]);
+
+  useEffect(() => {
+    const activeIndex = tabs.findIndex(tab => pathname?.startsWith(tab.path));
+    if (activeIndex >= 0 && tabRefs.current[activeIndex]) {
+      const activeTab = tabRefs.current[activeIndex];
+      setUnderlineWidth(activeTab.offsetWidth);
+      setUnderlineLeft(activeTab.offsetLeft);
+    }
+  }, [pathname]);
 
   return (
     <div className="relative bg-white/50 shadow-sm">
-      <div className="relative flex justify-center space-x-16 px-12 text-gray-700 font-medium text-lg">
-        {tabs.map((tab, idx) => {
-          const isActive = pathname?.startsWith(tab.path);
-          return (
-            <Link
-              key={tab.label}
-              href={tab.path}
-              className={`relative py-4 flex items-center gap-2 ${
-                isActive ? 'text-green-600 font-semibold' : 'hover:text-green-500'
-              }`}
-            >
-              <motion.span
-                animate={{
-                  scale: isActive ? 1.05 : 1,
-                  color: isActive ? '#16a34a' : '#374151'
-                }}
-                transition={{ type: 'spring', stiffness: 500 }}
-                className="flex items-center gap-2"
+      <div className="relative flex justify-center px-12 text-gray-700 font-medium text-lg">
+        <div className="flex space-x-16 relative">
+          {/* Underline indicator */}
+          <motion.div
+            className="absolute bottom-0 h-1 bg-green-500 rounded-full"
+            animate={{
+              width: underlineWidth,
+              left: underlineLeft,
+            }}
+            transition={{
+              type: 'spring',
+              stiffness: 300,
+              damping: 25,
+            }}
+          />
+          
+          {tabs.map((tab, idx) => {
+            const isActive = pathname?.startsWith(tab.path);
+            return (
+              <Link
+                key={tab.label}
+                href={tab.path}
+                ref={el => tabRefs.current[idx] = el}
+                className={`relative py-4 flex items-center gap-2 ${
+                  isActive ? 'text-green-600 font-semibold' : 'hover:text-green-500'
+                }`}
               >
-                {tab.icon}
-                {tab.label}
-              </motion.span>
-              
-              {isActive && (
-                <motion.div
-                  layoutId="underline"
-                  className="absolute bottom-0 left-0 right-0 h-1 bg-green-500 rounded-full"
-                  transition={{
-                    type: 'spring',
-                    stiffness: 300,
-                    damping: 25,
-                    mass: 0.5
+                <motion.span
+                  animate={{
+                    scale: isActive ? 1.05 : 1,
+                    color: isActive ? '#16a34a' : '#374151'
                   }}
-                />
-              )}
-            </Link>
-          );
-        })}
+                  transition={{ type: 'spring', stiffness: 500 }}
+                  className="flex items-center gap-2"
+                >
+                  {tab.icon}
+                  {tab.label}
+                </motion.span>
+              </Link>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
