@@ -41,9 +41,11 @@ export default function SecondaryNav() {
               left: underlineLeft,
             }}
             transition={{
-              type: 'spring',
-              stiffness: 300,
-              damping: 25,
+    type: 'spring',
+    stiffness: 150,  // Reduced from 300 (softer spring)
+    damping: 20,    // Reduced from 25 (less resistance)
+    mass: 1,        // Increased from default (more weight = slower movement)
+    restDelta: 0.001 // Finer stopping point
             }}
           />
           
