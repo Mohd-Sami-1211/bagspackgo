@@ -4,7 +4,7 @@ import Select from 'react-select';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { CalendarCheck, Search, RefreshCcw } from 'lucide-react';
-import data from '@/data/data'
+import data from '@/data/data.json';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const TrekSearchInput = forwardRef((props, ref) => {

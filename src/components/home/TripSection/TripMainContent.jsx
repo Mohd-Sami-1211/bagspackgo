@@ -335,49 +335,51 @@ const AdventureSlider = () => {
         />
       </div>
 
-      <div 
+            <div 
         className="w-screen -mx-4 bg-gradient-to-r from-[#bdf8e293] to-[#5df3bc93] py-8 h-[340px]"
         ref={sliderRef}
       >
-        <div className="max-w-7xl mx-auto px-4 h-full">
-          <div className="relative h-full">
-            <AnimatePresence mode="wait" custom={direction}>
-              <motion.div
-                key={currentIndex}
-                custom={direction}
-                initial={{ opacity: 0, x: direction > 0 ? 100 : -100 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: direction > 0 ? -100 : 100 }}
-                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className="grid grid-cols-1 md:grid-cols-2 gap-10 h-full"
-              >
-                {visibleAdventures.map((adventure, idx) => (
-                  <motion.div
-                    key={adventure.id}
-                    className="relative h-full rounded-xl overflow-hidden"
-                    whileHover={{ scale: 1.02 }}
-                    transition={{ type: "spring", stiffness: 300 }}
-                  >
-                    <VideoCard 
-                      media={adventure.media}
-                      name={adventure.name}
-                      description={adventure.description}
-                      locations={adventure.locations}
-                      color={adventure.color}
-                      textColor={adventure.textColor}
-                      isFlipped={flippedCards[idx]}
-                      onClick={() => toggleFlip(idx)}
-                    />
-                  </motion.div>
-                ))}
-              </motion.div>
-            </AnimatePresence>
+        <div className="max-w-7xl mx-auto mr-[35px] h-full">
+          <div className="relative h-full flex justify-center "> {/* Added flex justify-center */}
+            <div className="w-full max-w-7xl px-4"> {/* New constrained width container */}
+              <AnimatePresence mode="wait" custom={direction}>
+                <motion.div
+                  key={currentIndex}
+                  custom={direction}
+                  initial={{ opacity: 0, x: direction > 0 ? 100 : -100 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: direction > 0 ? -100 : 100 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                  className="grid grid-cols-1 md:grid-cols-2 gap-10 h-full"
+                >
+                  {visibleAdventures.map((adventure, idx) => (
+                    <motion.div
+                      key={adventure.id}
+                      className="relative h-full rounded-xl overflow-hidden"
+                      whileHover={{ scale: 1.02 }}
+                      transition={{ type: "spring", stiffness: 300 }}
+                    >
+                      <VideoCard 
+                        media={adventure.media}
+                        name={adventure.name}
+                        description={adventure.description}
+                        locations={adventure.locations}
+                        color={adventure.color}
+                        textColor={adventure.textColor}
+                        isFlipped={flippedCards[idx]}
+                        onClick={() => toggleFlip(idx)}
+                      />
+                    </motion.div>
+                  ))}
+                </motion.div>
+              </AnimatePresence>
+            </div>
 
-            {/* Navigation Arrows - Positioned closer to edges */}
+            {/* Navigation Arrows - Adjusted positioning */}
             <div className="absolute inset-0 flex items-center justify-between pointer-events-none">
               <motion.button
                 onClick={prevSlide}
-                className="absolute left-0 -translate-x-3 bg-black/30 p-3 rounded-full z-20 backdrop-blur-sm pointer-events-auto opacity-0 hover:opacity-100 transition-opacity duration-200"
+                className="absolute left-0 bg-black/30 p-3 rounded-full z-20 backdrop-blur-sm pointer-events-auto opacity-0 hover:opacity-100 transition-opacity duration-200"
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
               >
@@ -385,7 +387,7 @@ const AdventureSlider = () => {
               </motion.button>
               <motion.button
                 onClick={nextSlide}
-                className="absolute right-0 translate-x-3 bg-black/30 p-3 rounded-full z-20 backdrop-blur-sm pointer-events-auto opacity-0 hover:opacity-100 transition-opacity duration-200"
+                className="absolute right-0 bg-black/30 p-3 rounded-full z-20 backdrop-blur-sm pointer-events-auto opacity-0 hover:opacity-100 transition-opacity duration-200"
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
               >
