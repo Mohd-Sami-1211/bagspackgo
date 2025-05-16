@@ -2,9 +2,9 @@
 import { motion } from 'framer-motion';
 import { Star, MapPin, Users, Calendar } from 'lucide-react';
 
-const GuideCard = ({ guide, category, days }) => {
+const GuideCard = ({ guide, category, days, count }) => {
   const price = guide.price[category] || guide.price.individual;
-  const totalPrice = price * days;
+  const totalPrice = price * days * count;
   const peopleText = category === 'couple' ? 'couple' : 'person';
 
   return (
@@ -61,6 +61,9 @@ const GuideCard = ({ guide, category, days }) => {
                   <p className="text-sm text-gray-600">
                     <span className="font-medium">Package:</span> {category === 'couple' ? 'Couple' : 'Individual'}
                   </p>
+                  <p className="text-sm text-gray-600 mt-1">
+                    <span className="font-medium">Persons:</span> {count} {peopleText}{count > 1 ? 's' : ''}
+                  </p>
                 </div>
                 
                 {/* Right side - Pricing */}
@@ -70,9 +73,11 @@ const GuideCard = ({ guide, category, days }) => {
                       <span className="text-sm font-semibold text-green-800">Basic Package (per day):</span>
                       <span className="text-lg font-bold text-green-600">₹{price.toLocaleString()}/{peopleText}</span>
                     </div>
-                    <p className="text-sm text-gray-600 mt-1">
-                      <span className="font-medium">Total:</span> ₹{totalPrice.toLocaleString()}
-                    </p>
+                    <div className="text-sm text-gray-600 mt-1 text-right">
+                      <div className="font-medium">Total Calculation:</div>
+                      <div>₹{price.toLocaleString()} × {days} day{days > 1 ? 's' : ''} × {count} {peopleText}{count > 1 ? 's' : ''}</div>
+                      <div className="font-bold text-green-600 mt-1">= ₹{totalPrice.toLocaleString()}</div>
+                    </div>
                   </div>
                 </div>
               </div>
