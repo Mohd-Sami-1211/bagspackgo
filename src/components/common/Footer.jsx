@@ -2,8 +2,8 @@ import Image from "next/image";
 
 const Footer = () => {
   return (
-    <footer className="bg-gradient-to-r from-[#60c48998] to-[#1ef7a793] text-gray-800">
-      <div className="w-full mx-auto px-4 py-6 grid grid-cols-1 md:grid-cols-4 gap-8">
+    <footer className="bg-[#aff8d4] text-gray-800">
+      <div className="w-full mx-auto px-10 py-6 grid grid-cols-1 md:grid-cols-4 gap-8">
         
         {/* Brand Info */}
         <div>
@@ -18,7 +18,7 @@ const Footer = () => {
                        />
                      </a>
           </div>
-          <p className="mt-2 text-sm text-gray-800 font-bold italic">
+          <p className="mt-2 text-sm text-gray-800 font-bold">
             Just pack your bags, We've got the rest...
           </p>
         </div>
@@ -27,10 +27,10 @@ const Footer = () => {
         <div>
           <h3 className="text-lg font-semibold text-gray-800 mb-3">Quick Links</h3>
           <ul className="space-y-2">
-            <li><a href="/" className="px-2 py-1 hover:text-black hover:bg-white/40 transition-colors">Home</a></li>
-            <li><a href="/about" className="px-2 py-1 hover:text-black hover:bg-white/40 transition-colors">About Us</a></li>
-            <li><a href="/tours" className="px-2 py-1 hover:text-black hover:bg-white/40 transition-colors">Tours</a></li>
-            <li><a href="/contact" className="px-2 py-1 hover:text-black hover:bg-white/40 transition-colors">Contact</a></li>
+            <li><a href="/" className="text-sm px-2 py-1 hover:text-black hover:bg-white/40 transition-colors">Home</a></li>
+            <li><a href="/about" className="text-sm px-2 py-1 hover:text-black hover:bg-white/40 transition-colors">About Us</a></li>
+            <li><a href="/tours" className="text-sm px-2 py-1 hover:text-black hover:bg-white/40 transition-colors">Tours</a></li>
+            <li><a href="/contact" className="text-sm px-2 py-1 hover:text-black hover:bg-white/40 transition-colors">Contact</a></li>
           </ul>
         </div>
 
@@ -38,10 +38,10 @@ const Footer = () => {
         <div>
           <h3 className="text-lg font-semibold text-gray-800 mb-3">Help</h3>
           <ul className="space-y-2">
-            <li><a href="/faq" className="px-2 py-1 hover:text-black hover:bg-white/40 transition-colors">FAQ</a></li>
-            <li><a href="/support" className="px-2 py-1 hover:text-black hover:bg-white/40 transition-colors">Customer Support</a></li>
-            <li><a href="/privacy" className="px-2 py-1 hover:text-black hover:bg-white/40 transition-colors">Privacy Policy</a></li>
-            <li><a href="/terms" className="px-2 py-1 hover:text-black hover:bg-white/40 transition-colors">Terms & Conditions</a></li>
+            <li><a href="/faq" className="text-sm px-2 py-1 hover:text-black hover:bg-white/40 transition-colors">FAQ</a></li>
+            <li><a href="/support" className="text-sm px-2 py-1 hover:text-black hover:bg-white/40 transition-colors">Customer Support</a></li>
+            <li><a href="/privacy" className="text-sm px-2 py-1 hover:text-black hover:bg-white/40 transition-colors">Privacy Policy</a></li>
+            <li><a href="/terms" className="text-sm px-2 py-1 hover:text-black hover:bg-white/40 transition-colors">Terms & Conditions</a></li>
           </ul>
         </div>
 
@@ -55,7 +55,7 @@ const Footer = () => {
               placeholder="Email address"
               className="w-full px-3 py-2 rounded-l bg-white text-black focus:outline-none"
             />
-            <button className="bg-green-500 hover:bg-green-700 hover:text-white px-4 rounded-r text-gray-800">
+            <button className="bg-green-400 hover:bg-green-600 hover:text-white px-4 rounded-r text-gray-800">
               Subscribe
             </button>
           </form>

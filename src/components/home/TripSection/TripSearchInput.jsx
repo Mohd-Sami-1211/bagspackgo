@@ -6,8 +6,10 @@ import 'react-datepicker/dist/react-datepicker.css';
 import { CalendarCheck, Search, RefreshCcw } from 'lucide-react';
 import data from '@/data/data.json';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 
-const TripSearchInput = forwardRef((props, ref) => {
+const TripSearchInput = forwardRef(({ compactMode = false, onSearch }, ref) => {
+  const router = useRouter();
   const [days, setDays] = useState(1);
   const [count, setCount] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState('individual');
@@ -15,22 +17,22 @@ const TripSearchInput = forwardRef((props, ref) => {
   const [startDate, setStartDate] = useState(null);
   const [dateInput, setDateInput] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  const [error, setError] = useState(null);
 
-  // Expose reset functionality via ref
   useImperativeHandle(ref, () => ({
     reset: handleReset,
     getSearchParams: () => ({
-      destination: selectedDestination,
+      destination: selectedDestination?.value || '',
       category: selectedCategory,
-      date: startDate,
+      date: startDate?.toISOString() || '',
       days,
       count,
     }),
   }));
 
-  // Internal reset handler with animation
   const handleReset = () => {
     setIsSearching(true);
+    setError(null);
     setTimeout(() => {
       setDays(1);
       setCount(1);
@@ -76,20 +78,33 @@ const TripSearchInput = forwardRef((props, ref) => {
   };
 
   const handleSearch = () => {
-    setIsSearching(true);
-    const params = {
-      destination: selectedDestination,
-      category: selectedCategory,
-      date: startDate,
-      days,
-      count,
-    };
-    console.log('Search params:', params);
+    if (!selectedDestination) {
+      setError('Please select a destination');
+      return;
+    }
     
-    setTimeout(() => setIsSearching(false), 1000);
+    setError(null);
+    setIsSearching(true);
+    
+    const params = {
+      destination: selectedDestination?.value || '',
+      category: selectedCategory,
+      date: startDate?.toISOString() || '',
+      days: days.toString(),
+      count: count.toString(),
+    };
+
+    const filteredParams = Object.fromEntries(
+      Object.entries(params).filter(([_, value]) => value !== '')
+    );
+
+    const queryString = new URLSearchParams(filteredParams).toString();
+    
+    setTimeout(() => {
+      router.push(`/trip/guidelist?${queryString}`);
+    }, 500);
   };
 
-  // Animation variants
   const containerVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
@@ -141,7 +156,9 @@ const TripSearchInput = forwardRef((props, ref) => {
       whileInView="onscreen"
       viewport={{ once: true, amount: 0.2 }}
       variants={scrollVariants}
-      className="bg-white/90 rounded-2xl shadow-lg p-2 w-full max-w-5xl min-h-[180px] hover:shadow-xl transition-shadow duration-300"
+      className={`bg-white/90 rounded-2xl shadow-lg p-2 w-full ${
+        compactMode ? 'max-w-4xl' : 'max-w-5xl min-h-[180px]'
+      } hover:shadow-xl transition-shadow duration-300`}
     >
       <motion.div 
         initial="hidden"
@@ -149,7 +166,6 @@ const TripSearchInput = forwardRef((props, ref) => {
         variants={containerVariants}
         className="flex flex-col md:flex-row gap-3 mt-0.5"
       >
-        {/* Left Section */}
         <motion.div 
           variants={itemVariants}
           className="flex-[1.2] bg-[#C3EFE6] rounded-xl p-3 space-y-3"
@@ -157,6 +173,8 @@ const TripSearchInput = forwardRef((props, ref) => {
           <DestinationSelect 
             selectedDestination={selectedDestination}
             setSelectedDestination={setSelectedDestination}
+            error={error}
+            setError={setError}
           />
           
           <CategorySelect 
@@ -165,7 +183,6 @@ const TripSearchInput = forwardRef((props, ref) => {
           />
         </motion.div>
 
-        {/* Right Section */}
         <motion.div 
           variants={itemVariants}
           className="flex-[2] bg-[#C3EFE6] rounded-xl p-3 flex flex-col justify-between"
@@ -268,8 +285,7 @@ const TripSearchInput = forwardRef((props, ref) => {
   );
 });
 
-// Enhanced Select components with animations
-const DestinationSelect = ({ selectedDestination, setSelectedDestination }) => (
+const DestinationSelect = ({ selectedDestination, setSelectedDestination, error, setError }) => (
   <motion.div 
     className="relative z-[1000]"
     initial={{ opacity: 0, x: -10 }}
@@ -281,14 +297,37 @@ const DestinationSelect = ({ selectedDestination, setSelectedDestination }) => (
     <Select
       options={data.destinations}
       value={selectedDestination}
-      onChange={setSelectedDestination}
+      onChange={(value) => {
+        setSelectedDestination(value);
+        if (value) setError(null);
+      }}
       placeholder="Enter Place to Search"
       classNamePrefix="react-select"
       isClearable
-      styles={selectStyles}
+      styles={{
+        ...selectStyles,
+        control: (provided, state) => ({
+          ...selectStyles.control(provided, state),
+          borderColor: error ? '#ef4444' : state.isFocused ? '#10b981' : '#d1d5db',
+          boxShadow: error 
+            ? '0 0 0 1px #ef4444'
+            : state.isFocused 
+              ? '0 0 0 1px #10b981'
+              : null,
+        })
+      }}
       menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
       menuPosition="fixed"
     />
+    {error && (
+      <motion.p 
+        initial={{ opacity: 0, y: -5 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mt-1 text-xs text-red-500"
+      >
+        {error}
+      </motion.p>
+    )}
   </motion.div>
 );
 
@@ -313,7 +352,6 @@ const CategorySelect = ({ selectedCategory, setSelectedCategory }) => (
   </motion.div>
 );
 
-// Animated CountersSection
 const CountersSection = ({ days, setDays, count, setCount, selectedCategory }) => (
   <motion.div 
     className="flex gap-4"
@@ -340,7 +378,6 @@ const CountersSection = ({ days, setDays, count, setCount, selectedCategory }) =
   </motion.div>
 );
 
-// Animated Counter
 const Counter = ({ label, value, onIncrement, onDecrement, onChange }) => (
   <motion.div 
     className="flex-1"

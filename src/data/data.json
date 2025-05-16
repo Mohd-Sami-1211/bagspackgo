@@ -63,5 +63,197 @@
   "categories": [
     { "value": "individual", "label": "Individual" },
     { "value": "couple", "label": "Couple" }
-  ]
+  ],
+   "guides": [
+    {
+      "id": "KAS-001",
+      "name": "Aamir Khan",
+      "bio": "Houseboat specialist with 8 years experience in Dal Lake",
+      "image": "/images/guides/kashmir1.jpg",
+      "rating": 4.9,
+      "reviews": 128,
+      "location": "kashmir",
+      "price": { "individual": 2500, "couple": 4000 },
+      "languages": ["English", "Hindi"],
+      "specialties": ["Shikara Rides", "Mughal Gardens"],
+      "touristsHandled": 850,
+      "responseTime": "1 hour",
+      "badges": ["Top Rated"]
+    },
+    {
+      "id": "KAS-002",
+      "name": "Zoya Mir",
+      "bio": "Cultural guide specializing in Kashmiri handicrafts",
+      "image": "/images/guides/kashmir2.jpg",
+      "rating": 4.7,
+      "reviews": 95,
+      "location": "kashmir",
+      "price": { "individual": 1800, "couple": 3000 },
+      "languages": ["English", "Kashmiri"],
+      "specialties": ["Pashmina Workshops", "Local Cuisine"],
+      "touristsHandled": 420,
+      "responseTime": "2 hours",
+      "badges": ["Female Friendly"]
+    },
+    {
+      "id": "KAS-003",
+      "name": "Sameer Dar",
+      "bio": "Snow trekking and Gulmarg ski instructor",
+      "image": "/images/guides/kashmir3.jpg",
+      "rating": 4.8,
+      "reviews": 112,
+      "location": "kashmir",
+      "price": { "individual": 3000, "couple": 5000 },
+      "languages": ["English", "Hindi", "Urdu"],
+      "specialties": ["Skiing", "Snow Treks"],
+      "touristsHandled": 780,
+      "responseTime": "45 mins",
+      "badges": ["Winter Expert"]
+    },
+    {
+      "id": "KAS-004",
+      "name": "Nusrat Bano",
+      "bio": "Heritage walk expert in old Srinagar",
+      "image": "/images/guides/kashmir4.jpg",
+      "rating": 4.5,
+      "reviews": 89,
+      "location": "kashmir",
+      "price": { "individual": 1600, "couple": 2800 },
+      "languages": ["Hindi", "English"],
+      "specialties": ["Heritage Tours", "Architecture"],
+      "touristsHandled": 300,
+      "responseTime": "1.5 hours",
+      "badges": ["Cultural Guide"]
+    },
+    {
+      "id": "KAS-005",
+      "name": "Imran Sheikh",
+      "bio": "Nature guide with 6 years in Sonamarg treks",
+      "image": "/images/guides/kashmir5.jpg",
+      "rating": 4.6,
+      "reviews": 78,
+      "location": "kashmir",
+      "price": { "individual": 2400, "couple": 3900 },
+      "languages": ["English", "Hindi"],
+      "specialties": ["Nature Walks", "Photography"],
+      "touristsHandled": 510,
+      "responseTime": "1 hour",
+      "badges": ["Eco Friendly"]
+    },
+    {
+      "id": "KAS-006", "name": "Rubina Yousuf", "bio": "Mountain trails and wildlife tracking expert", "image": "/images/guides/kashmir6.jpg", "rating": 4.8, "reviews": 102, "location": "kashmir", "price": { "individual": 2600, "couple": 4200 }, "languages": ["Kashmiri", "Hindi"], "specialties": ["Wildlife", "Hiking"], "touristsHandled": 600, "responseTime": "40 mins", "badges": ["Trail Expert"] },
+    {
+      "id": "KAS-007", "name": "Faheem Ahmad", "bio": "Floating markets and Dal Lake historian", "image": "/images/guides/kashmir7.jpg", "rating": 4.7, "reviews": 70, "location": "kashmir", "price": { "individual": 1700, "couple": 2800 }, "languages": ["English", "Hindi"], "specialties": ["Markets", "Cultural Heritage"], "touristsHandled": 340, "responseTime": "50 mins", "badges": ["Knowledgeable"] },
+    {
+      "id": "KAS-008", "name": "Iqra Jan", "bio": "Local Kashmiri cuisine expert", "image": "/images/guides/kashmir8.jpg", "rating": 4.6, "reviews": 88, "location": "kashmir", "price": { "individual": 2000, "couple": 3400 }, "languages": ["Kashmiri", "English"], "specialties": ["Food Trails", "Cooking Sessions"], "touristsHandled": 390, "responseTime": "1 hour", "badges": ["Foodie"] },
+    {
+      "id": "KAS-009", "name": "Bilal Lone", "bio": "Camping guide for Pahalgam", "image": "/images/guides/kashmir9.jpg", "rating": 4.9, "reviews": 134, "location": "kashmir", "price": { "individual": 2800, "couple": 4600 }, "languages": ["English", "Hindi"], "specialties": ["Camping", "River Rafting"], "touristsHandled": 790, "responseTime": "35 mins", "badges": ["Outdoor Pro"] },
+    {
+      "id": "KAS-010", "name": "Mehreen Sofi", "bio": "Tulip garden expert during April season", "image": "/images/guides/kashmir10.jpg", "rating": 4.5, "reviews": 59, "location": "kashmir", "price": { "individual": 1400, "couple": 2400 }, "languages": ["Hindi", "English"], "specialties": ["Gardens", "Seasonal Tours"], "touristsHandled": 280, "responseTime": "2 hours", "badges": ["Seasonal Specialist"] },
+    {
+      "id": "KAS-011", "name": "Yusuf Dar", "bio": "Fishing tours in Lidder river", "image": "/images/guides/kashmir11.jpg", "rating": 4.6, "reviews": 61, "location": "kashmir", "price": { "individual": 2300, "couple": 3600 }, "languages": ["English", "Hindi"], "specialties": ["Fishing", "Nature Walks"], "touristsHandled": 330, "responseTime": "1 hour", "badges": ["Angler’s Pick"] },
+    {
+      "id": "KAS-012", "name": "Shaista Jan", "bio": "Pilgrimage tours including Amarnath", "image": "/images/guides/kashmir12.jpg", "rating": 4.4, "reviews": 47, "location": "kashmir", "price": { "individual": 3000, "couple": 5000 }, "languages": ["Hindi", "Urdu"], "specialties": ["Spiritual Tours", "Cultural Narration"], "touristsHandled": 270, "responseTime": "1.5 hours", "badges": ["Pilgrimage Guide"] },
+    {
+      "id": "UTK-001",
+      "name": "Ravi Bisht",
+      "bio": "Trekking expert for Valley of Flowers",
+      "image": "/images/guides/uttarakhand1.jpg",
+      "rating": 4.8,
+      "reviews": 156,
+      "location": "uttarakhand",
+      "price": { "individual": 2000, "couple": 3500 },
+      "languages": ["English", "Hindi"],
+      "specialties": ["Himalayan Treks", "Wildlife Safaris"],
+      "touristsHandled": 1100,
+      "responseTime": "30 mins",
+      "badges": ["Adventure Pro"]
+    },
+    {
+      "id": "UTK-002",
+      "name": "Priyanka Rawat",
+      "bio": "Yoga guide certified in Rishikesh",
+      "image": "/images/guides/uttarakhand2.jpg",
+      "rating": 4.6,
+      "reviews": 87,
+      "location": "uttarakhand",
+      "price": { "individual": 2200, "couple": 3800 },
+      "languages": ["English", "Hindi"],
+      "specialties": ["Meditation Retreats", "Ganga Aarti"],
+      "touristsHandled": 600,
+      "responseTime": "1 hour",
+      "badges": ["Wellness Expert"]
+    },
+    {
+      "id": "UTK-003", "name": "Manoj Negi", "bio": "Char Dham Yatra pilgrimage expert", "image": "/images/guides/uttarakhand3.jpg", "rating": 4.7, "reviews": 102, "location": "uttarakhand", "price": { "individual": 2500, "couple": 4000 }, "languages": ["Hindi", "English"], "specialties": ["Religious Tours", "History"], "touristsHandled": 800, "responseTime": "45 mins", "badges": ["Spiritual Guide"] },
+    {
+      "id": "UTK-004", "name": "Neha Bhatt", "bio": "Eco-tourism and village life specialist", "image": "/images/guides/uttarakhand4.jpg", "rating": 4.5, "reviews": 76, "location": "uttarakhand", "price": { "individual": 1700, "couple": 3000 }, "languages": ["English", "Hindi"], "specialties": ["Homestay", "Culture Tours"], "touristsHandled": 430, "responseTime": "1 hour", "badges": ["Eco Friendly"] },
+    {
+      "id": "UTK-005", "name": "Deepak Rawat", "bio": "River rafting and camping in Rishikesh", "image": "/images/guides/uttarakhand5.jpg", "rating": 4.9, "reviews": 190, "location": "uttarakhand", "price": { "individual": 2800, "couple": 4500 }, "languages": ["English", "Hindi"], "specialties": ["Rafting", "Camping"], "touristsHandled": 1500, "responseTime": "20 mins", "badges": ["Thrill Seeker"] },
+    {
+      "id": "UTK-006", "name": "Tanuja Joshi", "bio": "Birdwatching and nature walk guide in Nainital", "image": "/images/guides/uttarakhand6.jpg", "rating": 4.6, "reviews": 64, "location": "uttarakhand", "price": { "individual": 1800, "couple": 3200 }, "languages": ["English", "Hindi"], "specialties": ["Birding", "Botanical Walks"], "touristsHandled": 320, "responseTime": "1 hour", "badges": ["Nature Lover"] },
+    {
+      "id": "UTK-007", "name": "Mohit Nautiyal", "bio": "Trekking guide for Kedarkantha and Har ki Dun", "image": "/images/guides/uttarakhand7.jpg", "rating": 4.8, "reviews": 120, "location": "uttarakhand", "price": { "individual": 2700, "couple": 4300 }, "languages": ["English", "Hindi"], "specialties": ["Snow Treks", "Base Camps"], "touristsHandled": 880, "responseTime": "35 mins", "badges": ["Snow Expert"] },
+    {
+      "id": "UTK-008", "name": "Anjali Pandey", "bio": "Tea estate and cultural tour guide in Almora", "image": "/images/guides/uttarakhand8.jpg", "rating": 4.4, "reviews": 53, "location": "uttarakhand", "price": { "individual": 1600, "couple": 2900 }, "languages": ["English", "Hindi"], "specialties": ["Agriculture Tours", "Local Stories"], "touristsHandled": 250, "responseTime": "1.5 hours", "badges": ["Culture Guide"] },
+    {
+      "id": "UTK-009", "name": "Suresh Rana", "bio": "Jim Corbett Safari tour expert", "image": "/images/guides/uttarakhand9.jpg", "rating": 4.7, "reviews": 110, "location": "uttarakhand", "price": { "individual": 3000, "couple": 4800 }, "languages": ["English", "Hindi"], "specialties": ["Wildlife", "Photography"], "touristsHandled": 900, "responseTime": "30 mins", "badges": ["Wildlife Pro"] },
+    {
+      "id": "UTK-010", "name": "Poonam Dhyani", "bio": "Sustainable travel advocate in Mussoorie", "image": "/images/guides/uttarakhand10.jpg", "rating": 4.5, "reviews": 69, "location": "uttarakhand", "price": { "individual": 1900, "couple": 3100 }, "languages": ["Hindi", "English"], "specialties": ["Zero Waste Tours", "Sustainable Tourism"], "touristsHandled": 380, "responseTime": "1 hour", "badges": ["Green Guide"] },
+    {
+      "id": "UTK-011", "name": "Aditya Semwal", "bio": "Bungee jumping and ziplining guide in Rishikesh", "image": "/images/guides/uttarakhand11.jpg", "rating": 4.9, "reviews": 145, "location": "uttarakhand", "price": { "individual": 3200, "couple": 5000 }, "languages": ["English", "Hindi"], "specialties": ["Adventure Sports", "Safety Instruction"], "touristsHandled": 980, "responseTime": "20 mins", "badges": ["Extreme Sports"] },
+    {
+      "id": "UTK-012", "name": "Ritika Nautiyal", "bio": "Kumaoni heritage and folk guide", "image": "/images/guides/uttarakhand12.jpg", "rating": 4.3, "reviews": 42, "location": "uttarakhand", "price": { "individual": 1500, "couple": 2600 }, "languages": ["Hindi", "English"], "specialties": ["Folk Music", "Local Legends"], "touristsHandled": 210, "responseTime": "2 hours", "badges": ["Folk Enthusiast"] },
+    {
+      "id": "HIM-001",
+      "name": "Rahul Thakur",
+      "bio": "Spiti Valley road trip specialist",
+      "image": "/images/guides/himachal1.jpg",
+      "rating": 4.9,
+      "reviews": 142,
+      "location": "himachal",
+      "price": { "individual": 2800, "couple": 4500 },
+      "languages": ["English", "Hindi"],
+      "specialties": ["Mountain Drives", "Monastery Tours"],
+      "touristsHandled": 900,
+      "responseTime": "15 mins",
+      "badges": ["Local Legend"]
+    },
+    {
+      "id": "HIM-002",
+      "name": "Ananya Sharma",
+      "bio": "Paragliding instructor from Bir Billing",
+      "image": "/images/guides/himachal2.jpg",
+      "rating": 4.7,
+      "reviews": 78,
+      "location": "himachal",
+      "price": { "individual": 3500, "couple": 5500 },
+      "languages": ["English", "Hindi"],
+      "specialties": ["Adventure Sports", "Cafe Hopping"],
+      "touristsHandled": 500,
+      "responseTime": "1 hour",
+      "badges": ["Thrill Seeker"]
+    },
+    {
+      "id": "HIM-003", "name": "Sanjay Dogra", "bio": "Nature and wildlife guide in Great Himalayan National Park", "image": "/images/guides/himachal3.jpg", "rating": 4.8, "reviews": 112, "location": "himachal", "price": { "individual": 2600, "couple": 4200 }, "languages": ["English", "Hindi"], "specialties": ["Wildlife Spotting", "Eco Trails"], "touristsHandled": 760, "responseTime": "40 mins", "badges": ["Nature Guide"] },
+    {
+      "id": "HIM-004", "name": "Pooja Chauhan", "bio": "Snowboarding and skiing trainer in Solang", "image": "/images/guides/himachal4.jpg", "rating": 4.6, "reviews": 83, "location": "himachal", "price": { "individual": 3000, "couple": 5000 }, "languages": ["English", "Hindi"], "specialties": ["Skiing", "Snow Activities"], "touristsHandled": 470, "responseTime": "1 hour", "badges": ["Snow Pro"] },
+    {
+      "id": "HIM-005", "name": "Amit Verma", "bio": "Trekking and camping guide in Kasol", "image": "/images/guides/himachal5.jpg", "rating": 4.7, "reviews": 121, "location": "himachal", "price": { "individual": 2400, "couple": 4000 }, "languages": ["English", "Hindi"], "specialties": ["Forest Treks", "Camping"], "touristsHandled": 810, "responseTime": "35 mins", "badges": ["Trek Pro"] },
+    {
+      "id": "HIM-006", "name": "Kritika Mehta", "bio": "Photography and Instagram tour expert in Manali", "image": "/images/guides/himachal6.jpg", "rating": 4.5, "reviews": 67, "location": "himachal", "price": { "individual": 2100, "couple": 3600 }, "languages": ["English", "Hindi"], "specialties": ["Photography", "Scenic Routes"], "touristsHandled": 340, "responseTime": "1 hour", "badges": ["Insta Friendly"] },
+    {
+      "id": "HIM-007", "name": "Vikas Rana", "bio": "Motorbike expedition leader for Leh-Manali route", "image": "/images/guides/himachal7.jpg", "rating": 4.9, "reviews": 154, "location": "himachal", "price": { "individual": 3200, "couple": 5200 }, "languages": ["English", "Hindi"], "specialties": ["Bike Trips", "Extreme Terrain"], "touristsHandled": 960, "responseTime": "25 mins", "badges": ["Rider’s Choice"] },
+    {
+      "id": "HIM-008", "name": "Nisha Bhardwaj", "bio": "Cultural historian and guide in Shimla", "image": "/images/guides/himachal8.jpg", "rating": 4.6, "reviews": 73, "location": "himachal", "price": { "individual": 1800, "couple": 3000 }, "languages": ["English", "Hindi"], "specialties": ["British Heritage", "Architecture"], "touristsHandled": 390, "responseTime": "1 hour", "badges": ["Culture Buff"] },
+    {
+      "id": "HIM-009", "name": "Harsh Chauhan", "bio": "Adventure camping expert in Tirthan Valley", "image": "/images/guides/himachal9.jpg", "rating": 4.7, "reviews": 98, "location": "himachal", "price": { "individual": 2600, "couple": 4300 }, "languages": ["English", "Hindi"], "specialties": ["Riverside Camps", "Bonfire Nights"], "touristsHandled": 710, "responseTime": "45 mins", "badges": ["Camp Pro"] },
+    {
+      "id": "HIM-010", "name": "Meera Negi", "bio": "Ayurveda and wellness retreat guide", "image": "/images/guides/himachal10.jpg", "rating": 4.4, "reviews": 59, "location": "himachal", "price": { "individual": 2000, "couple": 3400 }, "languages": ["English", "Hindi"], "specialties": ["Spa & Therapy", "Detox Programs"], "touristsHandled": 300, "responseTime": "1.5 hours", "badges": ["Wellness Expert"] },
+    {
+      "id": "HIM-011", "name": "Arjun Dogra", "bio": "High-altitude trekking specialist in Kinnaur", "image": "/images/guides/himachal11.jpg", "rating": 4.8, "reviews": 116, "location": "himachal", "price": { "individual": 2900, "couple": 4700 }, "languages": ["English", "Hindi"], "specialties": ["Glacier Treks", "Altitude Acclimatization"], "touristsHandled": 890, "responseTime": "30 mins", "badges": ["Altitude Expert"] },
+    {
+      "id": "HIM-012", "name": "Sneha Rana", "bio": "Backpacking and local transport expert", "image": "/images/guides/himachal12.jpg", "rating": 4.5, "reviews": 61, "location": "himachal", "price": { "individual": 1700, "couple": 2900 }, "languages": ["English", "Hindi"], "specialties": ["Budget Travel", "Bus Routes"], "touristsHandled": 260, "responseTime": "2 hours", "badges": ["Budget Buddy"] }
+]
+
 }
