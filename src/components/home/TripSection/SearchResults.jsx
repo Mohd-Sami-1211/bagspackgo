@@ -466,22 +466,23 @@ const SearchResults = () => {
         </div>
 
         {/* Guides List */}
-        <div className="grid gap-6">
-          {guides.map((guide, index) => (
-            <motion.div
-              key={guide.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-            >
-              <GuideCard 
-                guide={guide}
-                category={category}
-                days={days}
-              />
-            </motion.div>
-          ))}
-        </div>
+<div className="grid gap-6">
+  {guides.map((guide, index) => (
+    <motion.div
+      key={guide.id}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.05 }}
+    >
+      <GuideCard 
+        guide={guide}
+        category={category}
+        days={days}
+        count={count}  
+      />
+    </motion.div>
+  ))}
+</div>
       </div>
     </div>
   );

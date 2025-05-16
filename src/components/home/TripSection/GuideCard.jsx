@@ -2,9 +2,14 @@
 import { motion } from 'framer-motion';
 import { Star, MapPin, Users, Calendar } from 'lucide-react';
 
-const GuideCard = ({ guide, category, days, count }) => {
-  const price = guide.price[category] || guide.price.individual;
-  const totalPrice = price * days * count;
+const GuideCard = ({ guide, category, days, count = 1 }) => {
+  // Get price based on package type with fallbacks
+  const pricePerPerson = Number(guide.price[category] || guide.price.individual || 0);
+  const numDays = Math.max(1, Number(days) || 1);
+  const numPeople = Math.max(1, Number(count) || 1);
+  
+  // Calculate total price
+  const totalPrice = pricePerPerson * numPeople * numDays;
   const peopleText = category === 'couple' ? 'couple' : 'person';
 
   return (
@@ -51,7 +56,7 @@ const GuideCard = ({ guide, category, days, count }) => {
                 </div>
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-amber-500" />
-                  <span className="text-sm text-gray-700">{days} day{parseInt(days) > 1 ? 's' : ''}</span>
+                  <span className="text-sm text-gray-700">{numDays} day{numDays > 1 ? 's' : ''}</span>
                 </div>
               </div>
 
@@ -62,7 +67,7 @@ const GuideCard = ({ guide, category, days, count }) => {
                     <span className="font-medium">Package:</span> {category === 'couple' ? 'Couple' : 'Individual'}
                   </p>
                   <p className="text-sm text-gray-600 mt-1">
-                    <span className="font-medium">Persons:</span> {count} {peopleText}{count > 1 ? 's' : ''}
+                    <span className="font-medium">For:</span> {numPeople} {category === 'couple' ? 'couples' : 'people'}
                   </p>
                 </div>
                 
@@ -70,14 +75,14 @@ const GuideCard = ({ guide, category, days, count }) => {
                 <div className="text-right">
                   <div className="inline-flex flex-col items-end bg-green-50 px-3 py-2 rounded-lg">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-green-800">Basic Package (per day):</span>
-                      <span className="text-lg font-bold text-green-600">₹{price.toLocaleString()}/{peopleText}</span>
+                      <span className="text-sm font-semibold text-green-800">Price (per day):</span>
+                      <span className="text-lg font-bold text-green-600">
+                        ₹{pricePerPerson.toLocaleString('en-IN')}/{peopleText}
+                      </span>
                     </div>
-                    <div className="text-sm text-gray-600 mt-1 text-right">
-                      <div className="font-medium">Total Calculation:</div>
-                      <div>₹{price.toLocaleString()} × {days} day{days > 1 ? 's' : ''} × {count} {peopleText}{count > 1 ? 's' : ''}</div>
-                      <div className="font-bold text-green-600 mt-1">= ₹{totalPrice.toLocaleString()}</div>
-                    </div>
+                    <p className="text-sm text-gray-600 mt-1">
+                      <span className="font-medium">Total:</span> ₹{totalPrice.toLocaleString('en-IN')}
+                    </p>
                   </div>
                 </div>
               </div>
