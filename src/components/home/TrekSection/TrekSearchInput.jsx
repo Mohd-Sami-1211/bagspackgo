@@ -6,16 +6,22 @@ import 'react-datepicker/dist/react-datepicker.css';
 import { CalendarCheck, Search, RefreshCcw } from 'lucide-react';
 import data from '@/data/data.json';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 
 const TrekSearchInput = forwardRef((props, ref) => {
   const [count, setCount] = useState(1);
+  const router = useRouter();
   const [selectedDestination, setSelectedDestination] = useState(null);
   const [selectedTrek, setSelectedTrek] = useState(null);
   const [startDate, setStartDate] = useState(null);
   const [dateInput, setDateInput] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [trekOptions, setTrekOptions] = useState([]);
-  const [trekError, setTrekError] = useState('');
+  const [errors, setErrors] = useState({
+    destination: '',
+    trek: '',
+    date: ''
+  });
 
   useImperativeHandle(ref, () => ({
     reset: handleReset,
@@ -36,18 +42,49 @@ const TrekSearchInput = forwardRef((props, ref) => {
       setSelectedDestination(null);
       setSelectedTrek(null);
       setTrekOptions([]);
-      setTrekError('');
+      setErrors({
+        destination: '',
+        trek: '',
+        date: ''
+      });
       setIsSearching(false);
     }, 300);
+  };
+
+  const validateFields = () => {
+    const newErrors = {
+      destination: '',
+      trek: '',
+      date: ''
+    };
+    
+    let isValid = true;
+    
+    if (!selectedDestination) {
+      newErrors.destination = 'Please select a destination';
+      isValid = false;
+    }
+    
+    if (!selectedTrek) {
+      newErrors.trek = 'Please select a trek';
+      isValid = false;
+    }
+    
+    if (!startDate) {
+      newErrors.date = 'Please select a date';
+      isValid = false;
+    }
+    
+    setErrors(newErrors);
+    return isValid;
   };
 
   const handleDestinationChange = (destination) => {
     setSelectedDestination(destination);
     setSelectedTrek(null);
-    setTrekError('');
+    setErrors(prev => ({ ...prev, destination: '', trek: '' }));
     
     if (destination) {
-      // Ensure data.treks exists and has the expected structure
       if (data?.treks && Array.isArray(data.treks)) {
         const filteredTreks = data.treks.filter(trek => 
           trek.destinationId && trek.destinationId.toString() === destination.value.toString()
@@ -64,13 +101,14 @@ const TrekSearchInput = forwardRef((props, ref) => {
       setTrekOptions([]);
     }
   };
+
   const handleTrekChange = (trek) => {
     if (!selectedDestination) {
-      setTrekError('Please select a destination first');
+      setErrors(prev => ({ ...prev, trek: 'Please select a destination first' }));
       return;
     }
-    setTrekError('');
     setSelectedTrek(trek);
+    setErrors(prev => ({ ...prev, trek: '' }));
   };
 
   const handleInputChange = (e) => {
@@ -93,6 +131,7 @@ const TrekSearchInput = forwardRef((props, ref) => {
       const parsedDate = new Date(year, month - 1, day);
       if (!isNaN(parsedDate.getTime())) {
         setStartDate(parsedDate);
+        setErrors(prev => ({ ...prev, date: '' }));
       } else {
         setStartDate(null);
       }
@@ -104,27 +143,29 @@ const TrekSearchInput = forwardRef((props, ref) => {
   const handleDateChange = (date) => {
     setStartDate(date);
     setDateInput(date ? date.toLocaleDateString('en-GB').split('/').map(v => v.padStart(2, '0')).join('/') : '');
+    setErrors(prev => ({ ...prev, date: '' }));
   };
 
-  const handleSearch = () => {
-    if (!selectedDestination && selectedTrek) {
-      setTrekError('Please select a destination first');
-      return;
-    }
+ const handleSearch = () => {
+  if (!validateFields()) {
+    return;
+  }
 
-    setIsSearching(true);
-    const params = {
-      destination: selectedDestination,
-      trek: selectedTrek,
-      date: startDate,
-      count,
-    };
-    console.log('Search params:', params);
-    
-    setTimeout(() => setIsSearching(false), 1000);
-  };
+  setIsSearching(true);
+  
+  // Construct query parameters
+  const queryParams = new URLSearchParams({
+    destination: selectedDestination.value,
+    trek: selectedTrek.value,
+    date: startDate.toISOString(),
+    count: count.toString()
+  }).toString();
 
-  // Animation variants
+  // Navigate to the results page with query parameters
+  router.push(`/trek/guidelist?${queryParams}`);
+};
+
+  // Animation variants (keep the same as before)
   const containerVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
@@ -190,7 +231,7 @@ const TrekSearchInput = forwardRef((props, ref) => {
           className="flex-[1.2] bg-[#C3EFE6] rounded-xl p-3 space-y-3"
         >
           <div className="relative z-[1000]">
-            <label className="block text-sm font-semibold text-gray-800 mb-1">Select Destination</label>
+            <label className="block text-sm font-semibold text-gray-800 mb-1">Select Destination*</label>
             <Select
               options={data.destinations.map(dest => ({
                 value: dest.value,
@@ -201,14 +242,30 @@ const TrekSearchInput = forwardRef((props, ref) => {
               placeholder="Choose a destination"
               classNamePrefix="react-select"
               isClearable
-              styles={selectStyles}
+              styles={{
+                ...selectStyles,
+                control: (provided, state) => ({
+                  ...selectStyles.control(provided, state),
+                  borderColor: errors.destination ? '#ef4444' : state.isFocused ? '#10b981' : '#d1d5db',
+                  boxShadow: errors.destination ? '0 0 0 1px #ef4444' : state.isFocused ? '0 0 0 1px #10b981' : null,
+                })
+              }}
               menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
               menuPosition="fixed"
             />
+            {errors.destination && (
+              <motion.p 
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-red-500 text-xs mt-1"
+              >
+                {errors.destination}
+              </motion.p>
+            )}
           </div>
 
           <div className="relative z-[999]">
-            <label className="block text-sm font-semibold text-gray-800 mb-1">Choose Trek</label>
+            <label className="block text-sm font-semibold text-gray-800 mb-1">Choose Trek*</label>
             <Select
               options={trekOptions}
               value={selectedTrek}
@@ -220,21 +277,21 @@ const TrekSearchInput = forwardRef((props, ref) => {
                 ...selectStyles,
                 control: (provided, state) => ({
                   ...selectStyles.control(provided, state),
-                  borderColor: trekError ? '#ef4444' : state.isFocused ? '#10b981' : '#d1d5db',
-                  boxShadow: trekError ? '0 0 0 1px #ef4444' : state.isFocused ? '0 0 0 1px #10b981' : null,
+                  borderColor: errors.trek ? '#ef4444' : state.isFocused ? '#10b981' : '#d1d5db',
+                  boxShadow: errors.trek ? '0 0 0 1px #ef4444' : state.isFocused ? '0 0 0 1px #10b981' : null,
                 })
               }}
               menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
               menuPosition="fixed"
               isDisabled={!selectedDestination}
             />
-            {trekError && (
+            {errors.trek && (
               <motion.p 
                 initial={{ opacity: 0, y: -5 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="text-red-500 text-xs mt-1"
               >
-                {trekError}
+                {errors.trek}
               </motion.p>
             )}
           </div>
@@ -248,7 +305,7 @@ const TrekSearchInput = forwardRef((props, ref) => {
           <div className="flex gap-4">
             {/* Date Picker */}
             <div className="flex-1">
-              <label className="block text-sm font-semibold text-gray-800 mb-1">Start Date</label>
+              <label className="block text-sm font-semibold text-gray-800 mb-1">Start Date*</label>
               <DatePicker
                 selected={startDate}
                 onChange={handleDateChange}
@@ -266,7 +323,7 @@ const TrekSearchInput = forwardRef((props, ref) => {
                       value={dateInput}
                       onChange={handleInputChange}
                       placeholder="DD/MM/YYYY"
-                      className="bg-white border border-gray-300 text-gray-800 text-sm rounded-md focus:ring-green-500 focus:border-green-500 block w-full pl-9 pr-2 py-1.5 transition-all"
+                      className={`bg-white border ${errors.date ? 'border-red-500' : 'border-gray-300'} text-gray-800 text-sm rounded-md focus:ring-green-500 focus:border-green-500 block w-full pl-9 pr-2 py-1.5 transition-all`}
                     />
                   </motion.div>
                 }
@@ -280,6 +337,15 @@ const TrekSearchInput = forwardRef((props, ref) => {
                 calendarClassName="border-green-200 rounded-md shadow-xl bg-white"
                 wrapperClassName="w-full"
               />
+              {errors.date && (
+                <motion.p 
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-red-500 text-xs mt-1"
+                >
+                  {errors.date}
+                </motion.p>
+              )}
             </div>
 
             {/* Counter */}
@@ -345,6 +411,7 @@ const TrekSearchInput = forwardRef((props, ref) => {
   );
 });
 
+// Counter component remains the same
 const Counter = ({ label, value, onIncrement, onDecrement, onChange }) => (
   <motion.div 
     className="w-full"
@@ -380,6 +447,7 @@ const Counter = ({ label, value, onIncrement, onDecrement, onChange }) => (
   </motion.div>
 );
 
+// selectStyles remains the same
 const selectStyles = {
   control: (provided, state) => ({
     ...provided,

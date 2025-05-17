@@ -1,70 +1,331 @@
 {
   "destinations": [
-    { "value": "kashmir", "label": "Kashmir" },
-    { "value": "uttarakhand", "label": "Uttarakhand" },
-    { "value": "goa", "label": "Goa" },
-    { "value": "himachal", "label": "Himachal Pradesh" },
-    { "value": "rajasthan", "label": "Rajasthan" },
-    { "value": "kerala", "label": "Kerala" },
-    { "value": "sikkim", "label": "Sikkim" },
-    { "value": "andaman", "label": "Andaman & Nicobar" },
-    { "value": "ladakh", "label": "Ladakh" },
-    { "value": "arunachal", "label": "Arunachal Pradesh" },
-    { "value": "meghalaya", "label": "Meghalaya" },
-    { "value": "assam", "label": "Assam" },
-    { "value": "madhya", "label": "Madhya Pradesh" },
-    { "value": "tamilnadu", "label": "Tamil Nadu" },
-    { "value": "maharashtra", "label": "Maharashtra" }
+    {
+      "value": "kashmir",
+      "label": "Kashmir"
+    },
+    {
+      "value": "uttarakhand",
+      "label": "Uttarakhand"
+    },
+    {
+      "value": "goa",
+      "label": "Goa"
+    },
+    {
+      "value": "himachal",
+      "label": "Himachal Pradesh"
+    },
+    {
+      "value": "rajasthan",
+      "label": "Rajasthan"
+    },
+    {
+      "value": "kerala",
+      "label": "Kerala"
+    },
+    {
+      "value": "sikkim",
+      "label": "Sikkim"
+    },
+    {
+      "value": "andaman",
+      "label": "Andaman & Nicobar"
+    },
+    {
+      "value": "ladakh",
+      "label": "Ladakh"
+    },
+    {
+      "value": "arunachal",
+      "label": "Arunachal Pradesh"
+    },
+    {
+      "value": "meghalaya",
+      "label": "Meghalaya"
+    },
+    {
+      "value": "assam",
+      "label": "Assam"
+    },
+    {
+      "value": "madhya",
+      "label": "Madhya Pradesh"
+    },
+    {
+      "value": "tamilnadu",
+      "label": "Tamil Nadu"
+    },
+    {
+      "value": "maharashtra",
+      "label": "Maharashtra"
+    }
   ],
   "treks": [
-    { "id": "kashmir-1", "name": "Kashmir Great Lakes Trek", "duration": "7 days", "destinationId": "kashmir" },
-    { "id": "kashmir-2", "name": "Tarsar Marsar Trek", "duration": "7 days", "destinationId": "kashmir" },
-    { "id": "kashmir-3", "name": "Tulian Lake Trek", "duration": "3 days", "destinationId": "kashmir" },
-    { "id": "kashmir-4", "name": "Naranag Gangbal Trek", "duration": "6 days", "destinationId": "kashmir" },
-    { "id": "kashmir-5", "name": "Sonmarg Vishansar Trek", "duration": "5 days", "destinationId": "kashmir" },
-    { "id": "kashmir-6", "name": "Lolab Valley Trek", "duration": "4 days", "destinationId": "kashmir" },
-    { "id": "uttarakhand-1", "name": "Valley of Flowers Trek", "duration": "6 days", "destinationId": "uttarakhand" },
-    { "id": "uttarakhand-2", "name": "Roopkund Trek", "duration": "8 days", "destinationId": "uttarakhand" },
-    { "id": "uttarakhand-3", "name": "Kedarkantha Trek", "duration": "6 days", "destinationId": "uttarakhand" },
-    { "id": "uttarakhand-4", "name": "Har Ki Dun Trek", "duration": "7 days", "destinationId": "uttarakhand" },
-    { "id": "uttarakhand-5", "name": "Pindari Glacier Trek", "duration": "7 days", "destinationId": "uttarakhand" },
-    { "id": "goa-1", "name": "Dudhsagar Waterfall Trek", "duration": "1 day", "destinationId": "goa" },
-    { "id": "goa-2", "name": "Tambdi Surla Trek", "duration": "1 day", "destinationId": "goa" },
-    { "id": "himachal-1", "name": "Hampta Pass Trek", "duration": "5 days", "destinationId": "himachal" },
-    { "id": "himachal-2", "name": "Beas Kund Trek", "duration": "3 days", "destinationId": "himachal" },
-    { "id": "himachal-3", "name": "Bhrigu Lake Trek", "duration": "4 days", "destinationId": "himachal" },
-    { "id": "himachal-4", "name": "Triund Trek", "duration": "2 days", "destinationId": "himachal" },
-    { "id": "himachal-5", "name": "Pin Parvati Pass Trek", "duration": "9 days", "destinationId": "himachal" },
-    { "id": "rajasthan-1", "name": "Mount Abu Trek", "duration": "1 day", "destinationId": "rajasthan" },
-    { "id": "rajasthan-2", "name": "Kumbhalgarh Fort Trek", "duration": "2 days", "destinationId": "rajasthan" },
-    { "id": "kerala-1", "name": "Chembra Peak Trek", "duration": "1 day", "destinationId": "kerala" },
-    { "id": "kerala-2", "name": "Meesapulimala Trek", "duration": "2 days", "destinationId": "kerala" },
-    { "id": "kerala-3", "name": "Agasthyakoodam Trek", "duration": "2 days", "destinationId": "kerala" },
-    { "id": "sikkim-1", "name": "Goechala Trek", "duration": "10 days", "destinationId": "sikkim" },
-    { "id": "sikkim-2", "name": "Dzongri Trek", "duration": "5 days", "destinationId": "sikkim" },
-    { "id": "sikkim-3", "name": "Barsey Rhododendron Trek", "duration": "4 days", "destinationId": "sikkim" },
-    { "id": "andaman-1", "name": "Mount Harriet Trek", "duration": "1 day", "destinationId": "andaman" },
-    { "id": "ladakh-1", "name": "Chadar Trek", "duration": "9 days", "destinationId": "ladakh" },
-    { "id": "ladakh-2", "name": "Markha Valley Trek", "duration": "8 days", "destinationId": "ladakh" },
-    { "id": "ladakh-3", "name": "Stok Kangri Trek", "duration": "9 days", "destinationId": "ladakh" },
-    { "id": "arunachal-1", "name": "Tawang Trek", "duration": "6 days", "destinationId": "arunachal" },
-    { "id": "arunachal-2", "name": "Ziro Valley Trek", "duration": "5 days", "destinationId": "arunachal" },
-    { "id": "meghalaya-1", "name": "Living Root Bridge Trek", "duration": "1 day", "destinationId": "meghalaya" },
-    { "id": "meghalaya-2", "name": "David Scott Trail", "duration": "1 day", "destinationId": "meghalaya" },
-    { "id": "assam-1", "name": "Nilachal Hills Trek", "duration": "1 day", "destinationId": "assam" },
-    { "id": "assam-2", "name": "Garbhanga Forest Trek", "duration": "1 day", "destinationId": "assam" },
-    { "id": "madhya-1", "name": "Pachmarhi Trek", "duration": "2 days", "destinationId": "madhya" },
-    { "id": "madhya-2", "name": "Satpura Range Trek", "duration": "3 days", "destinationId": "madhya" },
-    { "id": "tamilnadu-1", "name": "Kodaikanal Forest Trek", "duration": "2 days", "destinationId": "tamilnadu" },
-    { "id": "tamilnadu-2", "name": "Nilgiri Hills Trek", "duration": "3 days", "destinationId": "tamilnadu" },
-    { "id": "maharashtra-1", "name": "Rajmachi Fort Trek", "duration": "2 days", "destinationId": "maharashtra" },
-    { "id": "maharashtra-2", "name": "Harishchandragad Trek", "duration": "2 days", "destinationId": "maharashtra" }
+    {
+      "id": "kashmir-1",
+      "name": "Kashmir Great Lakes Trek",
+      "duration": "7 days",
+      "destinationId": "kashmir"
+    },
+    {
+      "id": "kashmir-2",
+      "name": "Tarsar Marsar Trek",
+      "duration": "7 days",
+      "destinationId": "kashmir"
+    },
+    {
+      "id": "kashmir-3",
+      "name": "Tulian Lake Trek",
+      "duration": "3 days",
+      "destinationId": "kashmir"
+    },
+    {
+      "id": "kashmir-4",
+      "name": "Naranag Gangbal Trek",
+      "duration": "6 days",
+      "destinationId": "kashmir"
+    },
+    {
+      "id": "kashmir-5",
+      "name": "Sonmarg Vishansar Trek",
+      "duration": "5 days",
+      "destinationId": "kashmir"
+    },
+    {
+      "id": "kashmir-6",
+      "name": "Lolab Valley Trek",
+      "duration": "4 days",
+      "destinationId": "kashmir"
+    },
+    {
+      "id": "uttarakhand-1",
+      "name": "Valley of Flowers Trek",
+      "duration": "6 days",
+      "destinationId": "uttarakhand"
+    },
+    {
+      "id": "uttarakhand-2",
+      "name": "Roopkund Trek",
+      "duration": "8 days",
+      "destinationId": "uttarakhand"
+    },
+    {
+      "id": "uttarakhand-3",
+      "name": "Kedarkantha Trek",
+      "duration": "6 days",
+      "destinationId": "uttarakhand"
+    },
+    {
+      "id": "uttarakhand-4",
+      "name": "Har Ki Dun Trek",
+      "duration": "7 days",
+      "destinationId": "uttarakhand"
+    },
+    {
+      "id": "uttarakhand-5",
+      "name": "Pindari Glacier Trek",
+      "duration": "7 days",
+      "destinationId": "uttarakhand"
+    },
+    {
+      "id": "goa-1",
+      "name": "Dudhsagar Waterfall Trek",
+      "duration": "1 day",
+      "destinationId": "goa"
+    },
+    {
+      "id": "goa-2",
+      "name": "Tambdi Surla Trek",
+      "duration": "1 day",
+      "destinationId": "goa"
+    },
+    {
+      "id": "himachal-1",
+      "name": "Hampta Pass Trek",
+      "duration": "5 days",
+      "destinationId": "himachal"
+    },
+    {
+      "id": "himachal-2",
+      "name": "Beas Kund Trek",
+      "duration": "3 days",
+      "destinationId": "himachal"
+    },
+    {
+      "id": "himachal-3",
+      "name": "Bhrigu Lake Trek",
+      "duration": "4 days",
+      "destinationId": "himachal"
+    },
+    {
+      "id": "himachal-4",
+      "name": "Triund Trek",
+      "duration": "2 days",
+      "destinationId": "himachal"
+    },
+    {
+      "id": "himachal-5",
+      "name": "Pin Parvati Pass Trek",
+      "duration": "9 days",
+      "destinationId": "himachal"
+    },
+    {
+      "id": "rajasthan-1",
+      "name": "Mount Abu Trek",
+      "duration": "1 day",
+      "destinationId": "rajasthan"
+    },
+    {
+      "id": "rajasthan-2",
+      "name": "Kumbhalgarh Fort Trek",
+      "duration": "2 days",
+      "destinationId": "rajasthan"
+    },
+    {
+      "id": "kerala-1",
+      "name": "Chembra Peak Trek",
+      "duration": "1 day",
+      "destinationId": "kerala"
+    },
+    {
+      "id": "kerala-2",
+      "name": "Meesapulimala Trek",
+      "duration": "2 days",
+      "destinationId": "kerala"
+    },
+    {
+      "id": "kerala-3",
+      "name": "Agasthyakoodam Trek",
+      "duration": "2 days",
+      "destinationId": "kerala"
+    },
+    {
+      "id": "sikkim-1",
+      "name": "Goechala Trek",
+      "duration": "10 days",
+      "destinationId": "sikkim"
+    },
+    {
+      "id": "sikkim-2",
+      "name": "Dzongri Trek",
+      "duration": "5 days",
+      "destinationId": "sikkim"
+    },
+    {
+      "id": "sikkim-3",
+      "name": "Barsey Rhododendron Trek",
+      "duration": "4 days",
+      "destinationId": "sikkim"
+    },
+    {
+      "id": "andaman-1",
+      "name": "Mount Harriet Trek",
+      "duration": "1 day",
+      "destinationId": "andaman"
+    },
+    {
+      "id": "ladakh-1",
+      "name": "Chadar Trek",
+      "duration": "9 days",
+      "destinationId": "ladakh"
+    },
+    {
+      "id": "ladakh-2",
+      "name": "Markha Valley Trek",
+      "duration": "8 days",
+      "destinationId": "ladakh"
+    },
+    {
+      "id": "ladakh-3",
+      "name": "Stok Kangri Trek",
+      "duration": "9 days",
+      "destinationId": "ladakh"
+    },
+    {
+      "id": "arunachal-1",
+      "name": "Tawang Trek",
+      "duration": "6 days",
+      "destinationId": "arunachal"
+    },
+    {
+      "id": "arunachal-2",
+      "name": "Ziro Valley Trek",
+      "duration": "5 days",
+      "destinationId": "arunachal"
+    },
+    {
+      "id": "meghalaya-1",
+      "name": "Living Root Bridge Trek",
+      "duration": "1 day",
+      "destinationId": "meghalaya"
+    },
+    {
+      "id": "meghalaya-2",
+      "name": "David Scott Trail",
+      "duration": "1 day",
+      "destinationId": "meghalaya"
+    },
+    {
+      "id": "assam-1",
+      "name": "Nilachal Hills Trek",
+      "duration": "1 day",
+      "destinationId": "assam"
+    },
+    {
+      "id": "assam-2",
+      "name": "Garbhanga Forest Trek",
+      "duration": "1 day",
+      "destinationId": "assam"
+    },
+    {
+      "id": "madhya-1",
+      "name": "Pachmarhi Trek",
+      "duration": "2 days",
+      "destinationId": "madhya"
+    },
+    {
+      "id": "madhya-2",
+      "name": "Satpura Range Trek",
+      "duration": "3 days",
+      "destinationId": "madhya"
+    },
+    {
+      "id": "tamilnadu-1",
+      "name": "Kodaikanal Forest Trek",
+      "duration": "2 days",
+      "destinationId": "tamilnadu"
+    },
+    {
+      "id": "tamilnadu-2",
+      "name": "Nilgiri Hills Trek",
+      "duration": "3 days",
+      "destinationId": "tamilnadu"
+    },
+    {
+      "id": "maharashtra-1",
+      "name": "Rajmachi Fort Trek",
+      "duration": "2 days",
+      "destinationId": "maharashtra"
+    },
+    {
+      "id": "maharashtra-2",
+      "name": "Harishchandragad Trek",
+      "duration": "2 days",
+      "destinationId": "maharashtra"
+    }
   ],
   "categories": [
-    { "value": "individual", "label": "Individual" },
-    { "value": "couple", "label": "Couple" }
+    {
+      "value": "individual",
+      "label": "Individual"
+    },
+    {
+      "value": "couple",
+      "label": "Couple"
+    }
   ],
-   "guides": [
+  "guides": [
     {
       "id": "KAS-001",
       "name": "Aamir Khan",
@@ -73,12 +334,45 @@
       "rating": 4.9,
       "reviews": 128,
       "location": "kashmir",
-      "price": { "individual": 2500, "couple": 4000 },
-      "languages": ["English", "Hindi"],
-      "specialties": ["Shikara Rides", "Mughal Gardens"],
+      "price": {
+        "individual": 2500,
+        "couple": 4000
+      },
+      "languages": [
+        "English",
+        "Hindi"
+      ],
+      "specialties": [
+        "Shikara Rides",
+        "Mughal Gardens"
+      ],
       "touristsHandled": 850,
       "responseTime": "1 hour",
-      "badges": ["Top Rated"]
+      "badges": [
+        "Top Rated"
+      ],
+      "trekPackages": [
+        {
+          "trekId": "kashmir-2",
+          "price": 3503,
+          "duration": "6 days"
+        },
+        {
+          "trekId": "kashmir-3",
+          "price": 3775,
+          "duration": "2 days"
+        },
+        {
+          "trekId": "kashmir-4",
+          "price": 3497,
+          "duration": "7 days"
+        },
+        {
+          "trekId": "kashmir-5",
+          "price": 2638,
+          "duration": "6 days"
+        }
+      ]
     },
     {
       "id": "KAS-002",
@@ -88,12 +382,45 @@
       "rating": 4.7,
       "reviews": 95,
       "location": "kashmir",
-      "price": { "individual": 1800, "couple": 3000 },
-      "languages": ["English", "Kashmiri"],
-      "specialties": ["Pashmina Workshops", "Local Cuisine"],
+      "price": {
+        "individual": 1800,
+        "couple": 3000
+      },
+      "languages": [
+        "English",
+        "Kashmiri"
+      ],
+      "specialties": [
+        "Pashmina Workshops",
+        "Local Cuisine"
+      ],
       "touristsHandled": 420,
       "responseTime": "2 hours",
-      "badges": ["Female Friendly"]
+      "badges": [
+        "Female Friendly"
+      ],
+      "trekPackages": [
+        {
+          "trekId": "kashmir-1",
+          "price": 2975,
+          "duration": "8 days"
+        },
+        {
+          "trekId": "kashmir-2",
+          "price": 3244,
+          "duration": "8 days"
+        },
+        {
+          "trekId": "kashmir-3",
+          "price": 3622,
+          "duration": "4 days"
+        },
+        {
+          "trekId": "kashmir-4",
+          "price": 2715,
+          "duration": "6 days"
+        }
+      ]
     },
     {
       "id": "KAS-003",
@@ -103,12 +430,46 @@
       "rating": 4.8,
       "reviews": 112,
       "location": "kashmir",
-      "price": { "individual": 3000, "couple": 5000 },
-      "languages": ["English", "Hindi", "Urdu"],
-      "specialties": ["Skiing", "Snow Treks"],
+      "price": {
+        "individual": 3000,
+        "couple": 5000
+      },
+      "languages": [
+        "English",
+        "Hindi",
+        "Urdu"
+      ],
+      "specialties": [
+        "Skiing",
+        "Snow Treks"
+      ],
       "touristsHandled": 780,
       "responseTime": "45 mins",
-      "badges": ["Winter Expert"]
+      "badges": [
+        "Winter Expert"
+      ],
+      "trekPackages": [
+        {
+          "trekId": "kashmir-1",
+          "price": 2612,
+          "duration": "6 days"
+        },
+        {
+          "trekId": "kashmir-4",
+          "price": 2307,
+          "duration": "6 days"
+        },
+        {
+          "trekId": "kashmir-5",
+          "price": 3635,
+          "duration": "5 days"
+        },
+        {
+          "trekId": "kashmir-6",
+          "price": 3073,
+          "duration": "5 days"
+        }
+      ]
     },
     {
       "id": "KAS-004",
@@ -118,12 +479,50 @@
       "rating": 4.5,
       "reviews": 89,
       "location": "kashmir",
-      "price": { "individual": 1600, "couple": 2800 },
-      "languages": ["Hindi", "English"],
-      "specialties": ["Heritage Tours", "Architecture"],
+      "price": {
+        "individual": 1600,
+        "couple": 2800
+      },
+      "languages": [
+        "Hindi",
+        "English"
+      ],
+      "specialties": [
+        "Heritage Tours",
+        "Architecture"
+      ],
       "touristsHandled": 300,
       "responseTime": "1.5 hours",
-      "badges": ["Cultural Guide"]
+      "badges": [
+        "Cultural Guide"
+      ],
+      "trekPackages": [
+        {
+          "trekId": "kashmir-1",
+          "price": 3289,
+          "duration": "7 days"
+        },
+        {
+          "trekId": "kashmir-2",
+          "price": 2363,
+          "duration": "8 days"
+        },
+        {
+          "trekId": "kashmir-4",
+          "price": 2973,
+          "duration": "7 days"
+        },
+        {
+          "trekId": "kashmir-5",
+          "price": 2028,
+          "duration": "5 days"
+        },
+        {
+          "trekId": "kashmir-6",
+          "price": 3901,
+          "duration": "4 days"
+        }
+      ]
     },
     {
       "id": "KAS-005",
@@ -133,27 +532,377 @@
       "rating": 4.6,
       "reviews": 78,
       "location": "kashmir",
-      "price": { "individual": 2400, "couple": 3900 },
-      "languages": ["English", "Hindi"],
-      "specialties": ["Nature Walks", "Photography"],
+      "price": {
+        "individual": 2400,
+        "couple": 3900
+      },
+      "languages": [
+        "English",
+        "Hindi"
+      ],
+      "specialties": [
+        "Nature Walks",
+        "Photography"
+      ],
       "touristsHandled": 510,
       "responseTime": "1 hour",
-      "badges": ["Eco Friendly"]
+      "badges": [
+        "Eco Friendly"
+      ],
+      "trekPackages": [
+        {
+          "trekId": "kashmir-1",
+          "price": 2132,
+          "duration": "7 days"
+        },
+        {
+          "trekId": "kashmir-2",
+          "price": 2766,
+          "duration": "6 days"
+        },
+        {
+          "trekId": "kashmir-3",
+          "price": 3109,
+          "duration": "3 days"
+        },
+        {
+          "trekId": "kashmir-4",
+          "price": 3087,
+          "duration": "5 days"
+        },
+        {
+          "trekId": "kashmir-5",
+          "price": 2597,
+          "duration": "4 days"
+        },
+        {
+          "trekId": "kashmir-6",
+          "price": 2338,
+          "duration": "5 days"
+        }
+      ]
     },
     {
-      "id": "KAS-006", "name": "Rubina Yousuf", "bio": "Mountain trails and wildlife tracking expert", "image": "/images/guides/kashmir6.jpg", "rating": 4.8, "reviews": 102, "location": "kashmir", "price": { "individual": 2600, "couple": 4200 }, "languages": ["Kashmiri", "Hindi"], "specialties": ["Wildlife", "Hiking"], "touristsHandled": 600, "responseTime": "40 mins", "badges": ["Trail Expert"] },
+      "id": "KAS-006",
+      "name": "Rubina Yousuf",
+      "bio": "Mountain trails and wildlife tracking expert",
+      "image": "/images/guides/kashmir6.jpg",
+      "rating": 4.8,
+      "reviews": 102,
+      "location": "kashmir",
+      "price": {
+        "individual": 2600,
+        "couple": 4200
+      },
+      "languages": [
+        "Kashmiri",
+        "Hindi"
+      ],
+      "specialties": [
+        "Wildlife",
+        "Hiking"
+      ],
+      "touristsHandled": 600,
+      "responseTime": "40 mins",
+      "badges": [
+        "Trail Expert"
+      ],
+      "trekPackages": [
+        {
+          "trekId": "kashmir-2",
+          "price": 2686,
+          "duration": "6 days"
+        },
+        {
+          "trekId": "kashmir-5",
+          "price": 2971,
+          "duration": "4 days"
+        },
+        {
+          "trekId": "kashmir-6",
+          "price": 3006,
+          "duration": "5 days"
+        }
+      ]
+    },
     {
-      "id": "KAS-007", "name": "Faheem Ahmad", "bio": "Floating markets and Dal Lake historian", "image": "/images/guides/kashmir7.jpg", "rating": 4.7, "reviews": 70, "location": "kashmir", "price": { "individual": 1700, "couple": 2800 }, "languages": ["English", "Hindi"], "specialties": ["Markets", "Cultural Heritage"], "touristsHandled": 340, "responseTime": "50 mins", "badges": ["Knowledgeable"] },
+      "id": "KAS-007",
+      "name": "Faheem Ahmad",
+      "bio": "Floating markets and Dal Lake historian",
+      "image": "/images/guides/kashmir7.jpg",
+      "rating": 4.7,
+      "reviews": 70,
+      "location": "kashmir",
+      "price": {
+        "individual": 1700,
+        "couple": 2800
+      },
+      "languages": [
+        "English",
+        "Hindi"
+      ],
+      "specialties": [
+        "Markets",
+        "Cultural Heritage"
+      ],
+      "touristsHandled": 340,
+      "responseTime": "50 mins",
+      "badges": [
+        "Knowledgeable"
+      ],
+      "trekPackages": [
+        {
+          "trekId": "kashmir-1",
+          "price": 3732,
+          "duration": "7 days"
+        },
+        {
+          "trekId": "kashmir-2",
+          "price": 3015,
+          "duration": "8 days"
+        },
+        {
+          "trekId": "kashmir-3",
+          "price": 3305,
+          "duration": "4 days"
+        }
+      ]
+    },
     {
-      "id": "KAS-008", "name": "Iqra Jan", "bio": "Local Kashmiri cuisine expert", "image": "/images/guides/kashmir8.jpg", "rating": 4.6, "reviews": 88, "location": "kashmir", "price": { "individual": 2000, "couple": 3400 }, "languages": ["Kashmiri", "English"], "specialties": ["Food Trails", "Cooking Sessions"], "touristsHandled": 390, "responseTime": "1 hour", "badges": ["Foodie"] },
+      "id": "KAS-008",
+      "name": "Iqra Jan",
+      "bio": "Local Kashmiri cuisine expert",
+      "image": "/images/guides/kashmir8.jpg",
+      "rating": 4.6,
+      "reviews": 88,
+      "location": "kashmir",
+      "price": {
+        "individual": 2000,
+        "couple": 3400
+      },
+      "languages": [
+        "Kashmiri",
+        "English"
+      ],
+      "specialties": [
+        "Food Trails",
+        "Cooking Sessions"
+      ],
+      "touristsHandled": 390,
+      "responseTime": "1 hour",
+      "badges": [
+        "Foodie"
+      ],
+      "trekPackages": [
+        {
+          "trekId": "kashmir-3",
+          "price": 2697,
+          "duration": "2 days"
+        },
+        {
+          "trekId": "kashmir-4",
+          "price": 3146,
+          "duration": "6 days"
+        },
+        {
+          "trekId": "kashmir-5",
+          "price": 2582,
+          "duration": "4 days"
+        }
+      ]
+    },
     {
-      "id": "KAS-009", "name": "Bilal Lone", "bio": "Camping guide for Pahalgam", "image": "/images/guides/kashmir9.jpg", "rating": 4.9, "reviews": 134, "location": "kashmir", "price": { "individual": 2800, "couple": 4600 }, "languages": ["English", "Hindi"], "specialties": ["Camping", "River Rafting"], "touristsHandled": 790, "responseTime": "35 mins", "badges": ["Outdoor Pro"] },
+      "id": "KAS-009",
+      "name": "Bilal Lone",
+      "bio": "Camping guide for Pahalgam",
+      "image": "/images/guides/kashmir9.jpg",
+      "rating": 4.9,
+      "reviews": 134,
+      "location": "kashmir",
+      "price": {
+        "individual": 2800,
+        "couple": 4600
+      },
+      "languages": [
+        "English",
+        "Hindi"
+      ],
+      "specialties": [
+        "Camping",
+        "River Rafting"
+      ],
+      "touristsHandled": 790,
+      "responseTime": "35 mins",
+      "badges": [
+        "Outdoor Pro"
+      ],
+      "trekPackages": [
+        {
+          "trekId": "kashmir-1",
+          "price": 2355,
+          "duration": "6 days"
+        },
+        {
+          "trekId": "kashmir-2",
+          "price": 2884,
+          "duration": "8 days"
+        },
+        {
+          "trekId": "kashmir-4",
+          "price": 3668,
+          "duration": "6 days"
+        },
+        {
+          "trekId": "kashmir-5",
+          "price": 2564,
+          "duration": "5 days"
+        },
+        {
+          "trekId": "kashmir-6",
+          "price": 2998,
+          "duration": "3 days"
+        }
+      ]
+    },
     {
-      "id": "KAS-010", "name": "Mehreen Sofi", "bio": "Tulip garden expert during April season", "image": "/images/guides/kashmir10.jpg", "rating": 4.5, "reviews": 59, "location": "kashmir", "price": { "individual": 1400, "couple": 2400 }, "languages": ["Hindi", "English"], "specialties": ["Gardens", "Seasonal Tours"], "touristsHandled": 280, "responseTime": "2 hours", "badges": ["Seasonal Specialist"] },
+      "id": "KAS-010",
+      "name": "Mehreen Sofi",
+      "bio": "Tulip garden expert during April season",
+      "image": "/images/guides/kashmir10.jpg",
+      "rating": 4.5,
+      "reviews": 59,
+      "location": "kashmir",
+      "price": {
+        "individual": 1400,
+        "couple": 2400
+      },
+      "languages": [
+        "Hindi",
+        "English"
+      ],
+      "specialties": [
+        "Gardens",
+        "Seasonal Tours"
+      ],
+      "touristsHandled": 280,
+      "responseTime": "2 hours",
+      "badges": [
+        "Seasonal Specialist"
+      ],
+      "trekPackages": [
+        {
+          "trekId": "kashmir-2",
+          "price": 3537,
+          "duration": "8 days"
+        },
+        {
+          "trekId": "kashmir-3",
+          "price": 2280,
+          "duration": "4 days"
+        },
+        {
+          "trekId": "kashmir-4",
+          "price": 2555,
+          "duration": "6 days"
+        },
+        {
+          "trekId": "kashmir-6",
+          "price": 2157,
+          "duration": "4 days"
+        }
+      ]
+    },
     {
-      "id": "KAS-011", "name": "Yusuf Dar", "bio": "Fishing tours in Lidder river", "image": "/images/guides/kashmir11.jpg", "rating": 4.6, "reviews": 61, "location": "kashmir", "price": { "individual": 2300, "couple": 3600 }, "languages": ["English", "Hindi"], "specialties": ["Fishing", "Nature Walks"], "touristsHandled": 330, "responseTime": "1 hour", "badges": ["Angler’s Pick"] },
+      "id": "KAS-011",
+      "name": "Yusuf Dar",
+      "bio": "Fishing tours in Lidder river",
+      "image": "/images/guides/kashmir11.jpg",
+      "rating": 4.6,
+      "reviews": 61,
+      "location": "kashmir",
+      "price": {
+        "individual": 2300,
+        "couple": 3600
+      },
+      "languages": [
+        "English",
+        "Hindi"
+      ],
+      "specialties": [
+        "Fishing",
+        "Nature Walks"
+      ],
+      "touristsHandled": 330,
+      "responseTime": "1 hour",
+      "badges": [
+        "Angler\u2019s Pick"
+      ],
+      "trekPackages": [
+        {
+          "trekId": "kashmir-1",
+          "price": 2809,
+          "duration": "7 days"
+        },
+        {
+          "trekId": "kashmir-3",
+          "price": 3471,
+          "duration": "2 days"
+        },
+        {
+          "trekId": "kashmir-6",
+          "price": 3837,
+          "duration": "4 days"
+        }
+      ]
+    },
     {
-      "id": "KAS-012", "name": "Shaista Jan", "bio": "Pilgrimage tours including Amarnath", "image": "/images/guides/kashmir12.jpg", "rating": 4.4, "reviews": 47, "location": "kashmir", "price": { "individual": 3000, "couple": 5000 }, "languages": ["Hindi", "Urdu"], "specialties": ["Spiritual Tours", "Cultural Narration"], "touristsHandled": 270, "responseTime": "1.5 hours", "badges": ["Pilgrimage Guide"] },
+      "id": "KAS-012",
+      "name": "Shaista Jan",
+      "bio": "Pilgrimage tours including Amarnath",
+      "image": "/images/guides/kashmir12.jpg",
+      "rating": 4.4,
+      "reviews": 47,
+      "location": "kashmir",
+      "price": {
+        "individual": 3000,
+        "couple": 5000
+      },
+      "languages": [
+        "Hindi",
+        "Urdu"
+      ],
+      "specialties": [
+        "Spiritual Tours",
+        "Cultural Narration"
+      ],
+      "touristsHandled": 270,
+      "responseTime": "1.5 hours",
+      "badges": [
+        "Pilgrimage Guide"
+      ],
+      "trekPackages": [
+        {
+          "trekId": "kashmir-1",
+          "price": 3501,
+          "duration": "7 days"
+        },
+        {
+          "trekId": "kashmir-3",
+          "price": 2624,
+          "duration": "3 days"
+        },
+        {
+          "trekId": "kashmir-5",
+          "price": 2744,
+          "duration": "5 days"
+        },
+        {
+          "trekId": "kashmir-6",
+          "price": 3721,
+          "duration": "4 days"
+        }
+      ]
+    },
     {
       "id": "UTK-001",
       "name": "Ravi Bisht",
@@ -162,12 +911,50 @@
       "rating": 4.8,
       "reviews": 156,
       "location": "uttarakhand",
-      "price": { "individual": 2000, "couple": 3500 },
-      "languages": ["English", "Hindi"],
-      "specialties": ["Himalayan Treks", "Wildlife Safaris"],
+      "price": {
+        "individual": 2000,
+        "couple": 3500
+      },
+      "languages": [
+        "English",
+        "Hindi"
+      ],
+      "specialties": [
+        "Himalayan Treks",
+        "Wildlife Safaris"
+      ],
       "touristsHandled": 1100,
       "responseTime": "30 mins",
-      "badges": ["Adventure Pro"]
+      "badges": [
+        "Adventure Pro"
+      ],
+      "trekPackages": [
+        {
+          "trekId": "uttarakhand-1",
+          "price": 2395,
+          "duration": "5 days"
+        },
+        {
+          "trekId": "uttarakhand-2",
+          "price": 3523,
+          "duration": "9 days"
+        },
+        {
+          "trekId": "uttarakhand-3",
+          "price": 3107,
+          "duration": "5 days"
+        },
+        {
+          "trekId": "uttarakhand-4",
+          "price": 2943,
+          "duration": "7 days"
+        },
+        {
+          "trekId": "uttarakhand-5",
+          "price": 3456,
+          "duration": "7 days"
+        }
+      ]
     },
     {
       "id": "UTK-002",
@@ -177,33 +964,481 @@
       "rating": 4.6,
       "reviews": 87,
       "location": "uttarakhand",
-      "price": { "individual": 2200, "couple": 3800 },
-      "languages": ["English", "Hindi"],
-      "specialties": ["Meditation Retreats", "Ganga Aarti"],
+      "price": {
+        "individual": 2200,
+        "couple": 3800
+      },
+      "languages": [
+        "English",
+        "Hindi"
+      ],
+      "specialties": [
+        "Meditation Retreats",
+        "Ganga Aarti"
+      ],
       "touristsHandled": 600,
       "responseTime": "1 hour",
-      "badges": ["Wellness Expert"]
+      "badges": [
+        "Wellness Expert"
+      ],
+      "trekPackages": [
+        {
+          "trekId": "uttarakhand-1",
+          "price": 3998,
+          "duration": "5 days"
+        },
+        {
+          "trekId": "uttarakhand-3",
+          "price": 2505,
+          "duration": "6 days"
+        },
+        {
+          "trekId": "uttarakhand-4",
+          "price": 3291,
+          "duration": "6 days"
+        }
+      ]
     },
     {
-      "id": "UTK-003", "name": "Manoj Negi", "bio": "Char Dham Yatra pilgrimage expert", "image": "/images/guides/uttarakhand3.jpg", "rating": 4.7, "reviews": 102, "location": "uttarakhand", "price": { "individual": 2500, "couple": 4000 }, "languages": ["Hindi", "English"], "specialties": ["Religious Tours", "History"], "touristsHandled": 800, "responseTime": "45 mins", "badges": ["Spiritual Guide"] },
+      "id": "UTK-003",
+      "name": "Manoj Negi",
+      "bio": "Char Dham Yatra pilgrimage expert",
+      "image": "/images/guides/uttarakhand3.jpg",
+      "rating": 4.7,
+      "reviews": 102,
+      "location": "uttarakhand",
+      "price": {
+        "individual": 2500,
+        "couple": 4000
+      },
+      "languages": [
+        "Hindi",
+        "English"
+      ],
+      "specialties": [
+        "Religious Tours",
+        "History"
+      ],
+      "touristsHandled": 800,
+      "responseTime": "45 mins",
+      "badges": [
+        "Spiritual Guide"
+      ],
+      "trekPackages": [
+        {
+          "trekId": "uttarakhand-2",
+          "price": 3038,
+          "duration": "9 days"
+        },
+        {
+          "trekId": "uttarakhand-4",
+          "price": 3223,
+          "duration": "8 days"
+        },
+        {
+          "trekId": "uttarakhand-5",
+          "price": 3645,
+          "duration": "6 days"
+        }
+      ]
+    },
     {
-      "id": "UTK-004", "name": "Neha Bhatt", "bio": "Eco-tourism and village life specialist", "image": "/images/guides/uttarakhand4.jpg", "rating": 4.5, "reviews": 76, "location": "uttarakhand", "price": { "individual": 1700, "couple": 3000 }, "languages": ["English", "Hindi"], "specialties": ["Homestay", "Culture Tours"], "touristsHandled": 430, "responseTime": "1 hour", "badges": ["Eco Friendly"] },
+      "id": "UTK-004",
+      "name": "Neha Bhatt",
+      "bio": "Eco-tourism and village life specialist",
+      "image": "/images/guides/uttarakhand4.jpg",
+      "rating": 4.5,
+      "reviews": 76,
+      "location": "uttarakhand",
+      "price": {
+        "individual": 1700,
+        "couple": 3000
+      },
+      "languages": [
+        "English",
+        "Hindi"
+      ],
+      "specialties": [
+        "Homestay",
+        "Culture Tours"
+      ],
+      "touristsHandled": 430,
+      "responseTime": "1 hour",
+      "badges": [
+        "Eco Friendly"
+      ],
+      "trekPackages": [
+        {
+          "trekId": "uttarakhand-2",
+          "price": 3929,
+          "duration": "9 days"
+        },
+        {
+          "trekId": "uttarakhand-3",
+          "price": 3045,
+          "duration": "5 days"
+        },
+        {
+          "trekId": "uttarakhand-4",
+          "price": 3773,
+          "duration": "7 days"
+        },
+        {
+          "trekId": "uttarakhand-5",
+          "price": 3120,
+          "duration": "7 days"
+        }
+      ]
+    },
     {
-      "id": "UTK-005", "name": "Deepak Rawat", "bio": "River rafting and camping in Rishikesh", "image": "/images/guides/uttarakhand5.jpg", "rating": 4.9, "reviews": 190, "location": "uttarakhand", "price": { "individual": 2800, "couple": 4500 }, "languages": ["English", "Hindi"], "specialties": ["Rafting", "Camping"], "touristsHandled": 1500, "responseTime": "20 mins", "badges": ["Thrill Seeker"] },
+      "id": "UTK-005",
+      "name": "Deepak Rawat",
+      "bio": "River rafting and camping in Rishikesh",
+      "image": "/images/guides/uttarakhand5.jpg",
+      "rating": 4.9,
+      "reviews": 190,
+      "location": "uttarakhand",
+      "price": {
+        "individual": 2800,
+        "couple": 4500
+      },
+      "languages": [
+        "English",
+        "Hindi"
+      ],
+      "specialties": [
+        "Rafting",
+        "Camping"
+      ],
+      "touristsHandled": 1500,
+      "responseTime": "20 mins",
+      "badges": [
+        "Thrill Seeker"
+      ],
+      "trekPackages": [
+        {
+          "trekId": "uttarakhand-1",
+          "price": 3676,
+          "duration": "7 days"
+        },
+        {
+          "trekId": "uttarakhand-2",
+          "price": 2175,
+          "duration": "8 days"
+        },
+        {
+          "trekId": "uttarakhand-4",
+          "price": 2561,
+          "duration": "8 days"
+        },
+        {
+          "trekId": "uttarakhand-5",
+          "price": 2198,
+          "duration": "6 days"
+        }
+      ]
+    },
     {
-      "id": "UTK-006", "name": "Tanuja Joshi", "bio": "Birdwatching and nature walk guide in Nainital", "image": "/images/guides/uttarakhand6.jpg", "rating": 4.6, "reviews": 64, "location": "uttarakhand", "price": { "individual": 1800, "couple": 3200 }, "languages": ["English", "Hindi"], "specialties": ["Birding", "Botanical Walks"], "touristsHandled": 320, "responseTime": "1 hour", "badges": ["Nature Lover"] },
+      "id": "UTK-006",
+      "name": "Tanuja Joshi",
+      "bio": "Birdwatching and nature walk guide in Nainital",
+      "image": "/images/guides/uttarakhand6.jpg",
+      "rating": 4.6,
+      "reviews": 64,
+      "location": "uttarakhand",
+      "price": {
+        "individual": 1800,
+        "couple": 3200
+      },
+      "languages": [
+        "English",
+        "Hindi"
+      ],
+      "specialties": [
+        "Birding",
+        "Botanical Walks"
+      ],
+      "touristsHandled": 320,
+      "responseTime": "1 hour",
+      "badges": [
+        "Nature Lover"
+      ],
+      "trekPackages": [
+        {
+          "trekId": "uttarakhand-1",
+          "price": 3814,
+          "duration": "6 days"
+        },
+        {
+          "trekId": "uttarakhand-2",
+          "price": 2631,
+          "duration": "8 days"
+        },
+        {
+          "trekId": "uttarakhand-3",
+          "price": 3350,
+          "duration": "7 days"
+        },
+        {
+          "trekId": "uttarakhand-5",
+          "price": 3944,
+          "duration": "8 days"
+        }
+      ]
+    },
     {
-      "id": "UTK-007", "name": "Mohit Nautiyal", "bio": "Trekking guide for Kedarkantha and Har ki Dun", "image": "/images/guides/uttarakhand7.jpg", "rating": 4.8, "reviews": 120, "location": "uttarakhand", "price": { "individual": 2700, "couple": 4300 }, "languages": ["English", "Hindi"], "specialties": ["Snow Treks", "Base Camps"], "touristsHandled": 880, "responseTime": "35 mins", "badges": ["Snow Expert"] },
+      "id": "UTK-007",
+      "name": "Mohit Nautiyal",
+      "bio": "Trekking guide for Kedarkantha and Har ki Dun",
+      "image": "/images/guides/uttarakhand7.jpg",
+      "rating": 4.8,
+      "reviews": 120,
+      "location": "uttarakhand",
+      "price": {
+        "individual": 2700,
+        "couple": 4300
+      },
+      "languages": [
+        "English",
+        "Hindi"
+      ],
+      "specialties": [
+        "Snow Treks",
+        "Base Camps"
+      ],
+      "touristsHandled": 880,
+      "responseTime": "35 mins",
+      "badges": [
+        "Snow Expert"
+      ],
+      "trekPackages": [
+        {
+          "trekId": "uttarakhand-1",
+          "price": 3924,
+          "duration": "7 days"
+        },
+        {
+          "trekId": "uttarakhand-3",
+          "price": 3379,
+          "duration": "5 days"
+        },
+        {
+          "trekId": "uttarakhand-5",
+          "price": 3064,
+          "duration": "6 days"
+        }
+      ]
+    },
     {
-      "id": "UTK-008", "name": "Anjali Pandey", "bio": "Tea estate and cultural tour guide in Almora", "image": "/images/guides/uttarakhand8.jpg", "rating": 4.4, "reviews": 53, "location": "uttarakhand", "price": { "individual": 1600, "couple": 2900 }, "languages": ["English", "Hindi"], "specialties": ["Agriculture Tours", "Local Stories"], "touristsHandled": 250, "responseTime": "1.5 hours", "badges": ["Culture Guide"] },
+      "id": "UTK-008",
+      "name": "Anjali Pandey",
+      "bio": "Tea estate and cultural tour guide in Almora",
+      "image": "/images/guides/uttarakhand8.jpg",
+      "rating": 4.4,
+      "reviews": 53,
+      "location": "uttarakhand",
+      "price": {
+        "individual": 1600,
+        "couple": 2900
+      },
+      "languages": [
+        "English",
+        "Hindi"
+      ],
+      "specialties": [
+        "Agriculture Tours",
+        "Local Stories"
+      ],
+      "touristsHandled": 250,
+      "responseTime": "1.5 hours",
+      "badges": [
+        "Culture Guide"
+      ],
+      "trekPackages": [
+        {
+          "trekId": "uttarakhand-2",
+          "price": 3679,
+          "duration": "8 days"
+        },
+        {
+          "trekId": "uttarakhand-5",
+          "price": 2260,
+          "duration": "8 days"
+        }
+      ]
+    },
     {
-      "id": "UTK-009", "name": "Suresh Rana", "bio": "Jim Corbett Safari tour expert", "image": "/images/guides/uttarakhand9.jpg", "rating": 4.7, "reviews": 110, "location": "uttarakhand", "price": { "individual": 3000, "couple": 4800 }, "languages": ["English", "Hindi"], "specialties": ["Wildlife", "Photography"], "touristsHandled": 900, "responseTime": "30 mins", "badges": ["Wildlife Pro"] },
+      "id": "UTK-009",
+      "name": "Suresh Rana",
+      "bio": "Jim Corbett Safari tour expert",
+      "image": "/images/guides/uttarakhand9.jpg",
+      "rating": 4.7,
+      "reviews": 110,
+      "location": "uttarakhand",
+      "price": {
+        "individual": 3000,
+        "couple": 4800
+      },
+      "languages": [
+        "English",
+        "Hindi"
+      ],
+      "specialties": [
+        "Wildlife",
+        "Photography"
+      ],
+      "touristsHandled": 900,
+      "responseTime": "30 mins",
+      "badges": [
+        "Wildlife Pro"
+      ],
+      "trekPackages": [
+        {
+          "trekId": "uttarakhand-1",
+          "price": 2752,
+          "duration": "6 days"
+        },
+        {
+          "trekId": "uttarakhand-4",
+          "price": 2644,
+          "duration": "6 days"
+        }
+      ]
+    },
     {
-      "id": "UTK-010", "name": "Poonam Dhyani", "bio": "Sustainable travel advocate in Mussoorie", "image": "/images/guides/uttarakhand10.jpg", "rating": 4.5, "reviews": 69, "location": "uttarakhand", "price": { "individual": 1900, "couple": 3100 }, "languages": ["Hindi", "English"], "specialties": ["Zero Waste Tours", "Sustainable Tourism"], "touristsHandled": 380, "responseTime": "1 hour", "badges": ["Green Guide"] },
+      "id": "UTK-010",
+      "name": "Poonam Dhyani",
+      "bio": "Sustainable travel advocate in Mussoorie",
+      "image": "/images/guides/uttarakhand10.jpg",
+      "rating": 4.5,
+      "reviews": 69,
+      "location": "uttarakhand",
+      "price": {
+        "individual": 1900,
+        "couple": 3100
+      },
+      "languages": [
+        "Hindi",
+        "English"
+      ],
+      "specialties": [
+        "Zero Waste Tours",
+        "Sustainable Tourism"
+      ],
+      "touristsHandled": 380,
+      "responseTime": "1 hour",
+      "badges": [
+        "Green Guide"
+      ],
+      "trekPackages": [
+        {
+          "trekId": "uttarakhand-2",
+          "price": 2461,
+          "duration": "9 days"
+        },
+        {
+          "trekId": "uttarakhand-3",
+          "price": 2854,
+          "duration": "7 days"
+        },
+        {
+          "trekId": "uttarakhand-4",
+          "price": 2779,
+          "duration": "6 days"
+        }
+      ]
+    },
     {
-      "id": "UTK-011", "name": "Aditya Semwal", "bio": "Bungee jumping and ziplining guide in Rishikesh", "image": "/images/guides/uttarakhand11.jpg", "rating": 4.9, "reviews": 145, "location": "uttarakhand", "price": { "individual": 3200, "couple": 5000 }, "languages": ["English", "Hindi"], "specialties": ["Adventure Sports", "Safety Instruction"], "touristsHandled": 980, "responseTime": "20 mins", "badges": ["Extreme Sports"] },
+      "id": "UTK-011",
+      "name": "Aditya Semwal",
+      "bio": "Bungee jumping and ziplining guide in Rishikesh",
+      "image": "/images/guides/uttarakhand11.jpg",
+      "rating": 4.9,
+      "reviews": 145,
+      "location": "uttarakhand",
+      "price": {
+        "individual": 3200,
+        "couple": 5000
+      },
+      "languages": [
+        "English",
+        "Hindi"
+      ],
+      "specialties": [
+        "Adventure Sports",
+        "Safety Instruction"
+      ],
+      "touristsHandled": 980,
+      "responseTime": "20 mins",
+      "badges": [
+        "Extreme Sports"
+      ],
+      "trekPackages": [
+        {
+          "trekId": "uttarakhand-1",
+          "price": 3985,
+          "duration": "6 days"
+        },
+        {
+          "trekId": "uttarakhand-3",
+          "price": 3113,
+          "duration": "6 days"
+        }
+      ]
+    },
     {
-      "id": "UTK-012", "name": "Ritika Nautiyal", "bio": "Kumaoni heritage and folk guide", "image": "/images/guides/uttarakhand12.jpg", "rating": 4.3, "reviews": 42, "location": "uttarakhand", "price": { "individual": 1500, "couple": 2600 }, "languages": ["Hindi", "English"], "specialties": ["Folk Music", "Local Legends"], "touristsHandled": 210, "responseTime": "2 hours", "badges": ["Folk Enthusiast"] },
+      "id": "UTK-012",
+      "name": "Ritika Nautiyal",
+      "bio": "Kumaoni heritage and folk guide",
+      "image": "/images/guides/uttarakhand12.jpg",
+      "rating": 4.3,
+      "reviews": 42,
+      "location": "uttarakhand",
+      "price": {
+        "individual": 1500,
+        "couple": 2600
+      },
+      "languages": [
+        "Hindi",
+        "English"
+      ],
+      "specialties": [
+        "Folk Music",
+        "Local Legends"
+      ],
+      "touristsHandled": 210,
+      "responseTime": "2 hours",
+      "badges": [
+        "Folk Enthusiast"
+      ],
+      "trekPackages": [
+        {
+          "trekId": "uttarakhand-1",
+          "price": 3907,
+          "duration": "5 days"
+        },
+        {
+          "trekId": "uttarakhand-2",
+          "price": 3000,
+          "duration": "9 days"
+        },
+        {
+          "trekId": "uttarakhand-3",
+          "price": 2988,
+          "duration": "7 days"
+        },
+        {
+          "trekId": "uttarakhand-4",
+          "price": 2242,
+          "duration": "8 days"
+        },
+        {
+          "trekId": "uttarakhand-5",
+          "price": 2454,
+          "duration": "7 days"
+        }
+      ]
+    },
     {
       "id": "HIM-001",
       "name": "Rahul Thakur",
@@ -212,12 +1447,35 @@
       "rating": 4.9,
       "reviews": 142,
       "location": "himachal",
-      "price": { "individual": 2800, "couple": 4500 },
-      "languages": ["English", "Hindi"],
-      "specialties": ["Mountain Drives", "Monastery Tours"],
+      "price": {
+        "individual": 2800,
+        "couple": 4500
+      },
+      "languages": [
+        "English",
+        "Hindi"
+      ],
+      "specialties": [
+        "Mountain Drives",
+        "Monastery Tours"
+      ],
       "touristsHandled": 900,
       "responseTime": "15 mins",
-      "badges": ["Local Legend"]
+      "badges": [
+        "Local Legend"
+      ],
+      "trekPackages": [
+        {
+          "trekId": "himachal-4",
+          "price": 3651,
+          "duration": "1 days"
+        },
+        {
+          "trekId": "himachal-5",
+          "price": 3317,
+          "duration": "8 days"
+        }
+      ]
     },
     {
       "id": "HIM-002",
@@ -227,33 +1485,495 @@
       "rating": 4.7,
       "reviews": 78,
       "location": "himachal",
-      "price": { "individual": 3500, "couple": 5500 },
-      "languages": ["English", "Hindi"],
-      "specialties": ["Adventure Sports", "Cafe Hopping"],
+      "price": {
+        "individual": 3500,
+        "couple": 5500
+      },
+      "languages": [
+        "English",
+        "Hindi"
+      ],
+      "specialties": [
+        "Adventure Sports",
+        "Cafe Hopping"
+      ],
       "touristsHandled": 500,
       "responseTime": "1 hour",
-      "badges": ["Thrill Seeker"]
+      "badges": [
+        "Thrill Seeker"
+      ],
+      "trekPackages": [
+        {
+          "trekId": "himachal-2",
+          "price": 3446,
+          "duration": "2 days"
+        },
+        {
+          "trekId": "himachal-4",
+          "price": 3152,
+          "duration": "3 days"
+        },
+        {
+          "trekId": "himachal-5",
+          "price": 3465,
+          "duration": "8 days"
+        }
+      ]
     },
     {
-      "id": "HIM-003", "name": "Sanjay Dogra", "bio": "Nature and wildlife guide in Great Himalayan National Park", "image": "/images/guides/himachal3.jpg", "rating": 4.8, "reviews": 112, "location": "himachal", "price": { "individual": 2600, "couple": 4200 }, "languages": ["English", "Hindi"], "specialties": ["Wildlife Spotting", "Eco Trails"], "touristsHandled": 760, "responseTime": "40 mins", "badges": ["Nature Guide"] },
+      "id": "HIM-003",
+      "name": "Sanjay Dogra",
+      "bio": "Nature and wildlife guide in Great Himalayan National Park",
+      "image": "/images/guides/himachal3.jpg",
+      "rating": 4.8,
+      "reviews": 112,
+      "location": "himachal",
+      "price": {
+        "individual": 2600,
+        "couple": 4200
+      },
+      "languages": [
+        "English",
+        "Hindi"
+      ],
+      "specialties": [
+        "Wildlife Spotting",
+        "Eco Trails"
+      ],
+      "touristsHandled": 760,
+      "responseTime": "40 mins",
+      "badges": [
+        "Nature Guide"
+      ],
+      "trekPackages": [
+        {
+          "trekId": "himachal-1",
+          "price": 3802,
+          "duration": "4 days"
+        },
+        {
+          "trekId": "himachal-3",
+          "price": 3364,
+          "duration": "4 days"
+        },
+        {
+          "trekId": "himachal-4",
+          "price": 2729,
+          "duration": "3 days"
+        }
+      ]
+    },
     {
-      "id": "HIM-004", "name": "Pooja Chauhan", "bio": "Snowboarding and skiing trainer in Solang", "image": "/images/guides/himachal4.jpg", "rating": 4.6, "reviews": 83, "location": "himachal", "price": { "individual": 3000, "couple": 5000 }, "languages": ["English", "Hindi"], "specialties": ["Skiing", "Snow Activities"], "touristsHandled": 470, "responseTime": "1 hour", "badges": ["Snow Pro"] },
+      "id": "HIM-004",
+      "name": "Pooja Chauhan",
+      "bio": "Snowboarding and skiing trainer in Solang",
+      "image": "/images/guides/himachal4.jpg",
+      "rating": 4.6,
+      "reviews": 83,
+      "location": "himachal",
+      "price": {
+        "individual": 3000,
+        "couple": 5000
+      },
+      "languages": [
+        "English",
+        "Hindi"
+      ],
+      "specialties": [
+        "Skiing",
+        "Snow Activities"
+      ],
+      "touristsHandled": 470,
+      "responseTime": "1 hour",
+      "badges": [
+        "Snow Pro"
+      ],
+      "trekPackages": [
+        {
+          "trekId": "himachal-1",
+          "price": 2294,
+          "duration": "6 days"
+        },
+        {
+          "trekId": "himachal-3",
+          "price": 3750,
+          "duration": "5 days"
+        },
+        {
+          "trekId": "himachal-4",
+          "price": 3879,
+          "duration": "1 days"
+        }
+      ]
+    },
     {
-      "id": "HIM-005", "name": "Amit Verma", "bio": "Trekking and camping guide in Kasol", "image": "/images/guides/himachal5.jpg", "rating": 4.7, "reviews": 121, "location": "himachal", "price": { "individual": 2400, "couple": 4000 }, "languages": ["English", "Hindi"], "specialties": ["Forest Treks", "Camping"], "touristsHandled": 810, "responseTime": "35 mins", "badges": ["Trek Pro"] },
+      "id": "HIM-005",
+      "name": "Amit Verma",
+      "bio": "Trekking and camping guide in Kasol",
+      "image": "/images/guides/himachal5.jpg",
+      "rating": 4.7,
+      "reviews": 121,
+      "location": "himachal",
+      "price": {
+        "individual": 2400,
+        "couple": 4000
+      },
+      "languages": [
+        "English",
+        "Hindi"
+      ],
+      "specialties": [
+        "Forest Treks",
+        "Camping"
+      ],
+      "touristsHandled": 810,
+      "responseTime": "35 mins",
+      "badges": [
+        "Trek Pro"
+      ],
+      "trekPackages": [
+        {
+          "trekId": "himachal-1",
+          "price": 2145,
+          "duration": "5 days"
+        },
+        {
+          "trekId": "himachal-2",
+          "price": 3757,
+          "duration": "3 days"
+        },
+        {
+          "trekId": "himachal-3",
+          "price": 3423,
+          "duration": "5 days"
+        },
+        {
+          "trekId": "himachal-5",
+          "price": 3424,
+          "duration": "10 days"
+        }
+      ]
+    },
     {
-      "id": "HIM-006", "name": "Kritika Mehta", "bio": "Photography and Instagram tour expert in Manali", "image": "/images/guides/himachal6.jpg", "rating": 4.5, "reviews": 67, "location": "himachal", "price": { "individual": 2100, "couple": 3600 }, "languages": ["English", "Hindi"], "specialties": ["Photography", "Scenic Routes"], "touristsHandled": 340, "responseTime": "1 hour", "badges": ["Insta Friendly"] },
+      "id": "HIM-006",
+      "name": "Kritika Mehta",
+      "bio": "Photography and Instagram tour expert in Manali",
+      "image": "/images/guides/himachal6.jpg",
+      "rating": 4.5,
+      "reviews": 67,
+      "location": "himachal",
+      "price": {
+        "individual": 2100,
+        "couple": 3600
+      },
+      "languages": [
+        "English",
+        "Hindi"
+      ],
+      "specialties": [
+        "Photography",
+        "Scenic Routes"
+      ],
+      "touristsHandled": 340,
+      "responseTime": "1 hour",
+      "badges": [
+        "Insta Friendly"
+      ],
+      "trekPackages": [
+        {
+          "trekId": "himachal-1",
+          "price": 2302,
+          "duration": "4 days"
+        },
+        {
+          "trekId": "himachal-3",
+          "price": 2857,
+          "duration": "3 days"
+        },
+        {
+          "trekId": "himachal-4",
+          "price": 3868,
+          "duration": "1 days"
+        },
+        {
+          "trekId": "himachal-5",
+          "price": 2043,
+          "duration": "8 days"
+        }
+      ]
+    },
     {
-      "id": "HIM-007", "name": "Vikas Rana", "bio": "Motorbike expedition leader for Leh-Manali route", "image": "/images/guides/himachal7.jpg", "rating": 4.9, "reviews": 154, "location": "himachal", "price": { "individual": 3200, "couple": 5200 }, "languages": ["English", "Hindi"], "specialties": ["Bike Trips", "Extreme Terrain"], "touristsHandled": 960, "responseTime": "25 mins", "badges": ["Rider’s Choice"] },
+      "id": "HIM-007",
+      "name": "Vikas Rana",
+      "bio": "Motorbike expedition leader for Leh-Manali route",
+      "image": "/images/guides/himachal7.jpg",
+      "rating": 4.9,
+      "reviews": 154,
+      "location": "himachal",
+      "price": {
+        "individual": 3200,
+        "couple": 5200
+      },
+      "languages": [
+        "English",
+        "Hindi"
+      ],
+      "specialties": [
+        "Bike Trips",
+        "Extreme Terrain"
+      ],
+      "touristsHandled": 960,
+      "responseTime": "25 mins",
+      "badges": [
+        "Rider\u2019s Choice"
+      ],
+      "trekPackages": [
+        {
+          "trekId": "himachal-2",
+          "price": 2503,
+          "duration": "2 days"
+        },
+        {
+          "trekId": "himachal-3",
+          "price": 2773,
+          "duration": "4 days"
+        },
+        {
+          "trekId": "himachal-4",
+          "price": 2885,
+          "duration": "2 days"
+        },
+        {
+          "trekId": "himachal-5",
+          "price": 3182,
+          "duration": "9 days"
+        }
+      ]
+    },
     {
-      "id": "HIM-008", "name": "Nisha Bhardwaj", "bio": "Cultural historian and guide in Shimla", "image": "/images/guides/himachal8.jpg", "rating": 4.6, "reviews": 73, "location": "himachal", "price": { "individual": 1800, "couple": 3000 }, "languages": ["English", "Hindi"], "specialties": ["British Heritage", "Architecture"], "touristsHandled": 390, "responseTime": "1 hour", "badges": ["Culture Buff"] },
+      "id": "HIM-008",
+      "name": "Nisha Bhardwaj",
+      "bio": "Cultural historian and guide in Shimla",
+      "image": "/images/guides/himachal8.jpg",
+      "rating": 4.6,
+      "reviews": 73,
+      "location": "himachal",
+      "price": {
+        "individual": 1800,
+        "couple": 3000
+      },
+      "languages": [
+        "English",
+        "Hindi"
+      ],
+      "specialties": [
+        "British Heritage",
+        "Architecture"
+      ],
+      "touristsHandled": 390,
+      "responseTime": "1 hour",
+      "badges": [
+        "Culture Buff"
+      ],
+      "trekPackages": [
+        {
+          "trekId": "himachal-1",
+          "price": 3485,
+          "duration": "5 days"
+        },
+        {
+          "trekId": "himachal-2",
+          "price": 2780,
+          "duration": "2 days"
+        },
+        {
+          "trekId": "himachal-3",
+          "price": 3140,
+          "duration": "3 days"
+        },
+        {
+          "trekId": "himachal-4",
+          "price": 2919,
+          "duration": "2 days"
+        },
+        {
+          "trekId": "himachal-5",
+          "price": 2813,
+          "duration": "8 days"
+        }
+      ]
+    },
     {
-      "id": "HIM-009", "name": "Harsh Chauhan", "bio": "Adventure camping expert in Tirthan Valley", "image": "/images/guides/himachal9.jpg", "rating": 4.7, "reviews": 98, "location": "himachal", "price": { "individual": 2600, "couple": 4300 }, "languages": ["English", "Hindi"], "specialties": ["Riverside Camps", "Bonfire Nights"], "touristsHandled": 710, "responseTime": "45 mins", "badges": ["Camp Pro"] },
+      "id": "HIM-009",
+      "name": "Harsh Chauhan",
+      "bio": "Adventure camping expert in Tirthan Valley",
+      "image": "/images/guides/himachal9.jpg",
+      "rating": 4.7,
+      "reviews": 98,
+      "location": "himachal",
+      "price": {
+        "individual": 2600,
+        "couple": 4300
+      },
+      "languages": [
+        "English",
+        "Hindi"
+      ],
+      "specialties": [
+        "Riverside Camps",
+        "Bonfire Nights"
+      ],
+      "touristsHandled": 710,
+      "responseTime": "45 mins",
+      "badges": [
+        "Camp Pro"
+      ],
+      "trekPackages": [
+        {
+          "trekId": "himachal-1",
+          "price": 3688,
+          "duration": "4 days"
+        },
+        {
+          "trekId": "himachal-2",
+          "price": 3323,
+          "duration": "2 days"
+        },
+        {
+          "trekId": "himachal-3",
+          "price": 2595,
+          "duration": "5 days"
+        },
+        {
+          "trekId": "himachal-5",
+          "price": 2318,
+          "duration": "10 days"
+        }
+      ]
+    },
     {
-      "id": "HIM-010", "name": "Meera Negi", "bio": "Ayurveda and wellness retreat guide", "image": "/images/guides/himachal10.jpg", "rating": 4.4, "reviews": 59, "location": "himachal", "price": { "individual": 2000, "couple": 3400 }, "languages": ["English", "Hindi"], "specialties": ["Spa & Therapy", "Detox Programs"], "touristsHandled": 300, "responseTime": "1.5 hours", "badges": ["Wellness Expert"] },
+      "id": "HIM-010",
+      "name": "Meera Negi",
+      "bio": "Ayurveda and wellness retreat guide",
+      "image": "/images/guides/himachal10.jpg",
+      "rating": 4.4,
+      "reviews": 59,
+      "location": "himachal",
+      "price": {
+        "individual": 2000,
+        "couple": 3400
+      },
+      "languages": [
+        "English",
+        "Hindi"
+      ],
+      "specialties": [
+        "Spa & Therapy",
+        "Detox Programs"
+      ],
+      "touristsHandled": 300,
+      "responseTime": "1.5 hours",
+      "badges": [
+        "Wellness Expert"
+      ],
+      "trekPackages": [
+        {
+          "trekId": "himachal-1",
+          "price": 2473,
+          "duration": "4 days"
+        },
+        {
+          "trekId": "himachal-2",
+          "price": 3922,
+          "duration": "3 days"
+        },
+        {
+          "trekId": "himachal-3",
+          "price": 2218,
+          "duration": "5 days"
+        }
+      ]
+    },
     {
-      "id": "HIM-011", "name": "Arjun Dogra", "bio": "High-altitude trekking specialist in Kinnaur", "image": "/images/guides/himachal11.jpg", "rating": 4.8, "reviews": 116, "location": "himachal", "price": { "individual": 2900, "couple": 4700 }, "languages": ["English", "Hindi"], "specialties": ["Glacier Treks", "Altitude Acclimatization"], "touristsHandled": 890, "responseTime": "30 mins", "badges": ["Altitude Expert"] },
+      "id": "HIM-011",
+      "name": "Arjun Dogra",
+      "bio": "High-altitude trekking specialist in Kinnaur",
+      "image": "/images/guides/himachal11.jpg",
+      "rating": 4.8,
+      "reviews": 116,
+      "location": "himachal",
+      "price": {
+        "individual": 2900,
+        "couple": 4700
+      },
+      "languages": [
+        "English",
+        "Hindi"
+      ],
+      "specialties": [
+        "Glacier Treks",
+        "Altitude Acclimatization"
+      ],
+      "touristsHandled": 890,
+      "responseTime": "30 mins",
+      "badges": [
+        "Altitude Expert"
+      ],
+      "trekPackages": [
+        {
+          "trekId": "himachal-2",
+          "price": 2000,
+          "duration": "2 days"
+        },
+        {
+          "trekId": "himachal-4",
+          "price": 2943,
+          "duration": "2 days"
+        },
+        {
+          "trekId": "himachal-5",
+          "price": 2720,
+          "duration": "8 days"
+        }
+      ]
+    },
     {
-      "id": "HIM-012", "name": "Sneha Rana", "bio": "Backpacking and local transport expert", "image": "/images/guides/himachal12.jpg", "rating": 4.5, "reviews": 61, "location": "himachal", "price": { "individual": 1700, "couple": 2900 }, "languages": ["English", "Hindi"], "specialties": ["Budget Travel", "Bus Routes"], "touristsHandled": 260, "responseTime": "2 hours", "badges": ["Budget Buddy"] }
-]
-
+      "id": "HIM-012",
+      "name": "Sneha Rana",
+      "bio": "Backpacking and local transport expert",
+      "image": "/images/guides/himachal12.jpg",
+      "rating": 4.5,
+      "reviews": 61,
+      "location": "himachal",
+      "price": {
+        "individual": 1700,
+        "couple": 2900
+      },
+      "languages": [
+        "English",
+        "Hindi"
+      ],
+      "specialties": [
+        "Budget Travel",
+        "Bus Routes"
+      ],
+      "touristsHandled": 260,
+      "responseTime": "2 hours",
+      "badges": [
+        "Budget Buddy"
+      ],
+      "trekPackages": [
+        {
+          "trekId": "himachal-1",
+          "price": 2306,
+          "duration": "6 days"
+        },
+        {
+          "trekId": "himachal-2",
+          "price": 3041,
+          "duration": "2 days"
+        }
+      ]
+    }
+  ]
 }

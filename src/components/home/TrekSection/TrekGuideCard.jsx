@@ -1,16 +1,21 @@
 'use client';
 import { motion } from 'framer-motion';
-import { Star, MapPin, Users, Calendar } from 'lucide-react';
+import { Star, MapPin, Clock, Award, User } from 'lucide-react';
 
-const GuideCard = ({ guide, category, days, count = 1 }) => {
-  // Get price based on package type with fallbacks
-  const pricePerPerson = Number(guide.price[category] || guide.price.individual || 0);
-  const numDays = Math.max(1, Number(days) || 1);
-  const numPeople = Math.max(1, Number(count) || 1);
-  
-  // Calculate total price
-  const totalPrice = pricePerPerson * numPeople * numDays;
-  const peopleText = category === 'couple' ? 'couple' : 'person';
+const TrekGuideCard = ({ guide, trekId, individuals = 1 }) => {
+  // Safely find the trek package with proper null checks
+  const trekPackage = Array.isArray(guide.trekPackages)
+    ? guide.trekPackages.find(pkg => {
+        // Check if both IDs exist before comparing
+        if (!pkg?.trekId || !trekId) return false;
+        return pkg.trekId.toString() === trekId.toString();
+      })
+    : null;
+
+  // Set default values with proper fallbacks
+  const pricePerPerson = trekPackage?.price ?? guide.price?.individual ?? 0;
+  const duration = trekPackage?.duration ?? guide.duration ?? 'N/A';
+  const totalPrice = pricePerPerson * individuals;
 
   return (
     <motion.div
@@ -21,13 +26,17 @@ const GuideCard = ({ guide, category, days, count = 1 }) => {
       className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 hover:shadow-lg transition-all"
     >
       <div className="flex flex-col md:flex-row">
-        {/* Left Side (80%) */}
+        {/* Left Side */}
         <div className="w-full md:w-4/5 p-6">
           <div className="flex items-start gap-5">
-            {/* Logo Placeholder */}
+            {/* Guide Image */}
             <div className="flex-shrink-0">
-              <div className="bg-gray-200 rounded-lg w-16 h-16 flex items-center justify-center">
-                <span className="text-gray-500 text-xs text-center">Logo</span>
+              <div className="bg-gray-200 rounded-lg w-16 h-16 flex items-center justify-center overflow-hidden">
+                {guide.image ? (
+                  <img src={guide.image} alt={guide.name} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-gray-500 text-xs text-center">Image</span>
+                )}
               </div>
             </div>
 
@@ -45,43 +54,42 @@ const GuideCard = ({ guide, category, days, count = 1 }) => {
 
               <p className="text-gray-600 mt-1 text-sm">{guide.bio}</p>
 
-              <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="flex items-center gap-2">
                   <MapPin className="h-4 w-4 text-blue-500" />
                   <span className="text-sm text-gray-700 capitalize">{guide.location}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-purple-500" />
-                  <span className="text-sm text-gray-700">{guide.touristsHandled}+ trips</span>
+                  <Clock className="h-4 w-4 text-purple-500" />
+                  <span className="text-sm text-gray-700">{duration}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-amber-500" />
-                  <span className="text-sm text-gray-700">{numDays} day{numDays > 1 ? 's' : ''}</span>
+                  <Award className="h-4 w-4 text-amber-500" />
+                  <span className="text-sm text-gray-700">{guide.touristsHandled || 0}+ treks</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <User className="h-4 w-4 text-green-500" />
+                  <span className="text-sm text-gray-700">
+                    {individuals} {individuals > 1 ? 'people' : 'person'}
+                  </span>
                 </div>
               </div>
 
               <div className="mt-4 pt-4 border-t border-gray-100 flex justify-between items-start">
-                {/* Left side - Package type */}
                 <div>
-                  <p className="text-sm text-gray-600">
-                    <span className="font-medium">Package:</span> {category === 'couple' ? 'Couple' : 'Individual'}
-                  </p>
-                  <p className="text-sm text-gray-600 mt-1">
-                    <span className="font-medium">For:</span> {numPeople} {category === 'couple' ? 'couples' : 'people'}
-                  </p>
+
                 </div>
-                
-                {/* Right side - Pricing */}
                 <div className="text-right">
                   <div className="inline-flex flex-col items-end bg-green-50 px-3 py-2 rounded-lg">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-green-800">Price (per day):</span>
+                      <span className="text-sm font-semibold text-green-800">Price/person:</span>
                       <span className="text-lg font-bold text-green-600">
-                        ₹{pricePerPerson.toLocaleString('en-IN')}/{peopleText}
+                        ₹{pricePerPerson.toLocaleString('en-IN')}
                       </span>
                     </div>
                     <p className="text-sm text-gray-600 mt-1">
-                      <span className="font-medium">Total:</span> ₹{totalPrice.toLocaleString('en-IN')}
+                      <span className="font-medium">Total:</span>{' '}
+                      ₹{totalPrice.toLocaleString('en-IN')}
                     </p>
                   </div>
                 </div>
@@ -90,12 +98,12 @@ const GuideCard = ({ guide, category, days, count = 1 }) => {
           </div>
         </div>
 
-        {/* Right Side (20%) - View Button */}
-        <div className="w-full md:w-1/5 bg-green-300 flex items-center justify-center p-4">
+        {/* Right Side - Button */}
+        <div className="w-full md:w-1/5 bg-green-500 flex items-center justify-center p-4">
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="w-full py-3 bg-white hover:bg-[#d4f7d4] text-gray-600 hover:text-gray-900 font-medium rounded-lg transition-colors"
+            className="w-full py-3 bg-white hover:bg-[#d4f7d4] text-green-600 hover:text-green-800 font-medium rounded-lg transition-colors"
           >
             View Details
           </motion.button>
@@ -105,4 +113,4 @@ const GuideCard = ({ guide, category, days, count = 1 }) => {
   );
 };
 
-export default GuideCard;
+export default TrekGuideCard;

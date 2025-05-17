@@ -1,6 +1,6 @@
 'use client'
 import { Suspense } from 'react'
-import SearchResults from '@/components/home/TripSection/SearchResults'
+import SearchResults from '@/components/home/TripSection/TripSearchResults'
 
 export default function GuideListPage() {
   return (
