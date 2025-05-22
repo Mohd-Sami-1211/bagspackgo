@@ -47,12 +47,15 @@ const TrekSearchResults = () => {
     return value !== null && value !== '' ? value : defaultValue;
   };
 
+  // State initialization - KEY CHANGE: Using single state for individuals
   const destination = getValidParam('destination', '');
   const trekId = getValidParam('trek', '');
   const trekType = ['hiking', 'trekking', 'mountaineering'].includes(searchParams.get('type')) 
     ? searchParams.get('type') 
     : 'trekking';
-  const individuals = Math.max(1, parseInt(getValidParam('individuals', '1')));
+const [individuals, setIndividuals] = useState(
+  Math.max(1, parseInt(getValidParam('count', '1')))
+);
   const dateParam = searchParams.get('date');
   const date = dateParam && !isNaN(new Date(dateParam).getTime()) 
     ? new Date(dateParam) 
@@ -61,11 +64,10 @@ const TrekSearchResults = () => {
   // Selected trek details
   const selectedTrek = normalizedTreks.find(trek => trek.id.toString() === trekId.toString());
 
-  // Editable state
+  // Editable state - removed editableIndividuals since we're using single state
   const [editableDestination, setEditableDestination] = useState(destination);
   const [editableTrek, setEditableTrek] = useState(trekId);
   const [editableTrekType, setEditableTrekType] = useState(trekType);
-  const [editableIndividuals, setEditableIndividuals] = useState(individuals);
   const [editableDate, setEditableDate] = useState(date);
 
   // Search function with debounce
@@ -88,84 +90,86 @@ const TrekSearchResults = () => {
     });
   };
 
-  const sortGuides = (guides, option) => {
-    const [field, order] = option.split('-');
-    return [...guides].sort((a, b) => {
-      if (field === 'price') {
-        const aPrice = a.price?.individual || 0;
-        const bPrice = b.price?.individual || 0;
-        return order === 'desc' ? bPrice - aPrice : aPrice - bPrice;
-      }
-      return order === 'desc' ? (b.rating || 0) - (a.rating || 0) : (a.rating || 0) - (b.rating || 0);
-    });
-  };
+const sortGuides = (guides, option) => {
+  const [field, order] = option.split('-');
 
-  // Fetch and filter results
+  return [...guides].sort((a, b) => {
+    // Sort by trek package price if trekId exists
+    if (field === 'price' && trekId) {
+      const aPkg = a.trekPackages?.find(pkg => pkg.trekId?.toString() === trekId.toString());
+      const bPkg = b.trekPackages?.find(pkg => pkg.trekId?.toString() === trekId.toString());
+      const aPrice = aPkg?.price ?? 0;
+      const bPrice = bPkg?.price ?? 0;
+      return order === 'desc' ? bPrice - aPrice : aPrice - bPrice;
+    }
+
+    // Sort by rating
+    if (field === 'rating') {
+      return order === 'desc'
+        ? (b.rating || 0) - (a.rating || 0)
+        : (a.rating || 0) - (b.rating || 0);
+    }
+
+    return 0;
+  });
+};
+
 useEffect(() => {
   const fetchResults = async () => {
     setLoading(true);
     try {
       // Filter treks
       let trekResults = [...normalizedTreks];
-      
-      // Destination filter
+
       if (destination) {
-        trekResults = trekResults.filter(trek => 
+        trekResults = trekResults.filter(trek =>
           trek.location && trek.location.toLowerCase().includes(destination.toLowerCase())
         );
       }
-      
-      // Trek type filter
+
       if (trekType) {
         trekResults = trekResults.filter(trek => trek.type === trekType);
       }
-      
-      // Search query filter
+
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
-        trekResults = trekResults.filter(trek => 
-          (trek.name && trek.name.toLowerCase().includes(query)) ||
-          (trek.description && trek.description.toLowerCase().includes(query)) ||
-          (trek.highlights && trek.highlights.some(h => h.toLowerCase().includes(query)))
+        trekResults = trekResults.filter(trek =>
+          (trek.name && trek.name.toLowerCase().includes(query))
         );
       }
-      
-      // Sort results
+
       trekResults = sortTreks(trekResults, sortOption);
       setTreks(trekResults);
 
       // Filter guides
       let guideResults = [...normalizedGuides];
-      
+
       if (trekId) {
-        guideResults = guideResults.filter(guide => 
-          guide.trekPackages.some(pkg => pkg.trekId.toString() === trekId.toString())
+        guideResults = guideResults.filter(guide =>
+          guide.trekPackages.some(pkg => pkg.trekId?.toString() === trekId.toString())
         );
       }
-      
-if (destination) {
-  const searchDest = destination.toLowerCase().trim();
-  guideResults = guideResults.filter(guide => {
-    const guideLocation = guide.location?.toLowerCase().trim() || '';
-    const availableDests = guide.availableDestinations?.map(d => d.toLowerCase().trim()) || [];
-    return (
-      guideLocation.includes(searchDest) ||
-      availableDests.some(dest => dest.includes(searchDest))
-    );
-  });
-}
-      
+
+      if (destination) {
+        const searchDest = destination.toLowerCase().trim();
+        guideResults = guideResults.filter(guide => {
+          const guideLocation = guide.location?.toLowerCase().trim() || '';
+          const availableDests = guide.availableDestinations?.map(d => d.toLowerCase().trim()) || [];
+          return (
+            guideLocation.includes(searchDest) ||
+            availableDests.some(dest => dest.includes(searchDest))
+          );
+        });
+      }
+
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
-        guideResults = guideResults.filter(guide => 
-          (guide.name && guide.name.toLowerCase().includes(query)) ||
-          (guide.bio && guide.bio.toLowerCase().includes(query)) ||
-          (guide.specialties && guide.specialties.some(s => s.toLowerCase().includes(query)))
+        guideResults = guideResults.filter(guide =>
+          guide.name && guide.name.toLowerCase().includes(query)
         );
       }
-      
-      setGuides(sortGuides(guideResults, sortOption));
 
+      setGuides(sortGuides(guideResults, sortOption));
     } catch (error) {
       console.error('Error loading results:', error);
     } finally {
@@ -179,26 +183,22 @@ if (destination) {
   };
 }, [destination, trekId, trekType, sortOption, searchQuery]);
 
-  // Apply changes handler
+
+  // Apply changes handler - KEY CHANGE: Using current individuals state
 const handleApplyChanges = () => {
   setIsApplying(true);
   
-  // Prepare params exactly like trip section
   const params = {
     destination: editableDestination || destination,
     trek: editableTrek || trekId,
     type: editableTrekType || trekType,
-    individuals: editableIndividuals || individuals,
-    ...(editableDate && { date: editableDate.toISOString() }) // Same date format
+    count: individuals.toString(),  // Changed from 'individuals' to 'count'
+    ...(editableDate && { date: editableDate.toISOString() })
   };
 
-  // Create URLSearchParams - identical to trip section
   const queryString = new URLSearchParams(params).toString();
-  
-  // Use the same navigation pattern with consistent route
   router.push(`/trek/guidelist?${queryString}`);
   
-  // Same state reset timing
   setIsEditing(false);
   setIsApplying(false);
 };
@@ -208,7 +208,7 @@ const handleApplyChanges = () => {
     setEditableDestination(destination);
     setEditableTrek(trekId);
     setEditableTrekType(trekType);
-    setEditableIndividuals(individuals);
+    setIndividuals(Math.max(1, parseInt(getValidParam('individuals', '1')))); 
     setEditableDate(date);
     setIsEditing(false);
   };
@@ -244,7 +244,7 @@ const handleApplyChanges = () => {
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold text-gray-800">
               {isEditing ? 'Modify Your Trek' : 
-               selectedTrek ? `Your ${selectedTrek.name} Trek` : 
+               selectedTrek ? `Your ${selectedTrek.name}` : 
                `Browse ${trekType} Treks`}
             </h2>
             
@@ -279,134 +279,148 @@ const handleApplyChanges = () => {
           </div>
 
           {/* Parameter Display/Edit */}
-<div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-  {/* Destination Field - Fixed duplicate X icon */}
-  <div className="bg-[#c8fcd5e7] p-3 rounded-lg">
-    <label className="block text-xs text-gray-900 mb-1">Destination</label>
-    {isEditing ? (
-      <div className="relative">
-        <Select
-          options={data.destinations || []}
-          value={editableDestination ? 
-            data.destinations.find(d => d.value === editableDestination) || null : null}
-          onChange={(option) => {
-            setEditableDestination(option?.value || '');
-            setEditableTrek('');
-          }}
-          placeholder="Select destination"
-          classNamePrefix="react-select"
-          isClearable
-          styles={greenSelectStyles} 
-        />
-      </div>
-    ) : (
-      <p className="font-medium text-sm h-[36px] flex items-center">
-        {data.destinations.find(d => d.value === destination)?.label || 'Any'}
-      </p>
-    )}
-  </div>
-
-  {/* Trek Name Field */}
-  <div className="bg-[#c8fcd5e7] p-3 rounded-lg">
-    <label className="block text-xs text-gray-900 mb-1">Trek Name</label>
-    {isEditing ? (
-      <div className="relative">
-        <Select
-          options={normalizedTreks
-            .filter(trek => !editableDestination || trek.destinationId === editableDestination)
-            .map(trek => ({
-              value: trek.id,
-              label: trek.name,
-              duration: trek.duration
-            }))
-          }
-          value={editableTrek ? {
-            value: editableTrek,
-            label: normalizedTreks.find(t => t.id === editableTrek)?.name || ''
-          } : null}
-          onChange={(option) => setEditableTrek(option?.value || '')}
-          placeholder={editableDestination ? "Select trek" : "Select destination first"}
-          classNamePrefix="react-select"
-          isClearable
-          styles={greenSelectStyles} 
-          isDisabled={!editableDestination}
-          noOptionsMessage={() => "No treks found"}
-          formatOptionLabel={({ label, duration }) => (
-            <div className="w-full">
-              <div className="truncate">{label}</div>
-              <div className="text-xs text-gray-500 truncate">{duration}</div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {/* Destination Field */}
+            <div className="bg-[#c8fcd5e7] p-3 rounded-lg">
+              <label className="block text-xs text-gray-900 mb-1">Destination</label>
+              {isEditing ? (
+                <div className="relative">
+                  <Select
+                    options={data.destinations || []}
+                    value={editableDestination ? 
+                      data.destinations.find(d => d.value === editableDestination) || null : null}
+                    onChange={(option) => {
+                      setEditableDestination(option?.value || '');
+                      setEditableTrek('');
+                    }}
+                    placeholder="Select destination"
+                    classNamePrefix="react-select"
+                    isClearable
+                    styles={greenSelectStyles} 
+                  />
+                </div>
+              ) : (
+                <p className="font-medium text-sm h-[36px] flex items-center">
+                  {data.destinations.find(d => d.value === destination)?.label || 'Any'}
+                </p>
+              )}
             </div>
-          )}
-        />
-      </div>
-    ) : (
-      <p className="font-medium text-sm h-[36px] flex items-center truncate">
-        {selectedTrek ? selectedTrek.name : 'Not specified'}
-      </p>
-    )}
-  </div>
 
-  {/* Date Field - Matched to Trip Section */}
-  <div className="bg-[#c8fcd5e7] p-3 rounded-lg">
-    <label className="block text-xs text-gray-900 mb-1">Trek Date</label>
-    {isEditing ? (
-      <div className="relative">
-        <DatePicker
-          selected={editableDate}
-          onChange={setEditableDate}
-          placeholderText="Select date"
-          className="w-full p-2 border border-gray-300 rounded text-sm bg-white pl-2 pr-8 h-[36px]"
-          popperClassName="z-50"
-          calendarClassName="border-0 shadow-lg"
-          showPopperArrow={false}
-          minDate={new Date()}
-        />
-        <CalendarIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-      </div>
-    ) : (
-      <p className="font-medium text-sm h-[36px] flex items-center">
-        {date ? date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Not specified'}
-      </p>
-    )}
-  </div>
+            {/* Trek Name Field */}
+            <div className="bg-[#c8fcd5e7] p-3 rounded-lg">
+              <label className="block text-xs text-gray-900 mb-1">Trek Name</label>
+              {isEditing ? (
+                <div className="relative">
+                  <Select
+                    options={normalizedTreks
+                      .filter(trek => !editableDestination || trek.destinationId === editableDestination)
+                      .map(trek => ({
+                        value: trek.id,
+                        label: trek.name,
+                        duration: trek.duration
+                      }))
+                    }
+                    value={editableTrek ? {
+                      value: editableTrek,
+                      label: normalizedTreks.find(t => t.id === editableTrek)?.name || ''
+                    } : null}
+                    onChange={(option) => setEditableTrek(option?.value || '')}
+                    placeholder={editableDestination ? "Select trek" : "Select destination first"}
+                    classNamePrefix="react-select"
+                    isClearable
+                    styles={greenSelectStyles} 
+                    isDisabled={!editableDestination}
+                    noOptionsMessage={() => "No treks found"}
+                    formatOptionLabel={({ label, duration }) => (
+                      <div className="w-full">
+                        <div className="truncate">{label}</div>
+                        <div className="text-xs text-gray-500 truncate">{duration}</div>
+                      </div>
+                    )}
+                  />
+                </div>
+              ) : (
+                <p className="font-medium text-sm h-[36px] flex items-center truncate">
+                  {selectedTrek ? selectedTrek.name : 'Not specified'}
+                </p>
+              )}
+            </div>
 
-  {/* Individuals Field - Matched to Trip Section */}
-  <div className="bg-[#c8fcd5e7] p-3 rounded-lg">
-    <label className="block text-xs text-gray-900 mb-1">Individuals</label>
-    {isEditing ? (
-      <div className="flex items-center h-[36px] bg-white border border-gray-300 rounded overflow-hidden">
-        <button 
-          type="button"
-          onClick={() => setEditableIndividuals(prev => Math.max(1, prev - 1))}
-          className="px-2 text-gray-600 hover:bg-gray-100 h-full flex items-center"
-        >
-          -
-        </button>
-        <input
-          type="number"
-          min="1"
-          value={editableIndividuals}
-          onChange={(e) => {
-            const value = parseInt(e.target.value);
-            setEditableIndividuals(isNaN(value) ? 1 : Math.max(1, value));
-          }}
-          className="flex-1 text-center border-x border-gray-300 text-sm h-full w-12 focus:outline-none"
-        />
-        <button
-          type="button"
-          onClick={() => setEditableIndividuals(prev => prev + 1)}
-          className="px-2 text-gray-600 hover:bg-gray-100 h-full flex items-center"
-        >
-          +
-        </button>
-      </div>
-    ) : (
-      <p className="font-medium text-sm h-[36px] flex items-center">
-        {individuals} {individuals === 1 ? 'person' : 'people'}
-      </p>
-    )}
-  </div>
+            {/* Date Field */}
+            <div className="bg-[#c8fcd5e7] p-3 rounded-lg">
+              <label className="block text-xs text-gray-900 mb-1">Trek Date</label>
+              {isEditing ? (
+                <div className="relative">
+                  <DatePicker
+                    selected={editableDate}
+                    onChange={setEditableDate}
+                    placeholderText="Select date"
+                    className="w-full p-2 border border-gray-300 rounded text-sm bg-white pl-2 pr-8 h-[36px]"
+                    popperClassName="z-50"
+                    calendarClassName="border-0 shadow-lg"
+                    showPopperArrow={false}
+                    minDate={new Date()}
+                  />
+                  <CalendarIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                </div>
+              ) : (
+                <p className="font-medium text-sm h-[36px] flex items-center">
+                  {date ? date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Not specified'}
+                </p>
+              )}
+            </div>
+
+            {/* Individuals Field - KEY CHANGE: Simplified to use single state */}
+<div className="bg-[#c8fcd5e7] p-3 rounded-lg">
+  <label className="block text-xs text-gray-900 mb-1">Individuals</label>
+  {isEditing ? (
+    <div className="flex items-center h-[36px] bg-white border border-gray-300 rounded overflow-hidden focus-within:ring-1 focus-within:ring-green-500 focus-within:border-green-500">
+      <button 
+        type="button"
+        onClick={() => setIndividuals(prev => Math.max(1, prev - 1))}
+        className="px-2 text-gray-600 hover:bg-gray-100 h-full flex items-center"
+      >
+        -
+      </button>
+      <input
+        type="number"
+        min="1"
+        value={individuals}
+        onChange={(e) => {
+          const value = e.target.value;
+          // Allow empty value temporarily
+          if (value === "") {
+            setIndividuals("");
+          } else {
+            const numValue = parseInt(value);
+            if (!isNaN(numValue)) {
+              setIndividuals(Math.max(1, numValue));
+            }
+          }
+        }}
+        onBlur={() => {
+          // If empty after blur, set to 1
+          if (individuals === "") {
+            setIndividuals(1);
+          }
+        }}
+        className="flex-1 text-center border-x border-gray-300 text-sm h-full w-12 focus:outline-none font-medium"
+      />
+      <button
+        type="button"
+        onClick={() => setIndividuals(prev => (prev === "" ? 2 : prev + 1))}
+        className="px-2 text-gray-600 hover:bg-gray-100 h-full flex items-center"
+      >
+        +
+      </button>
+    </div>
+  ) : (
+    <p className="font-medium text-sm h-[36px] flex items-center">
+      {individuals} {individuals === 1 ? 'person' : 'people'}
+    </p>
+  )}
 </div>
+          </div>
         </div>
       </div>
 
@@ -537,12 +551,12 @@ const handleApplyChanges = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
                 >
-                  <TrekCard 
-                    guide={guide}
-                    individuals={individuals}
-                    date={date}
-                    trek={selectedTrek}
-                  />
+                  <TrekCard  
+                 guide={guide}
+                 trekId={trekId} 
+                 individuals={individuals}  
+                 date={date}
+                 />
                 </motion.div>
               ))
             ) : (
@@ -563,7 +577,7 @@ const handleApplyChanges = () => {
                 >
                   <TrekCard 
                     trek={trek}
-                    individuals={individuals}
+                    individuals={individuals}  
                     date={date}
                   />
                 </motion.div>
@@ -582,7 +596,7 @@ const handleApplyChanges = () => {
 };
 
 const greenSelectStyles = {
-   control: (provided, state) => ({
+  control: (provided, state) => ({
     ...provided,
     minHeight: '30px',
     fontSize: '0.875rem',

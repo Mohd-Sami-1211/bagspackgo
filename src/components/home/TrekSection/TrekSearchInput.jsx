@@ -1,5 +1,5 @@
 'use client';
-import { useState, forwardRef, useImperativeHandle } from 'react';
+import { useState, forwardRef, useImperativeHandle, useEffect, useRef } from 'react';
 import Select from 'react-select';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -146,26 +146,23 @@ const TrekSearchInput = forwardRef((props, ref) => {
     setErrors(prev => ({ ...prev, date: '' }));
   };
 
- const handleSearch = () => {
-  if (!validateFields()) {
-    return;
-  }
+  const handleSearch = () => {
+    if (!validateFields()) {
+      return;
+    }
 
-  setIsSearching(true);
-  
-  // Construct query parameters
-  const queryParams = new URLSearchParams({
-    destination: selectedDestination.value,
-    trek: selectedTrek.value,
-    date: startDate.toISOString(),
-    count: count.toString()
-  }).toString();
+    setIsSearching(true);
+    
+    const queryParams = new URLSearchParams({
+      destination: selectedDestination.value,
+      trek: selectedTrek.value,
+      date: startDate.toISOString(),
+      count: count.toString()
+    }).toString();
 
-  // Navigate to the results page with query parameters
-  router.push(`/trek/guidelist?${queryParams}`);
-};
+    router.push(`/trek/guidelist?${queryParams}`);
+  };
 
-  // Animation variants (keep the same as before)
   const containerVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
@@ -304,8 +301,11 @@ const TrekSearchInput = forwardRef((props, ref) => {
         >
           <div className="flex gap-4">
             {/* Date Picker */}
-            <div className="flex-1">
-              <label className="block text-sm font-semibold text-gray-800 mb-1">Start Date*</label>
+            <motion.div 
+              variants={itemVariants}
+              className="flex-1 relative z-[60]"
+            >
+              <label className="block text-sm font-semibold text-gray-800 mb-1">Enter Date</label>
               <DatePicker
                 selected={startDate}
                 onChange={handleDateChange}
@@ -323,7 +323,7 @@ const TrekSearchInput = forwardRef((props, ref) => {
                       value={dateInput}
                       onChange={handleInputChange}
                       placeholder="DD/MM/YYYY"
-                      className={`bg-white border ${errors.date ? 'border-red-500' : 'border-gray-300'} text-gray-800 text-sm rounded-md focus:ring-green-500 focus:border-green-500 block w-full pl-9 pr-2 py-1.5 transition-all`}
+                      className="bg-white border border-gray-300 text-gray-800 text-sm rounded-md focus:ring-green-500 focus:border-green-500 block w-full pl-9 pr-2 py-1.5 transition-all"
                     />
                   </motion.div>
                 }
@@ -346,7 +346,7 @@ const TrekSearchInput = forwardRef((props, ref) => {
                   {errors.date}
                 </motion.p>
               )}
-            </div>
+            </motion.div>
 
             {/* Counter */}
             <div className="flex-1">
@@ -355,7 +355,17 @@ const TrekSearchInput = forwardRef((props, ref) => {
                 value={count}
                 onIncrement={() => setCount(prev => prev + 1)}
                 onDecrement={() => setCount(prev => Math.max(1, prev - 1))}
-                onChange={(e) => setCount(Math.max(1, parseInt(e.target.value) || 1))}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === "") {
+                    setCount(1);
+                  } else {
+                    const numValue = parseInt(value);
+                    if (!isNaN(numValue)) {
+                      setCount(Math.max(1, numValue));
+                    }
+                  }
+                }}
               />
             </div>
           </div>
@@ -411,43 +421,76 @@ const TrekSearchInput = forwardRef((props, ref) => {
   );
 });
 
-// Counter component remains the same
-const Counter = ({ label, value, onIncrement, onDecrement, onChange }) => (
-  <motion.div 
-    className="w-full"
-    initial={{ opacity: 0, y: 10 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true, margin: "-30px" }}
-    transition={{ duration: 0.3 }}
-  >
-    <label className="block text-sm font-semibold text-gray-800 mb-1">{label}</label>
-    <div className="flex items-center bg-white rounded-lg border border-gray-300 h-9">
-      <motion.button 
-        className="px-2 text-gray-600 hover:bg-green-100 focus:outline-none focus:ring-1 focus:ring-green-400 rounded-l-md text-sm"
-        onClick={onDecrement}
-        whileTap={{ scale: 0.9 }}
-      >
-        -
-      </motion.button>
-      <input
-        type="number"
-        min="1"
-        value={value}
-        onChange={onChange}
-        className="flex-1 text-center border-x border-gray-300 text-sm"
-      />
-      <motion.button 
-        className="px-2 text-gray-600 hover:bg-green-100 focus:outline-none focus:ring-1 focus:ring-green-400 rounded-r-md text-sm"
-        onClick={onIncrement}
-        whileTap={{ scale: 0.9 }}
-      >
-        +
-      </motion.button>
-    </div>
-  </motion.div>
-);
+const Counter = ({ label, value, onIncrement, onDecrement, onChange }) => {
+  const [inputValue, setInputValue] = useState(value.toString());
+  const inputRef = useRef(null);
 
-// selectStyles remains the same
+  useEffect(() => {
+    setInputValue(value.toString());
+  }, [value]);
+
+  const handleChange = (e) => {
+    const newValue = e.target.value;
+    setInputValue(newValue);
+    
+    if (newValue === "") {
+      onChange({ target: { value: "" } });
+    } else if (/^\d*$/.test(newValue)) {
+      onChange(e);
+    }
+  };
+
+  const handleBlur = () => {
+    if (inputValue === "") {
+      setInputValue("1");
+      onChange({ target: { value: "1" } });
+    }
+  };
+
+  const handleFocus = (e) => {
+    e.target.select();
+  };
+
+  return (
+    <motion.div 
+      className="w-full"
+      initial={{ opacity: 0, y: 10 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-30px" }}
+      transition={{ duration: 0.3 }}
+    >
+      <label className="block text-sm font-semibold text-gray-800 mb-1">{label}</label>
+      <div className="flex items-center bg-white rounded-lg border border-gray-300 h-9">
+        <motion.button 
+          className="px-2 text-gray-600 hover:bg-green-100 focus:outline-none focus:ring-1 focus:ring-green-400 rounded-l-md text-sm"
+          onClick={onDecrement}
+          whileTap={{ scale: 0.9 }}
+        >
+          -
+        </motion.button>
+        <input
+          ref={inputRef}
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          value={inputValue}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          onFocus={handleFocus}
+          className="flex-1 text-center border-x border-gray-300 text-sm focus:outline-none "
+        />
+        <motion.button 
+          className="px-2 text-gray-600 hover:bg-green-100 focus:outline-none focus:ring-1 focus:ring-green-400 rounded-r-md text-sm"
+          onClick={onIncrement}
+          whileTap={{ scale: 0.9 }}
+        >
+          +
+        </motion.button>
+      </div>
+    </motion.div>
+  );
+};
+
 const selectStyles = {
   control: (provided, state) => ({
     ...provided,

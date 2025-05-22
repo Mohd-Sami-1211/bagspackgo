@@ -78,9 +78,7 @@ const SearchResults = () => {
         if (searchQuery) {
           const query = searchQuery.toLowerCase();
           results = results.filter(guide => 
-            guide.name.toLowerCase().includes(query) ||
-            guide.bio.toLowerCase().includes(query) ||
-            (guide.specialties?.some(s => s.toLowerCase().includes(query)))
+            guide.name.toLowerCase().includes(query)
           );
         }
         
@@ -203,155 +201,207 @@ const SearchResults = () => {
           </div>
 
           {/* Parameter Display/Edit */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            {/* Destination Field */}
-            <div className="bg-[#c8fcd5e7] p-3 rounded-lg relative">
-              <label className="block text-xs text-gray-900 mb-1">Destination</label>
-              {isEditing ? (
-                <div className="relative">
-                  <Select
-                    options={data.destinations}
-                    value={editableDestination ? 
-                      { value: editableDestination, label: editableDestination } : 
-                      null
-                    }
-                    onChange={(option) => setEditableDestination(option?.value || '')}
-                    placeholder="Enter place to search"
-                    classNamePrefix="react-select"
-                    isClearable
-                    styles={{
-                      ...inlineSelectStyles,
-                      clearIndicator: (provided) => ({
-                        ...provided,
-                        display: 'none'
-                      })
-                    }}
-                  />
-                  {editableDestination && (
-                    <div 
-                      onClick={() => setEditableDestination('')}
-                      className="absolute right-8 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
-                    >
-                      <X size={16} />
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <p className="font-medium">{destination || 'Any'}</p>
-              )}
-            </div>
+<div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+  {/* Destination Field - With matching focus ring */}
+  <div className="bg-[#c8fcd5e7] p-3 rounded-lg">
+    <label className="block text-xs text-gray-900 mb-1">Destination</label>
+    {isEditing ? (
+      <div className="relative">
+        <Select
+          options={data.destinations}
+          value={editableDestination ? 
+            { value: editableDestination, label: editableDestination } : 
+            null
+          }
+          onChange={(option) => setEditableDestination(option?.value || '')}
+          placeholder="Enter place to search"
+          classNamePrefix="react-select"
+          isClearable
+          styles={{
+            ...inlineSelectStyles,
+            control: (provided, state) => ({
+              ...provided,
+              height: '36px',
+              minHeight: '36px',
+              fontSize: '14px',
+              fontWeight: '500',
+              borderColor: state.isFocused ? '#10b981' : '#d1d5db',
+              boxShadow: state.isFocused ? '0 0 0 1px #10b981' : 'none',
+              '&:hover': {
+                borderColor: state.isFocused ? '#10b981' : '#d1d5db'
+              }
+            }),
+            placeholder: (provided) => ({
+              ...provided,
+              color: '#6b7280',
+              fontSize: '14px',
+              fontWeight: '400'
+            }),
+            singleValue: (provided) => ({
+              ...provided,
+              color: '#111827',
+              fontSize: '14px',
+              fontWeight: '500'
+            })
+          }}
+        />
+      </div>
+    ) : (
+      <p className="font-medium text-sm h-[36px] flex items-center text-gray-900">
+        {destination || 'Any'}
+      </p>
+    )}
+  </div>
 
-            {/* Category Field */}
-            <div className="bg-[#c8fcd5e7] p-3 rounded-lg">
-              <label className="block text-xs text-gray-900 mb-1">Package Type</label>
-              {isEditing ? (
-                <Select
-                  options={data.categories}
-                  value={data.categories.find(cat => cat.value === editableCategory)}
-                  onChange={(option) => setEditableCategory(option.value)}
-                  classNamePrefix="react-select"
-                  styles={inlineSelectStyles}
-                />
-              ) : (
-                <p className="font-medium capitalize">{category}</p>
-              )}
-            </div>
+  {/* Category Field - With matching focus ring */}
+  <div className="bg-[#c8fcd5e7] p-3 rounded-lg">
+    <label className="block text-xs text-gray-900 mb-1">Package Type</label>
+    {isEditing ? (
+      <Select
+        options={data.categories}
+        value={data.categories.find(cat => cat.value === editableCategory)}
+        onChange={(option) => setEditableCategory(option.value)}
+        classNamePrefix="react-select"
+        styles={{
+          ...inlineSelectStyles,
+          control: (provided, state) => ({
+            ...provided,
+            height: '36px',
+            minHeight: '36px',
+            fontSize: '14px',
+            fontWeight: '500',
+            borderColor: state.isFocused ? '#10b981' : '#d1d5db',
+            boxShadow: state.isFocused ? '0 0 0 1px #10b981' : 'none',
+            '&:hover': {
+              borderColor: state.isFocused ? '#10b981' : '#d1d5db'
+            }
+          }),
+          singleValue: (provided) => ({
+            ...provided,
+            color: '#111827',
+            fontSize: '14px',
+            fontWeight: '500'
+          })
+        }}
+      />
+    ) : (
+      <p className="font-medium text-sm h-[36px] flex items-center text-gray-900 capitalize">
+        {category}
+      </p>
+    )}
+  </div>
 
-            {/* Date Field */}
-            <div className="bg-[#c8fcd5e7] p-3 rounded-lg relative">
-              <label className="block text-xs text-gray-900 mb-1">Travel Date</label>
-              {isEditing ? (
-                <div className="relative">
-                  <DatePicker
-                    selected={editableDate}
-                    onChange={setEditableDate}
-                    placeholderText="Select date"
-                    className="w-full p-1 border border-gray-300 rounded text-sm bg-white pl-2 pr-8"
-                    popperClassName="z-50"
-                    calendarClassName="border-0 shadow-lg"
-                    showPopperArrow={false}
-                  />
-                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center">
-                    {editableDate && (
-                      <div 
-                        onClick={() => setEditableDate(null)}
-                        className="text-gray-400 hover:text-gray-600 mr-1 cursor-pointer"
-                      >
-                        <X size={16} />
-                      </div>
-                    )}
-                    <CalendarIcon className="h-4 w-4 text-gray-400" />
-                  </div>
-                </div>
-              ) : (
-                <p className="font-medium">
-                  {date ? date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Not specified'}
-                </p>
-              )}
-            </div>
+  {/* Date Field */}
+  <div className="bg-[#c8fcd5e7] p-3 rounded-lg">
+    <label className="block text-xs text-gray-900 mb-1">Travel Date</label>
+    {isEditing ? (
+      <div className="relative h-[36px]">
+        <DatePicker
+          selected={editableDate}
+          onChange={setEditableDate}
+          placeholderText="Select date"
+          className="w-full p-1 border border-gray-300 rounded text-sm bg-white pl-2 pr-8 h-[36px] focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500"
+          popperClassName="z-50"
+          calendarClassName="border-0 shadow-lg"
+          showPopperArrow={false}
+        />
+        <CalendarIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+      </div>
+    ) : (
+      <p className="font-medium text-sm h-[36px] flex items-center text-gray-900">
+        {date ? date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Not specified'}
+      </p>
+    )}
+  </div>
 
-            {/* Days Field */}
-            <div className="bg-[#c8fcd5e7] p-3 rounded-lg">
-              <label className="block text-xs text-gray-900 mb-1">Duration</label>
-              {isEditing ? (
-                <div className="flex items-center">
-                  <div 
-                    onClick={() => setEditableDays(prev => Math.max(1, prev - 1))}
-                    className="px-2 text-gray-600 hover:bg-gray-100 rounded-l cursor-pointer"
-                  >
-                    -
-                  </div>
-                  <input
-                    type="number"
-                    min="1"
-                    value={editableDays}
-                    onChange={(e) => setEditableDays(Math.max(1, parseInt(e.target.value) || 1))}
-                    className="flex-1 text-center border-x border-gray-300 text-sm w-12"
-                  />
-                  <div 
-                    onClick={() => setEditableDays(prev => prev + 1)}
-                    className="px-2 text-gray-600 hover:bg-gray-100 rounded-r cursor-pointer"
-                  >
-                    +
-                  </div>
-                </div>
-              ) : (
-                <p className="font-medium">{days} day{days > 1 ? 's' : ''}</p>
-              )}
-            </div>
+  {/* Days Field - Improved with blank state */}
+  <div className="bg-[#c8fcd5e7] p-3 rounded-lg">
+    <label className="block text-xs text-gray-900 mb-1">Duration</label>
+    {isEditing ? (
+      <div className="flex items-center h-[36px] bg-white border border-gray-300 rounded overflow-hidden focus-within:ring-1 focus-within:ring-green-500 focus-within:border-green-500">
+        <button 
+          type="button"
+          onClick={() => setEditableDays(prev => Math.max(1, prev === "" ? 0 : parseInt(prev) - 1))}
+          className="px-2 text-gray-600 hover:bg-gray-100 h-full flex items-center"
+        >
+          -
+        </button>
+        <input
+          type="number"
+          min="1"
+          value={editableDays}
+          onChange={(e) => {
+            const value = e.target.value;
+            setEditableDays(value === "" ? "" : Math.max(1, parseInt(value) || 1));
+          }}
+          onBlur={(e) => {
+            if (e.target.value === "" || e.target.value === "0") {
+              setEditableDays(1);
+            }
+          }}
+          className="flex-1 text-center border-x border-gray-300 text-sm h-full w-12 focus:outline-none font-medium text-gray-900"
+        />
+        <button
+          type="button"
+          onClick={() => setEditableDays(prev => (prev === "" ? 2 : parseInt(prev) + 1))}
+          className="px-2 text-gray-600 hover:bg-gray-100 h-full flex items-center"
+        >
+          +
+        </button>
+      </div>
+    ) : (
+      <p className="font-medium text-sm h-[36px] flex items-center text-gray-900">
+        {days} day{days > 1 ? 's' : ''}
+      </p>
+    )}
+  </div>
 
-            {/* Count Field */}
-            <div className="bg-[#c8fcd5e7] p-3 rounded-lg">
-              <label className="block text-xs text-gray-900 mb-1">
-                {category === 'couple' ? 'Couples' : 'People'}
-              </label>
-              {isEditing ? (
-                <div className="flex items-center">
-                  <div 
-                    onClick={() => setEditableCount(prev => Math.max(1, prev - 1))}
-                    className="px-2 text-gray-600 hover:bg-gray-100 rounded-l cursor-pointer"
-                  >
-                    -
-                  </div>
-                  <input
-                    type="number"
-                    min="1"
-                    value={editableCount}
-                    onChange={(e) => setEditableCount(Math.max(1, parseInt(e.target.value) || 1))}
-                    className="flex-1 text-center border-x border-gray-300 text-sm w-12"
-                  />
-                  <div 
-                    onClick={() => setEditableCount(prev => prev + 1)}
-                    className="px-2 text-gray-600 hover:bg-gray-100 rounded-r cursor-pointer"
-                  >
-                    +
-                  </div>
-                </div>
-              ) : (
-                <p className="font-medium">{count} {category === 'couple' ? 'couples' : 'people'}</p>
-              )}
-            </div>
-          </div>
+  {/* Count Field - Improved with blank state */}
+  <div className="bg-[#c8fcd5e7] p-3 rounded-lg">
+    <label className="block text-xs text-gray-900 mb-1">
+      {category === 'couple' ? 'Couples' : 'People'}
+    </label>
+    {isEditing ? (
+      <div className="flex items-center h-[36px] bg-white border border-gray-300 rounded overflow-hidden focus-within:ring-1 focus-within:ring-green-500 focus-within:border-green-500">
+        <button 
+          type="button"
+          onClick={() => setEditableCount(prev => Math.max(1, prev === "" ? 0 : parseInt(prev) - 1))}
+          className="px-2 text-gray-600 hover:bg-gray-100 h-full flex items-center"
+        >
+          -
+        </button>
+        <input
+          type="number"
+          min="1"
+          value={editableCount}
+          onChange={(e) => {
+            const value = e.target.value;
+            setEditableCount(value === "" ? "" : Math.max(1, parseInt(value) || 1));
+          }}
+          onBlur={(e) => {
+            if (e.target.value === "" || e.target.value === "0") {
+              setEditableCount(1);
+            }
+          }}
+          className="flex-1 text-center border-x border-gray-300 text-sm h-full w-12 focus:outline-none font-medium text-gray-900"
+        />
+        <button
+          type="button"
+          onClick={() => setEditableCount(prev => (prev === "" ? 2 : parseInt(prev) + 1))}
+          className="px-2 text-gray-600 hover:bg-gray-100 h-full flex items-center"
+        >
+          +
+        </button>
+      </div>
+    ) : (
+      <p className="font-medium text-sm h-[36px] flex items-center text-gray-900">
+        {count} {category === 'couple' 
+          ? count === 1 ? 'couple' : 'couples'
+          : count === 1 ? 'person' : 'people'}
+      </p>
+    )}
+  </div>
+</div>
         </div>
       </div>
 

@@ -3,26 +3,30 @@ import { motion } from 'framer-motion';
 import { Star, MapPin, Clock, Award, User } from 'lucide-react';
 
 const TrekGuideCard = ({ guide, trekId, individuals = 1 }) => {
-  // Safely find the trek package with proper null checks
   const trekPackage = Array.isArray(guide.trekPackages)
-    ? guide.trekPackages.find(pkg => {
-        // Check if both IDs exist before comparing
-        if (!pkg?.trekId || !trekId) return false;
-        return pkg.trekId.toString() === trekId.toString();
-      })
+    ? guide.trekPackages.find(pkg => pkg?.trekId?.toString() === trekId?.toString())
     : null;
 
-  // Set default values with proper fallbacks
-  const pricePerPerson = trekPackage?.price ?? guide.price?.individual ?? 0;
-  const duration = trekPackage?.duration ?? guide.duration ?? 'N/A';
+  const pricePerPerson = trekPackage?.price ?? 0;
+  const duration = trekPackage?.duration ?? 'N/A';
   const totalPrice = pricePerPerson * individuals;
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      whileHover={{ scale: 1.01 }}
+      transition={{
+        duration: 0.2,
+        ease: [0.25, 0.8, 0.25, 1]
+      }}
+      whileHover={{
+        scale: 1.02,
+        transition: {
+          type: 'spring',
+          stiffness: 250,
+          damping: 18
+        }
+      }}
       className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 hover:shadow-lg transition-all"
     >
       <div className="flex flex-col md:flex-row">
@@ -76,9 +80,7 @@ const TrekGuideCard = ({ guide, trekId, individuals = 1 }) => {
               </div>
 
               <div className="mt-4 pt-4 border-t border-gray-100 flex justify-between items-start">
-                <div>
-
-                </div>
+                <div></div>
                 <div className="text-right">
                   <div className="inline-flex flex-col items-end bg-green-50 px-3 py-2 rounded-lg">
                     <div className="flex items-center gap-2">
