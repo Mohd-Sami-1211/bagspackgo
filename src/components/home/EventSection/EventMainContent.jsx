@@ -5,7 +5,7 @@ import { X, Check, ChevronDown, ChevronUp, RefreshCcw, ArrowDown } from 'lucide-
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import EventCard from '@/components/home/EventSection/EventCard';
-import data from '@/data/data.json'; 
+import data from '@/data/data.json';
 
 const EventMainContent = () => {
   // State for events and filters
