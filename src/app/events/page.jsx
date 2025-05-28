@@ -1,5 +1,5 @@
 'use client';
-import EventMainContent from '@/components/Home/EventSection/EventMainContent';
+import EventMainContent from '@/components/home/EventSection/EventMainContent';
 import { motion } from 'framer-motion';
 
 export default function EventsPage() {
