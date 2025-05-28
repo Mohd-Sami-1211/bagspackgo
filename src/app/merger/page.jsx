@@ -1,7 +1,7 @@
-// app/community/page.jsx
+
 'use client';
 
-export default function CommunityPage() {
+export default function MergerPage() {
   return (
     <div>
       <h1>Merger Page</h1>

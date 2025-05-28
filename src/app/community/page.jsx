@@ -1,4 +1,4 @@
-// app/community/page.jsx
+
 'use client';
 
 export default function CommunityPage() {
