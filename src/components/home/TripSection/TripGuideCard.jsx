@@ -14,10 +14,20 @@ const GuideCard = ({ guide, category, days, count = 1 }) => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      whileHover={{ scale: 1.01 }}
+      transition={{
+        duration: 0.2,
+        ease: [0.25, 0.8, 0.25, 1]
+      }}
+      whileHover={{
+        scale: 1.02,
+        transition: {
+          type: 'spring',
+          stiffness: 250,
+          damping: 18
+        }
+      }}
       className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 hover:shadow-lg transition-all"
     >
       <div className="flex flex-col md:flex-row">

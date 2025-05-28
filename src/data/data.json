@@ -1975,5 +1975,280 @@
         }
       ]
     }
+  ],
+  "events": [
+    {
+      "name": "Heavenly Hike - Tarsar Escape",
+      "date": "2025-06-12",
+      "duration": "5 days",
+      "price": 7500,
+      "type": "Trekking",
+      "eventId": "KAS-001",
+      "rating": 4.6,
+      "bookings": 214,
+      "slotsLeft": 26,
+      "destinationId": "kashmir"
+    },
+    {
+      "name": "Frozen Trails - Lidder Expedition",
+      "date": "2025-02-10",
+      "duration": "6 days",
+      "price": 9200,
+      "type": "Trekking",
+      "eventId": "KAS-002",
+      "destinationId": "kashmir"
+    },
+    {
+      "name": "Gurez Glow - Border Valley Trek",
+      "date": "2025-10-22",
+      "duration": "5 days",
+      "price": 8100,
+      "type": "Trekking",
+      "eventId": "KAS-003",
+      "destinationId": "kashmir"
+    },
+    {
+      "name": "Snow Safari - Gulmarg Rush",
+      "date": "2025-01-20",
+      "duration": "4 days",
+      "price": 8200,
+      "type": "Snow Adventure",
+      "eventId": "KAS-004",
+      "destinationId": "kashmir"
+    },
+    {
+      "name": "Nomad Nights - Sonmarg Camp",
+      "date": "2025-08-18",
+      "duration": "3 days",
+      "price": 6700,
+      "type": "Camping",
+      "eventId": "KAS-005",
+      "destinationId": "kashmir"
+    },
+    {
+      "name": "Silk Route Cyclothon",
+      "date": "2025-07-09",
+      "duration": "1 day",
+      "price": 1500,
+      "type": "Cycling",
+      "eventId": "KAS-006",
+      "destinationId": "kashmir"
+    },
+    {
+      "name": "Shikara Serenity Festival",
+      "date": "2025-09-15",
+      "duration": "2 days",
+      "price": 3500,
+      "type": "Cultural Ride",
+      "eventId": "KAS-007",
+      "destinationId": "kashmir"
+    },
+    {
+      "name": "Valley Bloom - Tulip Festival Trek",
+      "date": "2025-04-05",
+      "duration": "3 days",
+      "price": 4600,
+      "type": "Festival Walk",
+      "eventId": "KAS-008",
+      "destinationId": "kashmir"
+    },
+    {
+      "name": "Kashmiri Cuisine Trails",
+      "date": "2025-09-05",
+      "duration": "2 days",
+      "price": 2900,
+      "type": "Food Walk",
+      "eventId": "KAS-009",
+      "destinationId": "kashmir"
+    },
+    {
+      "name": "Heritage Lantern Nights",
+      "date": "2025-12-14",
+      "duration": "2 days",
+      "price": 3200,
+      "type": "Night Heritage Walk",
+      "eventId": "KAS-010",
+      "destinationId": "kashmir"
+    },
+    {
+      "name": "Mystic Meadows - Valley Bloom Trek",
+      "date": "2025-07-01",
+      "duration": "6 days",
+      "price": 7800,
+      "type": "Trekking",
+      "eventId": "UTK-001",
+      "destinationId": "uttarakhand"
+    },
+    {
+      "name": "Char Dham Cyclo-Yatra",
+      "date": "2025-10-10",
+      "duration": "7 days",
+      "price": 10500,
+      "type": "Spiritual Cycling",
+      "eventId": "UTK-002",
+      "destinationId": "uttarakhand"
+    },
+    {
+      "name": "Sky Spirits - Paragliding Fest",
+      "date": "2025-09-20",
+      "duration": "3 days",
+      "price": 5600,
+      "type": "Paragliding",
+      "eventId": "UTK-003",
+      "destinationId": "uttarakhand"
+    },
+    {
+      "name": "Camp Ganga Blaze",
+      "date": "2025-05-25",
+      "duration": "4 days",
+      "price": 5200,
+      "type": "Camping",
+      "eventId": "UTK-004",
+      "destinationId": "uttarakhand"
+    },
+    {
+      "name": "Sattal Serenity Retreat",
+      "date": "2025-11-15",
+      "duration": "3 days",
+      "price": 3300,
+      "type": "Nature Walk",
+      "eventId": "UTK-005",
+      "destinationId": "uttarakhand"
+    },
+    {
+      "name": "Ganga Aarti Illumina",
+      "date": "2025-08-10",
+      "duration": "2 days",
+      "price": 2700,
+      "type": "Spiritual",
+      "eventId": "UTK-006",
+      "destinationId": "uttarakhand"
+    },
+    {
+      "name": "Kumaoni Culinary Fiesta",
+      "date": "2025-06-30",
+      "duration": "1 day",
+      "price": 1600,
+      "type": "Food Fest",
+      "eventId": "UTK-007",
+      "destinationId": "uttarakhand"
+    },
+    {
+      "name": "Nanda Devi Alpine Run",
+      "date": "2025-08-25",
+      "duration": "1 day",
+      "price": 2100,
+      "type": "Marathon",
+      "eventId": "UTK-008",
+      "destinationId": "uttarakhand"
+    },
+    {
+      "name": "Yoga Under the Himalayas",
+      "date": "2025-09-10",
+      "duration": "5 days",
+      "price": 4300,
+      "type": "Wellness",
+      "eventId": "UTK-009",
+      "destinationId": "uttarakhand"
+    },
+    {
+      "name": "Haunted Hills Night Trail",
+      "date": "2025-10-31",
+      "duration": "1 night",
+      "price": 1200,
+      "type": "Adventure Walk",
+      "eventId": "UTK-010",
+      "destinationId": "uttarakhand"
+    },
+    {
+      "name": "Sunset Vibe - Beach Music Fest",
+      "date": "2025-12-29",
+      "duration": "3 days",
+      "price": 4500,
+      "type": "Music Festival",
+      "eventId": "GOA-001",
+      "destinationId": "goa"
+    },
+    {
+      "name": "Sail & Dine - Yacht Cruise",
+      "date": "2025-07-10",
+      "duration": "1 day",
+      "price": 3800,
+      "type": "Luxury Cruise",
+      "eventId": "GOA-002",
+      "destinationId": "goa"
+    },
+    {
+      "name": "Dudhsagar Jungle Chase",
+      "date": "2025-08-14",
+      "duration": "1 day",
+      "price": 2900,
+      "type": "Trekking",
+      "eventId": "GOA-003",
+      "destinationId": "goa"
+    },
+    {
+      "name": "Underwater Odyssey",
+      "date": "2025-06-21",
+      "duration": "1 day",
+      "price": 5500,
+      "type": "Scuba Diving",
+      "eventId": "GOA-004",
+      "destinationId": "goa"
+    },
+    {
+      "name": "Portuguese Pathway Heritage Walk",
+      "date": "2025-11-04",
+      "duration": "1 day",
+      "price": 1900,
+      "type": "Cultural Tour",
+      "eventId": "GOA-005",
+      "destinationId": "goa"
+    },
+    {
+      "name": "Anjuna Art Carnival",
+      "date": "2025-10-15",
+      "duration": "2 days",
+      "price": 2500,
+      "type": "Art & Culture",
+      "eventId": "GOA-006",
+      "destinationId": "goa"
+    },
+    {
+      "name": "Palolem Sunset Kayak",
+      "date": "2025-09-18",
+      "duration": "1 day",
+      "price": 2000,
+      "type": "Kayaking",
+      "eventId": "GOA-007",
+      "destinationId": "goa"
+    },
+    {
+      "name": "Goan Spice Trails",
+      "date": "2025-07-25",
+      "duration": "1 day",
+      "price": 1700,
+      "type": "Culinary Tour",
+      "eventId": "GOA-008",
+      "destinationId": "goa"
+    },
+    {
+      "name": "Beach Zumba Bash",
+      "date": "2025-11-20",
+      "duration": "2 days",
+      "price": 2100,
+      "type": "Fitness",
+      "eventId": "GOA-009",
+      "destinationId": "goa"
+    },
+    {
+      "name": "Starlight Camping Fiesta",
+      "date": "2025-12-05",
+      "duration": "2 nights",
+      "price": 3400,
+      "type": "Camping",
+      "eventId": "GOA-010",
+      "destinationId": "goa"
+    }
   ]
 }

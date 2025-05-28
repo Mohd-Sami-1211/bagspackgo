@@ -1,17 +1,17 @@
 // components/common/SecondaryNav.jsx
 'use client';
-import { Mountain, Globe, Hotel, Plane, Globe2 } from 'lucide-react';
+import { Mountain, Users, Plane, Globe2, CalendarDays } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useRef, useState, useEffect } from 'react';
 
 const tabs = [
-  { label: 'Trip', icon: <Globe size={18} />, path: '/trip' },
+  { label: 'Trip', icon: <Plane size={18} />, path: '/trip' },
   { label: 'Trek', icon: <Mountain size={18} />, path: '/trek' },
-  { label: 'Hotels', icon: <Hotel size={18} />, path: '/hotels' },
-  { label: 'Flights', icon: <Plane size={18} />, path: '/flights' },
-  { label: 'Merger', icon: <Globe2 size={18} />, path: '/merger' },
+  { label: 'Merger', icon: <Users size={18} />, path: '/merger' },
+  { label: 'Events', icon: <CalendarDays size={18} />, path: '/events' },
+  { label: 'Community', icon: <Globe2 size={18} />, path: '/community' },
 ];
 
 export default function SecondaryNav() {

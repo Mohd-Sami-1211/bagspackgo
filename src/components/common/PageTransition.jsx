@@ -13,9 +13,9 @@ export default function PageTransition({ children, keyProp }) {
       await Promise.all([
         router.prefetch('/trip'),
         router.prefetch('/trek'),
-        router.prefetch('/hotels'),
-        router.prefetch('/flights'),
-        router.prefetch('/merger')
+        router.prefetch('/merger'),
+        router.prefetch('/events'),
+        router.prefetch('/community')
       ]);
     };
     prefetchRoutes();
