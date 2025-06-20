@@ -1,31 +1,227 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Check, ChevronDown, ChevronUp, RefreshCcw, ArrowDown } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import EventCard from '@/components/home/EventSection/EventCard';
 import data from '@/data/data.json';
+import { Search, Calendar, User, Tag, MapPin } from 'lucide-react';
+import GuideCard from '@/components/home/EventSection/GuideCard';
 
 const EventMainContent = () => {
   // State for events and filters
   const [filteredEvents, setFilteredEvents] = useState([]);
   const [displayedEvents, setDisplayedEvents] = useState([]);
   const [displayCount, setDisplayCount] = useState(6);
-
+  const [typeSearch, setTypeSearch] = useState('');
+  const [destinationSearch, setDestinationSearch] = useState('');
+  const [organizerSearch, setOrganizerSearch] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeSearch, setActiveSearch] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  
   // Filter states
   const [filters, setFilters] = useState({
     destination: [],
     organizer: [],
     date: null,
     dateRange: { start: null, end: null },
-    category: [],
+    types: [],
     sort: null
   });
 
   const [tempFilters, setTempFilters] = useState({ ...filters });
   const [openDropdown, setOpenDropdown] = useState(null);
   const [activeDateField, setActiveDateField] = useState('start');
+
+  // Priority scoring function (reusable)
+  const getPriorityScore = (text, query) => {
+    if (!text || !query) return 0;
+    
+    const textStr = String(text);
+    const queryStr = String(query);
+    
+    const lowerText = textStr.toLowerCase();
+    const lowerQuery = queryStr.toLowerCase();
+    
+    if (lowerText.startsWith(lowerQuery)) return 3;
+    if (lowerText.includes(lowerQuery)) return 2;
+    if (lowerText.split(' ').some(word => word.startsWith(lowerQuery))) return 1;
+    return 0;
+  };
+
+  // Unified search function with priority
+  const performSearch = (query) => {
+    if (!query || typeof query.trim !== 'function' || !query.trim()) {
+      resetSearch();
+      return;
+    }
+    
+    const trimmedQuery = query.trim();
+    setSearchQuery(trimmedQuery);
+    setActiveSearch(true);
+    setShowSuggestions(false);
+    
+    // Search both events and guides
+    const foundEvents = getFilteredEvents(trimmedQuery);
+    const foundGuides = getFilteredGuides(trimmedQuery);
+    
+    // Combine results with type indicators
+    const combinedResults = [
+      ...foundEvents.map(event => ({ ...event, type: 'event' })),
+      ...foundGuides.map(guide => ({ ...guide, type: 'guide' }))
+    ].sort((a, b) => b.priority - a.priority);
+    
+    setDisplayedEvents(combinedResults);
+  };
+
+  // Reset search to original state
+  const resetSearch = () => {
+    setSearchQuery('');
+    setActiveSearch(false);
+    setShowSuggestions(false);
+    setDisplayedEvents(filteredEvents.slice(0, displayCount));
+  };
+
+  // Enhanced suggestions generator
+  const getPrioritySuggestions = useMemo(() => {
+    const generateSuggestions = (query) => {
+      if (!query || !query.trim()) return [];
+      
+      const q = query.toLowerCase();
+      const categories = [
+        {
+          name: 'Events',
+          data: data.events || [],
+          fields: [
+            { name: 'name', weight: 3 },
+            { name: 'title', weight: 2 },
+            { name: 'type', weight: 1 }
+          ],
+          icon: <Calendar className="mr-2 text-green-500" size={16} />
+        },
+        {
+          name: 'Guides',
+          data: data.guides || [],
+          fields: [
+            { name: 'name', weight: 3 }
+          ],
+          icon: <User className="mr-2 text-green-500" size={16} />
+        },
+        {
+          name: 'Destinations',
+          data: data.destinations || [],
+          fields: [
+            { name: 'label', weight: 3 }
+          ],
+          icon: <MapPin className="mr-2 text-green-500" size={16} />
+        },
+        {
+          name: 'Event Types',
+          data: Array.from(new Set((data.events || []).map(e => e.type))),
+          fields: [
+            { name: 'type', weight: 2 }
+          ],
+          icon: <Tag className="mr-2 text-green-500" size={16} />
+        }
+      ];
+
+      return categories.map(category => {
+        const items = category.data
+          .map(item => {
+            let priority = 0;
+            
+            category.fields.forEach(field => {
+              const value = item[field.name] || item;
+              priority += getPriorityScore(value, q) * field.weight;
+            });
+
+            return { ...item, priority, type: category.name.toLowerCase() };
+          })
+          .filter(item => item.priority > 0)
+          .sort((a, b) => b.priority - a.priority)
+          .slice(0, 5);
+
+        return items.length > 0 ? {
+          category: category.name,
+          items,
+          icon: category.icon
+        } : null;
+      }).filter(Boolean);
+    };
+
+    return generateSuggestions;
+  }, [data]);
+
+  // Filter events with enhanced priority
+  const getFilteredEvents = useMemo(() => {
+    const filterEvents = (query) => {
+      if (!query || !query.trim()) return [];
+      
+      const q = query.toLowerCase();
+      return (data.events || [])
+        .map(event => {
+          let priority = 0;
+          
+          // Direct matches
+          priority += getPriorityScore(event?.name, q) * 3;
+          priority += getPriorityScore(event?.title, q) * 3;
+          priority += getPriorityScore(event?.type, q) * 2;
+          
+          // Destination matches
+          if (event.destination) {
+            const destination = (data.destinations || [])
+              .find(d => d.value === event.destination);
+            if (destination) {
+              // Exact match gets highest priority
+              if (destination.label.toLowerCase() === q) {
+                priority += 20;
+              }
+              // Partial match
+              else if (destination.label.toLowerCase().includes(q)) {
+                priority += 10;
+              }
+              // Check destination keywords if they exist
+              else if (destination.keywords?.some(kw => kw.toLowerCase().includes(q))) {
+                priority += 8;
+              }
+            }
+          }
+          
+          // Guide matches
+          if (event.guideId) {
+            const guide = (data.guides || [])
+              .find(g => g.id === event.guideId);
+            priority += getPriorityScore(guide?.name, q) * 2;
+          }
+          
+          return { ...event, priority };
+        })
+        .filter(event => event.priority > 0)
+        .sort((a, b) => b.priority - a.priority);
+    };
+
+    return filterEvents;
+  }, [data]);
+
+  // Filter guides with priority
+  const getFilteredGuides = useMemo(() => {
+    const filterGuides = (query) => {
+      if (!query || !query.trim()) return [];
+      
+      const q = query.toLowerCase();
+      return (data.guides || [])
+        .map(guide => ({
+          ...guide,
+          priority: getPriorityScore(guide?.name, q) * 3
+        }))
+        .filter(guide => guide.priority > 0)
+        .sort((a, b) => b.priority - a.priority);
+    };
+
+    return filterGuides;
+  }, [data]);
 
   // Apply filters when component mounts or filters change
   useEffect(() => {
@@ -46,9 +242,9 @@ const EventMainContent = () => {
     }
 
     // Category filter
-    if (filters.category.length > 0) {
+    if ((filters.type || []).length > 0) {
       results = results.filter(event => 
-        filters.category.includes(event.type)
+        (filters.type || []).includes(event.type)
       );
     }
 
@@ -126,7 +322,6 @@ const EventMainContent = () => {
           break;
       }
     } else {
-      // Default sort when no filters are applied
       results.sort((a, b) => {
         if (a.slotsLeft !== b.slotsLeft) {
           return a.slotsLeft - b.slotsLeft;
@@ -147,10 +342,10 @@ const EventMainContent = () => {
 
     if (hasFilters) {
       setDisplayedEvents(filteredEvents);
-    } else {
+    } else if (!activeSearch) {
       setDisplayedEvents(filteredEvents.slice(0, displayCount));
     }
-  }, [filteredEvents, filters, displayCount]);
+  }, [filteredEvents, filters, displayCount, activeSearch]);
 
   // Toggle dropdown
   const toggleDropdown = (dropdown) => {
@@ -232,6 +427,7 @@ const EventMainContent = () => {
       sort: null
     });
     setDisplayCount(6);
+    resetSearch();
   };
 
   // Get filtered organizers based on selected destinations
@@ -264,6 +460,22 @@ const EventMainContent = () => {
 
   const loadMoreEvents = () => {
     setDisplayCount(prev => prev + 6);
+  };
+
+  // Event handlers
+  const handleSuggestionClick = (value) => {
+    setSearchQuery(value);
+    performSearch(value);
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      performSearch(searchQuery);
+    }
+  };
+
+  const handleSearchClick = () => {
+    performSearch(searchQuery);
   };
 
   const hasFilters = Object.values(filters).some(filter => 
@@ -301,6 +513,7 @@ const EventMainContent = () => {
                       onClick={(e) => {
                         e.stopPropagation();
                         clearAppliedFilter('destination');
+                        setDestinationSearch('');
                       }}
                       className="text-xs text-red-500 mr-2 hover:underline"
                     >
@@ -325,30 +538,39 @@ const EventMainContent = () => {
                         type="text"
                         placeholder="Search destinations..."
                         className="w-full p-2 text-sm border border-gray-300 rounded-md mb-2 focus:ring-1 focus:ring-green-400 focus:border-green-400 focus:outline-none"
+                        value={destinationSearch}
+                        onChange={(e) => setDestinationSearch(e.target.value)}
                       />
                       <div className="max-h-48 overflow-y-auto">
-                        {data.destinations.map(dest => (
-                          <div 
-                            key={dest.value} 
-                            className={`flex items-center p-2 hover:bg-[#d1fae5] rounded-md cursor-pointer ${tempFilters.destination.includes(dest.value) ? 'bg-[#a7f3d0]' : ''}`}
-                            onClick={() => handleTempFilterChange('destination', dest.value)}
-                          >
-                            <div className="flex items-center">
-                              {tempFilters.destination.includes(dest.value) ? (
-                                <Check className="mr-2 text-green-600" size={16} />
-                              ) : (
-                                <div className="w-4 h-4 mr-2 border border-gray-300 rounded-sm" />
-                              )}
-                              {dest.label}
+                        {data.destinations
+                          .filter(dest => 
+                            dest.label.toLowerCase().includes(destinationSearch.toLowerCase())
+                          )
+                          .map(dest => (
+                            <div 
+                              key={dest.value} 
+                              className={`flex items-center p-2 hover:bg-[#d1fae5] rounded-md cursor-pointer ${tempFilters.destination.includes(dest.value) ? 'bg-[#a7f3d0]' : ''}`}
+                              onClick={() => handleTempFilterChange('destination', dest.value)}
+                            >
+                              <div className="flex items-center">
+                                {tempFilters.destination.includes(dest.value) ? (
+                                  <Check className="mr-2 text-green-600" size={16} />
+                                ) : (
+                                  <div className="w-4 h-4 mr-2 border border-gray-300 rounded-sm" />
+                                )}
+                                {dest.label}
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          ))}
                       </div>
                     </div>
                     <div className="flex justify-end gap-2 p-2 border-t border-gray-200">
                       <button 
                         className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded-md"
-                        onClick={() => setOpenDropdown(null)}
+                        onClick={() => {
+                          setOpenDropdown(null);
+                          setDestinationSearch('');
+                        }}
                       >
                         Cancel
                       </button>
@@ -365,18 +587,19 @@ const EventMainContent = () => {
             </div>
 
             {/* Organizer Filter */}
-            <div className={`mb-6 shadow-sm p-3 rounded-lg ${filters.organizer.length > 0 ? 'bg-green-300' : ''}`}>
+            <div className={`mb-6 shadow-sm p-3 rounded-lg ${(filters.organizer || []).length > 0 ? 'bg-green-50' : ''}`}>
               <div 
                 className="flex justify-between items-center cursor-pointer"
                 onClick={() => toggleDropdown('organizer')}
               >
                 <h3 className="text-gray-700">Organizer</h3>
                 <div className="flex items-center">
-                  {filters.organizer.length > 0 && (
+                  {(filters.organizer || []).length > 0 && (
                     <button 
                       onClick={(e) => {
                         e.stopPropagation();
                         clearAppliedFilter('organizer');
+                        setOrganizerSearch('');
                       }}
                       className="text-xs text-red-500 mr-2 hover:underline"
                     >
@@ -401,30 +624,138 @@ const EventMainContent = () => {
                         type="text"
                         placeholder="Search organizers..."
                         className="w-full p-2 text-sm border border-gray-300 rounded-md mb-2 focus:ring-1 focus:ring-green-400 focus:border-green-400 focus:outline-none"
+                        value={organizerSearch || ''}
+                        onChange={(e) => setOrganizerSearch(e.target.value)}
                       />
                       <div className="max-h-48 overflow-y-auto">
-                        {getFilteredOrganizers().map(org => (
-                          <div 
-                            key={org.id} 
-                            className={`flex items-center p-2 hover:bg-[#d1fae5] rounded-md cursor-pointer ${tempFilters.organizer.includes(org.id) ? 'bg-[#a7f3d0]' : ''}`}
-                            onClick={() => handleTempFilterChange('organizer', org.id)}
-                          >
-                            <div className="flex items-center">
-                              {tempFilters.organizer.includes(org.id) ? (
-                                <Check className="mr-2 text-green-600" size={16} />
-                              ) : (
-                                <div className="w-4 h-4 mr-2 border border-gray-300 rounded-sm" />
-                              )}
-                              {org.name}
+                        {(getFilteredOrganizers() || [])
+                          .filter(org => {
+                            const orgName = org?.name?.toLowerCase() || '';
+                            const searchTerm = (organizerSearch || '').toLowerCase();
+                            return orgName.includes(searchTerm);
+                          })
+                          .map(org => (
+                            <div 
+                              key={org.id} 
+                              className={`flex items-center p-2 hover:bg-[#d1fae5] rounded-md cursor-pointer ${
+                                (tempFilters.organizer || []).includes(org.id) ? 'bg-[#a7f3d0]' : ''
+                              }`}
+                              onClick={() => handleTempFilterChange('organizer', org.id)}
+                            >
+                              <div className="flex items-center">
+                                {(tempFilters.organizer || []).includes(org.id) ? (
+                                  <Check className="mr-2 text-green-600" size={16} />
+                                ) : (
+                                  <div className="w-4 h-4 mr-2 border border-gray-300 rounded-sm" />
+                                )}
+                                {org?.name || 'Unknown Organizer'}
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          ))}
                       </div>
                     </div>
                     <div className="flex justify-end gap-2 p-2 border-t border-gray-200">
                       <button 
                         className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded-md"
-                        onClick={() => setOpenDropdown(null)}
+                        onClick={() => {
+                          setOpenDropdown(null);
+                          setOrganizerSearch('');
+                        }}
+                      >
+                        Cancel
+                      </button>
+                      <button 
+                        className="px-3 py-1 text-sm bg-green-500 hover:bg-green-600 text-white rounded-md"
+                        onClick={applyFilters}
+                      >
+                        Apply
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Event Type Filter */}
+            <div className={`mb-6 shadow-sm p-3 rounded-lg ${(filters.type || []).length > 0 ? 'bg-green-50' : ''}`}>
+              <div 
+                className="flex justify-between items-center cursor-pointer"
+                onClick={() => toggleDropdown('type')}
+              >
+                <h3 className="text-gray-700">Event Type</h3>
+                <div className="flex items-center">
+                  {(filters.type || []).length > 0 && (
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        clearAppliedFilter('type');
+                        setTypeSearch('');
+                      }}
+                      className="text-xs text-red-500 mr-2 hover:underline"
+                    >
+                      Clear
+                    </button>
+                  )}
+                  {openDropdown === 'type' ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                </div>
+              </div>
+              
+              <AnimatePresence>
+                {openDropdown === 'type' && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="mt-2 bg-white overflow-hidden"
+                  >
+                    <div className="p-2">
+                      <input
+                        type="text"
+                        placeholder="Search event types..."
+                        className="w-full p-2 text-sm border border-gray-300 rounded-md mb-2 focus:ring-1 focus:ring-green-400 focus:border-green-400 focus:outline-none"
+                        value={typeSearch}
+                        onChange={(e) => setTypeSearch(e.target.value)}
+                      />
+                      <div className="max-h-48 overflow-y-auto">
+                        {Array.from(new Set(data.events?.map(event => event.type) || []))
+                          .filter(type => 
+                            type && typeof type === 'string' && type.toLowerCase().includes((typeSearch || '').toLowerCase())
+                          )
+                          .sort((a, b) => a.localeCompare(b))
+                          .map(type => (
+                            <div 
+                              key={type} 
+                              className={`flex items-center p-2 hover:bg-[#d1fae5] rounded-md cursor-pointer ${(tempFilters.type || []).includes(type) ? 'bg-[#a7f3d0]' : ''}`}
+                              onClick={() => {
+                                setTempFilters(prev => {
+                                  const currentTypes = prev.type || [];
+                                  const newTypes = currentTypes.includes(type)
+                                    ? currentTypes.filter(t => t !== type)
+                                    : [...currentTypes, type];
+                                  return {...prev, type: newTypes};
+                                });
+                              }}
+                            >
+                              <div className="flex items-center">
+                                {(tempFilters.type || []).includes(type) ? (
+                                  <Check className="mr-2 text-green-600" size={16} />
+                                ) : (
+                                  <div className="w-4 h-4 mr-2 border border-gray-300 rounded-sm" />
+                                )}
+                                {type}
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-2 p-2 border-t border-gray-200">
+                      <button 
+                        className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded-md"
+                        onClick={() => {
+                          setOpenDropdown(null);
+                          setTypeSearch('');
+                        }}
                       >
                         Cancel
                       </button>
@@ -441,7 +772,7 @@ const EventMainContent = () => {
             </div>
 
             {/* Date Filter */}
-            <div className={`mb-6 shadow-sm p-3 rounded-lg ${filters.date || filters.dateRange.start || filters.dateRange.end ? 'bg-green-300' : ''}`}>
+            <div className={`mb-6 shadow-sm p-3 rounded-lg ${filters.date || filters.dateRange.start || filters.dateRange.end ? 'bg-green-50' : ''}`}>
               <div 
                 className="flex justify-between items-center cursor-pointer"
                 onClick={() => toggleDropdown('date')}
@@ -478,7 +809,7 @@ const EventMainContent = () => {
                         {['Today', 'Tomorrow', 'This Week', 'This Month'].map(option => (
                           <button
                             key={option}
-                            className={`p-2 rounded-md text-sm ${tempFilters.date === option ? 'bg-green-600 text-white' : 'bg-green-200 hover:bg-green-400'}`}
+                            className={`p-2 rounded-md text-sm ${tempFilters.date === option ? 'bg-green-600 text-white' : 'bg-green-100 hover:bg-green-200'}`}
                             onClick={() => {
                               setTempFilters(prev => ({
                                 ...prev,
@@ -522,7 +853,7 @@ const EventMainContent = () => {
                           <div className="relative">
                             <div className="flex border border-gray-300 rounded-md mb-2 h-10">
                               <div 
-                                className={`w-1/2 p-0.7 text-center cursor-pointer flex items-center justify-center ${activeDateField === 'start' ? 'bg-green-400' : ''}`}
+                                className={`w-1/2 p-0.7 text-center cursor-pointer flex items-center justify-center ${activeDateField === 'start' ? 'bg-green-100' : ''}`}
                                 onClick={() => setActiveDateField('start')}
                               >
                                 {tempFilters.dateRange.start ? (
@@ -545,7 +876,7 @@ const EventMainContent = () => {
                                 )}
                               </div>
                               <div 
-                                className={`w-1/2 p-0.7 text-center cursor-pointer flex items-center justify-center ${activeDateField === 'end' ? 'bg-green-400' : ''}`}
+                                className={`w-1/2 p-0.7 text-center cursor-pointer flex items-center justify-center ${activeDateField === 'end' ? 'bg-green-100' : ''}`}
                                 onClick={() => setActiveDateField('end')}
                               >
                                 {tempFilters.dateRange.end ? (
@@ -606,79 +937,8 @@ const EventMainContent = () => {
               </AnimatePresence>
             </div>
 
-            {/* Category Filter */}
-            <div className={`mb-6 shadow-sm p-3 rounded-lg ${filters.category.length > 0 ? 'bg-green-300' : ''}`}>
-              <div 
-                className="flex justify-between items-center cursor-pointer"
-                onClick={() => toggleDropdown('category')}
-              >
-                <h3 className="text-gray-700">Category</h3>
-                <div className="flex items-center">
-                  {filters.category.length > 0 && (
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        clearAppliedFilter('category');
-                      }}
-                      className="text-xs text-red-500 mr-2 hover:underline"
-                    >
-                      Clear
-                    </button>
-                  )}
-                  {openDropdown === 'category' ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-                </div>
-              </div>
-              
-              <AnimatePresence>
-                {openDropdown === 'category' && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="mt-2 bg-white overflow-hidden"
-                  >
-                    <div className="p-2">
-                      <div className="max-h-48 overflow-y-auto">
-                        {data.categories.map(cat => (
-                          <div 
-                            key={cat.value} 
-                            className={`flex items-center p-2 hover:bg-[#d1fae5] rounded-md cursor-pointer ${tempFilters.category.includes(cat.value) ? 'bg-[#a7f3d0]' : ''}`}
-                            onClick={() => handleTempFilterChange('category', cat.value)}
-                          >
-                            <div className="flex items-center">
-                              {tempFilters.category.includes(cat.value) ? (
-                                <Check className="mr-2 text-green-600" size={16} />
-                              ) : (
-                                <div className="w-4 h-4 mr-2 border border-gray-300 rounded-sm" />
-                              )}
-                              {cat.label}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="flex justify-end gap-2 p-2 border-t border-gray-200">
-                      <button 
-                        className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded-md"
-                        onClick={() => setOpenDropdown(null)}
-                      >
-                        Cancel
-                      </button>
-                      <button 
-                        className="px-3 py-1 text-sm bg-green-500 hover:bg-green-600 text-white rounded-md"
-                        onClick={applyFilters}
-                      >
-                        Apply
-                      </button>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
             {/* Sort Filter */}
-            <div className={`mb-6 shadow-sm p-3 rounded-lg ${filters.sort ? 'bg-green-300' : ''}`}>
+            <div className={`mb-6 shadow-sm p-3 rounded-lg ${filters.sort ? 'bg-green-50' : ''}`}>
               <div 
                 className="flex justify-between items-center cursor-pointer"
                 onClick={() => toggleDropdown('sort')}
@@ -757,140 +1017,258 @@ const EventMainContent = () => {
 
             {/* Reset All Button */}
             <button
-              className="w-full py-2 bg-green-200 hover:text-white text-gray-700 rounded-md shadow hover:bg-red-500 transition-colors flex items-center justify-center"
+              className="w-full py-2 bg-green-100 hover:text-white text-gray-700 rounded-md shadow hover:bg-red-500 transition-colors flex items-center justify-center"
               onClick={resetAllFilters}
             >
               <RefreshCcw className="mr-2" size={16} />
               Reset All Filters
             </button>
-          </div>
+        </div>
         </div>
 
         {/* Right Content Section (75%) */}
-        <div className="w-3/4 p-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">
-            {hasFilters ? 'Your Events' : 'Top Events'}
-          </h2>
-          
-          {/* Applied Filters section */}
-          {hasFilters && (
-            <div className="mb-6">
-              <div className="flex flex-wrap gap-2">
-                {filters.destination.map(dest => (
-                  <div 
-                    key={`dest-${dest}`}
-                    className="flex items-center bg-green-500 text-white px-3 py-1 rounded-full text-sm"
-                  >
-                    {getDestinationLabel(dest)}
-                    <X 
-                      className="ml-2 cursor-pointer hover:text-red-300" 
-                      size={14}
-                      onClick={() => clearAppliedFilter('destination', dest)}
-                    />
-                  </div>
-                ))}
-                
-                {filters.organizer.map(org => (
-                  <div 
-                    key={`org-${org}`}
-                    className="flex items-center bg-green-500 text-white px-3 py-1 rounded-full text-sm"
-                  >
-                    {getOrganizerName(org)}
-                    <X 
-                      className="ml-2 cursor-pointer hover:text-red-300" 
-                      size={14}
-                      onClick={() => clearAppliedFilter('organizer', org)}
-                    />
-                  </div>
-                ))}
-                
-                {filters.date && (
-                  <div className="flex items-center bg-green-500 text-white px-3 py-1 rounded-full text-sm">
-                    {filters.date}
-                    <X 
-                      className="ml-2 cursor-pointer hover:text-red-300" 
-                      size={14}
-                      onClick={() => clearAppliedFilter('date')}
-                    />
-                  </div>
+        <div className="w-3/4 p-6 -mt-1.5">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-bold text-gray-800">
+              {activeSearch ? 'Search Results' : hasFilters ? 'Your Events' : 'Top Events'}
+            </h2>
+            
+            {/* Enhanced Search Bar */}
+            <div className="relative w-1/2">
+              <div className="relative flex">
+                <input
+                  type="text"
+                  placeholder="Search events, guides, destinations, types..."
+                  className="w-full p-2 pl-4 pr-10 border border-gray-300 rounded-full focus:ring-1 focus:ring-green-400 focus:border-green-400 focus:outline-none"
+                  value={searchQuery || ''}
+                  onChange={(e) => {
+                    const value = e.target.value || '';
+                    setSearchQuery(value);
+                    setActiveSearch(false);
+                    setShowSuggestions(value.length > 0);
+                  }}
+                  onFocus={() => setShowSuggestions(searchQuery.length > 0)}
+                  onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                  onKeyDown={handleKeyDown}
+                />
+                {searchQuery && (
+                  <X 
+                    className="absolute right-8 top-2.5 text-gray-400 cursor-pointer hover:text-gray-600"
+                    size={18}
+                    onClick={resetSearch}
+                  />
                 )}
-                
-                {(filters.dateRange.start || filters.dateRange.end) && (
-                  <div className="flex items-center bg-green-500 text-white px-3 py-1 rounded-full text-sm">
-                    {filters.dateRange.start ? formatDate(filters.dateRange.start) : '...'}
-                    {' → '}
-                    {filters.dateRange.end ? formatDate(filters.dateRange.end) : '...'}
-                    <X 
-                      className="ml-2 cursor-pointer hover:text-red-300" 
-                      size={14}
-                      onClick={() => clearAppliedFilter('dateRange')}
-                    />
-                  </div>
-                )}
-                
-                {filters.category.map(cat => (
-                  <div 
-                    key={`cat-${cat}`}
-                    className="flex items-center bg-green-500 text-white px-3 py-1 rounded-full text-sm"
-                  >
-                    {data.categories.find(c => c.value === cat)?.label || cat}
-                    <X 
-                      className="ml-2 cursor-pointer hover:text-red-300" 
-                      size={14}
-                      onClick={() => clearAppliedFilter('category', cat)}
-                    />
-                  </div>
-                ))}
-                
-                {filters.sort && (
-                  <div className="flex items-center bg-green-500 text-white px-3 py-1 rounded-full text-sm">
-                    {filters.sort}
-                    <X 
-                      className="ml-2 cursor-pointer hover:text-red-300" 
-                      size={14}
-                      onClick={() => clearAppliedFilter('sort')}
-                    />
-                  </div>
-                )}
+                <Search 
+                  className="absolute right-3 top-2.5 text-gray-400 cursor-pointer hover:text-gray-600" 
+                  size={18}
+                  onClick={handleSearchClick}
+                />
               </div>
+              
+              {/* Suggestions Dropdown */}
+              {showSuggestions && searchQuery && !activeSearch && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-80 overflow-y-auto">
+                  {getPrioritySuggestions(searchQuery).map((group, groupIndex) => (
+                    <div key={`group-${groupIndex}`} className="p-2 border-b border-gray-100 last:border-0">
+                      <div className="flex items-center text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                        {group.icon}
+                        <span>{group.category}</span>
+                      </div>
+                      {group.items.map((item, itemIndex) => {
+                        const keyParts = [
+                          group.category,
+                          item.id,
+                          item.type,
+                          item.label,
+                          item.name,
+                          item.title,
+                          itemIndex
+                        ].filter(Boolean);
+                        
+                        const uniqueKey = keyParts.join('-');
+                        
+                        return (
+                          <div 
+                            key={uniqueKey}
+                            className="flex items-center p-2 hover:bg-green-50 rounded-md cursor-pointer"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => {
+                              setSearchQuery(item.name || item.title || item.label || item.type);
+                              performSearch(item.name || item.title || item.label || item.type);
+                            }}
+                          >
+                            <span className="truncate">{item.name || item.title || item.label || item.type}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
+          </div>
+<div className="flex flex-wrap gap-2 mb-6">
+  {/* Destination Filters */}
+  {(filters.destination || []).map(destId => {
+    const destination = data.destinations.find(d => d.value === destId);
+    return (
+      <div key={`dest-${destId}`} className="flex items-center bg-green-400 text-white px-3 py-1 rounded-full text-sm">
+        {destination?.label || destId}
+        <X 
+          size={14} 
+          className="ml-1 cursor-pointer hover:text-red-500"
+          onClick={() => clearAppliedFilter('destination', destId)}
+        />
+      </div>
+    );
+  })}
 
-          {/* Event cards section */}
-            {displayedEvents.length > 0 ? (
-    <div className="space-y-6"> {/* Changed from grid to space-y for single column */}
-      {displayedEvents.map((event) => (
-        <EventCard key={event.eventId} event={event} />
-      ))}
-      
-      {/* Show More button */}
-      {!hasFilters && filteredEvents.length > displayCount && (
-        <div className="mt-8 flex justify-center">
-          <button
-            onClick={loadMoreEvents}
-            className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors flex items-center"
-          >
-            Show More <ArrowDown className="ml-2" size={18} />
-          </button>
-        </div>
-      )}
+  {/* Organizer Filters */}
+  {(filters.organizer || []).map(orgId => {
+    const organizer = data.guides.find(g => g.id === orgId);
+    return (
+      <div key={`org-${orgId}`} className="flex items-center bg-green-400 text-white px-3 py-1 rounded-full text-sm">
+        {organizer?.name || orgId}
+        <X 
+          size={14} 
+          className="ml-1 cursor-pointer hover:text-red-500"
+          onClick={() => clearAppliedFilter('organizer', orgId)}
+        />
+      </div>
+    );
+  })}
+
+  {/* Type Filters */}
+  {(filters.type || []).map(type => (
+    <div key={`type-${type}`} className="flex items-center bg-green-400 text-white px-3 py-1 rounded-full text-sm">
+      {type}
+      <X 
+        size={14} 
+        className="ml-1 cursor-pointer hover:text-red-500"
+        onClick={() => clearAppliedFilter('type', type)}
+      />
     </div>
-  )  : (
-            <div className="flex flex-col items-center justify-center py-12">
-              <div className="text-gray-400 mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-medium text-gray-700 mb-2">No events found</h3>
-              <p className="text-gray-500 text-sm">Try adjusting your filters to see more results</p>
-              <button 
-                className="mt-4 px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors"
-                onClick={resetAllFilters}
-              >
-                Reset All Filters
-              </button>
+  ))}
+
+  {/* Date Filter */}
+  {filters.date && (
+    <div className="flex items-center bg-green-400 text-white px-3 py-1 rounded-full text-sm">
+      {filters.date}
+      <X 
+        size={14} 
+        className="ml-1 cursor-pointer hover:text-red-500"
+        onClick={() => clearAppliedFilter('date')}
+      />
+    </div>
+  )}
+
+  {/* Date Range Filter */}
+  {(filters.dateRange?.start || filters.dateRange?.end) && (
+    <div className="flex items-center bg-green-400 text-white px-3 py-1 rounded-full text-sm">
+      {filters.dateRange.start ? formatDate(filters.dateRange.start) : 'Any'} - 
+      {filters.dateRange.end ? formatDate(filters.dateRange.end) : 'Any'}
+      <X 
+        size={14} 
+        className="ml-1 cursor-pointer hover:text-red-500"
+        onClick={() => clearAppliedFilter('dateRange')}
+      />
+    </div>
+  )}
+
+  {/* Sort Filter */}
+  {filters.sort && (
+    <div className="flex items-center bg-green-400 text-white px-3 py-1 rounded-full text-sm">
+      {filters.sort}
+      <X 
+        size={14} 
+        className="ml-1 cursor-pointer hover:text-red-500"
+        onClick={() => clearAppliedFilter('sort')}
+      />
+    </div>
+  )}
+</div>
+          {/* Search Results Section */}
+          {activeSearch ? (
+            <div className="space-y-8">
+              {/* Combined Results */}
+              {displayedEvents.length > 0 ? (
+                <div>
+                  <h3 className="text-xl font-semibold mb-4">
+                    {displayedEvents.length} results matching "{searchQuery}"
+                  </h3>
+                  <div className="space-y-6">
+                    {displayedEvents.map((item) => (
+                      item.type === 'event' ? (
+                        <EventCard key={`event-${item.eventId}`} event={item} />
+                      ) : (
+                        <GuideCard key={`guide-${item.id}`} guide={item} />
+                      )
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                /* No Results Found */
+                <div className="flex flex-col items-center justify-center py-12">
+                  <div className="text-gray-400 mb-4">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-16 w-16"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1}
+                        d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-700 mb-2">
+                    No results found
+                  </h3>
+                  <p className="text-gray-500 text-sm mb-4">
+                    Try different search terms
+                  </p>
+                </div>
+              )}
             </div>
+          ) : (
+            /* Original Events Display */
+            displayedEvents.length > 0 ? (
+              <div className="space-y-6">
+                {displayedEvents.map((event) => (
+                  <EventCard key={event.eventId} event={event} />
+                ))}
+                {!hasFilters && filteredEvents.length > displayCount && (
+                  <div className="mt-8 flex justify-center">
+                    <button
+                      onClick={loadMoreEvents}
+                      className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors flex items-center"
+                    >
+                      Show More <ArrowDown className="ml-2" size={18} />
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12">
+                <div className="text-gray-400 mb-4">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-medium text-gray-700 mb-2">No events found</h3>
+                <p className="text-gray-500 text-sm">Try adjusting your filters to see more results</p>
+                <button 
+                  className="mt-4 px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors"
+                  onClick={resetAllFilters}
+                >
+                  Reset All Filters
+                </button>
+              </div>
+            )
           )}
         </div>
       </div>
