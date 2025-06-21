@@ -1,11 +1,16 @@
-
 'use client';
 
+import { motion } from 'framer-motion';
+import MergerMainContent from '@/components/home/MergerSection/MergerMainContent';
 export default function MergerPage() {
   return (
-    <div>
-      <h1>Merger Page</h1>
-      <p>Basic test page</p>
-    </div>
-  )
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className="w-full h-full"
+    >
+      <MergerMainContent />
+    </motion.div>
+  );
 }
