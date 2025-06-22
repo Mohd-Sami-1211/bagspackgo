@@ -29,6 +29,8 @@ const EventCard = ({ event,guides }) => {
     day: 'numeric',
     year: 'numeric',
   });
+  
+  const matchedGuide = guides?.find(g => g.id === event.eventId);
 
   return (
     <motion.div
@@ -67,7 +69,8 @@ const EventCard = ({ event,guides }) => {
       <h2 className="text-xl font-bold text-gray-800 mb-1 px-1 py-1">{event.name}</h2>
       <p className="text-gray-600 flex items-center gap-1 px-1 ">
         <User size={14} className="text-blue-500" />
-        <span className="text-sm">Guided by {guides?.[0]?.name || "Local Guide"}</span>
+       <span className="text-sm">{matchedGuide?.name || "Local Guide"}</span>
+
       </p>
     </div>
     

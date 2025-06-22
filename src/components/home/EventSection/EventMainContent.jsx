@@ -1199,7 +1199,7 @@ const EventMainContent = () => {
                   <div className="space-y-6">
                     {displayedEvents.map((item) => (
                       item.type === 'event' ? (
-                        <EventCard key={`event-${item.eventId}`} event={item} />
+                        <EventCard key={`event-${item.eventId}`} event={item} guides={data.guides}/>
                       ) : (
                         <GuideCard key={`guide-${item.id}`} guide={item} />
                       )
@@ -1239,7 +1239,7 @@ const EventMainContent = () => {
             displayedEvents.length > 0 ? (
               <div className="space-y-6">
                 {displayedEvents.map((event) => (
-                  <EventCard key={event.eventId} event={event} />
+                  <EventCard key={event.eventId} event={event} guides={data.guides}/>
                 ))}
                 {!hasFilters && filteredEvents.length > displayCount && (
                   <div className="mt-8 flex justify-center">

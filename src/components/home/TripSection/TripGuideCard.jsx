@@ -1,6 +1,7 @@
 'use client';
 import { motion } from 'framer-motion';
 import { Star, MapPin, Users, Calendar } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 const GuideCard = ({ guide, category, days, count = 1 }) => {
   // Get price based on package type with fallbacks
@@ -11,6 +12,7 @@ const GuideCard = ({ guide, category, days, count = 1 }) => {
   // Calculate total price
   const totalPrice = pricePerPerson * numPeople * numDays;
   const peopleText = category === 'couple' ? 'couple' : 'person';
+  const router = useRouter();
 
   return (
     <motion.div
@@ -106,12 +108,13 @@ const GuideCard = ({ guide, category, days, count = 1 }) => {
         {/* Right Side (20%) - View Button */}
         <div className="w-full md:w-1/5 bg-green-500 flex items-center justify-center p-4">
           <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="w-full py-3 bg-white hover:bg-[#d4f7d4] text-gray-600 hover:text-gray-900 font-medium rounded-lg transition-colors"
-          >
-            View Details
-          </motion.button>
+  whileHover={{ scale: 1.05 }}
+  whileTap={{ scale: 0.95 }}
+  onClick={() => router.push(`/trip/guidelist/tripdetails/${guide.id}?category=${category}&days=${days}&count=${count}`)}
+  className="w-full py-3 bg-white hover:bg-[#d4f7d4] text-gray-600 hover:text-gray-900 font-medium rounded-lg transition-colors"
+>
+  View Details
+</motion.button>
         </div>
       </div>
     </motion.div>

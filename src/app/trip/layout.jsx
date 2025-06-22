@@ -15,7 +15,7 @@ export default function TripLayout({ children }) {
       transition={{ duration: 0.3 }}
       className={`min-h-screen ${!isGuideListPage ? "bg-white/90 bg-[url('/images/hero.svg')] bg-no-repeat" : "bg-white"}`}
     >
-      <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 ">
+      <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <PageTransition key={pathname}>
           {children}
         </PageTransition>
