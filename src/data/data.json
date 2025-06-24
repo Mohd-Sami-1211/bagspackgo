@@ -372,6 +372,16 @@
           "price": 2638,
           "duration": "6 days"
         }
+      ],
+      "hotelsAvailable": [
+        "The Lalit Grand Palace",
+        "Houseboat Flora",
+        "Vivanta Dal View"
+      ],
+      "activitiesAvailable": [
+        "Shikara Ride",
+        "Mughal Garden Tour",
+        "Lal Chowk Shopping"
       ]
     },
     {
@@ -420,6 +430,16 @@
           "price": 2715,
           "duration": "6 days"
         }
+      ],
+      "hotelsAvailable": [
+        "Hotel Paradise",
+        "Spring Hills",
+        "Yusmarg Residency"
+      ],
+      "activitiesAvailable": [
+        "Local Markets",
+        "Tulip Viewing",
+        "Food Trails"
       ]
     },
     {
@@ -469,6 +489,16 @@
           "price": 3073,
           "duration": "5 days"
         }
+      ],
+      "hotelsAvailable": [
+        "Khyber Himalayan Resort",
+        "Hotel Hilltop",
+        "Heevan Retreat"
+      ],
+      "activitiesAvailable": [
+        "Skiing",
+        "Snowboarding",
+        "Gondola Ride"
       ]
     },
     {
@@ -522,6 +552,16 @@
           "price": 3901,
           "duration": "4 days"
         }
+      ],
+      "hotelsAvailable": [
+        "Hotel Paradise",
+        "Hotel Rah Villas",
+        "Hotel Snowland"
+      ],
+      "activitiesAvailable": [
+        "Heritage Tours",
+        "Architecture",
+        "Photography"
       ]
     },
     {
@@ -580,6 +620,16 @@
           "price": 2338,
           "duration": "5 days"
         }
+      ],
+      "hotelsAvailable": [
+        "Hotel Pine N Peak",
+        "Radisson Golf Resort",
+        "Woodstock Hotel"
+      ],
+      "activitiesAvailable": [
+        "Camping",
+        "River Rafting",
+        "Fishing"
       ]
     },
     {
@@ -623,6 +673,16 @@
           "price": 3006,
           "duration": "5 days"
         }
+      ],
+      "hotelsAvailable": [
+        "Lolab Retreat",
+        "Hotel Royal Kaka Palace",
+        "Valley View Hotel"
+      ],
+      "activitiesAvailable": [
+        "Village Tours",
+        "Bird Watching",
+        "Photography"
       ]
     },
     {
@@ -666,6 +726,16 @@
           "price": 3305,
           "duration": "4 days"
         }
+      ],
+      "hotelsAvailable": [
+        "Hotel Aroma",
+        "Apple Residency",
+        "Pine Spring Hotel"
+      ],
+      "activitiesAvailable": [
+        "Cultural Heritage",
+        "Markets",
+        "Shopping"
       ]
     },
     {
@@ -709,6 +779,15 @@
           "price": 2582,
           "duration": "4 days"
         }
+      ],
+      "hotelsAvailable": [
+        "Houseboat Flora",
+        "Spring Hills",
+        "Pahalgam Retreat"
+      ],
+      "activitiesAvailable": [
+        "Food Trails",
+        "Cooking Sessions"
       ]
     },
     {
@@ -762,6 +841,15 @@
           "price": 2998,
           "duration": "3 days"
         }
+      ],
+      "hotelsAvailable": [
+        "Hotel Pine N Peak",
+        "Vivanta Dal View",
+        "Hotel Snowland"
+      ],
+      "activitiesAvailable": [
+        "Camping",
+        "River Rafting"
       ]
     },
     {
@@ -810,6 +898,16 @@
           "price": 2157,
           "duration": "4 days"
         }
+      ],
+      "hotelsAvailable": [
+        "The Lalit Grand Palace",
+        "Hotel Aroma",
+        "Yusmarg Residency"
+      ],
+      "activitiesAvailable": [
+        "Gardens",
+        "Seasonal Tours",
+        "Tulip Viewing"
       ]
     },
     {
@@ -853,6 +951,15 @@
           "price": 3837,
           "duration": "4 days"
         }
+      ],
+      "hotelsAvailable": [
+        "Pahalgam Retreat",
+        "Hotel Pine N Peak",
+        "Radisson Golf Resort"
+      ],
+      "activitiesAvailable": [
+        "Fishing",
+        "Nature Walks"
       ]
     },
     {
@@ -901,6 +1008,15 @@
           "price": 3721,
           "duration": "4 days"
         }
+      ],
+      "hotelsAvailable": [
+        "Hotel Paradise",
+        "Hotel Snowland",
+        "Spring Hills"
+      ],
+      "activitiesAvailable": [
+        "Spiritual Tours",
+        "Pilgrimage Tours"
       ]
     },
     {
@@ -954,6 +1070,16 @@
           "price": 3456,
           "duration": "7 days"
         }
+      ],
+      "hotelsAvailable": [
+        "Aloha on the Ganges",
+        "Ganga Kinare",
+        "Jaypee Residency Manor"
+      ],
+      "activitiesAvailable": [
+        "River Rafting",
+        "Himalayan Treks",
+        "Wildlife Safari"
       ]
     },
     {
@@ -997,6 +1123,16 @@
           "price": 3291,
           "duration": "6 days"
         }
+      ],
+      "hotelsAvailable": [
+        "EllBee Ganga View",
+        "Ganga Kinare",
+        "Hotel Alpana"
+      ],
+      "activitiesAvailable": [
+        "Yoga Retreat",
+        "Meditation Retreats",
+        "Ganga Aarti"
       ]
     },
     {
@@ -1040,6 +1176,15 @@
           "price": 3645,
           "duration": "6 days"
         }
+      ],
+      "hotelsAvailable": [
+        "Hotel Alpana",
+        "The Naini Retreat",
+        "Hotel Shikhar"
+      ],
+      "activitiesAvailable": [
+        "Religious Tours",
+        "Temple Visits"
       ]
     },
     {
@@ -1088,6 +1233,16 @@
           "price": 3120,
           "duration": "7 days"
         }
+      ],
+      "hotelsAvailable": [
+        "Hotel Shikhar",
+        "Kalmatia Sangam",
+        "The Kumaon"
+      ],
+      "activitiesAvailable": [
+        "Homestay",
+        "Cultural Walk",
+        "Village Walks"
       ]
     },
     {
@@ -1136,6 +1291,16 @@
           "price": 2198,
           "duration": "6 days"
         }
+      ],
+      "hotelsAvailable": [
+        "Aloha on the Ganges",
+        "Clifftop Club Resort",
+        "Blue Poppy Resort"
+      ],
+      "activitiesAvailable": [
+        "Rafting",
+        "Camping",
+        "Adventure Sports"
       ]
     },
     {
@@ -1184,6 +1349,15 @@
           "price": 3944,
           "duration": "8 days"
         }
+      ],
+      "hotelsAvailable": [
+        "The Naini Retreat",
+        "Shervani Hilltop",
+        "Hotel Arif Castles"
+      ],
+      "activitiesAvailable": [
+        "Bird Watching",
+        "Botanical Walks"
       ]
     },
     {
@@ -1227,6 +1401,16 @@
           "price": 3064,
           "duration": "6 days"
         }
+      ],
+      "hotelsAvailable": [
+        "Clifftop Club Resort",
+        "Blue Poppy Resort",
+        "Auli Nature Resort"
+      ],
+      "activitiesAvailable": [
+        "Snow Treks",
+        "Base Camps",
+        "Skiing"
       ]
     },
     {
@@ -1265,6 +1449,15 @@
           "price": 2260,
           "duration": "8 days"
         }
+      ],
+      "hotelsAvailable": [
+        "Hotel Shikhar",
+        "Kalmatia Sangam",
+        "The Kumaon"
+      ],
+      "activitiesAvailable": [
+        "Agriculture Tours",
+        "Local Stories"
       ]
     },
     {
@@ -1303,6 +1496,16 @@
           "price": 2644,
           "duration": "6 days"
         }
+      ],
+      "hotelsAvailable": [
+        "Taj Corbett Resort",
+        "Aahana \u2013 The Corbett Wilderness",
+        "Namah Resort"
+      ],
+      "activitiesAvailable": [
+        "Wildlife",
+        "Photography",
+        "River Picnic"
       ]
     },
     {
@@ -1346,6 +1549,14 @@
           "price": 2779,
           "duration": "6 days"
         }
+      ],
+      "hotelsAvailable": [
+        "Hotel Alpana",
+        "Ganga Lahari"
+      ],
+      "activitiesAvailable": [
+        "Zero Waste Tours",
+        "Sustainable Tourism"
       ]
     },
     {
@@ -1384,6 +1595,14 @@
           "price": 3113,
           "duration": "6 days"
         }
+      ],
+      "hotelsAvailable": [
+        "Aloha on the Ganges",
+        "Jaypee Residency Manor"
+      ],
+      "activitiesAvailable": [
+        "Bungee Jumping",
+        "Adventure Sports"
       ]
     },
     {
@@ -1437,6 +1656,15 @@
           "price": 2454,
           "duration": "7 days"
         }
+      ],
+      "hotelsAvailable": [
+        "Hotel Shikhar",
+        "Sun n Snow Inn",
+        "Pratiksha Himalayan Retreat"
+      ],
+      "activitiesAvailable": [
+        "Folk Music",
+        "Local Legends"
       ]
     },
     {
@@ -2252,162 +2480,375 @@
     }
   ],
   "mergers": [
-  {
-    "id": "#47381925",
-    "title": "Ganges Valley Retreat",
-    "createdBy": "Ravi Kumar",
-    "category": "General",
-    "date": "2025-07-12",
-    "guideId": "UTK-001",
-    "destinationId": "uttarakhand",
-    "members": "4/10",
-    "location": "Uttarakhand",
-    "price": 8500,
-    "slotsLeft": 6
-  },
-  {
-    "id": "#82146309",
-    "title": "Kashmir Lakes Discovery",
-    "createdBy": "Fatima Shah",
-    "category": "Couple",
-    "date": "2025-09-01",
-    "guideId": "KAS-003",
-    "destinationId": "kashmir",
-    "members": "6/8",
-    "location": "Kashmir",
-    "price": 9200,
-    "slotsLeft": 2
-  },
-  {
-    "id": "#17842936",
-    "title": "Goa Coastal Chill",
-    "createdBy": "David Pinto",
-    "category": "Mixed",
-    "date": "2025-12-05",
-    "guideId": "KAS-007",
-    "destinationId": "goa",
-    "members": "5/10",
-    "location": "Goa",
-    "price": 6500,
-    "slotsLeft": 5
-  },
-  {
-    "id": "#59021384",
-    "title": "Manali Snowline Trek",
-    "createdBy": "Pooja Thakur",
-    "category": "Female Only",
-    "date": "2025-01-15",
-    "guideId": "HIM-004",
-    "destinationId": "himachal",
-    "members": "7/10",
-    "location": "Himachal Pradesh",
-    "price": 10800,
-    "slotsLeft": 3
-  },
-  {
-    "id": "#30971652",
-    "title": "Jaipur Royal Hike",
-    "createdBy": "Ajay Meena",
-    "category": "Male Only",
-    "date": "2025-02-20",
-    "guideId": "HIM-008",
-    "destinationId": "rajasthan",
-    "members": "6/10",
-    "location": "Rajasthan",
-    "price": 7400,
-    "slotsLeft": 4
-  },
-  {
-    "id": "#68790415",
-    "title": "Alleppey Houseboat Escape",
-    "createdBy": "Anjali Nair",
-    "category": "Couple",
-    "date": "2025-11-18",
-    "guideId": "UTK-004",
-    "destinationId": "kerala",
-    "members": "3/6",
-    "location": "Kerala",
-    "price": 8900,
-    "slotsLeft": 3
-  },
-  {
-    "id": "#95324867",
-    "title": "Sikkim Rhododendron Trail",
-    "createdBy": "Tashi Bhutia",
-    "category": "General",
-    "date": "2025-04-20",
-    "guideId": "HIM-001",
-    "destinationId": "sikkim",
-    "members": "5/8",
-    "location": "Sikkim",
-    "price": 10500,
-    "slotsLeft": 3
-  },
-  {
-    "id": "#14038679",
-    "title": "Andaman Coral Trek",
-    "createdBy": "Sanya Rodrigues",
-    "category": "Mixed",
-    "date": "2025-03-30",
-    "guideId": "HIM-003",
-    "destinationId": "andaman",
-    "members": "7/12",
-    "location": "Andaman & Nicobar",
-    "price": 9800,
-    "slotsLeft": 5
-  },
-  {
-    "id": "#76890241",
-    "title": "Leh Adventure Bikers",
-    "createdBy": "Aryan Sharma",
-    "category": "Male Only",
-    "date": "2025-08-25",
-    "guideId": "HIM-007",
-    "destinationId": "ladakh",
-    "members": "8/10",
-    "location": "Ladakh",
-    "price": 15000,
-    "slotsLeft": 2
-  },
-  {
-    "id": "#26417358",
-    "title": "Tawang Serenity Trek",
-    "createdBy": "Nima Tsering",
-    "category": "General",
-    "date": "2025-05-05",
-    "guideId": "HIM-006",
-    "destinationId": "arunachal",
-    "members": "6/10",
-    "location": "Arunachal Pradesh",
-    "price": 11300,
-    "slotsLeft": 4
-  },
-  {
-    "id": "#39718264",
-    "title": "Living Roots Adventure",
-    "createdBy": "Benedict Sangma",
-    "category": "Mixed",
-    "date": "2025-06-01",
-    "guideId": "HIM-009",
-    "destinationId": "meghalaya",
-    "members": "5/9",
-    "location": "Meghalaya",
-    "price": 7200,
-    "slotsLeft": 4
-  },
-  {
-    "id": "#80261793",
-    "title": "Assam Jungle Trail",
-    "createdBy": "Reema Das",
-    "category": "Female Only",
-    "date": "2025-10-12",
-    "guideId": "HIM-005",
-    "destinationId": "assam",
-    "members": "4/7",
-    "location": "Assam",
-    "price": 7900,
-    "slotsLeft": 3
+    {
+      "id": "#47381925",
+      "title": "Ganges Valley Retreat",
+      "createdBy": "Ravi Kumar",
+      "category": "General",
+      "date": "2025-07-12",
+      "guideId": "UTK-001",
+      "destinationId": "uttarakhand",
+      "members": "4/10",
+      "location": "Uttarakhand",
+      "price": 8500,
+      "slotsLeft": 6
+    },
+    {
+      "id": "#82146309",
+      "title": "Kashmir Lakes Discovery",
+      "createdBy": "Fatima Shah",
+      "category": "Couple",
+      "date": "2025-09-01",
+      "guideId": "KAS-003",
+      "destinationId": "kashmir",
+      "members": "6/8",
+      "location": "Kashmir",
+      "price": 9200,
+      "slotsLeft": 2
+    },
+    {
+      "id": "#17842936",
+      "title": "Goa Coastal Chill",
+      "createdBy": "David Pinto",
+      "category": "Mixed",
+      "date": "2025-12-05",
+      "guideId": "KAS-007",
+      "destinationId": "goa",
+      "members": "5/10",
+      "location": "Goa",
+      "price": 6500,
+      "slotsLeft": 5
+    },
+    {
+      "id": "#59021384",
+      "title": "Manali Snowline Trek",
+      "createdBy": "Pooja Thakur",
+      "category": "Female Only",
+      "date": "2025-01-15",
+      "guideId": "HIM-004",
+      "destinationId": "himachal",
+      "members": "7/10",
+      "location": "Himachal Pradesh",
+      "price": 10800,
+      "slotsLeft": 3
+    },
+    {
+      "id": "#30971652",
+      "title": "Jaipur Royal Hike",
+      "createdBy": "Ajay Meena",
+      "category": "Male Only",
+      "date": "2025-02-20",
+      "guideId": "HIM-008",
+      "destinationId": "rajasthan",
+      "members": "6/10",
+      "location": "Rajasthan",
+      "price": 7400,
+      "slotsLeft": 4
+    },
+    {
+      "id": "#68790415",
+      "title": "Alleppey Houseboat Escape",
+      "createdBy": "Anjali Nair",
+      "category": "Couple",
+      "date": "2025-11-18",
+      "guideId": "UTK-004",
+      "destinationId": "kerala",
+      "members": "3/6",
+      "location": "Kerala",
+      "price": 8900,
+      "slotsLeft": 3
+    },
+    {
+      "id": "#95324867",
+      "title": "Sikkim Rhododendron Trail",
+      "createdBy": "Tashi Bhutia",
+      "category": "General",
+      "date": "2025-04-20",
+      "guideId": "HIM-001",
+      "destinationId": "sikkim",
+      "members": "5/8",
+      "location": "Sikkim",
+      "price": 10500,
+      "slotsLeft": 3
+    },
+    {
+      "id": "#14038679",
+      "title": "Andaman Coral Trek",
+      "createdBy": "Sanya Rodrigues",
+      "category": "Mixed",
+      "date": "2025-03-30",
+      "guideId": "HIM-003",
+      "destinationId": "andaman",
+      "members": "7/12",
+      "location": "Andaman & Nicobar",
+      "price": 9800,
+      "slotsLeft": 5
+    },
+    {
+      "id": "#76890241",
+      "title": "Leh Adventure Bikers",
+      "createdBy": "Aryan Sharma",
+      "category": "Male Only",
+      "date": "2025-08-25",
+      "guideId": "HIM-007",
+      "destinationId": "ladakh",
+      "members": "8/10",
+      "location": "Ladakh",
+      "price": 15000,
+      "slotsLeft": 2
+    },
+    {
+      "id": "#26417358",
+      "title": "Tawang Serenity Trek",
+      "createdBy": "Nima Tsering",
+      "category": "General",
+      "date": "2025-05-05",
+      "guideId": "HIM-006",
+      "destinationId": "arunachal",
+      "members": "6/10",
+      "location": "Arunachal Pradesh",
+      "price": 11300,
+      "slotsLeft": 4
+    },
+    {
+      "id": "#39718264",
+      "title": "Living Roots Adventure",
+      "createdBy": "Benedict Sangma",
+      "category": "Mixed",
+      "date": "2025-06-01",
+      "guideId": "HIM-009",
+      "destinationId": "meghalaya",
+      "members": "5/9",
+      "location": "Meghalaya",
+      "price": 7200,
+      "slotsLeft": 4
+    },
+    {
+      "id": "#80261793",
+      "title": "Assam Jungle Trail",
+      "createdBy": "Reema Das",
+      "category": "Female Only",
+      "date": "2025-10-12",
+      "guideId": "HIM-005",
+      "destinationId": "assam",
+      "members": "4/7",
+      "location": "Assam",
+      "price": 7900,
+      "slotsLeft": 3
+    }
+  ],
+  "locations": {
+    "kashmir": [
+      {
+        "name": "Srinagar",
+        "hotels": [
+          "The Lalit Grand Palace",
+          "Vivanta Dal View",
+          "Houseboat Flora"
+        ],
+        "activities": [
+          "Shikara Ride",
+          "Mughal Garden Tour",
+          "Lal Chowk Shopping"
+        ]
+      },
+      {
+        "name": "Gulmarg",
+        "hotels": [
+          "Khyber Himalayan Resort",
+          "Hotel Hilltop",
+          "Heevan Retreat"
+        ],
+        "activities": [
+          "Skiing",
+          "Gondola Ride",
+          "Snowboarding"
+        ]
+      },
+      {
+        "name": "Pahalgam",
+        "hotels": [
+          "Hotel Pine N Peak",
+          "Radisson Golf Resort",
+          "Woodstock Hotel"
+        ],
+        "activities": [
+          "Camping",
+          "River Rafting",
+          "Fishing"
+        ]
+      },
+      {
+        "name": "Sonamarg",
+        "hotels": [
+          "Hotel Snowland",
+          "Hotel Rah Villas",
+          "Thajwas Resort"
+        ],
+        "activities": [
+          "Glacier Trek",
+          "Photography",
+          "Nature Walks"
+        ]
+      },
+      {
+        "name": "Yusmarg",
+        "hotels": [
+          "Yusmarg Residency",
+          "Hillscape Cottages",
+          "Green View Guesthouse"
+        ],
+        "activities": [
+          "Picnic",
+          "Short Hikes",
+          "Boating"
+        ]
+      },
+      {
+        "name": "Kupwara",
+        "hotels": [
+          "Lolab Retreat",
+          "Hotel Royal Kaka Palace",
+          "Valley View Hotel"
+        ],
+        "activities": [
+          "Village Tours",
+          "Bird Watching",
+          "Photography"
+        ]
+      },
+      {
+        "name": "Pulwama",
+        "hotels": [
+          "Hotel Aroma",
+          "Apple Residency",
+          "Pine Spring Hotel"
+        ],
+        "activities": [
+          "Tulip Viewing",
+          "Garden Tours",
+          "Food Trails"
+        ]
+      },
+      {
+        "name": "Anantnag",
+        "hotels": [
+          "Hotel Paradise",
+          "Spring Hills",
+          "Pahalgam Retreat"
+        ],
+        "activities": [
+          "Pilgrimage Tours",
+          "Local Markets",
+          "Hot Springs"
+        ]
+      }
+    ],
+    "uttarakhand": [
+      {
+        "name": "Rishikesh",
+        "hotels": [
+          "Aloha on the Ganges",
+          "Ganga Kinare",
+          "EllBee Ganga View"
+        ],
+        "activities": [
+          "River Rafting",
+          "Yoga Retreat",
+          "Ganga Aarti"
+        ]
+      },
+      {
+        "name": "Mussoorie",
+        "hotels": [
+          "Jaypee Residency Manor",
+          "Fortune Grace",
+          "Welcomhotel"
+        ],
+        "activities": [
+          "Cable Car Ride",
+          "Mall Road Walk",
+          "Nature Trail"
+        ]
+      },
+      {
+        "name": "Nainital",
+        "hotels": [
+          "The Naini Retreat",
+          "Shervani Hilltop",
+          "Hotel Arif Castles"
+        ],
+        "activities": [
+          "Boating",
+          "Tiffin Top Trek",
+          "Bird Watching"
+        ]
+      },
+      {
+        "name": "Almora",
+        "hotels": [
+          "Hotel Shikhar",
+          "Kalmatia Sangam",
+          "The Kumaon"
+        ],
+        "activities": [
+          "Cultural Walk",
+          "Tea Estate Visit",
+          "Local Handicrafts"
+        ]
+      },
+      {
+        "name": "Auli",
+        "hotels": [
+          "Clifftop Club Resort",
+          "Blue Poppy Resort",
+          "Auli Nature Resort"
+        ],
+        "activities": [
+          "Skiing",
+          "Snowboarding",
+          "Chair Lift Ride"
+        ]
+      },
+      {
+        "name": "Haridwar",
+        "hotels": [
+          "Haveli Hari Ganga",
+          "Ganga Lahari",
+          "Hotel Alpana"
+        ],
+        "activities": [
+          "Temple Visits",
+          "Spiritual Walk",
+          "Evening Ganga Aarti"
+        ]
+      },
+      {
+        "name": "Jim Corbett",
+        "hotels": [
+          "Taj Corbett Resort",
+          "Aahana \u2013 The Corbett Wilderness",
+          "Namah Resort"
+        ],
+        "activities": [
+          "Wildlife Safari",
+          "Bird Watching",
+          "River Picnic"
+        ]
+      },
+      {
+        "name": "Kausani",
+        "hotels": [
+          "Chevron Eco Lodge",
+          "Sun n Snow Inn",
+          "Pratiksha Himalayan Retreat"
+        ],
+        "activities": [
+          "Sunrise View",
+          "Himalaya Watching",
+          "Village Walks"
+        ]
+      }
+    ]
   }
-]
-
 }
