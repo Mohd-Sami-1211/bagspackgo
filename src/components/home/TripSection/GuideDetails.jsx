@@ -2,8 +2,8 @@
 import { Star, Edit, MapPin, Users, Calendar, Share2, Heart, ChevronRight, ArrowRight, ArrowLeft, Hotel, Clock, Map } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import Itenary from './Itenary';
-import ArrDep from './Arr-dep';
+import Itenary from '@/components/home/TripSection/Itenary';
+import ArrDep from '@/components/home/TripSection/Arr-dep';
 
 const GuideDetails = ({ guide, category, days, count = 1 }) => {
   const router = useRouter();
