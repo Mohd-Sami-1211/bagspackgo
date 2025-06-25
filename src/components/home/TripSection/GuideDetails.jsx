@@ -3,7 +3,7 @@ import { Star, Edit, MapPin, Users, Calendar, Share2, Heart, ChevronRight, Arrow
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import Itenary from '@/components/home/TripSection/Itenary';
-import ArrDep from '@/components/home/TripSection/Arr-dep';
+import ArrDep from '@/components/home/TripSection/Arr-Dep';
 
 const GuideDetails = ({ guide, category, days, count = 1 }) => {
   const router = useRouter();
