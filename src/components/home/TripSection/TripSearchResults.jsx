@@ -529,6 +529,7 @@ const SearchResults = () => {
         category={category}
         days={days}
         count={count}  
+        date={date}
       />
     </motion.div>
   ))}

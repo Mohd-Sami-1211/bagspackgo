@@ -1,11 +1,31 @@
 'use client';
 import { Star, Edit, MapPin, Users, Calendar, Share2, Heart, ChevronRight, ArrowRight, ArrowLeft, Hotel, Clock, Map } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import Itenary from '@/components/home/TripSection/Itenary';
 import ArrDep from '@/components/home/TripSection/Arr-Dep';
+import PersonalDetails from '@/components/home/TripSection/PersonalDetails';
 
-const GuideDetails = ({ guide, category, days, count = 1 }) => {
+const GuideDetails = ({ guide }) => {
+  const searchParams = useSearchParams();
+  
+  // Get parameters from URL with validation
+  const category = ['individual', 'couple', 'group'].includes(searchParams.get('category')) 
+    ? searchParams.get('category') 
+    : 'individual';
+  const days = Math.max(1, parseInt(searchParams.get('days')) || 1);
+  const count = Math.max(1, parseInt(searchParams.get('count')) || 1);
+  const dateParam = searchParams.get('date');
+  const date = dateParam && !isNaN(new Date(dateParam).getTime()) 
+    ? new Date(dateParam) 
+    : new Date();
+
+  // Calculate derived values
+  const numDays = Math.max(1, Number(days) || 1);
+  const numPeople = Math.max(1, Number(count) || 1);
+  const peopleText = category === 'couple' ? 'couple' : 'person';
+  const tripDuration = numDays;
+
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('dayByDay');
   const [currentDay, setCurrentDay] = useState(1);
@@ -17,10 +37,7 @@ const GuideDetails = ({ guide, category, days, count = 1 }) => {
   const [errors, setErrors] = useState({});
   const [arrDepCompleted, setArrDepCompleted] = useState(false);
   const [personalDetailsCompleted, setPersonalDetailsCompleted] = useState(false);
-
-  const numDays = Math.max(1, Number(days) || 1);
-  const numPeople = Math.max(1, Number(count) || 1);
-  const peopleText = category === 'couple' ? 'couple' : 'person';
+  const [selectedStartDate, setSelectedStartDate] = useState(date);
 
   const defaultPackage = {
     name: 'Basic Package',
@@ -39,14 +56,26 @@ const GuideDetails = ({ guide, category, days, count = 1 }) => {
     ]
   };
 
-  const [selectedStartDate, setSelectedStartDate] = useState(new Date());
-  const tripDuration = numDays;
-
+  // Initialize itineraries with correct dates
   useEffect(() => {
-    if (itenaries.length === 0) {
-      const initialItenaries = Array.from({ length: numDays }, (_, i) => ({
+    // Ensure we have a valid date
+    const startDate = selectedStartDate && !isNaN(selectedStartDate.getTime()) 
+      ? new Date(selectedStartDate) 
+      : new Date();
+
+    const initialItenaries = Array.from({ length: numDays }, (_, i) => {
+      const dayDate = new Date(startDate);
+      dayDate.setDate(dayDate.getDate() + i);
+      
+      return {
         dayNumber: i + 1,
-        date: new Date(Date.now() + i * 24 * 60 * 60 * 1000).toLocaleDateString(),
+        date: dayDate.toLocaleDateString('en-US', {
+          weekday: 'short',
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        }),
+        rawDate: dayDate, // Store the Date object for calculations
         destination: defaultPackage.destination,
         location: defaultPackage.locations[i % defaultPackage.locations.length],
         departure: {
@@ -55,10 +84,24 @@ const GuideDetails = ({ guide, category, days, count = 1 }) => {
         },
         hotel: defaultPackage.hotel,
         activities: defaultPackage.activities
-      }));
-      setItenaries(initialItenaries);
-    }
-  }, [numDays]);
+      };
+    });
+    setItenaries(initialItenaries);
+  }, [numDays, selectedStartDate]);
+
+  const [bookingData, setBookingData] = useState({
+    category: 'individual',
+    count: 1,
+    personalDetails: null
+  });
+  const [step, setStep] = useState(1);
+
+  const handleSavePersonalDetails = (data) => {
+    setBookingData(prev => ({
+      ...prev,
+      personalDetails: data
+    }));
+  };
 
   const basePrice = guide.price * numDays * numPeople;
   const discount = basePrice * 0.1;
@@ -90,9 +133,7 @@ const GuideDetails = ({ guide, category, days, count = 1 }) => {
       setActiveTab('arrivalDeparture');
     } else if (activeTab === 'arrivalDeparture' && arrDepCompleted) {
       setActiveTab('personalDetails');
-    } else if (activeTab === 'personalDetails' && personalDetailsCompleted) {
-      setActiveTab('reviewJourney');
-    }
+    } 
   };
 
   const handleBack = () => {
@@ -100,8 +141,6 @@ const GuideDetails = ({ guide, category, days, count = 1 }) => {
       setActiveTab('dayByDay');
     } else if (activeTab === 'personalDetails') {
       setActiveTab('arrivalDeparture');
-    } else if (activeTab === 'reviewJourney') {
-      setActiveTab('personalDetails');
     } else {
       setIsEditing(false);
       setEditSection(null);
@@ -111,7 +150,8 @@ const GuideDetails = ({ guide, category, days, count = 1 }) => {
   };
 
   const handleArrDepSubmit = (data) => {
-    setSelectedStartDate(data.startDate);
+    const newStartDate = new Date(data.startDate);
+    setSelectedStartDate(newStartDate);
     setArrDepCompleted(true);
     setActiveTab('personalDetails');
   };
@@ -133,8 +173,6 @@ const GuideDetails = ({ guide, category, days, count = 1 }) => {
         return false;
       case 'personalDetails':
         return !arrDepCompleted;
-      case 'reviewJourney':
-        return !(arrDepCompleted && personalDetailsCompleted);
       default:
         return false;
     }
@@ -201,7 +239,6 @@ const GuideDetails = ({ guide, category, days, count = 1 }) => {
               { key: 'dayByDay', label: 'Day by Day' },
               { key: 'arrivalDeparture', label: 'Arrival/Departure' },
               { key: 'personalDetails', label: 'Personal Details' },
-              { key: 'reviewJourney', label: 'Review Journey' }
             ].map(tab => (
               <button
                 key={tab.key}
@@ -465,8 +502,12 @@ const GuideDetails = ({ guide, category, days, count = 1 }) => {
 
             {activeTab === 'personalDetails' && (
               <div>
-                <h3 className="text-lg font-semibold mb-5 text-gray-800">Personal Details</h3>
-                {/* Personal details form would go here */}
+                <PersonalDetails
+                  category={category}
+                  count={count}
+                  onSave={handleSavePersonalDetails}
+                  onNext={handleNextTab}
+                />
                 <div className="flex justify-between pt-4">
                   <button
                     type="button"
@@ -479,36 +520,13 @@ const GuideDetails = ({ guide, category, days, count = 1 }) => {
                   <button
                     type="button"
                     onClick={() => {
-                      setPersonalDetailsCompleted(true);
-                      setActiveTab('reviewJourney');
+                      handleSavePersonalDetails(bookingData.personalDetails);
+                      handleNextTab();
                     }}
                     className="px-5 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center shadow-sm"
                   >
-                    Next
+                    Review Journey
                     <ArrowRight className="h-4 w-4 ml-2" />
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'reviewJourney' && (
-              <div>
-                <h3 className="text-lg font-semibold mb-5 text-gray-800">Review Your Journey</h3>
-                {/* Review content would go here */}
-                <div className="flex justify-between pt-4">
-                  <button
-                    type="button"
-                    onClick={handleBack}
-                    className="px-5 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors flex items-center"
-                  >
-                    <ArrowLeft className="h-4 w-4 mr-2" />
-                    Back
-                  </button>
-                  <button
-                    type="button"
-                    className="px-5 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center shadow-sm"
-                  >
-                    Confirm Booking
                   </button>
                 </div>
               </div>
@@ -517,7 +535,7 @@ const GuideDetails = ({ guide, category, days, count = 1 }) => {
         </div>
 
         <div className="w-full lg:w-4/12">
-          <div className="bg-white rounded-xl shadow-md overflow-hidden sticky top-6 border border-gray-100">
+          <div className="bg-white rounded-xl shadow-md overflow-hidden top-6 border border-gray-100">
             <div className="bg-gradient-to-r from-green-400 to-green-500 px-5 py-3">
               <h3 className="text-white font-semibold text-base">Booking Summary</h3>
             </div>

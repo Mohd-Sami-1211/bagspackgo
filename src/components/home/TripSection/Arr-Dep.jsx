@@ -7,8 +7,13 @@ const ArrDep = ({
   onNext,
   onBack,
   startDate: initialStartDate,
-  duration
+  duration 
 }) => {
+  // Validate and set default for initialStartDate
+  if (!initialStartDate || isNaN(new Date(initialStartDate).getTime())) {
+    initialStartDate = new Date();
+  }
+
   const [formData, setFormData] = useState({
     arrival: {
       city: '',
@@ -37,23 +42,21 @@ const ArrDep = ({
 
   // Calculate dates based on startDate and duration
   useEffect(() => {
-    if (initialStartDate) {
-      const arrivalDate = new Date(initialStartDate);
-      const departureDate = new Date(initialStartDate);
-      departureDate.setDate(departureDate.getDate() + duration - 1);
+    const arrivalDate = new Date(initialStartDate);
+    const departureDate = new Date(initialStartDate);
+    departureDate.setDate(departureDate.getDate() + duration - 1);
 
-      setFormData(prev => ({
-        ...prev,
-        arrival: {
-          ...prev.arrival,
-          date: arrivalDate.toISOString().split('T')[0]
-        },
-        departure: {
-          ...prev.departure,
-          date: departureDate.toISOString().split('T')[0]
-        }
-      }));
-    }
+    setFormData(prev => ({
+      ...prev,
+      arrival: {
+        ...prev.arrival,
+        date: arrivalDate.toISOString().split('T')[0]
+      },
+      departure: {
+        ...prev.departure,
+        date: departureDate.toISOString().split('T')[0]
+      }
+    }));
   }, [initialStartDate, duration]);
 
   const handleChange = (section, field, value) => {
@@ -127,38 +130,31 @@ const ArrDep = ({
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Trip Start Date Section (non-editable) */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h4 className="text-lg font-semibold text-gray-800 mb-5 flex items-center">
-            <span className="w-7 h-7 flex items-center justify-center bg-green-100 text-green-800 rounded-full mr-3">
-              1
-            </span>
-            Trip Information
-          </h4>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Start Date
-              </label>
-              <div className="p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-700">
-                {initialStartDate.toLocaleDateString('en-US', { 
-                  weekday: 'short', 
-                  year: 'numeric', 
-                  month: 'short', 
-                  day: 'numeric' 
-                })}
-              </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Start Date
+            </label>
+            <div className="p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-700">
+              {initialStartDate?.toLocaleDateString('en-US', { 
+                weekday: 'short', 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric' 
+              })}
             </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Trip Duration
-              </label>
-              <div className="p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-700">
-                {duration} day{duration > 1 ? 's' : ''}
-              </div>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Trip Duration
+            </label>
+            <div className="p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-700">
+              {duration} day{duration > 1 ? 's' : ''}
             </div>
           </div>
         </div>
+      </div>
 
         {/* Arrival Section */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
