@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 
 const FAQ = ({ faqs, activeIndex, toggleFAQ }) => {
   return (
-    <div className="px-4 max-w-7xl mx-auto">
+    <div className="px-4 max-w-7xl mx-auto mt-16">
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
@@ -12,7 +12,7 @@ const FAQ = ({ faqs, activeIndex, toggleFAQ }) => {
       className="text-center mb-28"
     >
       <motion.h2 
-        className="text-4xl font-bold text-gray-800 mb-4"
+        className="text-4xl md:text-5xl font-bold text-gray-800 mb-4"
         initial={{ scale: 0.9 }}
         whileInView={{ scale: 1 }}
         transition={{ 
@@ -22,7 +22,7 @@ const FAQ = ({ faqs, activeIndex, toggleFAQ }) => {
           stiffness: 100
         }}
       >
-        Frequently Asked Questions
+        Frequently Asked <span className="text-green-600">Questions</span>
       </motion.h2>
       <motion.div 
         className="h-1 bg-gradient-to-r from-amber-400 to-amber-600 mx-auto w-24 rounded-full mb-12"
@@ -41,7 +41,7 @@ const FAQ = ({ faqs, activeIndex, toggleFAQ }) => {
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
         viewport={{ once: true }}
-          className="max-w-7xl mx-auto bg-[#bdf8e293] rounded-2xl p-8 mb-16"
+          className="max-w-7xl mx-auto bg-gradient-to-br from-green-50 to-blue-50 rounded-2xl p-8 mb-16 "
       >
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-2 gap-8">
@@ -78,7 +78,7 @@ const FAQ = ({ faqs, activeIndex, toggleFAQ }) => {
                       opacity: activeIndex === index ? 1 : 0,
                       height: activeIndex === index ? "auto" : 0
                     }}
-                    transition={{ duration: 0.5, ease: "easeInOut" }}
+                    transition={{ duration: 0.2, ease: "easeInOut" }}
                     className="overflow-hidden"
                   >
                     <p className="mt-2 text-gray-600 text-left">{faq.answer}</p>
@@ -120,7 +120,7 @@ const FAQ = ({ faqs, activeIndex, toggleFAQ }) => {
                       opacity: activeIndex === index + 6 ? 1 : 0,
                       height: activeIndex === index + 6 ? "auto" : 0
                     }}
-                    transition={{ duration: 0.5, ease: "easeInOut" }}
+                    transition={{ duration: 0.2, ease: "easeInOut" }}
                     className="overflow-hidden"
                   >
                     <p className="mt-2 text-gray-600 text-left">{faq.answer}</p>

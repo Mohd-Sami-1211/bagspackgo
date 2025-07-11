@@ -2,7 +2,7 @@ import Image from "next/image";
 
 const Footer = () => {
   return (
-    <footer className="bg-[#aff8d4] text-gray-800">
+    <footer className="bg-gradient-to-br from-green-200 to-blue-100 text-gray-800">
       <div className="w-full mx-auto px-10 py-6 grid grid-cols-1 md:grid-cols-4 gap-8">
         
         {/* Brand Info */}
@@ -55,7 +55,7 @@ const Footer = () => {
               placeholder="Email address"
               className="w-full px-3 py-2 rounded-l bg-white text-black focus:outline-none"
             />
-            <button className="bg-green-400 hover:bg-green-600 hover:text-white px-4 rounded-r text-gray-800">
+            <button className="bg-green-300 hover:bg-green-500 hover:text-white px-4 rounded-r text-gray-800">
               Subscribe
             </button>
           </form>

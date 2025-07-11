@@ -261,7 +261,7 @@ const ArrDep = ({
             <span className="w-7 h-7 flex items-center justify-center bg-green-100 text-green-800 rounded-full mr-3">
               3
             </span>
-            Departure Details
+            Drop Off Details
           </h4>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

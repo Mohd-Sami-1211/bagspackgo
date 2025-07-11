@@ -1,125 +1,149 @@
-'use client';
-import { motion } from "framer-motion";
+import { motion } from 'framer-motion';
+import { Mountain, Camera, Users, Award, Heart, Calendar } from 'lucide-react';
+import { Card } from '@/components/Card';
 
 const AboutUs = () => {
+  const stats = [
+    { number: "10K+", label: "Happy Travelers" },
+    { number: "500+", label: "Verified Guides" },
+    { number: "50+", label: "Destinations" }
+  ];
+
+  const features = [
+    {
+      icon: Mountain,
+      title: "Expert Local Guides",
+      description: "Our experienced guides know every hidden gem and secret path"
+    },
+    {
+      icon: Camera,
+      title: "Picture Perfect Moments",
+      description: "Capture stunning memories with photography-focused tours"
+    },
+    {
+      icon: Users,
+      title: "Community Driven",
+      description: "Join thousands of travelers who've discovered the magic"
+    },
+    {
+      icon: Award,
+      title: "Award Winning",
+      description: "Recognized for excellence in sustainable tourism"
+    },
+    {
+      icon: Heart,
+      title: "Passionate Team",
+      description: "We love sharing the beauty and culture of our homeland"
+    },
+    {
+      icon: Calendar,
+      title: "Year-Round",
+      description: "Activities for every season from summer to winter"
+    }
+  ];
+
   return (
-    <div className="max-w-7xl mx-auto px-4 py-16">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        viewport={{ once: true }}
-        className="text-center mb-12"
-      >
-        <motion.h2 
-          className="text-4xl font-bold text-gray-800 mb-4"
-          initial={{ scale: 0.9 }}
-          whileInView={{ scale: 1 }}
-          transition={{ 
-            duration: 0.5, 
-            delay: 0.2,
-            type: "spring",
-            stiffness: 100
-          }}
-        >
-          About Us
-        </motion.h2>
-        <motion.div 
-          className="h-1 bg-gradient-to-r from-amber-400 to-amber-600 mx-auto w-24 rounded-full"
-          initial={{ width: 0 }}
-          whileInView={{ width: 96 }}
-          transition={{ 
-            duration: 0.8, 
-            delay: 0.3,
-            type: "spring",
-            stiffness: 50
-          }}
-        />
-      </motion.div>
+    <section className="relative">
+      
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 mb-16 -mt-16">
+        <div className="text-center pt-20">
+          <motion.h2 
+            className="text-4xl md:text-5xl font-bold text-gray-800 mb-4"
+            initial={{ scale: 0.9 }}
+            whileInView={{ scale: 1 }}
+            transition={{ 
+              duration: 0.5, 
+              delay: 0.2,
+              type: "spring",
+              stiffness: 100
+            }}
+          >
+            About <span className="text-green-600">Bagspackgo</span>
+          </motion.h2>
+          <motion.div 
+            className="h-1 bg-gradient-to-r from-amber-400 to-amber-600 mx-auto w-24 rounded-full mb-12"
+            initial={{ width: 0 }}
+            whileInView={{ width: 96 }}
+            transition={{ 
+              duration: 0.8, 
+              delay: 0.3,
+              type: "spring",
+              stiffness: 50
+            }}
+          />
+        </div>
+      </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 50 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-        viewport={{ once: true }}
-      >
-        <div className="bg-gradient-to-r from-[#bdf8e293] to-[#adf0d793] rounded-2xl p-4 h-[500px] w-full flex items-center justify-center">
-          <div className="bg-white rounded-xl p-8 md:p-10 w-[calc(100%-32px)] h-[calc(100%-32px)] min-h-[400px] flex flex-col justify-center">
-            <div className="prose max-w-none">
-              <p className="text-lg text-gray-700 mb-6">
-                At BagspackGo, we believe that travel should be personal, flexible, and filled with meaningful connections. That's why we've created a platform that does more than just list destinations—it opens up a world of possibilities by directly linking curious travelers with local tour guides and small travel firms that bring every journey to life.
-              </p>
-              
-              <div className="grid md:grid-cols-2 gap-8 mb-8">
-                <div>
-                  <h3 className="text-xl font-semibold text-gray-800 mb-4">Our Approach</h3>
-                  <ul className="space-y-4">
-                    <li className="flex items-start">
-                      <svg className="h-5 w-5 text-green-500 mt-1 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                      <span className="text-gray-700">
-                        Verified local guides for authentic experiences
-                      </span>
-                    </li>
-                    <li className="flex items-start">
-                      <svg className="h-5 w-5 text-green-500 mt-1 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                      <span className="text-gray-700">
-                        Direct connection with no middlemen
-                      </span>
-                    </li>
-                    <li className="flex items-start">
-                      <svg className="h-5 w-5 text-green-500 mt-1 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                      <span className="text-gray-700">
-                        Full itinerary control and customization
-                      </span>
-                    </li>
-                  </ul>
-                </div>
-
-                <div>
-                  <h3 className="text-xl font-semibold text-gray-800 mb-4">Unique Features</h3>
-                  <ul className="space-y-4">
-                    <li className="flex items-start">
-                      <svg className="h-5 w-5 text-green-500 mt-1 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                      <span className="text-gray-700">
-                        Merger feature for group travel
-                      </span>
-                    </li>
-                    <li className="flex items-start">
-                      <svg className="h-5 w-5 text-green-500 mt-1 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                      <span className="text-gray-700">
-                        Expert-guided trekking adventures
-                      </span>
-                    </li>
-                    <li className="flex items-start">
-                      <svg className="h-5 w-5 text-green-500 mt-1 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                      <span className="text-gray-700">
-                        Tailored experiences for every traveler
-                      </span>
-                    </li>
-                  </ul>
+      
+      <div className="bg-gradient-to-br from-green-50 to-blue-50 pt-16 pb-20">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-12 mb-20 items-center">
+            <motion.div
+              initial={{ x: -30, opacity: 0 }}
+              whileInView={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.4 }}
+              viewport={{ once: true }}
+            >
+              <h3 className="text-3xl font-bold text-gray-900 mb-6">Your Travel Companion</h3>
+              <div className="space-y-4 text-gray-600 leading-relaxed">
+                <p>
+                  BagspackGo connects you directly with verified local guides and travel experts. 
+                  We believe in authentic experiences, transparent pricing, and personalized adventures 
+                  that create lasting memories.
+                </p>
+                <p>
+                  What started as a small initiative has grown into a comprehensive tourism 
+                  platform, offering everything from romantic getaways to adventurous expeditions.
+                </p>
+                <p>
+                  Every experience we curate is infused with the warmth and hospitality that 
+                  travelers expect. We don't just show you places – we help you feel the soul of each destination.
+                </p>
+              </div>
+            </motion.div>
+            <motion.div 
+              className="relative"
+              initial={{ x: 30, opacity: 0 }}
+              whileInView={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.6 }}
+              viewport={{ once: true }}
+            >
+              <div className="bg-white rounded-2xl p-8 shadow-lg">
+                <div className="grid grid-cols-3 gap-4 text-center">
+                  {stats.map((stat, index) => (
+                    <div key={index} className="p-4">
+                      <div className="text-3xl font-bold text-green-600 mb-2">
+                        {stat.number}
+                      </div>
+                      <div className="text-gray-600 text-sm">{stat.label}</div>
+                    </div>
+                  ))}
                 </div>
               </div>
+            </motion.div>
+          </div>
 
-              <p className="text-lg text-gray-700">
-                Whether you're planning a peaceful trip, a challenging trek through the Himalayas, or a culturally immersive exploration, BagspackGo gives you the tools to shape your own experience. Browse our wide range of verified tour guides, compare offerings, and choose what fits your style.
-              </p>
-            </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {features.map((feature, index) => (
+              <Card 
+                key={feature.title} 
+                className="p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 bg-white/80 backdrop-blur-sm border-0 shadow-lg"
+                initial={{ y: 20, opacity: 0 }}
+                whileInView={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.1 * index }}
+                viewport={{ once: true }}
+              >
+                <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-blue-500 rounded-xl flex items-center justify-center mb-4">
+                  <feature.icon className="w-6 h-6 text-white" />
+                </div>
+                <h4 className="text-xl font-bold text-gray-900 mb-3">{feature.title}</h4>
+                <p className="text-gray-600 leading-relaxed">{feature.description}</p>
+              </Card>
+            ))}
           </div>
         </div>
-      </motion.div>
-    </div>
+      </div>
+    </section>
   );
 };
 

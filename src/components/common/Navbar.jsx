@@ -15,7 +15,7 @@ export default function Navbar() {
   }, []);
 
   return (
-    <nav className="flex items-center justify-between px-6 py-4 bg-green-400 shadow-md">
+    <nav className="flex items-center justify-between px-6 py-4 bg-green-300 shadow-md">
       <div className="flex items-center">
         <a href="/" className="inline-block w-[150px] h-[40px] overflow-hidden relative rounded-3xl bg-white">
           <Image 

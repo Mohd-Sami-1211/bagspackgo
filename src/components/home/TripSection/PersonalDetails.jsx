@@ -669,9 +669,10 @@ const PersonalDetails = ({
                 <button
                   type="button"
                   onClick={() => removeChild(index)}
-                  className="absolute top-4 right-3 p-1 text-black hover:text-white hover:bg-red-500  rounded-xl"
+                  className="absolute top-3 right-5 p-1 text-sm text-gray-500 hover:text-white hover:bg-red-500  rounded-xl"
                 >
-                  <Minus className="h-4 w-8" />
+                  Remove
+                  
                 </button>
 
                 <h5 className="text-md font-medium text-gray-700 mb-4 flex items-center">

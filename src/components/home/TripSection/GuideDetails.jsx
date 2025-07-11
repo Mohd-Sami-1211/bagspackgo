@@ -1,5 +1,5 @@
 'use client';
-import { Star, Edit, MapPin, Users, Calendar, Share2, Heart, ChevronRight, ArrowRight, ArrowLeft, Hotel, Clock, Map } from 'lucide-react';
+import { Star, Edit, MapPin, Users, Calendar, Share2, Heart, ChevronRight, ArrowRight, ArrowLeft, Hotel, Clock, Map, Utensils, Car, ShieldCheck, Mountain } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import Itenary from '@/components/home/TripSection/Itenary';
@@ -109,6 +109,39 @@ const GuideDetails = ({ guide }) => {
   const taxes = basePrice * 0.05;
   const total = basePrice - discount + platformFee + taxes;
   const nights = numDays + 1;
+
+    const packageInclusions = [
+    {
+      icon: <Utensils className="h-5 w-5 text-green-600" />,
+      title: "Food",
+      description: "All meals included (Breakfast, Lunch & Dinner)",
+      items: ["Vegetarian & Non-veg options", "Local cuisine experience", "Bottled water"]
+    },
+    {
+      icon: <Car className="h-5 w-5 text-green-600" />,
+      title: "Transport",
+      description: "Comfortable private transportation",
+      items: ["AC Vehicle", "Pickup/Drop from airport", "All inter-city transfers"]
+    },
+    {
+      icon: <Hotel className="h-5 w-5 text-green-600" />,
+      title: "Accommodation",
+      description: "Quality stays included",
+      items: ["3-4 Star Hotels", "Daily housekeeping", "All taxes included"]
+    },
+    {
+      icon: <ShieldCheck className="h-5 w-5 text-green-600" />,
+      title: "Guidance",
+      description: "Complete experienced guidance",
+      items: ["Local expert guide", "24/7 support", "Trip planning assistance"]
+    },
+    {
+      icon: <Mountain className="h-5 w-5 text-green-600" />,
+      title: "Explorations",
+      description: "Curated experiences included",
+      items: ["City tours", "Cultural experiences", "Adventure activities"]
+    }
+  ];
 
   const handleSaveItenary = (dayIndex, newData) => {
     setItenaries(prev => {
@@ -517,17 +550,54 @@ const GuideDetails = ({ guide }) => {
                     <ArrowLeft className="h-4 w-4 mr-2" />
                     Back
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      handleSavePersonalDetails(bookingData.personalDetails);
-                      handleNextTab();
-                    }}
-                    className="px-5 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center shadow-sm"
-                  >
-                    Review Journey
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </button>
+                 <button
+  type="button"
+  onClick={() => {
+    // Get the current form data from the component's state
+    const formData = {
+      contactDetails: bookingData.personalDetails?.contactDetails || {},
+      personalDetails: bookingData.personalDetails?.personalDetails || [],
+      children: bookingData.personalDetails?.children || []
+    };
+
+    // Get arrival/departure data from the component's state
+    const arrivalDepartureInfo = {
+      arrival: {
+        city: searchParams.get('arrivalCity') || '',
+        pickupAddress: searchParams.get('arrivalAddress') || '',
+        date: selectedStartDate.toISOString(),
+        time: searchParams.get('arrivalTime') || '09:00 AM'
+      },
+      departure: {
+        city: searchParams.get('departureCity') || '',
+        dropoffAddress: searchParams.get('departureAddress') || '',
+        date: new Date(selectedStartDate.getTime() + (numDays * 24 * 60 * 60 * 1000)).toISOString(),
+        time: searchParams.get('departureTime') || '05:00 PM'
+      }
+    };
+
+    // Store all trip data in localStorage for the review page
+    localStorage.setItem('tripData', JSON.stringify({
+      itenaries: itenaries,
+      arrivalDeparture: arrivalDepartureInfo,
+      personalDetails: formData,
+      guide: guide,
+      tripConfig: {
+        category,
+        days: numDays,
+        count: numPeople,
+        date: dateParam
+      }
+    }));
+
+    // Navigate to the review journey page
+    router.push(`/trip/guidelist/tripdetails/${guide.id}/reviewjourney?category=${category}&days=${numDays}&count=${numPeople}&date=${dateParam}`);
+  }}
+  className="px-5 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center shadow-sm hover:shadow-md"
+>
+  Review Journey
+  <ArrowRight className="h-4 w-4 ml-2 transition-transform group-hover:translate-x-1" />
+</button>
                 </div>
               </div>
             )}
@@ -535,51 +605,63 @@ const GuideDetails = ({ guide }) => {
         </div>
 
         <div className="w-full lg:w-4/12">
+        <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 mb-12">
+          <div className=" px-5 py-3">
+            <h2 className="text-green-500 font-semibold text-base">What's Included</h2>
+          </div>
+          
+          <div className="p-5">
+            <div className="space-y-5">
+              {packageInclusions.map((item, index) => (
+                <div key={index} className="flex items-start">
+                  <div className="flex-shrink-0 p-2 bg-green-50 rounded-lg mr-4">
+                    {item.icon}
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-gray-800">{item.title}</h4>
+                    <p className="text-sm text-gray-600 mt-1">{item.description}</p>
+                    <ul className="mt-2 space-y-1">
+                      {item.items.map((detail, i) => (
+                        <li key={i} className="flex items-start text-xs text-gray-500">
+                          <svg className="h-3 w-3 text-green-500 mr-1.5 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          {detail}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            <div className="mt-6 pt-4 border-t border-gray-200">
+              <h4 className="font-medium text-gray-800 mb-2">Activities Included</h4>
+              <div className="flex flex-wrap gap-2">
+                {guide.activitiesAvailable?.slice(0, 6).map((activity, i) => (
+                  <span key={i} className="px-2.5 py-1 bg-green-50 text-green-700 text-xs rounded-full">
+                    {activity}
+                  </span>
+                ))}
+                {guide.activitiesAvailable?.length > 6 && (
+                  <span className="px-2.5 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                    +{guide.activitiesAvailable.length - 6} more
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
           <div className="bg-white rounded-xl shadow-md overflow-hidden top-6 border border-gray-100">
             <div className="bg-gradient-to-r from-green-400 to-green-500 px-5 py-3">
               <h3 className="text-white font-semibold text-base">Booking Summary</h3>
             </div>
 
             <div className="p-5 space-y-5">
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center">
-                    <Calendar className="h-4 w-4 text-gray-400 mr-2" />
-                    <div>
-                      <p className="text-xs text-gray-500">Start Date</p>
-                      <p className="text-sm font-medium">
-                        {selectedStartDate.toLocaleDateString('en-US', { 
-                          day: 'numeric', 
-                          month: 'short', 
-                          year: 'numeric' 
-                        })}
-                      </p>
-                    </div>
-                  </div>
-                  <button 
-                    className="text-green-600 text-xs font-medium hover:text-green-700 transition-colors"
-                    onClick={() => setActiveTab('arrivalDeparture')}
-                  >
-                    Edit
-                  </button>
-                </div>
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center">
-                    <Users className="h-4 w-4 text-gray-400 mr-2" />
-                    <div>
-                      <p className="text-xs text-gray-500">Travelers</p>
-                      <p className="text-sm font-medium">
-                        {numPeople} {peopleText}{numPeople > 1 ? 's' : ''} • {numDays} day{numDays > 1 ? 's' : ''} • {nights} nights
-                      </p>
-                    </div>
-                  </div>
-                  <button className="text-green-600 text-xs font-medium hover:text-green-700 transition-colors">
-                    Edit
-                  </button>
-                </div>
-              </div>
+              
 
-              <div className="border-t border-gray-200 pt-4">
+              <div className=" ">
                 <h4 className="font-medium text-gray-700 text-sm mb-2">Price Breakdown</h4>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between text-gray-600">

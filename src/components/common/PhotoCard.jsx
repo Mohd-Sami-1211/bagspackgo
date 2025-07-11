@@ -8,8 +8,8 @@ const PhotoCard = ({
   images, 
   name, 
   description, 
-  bgColor="from-emerald-500 to-emerald-700", 
-  textColor="text-emerald-50",
+  bgColor="from-blue-500 to-blue-700", 
+  textColor="text-white",
   autoSlide = true
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -32,14 +32,13 @@ const PhotoCard = ({
     setIsFlipped(!isFlipped);
   };
 
-  // Auto slide effect
   useEffect(() => {
     if (!autoSlide || isFlipped) return;
 
     const interval = setInterval(() => {
       setDirection(1);
       setCurrentIndex((prev) => (prev + 1) % images.length);
-    }, 5000); // Slowed down from 4000 to 5000
+    }, 5000);
 
     return () => clearInterval(interval);
   }, [autoSlide, isFlipped, images.length]);
@@ -60,10 +59,10 @@ const PhotoCard = ({
               damping: 30,
               duration: 0.8
             }}
-            className="absolute inset-0"
+            className="absolute inset-0 group"
           >
-            <div className="relative h-full w-full overflow-hidden rounded-xl shadow-lg group">
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent z-10" />
+            <div className="relative h-full w-full overflow-hidden rounded-xl shadow-lg">
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent z-10" />
               <div className="absolute bottom-4 left-4 z-20">
                 <h3 className="text-2xl font-bold text-white">{name}</h3>
               </div>
@@ -72,7 +71,7 @@ const PhotoCard = ({
                 src={images[currentIndex]}
                 alt={name}
                 fill
-                className="object-cover"
+                className="object-cover transition-transform duration-500 group-hover:scale-110"
                 priority
               />
 
@@ -114,7 +113,7 @@ const PhotoCard = ({
             className={`absolute inset-0 bg-gradient-to-br ${bgColor} ${textColor} p-6 rounded-xl shadow-lg overflow-y-auto`}
           >
             <h3 className="text-2xl font-bold mb-4">{name}</h3>
-            <p>{description}</p>
+            <p className="leading-relaxed">{description}</p>
           </motion.div>
         )}
       </AnimatePresence>
