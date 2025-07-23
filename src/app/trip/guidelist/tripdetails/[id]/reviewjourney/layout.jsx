@@ -7,7 +7,7 @@ export default function ReviewJourneyLayout({ children }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
-      className="bg-[#F2FFFC] min-h-screen pt-[80px] w-full -mt-8"
+      className="bg-gradient-to-br from-green-50 to-blue-50 min-h-screen pt-[80px] w-full -mt-12"
     >
       {children}
     </motion.div>

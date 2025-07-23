@@ -55,6 +55,25 @@ const GuideDetails = ({ guide }) => {
       { id: 2, name: 'Local Cuisine Tasting', duration: '1.5 hours', location: 'Pahalgam' }
     ]
   };
+  const [arrivalDepartureData, setArrivalDepartureData] = useState({
+  arrival: {
+    city: '',
+    pickupAddress: '',
+    date: '',
+    time: ''
+  },
+  departure: {
+    city: '',
+    dropoffAddress: '',
+    date: '',
+    time: ''
+  }
+});
+const [personalDetailsData, setPersonalDetailsData] = useState({
+  contactDetails: {},
+  personalDetails: [],
+  children: []
+});
 
   // Initialize itineraries with correct dates
   useEffect(() => {
@@ -96,13 +115,10 @@ const GuideDetails = ({ guide }) => {
   });
   const [step, setStep] = useState(1);
 
-  const handleSavePersonalDetails = (data) => {
-    setBookingData(prev => ({
-      ...prev,
-      personalDetails: data
-    }));
-  };
-
+   const handleSavePersonalDetails = (data) => {
+  setPersonalDetailsData(data);
+  setPersonalDetailsCompleted(true);
+};
   const basePrice = guide.price * numDays * numPeople;
   const discount = basePrice * 0.1;
   const platformFee = 50;
@@ -182,12 +198,14 @@ const GuideDetails = ({ guide }) => {
     }
   };
 
-  const handleArrDepSubmit = (data) => {
-    const newStartDate = new Date(data.startDate);
-    setSelectedStartDate(newStartDate);
-    setArrDepCompleted(true);
-    setActiveTab('personalDetails');
-  };
+const handleArrDepSubmit = (data) => {
+  const newStartDate = new Date(data.startDate);
+  setSelectedStartDate(newStartDate);
+  setArrivalDepartureData(data);
+  setArrDepCompleted(true);
+  setActiveTab('personalDetails');
+};
+
 
   const formatTimeWithAMPM = (time) => {
     if (!time) return '';
@@ -215,7 +233,7 @@ const GuideDetails = ({ guide }) => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-14">
       <div className="w-full bg-white pb-10">
         <div className="max-w-7xl mx-auto">
-          <div className="relative bg-gradient-to-r from-green-400 to-green-500 shadow-xl rounded-full px-6 py-5 flex items-center justify-between w-full max-w-4xl mx-auto">
+          <div className="relative bg-green-300 shadow-xl rounded-full px-6 py-5 flex items-center justify-between w-full max-w-4xl mx-auto">
             <div className="absolute top-2 right-4 mr-4 flex items-center bg-white rounded-full px-3 py-1 text-xs font-medium text-gray-800 shadow-md">
               <Star className="w-4 h-4 text-yellow-500 fill-yellow-400 mr-1" />
               {guide.rating}
@@ -265,7 +283,7 @@ const GuideDetails = ({ guide }) => {
         </div>
       </div>
 
-      <div className="w-full max-w-7xl mx-auto flex flex-col lg:flex-row gap-8 pt-6 pb-10 bg-[#e9ffeeee] rounded-xl p-6">
+      <div className="w-full max-w-7xl mx-auto flex flex-col lg:flex-row gap-8 pt-6 pb-10 bg-gradient-to-br from-green-50 to-blue-50 rounded-xl p-6">
         <div className="w-full lg:w-8/12">
           <div className="flex bg-white rounded-t-xl shadow-sm overflow-hidden border border-gray-200 mb-1.5">
             {[
@@ -294,7 +312,7 @@ const GuideDetails = ({ guide }) => {
             {activeTab === 'dayByDay' && (
               <>
                 <div className="flex justify-between items-center mb-5">
-                  <h3 className="text-lg font-semibold text-green-600 ml-5">
+                  <h3 className="text-lg font-semibold text-green-500 ml-5">
                     {viewingDay ? `Day ${viewingDay}` : 'Your Itinerary'}
                   </h3>
                   {viewingDay && !isEditing && (
@@ -408,11 +426,11 @@ const GuideDetails = ({ guide }) => {
                               <div>
                                 <h4 className="font-medium text-gray-900 flex items-center">
                                   <span className={`w-7 h-7 flex items-center justify-center ${
-                                    isCurrentDay ? 'bg-green-500 text-white' : 'bg-green-100 text-green-800'
+                                    isCurrentDay ? 'bg-green-500 text-white' : 'bg-green-100 text-green-600'
                                   } rounded-full mr-3 text-sm font-semibold`}>
                                     {day.dayNumber}
                                   </span>
-                                  <span className="text-green-700 font-semibold">{day.location}</span>
+                                  <span className="text-green-600 font-semibold">{day.location}</span>
                                 </h4>
                                 <p className="text-sm text-gray-500 mt-1.5 ml-10 flex items-center">
                                   <Calendar className="h-4 w-4 mr-2 text-gray-400" />
@@ -512,7 +530,7 @@ const GuideDetails = ({ guide }) => {
                   <div className="flex justify-end mt-6">
                     <button
                       onClick={handleNextTab}
-                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center text-sm shadow-sm transition-colors"
+                      className="px-4 py-2 bg-gradient-to-br from-green-400 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 flex items-center text-sm shadow-sm transition-colors"
                     >
                       Next <ArrowRight className="ml-2 h-4 w-4" />
                     </button>
@@ -553,34 +571,15 @@ const GuideDetails = ({ guide }) => {
                  <button
   type="button"
   onClick={() => {
-    // Get the current form data from the component's state
-    const formData = {
-      contactDetails: bookingData.personalDetails?.contactDetails || {},
-      personalDetails: bookingData.personalDetails?.personalDetails || [],
-      children: bookingData.personalDetails?.children || []
-    };
-
-    // Get arrival/departure data from the component's state
-    const arrivalDepartureInfo = {
-      arrival: {
-        city: searchParams.get('arrivalCity') || '',
-        pickupAddress: searchParams.get('arrivalAddress') || '',
-        date: selectedStartDate.toISOString(),
-        time: searchParams.get('arrivalTime') || '09:00 AM'
-      },
-      departure: {
-        city: searchParams.get('departureCity') || '',
-        dropoffAddress: searchParams.get('departureAddress') || '',
-        date: new Date(selectedStartDate.getTime() + (numDays * 24 * 60 * 60 * 1000)).toISOString(),
-        time: searchParams.get('departureTime') || '05:00 PM'
-      }
-    };
-
-    // Store all trip data in localStorage for the review page
-    localStorage.setItem('tripData', JSON.stringify({
+    // Prepare all trip data with proper structure
+    const tripData = {
       itenaries: itenaries,
-      arrivalDeparture: arrivalDepartureInfo,
-      personalDetails: formData,
+      arrivalDeparture: arrivalDepartureData,
+      personalDetails: {
+        contactDetails: personalDetailsData.contactDetails || {},
+        personalDetails: personalDetailsData.personalDetails || [],
+        children: personalDetailsData.children || []
+      },
       guide: guide,
       tripConfig: {
         category,
@@ -588,10 +587,15 @@ const GuideDetails = ({ guide }) => {
         count: numPeople,
         date: dateParam
       }
-    }));
+    };
 
-    // Navigate to the review journey page
-    router.push(`/trip/guidelist/tripdetails/${guide.id}/reviewjourney?category=${category}&days=${numDays}&count=${numPeople}&date=${dateParam}`);
+    // Store in localStorage
+    localStorage.setItem('tripData', JSON.stringify(tripData));
+
+    // Navigate to review page
+    router.push(
+      `/trip/guidelist/tripdetails/${guide.id}/reviewjourney?category=${category}&days=${numDays}&count=${numPeople}&date=${dateParam}`
+    );
   }}
   className="px-5 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center shadow-sm hover:shadow-md"
 >
@@ -653,81 +657,7 @@ const GuideDetails = ({ guide }) => {
           </div>
         </div>
 
-          <div className="bg-white rounded-xl shadow-md overflow-hidden top-6 border border-gray-100">
-            <div className="bg-gradient-to-r from-green-400 to-green-500 px-5 py-3">
-              <h3 className="text-white font-semibold text-base">Booking Summary</h3>
-            </div>
-
-            <div className="p-5 space-y-5">
-              
-
-              <div className=" ">
-                <h4 className="font-medium text-gray-700 text-sm mb-2">Price Breakdown</h4>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between text-gray-600">
-                    <span>Trip Price</span>
-                    <span className="font-medium">${basePrice.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-green-600">
-                    <span>Discount</span>
-                    <span>- ${discount.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-gray-600">
-                    <span>Platform Fee</span>
-                    <span className="font-medium">${platformFee.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-gray-600">
-                    <span>Taxes</span>
-                    <span className="font-medium">${taxes.toFixed(2)}</span>
-                  </div>
-                </div>
-                <div className="flex justify-between text-base font-semibold border-t border-gray-200 pt-3 mt-3">
-                  <span>Total</span>
-                  <span>${total.toFixed(2)}</span>
-                </div>
-              </div>
-
-              <div>
-                <label htmlFor="coupon" className="block text-sm text-gray-700 mb-1">Add coupon code</label>
-                <div className="flex">
-                  <input
-                    type="text"
-                    id="coupon"
-                    placeholder="Enter code"
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:ring-green-500 focus:border-green-500 text-sm"
-                  />
-                  <button className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-r-md hover:bg-green-700 transition">
-                    Apply
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex items-start text-sm">
-                <input
-                  type="checkbox"
-                  id="terms"
-                  checked={acceptTerms}
-                  onChange={(e) => setAcceptTerms(e.target.checked)}
-                  className="mt-1 mr-2 h-4 w-4 text-green-600 border-gray-300 rounded"
-                />
-                <label htmlFor="terms" className="text-gray-600 leading-snug">
-                  I agree to the <a href="#" className="text-green-600 hover:underline">Terms & Conditions</a> and{' '}
-                  <a href="#" className="text-green-600 hover:underline">Privacy Policy</a>
-                </label>
-              </div>
-
-              <button
-                disabled={!acceptTerms}
-                className={`w-full py-3 px-4 rounded-lg font-semibold text-sm text-white transition-all ${
-                  acceptTerms
-                    ? 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 shadow-md hover:shadow-lg'
-                    : 'bg-gray-400 cursor-not-allowed'
-                }`}
-              >
-                Pay Now • ${total.toFixed(2)}
-              </button>
-            </div>
-          </div>
+          
         </div>
       </div>
     </div>

@@ -161,7 +161,7 @@ const SearchResults = () => {
   }
 
   return (
-    <div className="min-h-screen w-full bg-[#e9ffeeee] -mt-20 mb-10">
+    <div className="min-h-screen w-full bg-gradient-to-br from-green-50 to-blue-50 -mt-20 mb-10">
       {/* Search Parameters Bar */}
       <div className="w-full bg-white border-b-2">
         <div className=" px-4 py-4 mb-4">
@@ -203,7 +203,7 @@ const SearchResults = () => {
           {/* Parameter Display/Edit */}
 <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
   {/* Destination Field - With matching focus ring */}
-  <div className="bg-[#c8fcd5e7] p-3 rounded-lg">
+  <div className="bg-gradient-to-br from-green-50 to-blue-50 p-3 rounded-lg">
     <label className="block text-xs text-gray-900 mb-1">Destination</label>
     {isEditing ? (
       <div className="relative">
@@ -254,7 +254,7 @@ const SearchResults = () => {
   </div>
 
   {/* Category Field - With matching focus ring */}
-  <div className="bg-[#c8fcd5e7] p-3 rounded-lg">
+  <div className="bg-gradient-to-br from-green-50 to-blue-50 p-3 rounded-lg">
     <label className="block text-xs text-gray-900 mb-1">Package Type</label>
     {isEditing ? (
       <Select
@@ -292,7 +292,7 @@ const SearchResults = () => {
   </div>
 
   {/* Date Field */}
-  <div className="bg-[#c8fcd5e7] p-3 rounded-lg">
+  <div className="bg-gradient-to-br from-green-50 to-blue-50 p-3 rounded-lg">
     <label className="block text-xs text-gray-900 mb-1">Travel Date</label>
     {isEditing ? (
       <div className="relative h-[36px]">
@@ -315,7 +315,7 @@ const SearchResults = () => {
   </div>
 
   {/* Days Field - Improved with blank state */}
-  <div className="bg-[#c8fcd5e7] p-3 rounded-lg">
+  <div className="bg-gradient-to-br from-green-50 to-blue-50 p-3 rounded-lg">
     <label className="block text-xs text-gray-900 mb-1">Duration</label>
     {isEditing ? (
       <div className="flex items-center h-[36px] bg-white border border-gray-300 rounded overflow-hidden focus-within:ring-1 focus-within:ring-green-500 focus-within:border-green-500">
@@ -357,7 +357,7 @@ const SearchResults = () => {
   </div>
 
   {/* Count Field - Improved with blank state */}
-  <div className="bg-[#c8fcd5e7] p-3 rounded-lg">
+  <div className="bg-gradient-to-br from-green-50 to-blue-50 p-3 rounded-lg">
     <label className="block text-xs text-gray-900 mb-1">
       {category === 'couple' ? 'Couples' : 'People'}
     </label>

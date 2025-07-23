@@ -97,29 +97,32 @@ const ArrDep = ({
   };
 
   const handleSubmit = (e) => {
-    e.preventDefault();
-    if (validateForm()) {
-      onNext({
-        ...formData,
-        startDate: initialStartDate, // Using the initial start date (uneditable)
-        arrival: {
-          ...formData.arrival,
-          time: `${formData.arrival.time} ${formData.arrival.ampm}`
-        },
-        departure: {
-          ...formData.departure,
-          time: `${formData.departure.time} ${formData.departure.ampm}`
-        }
-      });
-    }
-  };
+  e.preventDefault();
+  if (validateForm()) {
+    onNext({
+      arrival: {
+        city: formData.arrival.city,
+        pickupAddress: formData.arrival.pickupAddress,
+        date: formData.arrival.date,
+        time: `${formData.arrival.time} ${formData.arrival.ampm}`
+      },
+      departure: {
+        city: formData.departure.city,
+        dropoffAddress: formData.departure.dropoffAddress,
+        date: formData.departure.date,
+        time: `${formData.departure.time} ${formData.departure.ampm}`
+      },
+      startDate: new Date(formData.arrival.date) // Pass the start date
+    });
+  }
+};
 
   return (
     <div className="space-y-6">
       <h3 className="text-2xl font-semibold text-gray-800 mb-6">Arrival & Departure Details</h3>
       
       {/* Destination Section (non-editable) */}
-      <div className="bg-green-50 border border-green-100 rounded-lg p-4 mb-6">
+      <div className="bg-gradient-to-br from-green-50 to-blue-50  border border-green-100 rounded-lg p-4 mb-6">
         <div className="flex items-center">
           <MapPin className="h-5 w-5 text-green-600 mr-2" />
           <span className="text-sm font-medium text-gray-500">Your Destination</span>

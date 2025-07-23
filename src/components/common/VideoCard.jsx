@@ -7,7 +7,7 @@ const VideoCard = ({
   name,
   description,
   locations,
-  color = "from-gray-900 to-gray-800",
+  color = "from-green-500 to-green-700",
   textColor = "text-white",
   isFlipped,
   onClick,

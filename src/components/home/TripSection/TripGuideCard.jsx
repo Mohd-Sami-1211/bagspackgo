@@ -106,7 +106,7 @@ const GuideCard = ({ guide, category, days, count = 1, date }) => {
         </div>
 
         {/* Right Side (20%) - View Button */}
-         <div className="w-full md:w-1/5 bg-green-500 flex items-center justify-center p-4">
+         <div className="w-full md:w-1/5 bg-green-300 flex items-center justify-center p-4">
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}

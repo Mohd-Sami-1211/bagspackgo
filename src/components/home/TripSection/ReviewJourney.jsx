@@ -1,6 +1,7 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ArrowLeft, 
   ArrowRight, 
@@ -17,12 +18,32 @@ import {
   Mail, 
   Phone,
   CreditCard,
-  Star
+  Star,
+  Luggage,
+  Plane,
+  Car,
+  Train,
+  Ship,
+  Utensils,
+  Landmark,
+  Mountain,
+  Sun,
+  Moon
 } from 'lucide-react';
 
-const ReviewJourney = ({ guide, tripData, searchParams }) => {
+const ReviewJourney = ({ guide, searchParams }) => {
+  const [tripData, setTripData] = useState(null);
   const router = useRouter();
   const [activeSection, setActiveSection] = useState('itinerary');
+  const [isAnimating, setIsAnimating] = useState(false);
+
+   useEffect(() => {
+    const storedData = localStorage.getItem('tripData');
+    if (storedData) {
+      setTripData(JSON.parse(storedData));
+    }
+  }, []);
+  
 
   // Safely extract URL parameters with defaults
   const category = searchParams?.get('category') || 'individual';
@@ -69,6 +90,36 @@ const ReviewJourney = ({ guide, tripData, searchParams }) => {
       total
     };
   };
+  const [isLoading, setIsLoading] = useState(true);
+
+useEffect(() => {
+  const loadData = () => {
+    try {
+      const storedData = localStorage.getItem('tripData');
+      if (storedData) {
+        const parsedData = JSON.parse(storedData);
+        
+        // Ensure proper structure
+        const formattedData = {
+          ...parsedData,
+          personalDetails: {
+            contactDetails: parsedData.personalDetails?.contactDetails || {},
+            personalDetails: parsedData.personalDetails?.personalDetails || [],
+            children: parsedData.personalDetails?.children || []
+          }
+        };
+        
+        setTripData(formattedData);
+      }
+    } catch (error) {
+      console.error("Error loading trip data:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  loadData();
+}, []);
 
   const paymentDetails = calculatePayment();
 
@@ -81,41 +132,85 @@ const ReviewJourney = ({ guide, tripData, searchParams }) => {
     alert('Redirecting to payment gateway...');
   };
 
+  const changeSection = (newSection) => {
+    setIsAnimating(true);
+    setTimeout(() => {
+      setActiveSection(newSection);
+      setIsAnimating(false);
+    }, 300);
+  };
+
+  const getTransportIcon = (transportType) => {
+    switch(transportType?.toLowerCase()) {
+      case 'plane': return <Plane className="h-5 w-5 mr-2 text-blue-500" />;
+      case 'car': return <Car className="h-5 w-5 mr-2 text-green-500" />;
+      case 'train': return <Train className="h-5 w-5 mr-2 text-amber-500" />;
+      case 'ship': return <Ship className="h-5 w-5 mr-2 text-indigo-500" />;
+      default: return <Car className="h-5 w-5 mr-2 text-gray-500" />;
+    }
+  };
+
   const renderSectionContent = () => {
     switch (activeSection) {
       case 'itinerary':
         return (
-          <div className="bg-white rounded-xl shadow-sm p-6 space-y-6">
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            transition={{ duration: 0.3 }}
+            className="bg-white rounded-2xl shadow-lg p-8 space-y-8 border border-gray-100"
+          >
             {/* Itinerary section content */}
             <div className="flex justify-between items-center">
-              <h3 className="text-xl font-semibold text-gray-800">Trip Itinerary</h3>
+              <div className="flex items-center">
+                <div className="p-3 bg-gradient-to-r from-green-500 to-green-600 rounded-xl mr-4">
+                  <Map className="h-6 w-6 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-800">Trip Itinerary</h3>
+              </div>
               <button 
                 onClick={() => handleEditSection('itinerary')}
-                className="flex items-center text-green-600 hover:text-green-700 text-sm"
+                className="flex items-center text-green-600 hover:text-green-700 text-sm font-medium px-4 py-2 rounded-lg hover:bg-blue-50 transition-all"
               >
-                <Edit className="h-4 w-4 mr-1" /> Edit
+                <Edit className="h-4 w-4 mr-2" /> Edit Plan
               </button>
             </div>
 
             {/* Guide and Trip Summary */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <h4 className="text-lg font-medium text-gray-700">Guide Details</h4>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-xl p-6 border border-green-100">
+                <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                  <User className="h-5 w-5 text-green-600 mr-2" />
+                  Guide Details
+                </h4>
                 {guide ? (
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                      <span className="text-green-600 font-medium">
+                  <div className="flex items-start space-x-4">
+                    <div className="w-16 h-16 bg-gradient-to-br from-green-100 to-green-200 rounded-xl flex items-center justify-center shadow-sm">
+                      <span className="text-green-600 font-bold text-xl">
                         {guide.name?.split(' ').map(n => n[0]).join('')}
                       </span>
                     </div>
-                    <div>
-                      <p className="font-medium">{guide.name}</p>
-                      <p className="text-sm text-gray-600 flex items-center">
-                        <MapPin className="h-4 w-4 mr-1" /> {guide.location}
+                    <div className="flex-1">
+                      <p className="font-bold text-gray-800 text-lg">{guide.name}</p>
+                      <p className="text-sm text-gray-600 flex items-center mt-1">
+                        <MapPin className="h-4 w-4 mr-1 text-green-500" /> {guide.location}
                       </p>
-                      <div className="flex items-center mt-1">
-                        <Star className="h-4 w-4 text-yellow-500 fill-yellow-400 mr-1" />
-                        <span className="text-sm">{guide.rating} ({guide.reviews} reviews)</span>
+                      <div className="flex items-center mt-2">
+                        <div className="flex">
+                          {[...Array(5)].map((_, i) => (
+                            <Star 
+                              key={i} 
+                              className={`h-4 w-4 ${i < Math.floor(guide.rating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} 
+                            />
+                          ))}
+                        </div>
+                        <span className="text-sm ml-1 text-gray-600">({guide.reviews} reviews)</span>
+                      </div>
+                      <div className="mt-3">
+                        <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                          {guide.languages?.join(', ') || 'English'}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -124,41 +219,52 @@ const ReviewJourney = ({ guide, tripData, searchParams }) => {
                 )}
               </div>
 
-              <div className="space-y-4">
-                <h4 className="text-lg font-medium text-gray-700">Trip Summary</h4>
+              <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-xl p-6 border border-green-100">
+                <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                  <Luggage className="h-5 w-5 text-green-600 mr-2" />
+                  Trip Summary
+                </h4>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="flex items-center space-x-2">
-                    <Calendar className="h-5 w-5 text-gray-500" />
+                  <div className="flex items-start space-x-3">
+                    <div className="p-2 bg-green-100 rounded-lg">
+                      <Calendar className="h-5 w-5 text-green-600" />
+                    </div>
                     <div>
                       <p className="text-sm text-gray-500">Start Date</p>
-                      <p className="font-medium">
+                      <p className="font-semibold text-gray-800">
                         {date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Users className="h-5 w-5 text-gray-500" />
+                  <div className="flex items-start space-x-3">
+                    <div className="p-2 bg-purple-100 rounded-lg">
+                      <Users className="h-5 w-5 text-purple-600" />
+                    </div>
                     <div>
                       <p className="text-sm text-gray-500">Travelers</p>
-                      <p className="font-medium">
+                      <p className="font-semibold text-gray-800">
                         {count} {category === 'couple' ? 'couple' : 'person'}{count > 1 ? 's' : ''}
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Clock className="h-5 w-5 text-gray-500" />
+                  <div className="flex items-start space-x-3">
+                    <div className="p-2 bg-amber-100 rounded-lg">
+                      <Clock className="h-5 w-5 text-amber-600" />
+                    </div>
                     <div>
                       <p className="text-sm text-gray-500">Duration</p>
-                      <p className="font-medium">
+                      <p className="font-semibold text-gray-800">
                         {days} day{days > 1 ? 's' : ''}
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Hotel className="h-5 w-5 text-gray-500" />
+                  <div className="flex items-start space-x-3">
+                    <div className="p-2 bg-red-100 rounded-lg">
+                      <Hotel className="h-5 w-5 text-red-600" />
+                    </div>
                     <div>
                       <p className="text-sm text-gray-500">Nights</p>
-                      <p className="font-medium">
+                      <p className="font-semibold text-gray-800">
                         {days} night{days > 1 ? 's' : ''}
                       </p>
                     </div>
@@ -169,299 +275,519 @@ const ReviewJourney = ({ guide, tripData, searchParams }) => {
 
             {/* Day-wise Plan */}
             <div className="space-y-6">
-              <h4 className="text-lg font-medium text-gray-700">Day-wise Plan</h4>
+              <h4 className="text-xl font-semibold text-gray-800 flex items-center">
+                <div className="p-3 bg-gradient-to-r from-green-500 to-green-600 rounded-xl mr-4">
+                  <Calendar className="h-6 w-6 text-white" />
+                </div>
+                Day-wise Plan
+              </h4>
               {itenaries.length > 0 ? (
-                itenaries.map((day, index) => (
-                  <div key={index} className="border border-gray-200 rounded-lg p-5">
-                    <div className="flex justify-between items-center mb-4">
-                      <h5 className="font-medium text-gray-800">
-                        Day {day.dayNumber}: {day.location}
-                      </h5>
-                      <p className="text-sm text-gray-500">
-                        {day.rawDate ? new Date(day.rawDate).toLocaleDateString('en-US', { 
-                          weekday: 'short', 
-                          month: 'short', 
-                          day: 'numeric' 
-                        }) : 'Date not specified'}
-                      </p>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <h6 className="text-sm font-medium text-gray-600 mb-2 flex items-center">
-                          <Clock className="h-4 w-4 mr-2 text-blue-500" /> Departure
-                        </h6>
-                        <p className="text-sm text-gray-700">
-                          {day.departure?.time || 'Not specified'} from {day.departure?.address || 'Not specified'}
-                        </p>
-                      </div>
-                      
-                      <div>
-                        <h6 className="text-sm font-medium text-gray-600 mb-2 flex items-center">
-                          <Hotel className="h-4 w-4 mr-2 text-amber-500" /> Accommodation
-                        </h6>
-                        <p className="text-sm text-gray-700">
-                          {day.hotel?.name || 'Not selected'}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="mt-4">
-                      <h6 className="text-sm font-medium text-gray-600 mb-2 flex items-center">
-                        <Map className="h-4 w-4 mr-2 text-purple-500" /> Activities
-                      </h6>
-                      <ul className="space-y-1">
-                        {day.activities?.length > 0 ? (
-                          day.activities.map((activity, i) => (
-                            <li key={i} className="flex items-center text-sm text-gray-700">
-                              <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                              {activity.name} ({activity.duration})
-                            </li>
-                          ))
-                        ) : (
-                          <li className="text-sm text-gray-500">No activities selected</li>
-                        )}
-                      </ul>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p className="text-gray-500">No itinerary information available</p>
-              )}
-            </div>
-          </div>
-        );
-      
-      case 'arrivalDeparture':
-        return (
-          <div className="bg-white rounded-xl shadow-sm p-6 space-y-6">
-            <div className="flex justify-between items-center">
-              <h3 className="text-xl font-semibold text-gray-800">Arrival & Departure</h3>
-              <button 
-                onClick={() => handleEditSection('arrivalDeparture')}
-                className="flex items-center text-green-600 hover:text-green-700 text-sm"
-              >
-                <Edit className="h-4 w-4 mr-1" /> Edit
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="border border-gray-200 rounded-lg p-5">
-                <h4 className="text-lg font-medium text-gray-700 mb-4 flex items-center">
-                  <span className="w-6 h-6 flex items-center justify-center bg-blue-100 text-blue-600 rounded-full mr-3">
-                    1
-                  </span>
-                  Arrival Details
-                </h4>
-                
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-sm text-gray-500">City</p>
-                    <p className="font-medium">{arrivalDeparture.arrival?.city || 'Not specified'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Pickup Address</p>
-                    <p className="font-medium">{arrivalDeparture.arrival?.pickupAddress || 'Not specified'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Date</p>
-                    <p className="font-medium">
-                      {arrivalDeparture.arrival?.date ? 
-                        new Date(arrivalDeparture.arrival.date).toLocaleDateString('en-US', { 
-                          weekday: 'short', 
-                          month: 'short', 
-                          day: 'numeric' 
-                        }) : 
-                        'Not specified'}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Time</p>
-                    <p className="font-medium">{arrivalDeparture.arrival?.time || 'Not specified'}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="border border-gray-200 rounded-lg p-5">
-                <h4 className="text-lg font-medium text-gray-700 mb-4 flex items-center">
-                  <span className="w-6 h-6 flex items-center justify-center bg-green-100 text-green-600 rounded-full mr-3">
-                    2
-                  </span>
-                  Departure Details
-                </h4>
-                
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-sm text-gray-500">City</p>
-                    <p className="font-medium">{arrivalDeparture.departure?.city || 'Not specified'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Drop-off Address</p>
-                    <p className="font-medium">{arrivalDeparture.departure?.dropoffAddress || 'Not specified'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Date</p>
-                    <p className="font-medium">
-                      {arrivalDeparture.departure?.date ? 
-                        new Date(arrivalDeparture.departure.date).toLocaleDateString('en-US', { 
-                          weekday: 'short', 
-                          month: 'short', 
-                          day: 'numeric' 
-                        }) : 
-                        'Not specified'}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Time</p>
-                    <p className="font-medium">{arrivalDeparture.departure?.time || 'Not specified'}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-
-      case 'personalDetails':
-        return (
-          <div className="bg-white rounded-xl shadow-sm p-6 space-y-6">
-            <div className="flex justify-between items-center">
-              <h3 className="text-xl font-semibold text-gray-800">Personal Details</h3>
-              <button 
-                onClick={() => handleEditSection('personalDetails')}
-                className="flex items-center text-green-600 hover:text-green-700 text-sm"
-              >
-                <Edit className="h-4 w-4 mr-1" /> Edit
-              </button>
-            </div>
-
-            <div className="space-y-6">
-              <div className="border border-gray-200 rounded-lg p-5">
-                <h4 className="text-lg font-medium text-gray-700 mb-4 flex items-center">
-                  <span className="w-6 h-6 flex items-center justify-center bg-purple-100 text-purple-600 rounded-full mr-3">
-                    1
-                  </span>
-                  Contact Information
-                </h4>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-gray-500">Email</p>
-                    <p className="font-medium">{personalDetails.contactDetails?.email || 'Not specified'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Mobile</p>
-                    <p className="font-medium">{personalDetails.contactDetails?.mobile || 'Not specified'}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="border border-gray-200 rounded-lg p-5">
-                <h4 className="text-lg font-medium text-gray-700 mb-4 flex items-center">
-                  <span className="w-6 h-6 flex items-center justify-center bg-amber-100 text-amber-600 rounded-full mr-3">
-                    2
-                  </span>
-                  Traveler Details
-                </h4>
-                
-                <div className="space-y-4">
-                  {personalDetails.personalDetails?.length > 0 ? (
-                    personalDetails.personalDetails.map((traveler, index) => (
-                      <div key={index} className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
-                        <h5 className="font-medium text-gray-800 mb-2">
-                          Traveler {index + 1}: {traveler.name || 'Name not specified'}
-                        </h5>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                          <div>
-                            <p className="text-sm text-gray-500">Gender</p>
-                            <p className="font-medium capitalize">{traveler.gender || 'Not specified'}</p>
+                <div className="space-y-6">
+                  {itenaries.map((day, index) => (
+                    <motion.div 
+                      key={index}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="bg-white rounded-xl shadow-md border border-gray-100 p-6 hover:shadow-lg transition-shadow"
+                    >
+                      <div className="flex justify-between items-center mb-4">
+                        <div>
+                          <h5 className="font-bold text-gray-800 text-lg">
+                            <span className="bg-gradient-to-r from-green-400 to-green-600 text-white px-3 py-1 rounded-full text-sm mr-3">
+                              Day {day.dayNumber}
+                            </span>
+                            {day.location}
+                          </h5>
+                          <p className="text-sm text-gray-500 mt-1">
+                            {day.rawDate ? new Date(day.rawDate).toLocaleDateString('en-US', { 
+                              weekday: 'short', 
+                              month: 'short', 
+                              day: 'numeric' 
+                            }) : 'Date not specified'}
+                          </p>
+                        </div>
+                        <div className="flex space-x-2">
+                          <div className="bg-green-50 text-green-600 px-2 py-1 rounded-full text-xs flex items-center">
+                            <Sun className="h-3 w-3 mr-1" />
+                            <span>Day {index + 1}</span>
                           </div>
-                          <div>
-                            <p className="text-sm text-gray-500">Age</p>
-                            <p className="font-medium">{traveler.age || 'Not specified'}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-gray-500">Nationality</p>
-                            <p className="font-medium">{traveler.nationality || 'Not specified'}</p>
-                          </div>
-                          {traveler.idType && (
-                            <div>
-                              <p className="text-sm text-gray-500">ID Proof</p>
-                              <p className="font-medium">{traveler.idType}: {traveler.idNumber || 'Not specified'}</p>
+                          {day.transport && (
+                            <div className="bg-blue-50 text-green-600 px-2 py-1 rounded-full text-xs flex items-center">
+                              {getTransportIcon(day.transport)}
+                              <span>{day.transport}</span>
                             </div>
                           )}
                         </div>
                       </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="bg-green-50 rounded-lg p-4">
+                          <h6 className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                            <Clock className="h-5 w-5 text-green-500 mr-2" /> Departure
+                          </h6>
+                          <p className="text-sm text-gray-700">
+                            {day.departure?.time || 'Not specified'} from {day.departure?.address || 'Not specified'}
+                          </p>
+                        </div>
+                        
+                        <div className="bg-blue-50 rounded-lg p-4">
+                          <h6 className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                            <Hotel className="h-5 w-5 text-green-500 mr-2" /> Accommodation
+                          </h6>
+                          <p className="text-sm text-gray-700">
+                            {day.hotel?.name || 'Not selected'}
+                          </p>
+                          {day.hotel?.rating && (
+                            <div className="flex items-center mt-1">
+                              {[...Array(5)].map((_, i) => (
+                                <Star 
+                                  key={i} 
+                                  className={`h-3 w-3 ${i < day.hotel.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} 
+                                />
+                              ))}
+                              <span className="text-xs text-gray-500 ml-1">{day.hotel.rating}/5</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="mt-6">
+                        <h6 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+                          <Map className="h-5 w-5 text-green-500 mr-2" /> Activities
+                        </h6>
+                        <ul className="space-y-3">
+                          {day.activities?.length > 0 ? (
+                            day.activities.map((activity, i) => (
+                              <motion.li 
+                                key={i}
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: i * 0.05 }}
+                                className="flex items-start text-sm text-gray-700 bg-gradient-to-br from-green-50 to-blue-50 p-3 rounded-lg"
+                              >
+                                <span className="flex-shrink-0 w-3 h-3 bg-gradient-to-r from-green-400 to-green-500 rounded-full mt-1 mr-3"></span>
+                                <div className="flex-1">
+                                  <p className="font-medium">{activity.name}</p>
+                                  <p className="text-xs text-gray-500 mt-1 flex items-center">
+                                    <Clock className="h-3 w-3 mr-1" /> {activity.duration}
+                                    {activity.type && (
+                                      <span className="ml-3 flex items-center">
+                                        {activity.type === 'landmark' ? (
+                                          <Landmark className="h-3 w-3 mr-1" />
+                                        ) : activity.type === 'mountain' ? (
+                                          <Mountain className="h-3 w-3 mr-1" />
+                                        ) : activity.type === 'food' ? (
+                                          <Utensils className="h-3 w-3 mr-1" />
+                                        ) : null}
+                                        {activity.type}
+                                      </span>
+                                    )}
+                                  </p>
+                                </div>
+                              </motion.li>
+                            ))
+                          ) : (
+                            <li className="text-sm text-gray-500 grad p-3 rounded-lg">No activities selected</li>
+                          )}
+                        </ul>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-xl p-8 text-center">
+                  <MapPin className="h-10 w-10 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-500">No itinerary information available</p>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        );
+      
+      case 'arrivalDeparture':
+        return (
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            transition={{ duration: 0.3 }}
+            className="bg-white rounded-2xl shadow-lg p-8 space-y-8 border border-gray-100"
+          >
+            <div className="flex justify-between items-center">
+              <div className="flex items-center">
+                <div className="p-3 bg-gradient-to-r from-green-500 to-green-600 rounded-xl mr-4">
+                  <Plane className="h-6 w-6 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-800">Arrival & Departure</h3>
+              </div>
+              <button 
+                onClick={() => handleEditSection('arrivalDeparture')}
+                className="flex items-center text-green-600 hover:text-green-700 text-sm font-medium px-4 py-2 rounded-lg hover:bg-green-50 transition-all"
+              >
+                <Edit className="h-4 w-4 mr-2" /> Edit Details
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="border border-green-100 rounded-xl p-6 bg-gradient-to-br from-green-50 to-blue-50"
+              >
+                <div className="flex items-center mb-6">
+                  <div className="w-8 h-8 flex items-center justify-center bg-green-100 text-green-600 rounded-full mr-3">
+                    1
+                  </div>
+                  <h4 className="text-lg font-semibold text-gray-800">Arrival Details</h4>
+                </div>
+                
+                <div className="space-y-5">
+                  <div className="bg-white p-4 rounded-lg shadow-sm">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">City</p>
+                    <p className="font-semibold text-gray-800 flex items-center">
+                      <MapPin className="h-5 w-5 text-green-500 mr-2" />
+                      {arrivalDeparture.arrival?.city || 'Not specified'}
+                    </p>
+                  </div>
+                  <div className="bg-white p-4 rounded-lg shadow-sm">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Pickup Address</p>
+                    <p className="font-semibold text-gray-800">
+                      {arrivalDeparture.arrival?.pickupAddress || 'Not specified'}
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-white p-4 rounded-lg shadow-sm">
+                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Date</p>
+                      <p className="font-semibold text-gray-800 flex items-center">
+                        <Calendar className="h-5 w-5 text-green-500 mr-2" />
+                        {arrivalDeparture.arrival?.date ? 
+                          new Date(arrivalDeparture.arrival.date).toLocaleDateString('en-US', { 
+                            weekday: 'short', 
+                            month: 'short', 
+                            day: 'numeric' 
+                          }) : 
+                          'Not specified'}
+                      </p>
+                    </div>
+                    <div className="bg-white p-4 rounded-lg shadow-sm">
+                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Time</p>
+                      <p className="font-semibold text-gray-800 flex items-center">
+                        <Clock className="h-5 w-5 text-green-500 mr-2" />
+                        {arrivalDeparture.arrival?.time || 'Not specified'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="border border-green-100 rounded-xl p-6 bg-gradient-to-br from-green-50 to-blue-50"
+              >
+                <div className="flex items-center mb-6">
+                  <div className="w-8 h-8 flex items-center justify-center bg-green-100 text-green-600 rounded-full mr-3">
+                    2
+                  </div>
+                  <h4 className="text-lg font-semibold text-gray-800">Departure Details</h4>
+                </div>
+                
+                <div className="space-y-5">
+                  <div className="bg-white p-4 rounded-lg shadow-sm">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">City</p>
+                    <p className="font-semibold text-gray-800 flex items-center">
+                      <MapPin className="h-5 w-5 text-green-500 mr-2" />
+                      {arrivalDeparture.departure?.city || 'Not specified'}
+                    </p>
+                  </div>
+                  <div className="bg-white p-4 rounded-lg shadow-sm">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Drop-off Address</p>
+                    <p className="font-semibold text-gray-800">
+                      {arrivalDeparture.departure?.dropoffAddress || 'Not specified'}
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-white p-4 rounded-lg shadow-sm">
+                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Date</p>
+                      <p className="font-semibold text-gray-800 flex items-center">
+                        <Calendar className="h-5 w-5 text-green-500 mr-2" />
+                        {arrivalDeparture.departure?.date ? 
+                          new Date(arrivalDeparture.departure.date).toLocaleDateString('en-US', { 
+                            weekday: 'short', 
+                            month: 'short', 
+                            day: 'numeric' 
+                          }) : 
+                          'Not specified'}
+                      </p>
+                    </div>
+                    <div className="bg-white p-4 rounded-lg shadow-sm">
+                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Time</p>
+                      <p className="font-semibold text-gray-800 flex items-center">
+                        <Clock className="h-5 w-5 text-green-500 mr-2" />
+                        {arrivalDeparture.departure?.time || 'Not specified'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          </motion.div>
+        );
+
+      case 'personalDetails':
+        return (
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            transition={{ duration: 0.3 }}
+            className="bg-white rounded-2xl shadow-lg p-8 space-y-8 border border-gray-100"
+          >
+            <div className="flex justify-between items-center">
+              <div className="flex items-center">
+                <div className="p-3 bg-gradient-to-r from-green-500 to-green-600 rounded-xl mr-4">
+                  <User className="h-6 w-6 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-800">Personal Details</h3>
+              </div>
+              <button 
+                onClick={() => handleEditSection('personalDetails')}
+                className="flex items-center text-green-600 hover:text-green-700 text-sm font-medium px-4 py-2 rounded-lg hover:bg-green-50 transition-all"
+              >
+                <Edit className="h-4 w-4 mr-2" /> Edit Information
+              </button>
+            </div>
+
+            <div className="space-y-8">
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="border border-green-100 rounded-xl p-6 bg-gradient-to-br from-green-50 to-blue-50"
+              >
+                <div className="flex items-center mb-6">
+                  <div className="w-8 h-8 flex items-center justify-center bg-green-100 text-green-600 rounded-full mr-3">
+                    1
+                  </div>
+                  <h4 className="text-lg font-semibold text-gray-800">Contact Information</h4>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-white p-4 rounded-lg shadow-sm">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1 flex items-center">
+                      <Mail className="h-4 w-4 text-green-500 mr-2" /> Email
+                    </p>
+                    <p className="font-semibold text-gray-800">
+                      {personalDetails.contactDetails?.email || 'Not specified'}
+                    </p>
+                  </div>
+                  <div className="bg-white p-4 rounded-lg shadow-sm">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1 flex items-center">
+                      <Phone className="h-4 w-4 text-green-500 mr-2" /> Mobile
+                    </p>
+                    <p className="font-semibold text-gray-800">
+                      {personalDetails.contactDetails?.mobile || 'Not specified'}
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="border border-green-100 rounded-xl p-6 bg-gradient-to-br from-green-50 to-blue-50"
+              >
+                <div className="flex items-center mb-6">
+                  <div className="w-8 h-8 flex items-center justify-center bg-green-100 text-green-600 rounded-full mr-3">
+                    2
+                  </div>
+                  <h4 className="text-lg font-semibold text-gray-800">Traveler Details</h4>
+                </div>
+                
+                <div className="space-y-6">
+                  {personalDetails.personalDetails?.length > 0 ? (
+                    personalDetails.personalDetails.map((traveler, index) => (
+                      <motion.div 
+                        key={index}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                        className="bg-white rounded-lg p-5 shadow-sm border border-gray-100"
+                      >
+                        <div className="flex justify-between items-start">
+                          <h5 className="font-bold text-gray-800 text-lg mb-3">
+                            Traveler {index + 1}: {traveler.name || 'Name not specified'}
+                          </h5>
+                          <div className="bg-green-50 text-green-600 px-2 py-1 rounded-full text-xs">
+                            {index === 0 ? 'Primary' : 'Additional'}
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                          <div className="bg-gray-50 p-3 rounded-lg">
+                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Gender</p>
+                            <p className="font-semibold text-gray-800 capitalize">
+                              {traveler.gender || 'Not specified'}
+                            </p>
+                          </div>
+                          <div className="bg-gray-50 p-3 rounded-lg">
+                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Age</p>
+                            <p className="font-semibold text-gray-800">
+                              {traveler.age || 'Not specified'}
+                            </p>
+                          </div>
+                          <div className="bg-gray-50 p-3 rounded-lg">
+                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Nationality</p>
+                            <p className="font-semibold text-gray-800">
+                              {traveler.nationality || 'Not specified'}
+                            </p>
+                          </div>
+                          {traveler.idType && (
+                            <div className="bg-gray-50 p-3 rounded-lg">
+                              <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">ID Proof</p>
+                              <p className="font-semibold text-gray-800">
+                                {traveler.idType}: {traveler.idNumber || 'Not specified'}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </motion.div>
                     ))
                   ) : (
-                    <p className="text-gray-500">No traveler information available</p>
+                    <div className="bg-gray-50 rounded-xl p-8 text-center">
+                      <User className="h-10 w-10 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-500">No traveler information available</p>
+                    </div>
                   )}
                 </div>
-              </div>
+              </motion.div>
             </div>
-          </div>
+          </motion.div>
         );
 
       case 'payment':
         return (
-          <div className="bg-white rounded-xl shadow-sm p-6 space-y-6">
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            transition={{ duration: 0.3 }}
+            className="bg-white rounded-2xl shadow-lg p-8 space-y-8 border border-gray-100"
+          >
             <div className="flex justify-between items-center">
-              <h3 className="text-xl font-semibold text-gray-800">Payment Details</h3>
+              <div className="flex items-center">
+                <div className="p-3 bg-gradient-to-r from-green-500 to-green-600 rounded-xl mr-4">
+                  <CreditCard className="h-6 w-6 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-800">Payment Details</h3>
+              </div>
             </div>
 
-            <div className="space-y-4">
-              <div className="border border-gray-200 rounded-lg p-5">
-                <h4 className="text-lg font-medium text-gray-700 mb-4">Price Summary</h4>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="border border-green-100 rounded-xl p-6 bg-gradient-to-br from-green-50 to-blue-50"
+              >
+                <h4 className="text-lg font-semibold text-gray-800 mb-6">Price Summary</h4>
                 
-                <div className="space-y-3">
-                  <div className="flex justify-between">
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
                     <span className="text-gray-600">Base Price</span>
-                    <span className="font-medium">${paymentDetails.basePrice.toFixed(2)}</span>
+                    <span className="font-semibold">${paymentDetails.basePrice.toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between text-green-600">
-                    <span>Discount</span>
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100 text-green-700">
+                    <span>Discount (10%)</span>
                     <span>-${paymentDetails.discount.toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
                     <span className="text-gray-600">Platform Fee</span>
-                    <span className="font-medium">${paymentDetails.platformFee.toFixed(2)}</span>
+                    <span className="font-semibold">${paymentDetails.platformFee.toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Taxes</span>
-                    <span className="font-medium">${paymentDetails.taxes.toFixed(2)}</span>
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                    <span className="text-gray-600">Taxes (5%)</span>
+                    <span className="font-semibold">${paymentDetails.taxes.toFixed(2)}</span>
                   </div>
-                  <div className="border-t border-gray-200 pt-3 mt-2">
-                    <div className="flex justify-between font-semibold text-lg">
-                      <span>Total</span>
-                      <span>${paymentDetails.total.toFixed(2)}</span>
+                  <div className="pt-4 mt-2">
+                    <div className="flex justify-between items-center bg-gradient-to-r from-green-100 to-green-200 p-4 rounded-lg">
+                      <span className="font-bold text-lg text-gray-800">Total Amount</span>
+                      <span className="font-bold text-lg text-green-700">${paymentDetails.total.toFixed(2)}</span>
                     </div>
                   </div>
                 </div>
-              </div>
+              </motion.div>
 
-              <div className="border border-gray-200 rounded-lg p-5">
-                <h4 className="text-lg font-medium text-gray-700 mb-4">Payment Method</h4>
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="border border-blue-100 rounded-xl p-6 bg-gradient-to-br from-green-50 to-blue-50"
+              >
+                <h4 className="text-lg font-semibold text-gray-800 mb-6">Payment Method</h4>
                 
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-3 p-3 border border-green-300 bg-green-50 rounded-lg">
-                    <CreditCard className="h-5 w-5 text-green-600" />
-                    <span className="font-medium">Credit/Debit Card</span>
-                  </div>
-                  <div className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg">
-                    <svg className="h-5 w-5 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 0C8.21 0 4.831 1.757 2.632 4.501l3.042 3.042C6.86 5.988 9.295 5 12 5c3.86 0 7 3.141 7 7h2c0-4.962-4.037-9-9-9zm9.368 4.501l-3.042 3.042C17.14 5.988 14.705 5 12 5c-3.86 0-7 3.141-7 7H3c0-4.962 4.037-9 9-9 3.79 0 7.169 1.757 9.368 4.501zM12 8c-2.209 0-4 1.791-4 4s1.791 4 4 4 4-1.791 4-4-1.791-4-4-4z"/>
-                    </svg>
-                    <span className="font-medium">PayPal</span>
-                  </div>
-                  <div className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg">
-                    <svg className="h-5 w-5 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 22c-5.523 0-10-4.477-10-10S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm-1-17v8h7v-2h-5V5z"/>
-                    </svg>
-                    <span className="font-medium">Google Pay</span>
-                  </div>
+                <div className="space-y-4">
+                  <motion.div 
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="flex items-center space-x-4 p-4 border-2 border-green-300 bg-white rounded-xl shadow-sm cursor-pointer"
+                  >
+                    <div className="p-2 bg-green-100 rounded-lg">
+                      <CreditCard className="h-6 w-6 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-800">Credit/Debit Card</p>
+                      <p className="text-sm text-gray-500">Pay with Visa, Mastercard, etc.</p>
+                    </div>
+                  </motion.div>
+                  <motion.div 
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="flex items-center space-x-4 p-4 border border-gray-200 bg-white rounded-xl shadow-sm cursor-pointer"
+                  >
+                    <div className="p-2 bg-green-100 rounded-lg">
+                      <svg className="h-6 w-6 text-green-600" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 0C8.21 0 4.831 1.757 2.632 4.501l3.042 3.042C6.86 5.988 9.295 5 12 5c3.86 0 7 3.141 7 7h2c0-4.962-4.037-9-9-9zm9.368 4.501l-3.042 3.042C17.14 5.988 14.705 5 12 5c-3.86 0-7 3.141-7 7H3c0-4.962 4.037-9 9-9 3.79 0 7.169 1.757 9.368 4.501zM12 8c-2.209 0-4 1.791-4 4s1.791 4 4 4 4-1.791 4-4-1.791-4-4-4z"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-800">PayPal</p>
+                      <p className="text-sm text-gray-500">Pay with your PayPal account</p>
+                    </div>
+                  </motion.div>
+                  <motion.div 
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="flex items-center space-x-4 p-4 border border-gray-200 bg-white rounded-xl shadow-sm cursor-pointer"
+                  >
+                    <div className="p-2 bg-green-100 rounded-lg">
+                      <svg className="h-6 w-6 text-green-600" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 22c-5.523 0-10-4.477-10-10S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm-1-17v8h7v-2h-5V5z"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-800">Google Pay</p>
+                      <p className="text-sm text-gray-500">Fast checkout with Google Pay</p>
+                    </div>
+                  </motion.div>
                 </div>
-              </div>
+              </motion.div>
             </div>
-          </div>
+
+            <div className="bg-green-50 rounded-xl p-6 border border-green-100">
+              <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                <CheckCircle2 className="h-6 w-6 text-green-600 mr-2" />
+                Secure Payment Guarantee
+              </h4>
+              <p className="text-gray-600">
+                Your payment information is processed securely. We do not store your credit card details.
+                This site is protected by reCAPTCHA and the Google <a href="#" className="text-blue-600 hover:underline">Privacy Policy</a> and <a href="#" className="text-blue-600 hover:underline">Terms of Service</a> apply.
+              </p>
+            </div>
+          </motion.div>
         );
 
       default:
@@ -470,93 +796,193 @@ const ReviewJourney = ({ guide, tripData, searchParams }) => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Review Your Journey</h1>
-        <p className="text-gray-600 mt-2">Please review all the details before making payment</p>
-      </div>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-gradient-to-br from-green-50 to-blue-50 -mt-20">
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="mb-10"
+      >
+        <h1 className="text-4xl font-bold text-gray-900 bg-gradient-to-r from-green-500 to-green-700 bg-clip-text text-transparent">
+          Review Your Journey
+        </h1>
+        <p className="text-gray-600 mt-3 text-lg">
+          Please review all the details before making payment
+        </p>
+      </motion.div>
 
       {/* Progress Steps */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between relative">
-          {/* Line */}
-          <div className="absolute top-1/2 left-0 right-0 h-1 bg-gray-200 -z-10"></div>
-          
-          {/* Steps */}
-          {['itinerary', 'arrivalDeparture', 'personalDetails', 'payment'].map((step, index) => {
-            const isActive = activeSection === step;
-            const isCompleted = ['itinerary', 'arrivalDeparture', 'personalDetails'].indexOf(activeSection) > index;
-            const stepNames = {
-              itinerary: 'Itinerary',
-              arrivalDeparture: 'Pickup/Dropoff',
-              personalDetails: 'Personal Details',
-              payment: 'Payment'
-            };
+<div className="mb-12 relative">
+  {/* Background line container - spans full width */}
+  <div className="absolute top-7 left-0 right-0 h-1 bg-gray-200 -translate-y-1/2 z-0">
+    {/* Animated progress line with flowing effect */}
+    <motion.div 
+      initial={{ width: 0 }}
+      animate={{
+        width: activeSection === 'itinerary' ? '25%' : 
+              activeSection === 'arrivalDeparture' ? '50%' : 
+              activeSection === 'personalDetails' ? '75%' : '100%'
+      }}
+      transition={{ duration: 0.8, ease: "easeInOut" }}
+      className="h-full relative overflow-hidden"
+    >
+      {/* Flowing gradient effect */}
+      <motion.div
+        animate={{
+          x: [0, 100, 0]
+        }}
+        transition={{
+          duration: 3,
+          repeat: Infinity,
+          ease: "linear"
+        }}
+        className="absolute inset-0 bg-gradient-to-r from-transparent via-green-400/80 to-transparent"
+      />
+      {/* Solid base color */}
+      <div className="absolute inset-0 bg-gradient-to-r from-green-400 to-green-600" />
+    </motion.div>
+  </div>
 
-            return (
-              <div key={step} className="flex flex-col items-center">
-                <button
-                  onClick={() => setActiveSection(step)}
-                  className={`w-10 h-10 rounded-full flex items-center justify-center ${isActive || isCompleted ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-600'}`}
-                >
-                  {isCompleted ? (
-                    <CheckCircle2 className="h-5 w-5" />
-                  ) : (
-                    <span>{index + 1}</span>
-                  )}
-                </button>
-                <span className={`mt-2 text-sm font-medium ${isActive ? 'text-green-600' : 'text-gray-600'}`}>
-                  {stepNames[step]}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+  {/* Steps container */}
+  <div className="flex justify-between relative z-10">
+    {['itinerary', 'arrivalDeparture', 'personalDetails', 'payment'].map((step, index) => {
+      const isActive = activeSection === step;
+      const isCompleted = ['itinerary', 'arrivalDeparture', 'personalDetails','payment'].indexOf(activeSection) > index;
+      const stepNames = {
+        itinerary: 'Itinerary',
+        arrivalDeparture: 'Pickup/Dropoff',
+        personalDetails: 'Travelers',
+        payment: 'Payment'
+      };
+
+      const stepIcons = {
+        itinerary: <Map className="h-5 w-5" />,
+        arrivalDeparture: <Plane className="h-5 w-5" />,
+        personalDetails: <Users className="h-5 w-5" />,
+        payment: <CreditCard className="h-5 w-5" />
+      };
+
+      return (
+        <motion.div 
+          key={step}
+          whileHover={{ scale: 1.05 }}
+          className="flex flex-col items-center"
+        >
+          {/* Step circle with pulse effect when active */}
+          <motion.button
+            initial={false}
+            animate={{
+              scale: isActive ? [1, 1.1, 1] : 1,
+              boxShadow: isActive ? "0 0 0 8px rgba(74, 222, 128, 0.2)" : "none"
+            }}
+            transition={{
+              scale: isActive ? { duration: 1, repeat: Infinity } : {},
+              boxShadow: { duration: 0.3 }
+            }}
+            onClick={() => !isAnimating && changeSection(step)}
+            className={`w-14 h-14 rounded-full flex items-center justify-center shadow-md ${
+              isActive ? 'bg-gradient-to-br from-green-400 to-green-700 text-white' : 
+              isCompleted ? 'bg-green-500 text-white' : 
+              'bg-white text-gray-400 border-2 border-gray-300'
+            } transition-all duration-300 relative`}
+          >
+            {isCompleted ? (
+              <CheckCircle2 className="h-6 w-6" />
+            ) : (
+              stepIcons[step]
+            )}
+            {/* Glow effect for active step */}
+            {isActive && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 1, scale: 1.5 }}
+                exit={{ opacity: 0, scale: 0.5 }}
+                transition={{ duration: 1, repeat: Infinity }}
+                className="absolute inset-0 rounded-full bg-green-400/30 -z-10"
+              />
+            )}
+          </motion.button>
+          
+          {/* Step label with subtle animation */}
+          <motion.div
+            initial={{ y: 0 }}
+            animate={{ y: isActive ? -2 : 0 }}
+            transition={{ type: "spring", stiffness: 300 }}
+            className={`mt-3 text-sm font-medium ${
+              isActive ? 'text-green-600 font-bold' : 
+              isCompleted ? 'text-green-600' : 
+              'text-gray-500'
+            }`}
+          >
+            {stepNames[step]}
+          </motion.div>
+          <div className={`text-xs mt-1 ${
+            isActive ? 'text-green-500' : 'text-gray-400'
+          }`}>
+            Step {index + 1}/4
+          </div>
+        </motion.div>
+      );
+    })}
+  </div>
+</div>
 
       {/* Content Section */}
-      {renderSectionContent()}
+      <AnimatePresence mode="wait">
+        {renderSectionContent()}
+      </AnimatePresence>
 
       {/* Navigation Buttons */}
-      <div className="mt-8 flex justify-between">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        className="mt-12 flex justify-between"
+      >
         {activeSection !== 'itinerary' ? (
-          <button
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => {
               const sections = ['itinerary', 'arrivalDeparture', 'personalDetails', 'payment'];
               const currentIndex = sections.indexOf(activeSection);
-              setActiveSection(sections[currentIndex - 1]);
+              changeSection(sections[currentIndex - 1]);
             }}
-            className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 flex items-center"
+            className="px-8 py-3 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 flex items-center shadow-sm hover:shadow-md transition-all"
           >
             <ArrowLeft className="h-5 w-5 mr-2" />
             Back
-          </button>
+          </motion.button>
         ) : (
           <div></div> // Empty div to maintain flex space-between
         )}
 
         {activeSection !== 'payment' ? (
-          <button
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => {
               const sections = ['itinerary', 'arrivalDeparture', 'personalDetails', 'payment'];
               const currentIndex = sections.indexOf(activeSection);
-              setActiveSection(sections[currentIndex + 1]);
+              changeSection(sections[currentIndex + 1]);
             }}
-            className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center"
+            className="px-8 py-3 bg-gradient-to-r from-green-400 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 flex items-center shadow-lg hover:shadow-xl transition-all"
           >
-            Next
+            Continue
             <ArrowRight className="h-5 w-5 ml-2" />
-          </button>
+          </motion.button>
         ) : (
-          <button
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             onClick={handleMakePayment}
-            className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center"
+            className="px-8 py-3 bg-gradient-to-r from-green-400 to-green-600 text-white rounded-xl hover:from-green-500 hover:to-green-700 flex items-center shadow-lg hover:shadow-xl transition-all"
           >
-            Make Payment
+            Complete Payment
             <CreditCard className="h-5 w-5 ml-2" />
-          </button>
+          </motion.button>
         )}
-      </div>
+      </motion.div>
     </div>
   );
 };

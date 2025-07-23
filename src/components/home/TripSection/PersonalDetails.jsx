@@ -577,7 +577,7 @@ const PersonalDetails = ({
       <h3 className="text-2xl font-semibold text-gray-800 mb-6">Personal Details</h3>
       
       {/* Contact Details Section */}
-      <div className="bg-green-100 rounded-xl shadow-sm border border-gray-200 p-6">
+      <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-xl shadow-sm border border-gray-200 p-6">
         <h4 className="text-lg font-semibold text-gray-800 mb-5 flex items-center">
           <span className="w-7 h-7 flex items-center justify-center bg-white text-green-800 rounded-full mr-3">
             1
@@ -632,7 +632,7 @@ const PersonalDetails = ({
       </div>
 
       {/* Personal Details Section */}
-      <div className="bg-green-100 rounded-xl shadow-sm border border-gray-200 p-6">
+      <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-xl shadow-sm border border-gray-200 p-6">
         <h4 className="text-lg font-semibold text-gray-800 mb-5 flex items-center">
           <span className="w-7 h-7 flex items-center justify-center bg-white text-green-800 rounded-full mr-3">
             2
@@ -644,7 +644,7 @@ const PersonalDetails = ({
       </div>
 
       {/* Children Section */}
-      <div className="bg-green-100 rounded-xl shadow-sm border border-gray-200 p-6">
+      <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="flex justify-between items-center mb-5">
           <h4 className="text-lg font-semibold text-gray-800 flex items-center">
             <span className="w-7 h-7 flex items-center justify-center bg-white text-green-800 rounded-full mr-3">
@@ -655,7 +655,7 @@ const PersonalDetails = ({
           <button
             type="button"
             onClick={addChild}
-            className="px-3 py-1.5 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors flex items-center text-sm"
+            className="px-3 py-1.5 bg-white/90 text-green-700 rounded-lg hover:bg-green-100 transition-colors flex items-center text-sm"
           >
             <Plus className="h-4 w-4 mr-1" />
             Add Child
