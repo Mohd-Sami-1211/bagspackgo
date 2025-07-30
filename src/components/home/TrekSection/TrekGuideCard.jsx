@@ -1,8 +1,10 @@
 'use client';
 import { motion } from 'framer-motion';
 import { Star, MapPin, Clock, Award, User } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 const TrekGuideCard = ({ guide, trekId, individuals = 1 }) => {
+  const router = useRouter();
   const trekPackage = Array.isArray(guide.trekPackages)
     ? guide.trekPackages.find(pkg => pkg?.trekId?.toString() === trekId?.toString())
     : null;
@@ -10,6 +12,14 @@ const TrekGuideCard = ({ guide, trekId, individuals = 1 }) => {
   const pricePerPerson = trekPackage?.price ?? 0;
   const duration = trekPackage?.duration ?? 'N/A';
   const totalPrice = pricePerPerson * individuals;
+
+  const handleViewDetails = () => {
+    const params = new URLSearchParams();
+    params.set('trekId', trekId);
+    params.set('individuals', individuals);
+    
+    router.push(`/trek/guidelist/trekdetails/${guide.id}?${params.toString()}`);
+  };
 
   return (
     <motion.div
@@ -101,10 +111,11 @@ const TrekGuideCard = ({ guide, trekId, individuals = 1 }) => {
         </div>
 
         {/* Right Side - Button */}
-        <div className="w-full md:w-1/5 bg-green-500 flex items-center justify-center p-4">
+        <div className="w-full md:w-1/5 bg-green-300 flex items-center justify-center p-4">
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            onClick={handleViewDetails}
             className="w-full py-3 bg-white hover:bg-[#d4f7d4] text-green-600 hover:text-green-800 font-medium rounded-lg transition-colors"
           >
             View Details

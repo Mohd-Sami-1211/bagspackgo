@@ -237,7 +237,7 @@ const handleApplyChanges = () => {
   }
 
   return (
-    <div className="min-h-screen w-full bg-[#e9ffeeee] -mt-20 mb-10">
+    <div className="min-h-screen w-full bg-gradient-to-br from-green-50 to-blue-50 -mt-20 mb-10">
       {/* Search Parameters Bar */}
       <div className="w-full bg-white border-b-2">
         <div className="px-4 py-4 mb-4">
@@ -281,7 +281,7 @@ const handleApplyChanges = () => {
           {/* Parameter Display/Edit */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Destination Field */}
-            <div className="bg-[#c8fcd5e7] p-3 rounded-lg">
+            <div className="bg-gradient-to-br from-green-50 to-blue-50 p-3 rounded-lg">
               <label className="block text-xs text-gray-900 mb-1">Destination</label>
               {isEditing ? (
                 <div className="relative">
@@ -307,7 +307,7 @@ const handleApplyChanges = () => {
             </div>
 
             {/* Trek Name Field */}
-            <div className="bg-[#c8fcd5e7] p-3 rounded-lg">
+            <div className="bg-gradient-to-br from-green-50 to-blue-50 p-3 rounded-lg">
               <label className="block text-xs text-gray-900 mb-1">Trek Name</label>
               {isEditing ? (
                 <div className="relative">
@@ -347,7 +347,7 @@ const handleApplyChanges = () => {
             </div>
 
             {/* Date Field */}
-            <div className="bg-[#c8fcd5e7] p-3 rounded-lg">
+            <div className="bg-gradient-to-br from-green-50 to-blue-50 p-3 rounded-lg">
               <label className="block text-xs text-gray-900 mb-1">Trek Date</label>
               {isEditing ? (
                 <div className="relative">
@@ -371,7 +371,7 @@ const handleApplyChanges = () => {
             </div>
 
             {/* Individuals Field - KEY CHANGE: Simplified to use single state */}
-<div className="bg-[#c8fcd5e7] p-3 rounded-lg">
+<div className="bg-gradient-to-br from-green-50 to-blue-50 p-3 rounded-lg">
   <label className="block text-xs text-gray-900 mb-1">Individuals</label>
   {isEditing ? (
     <div className="flex items-center h-[36px] bg-white border border-gray-300 rounded overflow-hidden focus-within:ring-1 focus-within:ring-green-500 focus-within:border-green-500">

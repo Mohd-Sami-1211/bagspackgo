@@ -11,7 +11,8 @@ const inter = Inter({ subsets: ['latin'] });
 export default function RootLayout({ children }) {
   const pathname = usePathname();
   const hideSecondaryNav = pathname === '/trip/guidelist' || pathname === '/trek/guidelist' ||
-    pathname?.includes('/tripdetails');
+    pathname?.includes('/tripdetails') ||
+    pathname?.includes('/trekdetails');
 
   return (
     <html lang="en">
