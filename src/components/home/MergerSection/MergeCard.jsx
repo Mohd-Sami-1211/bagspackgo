@@ -1,8 +1,11 @@
 'use client';
 import { motion } from 'framer-motion';
 import { Calendar, MapPin, Users, User, BadgeInfo } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 const MergeCard = ({ merger, guides }) => {
+  const router = useRouter();
+  
   const cardVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
@@ -28,6 +31,10 @@ const MergeCard = ({ merger, guides }) => {
       : merger.category === 'Male Only'
       ? 'linear-gradient(to bottom, #3b82f6, #60a5fa)' // blue
       : 'none';
+
+  const handleViewDetails = () => {
+    router.push(`/merger/mergerdetails/${merger.id}`);
+  };
 
   return (
     <motion.div
@@ -110,10 +117,11 @@ const MergeCard = ({ merger, guides }) => {
       </div>
 
       {/* Right 25% */}
-      <div className="w-1/4 bg-green-500 flex items-center justify-center p-4">
+      <div className="w-1/4 bg-green-300 flex items-center justify-center p-4">
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
+          onClick={handleViewDetails}
           className="w-full py-3 bg-white hover:bg-[#d4f7d4] text-gray-700 hover:text-black font-semibold rounded-lg transition-colors"
         >
           View Details

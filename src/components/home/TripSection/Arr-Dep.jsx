@@ -267,14 +267,7 @@ const ArrDep = ({ defaultLocation, onNext, onBack, startDate, duration }) => {
                         errors.arrival_time ? 'border-red-500 bg-red-50' : 'border-gray-300'
                       }`}
                     />
-                    <select
-                      value={formData.arrival.ampm}
-                      onChange={(e) => handleInputChange('arrival', 'ampm', e.target.value)}
-                      className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                    >
-                      <option value="AM">AM</option>
-                      <option value="PM">PM</option>
-                    </select>
+
                   </div>
                   {errors.arrival_time && (
                     <p className="mt-1 text-sm text-red-600 flex items-center">
@@ -378,14 +371,7 @@ const ArrDep = ({ defaultLocation, onNext, onBack, startDate, duration }) => {
                         errors.departure_time ? 'border-red-500 bg-red-50' : 'border-gray-300'
                       }`}
                     />
-                    <select
-                      value={formData.departure.ampm}
-                      onChange={(e) => handleInputChange('departure', 'ampm', e.target.value)}
-                      className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                    >
-                      <option value="AM">AM</option>
-                      <option value="PM">PM</option>
-                    </select>
+
                   </div>
                   {errors.departure_time && (
                     <p className="mt-1 text-sm text-red-600 flex items-center">
