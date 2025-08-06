@@ -8,9 +8,14 @@ import {
   User,
   Ticket,
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 
 const EventCard = ({ event,guides }) => {
+    const router = useRouter();
+  const handleViewDetails = () => {
+    router.push(`/events/eventdetails/${event.id}`);
+  };
   const cardVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
@@ -131,6 +136,7 @@ const EventCard = ({ event,guides }) => {
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
+          onClick={handleViewDetails}
           className="w-full py-3 bg-white hover:bg-[#d4f7d4] text-gray-700 hover:text-black font-semibold rounded-lg transition-colors"
         >
           View Details

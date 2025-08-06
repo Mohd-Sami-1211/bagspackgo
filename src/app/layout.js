@@ -13,7 +13,8 @@ export default function RootLayout({ children }) {
   const hideSecondaryNav = pathname === '/trip/guidelist' || pathname === '/trek/guidelist' ||
     pathname?.includes('/tripdetails') ||
     pathname?.includes('/trekdetails') ||
-    pathname?.includes('/mergerdetails');
+    pathname?.includes('/mergerdetails') ||
+    pathname?.includes('/eventdetails');
 
   return (
     <html lang="en">
