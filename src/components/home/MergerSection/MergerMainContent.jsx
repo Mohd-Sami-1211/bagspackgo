@@ -1231,7 +1231,7 @@ const MergerMainContent = () => {
       router.push('/merger/createmerger/');
     }}
   >
-    <span className="text-3xl leading-none font-bold">+</span>
+    <span className="text-4xl leading-none font-bold  pb-2">+</span>
   </motion.button>
 </motion.div>
 
