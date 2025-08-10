@@ -7,6 +7,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 import MergeCard from '@/components/home/MergerSection/MergeCard';
 import data from '@/data/data.json';
 import { Search, Calendar, User, Tag, MapPin } from 'lucide-react';
+import {useRouter} from 'next/navigation';
 
 const MergerMainContent = () => {
   // State for mergers and filters
@@ -33,7 +34,7 @@ const MergerMainContent = () => {
   const [tempFilters, setTempFilters] = useState({ ...filters });
   const [openDropdown, setOpenDropdown] = useState(null);
   const [activeDateField, setActiveDateField] = useState('start');
-
+  const router = useRouter();
   // Priority scoring function (reusable)
   const getPriorityScore = (text, query) => {
     if (!text || !query) return 0;
@@ -1227,7 +1228,7 @@ const MergerMainContent = () => {
     whileTap={{ scale: 0.95 }}
     className="bg-green-500 hover:bg-green-600 text-white rounded-full w-[60px] h-[60px] shadow-lg flex items-center justify-center"
     onClick={() => {
-      console.log('FAB clicked');
+      router.push('/merger/createmerger/');
     }}
   >
     <span className="text-3xl leading-none font-bold">+</span>

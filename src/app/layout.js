@@ -14,7 +14,8 @@ export default function RootLayout({ children }) {
     pathname?.includes('/tripdetails') ||
     pathname?.includes('/trekdetails') ||
     pathname?.includes('/mergerdetails') ||
-    pathname?.includes('/eventdetails');
+    pathname?.includes('/eventdetails') ||
+    pathname?.includes('/createmerger');
 
   return (
     <html lang="en">
