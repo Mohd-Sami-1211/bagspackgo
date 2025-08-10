@@ -1,11 +1,15 @@
-
 'use client';
+import { Suspense } from 'react';
+import CommunityMainContent from '@/components/home/CommunitySection/CommunityMainContent';
 
 export default function CommunityPage() {
   return (
-    <div>
-      <h1>Community Page</h1>
-      <p>Basic test page</p>
-    </div>
-  )
+    <Suspense fallback={
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
+      </div>
+    }>
+      <CommunityMainContent />
+    </Suspense>
+  );
 }
