@@ -17,18 +17,23 @@ export default function RootLayout({ children }) {
     pathname?.includes('/eventdetails') ||
     pathname?.includes('/createmerger') ||
     pathname?.includes('/bookings') ||
-    pathname?.includes('/help');
+    pathname?.includes('/help') ||
+    pathname?.includes('/signin') ||
+    pathname?.includes('/signup');
+
+    const hideNavbar = pathname === '/signin' || pathname ==='/signup';
+    const hideFooter = pathname === '/signin' || pathname ==='/signup';  
 
   return (
     <html lang="en">
       <head />
       <body className={`${inter.className} bg-white/90 text-gray-800 min-h-screen flex flex-col`}>
-        <Navbar />
+        {!hideNavbar && <Navbar />}
         {!hideSecondaryNav && <SecondaryNav />}
         <main className="flex-grow">
           {children}
         </main>
-        <Footer />
+        {!hideFooter && <Footer />}
       </body>
     </html>
   );
