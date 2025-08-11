@@ -37,9 +37,9 @@ export default function SignInPage() {
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
-        className="flex flex-1 items-center justify-center p-8 bg-green-50"
+        className="flex flex-1 items-center justify-center p-8 bg-green-100"
       >
-        <div className="bg-white/20 backdrop-blur-md border border-white/40 shadow-lg rounded-xl p-8 w-full max-w-md">
+        <div className="bg-white/90 backdrop-blur-md border border-white/40 shadow-lg rounded-xl p-8 w-full max-w-md">
           <div className="text-center mb-6">
             <Image
               src="/images/logo.svg"
