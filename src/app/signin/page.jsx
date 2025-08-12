@@ -15,7 +15,7 @@ export default function SignInPage() {
   // Hardcoded user credentials
   const validCredentials = {
     user: [
-      { email: 'user1@example.com', password: 'travel123' },
+      { email: 'user@example.com', password: 'user123' },
       { email: 'explorer@test.com', password: 'wanderlust' }
     ],
     provider: [
