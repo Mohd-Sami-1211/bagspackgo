@@ -3,9 +3,43 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 export default function SignInPage() {
   const [role, setRole] = useState('user');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const router = useRouter();
+
+  // Hardcoded user credentials
+  const validCredentials = {
+    user: [
+      { email: 'user1@example.com', password: 'travel123' },
+      { email: 'explorer@test.com', password: 'wanderlust' }
+    ],
+    provider: [
+      { email: 'provider@service.com', password: 'service123' },
+      { email: 'guide@adventure.com', password: 'adventure456' }
+    ]
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setError('');
+
+    // Check if credentials match
+    const isValid = validCredentials[role].some(
+      cred => cred.email === email && cred.password === password
+    );
+
+    if (isValid) {
+      // Successful login - redirect to trip page
+      router.push('/trip');
+    } else {
+      setError('Invalid email or password. Please try again.');
+    }
+  };
 
   return (
     <div className="flex flex-1 min-h-screen mx-auto">
@@ -18,7 +52,7 @@ export default function SignInPage() {
           className="object-cover"
         />
         <div className="absolute inset-0 bg-black/25" />
-         <div className="absolute inset-0 flex flex-col  p-12 text-white">
+        <div className="absolute inset-0 flex flex-col p-12 text-white">
           <h2 className="text-4xl font-bold mb-4 mx-auto">Begin Your Journey</h2>
           <p className="text-xl mb-6 pl-8">
             {role === 'user' 
@@ -49,14 +83,16 @@ export default function SignInPage() {
               className="mx-auto mb-4 rounded-3xl"
             />
             <h2 className="text-3xl font-bold text-green-800">Sign In</h2>
-            
           </div>
 
           <div className="flex gap-3 justify-center mb-6">
             {['user', 'provider'].map((t) => (
               <motion.button
                 key={t}
-                onClick={() => setRole(t)}
+                onClick={() => {
+                  setRole(t);
+                  setError('');
+                }}
                 whileTap={{ scale: 0.95 }}
                 className={`px-5 py-2 rounded-full font-medium transition ${
                   role === t
@@ -69,44 +105,66 @@ export default function SignInPage() {
             ))}
           </div>
 
-          <form className="space-y-4">
-            {['Email / Phone Number', 'Password'].map((field, idx) => (
-            <motion.div key={idx} whileFocus={{ scale: 1.02 }}>
-  <div className="relative">
-    <input
-      type={field === "Password" ? "password" : "text"}
-      required
-      className="peer w-full bg-transparent border-b-2 border-gray-400 pt-4 pb-1 text-black placeholder-transparent focus:outline-none"
-      placeholder={
-        field === "Email or Phone" 
-          ? "Email or Phone" 
-          : field === "Password" 
-            ? "Password" 
-            : field
-      }
-    />
-    <label className="absolute left-0 -top-2 text-sm text-gray-500 peer-placeholder-shown:text-base peer-placeholder-shown:top-4 peer-focus:-top-1 peer-focus:text-sm transition-all duration-200 ease-in-out pointer-events-none">
-      {field === "Email or Phone" ? "Enter Email or Phone" : field}
-    </label>
-  </div>
-</motion.div>
-            ))}
+          <form className="space-y-4" onSubmit={handleSubmit}>
+            <motion.div whileFocus={{ scale: 1.02 }}>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="peer w-full bg-transparent border-b-2 border-gray-400 pt-4 pb-1 text-black placeholder-transparent focus:outline-none"
+                  placeholder="Email / Phone Number"
+                />
+                <label className="absolute left-0 -top-2 text-sm text-gray-500 peer-placeholder-shown:text-base peer-placeholder-shown:top-4 peer-focus:-top-1 peer-focus:text-sm transition-all duration-200 ease-in-out pointer-events-none">
+                  Email / Phone Number
+                </label>
+              </div>
+            </motion.div>
+
+            <motion.div whileFocus={{ scale: 1.02 }}>
+              <div className="relative">
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="peer w-full bg-transparent border-b-2 border-gray-400 pt-4 pb-1 text-black placeholder-transparent focus:outline-none"
+                  placeholder="Password"
+                />
+                <label className="absolute left-0 -top-2 text-sm text-gray-500 peer-placeholder-shown:text-base peer-placeholder-shown:top-4 peer-focus:-top-1 peer-focus:text-sm transition-all duration-200 ease-in-out pointer-events-none">
+                  Password
+                </label>
+              </div>
+            </motion.div>
+
+            {error && (
+              <motion.div 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-red-500 text-sm text-center"
+              >
+                {error}
+              </motion.div>
+            )}
 
             <motion.button
               type="submit"
               whileHover={{ scale: 1.02 }}
               className="w-full bg-gradient-to-r from-green-400 to-green-500 text-white py-3 rounded-lg font-semibold shadow hover:shadow-lg transition"
             >
-              Continue
+              Sign In
             </motion.button>
           </form>
 
           <div className="mt-4 text-center text-black">
-            Don’t have an account?{' '}
+            Don't have an account?{' '}
             <Link href="/signup" className="underline text-blue-600 hover:text-blue-900">
               Sign up
             </Link>
           </div>
+
+          
         </div>
       </motion.div>
     </div>

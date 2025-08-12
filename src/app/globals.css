@@ -1,27 +1,56 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ✈ Plane animation */
 @keyframes planeMove {
-    0% {
-      left: -60px;
-    }
-    100% {
-      left: 100%;
-    }
+  0% {
+    left: -60px;
   }
-  
-  .animate-planeMove {
-    animation: planeMove 6s linear infinite;
-    
+  100% {
+    left: 100%;
   }
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  
-  .react-datepicker-popper {
-    animation: fadeIn 0.3s ease-out;
-  }
-  .bg-noise {
+}
+
+.animate-planeMove {
+  animation: planeMove 6s linear infinite;
+}
+
+/* ⬇ Fade-in animation for date picker */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.react-datepicker-popper {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* 🌫 Noise background */
+.bg-noise {
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23noiseFilter)' /%3E%3C/svg%3E");
+}
+
+/* 🛑 Remove blue autofill & focus background from inputs */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0px 1000px white inset !important;
+  box-shadow: 0 0 0px 1000px white inset !important;
+  -webkit-text-fill-color: #000 !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* 🚫 Remove blue border highlight on focus */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none !important;
+  box-shadow: none !important;
 }
