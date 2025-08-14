@@ -1,6 +1,6 @@
 'use client';
 import { motion } from 'framer-motion';
-import Sidebar from '@/components/serviceprovider/dashboard/Sidebar';
+import Sidebar from '@/components/serviceprovider/dashboard/SideBar';
 import ProfileHeader from '@/components/serviceprovider/dashboard/ProfileHeader';
 
 export default function DashboardPageLayout({ children }) {
