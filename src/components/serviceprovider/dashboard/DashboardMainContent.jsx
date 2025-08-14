@@ -1,6 +1,6 @@
 'use client';
-import OverviewStats from './overview/OverviewStats';
-import OverviewGraphs from './overview/OverviewGraphs';
+import OverviewStats from '@/components/serviceprovider/dashboard/Overview/OverviewStats';
+import OverviewGraphs from '@/components/serviceprovider/dashboard/Overview/OverviewGraphs';
 
 export default function DashboardMainContent() {
   return (

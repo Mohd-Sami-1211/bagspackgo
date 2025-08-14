@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
-import EventsScheduled from './EventsScheduled';
-import NewEventModal from './NewEventModal';
+import EventsScheduled from '@/components/serviceprovider/dashboard/Events/EventsScheduled';
+import NewEventModal from '@/components/serviceprovider/dashboard/Events/NewEventModal';
 
 export default function EventsList(){
   const [tab, setTab] = useState('inprogress');

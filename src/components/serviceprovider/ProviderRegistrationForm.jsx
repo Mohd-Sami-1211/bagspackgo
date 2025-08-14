@@ -1,10 +1,10 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import FormField from './FormField';
-import ProgressStatus from './ProgressStatus';
-import LogoHeader from './LogoHeader';
-import HelpPrompt from './HelpPrompt';
+import FormField from '@/components/serviceprovider/FormField';
+import ProgressStatus from '@/components/serviceprovider/ProgressStatus';
+import LogoHeader from '@/components/serviceprovider/LogoHeader';
+import HelpPrompt from '@/components/serviceprovider/HelpPrompt';
 import destinationsData from '@/data/data.json';
 
 export default function ProviderRegistrationForm() {

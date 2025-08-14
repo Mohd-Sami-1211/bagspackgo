@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
-import TripsApproval from './TripsApproval';
-import TripsScheduled from './TripsScheduled';
+import TripsApproval from '@/components/serviceprovider/dashboard/Trips/TripsApproval';
+import TripsScheduled from '@/components/serviceprovider/dashboard/Trips/TripsScheduled';
 
 export default function TripsList(){
   const [tab, setTab] = useState('approval');

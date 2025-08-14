@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
-import TreksApproval from './TreksApproval';
-import TreksScheduled from './TreksScheduled';
+import TreksApproval from '@/components/serviceprovider/dashboard/Treks/TreksApproval';
+import TreksScheduled from '@/components/serviceprovider/dashboard/Treks/TreksScheduled';
 
 export default function TreksList(){
   const [tab, setTab] = useState('approval');

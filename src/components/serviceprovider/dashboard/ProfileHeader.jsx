@@ -1,5 +1,5 @@
 'use client';
-import NotificationsBell from './NotificationsBell';
+import NotificationsBell from '@/components/serviceprovider/dashboard/NotificationsBell';
 
 export default function ProfileHeader() {
   return (

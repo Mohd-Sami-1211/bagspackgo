@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
-import MergersApproval from './MergersApproval';
-import MergersScheduled from './MergersScheduled';
+import MergersApproval from '@/components/serviceprovider/dashboard/Merger/MergersApproval';
+import MergersScheduled from '@/components/serviceprovider/dashboard/Merger/MergersScheduled';
 
 export default function MergersList(){
   const [tab, setTab] = useState('approval');
