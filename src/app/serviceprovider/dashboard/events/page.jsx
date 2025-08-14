@@ -1,3 +1,3 @@
 'use client';
-import EventsList from '@/components/serviceprovider/dashboard/events/EventsList';
+import EventsList from '@/components/serviceprovider/dashboard/Events/EventsList';
 export default function EventsPage(){ return <EventsList /> }
