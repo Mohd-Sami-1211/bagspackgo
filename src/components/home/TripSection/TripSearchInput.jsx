@@ -101,7 +101,7 @@ const TripSearchInput = forwardRef(({ compactMode = false, onSearch }, ref) => {
     const queryString = new URLSearchParams(filteredParams).toString();
     
     setTimeout(() => {
-      router.push(`/trip/guidelist?${queryString}`);
+      router.push(`/user/trip/guidelist?${queryString}`);
     }, 500);
   };
 

@@ -117,7 +117,7 @@ const GuideCard = ({ guide, category, days, count = 1, date }) => {
               params.set('count', count);
               if (date) params.set('date', date.toISOString());
               
-              router.push(`/trip/guidelist/tripdetails/${guide.id}?${params.toString()}`);
+              router.push(`/user/trip/guidelist/tripdetails/${guide.id}?${params.toString()}`);
             }}
             className="w-full py-3 bg-white hover:bg-[#d4f7d4] text-gray-600 hover:text-gray-900 font-medium rounded-lg transition-colors"
           >

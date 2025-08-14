@@ -527,7 +527,7 @@ const TrekGuideDetails = ({ guide }) => {
 
                       // Navigate to review page
                       router.push(
-                        `/trek/guidelist/trekdetails/${guide.id}/reviewjourney?trekId=${trekId}&individuals=${individuals}`
+                        `/user/trek/guidelist/trekdetails/${guide.id}/reviewjourney?trekId=${trekId}&individuals=${individuals}`
                       );
                     }}
                     className="px-5 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center shadow-sm hover:shadow-md"

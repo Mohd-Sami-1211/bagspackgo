@@ -25,21 +25,29 @@ export default function SignInPage() {
   };
 
   const handleSubmit = (e) => {
-    e.preventDefault();
-    setError('');
+  e.preventDefault();
+  setError('');
 
-    // Check if credentials match
-    const isValid = validCredentials[role].some(
-      cred => cred.email === email && cred.password === password
-    );
+  // Check if credentials match
+  const isValid = validCredentials[role].some(
+    cred => cred.email === email && cred.password === password
+  );
 
-    if (isValid) {
-      // Successful login - redirect to trip page
-      router.push('/trip');
+  if (isValid) {
+    // Store role in localStorage (optional for access protection)
+    localStorage.setItem('role', role);
+
+    // Redirect based on role
+    if (role === 'provider') {
+      router.push('/serviceprovider/dashboard');
     } else {
-      setError('Invalid email or password. Please try again.');
+      router.push('/user/trip');
     }
-  };
+  } else {
+    setError('Invalid email or password. Please try again.');
+  }
+};
+
 
   return (
     <div className="flex flex-1 min-h-screen mx-auto">

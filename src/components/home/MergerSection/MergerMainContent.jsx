@@ -1228,7 +1228,7 @@ const MergerMainContent = () => {
     whileTap={{ scale: 0.95 }}
     className="bg-green-500 hover:bg-green-600 text-white rounded-full w-[60px] h-[60px] shadow-lg flex items-center justify-center"
     onClick={() => {
-      router.push('/merger/createmerger/');
+      router.push('/user/merger/createmerger/');
     }}
   >
     <span className="text-4xl leading-none font-bold  pb-2">+</span>

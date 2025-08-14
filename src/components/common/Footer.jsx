@@ -29,8 +29,8 @@ const Footer = () => {
           <ul className="space-y-2">
             <li><a href="/" className="text-sm px-2 py-1 hover:text-black hover:bg-white/40 transition-colors">Home</a></li>
             <li><a href="/about" className="text-sm px-2 py-1 hover:text-black hover:bg-white/40 transition-colors">About Us</a></li>
-            <li><a href="/tours" className="text-sm px-2 py-1 hover:text-black hover:bg-white/40 transition-colors">Tours</a></li>
-            <li><a href="/contact" className="text-sm px-2 py-1 hover:text-black hover:bg-white/40 transition-colors">Contact</a></li>
+            <li><a href="/user/events" className="text-sm px-2 py-1 hover:text-black hover:bg-white/40 transition-colors">Events</a></li>
+            <li><a href="/user/merger" className="text-sm px-2 py-1 hover:text-black hover:bg-white/40 transition-colors">Merger</a></li>
           </ul>
         </div>
 
@@ -39,7 +39,7 @@ const Footer = () => {
           <h3 className="text-lg font-semibold text-gray-800 mb-3">Help</h3>
           <ul className="space-y-2">
             <li><a href="/faq" className="text-sm px-2 py-1 hover:text-black hover:bg-white/40 transition-colors">FAQ</a></li>
-            <li><a href="/support" className="text-sm px-2 py-1 hover:text-black hover:bg-white/40 transition-colors">Customer Support</a></li>
+            <li><a href="/user/help" className="text-sm px-2 py-1 hover:text-black hover:bg-white/40 transition-colors">Customer Support</a></li>
             <li><a href="/privacy" className="text-sm px-2 py-1 hover:text-black hover:bg-white/40 transition-colors">Privacy Policy</a></li>
             <li><a href="/terms" className="text-sm px-2 py-1 hover:text-black hover:bg-white/40 transition-colors">Terms & Conditions</a></li>
           </ul>

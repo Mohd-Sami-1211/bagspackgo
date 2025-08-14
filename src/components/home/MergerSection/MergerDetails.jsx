@@ -7,7 +7,7 @@ import { useRef } from 'react';
 const MergerDetails = ({ merger, guides }) => {
   const router = useRouter();
     const handleJoin = () => {
-    router.push(`/merger/mergerdetails/${merger.id}/personaldetails`);
+    router.push(`/user/merger/mergerdetails/${merger.id}/personaldetails`);
   };
   const ref = useRef(null);
   const { scrollYProgress } = useScroll({

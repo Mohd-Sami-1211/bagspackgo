@@ -14,7 +14,7 @@ import { useRouter } from 'next/navigation';
 const EventCard = ({ event,guides }) => {
     const router = useRouter();
   const handleViewDetails = () => {
-    router.push(`/events/eventdetails/${event.id}`);
+    router.push(`/user/events/eventdetails/${event.id}`);
   };
   const cardVariants = {
     hidden: { opacity: 0, y: 20 },

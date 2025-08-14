@@ -594,7 +594,7 @@ const handleArrDepSubmit = (data) => {
 
     // Navigate to review page
     router.push(
-      `/trip/guidelist/tripdetails/${guide.id}/reviewjourney?category=${category}&days=${numDays}&count=${numPeople}&date=${dateParam}`
+      `/user/trip/guidelist/tripdetails/${guide.id}/reviewjourney?category=${category}&days=${numDays}&count=${numPeople}&date=${dateParam}`
     );
   }}
   className="px-5 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center shadow-sm hover:shadow-md"

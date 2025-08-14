@@ -19,9 +19,11 @@ export default function RootLayout({ children }) {
     pathname?.includes('/bookings') ||
     pathname?.includes('/help') ||
     pathname?.includes('/signin') ||
-    pathname?.includes('/signup');
+    pathname?.includes('/signup') ||
+    pathname?.includes('/serviceprovider');
 
-    const hideNavbar = pathname === '/signin' || pathname ==='/signup';
+    const hideNavbar = pathname === '/signin' || pathname ==='/signup' ||
+    pathname?.includes('/serviceprovider');
     const hideFooter = pathname === '/signin' || pathname ==='/signup';  
 
   return (

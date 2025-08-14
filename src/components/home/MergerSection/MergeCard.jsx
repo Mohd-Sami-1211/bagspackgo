@@ -33,7 +33,7 @@ const MergeCard = ({ merger, guides }) => {
       : 'none';
 
   const handleViewDetails = () => {
-    router.push(`/merger/mergerdetails/${merger.id}`);
+    router.push(`/user/merger/mergerdetails/${merger.id}`);
   };
 
   return (

@@ -7,11 +7,11 @@ import { motion } from 'framer-motion';
 import { useRef, useState, useEffect } from 'react';
 
 const tabs = [
-  { label: 'Trip', icon: <Plane size={18} />, path: '/trip' },
-  { label: 'Trek', icon: <Mountain size={18} />, path: '/trek' },
-  { label: 'Merger', icon: <Users size={18} />, path: '/merger' },
-  { label: 'Events', icon: <CalendarDays size={18} />, path: '/events' },
-  { label: 'Community', icon: <Globe2 size={18} />, path: '/community' },
+  { label: 'Trip', icon: <Plane size={18} />, path: '/user/trip' },
+  { label: 'Trek', icon: <Mountain size={18} />, path: '/user/trek' },
+  { label: 'Merger', icon: <Users size={18} />, path: '/user/merger' },
+  { label: 'Events', icon: <CalendarDays size={18} />, path: 'user/events' },
+  { label: 'Community', icon: <Globe2 size={18} />, path: '/user/community' },
 ];
 
 export default function SecondaryNav() {

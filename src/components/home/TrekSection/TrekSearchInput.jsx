@@ -160,7 +160,7 @@ const TrekSearchInput = forwardRef((props, ref) => {
       count: count.toString()
     }).toString();
 
-    router.push(`/trek/guidelist?${queryParams}`);
+    router.push(`/user/trek/guidelist?${queryParams}`);
   };
 
   const containerVariants = {

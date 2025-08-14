@@ -29,11 +29,11 @@ export default function Navbar() {
       </div>
 
       <div className="flex items-center space-x-4 text-white/90 text-[15px] font-semibold">
-        <a href="/bookings" className="flex items-center gap-1 px-2 py-1 rounded hover:bg-white/20 hover:text-black transition-colors">
+        <a href="/user/bookings" className="flex items-center gap-1 px-2 py-1 rounded hover:bg-white/20 hover:text-black transition-colors">
           <CalendarCheck size={16} />
           Bookings
         </a>
-        <a href="/help" className="flex items-center gap-1 px-2 py-1 rounded hover:bg-white/20 hover:text-black transition-colors">
+        <a href="/user/help" className="flex items-center gap-1 px-2 py-1 rounded hover:bg-white/20 hover:text-black transition-colors">
           <Headphones size={16} />
           Help
         </a>

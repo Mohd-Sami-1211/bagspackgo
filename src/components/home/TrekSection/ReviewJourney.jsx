@@ -122,7 +122,7 @@ const ReviewTrek = ({ guide, searchParams }) => {
   const paymentDetails = calculatePayment();
 
   const handleEditSection = (section) => {
-    router.push(`/trek/guides/trekdetails/${guide?.id}?difficulty=${difficulty}&days=${days}&count=${count}&date=${date.toISOString()}#${section}`);
+    router.push(`/user/trek/guides/trekdetails/${guide?.id}?difficulty=${difficulty}&days=${days}&count=${count}&date=${date.toISOString()}#${section}`);
   };
 
   const handleMakePayment = () => {

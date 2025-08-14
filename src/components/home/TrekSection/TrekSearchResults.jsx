@@ -197,7 +197,7 @@ const handleApplyChanges = () => {
   };
 
   const queryString = new URLSearchParams(params).toString();
-  router.push(`/trek/guidelist?${queryString}`);
+  router.push(`/user/trek/guidelist?${queryString}`);
   
   setIsEditing(false);
   setIsApplying(false);

@@ -396,70 +396,8 @@ export default function SignUpPage() {
                 </div>
               )}
 
-              {/* Provider Specific Fields */}
-              {role === 'provider' && (
-                <>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      name="companyName"
-                      value={userData.companyName}
-                      onChange={handleInputChange}
-                      required
-                      className="peer w-full bg-transparent border-b-2 border-gray-400 pt-4 pb-1 text-black placeholder-transparent focus:outline-none"
-                      placeholder="Company Name"
-                    />
-                    <label className="absolute left-0 -top-2 text-sm text-gray-500 peer-placeholder-shown:text-base peer-placeholder-shown:top-4 peer-focus:-top-1 peer-focus:text-sm transition-all duration-200 ease-in-out pointer-events-none">
-                      Company Name*
-                    </label>
-                  </div>
-
-                  <div className="relative">
-                    <input
-                      type="email"
-                      name="companyEmail"
-                      value={userData.companyEmail}
-                      onChange={handleInputChange}
-                      required
-                      className="peer w-full bg-transparent border-b-2 border-gray-400 pt-4 pb-1 text-black placeholder-transparent focus:outline-none"
-                      placeholder="Company Email"
-                    />
-                    <label className="absolute left-0 -top-2 text-sm text-gray-500 peer-placeholder-shown:text-base peer-placeholder-shown:top-4 peer-focus:-top-1 peer-focus:text-sm transition-all duration-200 ease-in-out pointer-events-none">
-                      Company Email*
-                    </label>
-                  </div>
-
-                  <div className="relative">
-                    <input
-                      type="text"
-                      name="state"
-                      value={userData.state}
-                      onChange={handleInputChange}
-                      required
-                      className="peer w-full bg-transparent border-b-2 border-gray-400 pt-4 pb-1 text-black placeholder-transparent focus:outline-none"
-                      placeholder="State"
-                    />
-                    <label className="absolute left-0 -top-2 text-sm text-gray-500 peer-placeholder-shown:text-base peer-placeholder-shown:top-4 peer-focus:-top-1 peer-focus:text-sm transition-all duration-200 ease-in-out pointer-events-none">
-                      State*
-                    </label>
-                  </div>
-
-                  <div className="relative">
-                    <textarea
-                      name="address"
-                      value={userData.address}
-                      onChange={handleInputChange}
-                      required
-                      className="peer w-full bg-transparent border-b-2 border-gray-400 pt-4 pb-1 text-black placeholder-transparent focus:outline-none"
-                      placeholder="Address"
-                    />
-                    <label className="absolute left-0 -top-2 text-sm text-gray-500 peer-placeholder-shown:text-base peer-placeholder-shown:top-4 peer-focus:-top-1 peer-focus:text-sm transition-all duration-200 ease-in-out pointer-events-none">
-                      Address*
-                    </label>
-                  </div>
-                </>
-              )}
-
+            
+             
               {/* Password Fields */}
               <div className="relative">
                 <input

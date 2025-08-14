@@ -11,11 +11,11 @@ export default function PageTransition({ children, keyProp }) {
   useEffect(() => {
     const prefetchRoutes = async () => {
       await Promise.all([
-        router.prefetch('/trip'),
-        router.prefetch('/trek'),
-        router.prefetch('/merger'),
-        router.prefetch('/events'),
-        router.prefetch('/community')
+        router.prefetch('/user/trip'),
+        router.prefetch('/user/trek'),
+        router.prefetch('/user/merger'),
+        router.prefetch('/user/events'),
+        router.prefetch('/user/community')
       ]);
     };
     prefetchRoutes();

@@ -124,7 +124,7 @@ useEffect(() => {
   const paymentDetails = calculatePayment();
 
   const handleEditSection = (section) => {
-    router.push(`/trip/guidelist/tripdetails/${guide?.id}?category=${category}&days=${days}&count=${count}&date=${date.toISOString()}#${section}`);
+    router.push(`/user/trip/guidelist/tripdetails/${guide?.id}?category=${category}&days=${days}&count=${count}&date=${date.toISOString()}#${section}`);
   };
 
   const handleMakePayment = () => {

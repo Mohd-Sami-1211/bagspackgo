@@ -122,7 +122,7 @@ const SearchResults = () => {
     };
 
     const queryString = new URLSearchParams(params).toString();
-    router.push(`/trip/guidelist?${queryString}`);
+    router.push(`/user/trip/guidelist?${queryString}`);
     
     // Reset editing state after navigation
     setIsEditing(false);

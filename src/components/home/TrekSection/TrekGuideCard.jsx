@@ -18,7 +18,7 @@ const TrekGuideCard = ({ guide, trekId, individuals = 1 }) => {
     params.set('trekId', trekId);
     params.set('individuals', individuals);
     
-    router.push(`/trek/guidelist/trekdetails/${guide.id}?${params.toString()}`);
+    router.push(`/user/trek/guidelist/trekdetails/${guide.id}?${params.toString()}`);
   };
 
   return (
