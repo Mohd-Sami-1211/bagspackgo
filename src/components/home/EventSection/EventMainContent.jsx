@@ -485,7 +485,7 @@ const EventMainContent = () => {
 
   if (data.events.length === 0) {
     return (
-      <div className="max-w-7xl mx-auto mt-8 py-2 px-4 bg-[#e9ffeeee] rounded-xl shadow-lg overflow-hidden mb-40">
+      <div className="max-w-7xl mx-auto mt-8 py-2 px-4 bg-gradient-to-br from-green-50 to-blue-50 rounded-xl shadow-lg overflow-hidden mb-40">
         <div className="flex justify-center items-center h-64">
           <p>No events available</p>
         </div>
@@ -494,7 +494,7 @@ const EventMainContent = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto mt-8 py-2 px-4 bg-[#e9ffeeee] rounded-xl shadow-lg overflow-hidden mb-40">
+    <div className="max-w-7xl mx-auto mt-5 py-2 px-4  bg-gradient-to-br from-green-50 to-blue-50 rounded-xl shadow-lg overflow-hidden mb-40">
       <div className="flex h-full">
         {/* Left Filters Section (25%) */}
         <div className="w-1/4">

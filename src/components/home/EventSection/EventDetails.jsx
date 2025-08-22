@@ -140,7 +140,7 @@ useEffect(() => {
     } else {
       // Process booking
       alert(`Booking confirmed for ${bookingSlots} slots!`);
-      router.push('/');
+      router.push('/user/bookings');
     }
   };
 

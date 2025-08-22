@@ -1,6 +1,5 @@
 'use client';
 import { motion } from 'framer-motion';
-import ProviderNavbar from '@/components/serviceprovider/ProviderNavbar';
 
 export default function ServiceProviderLayout({ children }) {
   return (
@@ -8,10 +7,9 @@ export default function ServiceProviderLayout({ children }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
-      className="bg-[#F2FFFC] min-h-screen w-full"
+      className="bg-[#F2FFFC] min-h-screen pt-[80px] w-full -mt-20 " // Adjust based on your navbar height
     >
-      <ProviderNavbar />
-      <div className="pt-[80px]">{children}</div>
+      {children}
     </motion.div>
   );
 }

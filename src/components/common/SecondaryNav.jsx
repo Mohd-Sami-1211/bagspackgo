@@ -10,7 +10,7 @@ const tabs = [
   { label: 'Trip', icon: <Plane size={18} />, path: '/user/trip' },
   { label: 'Trek', icon: <Mountain size={18} />, path: '/user/trek' },
   { label: 'Merger', icon: <Users size={18} />, path: '/user/merger' },
-  { label: 'Events', icon: <CalendarDays size={18} />, path: 'user/events' },
+  { label: 'Events', icon: <CalendarDays size={18} />, path: '/user/events' },
   { label: 'Community', icon: <Globe2 size={18} />, path: '/user/community' },
 ];
 
