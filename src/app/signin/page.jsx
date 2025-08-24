@@ -39,7 +39,7 @@ export default function SignInPage() {
 
     // Redirect based on role
     if (role === 'provider') {
-      router.push('/serviceprovider/dashboard');
+      router.push('/serviceprovider');
     } else {
       router.push('/user/trip');
     }

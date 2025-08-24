@@ -1,3 +1,3 @@
 'use client';
-import TripsList from '@/components/serviceprovider/dashboard/Trips/TripsList';
-export default function TripsPage(){ return <TripsList /> }
+import TripMainContent from '@/components/serviceprovider/dashboard/Trips/TripMainContent';
+export default function TripsPage(){ return <TripMainContent /> }
