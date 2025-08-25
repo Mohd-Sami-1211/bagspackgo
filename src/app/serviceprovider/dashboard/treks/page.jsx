@@ -1,3 +1,3 @@
 'use client';
-import TreksList from '@/components/serviceprovider/dashboard/Treks/TreksList';
-export default function TreksPage(){ return <TreksList /> }
+import TrekMainContent from '@/components/serviceprovider/dashboard/Treks/TrekMainContent';
+export default function TreksPage(){ return <TrekMainContent /> }

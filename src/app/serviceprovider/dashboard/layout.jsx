@@ -1,15 +1,39 @@
 'use client';
+import { Suspense, useState } from 'react';
+import Sidebar from '@/components/serviceprovider/dashboard/Sidebar';
+import ProviderNavbar from '@/components/serviceprovider/dashboard/ProviderNavbar';
 import { motion } from 'framer-motion';
 
-export default function DashboardPageLayout({ children }) {
+export default function DashboardLayout({ children }) {
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
-      className="bg-[#F2FFFC] min-h-screen pt-[80px] w-full -mt-8 " // Adjust based on your navbar height
-    >
-      {children}
-    </motion.div>
+    <Suspense fallback={<div className="p-6">Loading dashboard…</div>}>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+        className="min-h-screen bg-neutral-50"
+      >
+        <ProviderNavbar 
+          isSidebarCollapsed={isSidebarCollapsed} 
+          setIsSidebarCollapsed={setIsSidebarCollapsed} 
+        />
+        <div className="flex pt-16">
+          <Sidebar 
+            isCollapsed={isSidebarCollapsed} 
+            setIsCollapsed={setIsSidebarCollapsed} 
+          />
+          <main
+            className={`flex-1 overflow-auto transition-all duration-500 ease-in-out  
+              ${isSidebarCollapsed ? 'ml-20' : 'ml-72'}`} 
+          >
+            <div className="p-6">
+              {children}
+            </div>
+          </main>
+        </div>
+      </motion.div>
+    </Suspense>
   );
 }

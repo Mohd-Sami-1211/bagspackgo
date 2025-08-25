@@ -24,7 +24,8 @@ export default function RootLayout({ children }) {
 
     const hideNavbar = pathname === '/signin' || pathname ==='/signup' ||
     pathname?.includes('/serviceprovider');
-    const hideFooter = pathname === '/signin' || pathname ==='/signup';  
+    const hideFooter = pathname === '/signin' || pathname ==='/signup'  ||
+    pathname?.includes('/serviceprovider');  
 
   return (
     <html lang="en">
