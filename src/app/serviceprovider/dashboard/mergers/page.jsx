@@ -1,3 +1,3 @@
 'use client';
-import MergerList from '@/components/serviceprovider/dashboard/Merger/MergersList';
-export default function MergerPage(){ return <MergerList /> }
+import MergerMainContent from '@/components/serviceprovider/dashboard/Merger/MergerMainContent';
+export default function MergerPage(){ return <MergerMainContent /> }
