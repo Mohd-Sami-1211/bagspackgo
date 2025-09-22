@@ -1,7 +1,16 @@
 'use client';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Calendar, Users, CreditCard, UserCircle2, MapPin, Clock, Mountain, TrendingUp } from 'lucide-react';
+import {
+  Calendar,
+  Users,
+  CreditCard,
+  UserCircle2,
+  MapPin,
+  Clock,
+  Mountain,
+  TrendingUp,
+} from 'lucide-react';
 
 // Dummy treks data
 const treksData = [
@@ -16,7 +25,7 @@ const treksData = [
     requestedBy: 'Neha Patel',
     price: 12500,
     status: 'Pending',
-    elevation: 13, // in 1000s of feet
+    elevation: 13,
   },
   {
     id: 'TR-102',
@@ -50,9 +59,9 @@ const treksData = [
 function TrekCard({ trek }) {
   return (
     <motion.div
-      whileHover={{ scale: 1.02 }}
-      transition={{ type: 'spring', stiffness: 200 }}
-      className="rounded-2xl border bg-white shadow-md p-5 flex flex-col gap-3 hover:shadow-xl"
+      whileHover={{ scale: 1.01 }}
+      transition={{ type: 'spring', stiffness: 120, damping: 12 }}
+      className="rounded-2xl border bg-white shadow-md hover:shadow-xl transition-all p-6 flex flex-col gap-4"
     >
       {/* Header */}
       <div className="flex justify-between items-center">
@@ -70,16 +79,16 @@ function TrekCard({ trek }) {
         </span>
       </div>
 
-      {/* Trek Name and Location */}
+      {/* Trek Name & Location */}
       <h3 className="font-semibold text-lg flex items-center gap-2">
         <Mountain className="w-4 h-4 text-green-600" /> {trek.name}
       </h3>
-      <div className="text-sm text-neutral-600 flex items-center gap-1">
+      <p className="text-sm text-neutral-600 flex items-center gap-1">
         <MapPin className="w-4 h-4 text-green-600" /> {trek.location}
-      </div>
+      </p>
 
-      {/* Trek Details */}
-      <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm text-neutral-600">
+      {/* Details */}
+      <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm text-neutral-600 mt-2">
         <div className="flex items-center gap-1">
           <Calendar className="w-4 h-4 text-green-600" /> {trek.date}
         </div>
@@ -94,49 +103,42 @@ function TrekCard({ trek }) {
         </div>
       </div>
 
-      {/* Elevation and Pricing */}
-      <div className="flex justify-between items-center">
-        <div className="text-sm text-neutral-600">
-          Max Elevation: {trek.elevation}k ft
-        </div>
-        <div className="font-semibold text-green-700 flex items-center gap-2">
+      {/* Elevation & Price */}
+      <div className="flex justify-between items-center text-sm text-neutral-700">
+        <p>Max Elevation: {trek.elevation}k ft</p>
+        <p className="font-semibold text-green-700 flex items-center gap-2">
           <CreditCard className="w-4 h-4" /> ₹{trek.price.toLocaleString()}
-        </div>
+        </p>
       </div>
 
       {/* Requested By */}
-      <div className="text-sm text-neutral-600 flex items-center gap-1">
+      <p className="text-sm text-neutral-600 flex items-center gap-1">
         <UserCircle2 className="w-4 h-4 text-green-600" /> Requested by {trek.requestedBy}
-      </div>
+      </p>
 
       {/* Actions */}
-      <div className="flex gap-2 mt-3">
+      <div className="flex gap-3 mt-3">
         {trek.status === 'Pending' && (
           <>
-            <button className="px-3 py-2 rounded-xl bg-gradient-to-br from-green-500 to-green-600 text-white hover:bg-green-600 transition">
+            <button className="px-4 py-2 rounded-xl bg-gradient-to-br from-green-500 to-green-600 text-white hover:opacity-90 transition">
               Approve
             </button>
-            <button className="px-3 py-2 rounded-xl border hover:bg-neutral-50 transition">
+            <button className="px-4 py-2 rounded-xl border hover:bg-neutral-50 transition">
               Decline
             </button>
           </>
         )}
         {trek.status === 'Scheduled' && (
-          <>
-            <button className="px-3 py-2 rounded-xl border hover:bg-neutral-50 transition">
-              Reschedule
-            </button>
-            <button className="px-3 py-2 rounded-xl border hover:bg-neutral-50 transition">
-              Cancel
-            </button>
-          </>
+          <button className="px-4 py-2 rounded-xl border hover:bg-neutral-50 transition">
+            Cancel
+          </button>
         )}
         {trek.status === 'Completed' && (
           <>
-            <button className="px-3 py-2 rounded-xl border hover:bg-neutral-50 transition">
+            <button className="px-4 py-2 rounded-xl border hover:bg-neutral-50 transition">
               Feedback
             </button>
-            <button className="px-3 py-2 rounded-xl border hover:bg-neutral-50 transition">
+            <button className="px-4 py-2 rounded-xl border hover:bg-neutral-50 transition">
               Share
             </button>
           </>
@@ -160,7 +162,7 @@ export default function TrekMainContent() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold text-neutral-800">Trek Management</h2>
+        <h2 className="text-3xl font-bold text-neutral-800">Trek Management</h2>
         <p className="text-neutral-600">Manage and review all trekking requests</p>
       </div>
 
@@ -172,7 +174,7 @@ export default function TrekMainContent() {
             onClick={() => setFilter(f)}
             className={`px-4 py-2 rounded-xl border transition ${
               filter === f
-                ? 'bg-green-400 text-white border-green-400'
+                ? 'bg-green-500 text-white border-green-500'
                 : 'bg-white text-neutral-700 hover:bg-neutral-50'
             }`}
           >
@@ -181,8 +183,8 @@ export default function TrekMainContent() {
         ))}
       </div>
 
-      {/* Cards Grid */}
-      <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
+      {/* Cards */}
+      <div className="grid grid-cols-1 gap-6">
         {filteredTreks.map((trek) => (
           <TrekCard key={trek.id} trek={trek} />
         ))}
