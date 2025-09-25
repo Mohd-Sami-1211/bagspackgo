@@ -196,29 +196,30 @@ export default function Sidebar({ isCollapsed }) {
       </div>
 
       {/* Logout */}
-      <div className="p-4 border-t bg-white">
-        <button
-          className={`flex items-center gap-4 w-full text-gray-700 hover:text-red-500 transition px-4 py-3 rounded-xl hover:bg-red-50 ${
-            isCollapsed ? "justify-center" : ""
-          }`}
-        >
-          <LogOut size={22} />
-          <AnimatePresence mode="wait">
-            {!isCollapsed && (
-              <motion.span 
-                key="logout-text"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
-                transition={{ duration: 0.2 }}
-                className="text-sm"
-              >
-                Logout
-              </motion.span>
-            )}
-          </AnimatePresence>
-        </button>
-      </div>
+        <div className="p-4 border-t bg-white">
+      <Link
+        href="/serviceprovider/dashboard/logout"
+        className={`flex items-center gap-4 w-full text-gray-700 hover:text-red-500 transition px-4 py-3 rounded-xl hover:bg-red-50 ${
+          isCollapsed ? 'justify-center' : ''
+        }`}
+      >
+        <LogOut size={22} />
+        <AnimatePresence mode="wait">
+          {!isCollapsed && (
+            <motion.span
+              key="logout-text"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -10 }}
+              transition={{ duration: 0.2 }}
+              className="text-sm"
+            >
+              Logout
+            </motion.span>
+          )}
+        </AnimatePresence>
+      </Link>
+    </div>
     </motion.aside>
   );
 }
