@@ -1,0 +1,19 @@
+{
+  "name": "bpgbackend",
+  "version": "1.0.0",
+  "description": "backend for bagspackgo",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [
+    "bagspackgo",
+    "travel"
+  ],
+  "author": "Mohd Samiullah",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0"
+  }
+}
