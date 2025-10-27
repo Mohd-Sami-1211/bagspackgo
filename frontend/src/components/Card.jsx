@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { cn } from "frontend/src/lib/utils";
+import { cn } from "src/lib/utils";
 
 const Card = React.forwardRef(
   ({ 

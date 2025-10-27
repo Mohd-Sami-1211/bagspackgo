@@ -69,146 +69,87 @@ export default function AdContent() {
   }, [nextSlide]);
 
   return (
-    <section className="relative -mt-20 mx-4 z-10">
-      <div className="relative rounded-2xl overflow-hidden shadow-2xl max-w-7xl mx-auto h-44">
+    <section className="relative -mt-24 mx-4 z-10">
+      <div className="w-full md:w-[96%] mx-auto relative overflow-hidden rounded-2xl shadow-2xl">
+
         <AnimatePresence custom={direction} mode="wait">
           {promotions.map((promo, index) =>
             index === currentSlide && (
               <motion.div
                 key={promo.id}
                 initial={{ x: direction > 0 ? 300 : -300, opacity: 0 }}
-                animate={{ 
-                  x: 0, 
+                animate={{
+                  x: 0,
                   opacity: 1,
-                  transition: {
-                    type: "spring",
-                    damping: 25,
-                    stiffness: 120
-                  }
+                  transition: { type: "spring", damping: 25, stiffness: 120 }
                 }}
-                exit={{ 
-                  x: direction > 0 ? -300 : 300, 
+                exit={{
+                  x: direction > 0 ? -300 : 300,
                   opacity: 0,
-                  transition: {
-                    duration: 0.4
-                  }
+                  transition: { duration: 0.4 }
                 }}
-                className={`absolute inset-0 flex bg-gradient-to-r ${promo.colors.bg} ${promo.colors.text}`}
+                className={`relative flex flex-col md:flex-row-reverse w-full bg-gradient-to-r ${promo.colors.bg} ${promo.colors.text} pb-10 md:pb-0`}
               >
+                {/* Sponsor Label */}
                 <motion.span
                   initial={{ y: -20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.3 }}
-                  className="absolute top-4 right-4 bg-black/80 text-white text-xs px-2 py-1 rounded-full z-30"
+                  className="absolute top-3 right-3 md:top-4 md:right-4 bg-black/80 text-white text-[10px] md:text-xs px-2 py-1 rounded-full z-30"
                 >
                   {promo.sponsor}
                 </motion.span>
 
+                {/* Curve - hidden on mobile */}
                 <svg
-                  className="absolute left-[30%] h-full z-10"
+                  className="hidden md:block absolute left-[35%] h-full w-[240px] lg:w-[280px] z-10"
                   viewBox="0 0 200 100"
                   preserveAspectRatio="none"
                 >
                   <path d={curvePath} fill="white" />
                 </svg>
 
-                <motion.div
-                  initial={{ x: -50, opacity: 0 }}
-                  animate={{ 
-                    x: 0, 
-                    opacity: 1,
-                    transition: {
-                      delay: 0.2,
-                      type: "spring",
-                      stiffness: 60
-                    }
-                  }}
-                  className="w-[30%] p-6 flex flex-col justify-center z-20"
-                >
-                  <motion.h3
-                    className="text-2xl font-bold mb-2"
-                    initial={{ y: 20 }}
-                    animate={{ 
-                      y: 0,
-                      transition: {
-                        delay: 0.4,
-                        type: "spring",
-                        stiffness: 100
-                      }
-                    }}
-                  >
+                {/* Image */}
+                <div className="w-full h-40 sm:h-48 md:h-auto md:w-[70%] relative overflow-hidden mx-auto md:mx-0">
+                  <Image
+                    src={promo.image}
+                    alt={promo.title}
+                    fill
+                    className="object-cover"
+                    priority
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-r from-white/10 via-transparent to-transparent z-10" />
+                </div>
+
+                {/* Content and Button */}
+                <div className="w-full md:w-[30%] p-4 sm:p-6 flex flex-col justify-start md:justify-center items-center md:items-start text-center md:text-left z-20 mt-2 md:mt-0 flex-1">
+                  <h3 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold mb-1 sm:mb-2">
                     {promo.title}
-                  </motion.h3>
-                  <motion.p
-                    className="text-sm mb-4"
-                    initial={{ y: 20 }}
-                    animate={{ 
-                      y: 0,
-                      transition: {
-                        delay: 0.5,
-                        type: "spring",
-                        stiffness: 100
-                      }
-                    }}
-                  >
-                    {promo.subtitle}
-                  </motion.p>
-                  <motion.button
-                    className={`px-5 py-2 rounded-md font-medium backdrop-blur-sm transition-all ${promo.colors.button} border border-white/30`}
-                    initial={{ scale: 0.7 }}
-                    animate={{ 
-                      scale: 1,
-                      transition: {
-                        delay: 0.6,
-                        type: "spring",
-                        stiffness: 200
-                      }
-                    }}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                  </h3>
+                  <p className="text-xs sm:text-sm mb-3 sm:mb-4">{promo.subtitle}</p>
+
+                  <button
+                    className={`px-4 py-2 rounded-md font-medium backdrop-blur-sm transition-all ${promo.colors.button} border border-white/30 text-sm sm:text-base`}
                   >
                     {promo.cta}
-                  </motion.button>
-                </motion.div>
-
-                <motion.div
-                  className="w-[70%] relative overflow-hidden"
-                  initial={{ x: 50, opacity: 0 }}
-                  animate={{ 
-                    x: 0, 
-                    opacity: 1,
-                    transition: {
-                      delay: 0.3,
-                      type: "spring",
-                      stiffness: 60
-                    }
-                  }}
-                >
-                  <div className="absolute inset-0">
-                    <Image
-                      src={promo.image}
-                      alt={promo.title}
-                      fill
-                      className="object-cover"
-                      priority
-                    />
-                  </div>
-                  <div className="absolute inset-0 bg-gradient-to-r from-white/10 via-transparent to-transparent z-10" />
-                </motion.div>
+                  </button>
+                </div>
               </motion.div>
             )
           )}
         </AnimatePresence>
 
         {/* Navigation Dots */}
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2 z-20">
+        <div className="absolute bottom-5 left-1/2 transform -translate-x-1/2 flex space-x-2 z-20">
           {promotions.map((_, index) => (
             <motion.button
               key={index}
               onClick={() => setCurrentSlide(index)}
-              className={`w-2 h-2 rounded-full transition-all ${index === currentSlide ? 'bg-white' : 'bg-white/50'}`}
+              className={`w-1 h-1 sm:w-2 sm:h-2 rounded-full transition-all ${
+                index === currentSlide ? 'bg-white' : 'bg-white/50'
+              }`}
               initial={{ scale: 0.8 }}
-              animate={{ 
+              animate={{
                 scale: index === currentSlide ? 1.2 : 1,
                 transition: { type: "spring", stiffness: 500 }
               }}
@@ -224,27 +165,20 @@ export default function AdContent() {
             onClick={prevSlide}
             className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/10 p-2 rounded-full z-20"
             initial={{ opacity: 0, x: -10 }}
-            whileHover={{ 
-              opacity: 1, 
-              x: 0,
-              backgroundColor: "rgba(0,0,0,0.3)"
-            }}
+            whileHover={{ opacity: 1, x: 0, backgroundColor: "rgba(0,0,0,0.3)" }}
             whileTap={{ scale: 0.9 }}
           >
-            <ChevronLeft className="text-white" size={24} />
+            <ChevronLeft className="text-white w-5 h-5" />
           </motion.button>
+
           <motion.button
             onClick={nextSlide}
             className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/10 p-2 rounded-full z-20"
             initial={{ opacity: 0, x: 10 }}
-            whileHover={{ 
-              opacity: 1, 
-              x: 0,
-              backgroundColor: "rgba(0,0,0,0.3)"
-            }}
+            whileHover={{ opacity: 1, x: 0, backgroundColor: "rgba(0,0,0,0.3)" }}
             whileTap={{ scale: 0.9 }}
           >
-            <ChevronRight className="text-white" size={24} />
+            <ChevronRight className="text-white w-5 h-5" />
           </motion.button>
         </div>
       </div>

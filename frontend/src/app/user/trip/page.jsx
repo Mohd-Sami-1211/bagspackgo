@@ -1,5 +1,5 @@
 'use client';
-import SearchInput from 'frontend/src/components/home/TripSection/TripSearchInput';
+import SearchInput from 'src/components/home/TripSection/TripSearchInput';
 
 export default function TripPage() {
   return (

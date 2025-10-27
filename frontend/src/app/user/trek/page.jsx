@@ -1,5 +1,5 @@
 'use client';
-import TrekSearchInput from 'frontend/src/components/home/TrekSection/TrekSearchInput';
+import TrekSearchInput from 'src/components/home/TrekSection/TrekSearchInput';
 
 export default function TrekPage() {
   return (

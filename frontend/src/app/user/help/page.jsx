@@ -1,6 +1,6 @@
 'use client';
 import { Suspense } from 'react';
-import HelpMainContent from 'frontend/src/components/home/HelpSection/HelpMainContent';
+import HelpMainContent from 'src/components/home/HelpSection/HelpMainContent';
 
 export default function HelpPage() {
   return (

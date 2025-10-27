@@ -1,6 +1,6 @@
 'use client';
 import { Suspense } from 'react';
-import BookingMainContent from 'frontend/src/components/home/BookingSection/BookingMainContent';
+import BookingMainContent from 'src/components/home/BookingSection/BookingMainContent';
 
 export default function BookingsPage() {
   return (

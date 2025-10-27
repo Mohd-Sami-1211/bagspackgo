@@ -1,7 +1,7 @@
 'use client';
 import { Suspense, useState } from 'react';
-import Sidebar from 'frontend/src/components/serviceprovider/dashboard/Sidebar';
-import ProviderNavbar from 'frontend/src/components/serviceprovider/dashboard/ProviderNavbar';
+import Sidebar from 'src/components/serviceprovider/dashboard/Sidebar';
+import ProviderNavbar from 'src/components/serviceprovider/dashboard/ProviderNavbar';
 import { motion } from 'framer-motion';
 
 export default function DashboardLayout({ children }) {

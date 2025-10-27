@@ -1,8 +1,8 @@
 'use client';
 import { motion } from 'framer-motion';
-import PageTransition from 'frontend/src/components/common/PageTransition';
+import PageTransition from 'src/components/common/PageTransition';
 import { usePathname } from 'next/navigation';
-import TrekMainContent from 'frontend/src/components/home/TrekSection/TrekMainContent';
+import TrekMainContent from 'src/components/home/TrekSection/TrekMainContent';
 
 export default function TrekLayout({ children }) {
   const pathname = usePathname();

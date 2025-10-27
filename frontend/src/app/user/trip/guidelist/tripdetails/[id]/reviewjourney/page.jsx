@@ -1,6 +1,6 @@
 'use client';
 import { Suspense } from 'react';
-import ReviewJourney from 'frontend/src/components/home/TripSection/ReviewJourney';
+import ReviewJourney from 'src/components/home/TripSection/ReviewJourney';
 import { useSearchParams } from 'next/navigation';
 
 export default function ReviewJourneyPage({ params }) {

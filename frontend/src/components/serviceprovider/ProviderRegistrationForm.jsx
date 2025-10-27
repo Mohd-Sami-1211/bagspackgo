@@ -22,7 +22,7 @@ import {
   HelpCircle,
   ArrowLeft
 } from 'lucide-react';
-import destinationsData from '@/data/data.json';
+import destinationsData from 'src/data/data.json';
 
 // Modern form field component
 function FormField({ label, hint, error, children, required, icon: Icon }) {

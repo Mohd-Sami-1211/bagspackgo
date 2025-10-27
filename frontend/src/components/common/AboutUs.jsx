@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { Mountain, Camera, Users, Award, Heart, Calendar } from 'lucide-react';
-import { Card } from 'frontend/src/components/Card';
+import { Card } from 'src/components/Card';
 
 const AboutUs = () => {
   const stats = [

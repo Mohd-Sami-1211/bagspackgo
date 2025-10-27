@@ -1,6 +1,6 @@
 'use client';
 import { Suspense } from 'react';
-import GuideDetails from 'frontend/src/components/home/TripSection/GuideDetails';
+import GuideDetails from 'src/components/home/TripSection/GuideDetails';
 import { useParams, useSearchParams, notFound } from 'next/navigation';
 import data from '@/data/data.json';
 

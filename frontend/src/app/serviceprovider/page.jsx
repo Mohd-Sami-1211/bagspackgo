@@ -1,6 +1,6 @@
 'use client';
 import { Suspense } from 'react';
-import ProviderRegistrationForm from 'frontend/src/components/serviceprovider/ProviderRegistrationForm';
+import ProviderRegistrationForm from 'src/components/serviceprovider/ProviderRegistrationForm';
 
 export default function ServiceProviderPage() {
   return (

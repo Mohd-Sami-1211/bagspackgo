@@ -2,8 +2,8 @@
 import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaClipboardList, FaUsers, FaHeart, FaFilter, FaCalendarAlt, FaHistory } from 'react-icons/fa';
-import BookingCard from 'frontend/src/components/home/BookingSection/BookingCard';
-import MergerCard from 'frontend/src/components/home/BookingSection/MergerCard';
+import BookingCard from 'src/components/home/BookingSection/BookingCard';
+import MergerCard from 'src/components/home/BookingSection/MergerCard';
 
 const BookingMainContent = () => {
   const [activeTab, setActiveTab] = useState('upcoming-bookings');

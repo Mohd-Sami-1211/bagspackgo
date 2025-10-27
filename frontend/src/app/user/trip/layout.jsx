@@ -1,8 +1,8 @@
 'use client';
 import { motion } from 'framer-motion';
-import PageTransition from 'frontend/src/components/common/PageTransition';
+import PageTransition from 'src/components/common/PageTransition';
 import { usePathname } from 'next/navigation';
-import TripMainContent from 'frontend/src/components/home/TripSection/TripMainContent';
+import TripMainContent from 'src/components/home/TripSection/TripMainContent';
 
 export default function TripLayout({ children }) {
   const pathname = usePathname();

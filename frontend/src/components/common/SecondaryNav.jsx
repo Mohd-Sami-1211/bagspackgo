@@ -31,7 +31,8 @@ export default function SecondaryNav() {
 
   return (
     <div className="relative bg-white/50 shadow-sm">
-      <div className="relative flex justify-center px-12 text-gray-700 font-medium text-lg">
+      {/* Desktop / Tablet */}
+      <div className="hidden md:flex justify-center px-12 text-gray-700 font-medium text-lg relative">
         <div className="flex space-x-16 relative">
           {/* Underline indicator */}
           <motion.div
@@ -41,11 +42,11 @@ export default function SecondaryNav() {
               left: underlineLeft,
             }}
             transition={{
-    type: 'spring',
-    stiffness: 150,  // Reduced from 300 (softer spring)
-    damping: 20,    // Reduced from 25 (less resistance)
-    mass: 1,        // Increased from default (more weight = slower movement)
-    restDelta: 0.001 // Finer stopping point
+              type: 'spring',
+              stiffness: 150,
+              damping: 20,
+              mass: 1,
+              restDelta: 0.001,
             }}
           />
           
@@ -75,6 +76,35 @@ export default function SecondaryNav() {
             );
           })}
         </div>
+      </div>
+
+      {/* Mobile: responsive version without horizontal scroll */}
+      <div className="md:hidden flex justify-around text-gray-700 font-medium text-base relative">
+        {tabs.map((tab, idx) => {
+          const isActive = pathname?.startsWith(tab.path);
+          return (
+            <Link
+              key={tab.label}
+              href={tab.path}
+              ref={el => tabRefs.current[idx] = el}
+              className={`flex flex-col items-center py-2 ${
+                isActive ? 'text-green-600 font-semibold' : 'hover:text-green-500'
+              }`}
+            >
+              <motion.span
+                animate={{
+                  scale: isActive ? 1.05 : 1,
+                  color: isActive ? '#16a34a' : '#374151'
+                }}
+                transition={{ type: 'spring', stiffness: 500 }}
+                className="flex flex-col items-center gap-1 text-sm"
+              >
+                {tab.icon}
+                {tab.label}
+              </motion.span>
+            </Link>
+          );
+        })}
       </div>
     </div>
   );
