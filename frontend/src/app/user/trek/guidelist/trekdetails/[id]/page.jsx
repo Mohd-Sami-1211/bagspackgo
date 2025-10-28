@@ -2,7 +2,7 @@
 import { Suspense } from 'react';
 import TrekGuideDetails from 'src/components/home/TrekSection/GuideDetails';
 import { useParams, useSearchParams, notFound } from 'next/navigation';
-import data from '@/data/data.json';
+import data from 'src/data/data.json'; //changed the routing for data.json here
 
 function TrekDetailsContent() {
   const params = useParams();
