@@ -650,7 +650,7 @@ export default function TripMainContent() {
   return (
    <div className="w-full">
   {/* Wrapper div with responsive height and bottom padding */}
-  <div className="relative h-[45vh] sm:h-[70vh] md:h-[80vh] pb-24 sm:pb-32 md:pb-0 bg-red-500"> 
+  <div className="relative h-[45vh] sm:h-[70vh] md:h-[80vh] pb-24 sm:pb-32 md:pb-0 "> 
     
     {/* Hero Section */}
     <section 
@@ -681,7 +681,7 @@ export default function TripMainContent() {
   </div>
 
   {/* Rest of the sections */}
-  <div className='mt-80 sm:mt-16 md:mt-20 bg-black/70'> 
+  <div className='mt-80 sm:mt-16 md:mt-20'> 
     <AdContent />
   </div>
   <PopularDestinations />
