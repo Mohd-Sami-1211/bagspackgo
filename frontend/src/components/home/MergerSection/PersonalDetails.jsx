@@ -17,8 +17,8 @@ import {
   Upload
 } from 'lucide-react';
 import Link from 'next/link';
-import ArrDep from 'frontend/src/components/home/MergerSection/Arr-Dep';
-import TravelerDetails from 'frontend/src/components/home/MergerSection/TravelerDetails';
+import ArrDep from 'src/components/home/MergerSection/Arr-Dep';
+import TravelerDetails from 'src/components/home/MergerSection/TravelerDetails';
 
 const PersonalDetails = ({ merger, guide }) => {
   const [activeSection, setActiveSection] = useState('arrival');
@@ -460,3 +460,4 @@ const PaymentSection = ({ price, onBack, onSubmit }) => {
 };
 
 export default PersonalDetails;
+//This is personal details section

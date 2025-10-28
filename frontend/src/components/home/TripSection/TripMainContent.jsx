@@ -681,7 +681,7 @@ export default function TripMainContent() {
   </div>
 
   {/* Rest of the sections */}
-  <div className='mt-84 sm:mt-16 md:mt-20 bg-black/70'> 
+  <div className='mt-80 sm:mt-16 md:mt-20 bg-black/70'> 
     <AdContent />
   </div>
   <PopularDestinations />
