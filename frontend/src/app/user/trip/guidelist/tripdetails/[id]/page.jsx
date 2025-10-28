@@ -2,7 +2,7 @@
 import { Suspense } from 'react';
 import GuideDetails from 'src/components/home/TripSection/GuideDetails';
 import { useParams, useSearchParams, notFound } from 'next/navigation';
-import data from '@/data/data.json';
+import data from 'src/data/data.json';
 
 function TripDetailsContent() {
   const params = useParams();
