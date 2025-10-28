@@ -1,6 +1,6 @@
 'use client';
 import { Suspense, useEffect, useState } from 'react';
-import ReviewTrek from 'frontend/src/components/home/TrekSection/ReviewJourney';
+import ReviewTrek from 'src/components/home/TrekSection/ReviewJourney';
 import { useSearchParams } from 'next/navigation';
 
 function ReviewJourneyContent() {

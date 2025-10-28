@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import MergerMainContent from 'frontend/src/components/home/MergerSection/MergerMainContent';
+import MergerMainContent from 'src/components/home/MergerSection/MergerMainContent';
 export default function MergerPage() {
   return (
     <motion.div

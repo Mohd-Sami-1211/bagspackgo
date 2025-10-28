@@ -10,7 +10,10 @@ const inter = Inter({ subsets: ['latin'] });
 
 export default function RootLayout({ children }) {
   const pathname = usePathname();
-  const hideSecondaryNav = pathname === '/user/trip/guidelist' || pathname === '/user/trek/guidelist' ||
+
+  const hideSecondaryNav =
+    pathname === '/user/trip/guidelist' ||
+    pathname === '/user/trek/guidelist' ||
     pathname?.includes('/tripdetails') ||
     pathname?.includes('/trekdetails') ||
     pathname?.includes('/mergerdetails') ||
@@ -22,21 +25,53 @@ export default function RootLayout({ children }) {
     pathname?.includes('/signup') ||
     pathname?.includes('/serviceprovider');
 
-    const hideNavbar = pathname === '/signin' || pathname ==='/signup' ||
+  const hideNavbar =
+    pathname === '/signin' ||
+    pathname === '/signup' ||
     pathname?.includes('/serviceprovider');
-    const hideFooter = pathname === '/signin' || pathname ==='/signup'  ||
-    pathname?.includes('/serviceprovider');  
+
+  const hideFooter =
+    pathname === '/signin' ||
+    pathname === '/signup' ||
+    pathname?.includes('/serviceprovider');
 
   return (
     <html lang="en">
       <head />
-      <body className={`${inter.className} bg-white/90 text-gray-800 min-h-screen flex flex-col`}>
+      <body
+        className={`${inter.className} bg-white/90 text-gray-800 min-h-screen flex flex-col`}
+      >
+        {/* Top Navbar (hidden for specific pages) */}
         {!hideNavbar && <Navbar />}
-        {!hideSecondaryNav && <SecondaryNav />}
-        <main className="flex-grow">
-          {children}
-        </main>
+
+        {/* SecondaryNav — normal on large screens, bottom-fixed on small */}
+        {!hideSecondaryNav && (
+          <div
+            className="
+              hidden md:block
+            "
+          >
+            <SecondaryNav />
+          </div>
+        )}
+
+        {/* Main content */}
+        <main className="flex-grow">{children}</main>
+
+        {/* Footer (hidden on auth/provider pages) */}
         {!hideFooter && <Footer />}
+
+        {/* Mobile bottom navigation */}
+        {!hideSecondaryNav && (
+          <div
+            className="
+              block md:hidden fixed bottom-0 left-0 right-0 z-50 
+              bg-white/95 border-t border-gray-200 shadow-lg
+            "
+          >
+            <SecondaryNav />
+          </div>
+        )}
       </body>
     </html>
   );

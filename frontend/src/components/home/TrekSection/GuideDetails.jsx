@@ -2,9 +2,9 @@
 import { Star, MapPin, Users,Clock, Calendar, Share2, Heart, ChevronRight, ArrowRight, ArrowLeft, Mountain, Compass, Flag, Map, Backpack, Tent, Sun, Moon, Thermometer, CloudRain, Wind } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import TrekItenary from 'frontend/src/components/home/TrekSection/Itenary';
-import PickupDropoff from 'frontend/src/components/home/TrekSection/Pick-Drop';
-import PersonalDetails from 'frontend/src/components/home/TrekSection/PersonalDetails';
+import TrekItenary from 'src/components/home/TrekSection/Itenary';
+import PickupDropoff from 'src/components/home/TrekSection/Pick-Drop';
+import PersonalDetails from 'src/components/home/TrekSection/PersonalDetails';
 
 const TrekGuideDetails = ({ guide }) => {
   const searchParams = useSearchParams();

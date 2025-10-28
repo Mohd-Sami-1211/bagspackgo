@@ -1,7 +1,7 @@
 'use client';
 
 import { Suspense } from 'react';
-import NewMerger from 'frontend/src/components/home/MergerSection/NewMerger';
+import NewMerger from 'src/components/home/MergerSection/NewMerger';
 import data from '@/data/data.json';
 
 export default function CreateMergerPage() {

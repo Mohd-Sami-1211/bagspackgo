@@ -1,6 +1,6 @@
 'use client';
 import { Suspense } from 'react';
-import CommunityMainContent from 'frontend/src/components/home/CommunitySection/CommunityMainContent';
+import CommunityMainContent from 'src/components/home/CommunitySection/CommunityMainContent';
 
 export default function CommunityPage() {
   return (

@@ -4,10 +4,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Check, ChevronDown, ChevronUp, RefreshCcw, ArrowDown } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import EventCard from 'frontend/src/components/home/EventSection/EventCard';
-import data from '@/data/data.json';
+import EventCard from 'src/components/home/EventSection/EventCard';
+import data from 'src/data/data.json';
 import { Search, Calendar, User, Tag, MapPin } from 'lucide-react';
-import GuideCard from 'frontend/src/components/home/EventSection/GuideCard';
+import GuideCard from 'src/components/home/EventSection/GuideCard';
 
 const EventMainContent = () => {
   // State for events and filters

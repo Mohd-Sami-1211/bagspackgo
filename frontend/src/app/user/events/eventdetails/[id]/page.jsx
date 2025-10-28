@@ -1,8 +1,8 @@
 'use client';
 import { use, Suspense } from 'react';
-import EventDetails from 'frontend/src/components/home/EventSection/EventDetails';
+import EventDetails from 'src/components/home/EventSection/EventDetails';
 import { notFound } from 'next/navigation';
-import data from '@/data/data.json';
+import data from 'src/data/data.json';
 
 function EventDetailsContent({ params }) {
   // Unwrap the params promise

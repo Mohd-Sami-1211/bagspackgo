@@ -1,8 +1,8 @@
 'use client';
 import { Suspense } from 'react';
-import MergerDetails from 'frontend/src/components/home/MergerSection/MergerDetails';
+import MergerDetails from 'src/components/home/MergerSection/MergerDetails';
 import { useParams, notFound } from 'next/navigation';
-import data from '@/data/data.json';
+import data from 'src/data/data.json';
 
 function MergerDetailsContent() {
   const params = useParams();

@@ -4,8 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Check, ChevronDown, ChevronUp, RefreshCcw, ArrowDown } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import MergeCard from 'frontend/src/components/home/MergerSection/MergeCard';
-import data from '@/data/data.json';
+import MergeCard from 'src/components/home/MergerSection/MergeCard';
+import data from 'src/data/data.json';
 import { Search, Calendar, User, Tag, MapPin } from 'lucide-react';
 import {useRouter} from 'next/navigation';
 

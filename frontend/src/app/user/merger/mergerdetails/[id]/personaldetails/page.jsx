@@ -2,8 +2,8 @@
 'use client';
 import { Suspense, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
-import data from '@/data/data.json';
-import PersonalDetails from 'frontend/src/components/home/MergerSection/PersonalDetails';
+import data from 'src/data/data.json';
+import PersonalDetails from 'src/components/home/MergerSection/PersonalDetails';
 
 function PersonalDetailsContent() {
   const params = useParams();

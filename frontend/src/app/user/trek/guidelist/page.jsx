@@ -1,6 +1,6 @@
 'use client';
 import { Suspense } from 'react';
-import TrekSearchResults from 'frontend/src/components/home/TrekSection/TrekSearchResults';
+import TrekSearchResults from 'src/components/home/TrekSection/TrekSearchResults';
 
 export default function GuideListPage() {
   return (

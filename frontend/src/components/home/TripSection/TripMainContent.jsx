@@ -1,12 +1,14 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence, useInView } from 'framer-motion';
+import Image from 'next/image';
 import { ChevronLeft, ChevronRight, Play, Star, Users, Calendar, Award, ArrowRight, Mountain, Camera, Heart } from 'lucide-react';
 import AdContent from '../../common/AdContent';
 import PhotoCard from '../../common/PhotoCard';
 import VideoCard from '../../common/VideoCard';
 import AboutUs from '../../common/AboutUs';
 import FAQ from '../../common/FAQ';
+import TripSearchInput from './TripSearchInput';
 
 // Destinations data with category colors
 const destinations = [
@@ -198,6 +200,7 @@ const adventures = [
     locations: ["Sonmarg", "Pahalgam", "Betaab Valley"],
   }
 ];
+
 const faqs = [
   {
     question: "What is BagspackGo?",
@@ -576,18 +579,15 @@ const Testimonials = () => {
         </div>
 
         <div className="text-center mt-8">
-          
-            <a className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-full font-medium hover:from-green-600 hover:to-green-700 transition-all shadow-md">
-              View All Stories
-              <ArrowRight className="ml-2" size={18} />
-            </a>
-        
+          <a className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-full font-medium hover:from-green-600 hover:to-green-700 transition-all shadow-md">
+            View All Stories
+            <ArrowRight className="ml-2" size={18} />
+          </a>
         </div>
       </div>
     </section>
   );
 };
-
 
 const PopularDestinations = () => {
   return (
@@ -642,18 +642,56 @@ const PopularDestinations = () => {
 };
 
 export default function TripMainContent() {
-   const [activeIndex, setActiveIndex] = useState(null);
+  const [activeIndex, setActiveIndex] = useState(null);
   const toggleFAQ = (index) => {
     setActiveIndex(activeIndex === index ? null : index);
   };
+
   return (
-    <div className="w-full">
-      <AdContent />
-      <PopularDestinations />
-      <AdventureSlider />
-      <Testimonials />
-      <AboutUs />
-      <FAQ faqs={faqs} activeIndex={activeIndex} toggleFAQ={toggleFAQ} />
+   <div className="w-full">
+  {/* Wrapper div with responsive height and bottom padding */}
+  <div className="relative h-[45vh] sm:h-[70vh] md:h-[80vh] pb-24 sm:pb-32 md:pb-0 bg-red-500"> 
+    
+    {/* Hero Section */}
+    <section 
+      id="trip-page" 
+      className="relative h-[25vh] sm:h-[50vh] md:h-[60vh] w-full overflow-hidden bg-cover bg-center bg-no-repeat"
+      style={{
+        backgroundImage: "url('/images/hero.svg')",
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}
+    >
+    </section>
+
+    {/* Search Input Container */}
+    <div className="absolute top-[18vh] sm:top-[35vh] md:top-[40vh] w-full flex items-center justify-center px-4 sm:px-6 lg:px-8 z-10">
+      <div className="w-full max-w-4xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="w-full"
+        >
+          <TripSearchInput />
+        </motion.div>
+      </div>
     </div>
+  </div>
+
+  {/* Rest of the sections */}
+  <div className='mt-84 sm:mt-16 md:mt-20 bg-black/70'> 
+    <AdContent />
+  </div>
+  <PopularDestinations />
+  <AdventureSlider />
+  <Testimonials />
+  <AboutUs />
+  <FAQ faqs={faqs} activeIndex={activeIndex} toggleFAQ={toggleFAQ} />
+</div>
+
+
+
   );
 }

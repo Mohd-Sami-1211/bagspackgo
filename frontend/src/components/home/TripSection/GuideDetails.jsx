@@ -2,9 +2,9 @@
 import { Star, Edit, MapPin, Users, Calendar, Share2, Heart, ChevronRight, ArrowRight, ArrowLeft, Hotel, Clock, Map, Utensils, Car, ShieldCheck, Mountain } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import Itenary from 'frontend/src/components/home/TripSection/Itenary';
-import ArrDep from 'frontend/src/components/home/TripSection/Arr-Dep';
-import PersonalDetails from 'frontend/src/components/home/TripSection/PersonalDetails';
+import Itenary from 'src/components/home/TripSection/Itenary';
+import ArrDep from 'src/components/home/TripSection/Arr-Dep';
+import PersonalDetails from 'src/components/home/TripSection/PersonalDetails';
 
 const GuideDetails = ({ guide }) => {
   const searchParams = useSearchParams();

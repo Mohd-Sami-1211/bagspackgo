@@ -7,7 +7,7 @@ import Select from 'react-select';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { X, Calendar as CalendarIcon, Search as SearchIcon, ChevronDown, Mountain, Star } from 'lucide-react';
-import data from '@/data/data.json';
+import data from 'src/data/data.json';
 
 const TrekSearchResults = () => {
   // Normalize data with proper fallbacks

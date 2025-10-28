@@ -1,6 +1,6 @@
 'use client';
 import { Suspense } from 'react';
-import TrekGuideDetails from 'frontend/src/components/home/TrekSection/GuideDetails';
+import TrekGuideDetails from 'src/components/home/TrekSection/GuideDetails';
 import { useParams, useSearchParams, notFound } from 'next/navigation';
 import data from '@/data/data.json';
 

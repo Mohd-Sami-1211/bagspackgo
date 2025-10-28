@@ -1,10 +1,16 @@
 'use client';
-import SearchInput from 'src/components/home/TripSection/TripSearchInput';
+import { motion } from 'framer-motion';
+import TripMainContent from 'src/components/home/TripSection/TripMainContent';
 
 export default function TripPage() {
   return (
-    <div id="trip-page" className="flex flex-col items-center justify-center min-h-[80vh] mt-14">
-      <SearchInput />
-    </div>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className="w-full h-full"
+    >
+      <TripMainContent />
+    </motion.div>
   );
 }
