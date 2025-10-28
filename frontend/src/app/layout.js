@@ -1,3 +1,4 @@
+// page.jsx (RootLayout)
 'use client';
 import './globals.css';
 import { Inter } from 'next/font/google';
@@ -36,39 +37,30 @@ export default function RootLayout({ children }) {
     pathname?.includes('/serviceprovider');
 
   return (
-    <html lang="en">
+    <html lang="en" className="w-full overflow-x-hidden">
       <head />
       <body
-        className={`${inter.className} bg-white/90 text-gray-800 min-h-screen flex flex-col`}
+        className={`${inter.className} bg-white/90 text-gray-800 min-h-screen flex flex-col w-full max-w-[100vw] overflow-x-hidden`}
       >
         {/* Top Navbar (hidden for specific pages) */}
         {!hideNavbar && <Navbar />}
 
         {/* SecondaryNav — normal on large screens, bottom-fixed on small */}
         {!hideSecondaryNav && (
-          <div
-            className="
-              hidden md:block
-            "
-          >
+          <div className="hidden md:block w-full">
             <SecondaryNav />
           </div>
         )}
 
         {/* Main content */}
-        <main className="flex-grow">{children}</main>
+        <main className="flex-grow w-full pb-16 md:pb-0">{children}</main>
 
         {/* Footer (hidden on auth/provider pages) */}
         {!hideFooter && <Footer />}
 
         {/* Mobile bottom navigation */}
         {!hideSecondaryNav && (
-          <div
-            className="
-              block md:hidden fixed bottom-0 left-0 right-0 z-50 
-              bg-white/95 border-t border-gray-200 shadow-lg
-            "
-          >
+          <div className="block md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 border-t border-gray-200 shadow-lg w-full">
             <SecondaryNav />
           </div>
         )}

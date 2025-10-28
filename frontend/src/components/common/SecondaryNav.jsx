@@ -30,10 +30,10 @@ export default function SecondaryNav() {
   }, [pathname]);
 
   return (
-    <div className="relative bg-white/50 shadow-sm">
-      {/* Desktop / Tablet */}
-      <div className="hidden md:flex justify-center px-12 text-gray-700 font-medium text-lg relative">
-        <div className="flex space-x-16 relative">
+    <div className="relative bg-white/50 shadow-sm w-full overflow-hidden">
+      {/* Desktop / Tablet - Improved centering */}
+      <div className="hidden md:flex justify-center w-full text-gray-700 font-medium text-lg relative">
+        <div className="flex justify-between md:justify-center md:gap-8 lg:gap-16 w-full max-w-4xl mx-auto px-4 md:px-8">
           {/* Underline indicator */}
           <motion.div
             className="absolute bottom-0 h-1 bg-green-500 rounded-full"
@@ -67,7 +67,7 @@ export default function SecondaryNav() {
                     color: isActive ? '#16a34a' : '#374151'
                   }}
                   transition={{ type: 'spring', stiffness: 500 }}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 whitespace-nowrap"
                 >
                   {tab.icon}
                   {tab.label}
@@ -78,8 +78,8 @@ export default function SecondaryNav() {
         </div>
       </div>
 
-      {/* Mobile: responsive version without horizontal scroll */}
-      <div className="md:hidden flex justify-around text-gray-700 font-medium text-base relative">
+      {/* Mobile: Perfectly evenly spaced grid without dividers */}
+      <div className="md:hidden grid grid-cols-5 gap-0 w-full">
         {tabs.map((tab, idx) => {
           const isActive = pathname?.startsWith(tab.path);
           return (
@@ -87,21 +87,24 @@ export default function SecondaryNav() {
               key={tab.label}
               href={tab.path}
               ref={el => tabRefs.current[idx] = el}
-              className={`flex flex-col items-center py-2 ${
-                isActive ? 'text-green-600 font-semibold' : 'hover:text-green-500'
-              }`}
+              className={`
+                flex flex-col items-center justify-center py-3 
+                ${isActive ? 'text-green-600 font-semibold' : 'text-gray-700 hover:text-green-500'}
+              `}
             >
-              <motion.span
+              <motion.div
                 animate={{
                   scale: isActive ? 1.05 : 1,
                   color: isActive ? '#16a34a' : '#374151'
                 }}
                 transition={{ type: 'spring', stiffness: 500 }}
-                className="flex flex-col items-center gap-1 text-sm"
+                className="flex flex-col items-center justify-center gap-1"
               >
                 {tab.icon}
-                {tab.label}
-              </motion.span>
+                <span className="text-xs font-medium truncate w-full text-center px-1">
+                  {tab.label}
+                </span>
+              </motion.div>
             </Link>
           );
         })}

@@ -650,12 +650,12 @@ export default function TripMainContent() {
   return (
    <div className="w-full">
   {/* Wrapper div with responsive height and bottom padding */}
-  <div className="relative h-[45vh] sm:h-[70vh] md:h-[80vh] pb-24 sm:pb-32 md:pb-0 "> 
+  <div className="relative h-[45vh] sm:h-[70vh] md:h-[60vh] pb-24 sm:pb-32 md:pb-0 "> 
     
     {/* Hero Section */}
     <section 
       id="trip-page" 
-      className="relative h-[25vh] sm:h-[50vh] md:h-[60vh] w-full overflow-hidden bg-cover bg-center bg-no-repeat"
+      className="relative h-[25vh] sm:h-[64vh] md:h-[40vh] w-full overflow-hidden bg-cover bg-center bg-no-repeat"
       style={{
         backgroundImage: "url('/images/hero.svg')",
         backgroundSize: 'cover',
@@ -666,7 +666,7 @@ export default function TripMainContent() {
     </section>
 
     {/* Search Input Container */}
-    <div className="absolute top-[18vh] sm:top-[35vh] md:top-[40vh] w-full flex items-center justify-center px-4 sm:px-6 lg:px-8 z-10">
+    <div className="absolute top-[10vh] sm:top-[35vh] md:top-[30vh] w-full flex items-center justify-center px-4 sm:px-6 lg:px-8 z-10">
       <div className="w-full max-w-4xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -681,7 +681,7 @@ export default function TripMainContent() {
   </div>
 
   {/* Rest of the sections */}
-  <div className='mt-80 sm:mt-16 md:mt-20'> 
+  <div className='mt-80 sm:mt-16 md:mt-16'> 
     <AdContent />
   </div>
   <PopularDestinations />
