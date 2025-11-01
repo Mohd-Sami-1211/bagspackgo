@@ -325,7 +325,7 @@ const features = [
 
 const DestinationSlider = ({ places, categoryColor, textColor }) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-6">
       {places.map((place) => (
         <div key={place.name} className="relative h-64 rounded-xl overflow-hidden">
           <PhotoCard
@@ -681,7 +681,7 @@ export default function TripMainContent() {
   </div>
 
   {/* Rest of the sections */}
-  <div className='mt-80 sm:mt-16 md:mt-48'> 
+  <div className='mt-80 sm:mt-16 md:mt-24 '> 
     <AdContent />
   </div>
   <PopularDestinations />

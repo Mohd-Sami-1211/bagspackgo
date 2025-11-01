@@ -69,7 +69,7 @@ export default function AdContent() {
   }, [nextSlide]);
 
   return (
-    <section className="relative -mt-24 mx-4 z-10">
+    <section className="relative -mt-4 mx-4 ">
       <div className="w-full md:w-[96%] mx-auto relative overflow-hidden rounded-2xl shadow-2xl">
 
         <AnimatePresence custom={direction} mode="wait">
@@ -102,7 +102,7 @@ export default function AdContent() {
 
                 {/* Curve - hidden on mobile */}
                 <svg
-                  className="hidden md:block absolute left-[35%] h-full w-[240px] lg:w-[280px] z-10"
+                  className="hidden md:block absolute left-[35%] h-full w-[240px] lg:w-[280px]"
                   viewBox="0 0 200 100"
                   preserveAspectRatio="none"
                 >

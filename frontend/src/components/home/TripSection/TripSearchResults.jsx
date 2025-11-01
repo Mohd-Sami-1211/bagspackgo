@@ -183,7 +183,7 @@ const SearchResults = () => {
                   whileTap={{ scale: 0.95 }}
                   onClick={handleApplyChanges}
                   disabled={isApplying}
-                  className="px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium flex items-center gap-2"
+                  className="px-4 py-2 bg-green-500 text-white rounded-md text-sm font-medium flex items-center gap-2"
                 >
                   {isApplying ? 'Applying...' : 'Apply Changes'}
                 </motion.button>
@@ -201,127 +201,155 @@ const SearchResults = () => {
           </div>
 
           {/* Parameter Display/Edit */}
-<div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-  {/* Destination Field - With matching focus ring */}
-  <div className="bg-gradient-to-br from-green-50 to-blue-50 p-3 rounded-lg">
-    <label className="block text-xs text-gray-900 mb-1">Destination</label>
+<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4">
+  {/* Destination Field */}
+  <div className="bg-gradient-to-br from-green-50 to-blue-50 p-2.5 sm:p-3 rounded-lg">
+    <label className="block text-[11px] sm:text-xs text-gray-900 mb-0.5 sm:mb-1">Destination</label>
     {isEditing ? (
-      <div className="relative">
+      <div className="relative z-50">
         <Select
-          options={data.destinations}
-          value={editableDestination ? 
-            { value: editableDestination, label: editableDestination } : 
-            null
-          }
-          onChange={(option) => setEditableDestination(option?.value || '')}
-          placeholder="Enter place to search"
-          classNamePrefix="react-select"
-          isClearable
-          styles={{
-            ...inlineSelectStyles,
-            control: (provided, state) => ({
-              ...provided,
-              height: '36px',
-              minHeight: '36px',
-              fontSize: '14px',
-              fontWeight: '500',
-              borderColor: state.isFocused ? '#10b981' : '#d1d5db',
-              boxShadow: state.isFocused ? '0 0 0 1px #10b981' : 'none',
-              '&:hover': {
-                borderColor: state.isFocused ? '#10b981' : '#d1d5db'
-              }
-            }),
-            placeholder: (provided) => ({
-              ...provided,
-              color: '#6b7280',
-              fontSize: '14px',
-              fontWeight: '400'
-            }),
-            singleValue: (provided) => ({
-              ...provided,
-              color: '#111827',
-              fontSize: '14px',
-              fontWeight: '500'
-            })
-          }}
-        />
+  options={data.destinations}
+  value={
+    editableDestination
+      ? { value: editableDestination, label: editableDestination }
+      : null
+  }
+  onChange={(option) => setEditableDestination(option?.value || '')}
+  placeholder="Enter place to search"
+  classNamePrefix="react-select"
+  isClearable
+  styles={{
+    ...inlineSelectStyles,
+    control: (provided, state) => ({
+      ...provided,
+      minHeight: '32px',
+      height: '32px',
+      fontSize: '13px',
+      fontWeight: '500',
+      borderColor: state.isFocused ? '#10b981' : '#d1d5db',
+      boxShadow: state.isFocused ? '0 0 0 1px #10b981' : 'none',
+      '&:hover': {
+        borderColor: state.isFocused ? '#10b981' : '#d1d5db',
+      },
+      width: '100%',          // full width control
+      padding: '0 0.25rem',   // small padding to fit placeholder
+      display: 'flex',
+      alignItems: 'center',
+    }),
+    input: (provided) => ({
+      ...provided,
+      margin: 0,
+      padding: 0,
+      width: '100%',           // ensure input spans entire control
+      color: '#111827',
+      fontSize: '13px',
+      fontWeight: '500',
+    }),
+    placeholder: (provided) => ({
+      ...provided,
+      color: '#6b7280',
+      fontSize: '13px',
+      fontWeight: '400',
+      width: '100%',
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis', // prevents clipping on small screens
+    }),
+    singleValue: (provided) => ({
+      ...provided,
+      color: '#111827',
+      fontSize: '13px',
+      fontWeight: '500',
+      width: '100%',
+    }),
+  }}
+/>
+
       </div>
     ) : (
-      <p className="font-medium text-sm h-[36px] flex items-center text-gray-900">
+      <p className="font-medium text-xs sm:text-sm h-[32px] sm:h-[36px] flex items-center text-gray-900">
         {destination || 'Any'}
       </p>
     )}
   </div>
 
-  {/* Category Field - With matching focus ring */}
-  <div className="bg-gradient-to-br from-green-50 to-blue-50 p-3 rounded-lg">
-    <label className="block text-xs text-gray-900 mb-1">Package Type</label>
+  {/* Category Field */}
+  <div className="bg-gradient-to-br from-green-50 to-blue-50 p-2.5 sm:p-3 rounded-lg">
+    <label className="block text-[11px] sm:text-xs text-gray-900 mb-0.5 sm:mb-1">Package Type</label>
     {isEditing ? (
       <Select
         options={data.categories}
-        value={data.categories.find(cat => cat.value === editableCategory)}
+        value={data.categories.find((cat) => cat.value === editableCategory)}
         onChange={(option) => setEditableCategory(option.value)}
         classNamePrefix="react-select"
         styles={{
           ...inlineSelectStyles,
           control: (provided, state) => ({
             ...provided,
-            height: '36px',
-            minHeight: '36px',
-            fontSize: '14px',
+            height: '32px',
+            minHeight: '32px',
+            fontSize: '13px',
             fontWeight: '500',
             borderColor: state.isFocused ? '#10b981' : '#d1d5db',
             boxShadow: state.isFocused ? '0 0 0 1px #10b981' : 'none',
             '&:hover': {
-              borderColor: state.isFocused ? '#10b981' : '#d1d5db'
-            }
+              borderColor: state.isFocused ? '#10b981' : '#d1d5db',
+            },
           }),
           singleValue: (provided) => ({
             ...provided,
             color: '#111827',
-            fontSize: '14px',
-            fontWeight: '500'
-          })
+            fontSize: '13px',
+            fontWeight: '500',
+          }),
         }}
       />
     ) : (
-      <p className="font-medium text-sm h-[36px] flex items-center text-gray-900 capitalize">
+      <p className="font-medium text-xs sm:text-sm h-[32px] sm:h-[36px] flex items-center text-gray-900 capitalize">
         {category}
       </p>
     )}
   </div>
 
   {/* Date Field */}
-  <div className="bg-gradient-to-br from-green-50 to-blue-50 p-3 rounded-lg">
-    <label className="block text-xs text-gray-900 mb-1">Travel Date</label>
+  <div className="bg-gradient-to-br from-green-50 to-blue-50 p-2.5 sm:p-3 rounded-lg">
+    <label className="block text-[11px] sm:text-xs text-gray-900 mb-0.5 sm:mb-1">Travel Date</label>
     {isEditing ? (
-      <div className="relative h-[36px]">
+      <div className="relative h-[32px] sm:h-[36px]">
         <DatePicker
           selected={editableDate}
           onChange={setEditableDate}
           placeholderText="Select date"
-          className="w-full p-1 border border-gray-300 rounded text-sm bg-white pl-2 pr-8 h-[36px] focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500"
+          className="w-full p-1 border border-gray-300 rounded text-xs sm:text-sm bg-white pl-2 pr-7 sm:pr-8 h-[32px] sm:h-[36px] focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500"
           popperClassName="z-50"
           calendarClassName="border-0 shadow-lg"
           showPopperArrow={false}
         />
-        <CalendarIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <CalendarIcon className="absolute right-2.5 sm:right-3 top-1/2 transform -translate-y-1/2 h-3.5 sm:h-4 w-3.5 sm:w-4 text-gray-400" />
       </div>
     ) : (
-      <p className="font-medium text-sm h-[36px] flex items-center text-gray-900">
-        {date ? date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Not specified'}
+      <p className="font-medium text-xs sm:text-sm h-[32px] sm:h-[36px] flex items-center text-gray-900">
+        {date
+          ? date.toLocaleDateString('en-US', {
+              day: 'numeric',
+              month: 'short',
+              year: 'numeric',
+            })
+          : 'Not specified'}
       </p>
     )}
   </div>
 
-  {/* Days Field - Improved with blank state */}
-  <div className="bg-gradient-to-br from-green-50 to-blue-50 p-3 rounded-lg">
-    <label className="block text-xs text-gray-900 mb-1">Duration</label>
+  {/* Days Field */}
+  <div className="bg-gradient-to-br from-green-50 to-blue-50 p-2.5 sm:p-3 rounded-lg">
+    <label className="block text-[11px] sm:text-xs text-gray-900 mb-0.5 sm:mb-1">Duration</label>
     {isEditing ? (
-      <div className="flex items-center h-[36px] bg-white border border-gray-300 rounded overflow-hidden focus-within:ring-1 focus-within:ring-green-500 focus-within:border-green-500">
-        <button 
+      <div className="flex items-center h-[32px] sm:h-[36px] bg-white border border-gray-300 rounded overflow-hidden focus-within:ring-1 focus-within:ring-green-500 focus-within:border-green-500">
+        <button
           type="button"
-          onClick={() => setEditableDays(prev => Math.max(1, prev === "" ? 0 : parseInt(prev) - 1))}
+          onClick={() =>
+            setEditableDays((prev) => Math.max(1, prev === '' ? 0 : parseInt(prev) - 1))
+          }
           className="px-2 text-gray-600 hover:bg-gray-100 h-full flex items-center"
         >
           -
@@ -332,40 +360,44 @@ const SearchResults = () => {
           value={editableDays}
           onChange={(e) => {
             const value = e.target.value;
-            setEditableDays(value === "" ? "" : Math.max(1, parseInt(value) || 1));
+            setEditableDays(value === '' ? '' : Math.max(1, parseInt(value) || 1));
           }}
           onBlur={(e) => {
-            if (e.target.value === "" || e.target.value === "0") {
+            if (e.target.value === '' || e.target.value === '0') {
               setEditableDays(1);
             }
           }}
-          className="flex-1 text-center border-x border-gray-300 text-sm h-full w-12 focus:outline-none font-medium text-gray-900"
+          className="flex-1 text-center border-x border-gray-300 text-xs sm:text-sm h-full w-12 focus:outline-none font-medium text-gray-900"
         />
         <button
           type="button"
-          onClick={() => setEditableDays(prev => (prev === "" ? 2 : parseInt(prev) + 1))}
+          onClick={() =>
+            setEditableDays((prev) => (prev === '' ? 2 : parseInt(prev) + 1))
+          }
           className="px-2 text-gray-600 hover:bg-gray-100 h-full flex items-center"
         >
           +
         </button>
       </div>
     ) : (
-      <p className="font-medium text-sm h-[36px] flex items-center text-gray-900">
+      <p className="font-medium text-xs sm:text-sm h-[32px] sm:h-[36px] flex items-center text-gray-900">
         {days} day{days > 1 ? 's' : ''}
       </p>
     )}
   </div>
 
-  {/* Count Field - Improved with blank state */}
-  <div className="bg-gradient-to-br from-green-50 to-blue-50 p-3 rounded-lg">
-    <label className="block text-xs text-gray-900 mb-1">
+  {/* Count Field */}
+  <div className="bg-gradient-to-br from-green-50 to-blue-50 p-2.5 sm:p-3 rounded-lg">
+    <label className="block text-[11px] sm:text-xs text-gray-900 mb-0.5 sm:mb-1">
       {category === 'couple' ? 'Couples' : 'People'}
     </label>
     {isEditing ? (
-      <div className="flex items-center h-[36px] bg-white border border-gray-300 rounded overflow-hidden focus-within:ring-1 focus-within:ring-green-500 focus-within:border-green-500">
-        <button 
+      <div className="flex items-center h-[32px] sm:h-[36px] bg-white border border-gray-300 rounded overflow-hidden focus-within:ring-1 focus-within:ring-green-500 focus-within:border-green-500">
+        <button
           type="button"
-          onClick={() => setEditableCount(prev => Math.max(1, prev === "" ? 0 : parseInt(prev) - 1))}
+          onClick={() =>
+            setEditableCount((prev) => Math.max(1, prev === '' ? 0 : parseInt(prev) - 1))
+          }
           className="px-2 text-gray-600 hover:bg-gray-100 h-full flex items-center"
         >
           -
@@ -376,32 +408,40 @@ const SearchResults = () => {
           value={editableCount}
           onChange={(e) => {
             const value = e.target.value;
-            setEditableCount(value === "" ? "" : Math.max(1, parseInt(value) || 1));
+            setEditableCount(value === '' ? '' : Math.max(1, parseInt(value) || 1));
           }}
           onBlur={(e) => {
-            if (e.target.value === "" || e.target.value === "0") {
+            if (e.target.value === '' || e.target.value === '0') {
               setEditableCount(1);
             }
           }}
-          className="flex-1 text-center border-x border-gray-300 text-sm h-full w-12 focus:outline-none font-medium text-gray-900"
+          className="flex-1 text-center border-x border-gray-300 text-xs sm:text-sm h-full w-12 focus:outline-none font-medium text-gray-900"
         />
         <button
           type="button"
-          onClick={() => setEditableCount(prev => (prev === "" ? 2 : parseInt(prev) + 1))}
+          onClick={() =>
+            setEditableCount((prev) => (prev === '' ? 2 : parseInt(prev) + 1))
+          }
           className="px-2 text-gray-600 hover:bg-gray-100 h-full flex items-center"
         >
           +
         </button>
       </div>
     ) : (
-      <p className="font-medium text-sm h-[36px] flex items-center text-gray-900">
-        {count} {category === 'couple' 
-          ? count === 1 ? 'couple' : 'couples'
-          : count === 1 ? 'person' : 'people'}
+      <p className="font-medium text-xs sm:text-sm h-[32px] sm:h-[36px] flex items-center text-gray-900">
+        {count}{' '}
+        {category === 'couple'
+          ? count === 1
+            ? 'couple'
+            : 'couples'
+          : count === 1
+          ? 'person'
+          : 'people'}
       </p>
     )}
   </div>
 </div>
+
         </div>
       </div>
 
@@ -447,46 +487,48 @@ const SearchResults = () => {
               
               {/* Dropdown Menu */}
               {showSortDropdown && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border border-gray-200"
-                >
-                  <div className="p-2">
-                    <div 
-                      className="px-3 py-2 text-sm hover:bg-green-50 rounded cursor-pointer"
-                      onClick={() => handleSortChange('rating-desc')}
-                    >
-                      Highest Rating
-                    </div>
-                    <div 
-                      className="px-3 py-2 text-sm hover:bg-green-50 rounded cursor-pointer"
-                      onClick={() => handleSortChange('rating-asc')}
-                    >
-                      Lowest Rating
-                    </div>
-                    <div 
-                      className="px-3 py-2 text-sm hover:bg-green-50 rounded cursor-pointer"
-                      onClick={() => handleSortChange('price-desc')}
-                    >
-                      Highest Price
-                    </div>
-                    <div 
-                      className="px-3 py-2 text-sm hover:bg-green-50 rounded cursor-pointer"
-                      onClick={() => handleSortChange('price-asc')}
-                    >
-                      Lowest Price
-                    </div>
-                    <div 
-                      className="px-3 py-2 text-sm hover:bg-green-50 rounded cursor-pointer"
-                      onClick={() => handleSortChange('reviews-desc')}
-                    >
-                      Most Reviews
-                    </div>
-                  </div>
-                </motion.div>
-              )}
+  <motion.div
+    initial={{ opacity: 0, y: -10 }}
+    animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: 0, y: -10 }}
+    className="absolute sm:right-0 sm:left-auto left-[0%] -translate-x-1/2 mt-2 w-56 max-w-[90vw] bg-white rounded-md shadow-lg z-50 border border-gray-200"
+  >
+    <div className="p-2">
+      <div
+        className="px-3 py-2 text-sm hover:bg-green-50 rounded cursor-pointer"
+        onClick={() => handleSortChange('rating-desc')}
+      >
+        Highest Rating
+      </div>
+      <div
+        className="px-3 py-2 text-sm hover:bg-green-50 rounded cursor-pointer"
+        onClick={() => handleSortChange('rating-asc')}
+      >
+        Lowest Rating
+      </div>
+      <div
+        className="px-3 py-2 text-sm hover:bg-green-50 rounded cursor-pointer"
+        onClick={() => handleSortChange('price-desc')}
+      >
+        Highest Price
+      </div>
+      <div
+        className="px-3 py-2 text-sm hover:bg-green-50 rounded cursor-pointer"
+        onClick={() => handleSortChange('price-asc')}
+      >
+        Lowest Price
+      </div>
+      <div
+        className="px-3 py-2 text-sm hover:bg-green-50 rounded cursor-pointer"
+        onClick={() => handleSortChange('reviews-desc')}
+      >
+        Most Reviews
+      </div>
+    </div>
+  </motion.div>
+)}
+
+
             </div>
 
             {/* Search Bar */}
