@@ -11,10 +11,12 @@
   "dependencies": {
     "@headlessui/react": "^2.2.7",
     "@radix-ui/react-slot": "^1.2.3",
+    "axios": "^1.13.2",
     "class-variance-authority": "^0.7.1",
     "countries-list": "^3.1.1",
     "framer-motion": "^12.9.4",
     "lucide-react": "^0.503.0",
+    "mongoose": "^8.19.3",
     "next": "15.3.1",
     "react": "^19.0.0",
     "react-datepicker": "^8.3.0",

@@ -1,10 +1,10 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect , useRef } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-
+import axios from 'axios';
 export default function SignUpPage() {
   const [role, setRole] = useState('user');
   const [step, setStep] = useState(1); // 1: Initial form, 2: OTP, 3: Complete profile
@@ -69,6 +69,16 @@ export default function SignUpPage() {
     setError('');
   };
 
+  // it changes the state whenver the emailOrPhone changes to get the latest data from the state variable
+  useEffect(() => {
+    const isEmail = emailOrPhone.includes('@');
+    setUserData(prev => ({
+      ...prev,
+      email: isEmail ? emailOrPhone : '',
+      phone: !isEmail ? emailOrPhone : ''
+    }));
+  }, [emailOrPhone]);
+
   // Handle form submission
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -107,19 +117,34 @@ export default function SignUpPage() {
   }, [timer, step]);
 
   // Handle initial form submission (request OTP)
-  const handleInitialSubmit = (e) => {
+  const handleInitialSubmit = async (e) => {
     e.preventDefault();
     
     if (!validateEmailOrPhone(emailOrPhone)) {
       setError('Please enter a valid email or 10-digit phone number');
       return;
     }
+    // Not getting the latest Data from the userData when it gets updated
 
-    const isEmail = emailOrPhone.includes('@');
-    setUserData(prev => ({ 
-      ...prev, 
-      [isEmail ? 'email' : 'phone']: emailOrPhone 
-    }));
+    // const isEmail = emailOrPhone.includes('@');
+    // setUserData(prev => ({ 
+    //   ...prev, 
+    //   [isEmail ? 'email' : 'phone']: emailOrPhone 
+    // }));
+
+    //Send OTP to user using backend
+    //Call the backend API's to check the email and give validation to the user
+    try {
+      console.log("Inside try")
+      console.log(userData.email)
+      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/signup`, {
+          email: userData.email
+        });
+      console.log(res.data);
+    } 
+    catch (error) {
+      console.error('Axios error:', error);
+    }
     
     setStep(2);
     setError('');
