@@ -1,10 +1,20 @@
 import nodemailer from 'nodemailer';
 import {userOTPModel} from "src/models/userOTPModel"
 import connectDB from "src/DB/DBConnection";
+import { UserModel } from 'src/models/userModel';
+import { NextResponse } from 'next/server';
 export async function POST(req) {
   try {
     await connectDB();
     const { email } = await req.json();
+    const isUserPresent = await UserModel.findOne({email});
+
+    // Checking if the User Already Signed Up or Not
+    if(isUserPresent){
+      return NextResponse.json({
+        message : "Already a User"
+      } , {status : 400})
+    }
 
     const transporter = nodemailer.createTransport({
       service: 'gmail',
