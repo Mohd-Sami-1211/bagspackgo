@@ -11,12 +11,12 @@ export default function SignUpPage() {
   const [emailOrPhone, setEmailOrPhone] = useState('');
   const [otp, setOtp] = useState(['', '', '', '']);
   const [userData, setUserData] = useState({
-    name: '',
+    name: 'Kavi',
     email: '',
-    phone: '',
+    phone: '7827428895',
     dob: '',
-    password: '',
-    confirmPassword: '',
+    password: 'Kavi@123',
+    confirmPassword: 'Kavi@123',
     companyName: '',
     companyEmail: '',
     state: '',
@@ -27,9 +27,6 @@ export default function SignUpPage() {
   const [error, setError] = useState('');
   const [timer, setTimer] = useState(30);
   const router = useRouter();
-
-  // Default OTP for demo purposes
-  const DEFAULT_OTP = '0000';
 
   // Validate email or phone
   const validateEmailOrPhone = (input) => {
@@ -51,19 +48,40 @@ export default function SignUpPage() {
   };
 
   // Verify OTP
-  const verifyOtp = () => {
+  const verifyOtp = async () => {
     const enteredOtp = otp.join('');
-    if (enteredOtp === DEFAULT_OTP) {
+    const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/verifyOTP`, {
+      email: userData.email,
+      otp: enteredOtp
+    });
+    const otpData = res.data.message; // your returned OTP object
+    if (!otpData) {
+      // OTP not found or invalid
+      setError('Invalid OTP. Please try again.');
+      return;
+    }
+
+    const currentTime = new Date();
+    const expiryTime = new Date(otpData.expiresAt);
+
+    if (expiryTime < currentTime) {
+      setError('OTP has expired. Please request a new one.');
+    } else if (otpData.verified) {
+      setError('OTP has already been used.');
+    } else {
+      // OTP valid and not expired or used
       setIsVerified(true);
       setStep(3);
       setError('');
-    } else {
-      setError('Invalid OTP. Please try again.');
     }
   };
 
   // Resend OTP
-  const resendOtp = () => {
+  const resendOtp = async () => {
+    const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/sendOTPUsingEmail`, {
+      email: userData.email
+    });
+    console.log(res);
     setTimer(30);
     setOtp(['', '', '', '']);
     setError('');
@@ -80,7 +98,7 @@ export default function SignUpPage() {
   }, [emailOrPhone]);
 
   // Handle form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
@@ -94,6 +112,24 @@ export default function SignUpPage() {
         setError('Please fill all required fields');
         return;
       }
+      else {
+        try {
+          const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/completeProfileOfUser`, {
+            name : userData.name,
+            email : userData.email,
+            phoneNumber : userData.phone,
+            dob : userData.dob,
+            password : userData.confirmPassword,
+          });
+          console.log(res);
+          setIsSubmitted(true);
+        } catch (error) {
+          const backendMessage = error.response?.data?.message || error.response?.data?.error ||'Unable to Complete Profile. Please try again.';
+          setError(backendMessage);
+          console.error('Axios error:', error);
+          
+        }
+      }
     } else {
       if (!userData.name || !userData.companyName || !userData.companyEmail || 
           !userData.state || !userData.address || (!userData.email && !userData.phone)) {
@@ -101,8 +137,6 @@ export default function SignUpPage() {
         return;
       }
     }
-
-    setIsSubmitted(true);
   };
 
   // Timer for OTP resend
@@ -124,30 +158,27 @@ export default function SignUpPage() {
       setError('Please enter a valid email or 10-digit phone number');
       return;
     }
-    // Not getting the latest Data from the userData when it gets updated
-
-    // const isEmail = emailOrPhone.includes('@');
-    // setUserData(prev => ({ 
-    //   ...prev, 
-    //   [isEmail ? 'email' : 'phone']: emailOrPhone 
-    // }));
 
     //Send OTP to user using backend
     //Call the backend API's to check the email and give validation to the user
     try {
       console.log("Inside try")
       console.log(userData.email)
-      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/signup`, {
-          email: userData.email
-        });
-      console.log(res.data);
+      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/sendOTPUsingEmail`, {
+        email: userData.email
+      });
+      console.log(res);
+      setStep(2);
+      setError('');
     } 
     catch (error) {
+      const backendMessage = error.response?.data?.message || error.response?.data?.error ||'Unable to send OTP. Please try again.';
+      setError(backendMessage);
       console.error('Axios error:', error);
     }
     
-    setStep(2);
-    setError('');
+    
+    
   };
 
   // Handle input changes
