@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import axios from "axios";
 
 export default function SignInPage() {
   const [role, setRole] = useState('user');
@@ -12,41 +13,32 @@ export default function SignInPage() {
   const [error, setError] = useState('');
   const router = useRouter();
 
-  // Hardcoded user credentials
-  const validCredentials = {
-    user: [
-      { email: 'user@example.com', password: 'user123' },
-      { email: 'explorer@test.com', password: 'wanderlust' }
-    ],
-    provider: [
-      { email: 'provider@service.com', password: 'service123' },
-      { email: 'guide@adventure.com', password: 'adventure456' }
-    ]
-  };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    //write backend API here 
 
-  const handleSubmit = (e) => {
-  e.preventDefault();
-  setError('');
+    try {
+      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/signin`, {
+        email,
+        password
+      });
+      console.log(res);
+      if(role=='provider'){
+        router.push('/serviceprovider')
 
-  // Check if credentials match
-  const isValid = validCredentials[role].some(
-    cred => cred.email === email && cred.password === password
-  );
-
-  if (isValid) {
-    // Store role in localStorage (optional for access protection)
-    localStorage.setItem('role', role);
-
-    // Redirect based on role
-    if (role === 'provider') {
-      router.push('/serviceprovider');
-    } else {
-      router.push('/user/trip');
+      }
+      else{
+        router.push('/user/trip')
+      }
+    } 
+    catch (error) {
+      const backendMessage = error.response?.data?.message ||'Unable to SignIn . Please try again.';
+      setError(backendMessage);
+      console.error('Axios error:', error);
+    
     }
-  } else {
-    setError('Invalid email or password. Please try again.');
-  }
-};
+  };
 
 
   return (

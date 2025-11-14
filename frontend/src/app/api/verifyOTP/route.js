@@ -26,6 +26,7 @@ export async function POST(req) {
     otpRecord.verified = true;
     await otpRecord.save();
 
+
     return NextResponse.json({ message: 'OTP verified successfully' }, { status: 200 });
   } catch (error) {
     console.log(error);
