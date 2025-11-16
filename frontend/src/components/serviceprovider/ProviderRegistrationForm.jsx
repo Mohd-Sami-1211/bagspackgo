@@ -23,6 +23,7 @@ import {
   ArrowLeft
 } from 'lucide-react';
 import destinationsData from 'src/data/data.json';
+import axios from 'axios';
 
 // Modern form field component
 function FormField({ label, hint, error, children, required, icon: Icon }) {
@@ -97,13 +98,13 @@ function ProgressStatus({ step = 'submitted' }) {
 
 export default function ProviderRegistrationForm() {
   const [form, setForm] = useState({
-    companyName: '',
-    companyMail: '',
-    companyMobile: '',
-    destinationId: '',
-    address: '',
-    instagram: '',
-    facebook: '',
+    companyName: 'Kavi Pvt Ltd',
+    companyMail: 'kavi.workspaceofficial@gmail.com',
+    companyMobile: '7827428895',
+    destinationId: 'Kashmir',
+    address: 'Dwarka',
+    instagram: 'https://Kavi/instagram.com',
+    facebook: 'https://Kavi/facebook.com',
     licenseFile: null,
     idFile: null,
     availability: { trips: true, treks: true, mergers: true },
@@ -155,20 +156,40 @@ const destinations = useMemo(() => {
     setForm(prev => ({ ...prev, availability: { ...prev.availability, [key]: !prev.availability[key] } }));
   }
 
-  function onSubmit(e) {
+  async function onSubmit(e) {
     e.preventDefault();
     
     if (!validateForm()) return;
-    
-    setSubmitted(true);
-    setStatus('submitted');
-    
-    // Simulate process
-    setTimeout(() => setStatus('pending'), 2000);
-    setTimeout(() => setStatus('approved'), 6000);
-     setTimeout(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, 100);
+
+    // Call the backend Api here to store the information of company details
+    const formData = new FormData();
+    formData.append("companyEmail", form.companyMail);
+    formData.append("companyName", form.companyName);
+    formData.append("companyMobileNumber", form.companyMobile);
+    formData.append("OperatingLocation", form.destinationId);
+    formData.append("facebookLink", form.facebook);
+    formData.append("instagramLink", form.instagram);
+    formData.append("BusinessLicense", form.licenseFile);
+    formData.append("idProof", form.idFile);
+    formData.append("availability", JSON.stringify(form.availability));
+    try {
+      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/completeCompanyDetails`,formData,  { headers: { "Content-Type": "multipart/form-data" } });
+      console.log(res);
+      
+      setSubmitted(true);
+      setStatus('submitted');
+      
+      // Simulate process
+      setTimeout(() => setStatus('pending'), 2000);
+        setTimeout(() => setStatus('approved'), 6000);
+        setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 100);
+    } catch (error) {
+      const backendMessage = error.response?.data?.message || error.response?.data?.error ||'Unable to Complete Profile. Please try again.';
+      setError(backendMessage);
+      console.error('Axios error:', error);
+    }
   }
 
   // File upload handler with style
