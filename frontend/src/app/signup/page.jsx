@@ -17,10 +17,6 @@ export default function SignUpPage() {
     dob: '',
     password: 'Kavi@123',
     confirmPassword: 'Kavi@123',
-    companyName: '',
-    companyEmail: '',
-    state: '',
-    address: ''
   });
   const [isVerified, setIsVerified] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -87,7 +83,7 @@ export default function SignUpPage() {
     setError('');
   };
 
-  // it changes the state whenver the emailOrPhone changes to get the latest data from the state variable
+  // it changes the state whenever the emailOrPhone changes to get the latest data from the state variable
   useEffect(() => {
     const isEmail = emailOrPhone.includes('@');
     setUserData(prev => ({
@@ -131,10 +127,24 @@ export default function SignUpPage() {
         }
       }
     } else {
-      if (!userData.name || !userData.companyName || !userData.companyEmail || 
-          !userData.state || !userData.address || (!userData.email && !userData.phone)) {
+      if (!userData.name || !userData.phone || !userData.password || (!userData.email && !userData.phone)) {
         setError('Please fill all required fields');
         return;
+      }
+      try {
+        const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/completeProfileOfProvider`, {
+          name : userData.name,
+          email : userData.email,
+          phoneNumber : userData.phone,
+          password : userData.confirmPassword,
+        });
+        console.log(res);
+        setIsSubmitted(true);
+      } catch (error) {
+        const backendMessage = error.response?.data?.message || error.response?.data?.error ||'Unable to Complete Profile. Please try again.';
+        setError(backendMessage);
+        console.error('Axios error:', error);
+        
       }
     }
   };

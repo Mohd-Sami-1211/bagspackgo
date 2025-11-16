@@ -19,17 +19,22 @@ export default function SignInPage() {
     //write backend API here 
 
     try {
-      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/signin`, {
-        email,
-        password
-      });
-      console.log(res);
       if(role=='provider'){
+        const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/signInProvider`, {
+          email,
+          password
+        });
+        console.log(res);
         router.push('/serviceprovider')
-
       }
       else{
+        const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/signin`, {
+          email,
+          password
+        });
+        console.log(res);
         router.push('/user/trip')
+
       }
     } 
     catch (error) {

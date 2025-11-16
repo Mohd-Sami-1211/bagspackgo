@@ -1,37 +1,26 @@
-import mongoose from "mongoose";
+import mongoose from "mongoose"
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
-const userSchema = new mongoose.Schema({
+const serviceProviderSchema = new mongoose.Schema({
     name : {
         type : String,
         required : true
     },
-    email :{
+    email : {
         type : String,
-        required : [true , "Email is Required"],
+        required : true
     },
     password : {
-      type : String,
-      required : true,
-      unique : true
-
+        type : String
     },
     phoneNumber : {
-        type : String,
-        required : [true , "Phone Number is Required"],
-        unique : true
-
-    },
-    dob : {
-      type : String,
-      required : true
+        type : String
     },
     refreshToken : {
-      type : String
+        type : String
     }
-
 })
-userSchema.pre("save", async function (next) {
+serviceProviderSchema.pre("save", async function (next) {
   if (this.isModified("password") && this.password) {
     
     try {
@@ -44,7 +33,7 @@ userSchema.pre("save", async function (next) {
   }
   next();
 });
-userSchema.methods.generateAccessToken =function(){
+serviceProviderSchema.methods.generateAccessToken =function(){
   const accessToken =jwt.sign({
     id : this._id,
     email : this.email
@@ -54,7 +43,7 @@ userSchema.methods.generateAccessToken =function(){
   return accessToken;
 }
 
-userSchema.methods.generateRefreshToken = async function(){
+serviceProviderSchema.methods.generateRefreshToken = async function(){
   const refreshToken = jwt.sign({
     id : this._id,
     email : this.email
@@ -64,11 +53,11 @@ userSchema.methods.generateRefreshToken = async function(){
   this.refreshToken = hashedRefreshToken;
   return refreshToken;
 }
-userSchema.methods.isPasswordValid = async function(passwordFromUser){
+serviceProviderSchema.methods.isPasswordValid = async function(passwordFromUser){
   const isValid = await bcrypt.compare(passwordFromUser , this.password);
   if(isValid){
     return true;
   }
   return false;
 }
-export const UserModel = mongoose.models.User ||  mongoose.model("User",userSchema) 
+export const serviceProviderModel = mongoose.models.ServiceProvider ||  mongoose.model("ServiceProvider",serviceProviderSchema); 
