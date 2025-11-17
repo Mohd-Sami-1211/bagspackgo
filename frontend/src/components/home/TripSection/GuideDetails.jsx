@@ -276,7 +276,7 @@ const GuideDetails = ({ guide }) => {
   return (
     <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 -mt-8 sm:-mt-10 md:-mt-12 lg:-mt-14" ref={pageTopRef}>
       {/* Guide Card - Made Responsive */}
-      <div className="w-full bg-white pb-6 sm:pb-8 md:pb-10 sm:-mt-4">
+      <div className="w-full bg-white pb-6 sm:pb-8 md:pb-10">
         <div className="max-w-7xl mx-auto">
           <div className="relative bg-green-300 shadow-xl rounded-2xl sm:rounded-3xl lg:rounded-full px-4 sm:px-6 py-4 sm:py-5 flex flex-col sm:flex-row items-center justify-between w-full max-w-4xl mx-auto gap-4 sm:gap-6 lg:gap-0">
             {/* Rating Badge - Responsive */}
