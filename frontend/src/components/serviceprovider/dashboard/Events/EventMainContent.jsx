@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Calendar, MapPin, Clock, Users, Plus, Edit3, Eye, Trash2, PlayCircle, CheckCircle2, Share2 } from 'lucide-react';
 
@@ -205,93 +206,10 @@ function EventCard({ event, onAction }) {
   );
 }
 
-function NewEventModal({ open, onClose }) {
-  if (!open) return null;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4"
-    >
-      <motion.div
-        initial={{ scale: 0.95, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        className="w-full max-w-lg rounded-2xl bg-white shadow-xl"
-      >
-        <div className="p-6 border-b border-neutral-100">
-          <h3 className="text-lg font-semibold text-neutral-900">Host New Event</h3>
-          <p className="text-sm text-neutral-600 mt-1">Create a new event for your community</p>
-        </div>
-        
-        <form className="p-6 grid gap-4">
-          <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">Event Title</label>
-            <input 
-              className="w-full rounded-lg border border-neutral-200 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent" 
-              placeholder="Enter event title"
-            />
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-2">Date</label>
-              <input 
-                type="date" 
-                className="w-full rounded-lg border border-neutral-200 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-2">Time</label>
-              <input 
-                type="time" 
-                className="w-full rounded-lg border border-neutral-200 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-              />
-            </div>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">Location</label>
-            <input 
-              className="w-full rounded-lg border border-neutral-200 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent" 
-              placeholder="Event venue"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">Description</label>
-            <textarea 
-              className="w-full rounded-lg border border-neutral-200 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent" 
-              placeholder="Describe your event"
-              rows={4}
-            />
-          </div>
-          
-          <div className="flex items-center justify-end gap-3 pt-4">
-            <button 
-              type="button" 
-              onClick={onClose}
-              className="px-4 py-2 rounded-lg border border-neutral-200 text-neutral-700 hover:bg-neutral-50 transition"
-            >
-              Cancel
-            </button>
-            <button 
-              type="submit"
-              className="px-4 py-2 rounded-lg bg-emerald-600 text-white font-medium hover:bg-emerald-700 transition"
-            >
-              Create Event
-            </button>
-          </div>
-        </form>
-      </motion.div>
-    </motion.div>
-  );
-}
-
 export default function EventMainContent() {
   const [activeTab, setActiveTab] = useState('live');
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [events, setEvents] = useState(eventsData);
+  const router = useRouter(); // Next.js router
 
   const tabs = [
     { key: 'live', label: 'Live Events', count: events.filter(e => e.status === 'Live').length },
@@ -330,6 +248,11 @@ export default function EventMainContent() {
     }
   }
 
+  // Function to handle hosting new event - using Next.js router
+  const handleHostEvent = () => {
+    router.push('/serviceprovider/dashboard/events/hostevent');
+  };
+
   return (
     <div className="space-y-6">
       {/* Header Section */}
@@ -342,7 +265,7 @@ export default function EventMainContent() {
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          onClick={() => setIsModalOpen(true)}
+          onClick={handleHostEvent}
           className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-600 text-white font-medium hover:bg-emerald-700 transition shadow-sm hover:shadow-md"
         >
           <Plus className="w-4 h-4" />
@@ -394,7 +317,7 @@ export default function EventMainContent() {
                 : 'Create your first event to get started.'}
             </p>
             <button
-              onClick={() => setIsModalOpen(true)}
+              onClick={handleHostEvent}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 transition"
             >
               <Plus className="w-4 h-4" />
@@ -407,8 +330,6 @@ export default function EventMainContent() {
           ))
         )}
       </div>
-
-      <NewEventModal open={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
   );
 }
