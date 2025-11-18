@@ -1,6 +1,10 @@
 import mongoose from "mongoose";
 
 const providerCompanySchema = new mongoose.Schema({
+    personalEmail : {
+        type : mongoose.Schema.Types.ObjectId,
+        ref : 'ServiceProvider'
+    },
     companyEmail : {
         type : String,
         required : true,

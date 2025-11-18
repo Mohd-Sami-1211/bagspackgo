@@ -3,20 +3,24 @@ import { UserModel } from "src/models/userModel";
 import connectDB from "src/DB/DBConnection";
 import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
+import { serviceProviderModel } from "src/models/serviceProviderModel";
 export async function POST(req) {
     await connectDB();
-    const {email , password} = await req.json();
+    const {email , password , role} = await req.json();
     const cookie = cookies();
     const tokenFromtheUser = (await cookie).get('accessToken')?.value;
-    console.log(tokenFromtheUser);
     const RefreshtokenFromtheUser = (await cookie).get('refreshToken')?.value;
-    console.log(RefreshtokenFromtheUser)
-    const user = await UserModel.findOne({email});
+    let user;
+    if(role=='user'){
+        user = await UserModel.findOne({email});
+
+    }
+    else if(role=='provider'){
+        user = await serviceProviderModel.findOne({email});
+    }
     if(!user){
         return NextResponse.json({
-        message : "User not Found",
-
-
+        message : "Please Sign Up First",
         } , {status : 400})
     }
     const isPasswordValid = await user.isPasswordValid(password);

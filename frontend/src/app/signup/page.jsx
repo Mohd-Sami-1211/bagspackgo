@@ -175,7 +175,9 @@ export default function SignUpPage() {
       console.log("Inside try")
       console.log(userData.email)
       const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/sendOTPUsingEmail`, {
-        email: userData.email
+        email: userData.email,
+        role : role=='user'?'user':'provider'
+        
       });
       console.log(res);
       setStep(2);

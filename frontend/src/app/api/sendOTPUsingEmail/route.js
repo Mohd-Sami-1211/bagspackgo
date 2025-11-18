@@ -3,18 +3,29 @@ import {userOTPModel} from "src/models/userOTPModel"
 import connectDB from "src/DB/DBConnection";
 import { UserModel } from 'src/models/userModel';
 import { NextResponse } from 'next/server';
+import { serviceProviderModel } from 'src/models/serviceProviderModel';
 export async function POST(req) {
   try {
     await connectDB();
-    const { email } = await req.json();
-    const isUserPresent = await UserModel.findOne({email});
-
-    // Checking if the User Already Signed Up or Not
-    if(isUserPresent){
-      return NextResponse.json({
-        message : "Already a User"
-      } , {status : 400})
+    const { email , role } = await req.json();
+    console.log(role);
+    if(role=='user'){
+      const isUserPresent = await UserModel.findOne({email});
+      if(isUserPresent){
+        return NextResponse.json({
+          message : "Already a User's Account . Please Sign in"
+        } , {status : 400})
+      }
     }
+    else{
+      const isProviderPresent = await serviceProviderModel.findOne({email});
+      if(isProviderPresent){
+        return NextResponse.json({
+          message : "Already a Provider's Account . Please Sign in"
+        } , {status : 400})
+      }
+    }
+    
 
     const transporter = nodemailer.createTransport({
       service: 'gmail',
