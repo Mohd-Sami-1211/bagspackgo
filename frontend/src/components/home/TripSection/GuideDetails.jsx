@@ -1,7 +1,7 @@
 'use client';
 import { Star, Edit, MapPin, Users, Calendar, Share2, Heart, ChevronRight, ArrowRight, ArrowLeft, Hotel, Clock, Map, Utensils, Car, ShieldCheck, Mountain } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Itenary from 'src/components/home/TripSection/Itenary';
 import ArrDep from 'src/components/home/TripSection/Arr-Dep';
 import PersonalDetails from 'src/components/home/TripSection/PersonalDetails';
@@ -10,14 +10,14 @@ const GuideDetails = ({ guide }) => {
   const searchParams = useSearchParams();
   
   // Get parameters from URL with validation
-  const category = ['individual', 'couple', 'group'].includes(searchParams.get('category')) 
-    ? searchParams.get('category') 
+  const category = ['individual', 'couple', 'group'].includes(searchParams.get('category'))
+    ? searchParams.get('category')
     : 'individual';
   const days = Math.max(1, parseInt(searchParams.get('days')) || 1);
   const count = Math.max(1, parseInt(searchParams.get('count')) || 1);
   const dateParam = searchParams.get('date');
-  const date = dateParam && !isNaN(new Date(dateParam).getTime()) 
-    ? new Date(dateParam) 
+  const date = dateParam && !isNaN(new Date(dateParam).getTime())
+    ? new Date(dateParam)
     : new Date();
 
   // Calculate derived values
@@ -30,10 +30,8 @@ const GuideDetails = ({ guide }) => {
   const [activeTab, setActiveTab] = useState('dayByDay');
   const [currentDay, setCurrentDay] = useState(1);
   const [acceptTerms, setAcceptTerms] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
   const [viewingDay, setViewingDay] = useState(null);
   const [itenaries, setItenaries] = useState([]);
-  const [editSection, setEditSection] = useState(null);
   const [errors, setErrors] = useState({});
   const [arrDepCompleted, setArrDepCompleted] = useState(false);
   const [personalDetailsCompleted, setPersonalDetailsCompleted] = useState(false);
@@ -55,31 +53,81 @@ const GuideDetails = ({ guide }) => {
       { id: 2, name: 'Local Cuisine Tasting', duration: '1.5 hours', location: 'Pahalgam' }
     ]
   };
+
   const [arrivalDepartureData, setArrivalDepartureData] = useState({
-  arrival: {
-    city: '',
-    pickupAddress: '',
-    date: '',
-    time: ''
-  },
-  departure: {
-    city: '',
-    dropoffAddress: '',
-    date: '',
-    time: ''
-  }
-});
-const [personalDetailsData, setPersonalDetailsData] = useState({
-  contactDetails: {},
-  personalDetails: [],
-  children: []
-});
+    arrival: {
+      city: '',
+      pickupAddress: '',
+      date: '',
+      time: ''
+    },
+    departure: {
+      city: '',
+      dropoffAddress: '',
+      date: '',
+      time: ''
+    }
+  });
+
+  const [personalDetailsData, setPersonalDetailsData] = useState({
+    contactDetails: {},
+    personalDetails: [],
+    children: []
+  });
+
+  // Add the missing useRef declarations
+  const scrollContainerRef = useRef(null);
+  const nodeRefs = useRef([]);
+  const pageTopRef = useRef(null);
+  const dayCardRefs = useRef([]);
+
+  // Scroll to top when viewing day details
+  useEffect(() => {
+    if (viewingDay && pageTopRef.current) {
+      pageTopRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [viewingDay]);
+
+  // Auto-scroll to selected day card
+  useEffect(() => {
+    if (!viewingDay && currentDay && dayCardRefs.current[currentDay - 1]) {
+      const dayCard = dayCardRefs.current[currentDay - 1];
+      const container = document.querySelector('.day-cards-container');
+      
+      if (dayCard && container) {
+        const cardTop = dayCard.offsetTop;
+        const containerTop = container.offsetTop;
+        const scrollPosition = cardTop - containerTop - 20; // 20px offset
+        
+        container.scrollTo({
+          top: scrollPosition,
+          behavior: 'smooth'
+        });
+      }
+    }
+  }, [currentDay, viewingDay]);
+
+  useEffect(() => {
+    const activeNode = nodeRefs.current[currentDay - 1];
+    const container = scrollContainerRef.current;
+
+    if (activeNode && container) {
+      const nodeCenter = activeNode.offsetLeft + activeNode.offsetWidth / 2;
+      const containerCenter = container.offsetWidth / 2;
+      const scrollPos = nodeCenter - containerCenter;
+
+      container.scrollTo({
+        left: scrollPos,
+        behavior: "smooth",
+      });
+    }
+  }, [currentDay]);
 
   // Initialize itineraries with correct dates
   useEffect(() => {
     // Ensure we have a valid date
-    const startDate = selectedStartDate && !isNaN(selectedStartDate.getTime()) 
-      ? new Date(selectedStartDate) 
+    const startDate = selectedStartDate && !isNaN(selectedStartDate.getTime())
+      ? new Date(selectedStartDate)
       : new Date();
 
     const initialItenaries = Array.from({ length: numDays }, (_, i) => {
@@ -113,12 +161,14 @@ const [personalDetailsData, setPersonalDetailsData] = useState({
     count: 1,
     personalDetails: null
   });
+
   const [step, setStep] = useState(1);
 
-   const handleSavePersonalDetails = (data) => {
-  setPersonalDetailsData(data);
-  setPersonalDetailsCompleted(true);
-};
+  const handleSavePersonalDetails = (data) => {
+    setPersonalDetailsData(data);
+    setPersonalDetailsCompleted(true);
+  };
+
   const basePrice = guide.price * numDays * numPeople;
   const discount = basePrice * 0.1;
   const platformFee = 50;
@@ -126,7 +176,7 @@ const [personalDetailsData, setPersonalDetailsData] = useState({
   const total = basePrice - discount + platformFee + taxes;
   const nights = numDays + 1;
 
-    const packageInclusions = [
+  const packageInclusions = [
     {
       icon: <Utensils className="h-5 w-5 text-green-600" />,
       title: "Food",
@@ -159,18 +209,9 @@ const [personalDetailsData, setPersonalDetailsData] = useState({
     }
   ];
 
-  const handleSaveItenary = (dayIndex, newData) => {
-    setItenaries(prev => {
-      const updated = [...prev];
-      updated[dayIndex] = { ...updated[dayIndex], ...newData };
-      return updated;
-    });
-    setIsEditing(false);
-  };
-
   const handleViewDay = (dayNumber) => {
     setViewingDay(dayNumber);
-    setCurrentDay(dayNumber); 
+    setCurrentDay(dayNumber);
   };
 
   const handleBackToList = () => {
@@ -182,7 +223,7 @@ const [personalDetailsData, setPersonalDetailsData] = useState({
       setActiveTab('arrivalDeparture');
     } else if (activeTab === 'arrivalDeparture' && arrDepCompleted) {
       setActiveTab('personalDetails');
-    } 
+    }
   };
 
   const handleBack = () => {
@@ -191,21 +232,18 @@ const [personalDetailsData, setPersonalDetailsData] = useState({
     } else if (activeTab === 'personalDetails') {
       setActiveTab('arrivalDeparture');
     } else {
-      setIsEditing(false);
-      setEditSection(null);
       setErrors({});
       setViewingDay(null);
     }
   };
 
-const handleArrDepSubmit = (data) => {
-  const newStartDate = new Date(data.startDate);
-  setSelectedStartDate(newStartDate);
-  setArrivalDepartureData(data);
-  setArrDepCompleted(true);
-  setActiveTab('personalDetails');
-};
-
+  const handleArrDepSubmit = (data) => {
+    const newStartDate = new Date(data.startDate);
+    setSelectedStartDate(newStartDate);
+    setArrivalDepartureData(data);
+    setArrDepCompleted(true);
+    setActiveTab('personalDetails');
+  };
 
   const formatTimeWithAMPM = (time) => {
     if (!time) return '';
@@ -229,52 +267,62 @@ const handleArrDepSubmit = (data) => {
     }
   };
 
+  // Handle day node click - set current day and scroll to that day card
+  const handleDayNodeClick = (dayNumber) => {
+    setCurrentDay(dayNumber);
+    // Auto-scroll will be handled by the useEffect above
+  };
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-14">
-      <div className="w-full bg-white pb-10">
+    <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 -mt-8 sm:-mt-10 md:-mt-12 lg:-mt-14" ref={pageTopRef}>
+      {/* Guide Card - Made Responsive */}
+      <div className="w-full bg-white pb-6 sm:pb-8 md:pb-10">
         <div className="max-w-7xl mx-auto">
-          <div className="relative bg-green-300 shadow-xl rounded-full px-6 py-5 flex items-center justify-between w-full max-w-4xl mx-auto">
-            <div className="absolute top-2 right-4 mr-4 flex items-center bg-white rounded-full px-3 py-1 text-xs font-medium text-gray-800 shadow-md">
-              <Star className="w-4 h-4 text-yellow-500 fill-yellow-400 mr-1" />
+          <div className="relative bg-green-300 shadow-xl rounded-2xl sm:rounded-3xl lg:rounded-full px-4 sm:px-6 py-4 sm:py-5 flex flex-col sm:flex-row items-center justify-between w-full max-w-4xl mx-auto gap-4 sm:gap-6 lg:gap-0">
+            {/* Rating Badge - Responsive */}
+            <div className="absolute top-2 right-3 sm:right-7 flex items-center bg-white rounded-full px-2 sm:px-2 py-1 text-xs font-medium text-gray-800 shadow-md">
+              <Star className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-500 fill-yellow-400 mr-1" />
               {guide.rating}
-              <span className="ml-1 text-gray-500">({guide.reviews})</span>
+              <span className="ml-1 text-gray-500 text-xs">({guide.reviews})</span>
             </div>
 
-            <div className="flex items-center">
-              <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-md border-2 border-green-100">
-                <div className="text-lg font-bold bg-gradient-to-r from-green-500 to-green-600 bg-clip-text text-transparent">
+            {/* Guide Info - Responsive */}
+            <div className="flex items-center w-full sm:w-auto justify-center sm:justify-start">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 lg:w-20 lg:h-20 bg-white rounded-full flex items-center justify-center shadow-md border-2 border-green-100 flex-shrink-0">
+                <div className="text-sm sm:text-base lg:text-lg font-bold bg-gradient-to-r from-green-500 to-green-600 bg-clip-text text-transparent">
                   {guide.name.split(' ').map(n => n[0]).join('')}
                 </div>
               </div>
-              <div className="ml-4 min-w-0">
-                <h2 className="text-lg font-bold text-white truncate">{guide.name}</h2>
-                <div className="flex items-center text-sm text-white mt-1">
-                  <MapPin className="h-4 w-4 mr-1 text-white" />
+              <div className="ml-3 sm:ml-4 min-w-0 flex-1 sm:flex-none">
+                <h2 className="text-sm sm:text-base lg:text-lg font-bold text-white truncate">{guide.name}</h2>
+                <div className="flex items-center text-xs sm:text-sm text-white mt-1">
+                  <MapPin className="h-3 w-3 sm:h-4 sm:w-4 mr-1 text-white flex-shrink-0" />
                   <span className="truncate">{guide.location}</span>
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 -ml-10 mr-28">
-              <div className="flex gap-2 mr-4">
-                <div className="bg-white/90 px-3 py-2 rounded-xl text-xs text-center shadow-md backdrop-blur-sm">
-                  <p className="text-gray-500">Type:</p>
-                  <p className="font-semibold capitalize text-gray-800">{category}</p>
+            {/* Trip Details & Actions - Responsive */}
+            <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto justify-center sm:justify-end">
+              <div className="flex gap-2 justify-center w-full sm:w-auto flex-wrap sm:flex-nowrap">
+                <div className="bg-white/90 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-xs text-center shadow-md backdrop-blur-sm min-w-[60px] sm:min-w-[70px]">
+                  <p className="text-gray-500 text-xs">Type:</p>
+                  <p className="font-semibold capitalize text-gray-800 text-xs sm:text-sm truncate">{category}</p>
                 </div>
-                <div className="bg-white/90 px-3 py-2 rounded-xl text-xs text-center shadow-md backdrop-blur-sm">
-                  <p className="text-gray-500">Days:</p>
-                  <p className="font-semibold text-gray-800">{numDays}</p>
+                <div className="bg-white/90 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-xs text-center shadow-md backdrop-blur-sm min-w-[60px] sm:min-w-[70px]">
+                  <p className="text-gray-500 text-xs">Days:</p>
+                  <p className="font-semibold text-gray-800 text-xs sm:text-sm">{numDays}</p>
                 </div>
-                <div className="bg-white/90 px-3 py-2 rounded-xl text-xs text-center shadow-md backdrop-blur-sm">
-                  <p className="text-gray-500">People:</p>
-                  <p className="font-semibold text-gray-800">{numPeople}</p>
+                <div className="bg-white/90 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-xs text-center shadow-md backdrop-blur-sm min-w-[60px] sm:min-w-[70px]">
+                  <p className="text-gray-500 text-xs">People:</p>
+                  <p className="font-semibold text-gray-800 text-xs sm:text-sm">{numPeople}</p>
                 </div>
               </div>
               <div className="flex gap-2">
-                <button className="p-2 bg-white/90 rounded-full shadow-md hover:bg-white transition-colors backdrop-blur-sm">
+                <button className="p-2 bg-white/90 rounded-full shadow-md hover:bg-white transition-colors backdrop-blur-sm flex-shrink-0">
                   <Share2 className="h-4 w-4 text-gray-600" />
                 </button>
-                <button className="p-2 bg-white/90 rounded-full shadow-md hover:bg-white transition-colors backdrop-blur-sm">
+                <button className="p-2 bg-white/90 rounded-full shadow-md hover:bg-white transition-colors backdrop-blur-sm flex-shrink-0">
                   <Heart className="h-4 w-4 text-rose-500" />
                 </button>
               </div>
@@ -283,7 +331,7 @@ const handleArrDepSubmit = (data) => {
         </div>
       </div>
 
-      <div className="w-full max-w-7xl mx-auto flex flex-col lg:flex-row gap-8 pt-6 pb-10 bg-gradient-to-br from-green-50 to-blue-50 rounded-xl p-6">
+      <div className="w-full max-w-7xl mx-auto flex flex-col lg:flex-row gap-4 sm:gap-6 md:gap-8 pt-4 sm:pt-6 pb-8 sm:pb-10 bg-gradient-to-br from-green-50 to-blue-50 rounded-xl p-4 sm:p-6">
         <div className="w-full lg:w-8/12">
           <div className="flex bg-white rounded-t-xl shadow-sm overflow-hidden border border-gray-200 mb-1.5">
             {[
@@ -294,7 +342,7 @@ const handleArrDepSubmit = (data) => {
               <button
                 key={tab.key}
                 onClick={() => !isTabDisabled(tab.key) && setActiveTab(tab.key)}
-                className={`w-full text-center text-sm font-medium py-3 transition-all ${
+                className={`flex-1 text-center text-xs sm:text-sm font-medium py-3 transition-all ${
                   activeTab === tab.key
                     ? 'text-green-600 border-b-2 border-green-600 bg-white'
                     : isTabDisabled(tab.key)
@@ -308,31 +356,23 @@ const handleArrDepSubmit = (data) => {
             ))}
           </div>
 
-          <div className="bg-white rounded-b-xl shadow-sm px-6 py-5">
+          <div className="bg-white rounded-b-xl shadow-sm px-4 sm:px-6 py-4 sm:py-5">
             {activeTab === 'dayByDay' && (
               <>
-                <div className="flex justify-between items-center mb-5">
-                  <h3 className="text-lg font-semibold text-green-500 ml-5">
+                <div className="flex justify-between items-center mb-4 sm:mb-5">
+                  <h3 className="text-base sm:text-lg font-semibold text-green-500 ml-0 sm:ml-5">
                     {viewingDay ? `Day ${viewingDay}` : 'Your Itinerary'}
                   </h3>
-                  {viewingDay && !isEditing && (
-                    <button
-                      onClick={() => setIsEditing(true)}
-                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm shadow-sm"
-                    >
-                      Edit
-                    </button>
-                  )}
                 </div>
 
                 {viewingDay ? (
                   <div>
                     <button
-                      onClick={handleBack}
+                      onClick={handleBackToList}
                       className="flex items-center text-green-600 mb-4 hover:text-green-700 transition-colors text-sm"
                     >
                       <ArrowLeft className="h-4 w-4 mr-1" />
-                      Back
+                      Back to Overview
                     </button>
 
                     <Itenary
@@ -355,15 +395,14 @@ const handleArrDepSubmit = (data) => {
                         })) || []
                       }
                       guide={guide}
-                      onSave={(newData) => handleSaveItenary(viewingDay - 1, newData)}
-                      onCancel={() => setIsEditing(false)}
-                      isEditing={isEditing}
-                      setIsEditing={setIsEditing}
+                      isEditing={false}
+                      setIsEditing={() => {}}
                     />
                   </div>
                 ) : (
-                  <div className="flex">
-                    <div className="w-1/4 pr-5">
+                  <div className="flex flex-col md:flex-row">
+                    {/* Timeline for medium screens and up */}
+                    <div className="hidden md:block md:w-1/4 pr-5">
                       <div className="relative h-full">
                         <div className="absolute left-1/2 top-0 h-full w-1.5 bg-gray-100 rounded-full -translate-x-1/2">
                           <div
@@ -381,10 +420,7 @@ const handleArrDepSubmit = (data) => {
                                 key={dayNum}
                                 className="relative flex items-center justify-center cursor-pointer"
                                 style={{ height: '104px' }}
-                                onClick={() => {
-                                  setCurrentDay(dayNum);
-                                  handleViewDay(dayNum);
-                                }}
+                                onClick={() => handleDayNodeClick(dayNum)}
                               >
                                 <div
                                   className={`absolute left-1/2 transform -translate-x-1/2 w-10 h-10 flex items-center justify-center rounded-full text-sm font-semibold transition-all duration-300 ${
@@ -404,65 +440,99 @@ const handleArrDepSubmit = (data) => {
                       </div>
                     </div>
 
-                    <div className="w-3/4 space-y-4">
+                    {/* Mobile Timeline - Centered with line through node centers */}
+                    <div className="block md:hidden mb-4">
+  <div className="flex justify-center">
+    <div 
+      className="relative flex items-center overflow-x-auto scrollbar-hide px-4 py-4 max-w-full"
+      ref={scrollContainerRef}
+    >
+      {/* Connecting line - positioned at exact center of nodes */}
+      <div className="absolute top-9 left-0 right-0 h-1 bg-gray-300 z-0"></div>
+      
+      <div className="flex items-center justify-center space-x-8 sm:space-x-12 mx-auto px-4">
+        {itenaries.map((day, index) => {
+          const dayNum = index + 1;
+          const isActive = dayNum <= currentDay;
+          const isCurrent = dayNum === currentDay;
+
+          return (
+            <div
+              key={dayNum}
+              className="relative z-10 flex flex-col items-center flex-shrink-0"
+            >
+              <div className="h-12 flex items-center justify-center"> {/* Fixed height container for consistent centering */}
+                <button
+                  onClick={() => handleDayNodeClick(dayNum)}
+                  className={`
+                    flex-shrink-0 flex items-center justify-center rounded-full font-semibold 
+                    transition-all duration-300 relative z-20
+                    ${isCurrent ? 'w-12 h-12 bg-green-500 text-white scale-110 ring-4 ring-green-300 shadow-lg' : ''}
+                    ${!isCurrent && isActive ? 'w-10 h-10 bg-green-400 text-white shadow-md' : ''}
+                    ${!isActive ? 'w-10 h-10 bg-gray-200 text-gray-600' : ''}
+                  `}
+                  ref={(el) => (nodeRefs.current[index] = el)}
+                >
+                  {dayNum}
+                </button>
+              </div>
+              <span className="text-xs text-gray-600 mt-2 font-medium whitespace-nowrap">
+                Day {dayNum}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  </div>
+</div>
+
+                    {/* Day Cards Container with auto-scroll */}
+                    <div className="w-full md:w-3/4 space-y-3 sm:space-y-4 day-cards-container max-h-[600px] overflow-y-auto">
                       {itenaries.map((day, index) => {
                         const dayNum = index + 1;
                         const isCurrentDay = dayNum === currentDay;
-                        
+
                         return (
                           <div
                             key={index}
-                            className={`p-5 rounded-lg border transition-all group ${
+                            ref={(el) => (dayCardRefs.current[index] = el)}
+                            className={`p-4 sm:p-5 rounded-lg border transition-all group ${
                               isCurrentDay
                                 ? 'border-green-300 bg-green-50 ring-1 ring-green-100 shadow-lg'
                                 : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
                             } cursor-pointer`}
-                            onClick={() => {
-                              setCurrentDay(dayNum);
-                              handleViewDay(dayNum);
-                            }}
+                            onClick={() => handleDayNodeClick(dayNum)}
                           >
                             <div className="flex justify-between items-start">
-                              <div>
+                              <div className="w-full">
                                 <h4 className="font-medium text-gray-900 flex items-center">
                                   <span className={`w-7 h-7 flex items-center justify-center ${
                                     isCurrentDay ? 'bg-green-500 text-white' : 'bg-green-100 text-green-600'
                                   } rounded-full mr-3 text-sm font-semibold`}>
                                     {day.dayNumber}
                                   </span>
-                                  <span className="text-green-600 font-semibold">{day.location}</span>
+                                  <span className="text-green-600 font-semibold text-sm sm:text-base">{day.location}</span>
                                 </h4>
-                                <p className="text-sm text-gray-500 mt-1.5 ml-10 flex items-center">
-                                  <Calendar className="h-4 w-4 mr-2 text-gray-400" />
+                                <p className="text-xs sm:text-sm text-gray-500 mt-1.5 ml-10 flex items-center">
+                                  <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-2 text-gray-400" />
                                   <span className="font-medium text-gray-600">{day.date}</span>
                                 </p>
                               </div>
-                              <button
-                                className="text-green-600 hover:text-green-700 flex items-center text-sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setCurrentDay(dayNum);
-                                  setViewingDay(dayNum);
-                                  setIsEditing(true);
-                                }}
-                              >
-                                <Edit className="h-4 w-4 mr-1" />
-                                Edit
-                              </button>
                             </div>
 
-                            <div className="mt-4 grid grid-cols-3 gap-5 ml-10">
-                              <div className="flex items-start space-x-3">
-                                <div className="p-2 bg-blue-50 rounded-lg">
-                                  <Clock className="h-5 w-5 text-blue-500" />
+                            <div className="mt-3 sm:mt-4 grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5 ml-10">
+                              <div className="flex items-start space-x-2 sm:space-x-3">
+                                <div className="p-1.5 sm:p-2 bg-blue-50 rounded-lg flex-shrink-0">
+                                  <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500" />
                                 </div>
-                                <div>
+                                <div className="min-w-0">
                                   <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Departure</p>
-                                  <p className="text-sm text-gray-800 mt-1">
+                                  <p className="text-xs sm:text-sm text-gray-800 mt-1">
                                     {day.departure?.time && (
                                       <>
                                         <span className="font-medium">{formatTimeWithAMPM(day.departure.time)}</span>
-                                        <span className="block text-gray-600 text-sm mt-0.5">
+                                        <span className="block text-gray-600 text-xs sm:text-sm mt-0.5 truncate">
                                           from {day.departure.address}
                                         </span>
                                       </>
@@ -471,15 +541,15 @@ const handleArrDepSubmit = (data) => {
                                 </div>
                               </div>
 
-                              <div className="flex items-start space-x-3">
-                                <div className="p-2 bg-amber-50 rounded-lg">
-                                  <Hotel className="h-5 w-5 text-amber-500" />
+                              <div className="flex items-start space-x-2 sm:space-x-3">
+                                <div className="p-1.5 sm:p-2 bg-amber-50 rounded-lg flex-shrink-0">
+                                  <Hotel className="h-4 w-4 sm:h-5 sm:w-5 text-amber-500" />
                                 </div>
-                                <div>
+                                <div className="min-w-0">
                                   <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Hotel</p>
-                                  <p className="text-sm text-gray-800 mt-1">
+                                  <p className="text-xs sm:text-sm text-gray-800 mt-1">
                                     {day.hotel?.name ? (
-                                      <span className="font-medium">{day.hotel.name}</span>
+                                      <span className="font-medium truncate">{day.hotel.name}</span>
                                     ) : (
                                       <span className="text-gray-400">Not selected</span>
                                     )}
@@ -487,13 +557,13 @@ const handleArrDepSubmit = (data) => {
                                 </div>
                               </div>
 
-                              <div className="flex items-start space-x-3">
-                                <div className="p-2 bg-purple-50 rounded-lg">
-                                  <Map className="h-5 w-5 text-purple-500" />
+                              <div className="flex items-start space-x-2 sm:space-x-3">
+                                <div className="p-1.5 sm:p-2 bg-purple-50 rounded-lg flex-shrink-0">
+                                  <Map className="h-4 w-4 sm:h-5 sm:w-5 text-purple-500" />
                                 </div>
-                                <div>
+                                <div className="min-w-0">
                                   <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Activities</p>
-                                  <p className="text-sm text-gray-800 mt-1">
+                                  <p className="text-xs sm:text-sm text-gray-800 mt-1">
                                     {day.activities?.length > 0 ? (
                                       <span className="font-medium">{day.activities.length} selected</span>
                                     ) : (
@@ -504,19 +574,18 @@ const handleArrDepSubmit = (data) => {
                               </div>
                             </div>
 
-                            <div className="mt-5 ml-10">
+                            <div className="mt-3 sm:mt-5 ml-10">
                               <button
-                                className={`flex items-center text-sm group ${
+                                className={`flex items-center text-xs sm:text-sm group ${
                                   isCurrentDay ? 'text-green-700 font-medium' : 'text-green-600'
                                 }`}
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  setCurrentDay(dayNum);
                                   handleViewDay(dayNum);
                                 }}
                               >
                                 <span>View details</span>
-                                <ChevronRight className="ml-1.5 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                                <ChevronRight className="ml-1.5 h-3 w-3 sm:h-4 sm:w-4 transition-transform group-hover:translate-x-0.5" />
                               </button>
                             </div>
                           </div>
@@ -527,7 +596,7 @@ const handleArrDepSubmit = (data) => {
                 )}
 
                 {!viewingDay && (
-                  <div className="flex justify-end mt-6">
+                  <div className="flex justify-end mt-4 sm:mt-6">
                     <button
                       onClick={handleNextTab}
                       className="px-4 py-2 bg-gradient-to-br from-green-400 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 flex items-center text-sm shadow-sm transition-colors"
@@ -563,101 +632,100 @@ const handleArrDepSubmit = (data) => {
                   <button
                     type="button"
                     onClick={handleBack}
-                    className="px-5 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors flex items-center"
+                    className="px-4 sm:px-5 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors flex items-center text-sm"
                   >
                     <ArrowLeft className="h-4 w-4 mr-2" />
                     Back
                   </button>
-                 <button
-  type="button"
-  onClick={() => {
-    // Prepare all trip data with proper structure
-    const tripData = {
-      itenaries: itenaries,
-      arrivalDeparture: arrivalDepartureData,
-      personalDetails: {
-        contactDetails: personalDetailsData.contactDetails || {},
-        personalDetails: personalDetailsData.personalDetails || [],
-        children: personalDetailsData.children || []
-      },
-      guide: guide,
-      tripConfig: {
-        category,
-        days: numDays,
-        count: numPeople,
-        date: dateParam
-      }
-    };
 
-    // Store in localStorage
-    localStorage.setItem('tripData', JSON.stringify(tripData));
+                  <button
+                    type="button"
+                    onClick={() => {
+                      // Prepare all trip data with proper structure
+                      const tripData = {
+                        itenaries: itenaries,
+                        arrivalDeparture: arrivalDepartureData,
+                        personalDetails: {
+                          contactDetails: personalDetailsData.contactDetails || {},
+                          personalDetails: personalDetailsData.personalDetails || [],
+                          children: personalDetailsData.children || []
+                        },
+                        guide: guide,
+                        tripConfig: {
+                          category,
+                          days: numDays,
+                          count: numPeople,
+                          date: dateParam
+                        }
+                      };
 
-    // Navigate to review page
-    router.push(
-      `/user/trip/guidelist/tripdetails/${guide.id}/reviewjourney?category=${category}&days=${numDays}&count=${numPeople}&date=${dateParam}`
-    );
-  }}
-  className="px-5 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center shadow-sm hover:shadow-md"
->
-  Review Journey
-  <ArrowRight className="h-4 w-4 ml-2 transition-transform group-hover:translate-x-1" />
-</button>
+                      // Store in localStorage
+                      localStorage.setItem('tripData', JSON.stringify(tripData));
+
+                      // Navigate to review page
+                      router.push(
+                        `/user/trip/guidelist/tripdetails/${guide.id}/reviewjourney?category=${category}&days=${numDays}&count=${numPeople}&date=${dateParam}`
+                      );
+                    }}
+                    className="px-4 sm:px-5 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center text-sm shadow-sm hover:shadow-md"
+                  >
+                    Review Journey
+                    <ArrowRight className="h-4 w-4 ml-2 transition-transform group-hover:translate-x-1" />
+                  </button>
                 </div>
               </div>
             )}
           </div>
         </div>
 
-        <div className="w-full lg:w-4/12">
-        <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 mb-12">
-          <div className=" px-5 py-3">
-            <h2 className="text-green-500 font-semibold text-base">What's Included</h2>
-          </div>
-          
-          <div className="p-5">
-            <div className="space-y-5">
-              {packageInclusions.map((item, index) => (
-                <div key={index} className="flex items-start">
-                  <div className="flex-shrink-0 p-2 bg-green-50 rounded-lg mr-4">
-                    {item.icon}
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-gray-800">{item.title}</h4>
-                    <p className="text-sm text-gray-600 mt-1">{item.description}</p>
-                    <ul className="mt-2 space-y-1">
-                      {item.items.map((detail, i) => (
-                        <li key={i} className="flex items-start text-xs text-gray-500">
-                          <svg className="h-3 w-3 text-green-500 mr-1.5 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                          {detail}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              ))}
+        <div className="w-full lg:w-4/12 mt-6 lg:mt-0">
+          <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 mb-6 sm:mb-12">
+            <div className="px-4 sm:px-5 py-3">
+              <h2 className="text-green-500 font-semibold text-base">What's Included</h2>
             </div>
-            
-            <div className="mt-6 pt-4 border-t border-gray-200">
-              <h4 className="font-medium text-gray-800 mb-2">Activities Included</h4>
-              <div className="flex flex-wrap gap-2">
-                {guide.activitiesAvailable?.slice(0, 6).map((activity, i) => (
-                  <span key={i} className="px-2.5 py-1 bg-green-50 text-green-700 text-xs rounded-full">
-                    {activity}
-                  </span>
+
+            <div className="p-4 sm:p-5">
+              <div className="space-y-4 sm:space-y-5">
+                {packageInclusions.map((item, index) => (
+                  <div key={index} className="flex items-start">
+                    <div className="flex-shrink-0 p-1.5 sm:p-2 bg-green-50 rounded-lg mr-3 sm:mr-4">
+                      {item.icon}
+                    </div>
+                    <div className="min-w-0">
+                      <h4 className="font-medium text-gray-800 text-sm sm:text-base">{item.title}</h4>
+                      <p className="text-xs sm:text-sm text-gray-600 mt-1">{item.description}</p>
+                      <ul className="mt-2 space-y-1">
+                        {item.items.map((detail, i) => (
+                          <li key={i} className="flex items-start text-xs text-gray-500">
+                            <svg className="h-3 w-3 text-green-500 mr-1.5 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            {detail}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
                 ))}
-                {guide.activitiesAvailable?.length > 6 && (
-                  <span className="px-2.5 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
-                    +{guide.activitiesAvailable.length - 6} more
-                  </span>
-                )}
+              </div>
+
+              <div className="mt-4 sm:mt-6 pt-4 border-t border-gray-200">
+                <h4 className="font-medium text-gray-800 mb-2 text-sm sm:text-base">Activities Included</h4>
+                <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                  {guide.activitiesAvailable?.slice(0, 6).map((activity, i) => (
+                    <span key={i} className="px-2 sm:px-2.5 py-1 bg-green-50 text-green-700 text-xs rounded-full">
+                      {activity}
+                    </span>
+                  ))}
+                  {guide.activitiesAvailable?.length > 6 && (
+                    <span className="px-2 sm:px-2.5 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                      +{guide.activitiesAvailable.length - 6} more
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-
-          
         </div>
       </div>
     </div>

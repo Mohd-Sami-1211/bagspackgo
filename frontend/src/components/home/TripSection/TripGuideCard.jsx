@@ -23,7 +23,7 @@ const GuideCard = ({ guide, category, days, count = 1, date }) => {
         scale: 1.02,
         transition: { type: 'spring', stiffness: 250, damping: 18 },
       }}
-      className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 hover:shadow-lg transition-all"
+      className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200 md:border-transparent hover:shadow-lg transition-all"
     >
       <div className="flex flex-col md:flex-row">
         {/* Left Side (80%) */}
