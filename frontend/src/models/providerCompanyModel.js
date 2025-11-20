@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
 const providerCompanySchema = new mongoose.Schema({
-    personalEmail : {
+    providerId : {
         type : mongoose.Schema.Types.ObjectId,
         ref : 'ServiceProvider'
     },

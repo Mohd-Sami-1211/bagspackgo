@@ -5,8 +5,13 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import axios from "axios";
+import { useDispatch , useSelector } from 'react-redux';
+import {addServiceProvider} from 'src/slices/serviceProviderSlice'
 
 export default function SignInPage() {
+  const dispatch = useDispatch();
+  const providerCompanyData = useSelector((store)=>store.providerCompany.currentCompany);
+  const getProviderData = useSelector((store)=>store.provider.currentProvider);
   const [role, setRole] = useState('user');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -17,7 +22,6 @@ export default function SignInPage() {
     e.preventDefault();
     setError('');
     //write backend API here 
-
     try {
       
       const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/signin`, {
@@ -30,7 +34,23 @@ export default function SignInPage() {
         router.push('/user/trip');
       }
       else{
-        router.push('/serviceprovider/dashboard')
+        const providerData = res.data.data;
+        dispatch(addServiceProvider(providerData));
+        if(!providerCompanyData){
+          router.push('/serviceprovider')
+        }
+        else{
+          if(getProviderData?._id === providerCompanyData?.providerId){
+            router.push('/serviceprovider/dashboard')
+
+          }
+          else{
+            router.push('/serviceprovider');
+          }
+
+        }
+       
+        
       }
 
     } 

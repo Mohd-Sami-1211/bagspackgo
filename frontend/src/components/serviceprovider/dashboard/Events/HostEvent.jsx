@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useSelector } from 'react-redux';
 import { 
   ArrowLeft, 
   Calendar, 
@@ -21,6 +22,7 @@ import {
   DollarSign,
   Check
 } from 'lucide-react';
+import axios from 'axios';
 
 export default function HostEventPage() {
   const router = useRouter();
@@ -28,27 +30,27 @@ export default function HostEventPage() {
   const [isPublished, setIsPublished] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [formData, setFormData] = useState({
-    title: '',
-    eventType: '',
-    location: '',
-    date: '',
+    title: 'Event',
+    eventType: 'Adventure Tour',
+    location: 'Kashmir',
+    date: '2025-11-18',
     duration: 1,
     totalSlots: 20,
-    pricePerSlot: '',
-    destination: '',
-    destinationLink: '',
-    about: '',
-    highlights: [''],
-    whatsIncluded: [''],
+    pricePerSlot: '2000',
+    destination: 'Leh',
+    destinationLink: 'https://destinationLink.com',
+    about: 'Happy Event',
+    highlights: ['Happy' , 'Enjoy' , 'Memorable'],
+    whatsIncluded: ['Happy' , 'Enjoy' , 'Memorable'],
     faqs: [
-      { question: '', answer: '' },
-      { question: '', answer: '' },
-      { question: '', answer: '' }
+      { question: 'What', answer: 'Hello' },
+      { question: 'when', answer: 'Hello' },
+      { question: 'Whn', answer: 'Okay' }
     ],
-    whatToBring: [''],
-    restrictions: [''],
-    pickupPoints: [{ location: '', link: '', time: '' }],
-    itinerary: ['', '', ''],
+    whatToBring: ['Food' , 'Water' , 'Wallet'],
+    restrictions: ['No Game' , 'Hello Game' , 'No'],
+    pickupPoints: [{ location: 'Delhi', link: 'http://link.com', time: '10:10' }],
+    itinerary: ['Hello', 'Hello2', 'Hello3'],
     poster: null
   });
 
@@ -87,6 +89,23 @@ export default function HostEventPage() {
     'Itinerary',
     'Poster & Finalize'
   ];
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!acceptedTerms) {
+      alert('Please accept the terms and conditions to publish your event.');
+      return;
+    }
+
+    // Handle the Form to Host the Event
+
+    const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/hostEvent`, {
+      form
+    } , { headers: { "Content-Type": "multipart/form-data" } });
+    consoel.log()
+
+    console.log('Form submitted:', formData);
+    setIsPublished(true);
+  };
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -165,17 +184,6 @@ export default function HostEventPage() {
   const prevSection = () => {
     setActiveSection(prev => Math.max(prev - 1, 0));
   };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!acceptedTerms) {
-      alert('Please accept the terms and conditions to publish your event.');
-      return;
-    }
-    console.log('Form submitted:', formData);
-    setIsPublished(true);
-  };
-
   const SectionHeader = ({ title, description, icon: Icon, number }) => (
     <div className="flex items-center gap-4 mb-8">
       <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg">

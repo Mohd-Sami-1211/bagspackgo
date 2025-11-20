@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import connectDB from "src/DB/DBConnection";
 import { providerCompanyModel } from "src/models/providerCompanyModel";
 import {v2 as cloudinary} from "cloudinary";
+import mongoose from "mongoose";
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -12,6 +13,7 @@ export async function POST(req){
     try {
         await connectDB();
         const formData = await req.formData();
+        const providerId = formData.get("providerId");
         const companyEmail = formData.get("companyEmail");
         const companyMobileNumber = formData.get("companyMobileNumber");
         const companyName  = formData.get("companyName");
@@ -25,6 +27,7 @@ export async function POST(req){
         const uploadResultOfId = await UploadFile(idProof);
         const jsonObjectOfAvailability = JSON.parse(availabilityData);
         const companyinfo = new providerCompanyModel({
+            providerId,
             companyEmail,
             companyMobileNumber,
             companyName,

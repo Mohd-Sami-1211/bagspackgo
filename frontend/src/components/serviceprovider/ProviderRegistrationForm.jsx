@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useSelector , useDispatch } from 'react-redux';
+import {addProviderCompany} from 'src/slices/providerCompanySlice'
 import { 
   Send, 
   Hourglass, 
@@ -97,6 +99,10 @@ function ProgressStatus({ step = 'submitted' }) {
 }
 
 export default function ProviderRegistrationForm() {
+  const dispatch = useDispatch();
+  const data = useSelector((store)=>store.provider.currentProvider);
+  const providerId = data?._id;
+  console.log(providerId)
   const [form, setForm] = useState({
     companyName: 'Kavi Pvt Ltd',
     companyMail: 'kavi.workspaceofficial@gmail.com',
@@ -163,6 +169,7 @@ const destinations = useMemo(() => {
 
     // Call the backend Api here to store the information of company details
     const formData = new FormData();
+    formData.append("providerId" , String(providerId));
     formData.append("companyEmail", form.companyMail);
     formData.append("companyName", form.companyName);
     formData.append("companyMobileNumber", form.companyMobile);
@@ -174,7 +181,9 @@ const destinations = useMemo(() => {
     formData.append("availability", JSON.stringify(form.availability));
     try {
       const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/completeCompanyDetails`,formData,  { headers: { "Content-Type": "multipart/form-data" } });
-      console.log(res);
+      const providerCompanyData = res?.data?.data;
+      console.log(providerCompanyData);
+      dispatch(addProviderCompany(providerCompanyData))
       
       setSubmitted(true);
       setStatus('submitted');
@@ -187,7 +196,7 @@ const destinations = useMemo(() => {
       }, 100);
     } catch (error) {
       const backendMessage = error.response?.data?.message || error.response?.data?.error ||'Unable to Complete Profile. Please try again.';
-      setError(backendMessage);
+      setErrors(backendMessage);
       console.error('Axios error:', error);
     }
   }
