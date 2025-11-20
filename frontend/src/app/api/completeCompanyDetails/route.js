@@ -2,13 +2,13 @@ import { NextResponse } from "next/server";
 import connectDB from "src/DB/DBConnection";
 import { providerCompanyModel } from "src/models/providerCompanyModel";
 import {v2 as cloudinary} from "cloudinary";
-import mongoose from "mongoose";
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
   secure : true
 });
+export default cloudinary;
 export async function POST(req){
     try {
         await connectDB();
@@ -60,7 +60,7 @@ export async function POST(req){
 
 
 
-async function UploadFile(fileName){
+export async function UploadFile(fileName){
     const type  = fileName.type;
     let isImage  = false;
     if(type =="image/jpg" || type == "image/jpeg" || type == "image/png"){

@@ -26,10 +26,12 @@ import axios from 'axios';
 
 export default function HostEventPage() {
   const router = useRouter();
+  const companyInfo = useSelector((store)=>store.providerCompany.currentCompany);
   const [activeSection, setActiveSection] = useState(0);
   const [isPublished, setIsPublished] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [formData, setFormData] = useState({
+    companyId : '',
     title: 'Event',
     eventType: 'Adventure Tour',
     location: 'Kashmir',
@@ -97,13 +99,12 @@ export default function HostEventPage() {
     }
 
     // Handle the Form to Host the Event
-
+    formData.companyId = companyInfo._id;
     const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/hostEvent`, {
-      form
+      formData
     } , { headers: { "Content-Type": "multipart/form-data" } });
-    consoel.log()
 
-    console.log('Form submitted:', formData);
+    console.log('Form submitted:', res);
     setIsPublished(true);
   };
 

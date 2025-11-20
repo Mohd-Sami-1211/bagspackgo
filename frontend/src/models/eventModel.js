@@ -5,43 +5,43 @@ const EventSchema = new mongoose.Schema({
         type : mongoose.Schema.Types.ObjectId,
         ref : 'providerCompanyInfo'
     },
-    EventTitle : {
+    title : {
         type : String
     },
-    EventType : {
+    eventType : {
         type : String
     },
-    Location : {
+    location : {
         type : String
     },
-    Date : {
+    date : {
         type : Date
     },
-    Duration : {
+    duration : {
         type : Number
     },
-    TotalSlots : {
+    totalSlots : {
         type : Number
     },
-    PricePerSlot : {
+    pricePerSlot : {
         type : Number
     },
-    Destination : {
+    destination : {
         type : String
     },
-    DestinationLink : {
+    destinationLink : {
         type : String
     },
-    AboutTheEvent : {
+    about : {
         type : String
     },
-    HighLights : {
+    highlights : {
         type : [String]
     },
-    Included : {
+    whatsIncluded : {
         type : [String]
     },
-    FAQ : {
+    faqs : {
         type : [
             {
                 Question : {type : String},
@@ -50,13 +50,13 @@ const EventSchema = new mongoose.Schema({
             }
         ]
     },
-    WhatToBringInEvent : {
+    whatToBring : {
         type : [String]
     },
-    Restrictions : {
+    restrictions : {
         type : [String]
     },
-    PickUpAndDrop : {
+    pickupPoints : {
         type : [
             {
                 Location : {type : String},
@@ -66,10 +66,10 @@ const EventSchema = new mongoose.Schema({
 
         ]
     },
-    EventItinerary : {
+    itinerary : {
         type : [String]
     },
-    Poster : {
+    posterFile : {
         type : String
     }
 })
