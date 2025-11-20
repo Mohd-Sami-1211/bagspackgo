@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { UploadFile } from "src/app/api/completeCompanyDetails/route";
 import { EventModel } from "src/models/eventModel";
+import connectDB from "src/DB/DBConnection";
 export async function POST(req) {
   try {
+    await connectDB();
     const formData = await req.formData();
-
-    // Extract simple string fields
+    
     const companyId = String(formData.get('formData[companyId]'));
     const title = formData.get('formData[title]');
     const eventType = formData.get('formData[eventType]');
@@ -60,7 +61,6 @@ export async function POST(req) {
         time: formData.get(`formData[pickupPoints][${i}][time]`)
       });
     }
-
     // Extract the file for poster
     const posterFile = formData.get('formData[poster]');
     const uploadedFile = await UploadFile(posterFile);
