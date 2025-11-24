@@ -2,7 +2,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import {addCompanyEvent} from "src/slices/providerCompanySlice"
+import { v4 as uuidv4 } from 'uuid';
 import { 
   ArrowLeft, 
   Calendar, 
@@ -26,33 +28,36 @@ import axios from 'axios';
 
 export default function HostEventPage() {
   const router = useRouter();
+  const dispatch = useDispatch();
   const companyInfo = useSelector((store)=>store.providerCompany.currentCompany);
   const [activeSection, setActiveSection] = useState(0);
   const [isPublished, setIsPublished] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [formData, setFormData] = useState({
     companyId : '',
-    title: 'Event',
+    eventId : '',
+    title: 'Kabaddi Event',
     eventType: 'Adventure Tour',
-    location: 'Kashmir',
+    location: 'Delhi',
     date: '2025-11-18',
-    duration: 1,
-    totalSlots: 20,
-    pricePerSlot: '2000',
+    duration: 5,
+    totalSlots: 25,
+    pricePerSlot: '800',
     destination: 'Leh',
-    destinationLink: 'https://destinationLink.com',
-    about: 'Happy Event',
+    destinationLink: 'https://Kabaddi/destinationLink.com',
+    about: 'Kabaddi is a team contact sport from South Asia played between two teams of seven players each',
     highlights: ['Happy' , 'Enjoy' , 'Memorable'],
     whatsIncluded: ['Happy' , 'Enjoy' , 'Memorable'],
     faqs: [
-      { question: 'What', answer: 'Hello' },
-      { question: 'when', answer: 'Hello' },
-      { question: 'Whn', answer: 'Okay' }
+      { question: 'What to bring', answer: 'Kabaddi Kit' },
+      { question: 'is Water Bottle allowed', answer: 'Yes' },
+      { question: 'Is this free', answer: 'No' },
+      { question: 'event Id', answer: 'Given' }
     ],
-    whatToBring: ['Food' , 'Water' , 'Wallet'],
-    restrictions: ['No Game' , 'Hello Game' , 'No'],
-    pickupPoints: [{ location: 'Delhi', link: 'http://link.com', time: '10:10' }],
-    itinerary: ['Hello', 'Hello2', 'Hello3'],
+    whatToBring: ['Food' , 'Water' , 'Wallet' , 'Excitement'],
+    restrictions: ['Do not Pick Water Bottle' , 'Do not wear slippers' , 'No'],
+    pickupPoints: [{ location: 'Delhi', link: 'http://Kabaddi.com', time: '10:10' }],
+    itinerary: ['Hello', 'Hello2', 'Hello3' , 'Hello4'],
     poster: null
   });
 
@@ -100,12 +105,17 @@ export default function HostEventPage() {
 
     // Handle the Form to Host the Event
     formData.companyId = companyInfo._id;
-    const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/hostEvent`, {
-      formData
-    } , { headers: { "Content-Type": "multipart/form-data" } });
-
-    console.log('Form submitted:', res);
-    setIsPublished(true);
+    formData.eventId = uuidv4();
+    try {
+      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/hostEvent`, {
+        formData
+      } , { headers: { "Content-Type": "multipart/form-data" } });
+      console.log('Form submitted:', res);
+      dispatch(addCompanyEvent(res?.data?.data));
+      setIsPublished(true);
+    } catch (error) {
+      console.error('Axios error:', error);
+    }
   };
 
   const handleChange = (e) => {

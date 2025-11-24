@@ -4,16 +4,18 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { LogOut, AlertTriangle, CheckCircle2, XCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useDispatch } from 'react-redux';
 
 export default function LogoutPage() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const router = useRouter();
+  const dispatch = useDispatch();
 
   const handleLogout = () => {
     setIsLoggingOut(true);
-    // Simulate API logout delay
     setTimeout(() => {
       // Clear auth tokens or perform actual logout logic here
+      dispatch({ type: "auth/logout" });
       router.push('/signin'); // Redirect to login page after logout
     }, 1500);
   };

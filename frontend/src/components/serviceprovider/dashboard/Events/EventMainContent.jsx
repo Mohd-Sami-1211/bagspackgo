@@ -1,9 +1,11 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Calendar, MapPin, Clock, Users, Plus, Edit3, Eye, Trash2, PlayCircle, CheckCircle2, Share2 } from 'lucide-react';
-
+import { useDispatch, useSelector } from 'react-redux';
+import { addCompanyEvent } from 'src/slices/providerCompanySlice';
+import axios from 'axios';
 // Events data
 const eventsData = [
   {
@@ -80,6 +82,34 @@ function StatusPill({ status }) {
 }
 
 function EventCard({ event, onAction }) {
+  const dispatch = useDispatch();
+  const companyDetails = useSelector((store)=>store.providerCompany.currentCompany);
+  const companyEvents = useSelector((store)=>store.providerCompany.currentEvents);
+  console.log(companyEvents);
+  const companyId = companyDetails._id;
+  useEffect(()=>{
+    async function fetchDetails(){
+      try {
+        console.log("Inside useEffect");
+        if(companyEvents.length==0){
+          console.log("Inside if")
+          const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/getCompanyEvents?companyId=${companyId}`);
+          console.log(res?.data?.data);
+          const backendMessage = res.data.message;
+          if(backendMessage=="Events Found"){
+            console.log("Dispatch Done")
+            dispatch(addCompanyEvent(res?.data?.data))
+          }
+
+        }
+        
+      } catch (error) {
+        console.log(error);
+        
+      }
+    }
+    fetchDetails();
+  },[])
   return (
     <motion.article
       layout

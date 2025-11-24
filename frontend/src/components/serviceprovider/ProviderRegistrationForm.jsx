@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import destinationsData from 'src/data/data.json';
 import axios from 'axios';
+import { useRouter } from 'next/navigation'
 
 // Modern form field component
 function FormField({ label, hint, error, children, required, icon: Icon }) {
@@ -99,10 +100,32 @@ function ProgressStatus({ step = 'submitted' }) {
 }
 
 export default function ProviderRegistrationForm() {
+  const router = useRouter();
   const dispatch = useDispatch();
   const data = useSelector((store)=>store.provider.currentProvider);
   const providerId = data?._id;
-  console.log(providerId)
+  useEffect(() =>{
+    async function fetchDetails(){
+      try {
+        console.log("Inside useEffect");
+        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/getCompanyInfo?providerId=${providerId}`);
+        const backendMessage = res.data.message;
+        console.log(backendMessage);
+        if(backendMessage=="Company Found"){
+          dispatch(addProviderCompany(res?.data?.data))
+          router.push('/serviceprovider/dashboard');
+        }
+        else{
+          router.push('/serviceprovider');
+        }
+      } catch (error) {
+        console.log(error);
+        
+      }
+    }
+    fetchDetails();
+    
+  },[])
   const [form, setForm] = useState({
     companyName: 'Kavi Pvt Ltd',
     companyMail: 'kavi.workspaceofficial@gmail.com',

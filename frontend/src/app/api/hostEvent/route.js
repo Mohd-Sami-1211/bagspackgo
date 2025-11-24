@@ -6,7 +6,7 @@ export async function POST(req) {
   try {
     await connectDB();
     const formData = await req.formData();
-    
+    const eventId = formData.get('formData[eventId]')
     const companyId = String(formData.get('formData[companyId]'));
     const title = formData.get('formData[title]');
     const eventType = formData.get('formData[eventType]');
@@ -18,7 +18,7 @@ export async function POST(req) {
     const destination = formData.get('formData[destination]');
     const destinationLink = formData.get('formData[destinationLink]');
     const about = formData.get('formData[about]');
-
+    console.log(eventId);
     // Extract array fields using loop
     const highlights = [];
     for (let i = 0; formData.has(`formData[highlights][${i}]`); i++) {
@@ -64,11 +64,10 @@ export async function POST(req) {
     // Extract the file for poster
     const posterFile = formData.get('formData[poster]');
     const uploadedFile = await UploadFile(posterFile);
-
-    // Now you have a structured object ready to use
       
     const companyEvent = new EventModel({
       companyId,
+      eventId,
       title,
       eventType,
       location,
@@ -91,9 +90,7 @@ export async function POST(req) {
     const companyEventSaved = await companyEvent.save();
     console.log(companyEventSaved)
 
-    // handle your DB save or file uploads here
-
-    return new Response(JSON.stringify({ message: "Data received", data: companyEventSaved }), {
+    return new Response(JSON.stringify({ message: "Data received", data : companyEventSaved }), {
       status: 200,
       headers: { "Content-Type": "application/json" }
     });

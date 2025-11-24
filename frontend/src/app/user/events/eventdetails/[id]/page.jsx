@@ -3,10 +3,10 @@ import { use, Suspense } from 'react';
 import EventDetails from 'src/components/home/EventSection/EventDetails';
 import { notFound } from 'next/navigation';
 import data from 'src/data/data.json';
-
+import React from 'react';
 function EventDetailsContent({ params }) {
   // Unwrap the params promise
-  const { id } = use(params);
+  const { id } = React.use(params);
   
   // Find the event by ID
   const event = data.events.find(e => e.id === id);

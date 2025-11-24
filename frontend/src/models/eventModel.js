@@ -18,7 +18,7 @@ const faqSchema = new mongoose.Schema(
 const EventSchema = new mongoose.Schema({
   companyId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "providerCompanyInfo"
+    ref : "providerCompanyInfo"
   },
   title: { type: String },
   eventType: { type: String },
@@ -41,7 +41,8 @@ const EventSchema = new mongoose.Schema({
   pickupPoints: [pickupPointSchema],
 
   itinerary: { type: [String] },
-
+  eventId : {type : String},
   posterFile: { type: String }
 });
+// mongoose.deleteModel && mongoose.deleteModel("EventModel");
 export const EventModel = mongoose.models.EventModel || mongoose.model("EventModel", EventSchema);
