@@ -73,7 +73,7 @@ export async function UploadFile(fileName){
             isImage
             ? {
                 use_filename: true,
-                unique_filename: false,
+                unique_filename: true,
                 folder: "bagspackgo",
                 transformation: [
                     { width: 800, height: 800, crop: "limit" },
@@ -83,7 +83,7 @@ export async function UploadFile(fileName){
                 }
             : {
                 use_filename: true,
-                unique_filename: false,
+                unique_filename: true,
                 folder: "bagspackgo",
                 resource_type: "raw", // for PDFs and other non-image files
                 },
