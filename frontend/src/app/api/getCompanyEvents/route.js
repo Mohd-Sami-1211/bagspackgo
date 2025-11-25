@@ -7,7 +7,7 @@ export async function GET(req){
     console.log(companyId);
     const companyEvents = await EventModel.find({companyId});
     console.log(companyEvents);
-    if(!companyEvents){
+    if(companyEvents.length==0){
         return NextResponse.json({
             message : "No Events"
         })

@@ -18,7 +18,6 @@ export async function POST(req) {
     const destination = formData.get('formData[destination]');
     const destinationLink = formData.get('formData[destinationLink]');
     const about = formData.get('formData[about]');
-    console.log(eventId);
     // Extract array fields using loop
     const highlights = [];
     for (let i = 0; formData.has(`formData[highlights][${i}]`); i++) {

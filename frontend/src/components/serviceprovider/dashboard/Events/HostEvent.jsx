@@ -36,16 +36,16 @@ export default function HostEventPage() {
   const [formData, setFormData] = useState({
     companyId : '',
     eventId : '',
-    title: 'Kabaddi Event',
+    title: 'Trekking Event',
     eventType: 'Adventure Tour',
-    location: 'Delhi',
+    location: 'Coimbatore',
     date: '2025-11-18',
-    duration: 5,
-    totalSlots: 25,
-    pricePerSlot: '800',
+    duration: 34,
+    totalSlots: 100,
+    pricePerSlot: '450',
     destination: 'Leh',
-    destinationLink: 'https://Kabaddi/destinationLink.com',
-    about: 'Kabaddi is a team contact sport from South Asia played between two teams of seven players each',
+    destinationLink: 'https://Trekking//destinationLink.com',
+    about: 'Trekking is a team contact sport from South Asia played between two teams of seven players each',
     highlights: ['Happy' , 'Enjoy' , 'Memorable'],
     whatsIncluded: ['Happy' , 'Enjoy' , 'Memorable'],
     faqs: [
@@ -56,7 +56,7 @@ export default function HostEventPage() {
     ],
     whatToBring: ['Food' , 'Water' , 'Wallet' , 'Excitement'],
     restrictions: ['Do not Pick Water Bottle' , 'Do not wear slippers' , 'No'],
-    pickupPoints: [{ location: 'Delhi', link: 'http://Kabaddi.com', time: '10:10' }],
+    pickupPoints: [{ location: 'Delhi', link: 'http://Trekking.com', time: '10:10' }],
     itinerary: ['Hello', 'Hello2', 'Hello3' , 'Hello4'],
     poster: null
   });

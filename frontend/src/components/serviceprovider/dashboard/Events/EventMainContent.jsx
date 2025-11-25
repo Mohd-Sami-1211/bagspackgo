@@ -6,110 +6,44 @@ import { Calendar, MapPin, Clock, Users, Plus, Edit3, Eye, Trash2, PlayCircle, C
 import { useDispatch, useSelector } from 'react-redux';
 import { addCompanyEvent } from 'src/slices/providerCompanySlice';
 import axios from 'axios';
-// Events data
-const eventsData = [
-  {
-    id: 'E-44',
-    title: 'Shikara Parade',
-    date: '2025-08-15',
-    time: '14:00',
-    status: 'Live',
-    location: 'Dal Lake, Srinagar',
-    duration: '3 hours',
-    attendees: '45/60',
-    description: 'Traditional Shikara boat parade showcasing local culture and craftsmanship',
-    category: 'Cultural Event',
-  },
-  {
-    id: 'E-45',
-    title: 'Himalayan Travel Fair',
-    date: '2025-08-28',
-    time: '10:00',
-    status: 'Upcoming',
-    location: 'Convention Center, Leh',
-    duration: '6 hours',
-    attendees: '23/100',
-    description: 'Annual travel fair featuring Himalayan destinations and adventure activities',
-    category: 'Exhibition',
-  },
-  {
-    id: 'E-46',
-    title: 'Kashmir Food Festival',
-    date: '2025-09-05',
-    time: '18:00',
-    status: 'Upcoming',
-    location: 'Mughal Gardens, Srinagar',
-    duration: '4 hours',
-    attendees: '12/80',
-    description: 'Culinary event featuring traditional Kashmiri cuisine and live cooking demonstrations',
-    category: 'Food Festival',
-  },
-  {
-    id: 'E-47',
-    title: 'Ladakh Photography Workshop',
-    date: '2025-07-20',
-    time: '09:00',
-    status: 'Past',
-    location: 'Leh Valley, Ladakh',
-    duration: '8 hours',
-    attendees: '30/30',
-    description: 'Professional photography workshop capturing the beauty of Ladakh landscapes',
-    category: 'Workshop',
-  },
-];
+// Helper to calculate event status based on date/time & duration
+function calculateStatus(event) {
+  const now = new Date();
+  // Parse event date and time (assuming ISO or compatible format)
+  const start = new Date(`${event.date.split('T')[0]}T${event.pickupPoints[0].time}:00`);
+  // Calculate end time by adding duration (in hours)
+  const end = new Date(start.getTime() + (Number(event.duration) || 0) * 60 * 60 * 1000);
+
+  if (now < start) return 'upcoming';
+  if (now >= start && now <= end) return 'live';
+  return 'past';
+}
 
 function StatusPill({ status }) {
   const map = {
-    'Live': 'bg-emerald-100 text-emerald-800',
-    'Upcoming': 'bg-blue-100 text-blue-800',
-    'Past': 'bg-neutral-100 text-neutral-800',
-    'Draft': 'bg-yellow-100 text-yellow-800',
+    live: 'bg-emerald-100 text-emerald-800',
+    upcoming: 'bg-blue-100 text-blue-800',
+    past: 'bg-neutral-100 text-neutral-800',
   };
-  
+
   const icons = {
-    'Live': <PlayCircle className="w-3 h-3" />,
-    'Upcoming': <Clock className="w-3 h-3" />,
-    'Past': <CheckCircle2 className="w-3 h-3" />,
-    'Draft': <Edit3 className="w-3 h-3" />,
+    live: <PlayCircle className="w-3 h-3" />,
+    upcoming: <Clock className="w-3 h-3" />,
+    past: <CheckCircle2 className="w-3 h-3" />,
   };
 
   return (
     <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${map[status] || 'bg-gray-100 text-gray-700'}`}>
       {icons[status]}
-      {status}
+      {status.charAt(0).toUpperCase() + status.slice(1)}
     </span>
   );
 }
 
 function EventCard({ event, onAction }) {
-  const dispatch = useDispatch();
-  const companyDetails = useSelector((store)=>store.providerCompany.currentCompany);
-  const companyEvents = useSelector((store)=>store.providerCompany.currentEvents);
-  console.log(companyEvents);
-  const companyId = companyDetails._id;
-  useEffect(()=>{
-    async function fetchDetails(){
-      try {
-        console.log("Inside useEffect");
-        if(companyEvents.length==0){
-          console.log("Inside if")
-          const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/getCompanyEvents?companyId=${companyId}`);
-          console.log(res?.data?.data);
-          const backendMessage = res.data.message;
-          if(backendMessage=="Events Found"){
-            console.log("Dispatch Done")
-            dispatch(addCompanyEvent(res?.data?.data))
-          }
+  // Calculate dynamic status here, overriding event.status
+  const dynamicStatus = calculateStatus(event);
 
-        }
-        
-      } catch (error) {
-        console.log(error);
-        
-      }
-    }
-    fetchDetails();
-  },[])
   return (
     <motion.article
       layout
@@ -131,8 +65,8 @@ function EventCard({ event, onAction }) {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-neutral-500">{event.id}</span>
-            <StatusPill status={event.status} />
+            <span className="text-sm text-neutral-500">{event.eventId}</span>
+            <StatusPill status={dynamicStatus} />
           </div>
         </div>
 
@@ -141,7 +75,7 @@ function EventCard({ event, onAction }) {
         <div className="grid grid-cols-2 gap-4 text-sm text-neutral-600 mb-4">
           <div className="flex items-center gap-2">
             <Clock className="w-4 h-4 text-emerald-600" />
-            <span>{event.date} at {event.time}</span>
+            <span>{event.date.split('T')[0]} at {event.pickupPoints[0].time}</span>
           </div>
           <div className="flex items-center gap-2">
             <MapPin className="w-4 h-4 text-emerald-600" />
@@ -149,17 +83,17 @@ function EventCard({ event, onAction }) {
           </div>
           <div className="flex items-center gap-2">
             <Users className="w-4 h-4 text-emerald-600" />
-            <span>{event.attendees} attendees</span>
+            <span>{event.totalSlots} attendees</span>
           </div>
           <div className="flex items-center gap-2">
             <Clock className="w-4 h-4 text-emerald-600" />
-            <span>{event.duration}</span>
+            <span>{event.duration} hours</span>
           </div>
         </div>
 
         <div className="flex items-center justify-between pt-4 border-t border-neutral-100">
           <div className="flex items-center gap-2">
-            {event.status === 'Upcoming' && (
+            {dynamicStatus === 'upcoming' && (
               <>
                 <button
                   onClick={() => onAction('view', event)}
@@ -184,8 +118,8 @@ function EventCard({ event, onAction }) {
                 </button>
               </>
             )}
-            
-            {event.status === 'Live' && (
+
+            {dynamicStatus === 'live' && (
               <>
                 <button
                   onClick={() => onAction('manage', event)}
@@ -202,8 +136,8 @@ function EventCard({ event, onAction }) {
                 </button>
               </>
             )}
-            
-            {event.status === 'Past' && (
+
+            {dynamicStatus === 'past' && (
               <>
                 <button
                   onClick={() => onAction('view', event)}
@@ -221,7 +155,7 @@ function EventCard({ event, onAction }) {
               </>
             )}
           </div>
-          
+
           <div className="flex items-center gap-2">
             <button
               onClick={() => onAction('delete', event)}
@@ -236,22 +170,43 @@ function EventCard({ event, onAction }) {
   );
 }
 
-export default function EventMainContent() {
+export default function EventMainContent({companyEvents}) {
+  // Get events from redux store
   const [activeTab, setActiveTab] = useState('live');
-  const [events, setEvents] = useState(eventsData);
-  const router = useRouter(); // Next.js router
+  const dipatch = useDispatch();
+  const currentCompany = useSelector((store)=>store.providerCompany.currentCompany);
+  const companyId = currentCompany._id;
+  const router = useRouter();
+  useEffect(()=>{
+    async function fetchDetails(){
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/getCompanyEvents?companyId=${companyId}`);
+      const backendMessage = res?.data?.message;
+      if(backendMessage=="Events Found"){
+        dipatch(addCompanyEvent(res?.data?.data))
+      }
+    }
+    if(companyEvents.length==0){
+      fetchDetails();
+    }
+  },[])
+
+  // Calculate dynamic statuses for UI count and filtering
+  const eventsWithDynamicStatus = companyEvents.map(e => ({
+    ...e,
+    status: calculateStatus(e)
+  }));
 
   const tabs = [
-    { key: 'live', label: 'Live Events', count: events.filter(e => e.status === 'Live').length },
-    { key: 'upcoming', label: 'Upcoming', count: events.filter(e => e.status === 'Upcoming').length },
-    { key: 'past', label: 'Past Events', count: events.filter(e => e.status === 'Past').length },
+    { key: 'live', label: 'Live Events', count: eventsWithDynamicStatus.filter(e => e.status === 'live').length },
+    { key: 'upcoming', label: 'Upcoming', count: eventsWithDynamicStatus.filter(e => e.status === 'upcoming').length },
+    { key: 'past', label: 'Past Events', count: eventsWithDynamicStatus.filter(e => e.status === 'past').length },
   ];
 
-  const filteredEvents = events.filter(event => {
+  const filteredEvents = eventsWithDynamicStatus.filter(event => {
     switch (activeTab) {
-      case 'live': return event.status === 'Live';
-      case 'upcoming': return event.status === 'Upcoming';
-      case 'past': return event.status === 'Past';
+      case 'live': return event.status === 'live';
+      case 'upcoming': return event.status === 'upcoming';
+      case 'past': return event.status === 'past';
       default: return true;
     }
   });
@@ -259,11 +214,13 @@ export default function EventMainContent() {
   function handleAction(type, event) {
     switch (type) {
       case 'publish':
-        setEvents(prev => prev.map(e => e.id === event.id ? { ...e, status: 'Live' } : e));
+        // handle publish logic here (e.g. update DB or redux, then UI updates automatically)
+        alert(`Publishing event: ${event.title}`);
         break;
       case 'delete':
         if (confirm(`Are you sure you want to delete "${event.title}"?`)) {
-          setEvents(prev => prev.filter(e => e.id !== event.id));
+          // Dispatch redux action or update local copy
+          alert(`Deleted event: ${event.title}`);
         }
         break;
       case 'view':
@@ -278,7 +235,6 @@ export default function EventMainContent() {
     }
   }
 
-  // Function to handle hosting new event - using Next.js router
   const handleHostEvent = () => {
     router.push('/serviceprovider/dashboard/events/hostevent');
   };
@@ -291,7 +247,7 @@ export default function EventMainContent() {
           <h1 className="text-2xl font-semibold text-neutral-900">Events Management</h1>
           <p className="text-neutral-600 mt-1">Manage and organize your community events</p>
         </div>
-        
+
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
@@ -342,8 +298,8 @@ export default function EventMainContent() {
               No {tabs.find(t => t.key === activeTab)?.label.toLowerCase()}
             </h3>
             <p className="text-neutral-600 mb-4 max-w-sm mx-auto">
-              {activeTab === 'live' 
-                ? 'Start by publishing an upcoming event to make it live.' 
+              {activeTab === 'live'
+                ? 'Start by publishing an upcoming event to make it live.'
                 : 'Create your first event to get started.'}
             </p>
             <button
@@ -356,7 +312,7 @@ export default function EventMainContent() {
           </motion.div>
         ) : (
           filteredEvents.map((event) => (
-            <EventCard key={event.id} event={event} onAction={handleAction} />
+            <EventCard key={event.eventId} event={event} onAction={handleAction} />
           ))
         )}
       </div>

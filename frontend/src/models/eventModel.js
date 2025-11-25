@@ -27,7 +27,6 @@ const EventSchema = new mongoose.Schema({
   duration: { type: Number },
   totalSlots: { type: Number },
   pricePerSlot: { type: Number },
-
   destination: { type: String },
   destinationLink: { type: String },
   about: { type: String },
@@ -44,5 +43,5 @@ const EventSchema = new mongoose.Schema({
   eventId : {type : String},
   posterFile: { type: String }
 });
-// mongoose.deleteModel && mongoose.deleteModel("EventModel");
+mongoose.deleteModel && mongoose.deleteModel("EventModel");
 export const EventModel = mongoose.models.EventModel || mongoose.model("EventModel", EventSchema);
