@@ -5,7 +5,6 @@ import { X, Check, ChevronDown, ChevronUp, RefreshCcw, ArrowDown } from 'lucide-
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import EventCard from 'src/components/home/EventSection/EventCard';
-import data from 'src/data/data.json';
 import { Search, Calendar, User, Tag, MapPin } from 'lucide-react';
 import GuideCard from 'src/components/home/EventSection/GuideCard';
 import axios from 'axios';

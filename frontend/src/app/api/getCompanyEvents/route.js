@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import connectDB from "src/DB/DBConnection";
 import { EventModel } from "src/models/eventModel";
-
 export async function GET(req){
     await connectDB();
     
@@ -27,6 +26,7 @@ export async function GET(req){
         result = await EventModel.find(query)
             .populate({
                 path: 'companyId',
+                model : 'providerCompanyInfo',
                 select: 'companyName', // ONLY company name
                 populate: {
                     path: 'providerId',
