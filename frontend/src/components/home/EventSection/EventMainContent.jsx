@@ -8,6 +8,7 @@ import EventCard from 'src/components/home/EventSection/EventCard';
 import data from 'src/data/data.json';
 import { Search, Calendar, User, Tag, MapPin } from 'lucide-react';
 import GuideCard from 'src/components/home/EventSection/GuideCard';
+import axios from 'axios';
 
 const EventMainContent = () => {
   // State for events and filters
@@ -20,6 +21,7 @@ const EventMainContent = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSearch, setActiveSearch] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [guides, setGuides] = useState([])
   
   // Filter states
   const [filters, setFilters] = useState({
@@ -35,216 +37,64 @@ const EventMainContent = () => {
   const [openDropdown, setOpenDropdown] = useState(null);
   const [activeDateField, setActiveDateField] = useState('start');
 
-  // Priority scoring function (reusable)
-  const getPriorityScore = (text, query) => {
-    if (!text || !query) return 0;
-    
-    const textStr = String(text);
-    const queryStr = String(query);
-    
-    const lowerText = textStr.toLowerCase();
-    const lowerQuery = queryStr.toLowerCase();
-    
-    if (lowerText.startsWith(lowerQuery)) return 3;
-    if (lowerText.includes(lowerQuery)) return 2;
-    if (lowerText.split(' ').some(word => word.startsWith(lowerQuery))) return 1;
-    return 0;
-  };
-
-  // Unified search function with priority
-  const performSearch = (query) => {
-    if (!query || typeof query.trim !== 'function' || !query.trim()) {
-      resetSearch();
-      return;
-    }
-    
-    const trimmedQuery = query.trim();
-    setSearchQuery(trimmedQuery);
-    setActiveSearch(true);
-    setShowSuggestions(false);
-    
-    // Search both events and guides
-    const foundEvents = getFilteredEvents(trimmedQuery);
-    const foundGuides = getFilteredGuides(trimmedQuery);
-    
-    // Combine results with type indicators
-    const combinedResults = [
-      ...foundEvents.map(event => ({ ...event, type: 'event' })),
-      ...foundGuides.map(guide => ({ ...guide, type: 'guide' }))
-    ].sort((a, b) => b.priority - a.priority);
-    
-    setDisplayedEvents(combinedResults);
-  };
-
-  // Reset search to original state
-  const resetSearch = () => {
-    setSearchQuery('');
-    setActiveSearch(false);
-    setShowSuggestions(false);
-    setDisplayedEvents(filteredEvents.slice(0, displayCount));
-  };
-
-  // Enhanced suggestions generator
-  const getPrioritySuggestions = useMemo(() => {
-    const generateSuggestions = (query) => {
-      if (!query || !query.trim()) return [];
+  // Fetch events from database
+  useEffect(() => {
+    async function fetchEvents() {
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/getCompanyEvents`);
       
-      const q = query.toLowerCase();
-      const categories = [
-        {
-          name: 'Events',
-          data: data.events || [],
-          fields: [
-            { name: 'name', weight: 3 },
-            { name: 'title', weight: 2 },
-            { name: 'type', weight: 1 }
-          ],
-          icon: <Calendar className="mr-2 text-green-500" size={16} />
-        },
-        {
-          name: 'Guides',
-          data: data.guides || [],
-          fields: [
-            { name: 'name', weight: 3 }
-          ],
-          icon: <User className="mr-2 text-green-500" size={16} />
-        },
-        {
-          name: 'Destinations',
-          data: data.destinations || [],
-          fields: [
-            { name: 'label', weight: 3 }
-          ],
-          icon: <MapPin className="mr-2 text-green-500" size={16} />
-        },
-        {
-          name: 'Event Types',
-          data: Array.from(new Set((data.events || []).map(e => e.type))),
-          fields: [
-            { name: 'type', weight: 2 }
-          ],
-          icon: <Tag className="mr-2 text-green-500" size={16} />
-        }
-      ];
-
-      return categories.map(category => {
-        const items = category.data
-          .map(item => {
-            let priority = 0;
-            
-            category.fields.forEach(field => {
-              const value = item[field.name] || item;
-              priority += getPriorityScore(value, q) * field.weight;
+      const data = res?.data?.data;
+      setFilteredEvents(data || []);
+      
+      // Extract guides with eventIds they're hosting
+      const uniqueGuides = data.reduce((guides, event) => {
+        if (event?.companyId?.providerId) {
+          const guide = event.companyId.providerId;
+          const existingGuideIndex = guides.findIndex(g => g._id === guide._id);
+          
+          if (existingGuideIndex === -1) {
+            // New guide - add with eventId
+            guides.push({
+              ...guide,
+              hostedEvents: [event.eventId] // Array of eventIds
             });
-
-            return { ...item, priority, type: category.name.toLowerCase() };
-          })
-          .filter(item => item.priority > 0)
-          .sort((a, b) => b.priority - a.priority)
-          .slice(0, 5);
-
-        return items.length > 0 ? {
-          category: category.name,
-          items,
-          icon: category.icon
-        } : null;
-      }).filter(Boolean);
-    };
-
-    return generateSuggestions;
-  }, [data]);
-
-  // Filter events with enhanced priority
-  const getFilteredEvents = useMemo(() => {
-    const filterEvents = (query) => {
-      if (!query || !query.trim()) return [];
-      
-      const q = query.toLowerCase();
-      return (data.events || [])
-        .map(event => {
-          let priority = 0;
-          
-          // Direct matches
-          priority += getPriorityScore(event?.name, q) * 3;
-          priority += getPriorityScore(event?.title, q) * 3;
-          priority += getPriorityScore(event?.type, q) * 2;
-          
-          // Destination matches
-          if (event.destination) {
-            const destination = (data.destinations || [])
-              .find(d => d.value === event.destination);
-            if (destination) {
-              // Exact match gets highest priority
-              if (destination.label.toLowerCase() === q) {
-                priority += 20;
-              }
-              // Partial match
-              else if (destination.label.toLowerCase().includes(q)) {
-                priority += 10;
-              }
-              // Check destination keywords if they exist
-              else if (destination.keywords?.some(kw => kw.toLowerCase().includes(q))) {
-                priority += 8;
-              }
-            }
+          } else {
+            // Existing guide - add eventId to hostedEvents array
+            guides[existingGuideIndex].hostedEvents.push(event.eventId);
           }
-          
-          // Guide matches
-          if (event.guideId) {
-            const guide = (data.guides || [])
-              .find(g => g.id === event.guideId);
-            priority += getPriorityScore(guide?.name, q) * 2;
-          }
-          
-          return { ...event, priority };
-        })
-        .filter(event => event.priority > 0)
-        .sort((a, b) => b.priority - a.priority);
-    };
-
-    return filterEvents;
-  }, [data]);
-
-  // Filter guides with priority
-  const getFilteredGuides = useMemo(() => {
-    const filterGuides = (query) => {
-      if (!query || !query.trim()) return [];
+        }
+        return guides;
+      }, []);
       
-      const q = query.toLowerCase();
-      return (data.guides || [])
-        .map(guide => ({
-          ...guide,
-          priority: getPriorityScore(guide?.name, q) * 3
-        }))
-        .filter(guide => guide.priority > 0)
-        .sort((a, b) => b.priority - a.priority);
-    };
-
-    return filterGuides;
-  }, [data]);
+      setGuides(uniqueGuides);
+    }
+    fetchEvents();
+  }, []);
 
   // Apply filters when component mounts or filters change
   useEffect(() => {
-    let results = [...data.events];
-
+    let results = [...filteredEvents]; // Use filteredEvents from database
+    
     // Destination filter
     if (filters.destination.length > 0) {
       results = results.filter(event => 
-        filters.destination.includes(event.destinationId)
+        filters.destination.includes(event.destination)
       );
     }
 
     // Organizer filter
     if (filters.organizer.length > 0) {
-      results = results.filter(event => 
-        filters.organizer.some(orgId => event.eventId.startsWith(orgId))
-      );
+      results = results.filter(event => {
+        const eventGuide = guides.find(guide => 
+          guide.hostedEvents?.includes(event.eventId)
+        );
+        return eventGuide && filters.organizer.includes(eventGuide._id);
+      });
     }
 
-    // Category filter
-    if ((filters.type || []).length > 0) {
+    // Event Type filter
+    if ((filters.types || []).length > 0) {
       results = results.filter(event => 
-        (filters.type || []).includes(event.type)
+        (filters.types || []).includes(event.eventType)
       );
     }
 
@@ -303,16 +153,16 @@ const EventMainContent = () => {
     if (filters.sort) {
       switch (filters.sort) {
         case 'Price: Low to High':
-          results.sort((a, b) => a.price - b.price);
+          results.sort((a, b) => a.pricePerSlot - b.pricePerSlot);
           break;
         case 'Price: High to Low':
-          results.sort((a, b) => b.price - a.price);
+          results.sort((a, b) => b.pricePerSlot - a.pricePerSlot);
           break;
         case 'Most Bookings':
           results.sort((a, b) => b.bookings - a.bookings);
           break;
         case 'Highest Rated':
-          results.sort((a, b) => b.rating - a.rating);
+          results.sort((a, b) => (b.rating || 0) - (a.rating || 0));
           break;
         case 'Date: Nearest First':
           results.sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -322,18 +172,196 @@ const EventMainContent = () => {
           break;
       }
     } else {
+      // Default sorting
       results.sort((a, b) => {
-        if (a.slotsLeft !== b.slotsLeft) {
-          return a.slotsLeft - b.slotsLeft;
+        if (a.bookings !== b.bookings) {
+          return b.bookings - a.bookings;
         }
-        return b.rating - a.rating;
+        return (b.rating || 0) - (a.rating || 0);
       });
     }
 
-    setFilteredEvents(results);
-  }, [filters]);
+    // Update displayed events with filtered/sorted results
+    setDisplayedEvents(results);
 
-  // Update displayed events
+  }, [filters, filteredEvents, guides]);
+
+  // Priority scoring function (reusable)
+  const getPriorityScore = (text, query) => {
+    if (!text || !query) return 0;
+    
+    const textStr = String(text);
+    const queryStr = String(query);
+    
+    const lowerText = textStr.toLowerCase();
+    const lowerQuery = queryStr.toLowerCase();
+    
+    if (lowerText.startsWith(lowerQuery)) return 3;
+    if (lowerText.includes(lowerQuery)) return 2;
+    if (lowerText.split(' ').some(word => word.startsWith(lowerQuery))) return 1;
+    return 0;
+  };
+
+  // Filter events with enhanced priority - Use filteredEvents
+  const getFilteredEvents = useMemo(() => {
+    const filterEvents = (query) => {
+      if (!query || !query.trim()) return [];
+      
+      const q = query.toLowerCase();
+      return filteredEvents // Use filteredEvents instead of data.events
+        .map(event => {
+          let priority = 0;
+          
+          // Direct matches
+          priority += getPriorityScore(event?.title, q) * 3;
+          priority += getPriorityScore(event?.eventType, q) * 2;
+          priority += getPriorityScore(event?.about, q) * 1;
+          
+          // Destination matches
+          if (event.destination) {
+            priority += getPriorityScore(event.destination, q) * 2;
+          }
+          
+          // Guide matches
+          if (event?.companyId?.providerId?.name) {
+            priority += getPriorityScore(event.companyId.providerId.name, q) * 2;
+          }
+          
+          // Company matches
+          if (event?.companyId?.companyName) {
+            priority += getPriorityScore(event.companyId.companyName, q) * 2;
+          }
+          
+          return { ...event, priority };
+        })
+        .filter(event => event.priority > 0)
+        .sort((a, b) => b.priority - a.priority);
+    };
+
+    return filterEvents;
+  }, [filteredEvents]);
+
+  // Filter guides with priority - Use guides state
+  const getFilteredGuides = useMemo(() => {
+    const filterGuides = (query) => {
+      if (!query || !query.trim()) return [];
+      
+      const q = query.toLowerCase();
+      return guides // Use guides state instead of data.guides
+        .map(guide => ({
+          ...guide,
+          priority: getPriorityScore(guide?.name, q) * 3
+        }))
+        .filter(guide => guide.priority > 0)
+        .sort((a, b) => b.priority - a.priority);
+    };
+
+    return filterGuides;
+  }, [guides]);
+
+  // Unified search function with priority
+  const performSearch = (query) => {
+    if (!query || typeof query.trim !== 'function' || !query.trim()) {
+      resetSearch();
+      return;
+    }
+    
+    const trimmedQuery = query.trim();
+    setSearchQuery(trimmedQuery);
+    setActiveSearch(true);
+    setShowSuggestions(false);
+    
+    // Search both events and guides
+    const foundEvents = getFilteredEvents(trimmedQuery);
+    const foundGuides = getFilteredGuides(trimmedQuery);
+    
+    // Combine results with type indicators
+    const combinedResults = [
+      ...foundEvents.map(event => ({ ...event, type: 'event' })),
+      ...foundGuides.map(guide => ({ ...guide, type: 'guide' }))
+    ].sort((a, b) => b.priority - a.priority);
+    
+    setDisplayedEvents(combinedResults);
+  };
+
+  // Reset search to original state
+  const resetSearch = () => {
+    setSearchQuery('');
+    setActiveSearch(false);
+    setShowSuggestions(false);
+    setDisplayedEvents(filteredEvents.slice(0, displayCount)); // Use filteredEvents
+  };
+
+  // Enhanced suggestions generator
+  const getPrioritySuggestions = useMemo(() => {
+    const generateSuggestions = (query) => {
+      if (!query || !query.trim()) return [];
+      
+      const q = query.toLowerCase();
+      const categories = [
+        {
+          name: 'Events',
+          data: filteredEvents || [], // Use filteredEvents
+          fields: [
+            { name: 'title', weight: 3 },
+            { name: 'eventType', weight: 2 }
+          ],
+          icon: <Calendar className="mr-2 text-green-500" size={16} />
+        },
+        {
+          name: 'Guides',
+          data: guides || [], // Use guides
+          fields: [
+            { name: 'name', weight: 3 }
+          ],
+          icon: <User className="mr-2 text-green-500" size={16} />
+        },
+        {
+          name: 'Destinations',
+          data: Array.from(new Set(filteredEvents.map(event => event.destination))).map(dest => ({ label: dest })) || [], // Generate from events
+          fields: [
+            { name: 'label', weight: 3 }
+          ],
+          icon: <MapPin className="mr-2 text-green-500" size={16} />
+        },
+        {
+          name: 'Event Types',
+          data: Array.from(new Set(filteredEvents.map(event => event.eventType))), // Generate from events
+          fields: [
+            { name: 'type', weight: 2 }
+          ],
+          icon: <Tag className="mr-2 text-green-500" size={16} />
+        }
+      ];
+
+      return categories.map(category => {
+        const items = category.data
+          .map(item => {
+            let priority = 0;
+            
+            category.fields.forEach(field => {
+              const value = item[field.name] || item;
+              priority += getPriorityScore(value, q) * field.weight;
+            });
+
+            return { ...item, priority, type: category.name.toLowerCase() };
+          })
+          .filter(item => item.priority > 0)
+          .sort((a, b) => b.priority - a.priority)
+          .slice(0, 5);
+
+        return items.length > 0 ? {
+          category: category.name,
+          items,
+          icon: category.icon
+        } : null;
+      }).filter(Boolean);
+    };
+
+    return generateSuggestions;
+  }, [filteredEvents, guides]);
+
+  // Update displayed events when filteredEvents changes
   useEffect(() => {
     const hasFilters = Object.values(filters).some(filter => 
       Array.isArray(filter) ? filter.length > 0 : filter !== null && 
@@ -341,7 +369,7 @@ const EventMainContent = () => {
     );
 
     if (hasFilters) {
-      setDisplayedEvents(filteredEvents);
+      // Filters are handled in the main useEffect
     } else if (!activeSearch) {
       setDisplayedEvents(filteredEvents.slice(0, displayCount));
     }
@@ -415,7 +443,7 @@ const EventMainContent = () => {
       organizer: [],
       date: null,
       dateRange: { start: null, end: null },
-      category: [],
+      types: [],
       sort: null
     });
     setTempFilters({
@@ -423,7 +451,7 @@ const EventMainContent = () => {
       organizer: [],
       date: null,
       dateRange: { start: null, end: null },
-      category: [],
+      types: [],
       sort: null
     });
     setDisplayCount(6);
@@ -432,20 +460,19 @@ const EventMainContent = () => {
 
   // Get filtered organizers based on selected destinations
   const getFilteredOrganizers = () => {
-    if (filters.destination.length === 0) return data.guides;
-    return data.guides.filter(guide => 
-      filters.destination.includes(guide.location)
-    );
+    if (filters.destination.length === 0) return guides;
+    return guides.filter(guide => {
+      // Check if guide has events in selected destinations
+      return guide.hostedEvents?.some(eventId => {
+        const event = filteredEvents.find(e => e.eventId === eventId);
+        return event && filters.destination.includes(event.destination);
+      });
+    });
   };
 
   // Helper functions
-  const getDestinationLabel = (id) => {
-    const destination = data.destinations.find(d => d.value === id);
-    return destination ? destination.label : id;
-  };
-
   const getOrganizerName = (id) => {
-    const organizer = data.guides.find(g => g.id === id);
+    const organizer = guides.find(g => g._id === id);
     return organizer ? organizer.name : id;
   };
 
@@ -483,7 +510,7 @@ const EventMainContent = () => {
     !(typeof filter === 'object' && filter.start === null && filter.end === null)
   );
 
-  if (data.events.length === 0) {
+  if (filteredEvents.length === 0) {
     return (
       <div className="max-w-7xl mx-auto mt-8 py-2 px-4 bg-gradient-to-br from-green-50 to-blue-50 rounded-xl shadow-lg overflow-hidden mb-40">
         <div className="flex justify-center items-center h-64">
@@ -542,23 +569,23 @@ const EventMainContent = () => {
                         onChange={(e) => setDestinationSearch(e.target.value)}
                       />
                       <div className="max-h-48 overflow-y-auto">
-                        {data.destinations
+                        {Array.from(new Set(filteredEvents.map(event => event.destination)))
                           .filter(dest => 
-                            dest.label.toLowerCase().includes(destinationSearch.toLowerCase())
+                            dest && dest.toLowerCase().includes(destinationSearch.toLowerCase())
                           )
                           .map(dest => (
                             <div 
-                              key={dest.value} 
-                              className={`flex items-center p-2 hover:bg-[#d1fae5] rounded-md cursor-pointer ${tempFilters.destination.includes(dest.value) ? 'bg-[#a7f3d0]' : ''}`}
-                              onClick={() => handleTempFilterChange('destination', dest.value)}
+                              key={dest} 
+                              className={`flex items-center p-2 hover:bg-[#d1fae5] rounded-md cursor-pointer ${tempFilters.destination.includes(dest) ? 'bg-[#a7f3d0]' : ''}`}
+                              onClick={() => handleTempFilterChange('destination', dest)}
                             >
                               <div className="flex items-center">
-                                {tempFilters.destination.includes(dest.value) ? (
+                                {tempFilters.destination.includes(dest) ? (
                                   <Check className="mr-2 text-green-600" size={16} />
                                 ) : (
                                   <div className="w-4 h-4 mr-2 border border-gray-300 rounded-sm" />
                                 )}
-                                {dest.label}
+                                {dest}
                               </div>
                             </div>
                           ))}
@@ -636,14 +663,14 @@ const EventMainContent = () => {
                           })
                           .map(org => (
                             <div 
-                              key={org.id} 
+                              key={org._id} 
                               className={`flex items-center p-2 hover:bg-[#d1fae5] rounded-md cursor-pointer ${
-                                (tempFilters.organizer || []).includes(org.id) ? 'bg-[#a7f3d0]' : ''
+                                (tempFilters.organizer || []).includes(org._id) ? 'bg-[#a7f3d0]' : ''
                               }`}
-                              onClick={() => handleTempFilterChange('organizer', org.id)}
+                              onClick={() => handleTempFilterChange('organizer', org._id)}
                             >
                               <div className="flex items-center">
-                                {(tempFilters.organizer || []).includes(org.id) ? (
+                                {(tempFilters.organizer || []).includes(org._id) ? (
                                   <Check className="mr-2 text-green-600" size={16} />
                                 ) : (
                                   <div className="w-4 h-4 mr-2 border border-gray-300 rounded-sm" />
@@ -677,18 +704,18 @@ const EventMainContent = () => {
             </div>
 
             {/* Event Type Filter */}
-            <div className={`mb-6 shadow-sm p-3 rounded-lg ${(filters.type || []).length > 0 ? 'bg-green-50' : ''}`}>
+            <div className={`mb-6 shadow-sm p-3 rounded-lg ${(filters.types || []).length > 0 ? 'bg-green-50' : ''}`}>
               <div 
                 className="flex justify-between items-center cursor-pointer"
-                onClick={() => toggleDropdown('type')}
+                onClick={() => toggleDropdown('types')}
               >
                 <h3 className="text-gray-700">Event Type</h3>
                 <div className="flex items-center">
-                  {(filters.type || []).length > 0 && (
+                  {(filters.types || []).length > 0 && (
                     <button 
                       onClick={(e) => {
                         e.stopPropagation();
-                        clearAppliedFilter('type');
+                        clearAppliedFilter('types');
                         setTypeSearch('');
                       }}
                       className="text-xs text-red-500 mr-2 hover:underline"
@@ -696,12 +723,12 @@ const EventMainContent = () => {
                       Clear
                     </button>
                   )}
-                  {openDropdown === 'type' ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                  {openDropdown === 'types' ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                 </div>
               </div>
               
               <AnimatePresence>
-                {openDropdown === 'type' && (
+                {openDropdown === 'types' && (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
@@ -718,7 +745,7 @@ const EventMainContent = () => {
                         onChange={(e) => setTypeSearch(e.target.value)}
                       />
                       <div className="max-h-48 overflow-y-auto">
-                        {Array.from(new Set(data.events?.map(event => event.type) || []))
+                        {Array.from(new Set(filteredEvents.map(event => event.eventType)))
                           .filter(type => 
                             type && typeof type === 'string' && type.toLowerCase().includes((typeSearch || '').toLowerCase())
                           )
@@ -726,19 +753,19 @@ const EventMainContent = () => {
                           .map(type => (
                             <div 
                               key={type} 
-                              className={`flex items-center p-2 hover:bg-[#d1fae5] rounded-md cursor-pointer ${(tempFilters.type || []).includes(type) ? 'bg-[#a7f3d0]' : ''}`}
+                              className={`flex items-center p-2 hover:bg-[#d1fae5] rounded-md cursor-pointer ${(tempFilters.types || []).includes(type) ? 'bg-[#a7f3d0]' : ''}`}
                               onClick={() => {
                                 setTempFilters(prev => {
-                                  const currentTypes = prev.type || [];
+                                  const currentTypes = prev.types || [];
                                   const newTypes = currentTypes.includes(type)
                                     ? currentTypes.filter(t => t !== type)
                                     : [...currentTypes, type];
-                                  return {...prev, type: newTypes};
+                                  return {...prev, types: newTypes};
                                 });
                               }}
                             >
                               <div className="flex items-center">
-                                {(tempFilters.type || []).includes(type) ? (
+                                {(tempFilters.types || []).includes(type) ? (
                                   <Check className="mr-2 text-green-600" size={16} />
                                 ) : (
                                   <div className="w-4 h-4 mr-2 border border-gray-300 rounded-sm" />
@@ -1077,7 +1104,7 @@ const EventMainContent = () => {
                       {group.items.map((item, itemIndex) => {
                         const keyParts = [
                           group.category,
-                          item.id,
+                          item.id || item._id,
                           item.type,
                           item.label,
                           item.name,
@@ -1093,11 +1120,11 @@ const EventMainContent = () => {
                             className="flex items-center p-2 hover:bg-green-50 rounded-md cursor-pointer"
                             onMouseDown={(e) => e.preventDefault()}
                             onClick={() => {
-                              setSearchQuery(item.name || item.title || item.label || item.type);
-                              performSearch(item.name || item.title || item.label || item.type);
+                              setSearchQuery(item.name || item.title || item.label || item.type || item);
+                              performSearch(item.name || item.title || item.label || item.type || item);
                             }}
                           >
-                            <span className="truncate">{item.name || item.title || item.label || item.type}</span>
+                            <span className="truncate">{item.name || item.title || item.label || item.type || item}</span>
                           </div>
                         );
                       })}
@@ -1109,43 +1136,37 @@ const EventMainContent = () => {
           </div>
 <div className="flex flex-wrap gap-2 mb-6">
   {/* Destination Filters */}
-  {(filters.destination || []).map(destId => {
-    const destination = data.destinations.find(d => d.value === destId);
-    return (
-      <div key={`dest-${destId}`} className="flex items-center bg-green-400 text-white px-3 py-1 rounded-full text-sm">
-        {destination?.label || destId}
-        <X 
-          size={14} 
-          className="ml-1 cursor-pointer hover:text-red-500"
-          onClick={() => clearAppliedFilter('destination', destId)}
-        />
-      </div>
-    );
-  })}
+  {(filters.destination || []).map(dest => (
+    <div key={`dest-${dest}`} className="flex items-center bg-green-400 text-white px-3 py-1 rounded-full text-sm">
+      {dest}
+      <X 
+        size={14} 
+        className="ml-1 cursor-pointer hover:text-red-500"
+        onClick={() => clearAppliedFilter('destination', dest)}
+      />
+    </div>
+  ))}
 
   {/* Organizer Filters */}
-  {(filters.organizer || []).map(orgId => {
-    const organizer = data.guides.find(g => g.id === orgId);
-    return (
-      <div key={`org-${orgId}`} className="flex items-center bg-green-400 text-white px-3 py-1 rounded-full text-sm">
-        {organizer?.name || orgId}
-        <X 
-          size={14} 
-          className="ml-1 cursor-pointer hover:text-red-500"
-          onClick={() => clearAppliedFilter('organizer', orgId)}
-        />
-      </div>
-    );
-  })}
+  {(filters.organizer || []).map(orgId => (
+    <div key={`org-${orgId}`} className="flex items-center bg-green-400 text-white px-3 py-1 rounded-full text-sm">
+      {getOrganizerName(orgId)}
+      <X 
+        size={14} 
+        className="ml-1 cursor-pointer hover:text-red-500"
+        onClick={() => clearAppliedFilter('organizer', orgId)}
+      />
+    </div>
+  ))}
 
   {/* Type Filters */}
-  {(filters.type || []).map(type => (
+  {(filters.types || []).map(type => (
     <div key={`type-${type}`} className="flex items-center bg-green-400 text-white px-3 py-1 rounded-full text-sm">
       {type}
       <X 
         size={14} 
         className="ml-1 cursor-pointer hover:text-red-500"
-        onClick={() => clearAppliedFilter('type', type)}
+        onClick={() => clearAppliedFilter('types', type)}
       />
     </div>
   ))}
@@ -1199,9 +1220,9 @@ const EventMainContent = () => {
                   <div className="space-y-6">
                     {displayedEvents.map((item) => (
                       item.type === 'event' ? (
-                        <EventCard key={`event-${item.eventId}`} event={item} guides={data.guides}/>
+                        <EventCard key={`event-${item.eventId}`} event={item} guides={guides}/>
                       ) : (
-                        <GuideCard key={`guide-${item.id}`} guide={item} />
+                        <GuideCard key={`guide-${item._id}`} guide={item} />
                       )
                     ))}
                   </div>
@@ -1239,7 +1260,7 @@ const EventMainContent = () => {
             displayedEvents.length > 0 ? (
               <div className="space-y-6">
                 {displayedEvents.map((event) => (
-                  <EventCard key={event.eventId} event={event} guides={data.guides}/>
+                  <EventCard key={event.eventId} event={event} guides={guides}/>
                 ))}
                 {!hasFilters && filteredEvents.length > displayCount && (
                   <div className="mt-8 flex justify-center">

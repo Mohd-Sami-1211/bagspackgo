@@ -38,10 +38,10 @@ const EventSchema = new mongoose.Schema({
   whatToBring: { type: [String] },
   restrictions: { type: [String] },
   pickupPoints: [pickupPointSchema],
-
+  bookings : {type : Number , default : 0},
   itinerary: { type: [String] },
   eventId : {type : String},
   posterFile: { type: String }
 });
-mongoose.deleteModel && mongoose.deleteModel("EventModel");
+// mongoose.deleteModel && mongoose.deleteModel("EventModel");
 export const EventModel = mongoose.models.EventModel || mongoose.model("EventModel", EventSchema);

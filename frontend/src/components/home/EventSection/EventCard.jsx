@@ -12,9 +12,10 @@ import { useRouter } from 'next/navigation';
 
 
 const EventCard = ({ event,guides }) => {
-    const router = useRouter();
+  const matchedGuide = guides?.find(guide => guide?.hostedEvents?.includes(event.eventId));
+  const router = useRouter();
   const handleViewDetails = () => {
-    router.push(`/user/events/eventdetails/${event.id}`);
+    router.push(`/user/events/eventdetails/${event.eventId}`);
   };
   const cardVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -34,8 +35,6 @@ const EventCard = ({ event,guides }) => {
     day: 'numeric',
     year: 'numeric',
   });
-  
-  const matchedGuide = guides?.find(g => g.id === event.eventId);
 
   return (
     <motion.div
@@ -50,19 +49,19 @@ const EventCard = ({ event,guides }) => {
         {/* Top 60% - Image */}
         <div className="relative h-[60%] w-full">
           <img
-            src={event.image || '/images/EventCover.webp'}
-            alt={event.name}
+            src={event.posterFile || '/images/EventCover.webp'}
+            alt={event.title}
             className="object-cover w-full h-full"
             onError={(e) => {
               e.target.src = '/images/events/default.jpg';
             }}
           />
           <div className="absolute top-2 left-2 bg-green-100 text-green-800 text-xs font-semibold px-3 py-1 rounded-full shadow">
-            {event.type}
+            {event.eventType}
           </div>
           <div className="absolute top-2 right-2 bg-yellow-100 text-yellow-700 text-xs font-semibold px-2 py-1 rounded-full shadow flex items-center gap-1">
             <Star className="w-4 h-4 fill-yellow-500 text-yellow-500" />
-            {event.rating}
+            {event.rating || ''}
           </div>
         </div>
 
@@ -71,7 +70,7 @@ const EventCard = ({ event,guides }) => {
   {/* Left Section - Event and Guide Info */}
   <div className="flex flex-col justify-between h-full px-4 py-1">
     <div>
-      <h2 className="text-xl font-bold text-gray-800 mb-1 px-1 py-1">{event.name}</h2>
+      <h2 className="text-xl font-bold text-gray-800 mb-1 px-1 py-1">{event.title}</h2>
       <p className="text-gray-600 flex items-center gap-1 px-1 ">
         <User size={14} className="text-blue-500" />
        <span className="text-sm">{matchedGuide?.name || "Local Guide"}</span>
@@ -83,7 +82,7 @@ const EventCard = ({ event,guides }) => {
 <div className="inline-flex justify-center items-center bg-green-50 px-3 py-1.5 rounded-lg w-fit mx-1">
   <p className="text-xs text-gray-500 mr-2 whitespace-nowrap">Starting from :</p>
   <p className="text-xl font-bold text-green-600 whitespace-nowrap">
-    ₹{event.price.toLocaleString('en-IN')}
+    ₹{event.pricePerSlot.toLocaleString('en-IN')}
   </p>
 </div>
   </div>
@@ -104,7 +103,7 @@ const EventCard = ({ event,guides }) => {
       <MapPin className="text-purple-500 mt-0.5" size={16} />
       <div>
         <p className="text-xs text-gray-500">Location</p>
-        <p className="text-sm font-medium capitalize">{event.destinationId}</p>
+        <p className="text-sm font-medium capitalize">{event.destination}</p>
       </div>
     </div>
 
@@ -113,7 +112,7 @@ const EventCard = ({ event,guides }) => {
       <Clock className="text-green-500 mt-0.5" size={16} />
       <div>
         <p className="text-xs text-gray-500">Duration</p>
-        <p className="text-sm font-medium">{event.duration}</p>
+        <p className="text-sm font-medium">{event.duration} days</p>
       </div>
     </div>
 
@@ -123,7 +122,7 @@ const EventCard = ({ event,guides }) => {
       <div>
         <p className="text-xs text-gray-500">Bookings</p>
         <p className="text-sm font-medium">
-          {event.bookings} / {event.bookings + event.slotsLeft}
+          {`${event.bookings}/${event.totalSlots}`}
         </p>
       </div>
     </div>

@@ -34,31 +34,65 @@ export default function HostEventPage() {
   const [isPublished, setIsPublished] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [formData, setFormData] = useState({
-    companyId : '',
-    eventId : '',
-    title: 'Trekking Event',
-    eventType: 'Adventure Tour',
-    location: 'Coimbatore',
-    date: '2025-11-18',
-    duration: 34,
-    totalSlots: 100,
-    pricePerSlot: '450',
-    destination: 'Leh',
-    destinationLink: 'https://Trekking//destinationLink.com',
-    about: 'Trekking is a team contact sport from South Asia played between two teams of seven players each',
-    highlights: ['Happy' , 'Enjoy' , 'Memorable'],
-    whatsIncluded: ['Happy' , 'Enjoy' , 'Memorable'],
-    faqs: [
-      { question: 'What to bring', answer: 'Kabaddi Kit' },
-      { question: 'is Water Bottle allowed', answer: 'Yes' },
-      { question: 'Is this free', answer: 'No' },
-      { question: 'event Id', answer: 'Given' }
+    companyId: '',
+    eventId: '',
+    title: 'Wildlife Safari in Jim Corbett',
+    eventType: 'Wildlife Safari',
+    location: 'Uttarakhand',
+    date: '2025-12-15',
+    duration: 2,
+    totalSlots: 6,
+    pricePerSlot: '3500',
+    destination: 'Jim Corbett National Park',
+    destinationLink: 'https://CorbettNationalPark.com',
+    about: 'Embark on an exciting jeep safari through the dense forests of Jim Corbett, India\'s oldest national park. With experienced naturalists, increase your chances of spotting tigers, elephants, and diverse bird species.',
+    highlights: [
+      "Multiple jeep safaris",
+      "Expert naturalist guide",
+      "Bird watching",
+      "Jungle resort stay",
+      "Evening bonfire"
     ],
-    whatToBring: ['Food' , 'Water' , 'Wallet' , 'Excitement'],
-    restrictions: ['Do not Pick Water Bottle' , 'Do not wear slippers' , 'No'],
-    pickupPoints: [{ location: 'Delhi', link: 'http://Trekking.com', time: '10:10' }],
-    itinerary: ['Hello', 'Hello2', 'Hello3' , 'Hello4'],
+    whatsIncluded: [
+      "Jeep safari charges",
+      "Forest entry fees",
+      "Accommodation",
+      "All meals",
+      "Naturalist guide"
+    ],
+    faqs: [
+      {
+        question: "What are the chances of spotting a tiger?",
+        answer: "While we cannot guarantee tiger sightings, our experienced guides know the best spots and timing to maximize your chances."
+      }
+    ],
+    whatToBring: [
+      "Binoculars",
+      "Camera with zoom lens",
+      "Neutral colored clothing",
+      "Insect repellent"
+    ],
+    restrictions: [
+      "Stay inside vehicle during safari",
+      "No loud noises",
+      "No plastic items allowed"
+    ],
+    pickupPoints: [{ location: 'Ramnagar Railway Station', link: 'https://Ramnagar.com', time: '07:00' }],
+    itinerary: [
+      "Meet at Ramnagar Railway Station",
+      "Transfer to jungle resort",
+      "Check-in and orientation",
+      "Morning jeep safari in Bijrani zone",
+      "Lunch at resort",
+      "Evening bird watching session",
+      "Bonfire and wildlife documentary",
+      "Early morning safari in Dhikala zone",
+      "Breakfast in wilderness",
+      "Nature walk with naturalist",
+      "Check-out and departure"
+    ],
     poster: null
+  
   });
 
   const eventTypes = [
