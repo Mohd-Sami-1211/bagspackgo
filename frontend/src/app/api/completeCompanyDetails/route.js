@@ -8,7 +8,6 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
   secure : true
 });
-export default cloudinary;
 export async function POST(req){
     try {
         await connectDB();
