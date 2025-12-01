@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import connectDB from "src/DB/DBConnection";
 import { EventModel } from "src/models/eventModel";
+import {providerCompanyModel} from "src/models/providerCompanyModel"
+import { serviceProviderModel } from "src/models/serviceProviderModel";
 export async function GET(req){
     await connectDB();
     
