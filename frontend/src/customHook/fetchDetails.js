@@ -4,6 +4,7 @@ import { useDispatch } from 'react-redux';
 import axios from 'axios';
 import { addServiceProvider } from 'src/slices/serviceProviderSlice';
 import { addProviderCompany } from 'src/slices/providerCompanySlice';
+import { addUser } from 'src/slices/userSlice';
 export function useFetchProvider() {
   const dispatch = useDispatch();
   
@@ -16,7 +17,7 @@ export function useFetchProvider() {
         console.log(res);
         
         const userData = res.data.data;
-        dispatch(addServiceProvider(userData));
+        userData?.role=="user" ? dispatch(addUser(userData)) : dispatch(addServiceProvider(userData));
         console.log(userData);
       } catch (error) {
         console.error('Error fetching details:', error);

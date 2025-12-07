@@ -24,9 +24,11 @@ import {
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
-
+import { useFetchProvider } from 'src/customHook/fetchDetails';
+import { useSelector } from 'react-redux';
 const EventDetails = ({ event, guide }) => {
-  const router = useRouter();
+  useFetchProvider();
+  const user = useSelector((store)=>store?.user?.currentUser);
   const [activeTab, setActiveTab] = useState('details');
   const [bookingSlots, setBookingSlots] = useState(1);
   const [bookingStep, setBookingStep] = useState(1);
@@ -43,7 +45,6 @@ const EventDetails = ({ event, guide }) => {
       country: 'India',
       address: 'Dwarka',
       idType: '',
-      eventId : '',
       idNumber: '7823811931221',
       idPhoto: null
     })),
@@ -124,6 +125,7 @@ const EventDetails = ({ event, guide }) => {
     
     // Log form data
     formData.eventId = event?.eventId;
+    formData.userId = user?._id;
     console.log('Form submitted with data:', formData);
     const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/eventbooking` , 
       {formData} , 

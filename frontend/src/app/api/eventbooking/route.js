@@ -13,15 +13,7 @@ export async function POST(req) {
     await connectDB();
     const formData = await req.formData();
     const amount = formData.get('formData[amount]');
-    const options = {
-      amount: parseInt(amount) * 100, // Convert rupees to paise
-      currency: "INR",
-      notes: {
-        description: "bagspackgo Razorpay Order",
-      },
-    };
-    const order = await razorpay.orders.create(options);
-    console.log(order);
+    const userId = formData.get('formData[userId]');
     // 1. Fetch contact details
     const email = formData.get('formData[contactDetails][email]');
     const mobileNumber = formData.get('formData[contactDetails][phone]');
@@ -82,7 +74,8 @@ export async function POST(req) {
         mobileNumber
       },
       participantsDetails : participants,
-      amount
+      amount,
+      userId
     });
 
     const savedBooking = await bookingData.save();

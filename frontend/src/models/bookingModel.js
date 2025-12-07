@@ -19,6 +19,10 @@ const contactDetailsSchema = new mongoose.Schema({
     mobileNumber : String
 } , {_id : false});
 const bookingSchema = new mongoose.Schema({
+    userId : {
+        type : mongoose.Schema.Types.ObjectId,
+        ref : "User"
+    },
     eventId : {type : String},
     contactDetails : contactDetailsSchema,
     participantsDetails : [partipantsSchema],

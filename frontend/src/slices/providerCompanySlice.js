@@ -1,8 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 const initialState  = {
-    currentCompany : null,
-    currentEvents : []
-
+    currentCompany : null
 }
 
 export const providerCompanySlice = createSlice({
