@@ -2,20 +2,27 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Calendar, MapPin, Clock, Users, Plus, Edit3, Eye, Trash2, PlayCircle, CheckCircle2, Share2 } from 'lucide-react';
-import { useDispatch, useSelector } from 'react-redux';
-import { addCompanyEvent } from 'src/slices/providerCompanySlice';
+import { Calendar, MapPin, Clock, Users, Plus, Edit3, Eye, Trash2, PlayCircle, CheckCircle2, Share2, Loader2 } from 'lucide-react';
+import { useSelector } from 'react-redux';
 import axios from 'axios';
+
 // Helper to calculate event status based on date/time & duration
 function calculateStatus(event) {
   const now = new Date();
-  // Parse event date and time (assuming ISO or compatible format)
-  const start = new Date(`${event.date.split('T')[0]}T${event.pickupPoints[0].time}:00`);
-  // Calculate end time by adding duration (in hours)
-  const end = new Date(start.getTime() + (Number(event.duration) || 0) * 60 * 60 * 1000);
+  
+  // Parse event date and time
+  const startDate = new Date(event.date);
+  const startTime = event.pickupPoints[0]?.time || '00:00';
+  
+  // Combine date and time
+  const [hours, minutes] = startTime.split(':').map(Number);
+  startDate.setHours(hours, minutes, 0, 0);
+  
+  // Calculate end time by adding duration (in days)
+  const endDate = new Date(startDate.getTime() + (Number(event.duration) || 0) * 24 * 60 * 60 * 1000);
 
-  if (now < start) return 'upcoming';
-  if (now >= start && now <= end) return 'live';
+  if (now < startDate) return 'upcoming';
+  if (now >= startDate && now <= endDate) return 'live';
   return 'past';
 }
 
@@ -61,33 +68,35 @@ function EventCard({ event, onAction }) {
             </div>
             <div>
               <h3 className="font-semibold text-neutral-900 text-lg">{event.title}</h3>
-              <p className="text-sm text-neutral-600">{event.category}</p>
+              <p className="text-sm text-neutral-600">{event.category || event.eventType}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-neutral-500">{event.eventId}</span>
+            <span className="text-sm text-neutral-500">{event.eventId || 'N/A'}</span>
             <StatusPill status={dynamicStatus} />
           </div>
         </div>
 
-        <p className="text-neutral-600 text-sm mb-4 line-clamp-2">{event.description}</p>
+        <p className="text-neutral-600 text-sm mb-4 line-clamp-2">{event.description || event.about || 'No description available'}</p>
 
         <div className="grid grid-cols-2 gap-4 text-sm text-neutral-600 mb-4">
           <div className="flex items-center gap-2">
             <Clock className="w-4 h-4 text-emerald-600" />
-            <span>{event.date.split('T')[0]} at {event.pickupPoints[0].time}</span>
+            <span>
+              {event.date ? new Date(event.date).toLocaleDateString() : 'Date not set'} at {event.pickupPoints?.[0]?.time || '00:00'}
+            </span>
           </div>
           <div className="flex items-center gap-2">
             <MapPin className="w-4 h-4 text-emerald-600" />
-            <span className="truncate">{event.location}</span>
+            <span className="truncate">{event.location || 'Location not set'}</span>
           </div>
           <div className="flex items-center gap-2">
             <Users className="w-4 h-4 text-emerald-600" />
-            <span>{event.totalSlots} attendees</span>
+            <span>{event.totalSlots || 0} attendees</span>
           </div>
           <div className="flex items-center gap-2">
             <Clock className="w-4 h-4 text-emerald-600" />
-            <span>{event.duration} days</span>
+            <span>{event.duration || 0} {event.duration === 1 ? 'day' : 'days'}</span>
           </div>
         </div>
 
@@ -170,28 +179,55 @@ function EventCard({ event, onAction }) {
   );
 }
 
-export default function EventMainContent({companyEvents}) {
-  // Get events from redux store
+export default function EventMainContent() {
   const [activeTab, setActiveTab] = useState('live');
-  const dipatch = useDispatch();
-  const currentCompany = useSelector((store)=>store.providerCompany.currentCompany);
-  const companyId = currentCompany._id;
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const router = useRouter();
-  useEffect(()=>{
-    async function fetchDetails(){
-      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/getCompanyEvents?companyId=${companyId}`);
-      const backendMessage = res?.data?.message;
-      if(backendMessage=="Events Found"){
-        dipatch(addCompanyEvent(res?.data?.data))
+  
+  // Get company ID from redux store
+  const currentCompany = useSelector((store) => store.providerCompany.currentCompany);
+  const companyId = currentCompany?._id;
+
+  useEffect(() => {
+    async function fetchEvents() {
+      if (!companyId) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/getCompanyEvents?companyId=${companyId}`,
+          { withCredentials: true }
+        );
+        
+        console.log('Events API Response:', res.data);
+        
+        const backendMessage = res?.data?.message;
+        if (backendMessage === "Events Found") {
+          setEvents(res?.data?.data || []);
+        } else {
+          setEvents([]);
+        }
+      } catch (error) {
+        console.error('Error fetching events:', error);
+        setError('Failed to load events. Please try again.');
+        setEvents([]);
+      } finally {
+        setLoading(false);
       }
     }
-    if(companyEvents.length==0){
-      fetchDetails();
-    }
-  },[])
+    
+    fetchEvents();
+  }, [companyId]);
 
   // Calculate dynamic statuses for UI count and filtering
-  const eventsWithDynamicStatus = companyEvents.map(e => ({
+  const eventsWithDynamicStatus = events.map(e => ({
     ...e,
     status: calculateStatus(e)
   }));
@@ -214,29 +250,60 @@ export default function EventMainContent({companyEvents}) {
   function handleAction(type, event) {
     switch (type) {
       case 'publish':
-        // handle publish logic here (e.g. update DB or redux, then UI updates automatically)
         alert(`Publishing event: ${event.title}`);
         break;
       case 'delete':
         if (confirm(`Are you sure you want to delete "${event.title}"?`)) {
-          // Dispatch redux action or update local copy
-          alert(`Deleted event: ${event.title}`);
+          handleDeleteEvent(event._id);
         }
         break;
       case 'view':
+        router.push(`/serviceprovider/dashboard/events/${event._id}`);
+        break;
       case 'edit':
+        router.push(`/serviceprovider/dashboard/events/edit/${event._id}`);
+        break;
       case 'manage':
+        router.push(`/serviceprovider/dashboard/events/manage/${event._id}`);
+        break;
       case 'share':
+        navigator.clipboard.writeText(`${window.location.origin}/event/${event._id}`);
+        alert('Event link copied to clipboard!');
+        break;
       case 'analytics':
-        alert(`${type.charAt(0).toUpperCase() + type.slice(1)} event: ${event.title}`);
+        router.push(`/serviceprovider/dashboard/events/analytics/${event._id}`);
         break;
       default:
         break;
     }
   }
 
+  const handleDeleteEvent = async (eventId) => {
+    try {
+      const res = await axios.delete(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/deleteEvent/${eventId}`,
+        { withCredentials: true }
+      );
+      
+      if (res.data.success) {
+        // Remove event from local state
+        setEvents(prev => prev.filter(event => event._id !== eventId));
+        alert('Event deleted successfully!');
+      } else {
+        alert('Failed to delete event. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      alert('Failed to delete event. Please try again.');
+    }
+  };
+
   const handleHostEvent = () => {
     router.push('/serviceprovider/dashboard/events/hostevent');
+  };
+
+  const handleRefresh = () => {
+    window.location.reload();
   };
 
   return (
@@ -248,15 +315,34 @@ export default function EventMainContent({companyEvents}) {
           <p className="text-neutral-600 mt-1">Manage and organize your community events</p>
         </div>
 
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={handleHostEvent}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-600 text-white font-medium hover:bg-emerald-700 transition shadow-sm hover:shadow-md"
-        >
-          <Plus className="w-4 h-4" />
-          Host New Event
-        </motion.button>
+        <div className="flex items-center gap-3">
+          {loading && (
+            <div className="flex items-center gap-2 text-sm text-neutral-600">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Loading events...
+            </div>
+          )}
+          
+          {error && (
+            <button
+              onClick={handleRefresh}
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-neutral-200 text-sm font-medium hover:bg-neutral-50 transition"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Retry
+            </button>
+          )}
+
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleHostEvent}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-600 text-white font-medium hover:bg-emerald-700 transition shadow-sm hover:shadow-md"
+          >
+            <Plus className="w-4 h-4" />
+            Host New Event
+          </motion.button>
+        </div>
       </div>
 
       {/* Tab Navigation */}
@@ -283,39 +369,71 @@ export default function EventMainContent({companyEvents}) {
         </div>
       </div>
 
-      {/* Events Grid */}
-      <div className="grid grid-cols-1 gap-4">
-        {filteredEvents.length === 0 ? (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-center py-12 px-6 rounded-lg border-2 border-dashed border-neutral-200"
+      {/* Loading State */}
+      {loading ? (
+        <div className="text-center py-12">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-50 flex items-center justify-center">
+            <Loader2 className="w-8 h-8 text-emerald-600 animate-spin" />
+          </div>
+          <h3 className="text-lg font-medium text-neutral-900 mb-2">Loading Events</h3>
+          <p className="text-neutral-600">Fetching your events from the server...</p>
+        </div>
+      ) : error ? (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-center py-12 px-6 rounded-lg border-2 border-dashed border-red-200 bg-red-50"
+        >
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center">
+            <AlertCircle className="w-8 h-8 text-red-600" />
+          </div>
+          <h3 className="text-lg font-medium text-red-900 mb-2">Error Loading Events</h3>
+          <p className="text-red-600 mb-4">{error}</p>
+          <button
+            onClick={handleRefresh}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 transition"
           >
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-50 flex items-center justify-center">
-              <Calendar className="w-8 h-8 text-emerald-600" />
-            </div>
-            <h3 className="text-lg font-medium text-neutral-900 mb-2">
-              No {tabs.find(t => t.key === activeTab)?.label.toLowerCase()}
-            </h3>
-            <p className="text-neutral-600 mb-4 max-w-sm mx-auto">
-              {activeTab === 'live'
-                ? 'Start by publishing an upcoming event to make it live.'
-                : 'Create your first event to get started.'}
-            </p>
-            <button
-              onClick={handleHostEvent}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 transition"
+            Try Again
+          </button>
+        </motion.div>
+      ) : (
+        /* Events Grid */
+        <div className="grid grid-cols-1 gap-4">
+          {filteredEvents.length === 0 ? (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-center py-12 px-6 rounded-lg border-2 border-dashed border-neutral-200"
             >
-              <Plus className="w-4 h-4" />
-              Host New Event
-            </button>
-          </motion.div>
-        ) : (
-          filteredEvents.map((event) => (
-            <EventCard key={event.eventId} event={event} onAction={handleAction} />
-          ))
-        )}
-      </div>
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-50 flex items-center justify-center">
+                <Calendar className="w-8 h-8 text-emerald-600" />
+              </div>
+              <h3 className="text-lg font-medium text-neutral-900 mb-2">
+                No {tabs.find(t => t.key === activeTab)?.label.toLowerCase()}
+              </h3>
+              <p className="text-neutral-600 mb-4 max-w-sm mx-auto">
+                {activeTab === 'live'
+                  ? 'Start by publishing an upcoming event to make it live.'
+                  : 'Create your first event to get started.'}
+              </p>
+              <button
+                onClick={handleHostEvent}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 transition"
+              >
+                <Plus className="w-4 h-4" />
+                Host New Event
+              </button>
+            </motion.div>
+          ) : (
+            filteredEvents.map((event) => (
+              <EventCard key={event._id || event.eventId} event={event} onAction={handleAction} />
+            ))
+          )}
+        </div>
+      )}
     </div>
   );
 }
+
+// Add RefreshCw icon import
+import { RefreshCw, AlertCircle } from 'lucide-react';

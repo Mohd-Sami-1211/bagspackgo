@@ -5,13 +5,14 @@ import jwt from "jsonwebtoken"
 export async function POST(req) {
     try {
         await connectDB();
-        const {email , phoneNumber , name , password , dob} = await req.json();
+        const {email , phoneNumber , name , password , dob , role} = await req.json();
         const newUser = new UserModel({
             name ,
             email,
             phoneNumber,
             dob,
-            password
+            password,
+            role
     
         })
 

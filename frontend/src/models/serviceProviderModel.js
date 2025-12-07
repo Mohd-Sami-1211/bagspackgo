@@ -16,6 +16,9 @@
       phoneNumber : {
           type : String
       },
+      role : {
+        type : String
+      },
       refreshToken : {
           type : String
       }
@@ -36,7 +39,8 @@
   serviceProviderSchema.methods.generateAccessToken =function(){
     const accessToken =jwt.sign({
       id : this._id,
-      email : this.email
+      email : this.email,
+      role : this.role
     },process.env.JWT_SECRET,
     {expiresIn : "1d"}
     )
@@ -46,7 +50,8 @@
   serviceProviderSchema.methods.generateRefreshToken = async function(){
     const refreshToken = jwt.sign({
       id : this._id,
-      email : this.email
+      email : this.email,
+      role : this.role
       
     } , process.env.REFRESH_TOKEN_SECRET)
     const hashedRefreshToken = await bcrypt.hash(refreshToken , 10);
@@ -60,4 +65,5 @@
     }
     return false;
   }
+  // mongoose.deleteModel && mongoose.deleteModel("ServiceProvider");
   export const serviceProviderModel = mongoose.models.ServiceProvider ||  mongoose.model("ServiceProvider",serviceProviderSchema); 

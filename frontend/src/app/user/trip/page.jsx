@@ -1,7 +1,7 @@
 'use client';
 import { motion } from 'framer-motion';
 import TripMainContent from 'src/components/home/TripSection/TripMainContent';
-
+import { useSelector } from 'react-redux';
 export default function TripPage() {
   return (
     <motion.div

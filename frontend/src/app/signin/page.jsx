@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -7,16 +7,61 @@ import { useRouter } from 'next/navigation';
 import axios from "axios";
 import { useDispatch , useSelector } from 'react-redux';
 import {addServiceProvider} from 'src/slices/serviceProviderSlice'
+import { addUser } from 'src/slices/userSlice';
+import { addProviderCompany } from 'src/slices/providerCompanySlice';
 
 export default function SignInPage() {
   const dispatch = useDispatch();
-  const providerCompanyData = useSelector((store)=>store.providerCompany.currentCompany);
-  const getProviderData = useSelector((store)=>store.provider.currentProvider);
   const [role, setRole] = useState('user');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const router = useRouter();
+  useEffect(() => {
+    console.log("Inside useEffect")
+    checkExistingAuth();
+  }, [role]);
+
+  const checkExistingAuth = async () => {
+    try {
+      // Fetch user data using cookies
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/userAndProvider`, {
+        withCredentials: true
+      });
+      
+      const userData = res.data.data;
+      console.log(userData)
+      
+      if (userData.role === 'user') {
+        dispatch(addUser(userData));
+        router.push('/user/trip');
+      } else if (userData.role === 'provider' && role!='user') {
+        dispatch(addServiceProvider(userData));
+        checkProviderRedirect(userData);
+      }
+    } catch (error) {
+      // No valid session or error
+      const backendMessage = error.response?.data?.message ||'Unable to SignIn . Please try again.';
+      setError(backendMessage);
+      console.error('Axios error:', error);
+    }
+  };
+
+  const checkProviderRedirect =async  (providerData) => {
+    const companyId = providerData?._id.toString();
+    const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/getCompanyInfo?providerId=${companyId}`, {
+      withCredentials: true
+    });
+    const companyData = res?.data?.message;
+    console.log(companyData);
+    if(companyData==="Company Not Found"){
+      router.push('/serviceprovider');
+    }
+    else {
+      dispatch(addProviderCompany(res?.data?.data))
+      router.push('/serviceprovider/dashboard');
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -28,28 +73,25 @@ export default function SignInPage() {
         email,
         password,
         role : role =='user'? 'user' : 'provider',
-      });
+      } ,{withCredentials : true});
       console.log(res);
+      const providerData = res?.data?.data;
       if(role=='user'){
+        dispatch(addUser(providerData));
         router.push('/user/trip');
       }
       else{
-        const providerData = res.data.data;
         dispatch(addServiceProvider(providerData));
-        if(!providerCompanyData){
-          router.push('/serviceprovider')
+        console.log("providerData " , providerData);
+        const companyId = providerData?._id.toString();
+        const companyResgistered = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/getCompanyInfo?providerId=${companyId}`)
+        console.log(companyResgistered);
+        if(companyResgistered?.data?.message==="Company Found"){
+          router.push('/serviceprovider/dashboard')
         }
         else{
-          if(getProviderData?._id === providerCompanyData?.providerId){
-            router.push('/serviceprovider/dashboard')
-
-          }
-          else{
-            router.push('/serviceprovider');
-          }
-
+          router.push('/serviceprovider')
         }
-       
         
       }
 

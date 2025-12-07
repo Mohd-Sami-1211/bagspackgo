@@ -25,10 +25,11 @@ import {
   Check
 } from 'lucide-react';
 import axios from 'axios';
+import { useFetchCompany } from 'src/customHook/fetchDetails';
 
 export default function HostEventPage() {
+  useFetchCompany();
   const router = useRouter();
-  const dispatch = useDispatch();
   const companyInfo = useSelector((store)=>store.providerCompany.currentCompany);
   const [activeSection, setActiveSection] = useState(0);
   const [isPublished, setIsPublished] = useState(false);
@@ -36,65 +37,78 @@ export default function HostEventPage() {
   const [formData, setFormData] = useState({
     companyId: '',
     eventId: '',
-    title: 'Wildlife Safari in Jim Corbett',
-    eventType: 'Wildlife Safari',
-    location: 'Uttarakhand',
-    date: '2025-12-15',
-    duration: 2,
-    totalSlots: 6,
-    pricePerSlot: '3500',
-    destination: 'Jim Corbett National Park',
-    destinationLink: 'https://CorbettNationalPark.com',
-    about: 'Embark on an exciting jeep safari through the dense forests of Jim Corbett, India\'s oldest national park. With experienced naturalists, increase your chances of spotting tigers, elephants, and diverse bird species.',
+    title: 'Scuba Diving Adventure in Andaman',
+    eventType: 'Water Sports',
+    location: 'Havelock Island, Andaman',
+    date: '2024-07-20',
+    duration: 3,
+    totalSlots: 10,
+    pricePerSlot: 7500,
+    destination: 'Elephant Beach, Andaman',
+    destinationLink: 'https://maps.app.goo.gl/elephantbeach',
+    about: 'Discover the vibrant marine life of Andaman with certified diving instructors. Experience underwater world with professional guidance and safety equipment.',
     highlights: [
-      "Multiple jeep safaris",
-      "Expert naturalist guide",
-      "Bird watching",
-      "Jungle resort stay",
-      "Evening bonfire"
+      "Certified PADI instructors",
+      "Two open water dives",
+      "Underwater photography",
+      "Coral reef exploration",
+      "Marine life spotting"
     ],
     whatsIncluded: [
-      "Jeep safari charges",
-      "Forest entry fees",
-      "Accommodation",
-      "All meals",
-      "Naturalist guide"
+      "Diving equipment rental",
+      "Certified instructor",
+      "Underwater photography",
+      "Refreshments",
+      "Transport from jetty",
+      "Insurance coverage"
     ],
     faqs: [
       {
-        question: "What are the chances of spotting a tiger?",
-        answer: "While we cannot guarantee tiger sightings, our experienced guides know the best spots and timing to maximize your chances."
+        question: "Do I need prior diving experience?",
+        answer: "No, we provide training for beginners. Certified instructors will guide you throughout."
+      },
+      {
+        question: "What is the minimum age?",
+        answer: "Minimum age is 12 years with parental consent and basic swimming skills."
+      },
+      {
+        question: "What if I have medical conditions?",
+        answer: "Please consult doctor before booking. Some conditions may restrict diving."
       }
     ],
     whatToBring: [
-      "Binoculars",
-      "Camera with zoom lens",
-      "Neutral colored clothing",
-      "Insect repellent"
+      "Swimming costume",
+      "Towel",
+      "Change of clothes",
+      "Waterproof sunscreen",
+      "Motion sickness tablets"
     ],
     restrictions: [
-      "Stay inside vehicle during safari",
-      "No loud noises",
-      "No plastic items allowed"
+      "No diving within 24 hours of flight",
+      "No alcohol before diving",
+      "Must be able to swim 200m",
+      "Medical certificate required for age 45+"
     ],
-    pickupPoints: [{ location: 'Ramnagar Railway Station', link: 'https://Ramnagar.com', time: '07:00' }],
+    pickupPoints: [
+      { 
+        location: 'Havelock Jetty', 
+        link: 'https://maps.app.goo.gl/havelockjetty', 
+        time: '08:00' 
+      }
+    ],
     itinerary: [
-      "Meet at Ramnagar Railway Station",
-      "Transfer to jungle resort",
-      "Check-in and orientation",
-      "Morning jeep safari in Bijrani zone",
-      "Lunch at resort",
-      "Evening bird watching session",
-      "Bonfire and wildlife documentary",
-      "Early morning safari in Dhikala zone",
-      "Breakfast in wilderness",
-      "Nature walk with naturalist",
-      "Check-out and departure"
+      'Registration at dive center',
+      'Theory and safety briefing',
+      'Gear fitting and pool session',
+      'Boat ride to dive site',
+      'First dive (45 minutes)',
+      'Surface interval and snacks',
+      'Second dive (45 minutes)',
+      'Return to shore',
+      'Certificate distribution'
     ],
-    poster: null
-  
+    poster: null,
   });
-
   const eventTypes = [
     'Adventure Tour',
     'Cultural Experience',
@@ -145,7 +159,6 @@ export default function HostEventPage() {
         formData
       } , { headers: { "Content-Type": "multipart/form-data" } });
       console.log('Form submitted:', res);
-      dispatch(addCompanyEvent(res?.data?.data));
       setIsPublished(true);
     } catch (error) {
       console.error('Axios error:', error);

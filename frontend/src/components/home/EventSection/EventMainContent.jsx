@@ -8,6 +8,7 @@ import EventCard from 'src/components/home/EventSection/EventCard';
 import { Search, Calendar, User, Tag, MapPin } from 'lucide-react';
 import GuideCard from 'src/components/home/EventSection/GuideCard';
 import axios from 'axios';
+import { LoadingSpinner } from 'src/app/user/events/eventdetails/[id]/page';
 
 const EventMainContent = () => {
   // State for events and filters
@@ -511,18 +512,7 @@ const EventMainContent = () => {
 
   if (filteredEvents.length === 0) {
     return (
-      <div className="max-w-7xl mx-auto mt-8 py-2 px-4 bg-gradient-to-br from-green-50 to-blue-50 rounded-xl shadow-lg overflow-hidden mb-40">
-        <div className="flex flex-col justify-center items-center h-64 space-y-4">
-          {/* Spinner */}
-          <div className="relative">
-            <div className="w-16 h-16 border-4 border-green-200 rounded-full"></div>
-            <div className="w-16 h-16 border-4 border-green-500 rounded-full absolute top-0 left-0 animate-spin border-t-transparent"></div>
-          </div>
-          
-          {/* Optional loading text */}
-          <p className="text-gray-600 font-medium">Loading events...</p>
-        </div>
-      </div>
+      <LoadingSpinner/>
     );
   }
 

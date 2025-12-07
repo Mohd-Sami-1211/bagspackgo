@@ -83,8 +83,10 @@ export async function POST(req) {
 
         }
         else{
+            console.log("Inside else")
             const accessToken = user.generateAccessToken();
             const refreshToken = await user.generateRefreshToken();
+            console.log("AccessToken created" , accessToken)
             const res = NextResponse.json({
                 success: true,
                 data : user

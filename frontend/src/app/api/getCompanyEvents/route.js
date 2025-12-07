@@ -22,7 +22,6 @@ export async function GET(req){
     // Use findOne for single event, find for multiple events
     if (eventId) {
         result = await EventModel.findOne(query); // This returns a single object
-        console.log(result)
         message = result ? "Event Found" : "Event not found";
     } else {
         result = await EventModel.find(query)

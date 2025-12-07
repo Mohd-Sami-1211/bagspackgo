@@ -6,7 +6,6 @@ export async function GET(req){
     const providerId = req.nextUrl.searchParams.get('providerId');
     console.log(providerId);
     const companyInfo = await providerCompanyModel.findOne({providerId});
-    console.log(companyInfo);
     if(!companyInfo){
         return NextResponse.json({
             message : "Company Not Found"

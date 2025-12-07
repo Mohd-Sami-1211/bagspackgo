@@ -4,12 +4,13 @@ import connectDB from "src/DB/DBConnection";
 export async function POST(req) {
     try {
         await connectDB();
-        const {email , phoneNumber , name , password} = await req.json();
+        const {email , phoneNumber , name , password , role} = await req.json();
         const newProvider = new serviceProviderModel({
             name ,
             email,
             phoneNumber,
-            password
+            password,
+            role
     
         })
 

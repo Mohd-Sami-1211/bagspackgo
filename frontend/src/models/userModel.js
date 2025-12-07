@@ -26,6 +26,9 @@ const userSchema = new mongoose.Schema({
       type : String,
       required : true
     },
+    role : {
+      type : String
+    },
     refreshToken : {
       type : String
     }
@@ -45,19 +48,23 @@ userSchema.pre("save", async function (next) {
   next();
 });
 userSchema.methods.generateAccessToken =function(){
+  console.log("New access is creating");
   const accessToken =jwt.sign({
     id : this._id,
-    email : this.email
+    email : this.email,
+    role : this.role
   },process.env.JWT_SECRET,
   {expiresIn : "1d"}
   )
+  console.log(accessToken ,"in DB")
   return accessToken;
 }
 
 userSchema.methods.generateRefreshToken = async function(){
   const refreshToken = jwt.sign({
     id : this._id,
-    email : this.email
+    email : this.email,
+    role : this.role
     
   } , process.env.REFRESH_TOKEN_SECRET)
   const hashedRefreshToken = await bcrypt.hash(refreshToken , 10);
@@ -71,4 +78,5 @@ userSchema.methods.isPasswordValid = async function(passwordFromUser){
   }
   return false;
 }
+// mongoose.deleteModel && mongoose.deleteModel("User");
 export const UserModel = mongoose.models.User ||  mongoose.model("User",userSchema) 

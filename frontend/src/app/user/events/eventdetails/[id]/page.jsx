@@ -71,14 +71,20 @@ function EventDetailsContent({ params }) {
 }
 
 // Reusable loading component
-const LoadingSpinner = () => (
-  <div className="flex justify-center items-center min-h-[50vh]">
-    <div className="animate-pulse flex flex-col items-center gap-4">
-      <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
-      <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-      <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+export const LoadingSpinner = () => (
+  <div className="max-w-7xl mx-auto mt-8 py-2 px-4 bg-gradient-to-br from-green-50 to-blue-50 rounded-xl shadow-lg overflow-hidden mb-40">
+    <div className="flex flex-col justify-center items-center h-64 space-y-4">
+      {/* Spinner */}
+      <div className="relative">
+        <div className="w-16 h-16 border-4 border-green-200 rounded-full"></div>
+        <div className="w-16 h-16 border-4 border-green-500 rounded-full absolute top-0 left-0 animate-spin border-t-transparent"></div>
+      </div>
+      
+      {/* Optional loading text */}
+      <p className="text-gray-600 font-medium">Loading</p>
     </div>
   </div>
+    
 );
 
 export default function EventDetailsPage({ params }) {

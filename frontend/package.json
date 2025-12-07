@@ -25,6 +25,7 @@
     "next": "15.3.1",
     "node-cron": "^4.2.1",
     "nodemailer": "^7.0.10",
+    "razorpay": "^2.9.6",
     "react": "^19.0.0",
     "react-datepicker": "^8.3.0",
     "react-dom": "^19.0.0",

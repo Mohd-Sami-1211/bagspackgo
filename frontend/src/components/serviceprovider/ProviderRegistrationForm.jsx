@@ -100,32 +100,8 @@ function ProgressStatus({ step = 'submitted' }) {
 }
 
 export default function ProviderRegistrationForm() {
-  const router = useRouter();
   const dispatch = useDispatch();
-  const data = useSelector((store)=>store.provider.currentProvider);
-  const providerId = data?._id;
-  useEffect(() =>{
-    async function fetchDetails(){
-      try {
-        console.log("Inside useEffect");
-        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/getCompanyInfo?providerId=${providerId}`);
-        const backendMessage = res.data.message;
-        console.log(backendMessage);
-        if(backendMessage=="Company Found"){
-          dispatch(addProviderCompany(res?.data?.data))
-          router.push('/serviceprovider/dashboard');
-        }
-        else{
-          router.push('/serviceprovider');
-        }
-      } catch (error) {
-        console.log(error);
-        
-      }
-    }
-    fetchDetails();
-    
-  },[])
+  const providerData = useSelector((store)=>store?.provider?.currentProvider)
   const [form, setForm] = useState({
     companyName: 'Kavi Pvt Ltd',
     companyMail: 'kavi.workspaceofficial@gmail.com',
@@ -192,7 +168,7 @@ const destinations = useMemo(() => {
 
     // Call the backend Api here to store the information of company details
     const formData = new FormData();
-    formData.append("providerId" , String(providerId));
+    formData.append("providerId" , String(providerData?._id));
     formData.append("companyEmail", form.companyMail);
     formData.append("companyName", form.companyName);
     formData.append("companyMobileNumber", form.companyMobile);

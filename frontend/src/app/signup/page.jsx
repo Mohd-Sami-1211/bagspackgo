@@ -116,6 +116,7 @@ export default function SignUpPage() {
             phoneNumber : userData.phone,
             dob : userData.dob,
             password : userData.confirmPassword,
+            role
           });
           console.log(res);
           setIsSubmitted(true);
@@ -137,6 +138,7 @@ export default function SignUpPage() {
           email : userData.email,
           phoneNumber : userData.phone,
           password : userData.confirmPassword,
+          role : 'provider'
         });
         console.log(res);
         setIsSubmitted(true);
