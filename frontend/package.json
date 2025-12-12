@@ -15,7 +15,7 @@
     "countries-list": "^3.1.1",
     "framer-motion": "^12.9.4",
     "lucide-react": "^0.503.0",
-    "next": "15.3.1",
+    "next": "^16.0.10",
     "react": "^19.0.0",
     "react-datepicker": "^8.3.0",
     "react-dom": "^19.0.0",
