@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation';
 
 const TripSearchInput = forwardRef(({ compactMode = false, onSearch }, ref) => {
   const router = useRouter();
-  const [days, setDays] = useState(1);
+  const [daysRange, setDaysRange] = useState(null);
   const [count, setCount] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState('individual');
   const [selectedDestination, setSelectedDestination] = useState(null);
@@ -25,7 +25,7 @@ const TripSearchInput = forwardRef(({ compactMode = false, onSearch }, ref) => {
       destination: selectedDestination?.value || '',
       category: selectedCategory,
       date: startDate?.toISOString() || '',
-      days,
+      daysRange: daysRange?.value || '',
       count,
     }),
   }));
@@ -34,7 +34,7 @@ const TripSearchInput = forwardRef(({ compactMode = false, onSearch }, ref) => {
     setIsSearching(true);
     setError(null);
     setTimeout(() => {
-      setDays(1);
+      setDaysRange(null);
       setCount(1);
       setStartDate(null);
       setDateInput('');
@@ -84,7 +84,7 @@ const TripSearchInput = forwardRef(({ compactMode = false, onSearch }, ref) => {
       destination: selectedDestination?.value || '',
       category: selectedCategory,
       date: startDate?.toISOString() || '',
-      days: days.toString(),
+      daysRange: daysRange?.value || '',
       count: count.toString(),
     };
 
@@ -143,7 +143,7 @@ const TripSearchInput = forwardRef(({ compactMode = false, onSearch }, ref) => {
         </motion.div>
 
         <motion.div variants={itemVariants} className="flex-[2] bg-[#C3EFE6] rounded-xl p-3 flex flex-col justify-between w-full md:w-auto">
-          <CountersSection days={days} setDays={setDays} count={count} setCount={setCount} selectedCategory={selectedCategory} />
+          <CountersSection daysRange={daysRange} setDaysRange={setDaysRange} count={count} setCount={setCount} selectedCategory={selectedCategory} />
 
           <div className="flex flex-col sm:flex-row gap-3 sm:items-end mt-3">
             <motion.div variants={itemVariants} className="flex-1 relative z-[60] w-full">
@@ -241,9 +241,13 @@ const DestinationSelect = ({ selectedDestination, setSelectedDestination, error,
       styles={{
         ...selectStyles,
         control: (provided, state) => ({
-          ...selectStyles.control(provided, state),
-          borderColor: error ? '#ef4444' : state.isFocused ? '#10b981' : '#d1d5db',
-          boxShadow: error ? '0 0 0 1px #ef4444' : state.isFocused ? '0 0 0 1px #10b981' : null,
+          ...provided,
+          minHeight: '32px',
+          fontSize: '0.85rem',
+          borderColor: state && state.isFocused ? '#10b981' : error ? '#ef4444' : '#d1d5db',
+          boxShadow: state && state.isFocused ? '0 0 0 1px #10b981' : error ? '0 0 0 1px #ef4444' : null,
+          '&:hover': { borderColor: state && state.isFocused ? '#10b981' : '#d1d5db' },
+          borderRadius: '8px',
         }),
       }}
       menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
@@ -276,35 +280,60 @@ const CategorySelect = ({ selectedCategory, setSelectedCategory }) => (
 );
 
 // ------------------- Counters Section -------------------
-const CountersSection = ({ days, setDays, count, setCount, selectedCategory }) => (
-  <motion.div className="flex gap-4 flex-wrap sm:flex-nowrap w-full" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true, margin: '-50px' }}>
-    <Counter
-      label="No. of Days"
-      value={days}
-      onIncrement={() => setDays((prev) => prev + 1)}
-      onDecrement={() => setDays((prev) => Math.max(1, prev - 1))}
-      onChange={(e) => {
-        const value = e.target.value;
-        if (value === '') setDays(1);
-        else {
-          const numValue = parseInt(value);
-          if (!isNaN(numValue)) setDays(Math.max(1, numValue));
-        }
-      }}
-    />
-    <Counter
-      label={selectedCategory === 'couple' ? 'No. of Couples' : 'No. of Individuals'}
-      value={count}
-      onIncrement={() => setCount((prev) => prev + 1)}
-      onDecrement={() => setCount((prev) => Math.max(1, prev - 1))}
-      onChange={(e) => {
-        const value = e.target.value;
-        if (value === '') setCount(1);
-        else {
-          const numValue = parseInt(value);
-          if (!isNaN(numValue)) setCount(Math.max(1, numValue));
-        }
-      }}
+const CountersSection = ({ daysRange, setDaysRange, count, setCount, selectedCategory }) => {
+  const daysOptions = [
+    { value: '0-3', label: '0-3 days' },
+    { value: '3-5', label: '3-5 days' },
+    { value: '5-7', label: '5-7 days' },
+    { value: '7-9', label: '7-9 days' },
+    { value: 'other', label: 'Others' }
+  ];
+
+  return (
+    <motion.div className="flex gap-4 flex-wrap sm:flex-nowrap w-full" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true, margin: '-50px' }}>
+      <DaysRangeSelect
+        daysRange={daysRange}
+        setDaysRange={setDaysRange}
+        daysOptions={daysOptions}
+      />
+      <Counter
+        label={selectedCategory === 'couple' ? 'No. of Couples' : 'No. of Individuals'}
+        value={count}
+        onIncrement={() => setCount((prev) => prev + 1)}
+        onDecrement={() => setCount((prev) => Math.max(1, prev - 1))}
+        onChange={(e) => {
+          const value = e.target.value;
+          if (value === '') setCount(1);
+          else {
+            const numValue = parseInt(value);
+            if (!isNaN(numValue)) setCount(Math.max(1, numValue));
+          }
+        }}
+      />
+    </motion.div>
+  );
+};
+
+// ------------------- Days Range Select -------------------
+const DaysRangeSelect = ({ daysRange, setDaysRange, daysOptions }) => (
+  <motion.div
+    className="flex-1 w-full sm:w-auto"
+    initial={{ opacity: 0, y: 10 }}
+    whileInView={{ opacity: 1, y: 0 }}
+    viewport={{ once: true, margin: '-30px' }}
+    transition={{ duration: 0.3 }}
+  >
+    <label className="block text-sm font-semibold text-gray-800 mb-1">No. of Days</label>
+    <Select
+      options={daysOptions}
+      value={daysRange}
+      onChange={setDaysRange}
+      placeholder="Select Days Range"
+      classNamePrefix="react-select"
+      isClearable
+      styles={selectStyles}
+      menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
+      menuPosition="fixed"
     />
   </motion.div>
 );
@@ -352,9 +381,9 @@ const selectStyles = {
     ...provided,
     minHeight: '32px',
     fontSize: '0.85rem',
-    borderColor: state.isFocused ? '#10b981' : '#d1d5db',
-    boxShadow: state.isFocused ? '0 0 0 1px #10b981' : null,
-    '&:hover': { borderColor: '#10b981' },
+    borderColor: state && state.isFocused ? '#10b981' : '#d1d5db',
+    boxShadow: state && state.isFocused ? '0 0 0 1px #10b981' : null,
+    '&:hover': { borderColor: state && state.isFocused ? '#10b981' : '#d1d5db' },
     borderRadius: '8px',
   }),
   menu: (provided) => ({
@@ -368,8 +397,8 @@ const selectStyles = {
   option: (provided, state) => ({
     ...provided,
     borderRadius: '6px',
-    backgroundColor: state.isSelected ? '#a7f3d0' : state.isFocused ? '#d1fae5' : 'white',
-    color: state.isSelected ? '#065f46' : '#1e293b',
+    backgroundColor: state && state.isSelected ? '#a7f3d0' : state && state.isFocused ? '#d1fae5' : 'white',
+    color: state && state.isSelected ? '#065f46' : '#1e293b',
     margin: '4px 0',
     padding: '8px 12px',
     transition: 'all 0.15s ease-out',
