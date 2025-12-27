@@ -1,5 +1,5 @@
 'use client';
-import { Star, Edit, MapPin, Users, Calendar, Share2, Heart, ChevronRight, ArrowRight, ArrowLeft, Hotel, Clock, Map, Utensils, Car, ShieldCheck, Mountain } from 'lucide-react';
+import { Star, Edit, MapPin, Users, Calendar, Share2, Heart, ChevronRight, ArrowRight, ArrowLeft, Hotel, Clock, Map, Utensils, Car, ShieldCheck, Mountain, Crown } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import Itenary from 'src/components/home/TripSection/Itenary';
@@ -13,20 +13,87 @@ const GuideDetails = ({ guide }) => {
   const category = ['individual', 'couple', 'group'].includes(searchParams.get('category'))
     ? searchParams.get('category')
     : 'individual';
-  const days = Math.max(1, parseInt(searchParams.get('days')) || 1);
+  const daysRange = searchParams.get('daysRange') || '';
   const count = Math.max(1, parseInt(searchParams.get('count')) || 1);
   const dateParam = searchParams.get('date');
   const date = dateParam && !isNaN(new Date(dateParam).getTime())
     ? new Date(dateParam)
     : new Date();
+  const packageId = searchParams.get('packageId');
 
   // Calculate derived values
-  const numDays = Math.max(1, Number(days) || 1);
   const numPeople = Math.max(1, Number(count) || 1);
   const peopleText = category === 'couple' ? 'couple' : 'person';
-  const tripDuration = numDays;
 
-  const router = useRouter();
+  // Find the selected package
+  const findSelectedPackage = () => {
+    if (packageId) {
+      return guide.packages?.find(pkg => pkg.id === packageId);
+    }
+    
+    if (daysRange) {
+      const [minDays, maxDays] = daysRange.split('-').map(Number);
+      const packagesInRange = guide.packages?.filter(pkg => 
+        pkg.days >= minDays && pkg.days <= maxDays
+      );
+      return packagesInRange?.[0]; // Return first package in range
+    }
+    
+    return null;
+  };
+
+  const selectedPackage = findSelectedPackage();
+  const isPremiumPackage = selectedPackage?.type === 'premium';
+  
+  // Use actual package days if available, otherwise use days from range
+  const getTripDuration = () => {
+    if (selectedPackage) {
+      return selectedPackage.days; // Use actual package days
+    }
+    
+    if (daysRange) {
+      const [minDays, maxDays] = daysRange.split('-').map(Number);
+      return Math.round((minDays + maxDays) / 2); // Average for non-package selection
+    }
+    
+    return 3; // Default
+  };
+
+  const tripDuration = getTripDuration();
+  const numDays = tripDuration;
+
+  // Calculate price based on selected package or fallback to daily rate
+  const calculatePrice = () => {
+    if (selectedPackage) {
+      // Use package price
+      const packagePrice = Number(selectedPackage.price[category] || selectedPackage.price.individual || 0);
+      return {
+        basePrice: packagePrice * numPeople,
+        perPersonPrice: packagePrice,
+        days: selectedPackage.days,
+        isPackage: true
+      };
+    } else {
+      // Fallback to daily rate calculation
+      const dailyRate = Number(guide.price[category] || guide.price.individual || 0);
+      return {
+        basePrice: dailyRate * numPeople * numDays,
+        perPersonPrice: dailyRate * numDays,
+        days: numDays,
+        isPackage: false
+      };
+    }
+  };
+
+  const priceDetails = calculatePrice();
+  const basePrice = priceDetails.basePrice;
+  const discount = basePrice * 0.1;
+  const platformFee = 50;
+  const taxes = basePrice * 0.05;
+  const total = basePrice - discount + platformFee + taxes;
+  const nights = numDays + 1;
+
+  const router = useRef();
   const [activeTab, setActiveTab] = useState('dayByDay');
   const [currentDay, setCurrentDay] = useState(1);
   const [acceptTerms, setAcceptTerms] = useState(false);
@@ -38,7 +105,7 @@ const GuideDetails = ({ guide }) => {
   const [selectedStartDate, setSelectedStartDate] = useState(date);
 
   const defaultPackage = {
-    name: 'Basic Package',
+    name: selectedPackage?.label || 'Basic Package',
     destination: guide.location,
     locations: ['Pahalgam', 'Gulmarg', 'Sonmarg'],
     departureTime: '09:00',
@@ -123,7 +190,7 @@ const GuideDetails = ({ guide }) => {
     }
   }, [currentDay]);
 
-  // Initialize itineraries with correct dates
+  // Initialize itineraries with correct dates - BASED ON ACTUAL PACKAGE DAYS
   useEffect(() => {
     // Ensure we have a valid date
     const startDate = selectedStartDate && !isNaN(selectedStartDate.getTime())
@@ -168,13 +235,6 @@ const GuideDetails = ({ guide }) => {
     setPersonalDetailsData(data);
     setPersonalDetailsCompleted(true);
   };
-
-  const basePrice = guide.price * numDays * numPeople;
-  const discount = basePrice * 0.1;
-  const platformFee = 50;
-  const taxes = basePrice * 0.05;
-  const total = basePrice - discount + platformFee + taxes;
-  const nights = numDays + 1;
 
   const packageInclusions = [
     {
@@ -278,7 +338,21 @@ const GuideDetails = ({ guide }) => {
       {/* Guide Card - Made Responsive */}
       <div className="w-full bg-white pb-6 sm:pb-8 md:pb-10">
         <div className="max-w-7xl mx-auto">
-          <div className="relative bg-green-300 shadow-xl rounded-2xl sm:rounded-3xl lg:rounded-full px-4 sm:px-6 py-4 sm:py-5 flex flex-col sm:flex-row items-center justify-between w-full max-w-4xl mx-auto gap-4 sm:gap-6 lg:gap-0">
+          <div className={`relative shadow-xl rounded-2xl sm:rounded-3xl lg:rounded-full px-4 sm:px-6 py-4 sm:py-5 flex flex-col sm:flex-row items-center justify-between w-full max-w-4xl mx-auto gap-4 sm:gap-6 lg:gap-0 ${
+            isPremiumPackage 
+              ? 'bg-gradient-to-r from-amber-400 to-yellow-400' 
+              : 'bg-green-300'
+          }`}>
+            {/* Premium Badge - Fixed positioning */}
+            {isPremiumPackage && (
+              <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 z-10">
+                <div className="flex items-center bg-gradient-to-r from-amber-500 to-yellow-500 text-white rounded-full px-3 py-1 text-xs font-medium shadow-lg">
+                  <Crown className="w-3 h-3 mr-1" />
+                  Premium Package
+                </div>
+              </div>
+            )}
+
             {/* Rating Badge - Responsive */}
             <div className="absolute top-2 right-3 sm:right-7 flex items-center bg-white rounded-full px-2 sm:px-2 py-1 text-xs font-medium text-gray-800 shadow-md">
               <Star className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-500 fill-yellow-400 mr-1" />
@@ -288,8 +362,16 @@ const GuideDetails = ({ guide }) => {
 
             {/* Guide Info - Responsive */}
             <div className="flex items-center w-full sm:w-auto justify-center sm:justify-start">
-              <div className="w-14 h-14 sm:w-16 sm:h-16 lg:w-20 lg:h-20 bg-white rounded-full flex items-center justify-center shadow-md border-2 border-green-100 flex-shrink-0">
-                <div className="text-sm sm:text-base lg:text-lg font-bold bg-gradient-to-r from-green-500 to-green-600 bg-clip-text text-transparent">
+              <div className={`w-14 h-14 sm:w-16 sm:h-16 lg:w-20 lg:h-20 rounded-full flex items-center justify-center shadow-md border-2 flex-shrink-0 ${
+                isPremiumPackage 
+                  ? 'bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-200' 
+                  : 'bg-white border-green-100'
+              }`}>
+                <div className={`text-sm sm:text-base lg:text-lg font-bold ${
+                  isPremiumPackage 
+                    ? 'bg-gradient-to-r from-amber-600 to-yellow-600 bg-clip-text text-transparent' 
+                    : 'bg-gradient-to-r from-green-500 to-green-600 bg-clip-text text-transparent'
+                }`}>
                   {guide.name.split(' ').map(n => n[0]).join('')}
                 </div>
               </div>
@@ -299,6 +381,18 @@ const GuideDetails = ({ guide }) => {
                   <MapPin className="h-3 w-3 sm:h-4 sm:w-4 mr-1 text-white flex-shrink-0" />
                   <span className="truncate">{guide.location}</span>
                 </div>
+                {selectedPackage && (
+                  <div className="flex items-center mt-1 flex-wrap gap-1">
+                    <span className="text-xs font-medium px-2 py-0.5 rounded text-white bg-white/20 backdrop-blur-sm">
+                      {selectedPackage.label} ({selectedPackage.days} days)
+                    </span>
+                    {isPremiumPackage && (
+                      <span className="text-xs font-medium px-2 py-0.5 rounded bg-white/30 backdrop-blur-sm text-white border border-white/50">
+                        Premium
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -311,7 +405,7 @@ const GuideDetails = ({ guide }) => {
                 </div>
                 <div className="bg-white/90 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-xs text-center shadow-md backdrop-blur-sm min-w-[60px] sm:min-w-[70px]">
                   <p className="text-gray-500 text-xs">Days:</p>
-                  <p className="font-semibold text-gray-800 text-xs sm:text-sm">{numDays}</p>
+                  <p className="font-semibold text-gray-800 text-xs sm:text-sm">{priceDetails.days}</p>
                 </div>
                 <div className="bg-white/90 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-xs text-center shadow-md backdrop-blur-sm min-w-[60px] sm:min-w-[70px]">
                   <p className="text-gray-500 text-xs">People:</p>
@@ -406,7 +500,9 @@ const GuideDetails = ({ guide }) => {
                       <div className="relative h-full">
                         <div className="absolute left-1/2 top-0 h-full w-1.5 bg-gray-100 rounded-full -translate-x-1/2">
                           <div
-                            className="bg-green-400 w-1.5 rounded-full transition-all duration-500"
+                            className={`w-1.5 rounded-full transition-all duration-500 ${
+                              isPremiumPackage ? 'bg-gradient-to-b from-amber-400 to-yellow-400' : 'bg-green-400'
+                            }`}
                             style={{ height: `${(currentDay / numDays) * 100}%` }}
                           ></div>
                         </div>
@@ -425,9 +521,13 @@ const GuideDetails = ({ guide }) => {
                                 <div
                                   className={`absolute left-1/2 transform -translate-x-1/2 w-10 h-10 flex items-center justify-center rounded-full text-sm font-semibold transition-all duration-300 ${
                                     isCurrent
-                                      ? 'bg-green-500 text-white ring-4 ring-green-200 scale-110 shadow-lg'
+                                      ? isPremiumPackage
+                                        ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white ring-4 ring-amber-200 scale-110 shadow-lg'
+                                        : 'bg-green-500 text-white ring-4 ring-green-200 scale-110 shadow-lg'
                                       : isActive
-                                      ? 'bg-green-400 text-white shadow-md'
+                                      ? isPremiumPackage
+                                        ? 'bg-gradient-to-r from-amber-400 to-yellow-400 text-white shadow-md'
+                                        : 'bg-green-400 text-white shadow-md'
                                       : 'bg-gray-200 text-gray-600'
                                   }`}
                                 >
@@ -442,50 +542,54 @@ const GuideDetails = ({ guide }) => {
 
                     {/* Mobile Timeline - Centered with line through node centers */}
                     <div className="block md:hidden mb-4">
-  <div className="flex justify-center">
-    <div 
-      className="relative flex items-center overflow-x-auto scrollbar-hide px-4 py-4 max-w-full"
-      ref={scrollContainerRef}
-    >
-      {/* Connecting line - positioned at exact center of nodes */}
-      <div className="absolute top-9 left-0 right-0 h-1 bg-gray-300 z-0"></div>
-      
-      <div className="flex items-center justify-center space-x-8 sm:space-x-12 mx-auto px-4">
-        {itenaries.map((day, index) => {
-          const dayNum = index + 1;
-          const isActive = dayNum <= currentDay;
-          const isCurrent = dayNum === currentDay;
+                      <div className="flex justify-center">
+                        <div 
+                          className="relative flex items-center overflow-x-auto scrollbar-hide px-4 py-4 max-w-full"
+                          ref={scrollContainerRef}
+                        >
+                          {/* Connecting line - positioned at exact center of nodes */}
+                          <div className="absolute top-9 left-0 right-0 h-1 bg-gray-300 z-0"></div>
+                          
+                          <div className="flex items-center justify-center space-x-8 sm:space-x-12 mx-auto px-4">
+                            {itenaries.map((day, index) => {
+                              const dayNum = index + 1;
+                              const isActive = dayNum <= currentDay;
+                              const isCurrent = dayNum === currentDay;
 
-          return (
-            <div
-              key={dayNum}
-              className="relative z-10 flex flex-col items-center flex-shrink-0"
-            >
-              <div className="h-12 flex items-center justify-center"> {/* Fixed height container for consistent centering */}
-                <button
-                  onClick={() => handleDayNodeClick(dayNum)}
-                  className={`
-                    flex-shrink-0 flex items-center justify-center rounded-full font-semibold 
-                    transition-all duration-300 relative z-20
-                    ${isCurrent ? 'w-12 h-12 bg-green-500 text-white scale-110 ring-4 ring-green-300 shadow-lg' : ''}
-                    ${!isCurrent && isActive ? 'w-10 h-10 bg-green-400 text-white shadow-md' : ''}
-                    ${!isActive ? 'w-10 h-10 bg-gray-200 text-gray-600' : ''}
-                  `}
-                  ref={(el) => (nodeRefs.current[index] = el)}
-                >
-                  {dayNum}
-                </button>
-              </div>
-              <span className="text-xs text-gray-600 mt-2 font-medium whitespace-nowrap">
-                Day {dayNum}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  </div>
-</div>
+                              return (
+                                <div
+                                  key={dayNum}
+                                  className="relative z-10 flex flex-col items-center flex-shrink-0"
+                                >
+                                  <div className="h-12 flex items-center justify-center">
+                                    <button
+                                      onClick={() => handleDayNodeClick(dayNum)}
+                                      className={`
+                                        flex-shrink-0 flex items-center justify-center rounded-full font-semibold 
+                                        transition-all duration-300 relative z-20
+                                        ${isCurrent ? 'w-12 h-12 scale-110 ring-4 shadow-lg' : ''}
+                                        ${!isCurrent && isActive ? 'w-10 h-10 shadow-md' : ''}
+                                        ${!isActive ? 'w-10 h-10 bg-gray-200 text-gray-600' : ''}
+                                        ${isCurrent && isPremiumPackage ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white ring-amber-300' : ''}
+                                        ${isCurrent && !isPremiumPackage ? 'bg-green-500 text-white ring-green-300' : ''}
+                                        ${!isCurrent && isActive && isPremiumPackage ? 'bg-gradient-to-r from-amber-400 to-yellow-400 text-white' : ''}
+                                        ${!isCurrent && isActive && !isPremiumPackage ? 'bg-green-400 text-white' : ''}
+                                      `}
+                                      ref={(el) => (nodeRefs.current[index] = el)}
+                                    >
+                                      {dayNum}
+                                    </button>
+                                  </div>
+                                  <span className="text-xs text-gray-600 mt-2 font-medium whitespace-nowrap">
+                                    Day {dayNum}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
 
                     {/* Day Cards Container with auto-scroll */}
                     <div className="w-full md:w-3/4 space-y-3 sm:space-y-4 day-cards-container max-h-[600px] overflow-y-auto">
@@ -499,7 +603,9 @@ const GuideDetails = ({ guide }) => {
                             ref={(el) => (dayCardRefs.current[index] = el)}
                             className={`p-4 sm:p-5 rounded-lg border transition-all group ${
                               isCurrentDay
-                                ? 'border-green-300 bg-green-50 ring-1 ring-green-100 shadow-lg'
+                                ? isPremiumPackage
+                                  ? 'border-amber-300 bg-gradient-to-br from-amber-50 to-white ring-1 ring-amber-100 shadow-lg'
+                                  : 'border-green-300 bg-green-50 ring-1 ring-green-100 shadow-lg'
                                 : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
                             } cursor-pointer`}
                             onClick={() => handleDayNodeClick(dayNum)}
@@ -507,12 +613,22 @@ const GuideDetails = ({ guide }) => {
                             <div className="flex justify-between items-start">
                               <div className="w-full">
                                 <h4 className="font-medium text-gray-900 flex items-center">
-                                  <span className={`w-7 h-7 flex items-center justify-center ${
-                                    isCurrentDay ? 'bg-green-500 text-white' : 'bg-green-100 text-green-600'
-                                  } rounded-full mr-3 text-sm font-semibold`}>
+                                  <span className={`w-7 h-7 flex items-center justify-center rounded-full mr-3 text-sm font-semibold ${
+                                    isCurrentDay
+                                      ? isPremiumPackage
+                                        ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white'
+                                        : 'bg-green-500 text-white'
+                                      : isPremiumPackage
+                                      ? 'bg-gradient-to-r from-amber-100 to-yellow-100 text-amber-600'
+                                      : 'bg-green-100 text-green-600'
+                                  }`}>
                                     {day.dayNumber}
                                   </span>
-                                  <span className="text-green-600 font-semibold text-sm sm:text-base">{day.location}</span>
+                                  <span className={`font-semibold text-sm sm:text-base ${
+                                    isPremiumPackage ? 'text-amber-600' : 'text-green-600'
+                                  }`}>
+                                    {day.location}
+                                  </span>
                                 </h4>
                                 <p className="text-xs sm:text-sm text-gray-500 mt-1.5 ml-10 flex items-center">
                                   <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-2 text-gray-400" />
@@ -577,8 +693,10 @@ const GuideDetails = ({ guide }) => {
                             <div className="mt-3 sm:mt-5 ml-10">
                               <button
                                 className={`flex items-center text-xs sm:text-sm group ${
-                                  isCurrentDay ? 'text-green-700 font-medium' : 'text-green-600'
-                                }`}
+                                  isCurrentDay
+                                    ? isPremiumPackage ? 'text-amber-700' : 'text-green-700'
+                                    : isPremiumPackage ? 'text-amber-600' : 'text-green-600'
+                                } font-medium`}
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   handleViewDay(dayNum);
@@ -599,7 +717,11 @@ const GuideDetails = ({ guide }) => {
                   <div className="flex justify-end mt-4 sm:mt-6">
                     <button
                       onClick={handleNextTab}
-                      className="px-4 py-2 bg-gradient-to-br from-green-400 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 flex items-center text-sm shadow-sm transition-colors"
+                      className={`px-4 py-2 text-white rounded-lg hover:from-green-600 hover:to-green-700 flex items-center text-sm shadow-sm transition-colors ${
+                        isPremiumPackage
+                          ? 'bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600'
+                          : 'bg-gradient-to-br from-green-400 to-green-600'
+                      }`}
                     >
                       Next <ArrowRight className="ml-2 h-4 w-4" />
                     </button>
@@ -651,11 +773,14 @@ const GuideDetails = ({ guide }) => {
                           children: personalDetailsData.children || []
                         },
                         guide: guide,
+                        selectedPackage: selectedPackage,
                         tripConfig: {
                           category,
-                          days: numDays,
+                          days: priceDetails.days,
+                          daysRange,
                           count: numPeople,
-                          date: dateParam
+                          date: dateParam,
+                          packageId
                         }
                       };
 
@@ -663,11 +788,22 @@ const GuideDetails = ({ guide }) => {
                       localStorage.setItem('tripData', JSON.stringify(tripData));
 
                       // Navigate to review page
+                      const params = new URLSearchParams();
+                      params.set('category', category);
+                      params.set('daysRange', daysRange || '');
+                      params.set('count', numPeople);
+                      if (dateParam) params.set('date', dateParam);
+                      if (packageId) params.set('packageId', packageId);
+
                       router.push(
-                        `/user/trip/guidelist/tripdetails/${guide.id}/reviewjourney?category=${category}&days=${numDays}&count=${numPeople}&date=${dateParam}`
+                        `/user/trip/guidelist/tripdetails/${guide.id}/reviewjourney?${params.toString()}`
                       );
                     }}
-                    className="px-4 sm:px-5 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center text-sm shadow-sm hover:shadow-md"
+                    className={`px-4 sm:px-5 py-2.5 text-white rounded-lg transition-colors flex items-center text-sm shadow-sm hover:shadow-md ${
+                      isPremiumPackage
+                        ? 'bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600'
+                        : 'bg-green-600 hover:bg-green-700'
+                    }`}
                   >
                     Review Journey
                     <ArrowRight className="h-4 w-4 ml-2 transition-transform group-hover:translate-x-1" />
@@ -679,16 +815,26 @@ const GuideDetails = ({ guide }) => {
         </div>
 
         <div className="w-full lg:w-4/12 mt-6 lg:mt-0">
-          <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 mb-6 sm:mb-12">
-            <div className="px-4 sm:px-5 py-3">
-              <h2 className="text-green-500 font-semibold text-base">What's Included</h2>
+          <div className={`rounded-xl shadow-md overflow-hidden border mb-6 sm:mb-12 ${
+            isPremiumPackage 
+              ? 'border-amber-200 bg-gradient-to-b from-white to-amber-50' 
+              : 'border-gray-100 bg-white'
+          }`}>
+            <div className={`px-4 sm:px-5 py-3 ${
+              isPremiumPackage 
+                ? 'bg-gradient-to-r from-amber-500 to-yellow-500' 
+                : 'bg-green-500'
+            }`}>
+              <h2 className="text-white font-semibold text-base">What's Included</h2>
             </div>
 
             <div className="p-4 sm:p-5">
               <div className="space-y-4 sm:space-y-5">
                 {packageInclusions.map((item, index) => (
                   <div key={index} className="flex items-start">
-                    <div className="flex-shrink-0 p-1.5 sm:p-2 bg-green-50 rounded-lg mr-3 sm:mr-4">
+                    <div className={`flex-shrink-0 p-1.5 sm:p-2 rounded-lg mr-3 sm:mr-4 ${
+                      isPremiumPackage ? 'bg-gradient-to-br from-amber-100 to-yellow-100' : 'bg-green-50'
+                    }`}>
                       {item.icon}
                     </div>
                     <div className="min-w-0">
@@ -713,7 +859,11 @@ const GuideDetails = ({ guide }) => {
                 <h4 className="font-medium text-gray-800 mb-2 text-sm sm:text-base">Activities Included</h4>
                 <div className="flex flex-wrap gap-1.5 sm:gap-2">
                   {guide.activitiesAvailable?.slice(0, 6).map((activity, i) => (
-                    <span key={i} className="px-2 sm:px-2.5 py-1 bg-green-50 text-green-700 text-xs rounded-full">
+                    <span key={i} className={`px-2 sm:px-2.5 py-1 text-xs rounded-full ${
+                      isPremiumPackage
+                        ? 'bg-gradient-to-r from-amber-100 to-yellow-100 text-amber-700'
+                        : 'bg-green-50 text-green-700'
+                    }`}>
                       {activity}
                     </span>
                   ))}
@@ -724,6 +874,8 @@ const GuideDetails = ({ guide }) => {
                   )}
                 </div>
               </div>
+
+              
             </div>
           </div>
         </div>

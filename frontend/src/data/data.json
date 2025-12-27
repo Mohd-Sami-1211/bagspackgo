@@ -382,6 +382,48 @@
         "Shikara Ride",
         "Mughal Garden Tour",
         "Lal Chowk Shopping"
+      ],
+      "packages": [
+        {
+          "id": "pkg-3d",
+          "label": "3-day package",
+          "days": 3,
+          "type": "budget",
+          "price": {
+            "individual": 7500,
+            "couple": 12000
+          }
+        },
+        {
+          "id": "pkg-5d",
+          "label": "5-day package",
+          "days": 5,
+          "type": "premium",
+          "price": {
+            "individual": 14700,
+            "couple": 23520
+          }
+        },
+        {
+          "id": "pkg-7d",
+          "label": "7-day package",
+          "days": 7,
+          "type": "premium",
+          "price": {
+            "individual": 19950,
+            "couple": 31920
+          }
+        },
+        {
+          "id": "pkg-9d",
+          "label": "9-day package",
+          "days": 9,
+          "type": "premium",
+          "price": {
+            "individual": 24840,
+            "couple": 39744
+          }
+        }
       ]
     },
     {
@@ -440,6 +482,48 @@
         "Local Markets",
         "Tulip Viewing",
         "Food Trails"
+      ],
+      "packages": [
+        {
+          "id": "pkg-3d",
+          "label": "3-day package",
+          "days": 3,
+          "type": "budget",
+          "price": {
+            "individual": 5400,
+            "couple": 9000
+          }
+        },
+        {
+          "id": "pkg-5d",
+          "label": "5-day package",
+          "days": 5,
+          "type": "budget",
+          "price": {
+            "individual": 8820,
+            "couple": 14700
+          }
+        },
+        {
+          "id": "pkg-7d",
+          "label": "7-day package",
+          "days": 7,
+          "type": "budget",
+          "price": {
+            "individual": 11970,
+            "couple": 19950
+          }
+        },
+        {
+          "id": "pkg-9d",
+          "label": "9-day package",
+          "days": 9,
+          "type": "budget",
+          "price": {
+            "individual": 14904,
+            "couple": 24840
+          }
+        }
       ]
     },
     {
@@ -499,6 +583,48 @@
         "Skiing",
         "Snowboarding",
         "Gondola Ride"
+      ],
+      "packages": [
+        {
+          "id": "pkg-3d",
+          "label": "3-day package",
+          "days": 3,
+          "type": "premium",
+          "price": {
+            "individual": 10800,
+            "couple": 18000
+          }
+        },
+        {
+          "id": "pkg-5d",
+          "label": "5-day package",
+          "days": 5,
+          "type": "premium",
+          "price": {
+            "individual": 17640,
+            "couple": 29400
+          }
+        },
+        {
+          "id": "pkg-7d",
+          "label": "7-day package",
+          "days": 7,
+          "type": "premium",
+          "price": {
+            "individual": 23940,
+            "couple": 39900
+          }
+        },
+        {
+          "id": "pkg-9d",
+          "label": "9-day package",
+          "days": 9,
+          "type": "budget",
+          "price": {
+            "individual": 24840,
+            "couple": 41400
+          }
+        }
       ]
     },
     {
@@ -562,6 +688,48 @@
         "Heritage Tours",
         "Architecture",
         "Photography"
+      ],
+      "packages": [
+        {
+          "id": "pkg-3d",
+          "label": "3-day package",
+          "days": 3,
+          "type": "premium",
+          "price": {
+            "individual": 5760,
+            "couple": 10080
+          }
+        },
+        {
+          "id": "pkg-5d",
+          "label": "5-day package",
+          "days": 5,
+          "type": "budget",
+          "price": {
+            "individual": 7840,
+            "couple": 13720
+          }
+        },
+        {
+          "id": "pkg-7d",
+          "label": "7-day package",
+          "days": 7,
+          "type": "budget",
+          "price": {
+            "individual": 10640,
+            "couple": 18620
+          }
+        },
+        {
+          "id": "pkg-9d",
+          "label": "9-day package",
+          "days": 9,
+          "type": "budget",
+          "price": {
+            "individual": 13248,
+            "couple": 23184
+          }
+        }
       ]
     },
     {
@@ -630,6 +798,48 @@
         "Camping",
         "River Rafting",
         "Fishing"
+      ],
+      "packages": [
+        {
+          "id": "pkg-3d",
+          "label": "3-day package",
+          "days": 3,
+          "type": "premium",
+          "price": {
+            "individual": 8640,
+            "couple": 14040
+          }
+        },
+        {
+          "id": "pkg-5d",
+          "label": "5-day package",
+          "days": 5,
+          "type": "premium",
+          "price": {
+            "individual": 14112,
+            "couple": 22932
+          }
+        },
+        {
+          "id": "pkg-7d",
+          "label": "7-day package",
+          "days": 7,
+          "type": "budget",
+          "price": {
+            "individual": 15960,
+            "couple": 25935
+          }
+        },
+        {
+          "id": "pkg-9d",
+          "label": "9-day package",
+          "days": 9,
+          "type": "premium",
+          "price": {
+            "individual": 23846,
+            "couple": 38750
+          }
+        }
       ]
     },
     {
@@ -683,6 +893,48 @@
         "Village Tours",
         "Bird Watching",
         "Photography"
+      ],
+      "packages": [
+        {
+          "id": "pkg-3d",
+          "label": "3-day package",
+          "days": 3,
+          "type": "budget",
+          "price": {
+            "individual": 7800,
+            "couple": 12600
+          }
+        },
+        {
+          "id": "pkg-5d",
+          "label": "5-day package",
+          "days": 5,
+          "type": "budget",
+          "price": {
+            "individual": 12740,
+            "couple": 20580
+          }
+        },
+        {
+          "id": "pkg-7d",
+          "label": "7-day package",
+          "days": 7,
+          "type": "premium",
+          "price": {
+            "individual": 20748,
+            "couple": 33516
+          }
+        },
+        {
+          "id": "pkg-9d",
+          "label": "9-day package",
+          "days": 9,
+          "type": "premium",
+          "price": {
+            "individual": 25834,
+            "couple": 41731
+          }
+        }
       ]
     },
     {
@@ -736,6 +988,48 @@
         "Cultural Heritage",
         "Markets",
         "Shopping"
+      ],
+      "packages": [
+        {
+          "id": "pkg-3d",
+          "label": "3-day package",
+          "days": 3,
+          "type": "premium",
+          "price": {
+            "individual": 6120,
+            "couple": 10080
+          }
+        },
+        {
+          "id": "pkg-5d",
+          "label": "5-day package",
+          "days": 5,
+          "type": "premium",
+          "price": {
+            "individual": 9996,
+            "couple": 16464
+          }
+        },
+        {
+          "id": "pkg-7d",
+          "label": "7-day package",
+          "days": 7,
+          "type": "premium",
+          "price": {
+            "individual": 13566,
+            "couple": 22344
+          }
+        },
+        {
+          "id": "pkg-9d",
+          "label": "9-day package",
+          "days": 9,
+          "type": "premium",
+          "price": {
+            "individual": 16891,
+            "couple": 27821
+          }
+        }
       ]
     },
     {
@@ -788,6 +1082,48 @@
       "activitiesAvailable": [
         "Food Trails",
         "Cooking Sessions"
+      ],
+      "packages": [
+        {
+          "id": "pkg-3d",
+          "label": "3-day package",
+          "days": 3,
+          "type": "premium",
+          "price": {
+            "individual": 7200,
+            "couple": 12240
+          }
+        },
+        {
+          "id": "pkg-5d",
+          "label": "5-day package",
+          "days": 5,
+          "type": "premium",
+          "price": {
+            "individual": 11760,
+            "couple": 19992
+          }
+        },
+        {
+          "id": "pkg-7d",
+          "label": "7-day package",
+          "days": 7,
+          "type": "budget",
+          "price": {
+            "individual": 13300,
+            "couple": 22610
+          }
+        },
+        {
+          "id": "pkg-9d",
+          "label": "9-day package",
+          "days": 9,
+          "type": "premium",
+          "price": {
+            "individual": 19872,
+            "couple": 33782
+          }
+        }
       ]
     },
     {
@@ -850,6 +1186,48 @@
       "activitiesAvailable": [
         "Camping",
         "River Rafting"
+      ],
+      "packages": [
+        {
+          "id": "pkg-3d",
+          "label": "3-day package",
+          "days": 3,
+          "type": "premium",
+          "price": {
+            "individual": 10080,
+            "couple": 16560
+          }
+        },
+        {
+          "id": "pkg-5d",
+          "label": "5-day package",
+          "days": 5,
+          "type": "budget",
+          "price": {
+            "individual": 13720,
+            "couple": 22540
+          }
+        },
+        {
+          "id": "pkg-7d",
+          "label": "7-day package",
+          "days": 7,
+          "type": "budget",
+          "price": {
+            "individual": 18620,
+            "couple": 30590
+          }
+        },
+        {
+          "id": "pkg-9d",
+          "label": "9-day package",
+          "days": 9,
+          "type": "premium",
+          "price": {
+            "individual": 27821,
+            "couple": 45706
+          }
+        }
       ]
     },
     {
@@ -908,6 +1286,48 @@
         "Gardens",
         "Seasonal Tours",
         "Tulip Viewing"
+      ],
+      "packages": [
+        {
+          "id": "pkg-3d",
+          "label": "3-day package",
+          "days": 3,
+          "type": "budget",
+          "price": {
+            "individual": 4200,
+            "couple": 7200
+          }
+        },
+        {
+          "id": "pkg-5d",
+          "label": "5-day package",
+          "days": 5,
+          "type": "budget",
+          "price": {
+            "individual": 6860,
+            "couple": 11760
+          }
+        },
+        {
+          "id": "pkg-7d",
+          "label": "7-day package",
+          "days": 7,
+          "type": "budget",
+          "price": {
+            "individual": 9310,
+            "couple": 15960
+          }
+        },
+        {
+          "id": "pkg-9d",
+          "label": "9-day package",
+          "days": 9,
+          "type": "premium",
+          "price": {
+            "individual": 13910,
+            "couple": 23846
+          }
+        }
       ]
     },
     {
@@ -933,7 +1353,7 @@
       "touristsHandled": 330,
       "responseTime": "1 hour",
       "badges": [
-        "Angler\u2019s Pick"
+        "Angler’s Pick"
       ],
       "trekPackages": [
         {
@@ -960,6 +1380,48 @@
       "activitiesAvailable": [
         "Fishing",
         "Nature Walks"
+      ],
+      "packages": [
+        {
+          "id": "pkg-3d",
+          "label": "3-day package",
+          "days": 3,
+          "type": "premium",
+          "price": {
+            "individual": 8280,
+            "couple": 12960
+          }
+        },
+        {
+          "id": "pkg-5d",
+          "label": "5-day package",
+          "days": 5,
+          "type": "budget",
+          "price": {
+            "individual": 11270,
+            "couple": 17640
+          }
+        },
+        {
+          "id": "pkg-7d",
+          "label": "7-day package",
+          "days": 7,
+          "type": "budget",
+          "price": {
+            "individual": 15295,
+            "couple": 23940
+          }
+        },
+        {
+          "id": "pkg-9d",
+          "label": "9-day package",
+          "days": 9,
+          "type": "budget",
+          "price": {
+            "individual": 19044,
+            "couple": 29808
+          }
+        }
       ]
     },
     {
@@ -1017,6 +1479,48 @@
       "activitiesAvailable": [
         "Spiritual Tours",
         "Pilgrimage Tours"
+      ],
+      "packages": [
+        {
+          "id": "pkg-3d",
+          "label": "3-day package",
+          "days": 3,
+          "type": "premium",
+          "price": {
+            "individual": 10800,
+            "couple": 18000
+          }
+        },
+        {
+          "id": "pkg-5d",
+          "label": "5-day package",
+          "days": 5,
+          "type": "budget",
+          "price": {
+            "individual": 14700,
+            "couple": 24500
+          }
+        },
+        {
+          "id": "pkg-7d",
+          "label": "7-day package",
+          "days": 7,
+          "type": "budget",
+          "price": {
+            "individual": 19950,
+            "couple": 33250
+          }
+        },
+        {
+          "id": "pkg-9d",
+          "label": "9-day package",
+          "days": 9,
+          "type": "budget",
+          "price": {
+            "individual": 24840,
+            "couple": 41400
+          }
+        }
       ]
     },
     {
@@ -1080,6 +1584,48 @@
         "River Rafting",
         "Himalayan Treks",
         "Wildlife Safari"
+      ],
+      "packages": [
+        {
+          "id": "pkg-3d",
+          "label": "3-day package",
+          "days": 3,
+          "type": "budget",
+          "price": {
+            "individual": 6000,
+            "couple": 10500
+          }
+        },
+        {
+          "id": "pkg-5d",
+          "label": "5-day package",
+          "days": 5,
+          "type": "budget",
+          "price": {
+            "individual": 9800,
+            "couple": 17150
+          }
+        },
+        {
+          "id": "pkg-7d",
+          "label": "7-day package",
+          "days": 7,
+          "type": "premium",
+          "price": {
+            "individual": 15960,
+            "couple": 27930
+          }
+        },
+        {
+          "id": "pkg-9d",
+          "label": "9-day package",
+          "days": 9,
+          "type": "premium",
+          "price": {
+            "individual": 19872,
+            "couple": 34776
+          }
+        }
       ]
     },
     {
@@ -1133,6 +1679,48 @@
         "Yoga Retreat",
         "Meditation Retreats",
         "Ganga Aarti"
+      ],
+      "packages": [
+        {
+          "id": "pkg-3d",
+          "label": "3-day package",
+          "days": 3,
+          "type": "budget",
+          "price": {
+            "individual": 6600,
+            "couple": 11400
+          }
+        },
+        {
+          "id": "pkg-5d",
+          "label": "5-day package",
+          "days": 5,
+          "type": "budget",
+          "price": {
+            "individual": 10780,
+            "couple": 18620
+          }
+        },
+        {
+          "id": "pkg-7d",
+          "label": "7-day package",
+          "days": 7,
+          "type": "premium",
+          "price": {
+            "individual": 17556,
+            "couple": 30324
+          }
+        },
+        {
+          "id": "pkg-9d",
+          "label": "9-day package",
+          "days": 9,
+          "type": "budget",
+          "price": {
+            "individual": 18216,
+            "couple": 31464
+          }
+        }
       ]
     },
     {
@@ -1185,6 +1773,48 @@
       "activitiesAvailable": [
         "Religious Tours",
         "Temple Visits"
+      ],
+      "packages": [
+        {
+          "id": "pkg-3d",
+          "label": "3-day package",
+          "days": 3,
+          "type": "budget",
+          "price": {
+            "individual": 7500,
+            "couple": 12000
+          }
+        },
+        {
+          "id": "pkg-5d",
+          "label": "5-day package",
+          "days": 5,
+          "type": "budget",
+          "price": {
+            "individual": 12250,
+            "couple": 19600
+          }
+        },
+        {
+          "id": "pkg-7d",
+          "label": "7-day package",
+          "days": 7,
+          "type": "budget",
+          "price": {
+            "individual": 16625,
+            "couple": 26600
+          }
+        },
+        {
+          "id": "pkg-9d",
+          "label": "9-day package",
+          "days": 9,
+          "type": "premium",
+          "price": {
+            "individual": 24840,
+            "couple": 39744
+          }
+        }
       ]
     },
     {
@@ -1243,6 +1873,48 @@
         "Homestay",
         "Cultural Walk",
         "Village Walks"
+      ],
+      "packages": [
+        {
+          "id": "pkg-3d",
+          "label": "3-day package",
+          "days": 3,
+          "type": "premium",
+          "price": {
+            "individual": 6120,
+            "couple": 10800
+          }
+        },
+        {
+          "id": "pkg-5d",
+          "label": "5-day package",
+          "days": 5,
+          "type": "budget",
+          "price": {
+            "individual": 8330,
+            "couple": 14700
+          }
+        },
+        {
+          "id": "pkg-7d",
+          "label": "7-day package",
+          "days": 7,
+          "type": "premium",
+          "price": {
+            "individual": 13566,
+            "couple": 23940
+          }
+        },
+        {
+          "id": "pkg-9d",
+          "label": "9-day package",
+          "days": 9,
+          "type": "premium",
+          "price": {
+            "individual": 16891,
+            "couple": 29808
+          }
+        }
       ]
     },
     {
@@ -1301,6 +1973,48 @@
         "Rafting",
         "Camping",
         "Adventure Sports"
+      ],
+      "packages": [
+        {
+          "id": "pkg-3d",
+          "label": "3-day package",
+          "days": 3,
+          "type": "budget",
+          "price": {
+            "individual": 8400,
+            "couple": 13500
+          }
+        },
+        {
+          "id": "pkg-5d",
+          "label": "5-day package",
+          "days": 5,
+          "type": "budget",
+          "price": {
+            "individual": 13720,
+            "couple": 22050
+          }
+        },
+        {
+          "id": "pkg-7d",
+          "label": "7-day package",
+          "days": 7,
+          "type": "premium",
+          "price": {
+            "individual": 22344,
+            "couple": 35910
+          }
+        },
+        {
+          "id": "pkg-9d",
+          "label": "9-day package",
+          "days": 9,
+          "type": "premium",
+          "price": {
+            "individual": 27821,
+            "couple": 44712
+          }
+        }
       ]
     },
     {
@@ -1358,6 +2072,48 @@
       "activitiesAvailable": [
         "Bird Watching",
         "Botanical Walks"
+      ],
+      "packages": [
+        {
+          "id": "pkg-3d",
+          "label": "3-day package",
+          "days": 3,
+          "type": "budget",
+          "price": {
+            "individual": 5400,
+            "couple": 9600
+          }
+        },
+        {
+          "id": "pkg-5d",
+          "label": "5-day package",
+          "days": 5,
+          "type": "premium",
+          "price": {
+            "individual": 10584,
+            "couple": 18816
+          }
+        },
+        {
+          "id": "pkg-7d",
+          "label": "7-day package",
+          "days": 7,
+          "type": "premium",
+          "price": {
+            "individual": 14364,
+            "couple": 25536
+          }
+        },
+        {
+          "id": "pkg-9d",
+          "label": "9-day package",
+          "days": 9,
+          "type": "budget",
+          "price": {
+            "individual": 14904,
+            "couple": 26496
+          }
+        }
       ]
     },
     {
@@ -1411,6 +2167,48 @@
         "Snow Treks",
         "Base Camps",
         "Skiing"
+      ],
+      "packages": [
+        {
+          "id": "pkg-3d",
+          "label": "3-day package",
+          "days": 3,
+          "type": "premium",
+          "price": {
+            "individual": 9720,
+            "couple": 15480
+          }
+        },
+        {
+          "id": "pkg-5d",
+          "label": "5-day package",
+          "days": 5,
+          "type": "premium",
+          "price": {
+            "individual": 15876,
+            "couple": 25284
+          }
+        },
+        {
+          "id": "pkg-7d",
+          "label": "7-day package",
+          "days": 7,
+          "type": "premium",
+          "price": {
+            "individual": 21546,
+            "couple": 34314
+          }
+        },
+        {
+          "id": "pkg-9d",
+          "label": "9-day package",
+          "days": 9,
+          "type": "premium",
+          "price": {
+            "individual": 26827,
+            "couple": 42725
+          }
+        }
       ]
     },
     {
@@ -1458,6 +2256,48 @@
       "activitiesAvailable": [
         "Agriculture Tours",
         "Local Stories"
+      ],
+      "packages": [
+        {
+          "id": "pkg-3d",
+          "label": "3-day package",
+          "days": 3,
+          "type": "premium",
+          "price": {
+            "individual": 5760,
+            "couple": 10440
+          }
+        },
+        {
+          "id": "pkg-5d",
+          "label": "5-day package",
+          "days": 5,
+          "type": "premium",
+          "price": {
+            "individual": 9408,
+            "couple": 17052
+          }
+        },
+        {
+          "id": "pkg-7d",
+          "label": "7-day package",
+          "days": 7,
+          "type": "budget",
+          "price": {
+            "individual": 10640,
+            "couple": 19285
+          }
+        },
+        {
+          "id": "pkg-9d",
+          "label": "9-day package",
+          "days": 9,
+          "type": "premium",
+          "price": {
+            "individual": 15898,
+            "couple": 28814
+          }
+        }
       ]
     },
     {
@@ -1499,13 +2339,55 @@
       ],
       "hotelsAvailable": [
         "Taj Corbett Resort",
-        "Aahana \u2013 The Corbett Wilderness",
+        "Aahana – The Corbett Wilderness",
         "Namah Resort"
       ],
       "activitiesAvailable": [
         "Wildlife",
         "Photography",
         "River Picnic"
+      ],
+      "packages": [
+        {
+          "id": "pkg-3d",
+          "label": "3-day package",
+          "days": 3,
+          "type": "premium",
+          "price": {
+            "individual": 10800,
+            "couple": 17280
+          }
+        },
+        {
+          "id": "pkg-5d",
+          "label": "5-day package",
+          "days": 5,
+          "type": "budget",
+          "price": {
+            "individual": 14700,
+            "couple": 23520
+          }
+        },
+        {
+          "id": "pkg-7d",
+          "label": "7-day package",
+          "days": 7,
+          "type": "budget",
+          "price": {
+            "individual": 19950,
+            "couple": 31920
+          }
+        },
+        {
+          "id": "pkg-9d",
+          "label": "9-day package",
+          "days": 9,
+          "type": "premium",
+          "price": {
+            "individual": 29808,
+            "couple": 47693
+          }
+        }
       ]
     },
     {
@@ -1557,6 +2439,48 @@
       "activitiesAvailable": [
         "Zero Waste Tours",
         "Sustainable Tourism"
+      ],
+      "packages": [
+        {
+          "id": "pkg-3d",
+          "label": "3-day package",
+          "days": 3,
+          "type": "budget",
+          "price": {
+            "individual": 5700,
+            "couple": 9300
+          }
+        },
+        {
+          "id": "pkg-5d",
+          "label": "5-day package",
+          "days": 5,
+          "type": "budget",
+          "price": {
+            "individual": 9310,
+            "couple": 15190
+          }
+        },
+        {
+          "id": "pkg-7d",
+          "label": "7-day package",
+          "days": 7,
+          "type": "premium",
+          "price": {
+            "individual": 15162,
+            "couple": 24738
+          }
+        },
+        {
+          "id": "pkg-9d",
+          "label": "9-day package",
+          "days": 9,
+          "type": "premium",
+          "price": {
+            "individual": 18878,
+            "couple": 30802
+          }
+        }
       ]
     },
     {
@@ -1603,6 +2527,48 @@
       "activitiesAvailable": [
         "Bungee Jumping",
         "Adventure Sports"
+      ],
+      "packages": [
+        {
+          "id": "pkg-3d",
+          "label": "3-day package",
+          "days": 3,
+          "type": "premium",
+          "price": {
+            "individual": 11520,
+            "couple": 18000
+          }
+        },
+        {
+          "id": "pkg-5d",
+          "label": "5-day package",
+          "days": 5,
+          "type": "premium",
+          "price": {
+            "individual": 18816,
+            "couple": 29400
+          }
+        },
+        {
+          "id": "pkg-7d",
+          "label": "7-day package",
+          "days": 7,
+          "type": "budget",
+          "price": {
+            "individual": 21280,
+            "couple": 33250
+          }
+        },
+        {
+          "id": "pkg-9d",
+          "label": "9-day package",
+          "days": 9,
+          "type": "premium",
+          "price": {
+            "individual": 31795,
+            "couple": 49680
+          }
+        }
       ]
     },
     {
@@ -1665,6 +2631,48 @@
       "activitiesAvailable": [
         "Folk Music",
         "Local Legends"
+      ],
+      "packages": [
+        {
+          "id": "pkg-3d",
+          "label": "3-day package",
+          "days": 3,
+          "type": "premium",
+          "price": {
+            "individual": 5400,
+            "couple": 9360
+          }
+        },
+        {
+          "id": "pkg-5d",
+          "label": "5-day package",
+          "days": 5,
+          "type": "budget",
+          "price": {
+            "individual": 7350,
+            "couple": 12740
+          }
+        },
+        {
+          "id": "pkg-7d",
+          "label": "7-day package",
+          "days": 7,
+          "type": "premium",
+          "price": {
+            "individual": 11970,
+            "couple": 20748
+          }
+        },
+        {
+          "id": "pkg-9d",
+          "label": "9-day package",
+          "days": 9,
+          "type": "budget",
+          "price": {
+            "individual": 12420,
+            "couple": 21528
+          }
+        }
       ]
     },
     {
@@ -1702,6 +2710,48 @@
           "trekId": "himachal-5",
           "price": 3317,
           "duration": "8 days"
+        }
+      ],
+      "packages": [
+        {
+          "id": "pkg-3d",
+          "label": "3-day package",
+          "days": 3,
+          "type": "budget",
+          "price": {
+            "individual": 8400,
+            "couple": 13500
+          }
+        },
+        {
+          "id": "pkg-5d",
+          "label": "5-day package",
+          "days": 5,
+          "type": "premium",
+          "price": {
+            "individual": 16464,
+            "couple": 26460
+          }
+        },
+        {
+          "id": "pkg-7d",
+          "label": "7-day package",
+          "days": 7,
+          "type": "premium",
+          "price": {
+            "individual": 22344,
+            "couple": 35910
+          }
+        },
+        {
+          "id": "pkg-9d",
+          "label": "9-day package",
+          "days": 9,
+          "type": "budget",
+          "price": {
+            "individual": 23184,
+            "couple": 37260
+          }
         }
       ]
     },
@@ -1746,6 +2796,48 @@
           "price": 3465,
           "duration": "8 days"
         }
+      ],
+      "packages": [
+        {
+          "id": "pkg-3d",
+          "label": "3-day package",
+          "days": 3,
+          "type": "budget",
+          "price": {
+            "individual": 10500,
+            "couple": 16500
+          }
+        },
+        {
+          "id": "pkg-5d",
+          "label": "5-day package",
+          "days": 5,
+          "type": "premium",
+          "price": {
+            "individual": 20580,
+            "couple": 32340
+          }
+        },
+        {
+          "id": "pkg-7d",
+          "label": "7-day package",
+          "days": 7,
+          "type": "budget",
+          "price": {
+            "individual": 23275,
+            "couple": 36575
+          }
+        },
+        {
+          "id": "pkg-9d",
+          "label": "9-day package",
+          "days": 9,
+          "type": "budget",
+          "price": {
+            "individual": 28980,
+            "couple": 45540
+          }
+        }
       ]
     },
     {
@@ -1789,6 +2881,48 @@
           "price": 2729,
           "duration": "3 days"
         }
+      ],
+      "packages": [
+        {
+          "id": "pkg-3d",
+          "label": "3-day package",
+          "days": 3,
+          "type": "budget",
+          "price": {
+            "individual": 7800,
+            "couple": 12600
+          }
+        },
+        {
+          "id": "pkg-5d",
+          "label": "5-day package",
+          "days": 5,
+          "type": "budget",
+          "price": {
+            "individual": 12740,
+            "couple": 20580
+          }
+        },
+        {
+          "id": "pkg-7d",
+          "label": "7-day package",
+          "days": 7,
+          "type": "premium",
+          "price": {
+            "individual": 20748,
+            "couple": 33516
+          }
+        },
+        {
+          "id": "pkg-9d",
+          "label": "9-day package",
+          "days": 9,
+          "type": "budget",
+          "price": {
+            "individual": 21528,
+            "couple": 34776
+          }
+        }
       ]
     },
     {
@@ -1831,6 +2965,48 @@
           "trekId": "himachal-4",
           "price": 3879,
           "duration": "1 days"
+        }
+      ],
+      "packages": [
+        {
+          "id": "pkg-3d",
+          "label": "3-day package",
+          "days": 3,
+          "type": "premium",
+          "price": {
+            "individual": 10800,
+            "couple": 18000
+          }
+        },
+        {
+          "id": "pkg-5d",
+          "label": "5-day package",
+          "days": 5,
+          "type": "premium",
+          "price": {
+            "individual": 17640,
+            "couple": 29400
+          }
+        },
+        {
+          "id": "pkg-7d",
+          "label": "7-day package",
+          "days": 7,
+          "type": "budget",
+          "price": {
+            "individual": 19950,
+            "couple": 33250
+          }
+        },
+        {
+          "id": "pkg-9d",
+          "label": "9-day package",
+          "days": 9,
+          "type": "premium",
+          "price": {
+            "individual": 29808,
+            "couple": 49680
+          }
         }
       ]
     },
@@ -1880,6 +3056,48 @@
           "price": 3424,
           "duration": "10 days"
         }
+      ],
+      "packages": [
+        {
+          "id": "pkg-3d",
+          "label": "3-day package",
+          "days": 3,
+          "type": "budget",
+          "price": {
+            "individual": 7200,
+            "couple": 12000
+          }
+        },
+        {
+          "id": "pkg-5d",
+          "label": "5-day package",
+          "days": 5,
+          "type": "premium",
+          "price": {
+            "individual": 14112,
+            "couple": 23520
+          }
+        },
+        {
+          "id": "pkg-7d",
+          "label": "7-day package",
+          "days": 7,
+          "type": "budget",
+          "price": {
+            "individual": 15960,
+            "couple": 26600
+          }
+        },
+        {
+          "id": "pkg-9d",
+          "label": "9-day package",
+          "days": 9,
+          "type": "budget",
+          "price": {
+            "individual": 19872,
+            "couple": 33120
+          }
+        }
       ]
     },
     {
@@ -1928,6 +3146,48 @@
           "price": 2043,
           "duration": "8 days"
         }
+      ],
+      "packages": [
+        {
+          "id": "pkg-3d",
+          "label": "3-day package",
+          "days": 3,
+          "type": "premium",
+          "price": {
+            "individual": 7560,
+            "couple": 12960
+          }
+        },
+        {
+          "id": "pkg-5d",
+          "label": "5-day package",
+          "days": 5,
+          "type": "budget",
+          "price": {
+            "individual": 10290,
+            "couple": 17640
+          }
+        },
+        {
+          "id": "pkg-7d",
+          "label": "7-day package",
+          "days": 7,
+          "type": "premium",
+          "price": {
+            "individual": 16758,
+            "couple": 28728
+          }
+        },
+        {
+          "id": "pkg-9d",
+          "label": "9-day package",
+          "days": 9,
+          "type": "budget",
+          "price": {
+            "individual": 17388,
+            "couple": 29808
+          }
+        }
       ]
     },
     {
@@ -1953,7 +3213,7 @@
       "touristsHandled": 960,
       "responseTime": "25 mins",
       "badges": [
-        "Rider\u2019s Choice"
+        "Rider’s Choice"
       ],
       "trekPackages": [
         {
@@ -1975,6 +3235,48 @@
           "trekId": "himachal-5",
           "price": 3182,
           "duration": "9 days"
+        }
+      ],
+      "packages": [
+        {
+          "id": "pkg-3d",
+          "label": "3-day package",
+          "days": 3,
+          "type": "budget",
+          "price": {
+            "individual": 9600,
+            "couple": 15600
+          }
+        },
+        {
+          "id": "pkg-5d",
+          "label": "5-day package",
+          "days": 5,
+          "type": "premium",
+          "price": {
+            "individual": 18816,
+            "couple": 30576
+          }
+        },
+        {
+          "id": "pkg-7d",
+          "label": "7-day package",
+          "days": 7,
+          "type": "premium",
+          "price": {
+            "individual": 25536,
+            "couple": 41496
+          }
+        },
+        {
+          "id": "pkg-9d",
+          "label": "9-day package",
+          "days": 9,
+          "type": "budget",
+          "price": {
+            "individual": 26496,
+            "couple": 43056
+          }
         }
       ]
     },
@@ -2029,6 +3331,48 @@
           "price": 2813,
           "duration": "8 days"
         }
+      ],
+      "packages": [
+        {
+          "id": "pkg-3d",
+          "label": "3-day package",
+          "days": 3,
+          "type": "premium",
+          "price": {
+            "individual": 6480,
+            "couple": 10800
+          }
+        },
+        {
+          "id": "pkg-5d",
+          "label": "5-day package",
+          "days": 5,
+          "type": "budget",
+          "price": {
+            "individual": 8820,
+            "couple": 14700
+          }
+        },
+        {
+          "id": "pkg-7d",
+          "label": "7-day package",
+          "days": 7,
+          "type": "premium",
+          "price": {
+            "individual": 14364,
+            "couple": 23940
+          }
+        },
+        {
+          "id": "pkg-9d",
+          "label": "9-day package",
+          "days": 9,
+          "type": "premium",
+          "price": {
+            "individual": 17885,
+            "couple": 29808
+          }
+        }
       ]
     },
     {
@@ -2077,6 +3421,48 @@
           "price": 2318,
           "duration": "10 days"
         }
+      ],
+      "packages": [
+        {
+          "id": "pkg-3d",
+          "label": "3-day package",
+          "days": 3,
+          "type": "budget",
+          "price": {
+            "individual": 7800,
+            "couple": 12900
+          }
+        },
+        {
+          "id": "pkg-5d",
+          "label": "5-day package",
+          "days": 5,
+          "type": "premium",
+          "price": {
+            "individual": 15288,
+            "couple": 25284
+          }
+        },
+        {
+          "id": "pkg-7d",
+          "label": "7-day package",
+          "days": 7,
+          "type": "premium",
+          "price": {
+            "individual": 20748,
+            "couple": 34314
+          }
+        },
+        {
+          "id": "pkg-9d",
+          "label": "9-day package",
+          "days": 9,
+          "type": "premium",
+          "price": {
+            "individual": 25834,
+            "couple": 42725
+          }
+        }
       ]
     },
     {
@@ -2119,6 +3505,48 @@
           "trekId": "himachal-3",
           "price": 2218,
           "duration": "5 days"
+        }
+      ],
+      "packages": [
+        {
+          "id": "pkg-3d",
+          "label": "3-day package",
+          "days": 3,
+          "type": "budget",
+          "price": {
+            "individual": 6000,
+            "couple": 10200
+          }
+        },
+        {
+          "id": "pkg-5d",
+          "label": "5-day package",
+          "days": 5,
+          "type": "premium",
+          "price": {
+            "individual": 11760,
+            "couple": 19992
+          }
+        },
+        {
+          "id": "pkg-7d",
+          "label": "7-day package",
+          "days": 7,
+          "type": "premium",
+          "price": {
+            "individual": 15960,
+            "couple": 27132
+          }
+        },
+        {
+          "id": "pkg-9d",
+          "label": "9-day package",
+          "days": 9,
+          "type": "premium",
+          "price": {
+            "individual": 19872,
+            "couple": 33782
+          }
         }
       ]
     },
@@ -2163,6 +3591,48 @@
           "price": 2720,
           "duration": "8 days"
         }
+      ],
+      "packages": [
+        {
+          "id": "pkg-3d",
+          "label": "3-day package",
+          "days": 3,
+          "type": "premium",
+          "price": {
+            "individual": 10440,
+            "couple": 16920
+          }
+        },
+        {
+          "id": "pkg-5d",
+          "label": "5-day package",
+          "days": 5,
+          "type": "premium",
+          "price": {
+            "individual": 17052,
+            "couple": 27636
+          }
+        },
+        {
+          "id": "pkg-7d",
+          "label": "7-day package",
+          "days": 7,
+          "type": "budget",
+          "price": {
+            "individual": 19285,
+            "couple": 31255
+          }
+        },
+        {
+          "id": "pkg-9d",
+          "label": "9-day package",
+          "days": 9,
+          "type": "budget",
+          "price": {
+            "individual": 24012,
+            "couple": 38916
+          }
+        }
       ]
     },
     {
@@ -2201,12 +3671,54 @@
           "price": 3041,
           "duration": "2 days"
         }
+      ],
+      "packages": [
+        {
+          "id": "pkg-3d",
+          "label": "3-day package",
+          "days": 3,
+          "type": "budget",
+          "price": {
+            "individual": 5100,
+            "couple": 8700
+          }
+        },
+        {
+          "id": "pkg-5d",
+          "label": "5-day package",
+          "days": 5,
+          "type": "premium",
+          "price": {
+            "individual": 9996,
+            "couple": 17052
+          }
+        },
+        {
+          "id": "pkg-7d",
+          "label": "7-day package",
+          "days": 7,
+          "type": "budget",
+          "price": {
+            "individual": 11305,
+            "couple": 19285
+          }
+        },
+        {
+          "id": "pkg-9d",
+          "label": "9-day package",
+          "days": 9,
+          "type": "budget",
+          "price": {
+            "individual": 14076,
+            "couple": 24012
+          }
+        }
       ]
     }
   ],
   "events": [
     {
-      "id" : "012112",
+      "id": "012112",
       "name": "Heavenly Hike - Tarsar Escape",
       "date": "2025-06-12",
       "duration": "5 days",
@@ -2828,7 +4340,7 @@
         "name": "Jim Corbett",
         "hotels": [
           "Taj Corbett Resort",
-          "Aahana \u2013 The Corbett Wilderness",
+          "Aahana – The Corbett Wilderness",
           "Namah Resort"
         ],
         "activities": [
