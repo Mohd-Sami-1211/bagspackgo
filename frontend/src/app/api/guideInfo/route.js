@@ -56,10 +56,9 @@ export async function GET(req) {
 
     } catch (error) {
         console.error("Error in GET guide by eventId:", error);
-        return NextResponse.json({
-            success: false,
-            message: "Internal server error",
-            error: error.message
-        }, { status: 500 });
+        return new Response(JSON.stringify({ error: error.message }), {
+            status: 500,
+            headers: { 'Content-Type': 'application/json' }
+        });
     }
 }

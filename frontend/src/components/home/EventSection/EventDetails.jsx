@@ -22,10 +22,10 @@ import {
   Mail,Phone,Upload
 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { useFetchProvider } from 'src/customHook/fetchDetails';
 import { useSelector } from 'react-redux';
+import { getRazorpayOptions } from 'src/utils/razorpayOptions';
 const EventDetails = ({ event, guide }) => {
   useFetchProvider();
   const user = useSelector((store)=>store?.user?.currentUser);
@@ -127,14 +127,19 @@ const EventDetails = ({ event, guide }) => {
     formData.eventId = event?.eventId;
     formData.userId = user?._id;
     console.log('Form submitted with data:', formData);
-    const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/eventbooking` , 
+    const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/eventbooking` , 
       {formData} , 
       { headers: { "Content-Type": "multipart/form-data" } } 
     );
-    console.log(res);
+    console.log(response)
+    const {order} = response?.data;
+    const options = getRazorpayOptions(order);
+
+    const rzp = new window.Razorpay(options);
+    rzp.open();
     
     // Show success message and redirect
-    alert(`Booking confirmed for ${bookingSlots} slot(s)! Redirecting to bookings page...`);
+    // alert(`Booking confirmed for ${bookingSlots} slot(s)! Redirecting to bookings page...`);
     // router.push('/user/bookings');
   };
 
@@ -240,6 +245,7 @@ const EventDetails = ({ event, guide }) => {
   };
 
   return (
+    
     <div className="max-w-7xl mx-auto px-2 sm:px-2 lg:px-4 py-8 -mt-16 shadow-lg rounded-2xl bg-gradient-to-br from-green-50 to-blue-50 mb-16">
       {/* Header Section */}
       <motion.div 

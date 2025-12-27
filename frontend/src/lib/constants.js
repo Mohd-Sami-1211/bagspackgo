@@ -1,0 +1,1 @@
+export const RAZORPAY_SCRIPT="https://checkout.razorpay.com/v1/checkout.js";

@@ -26,7 +26,11 @@ const bookingSchema = new mongoose.Schema({
     eventId : {type : String},
     contactDetails : contactDetailsSchema,
     participantsDetails : [partipantsSchema],
-    amount : {type : String}
+    amount : {type : String},
+    razorpayOrderId : {type : String},
+    status: {type : String},
+    paymentId : {type : String},
+    paidAt : {type : Date}
 })
 // mongoose.deleteModel && mongoose.deleteModel("booking");
 export const bookingModel = mongoose.models.booking || mongoose.model("booking", bookingSchema);

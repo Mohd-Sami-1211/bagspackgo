@@ -5,14 +5,16 @@ import { EventModel } from "src/models/eventModel";
 import connectDB from "src/DB/DBConnection";
 import Razorpay from "razorpay";
 const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_API_KEY,
-  key_secret: process.env.RAZORPAY_API_SECRET,
+  key_id: process.env.NEXT_PUBLIC_RAZORPAY_API_KEY,
+  key_secret: process.env.NEXT_PUBLIC_RAZORPAY_API_SECRET,
 });
+
 export async function POST(req) {
   try {
     await connectDB();
     const formData = await req.formData();
-    const amount = formData.get('formData[amount]');
+    const amountStr = formData.get('formData[amount]');
+    const amount = Number(amountStr.replace(/,/g, '')); 
     const userId = formData.get('formData[userId]');
     // 1. Fetch contact details
     const email = formData.get('formData[contactDetails][email]');
@@ -63,7 +65,17 @@ export async function POST(req) {
     if (!updatedEvent) {
       throw new Error('Not enough slots available');
     }
+    console.log(amount)
+    const options = {
+      amount: Number(amount) * 100, // Amount in paise
+      currency: "INR",
+      receipt: `receipt_${Date.now()}`,
+    };
+    console.log(options)
+    
 
+    const razorpayOrder = await razorpay.orders.create(options);
+    if (!razorpayOrder) throw new Error("Failed to create Razorpay order");
     
 
     // 5. Create booking document
@@ -75,14 +87,17 @@ export async function POST(req) {
       },
       participantsDetails : participants,
       amount,
-      userId
+      userId,
+      razorpayOrderId: razorpayOrder.id, 
+      status: "pending"
     });
 
     const savedBooking = await bookingData.save();
     
     return new Response(JSON.stringify({ 
       message: "Booking created successfully", 
-      data: savedBooking 
+      data: savedBooking,
+      order: razorpayOrder
     }), {
       status: 200,
       headers: { "Content-Type": "application/json" }
