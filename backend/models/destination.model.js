@@ -16,14 +16,9 @@ const destinationSchema = new mongoose.Schema({
     default: "",
   },
   categories: {
-    type: [String], // e.g., ['individual', 'couple']
+    type: [String], // only two categories: 'individual', 'couple'
     default: ['individual', 'couple'],
   },
-  guides: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "GuideDetails", // reference to guide details
-  }],
-  
 }, { timestamps: true });
 
 export const Destination = mongoose.model("Destination", destinationSchema);
