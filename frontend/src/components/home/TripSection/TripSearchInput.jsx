@@ -241,13 +241,9 @@ const DestinationSelect = ({ selectedDestination, setSelectedDestination, error,
       styles={{
         ...selectStyles,
         control: (provided, state) => ({
-          ...provided,
-          minHeight: '32px',
-          fontSize: '0.85rem',
-          borderColor: state && state.isFocused ? '#10b981' : error ? '#ef4444' : '#d1d5db',
-          boxShadow: state && state.isFocused ? '0 0 0 1px #10b981' : error ? '0 0 0 1px #ef4444' : null,
-          '&:hover': { borderColor: state && state.isFocused ? '#10b981' : '#d1d5db' },
-          borderRadius: '8px',
+          ...selectStyles.control(provided, state),
+          borderColor: error ? '#ef4444' : state.isFocused ? '#10b981' : '#d1d5db',
+          boxShadow: error ? '0 0 0 1px #ef4444' : state.isFocused ? '0 0 0 1px #10b981' : null,
         }),
       }}
       menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
@@ -291,11 +287,34 @@ const CountersSection = ({ daysRange, setDaysRange, count, setCount, selectedCat
 
   return (
     <motion.div className="flex gap-4 flex-wrap sm:flex-nowrap w-full" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true, margin: '-50px' }}>
-      <DaysRangeSelect
-        daysRange={daysRange}
-        setDaysRange={setDaysRange}
-        daysOptions={daysOptions}
-      />
+      {/* Days Range Select Dropdown */}
+      <motion.div
+        className="flex-1 w-full sm:w-auto"
+        initial={{ opacity: 0, y: 10 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: '-30px' }}
+        transition={{ duration: 0.3 }}
+      >
+        <label className="block text-sm font-semibold text-gray-800 mb-1">No. of Days</label>
+        <Select
+          options={daysOptions}
+          value={daysRange}
+          onChange={setDaysRange}
+          placeholder="Select Days Range"
+          classNamePrefix="react-select"
+          isClearable
+          styles={{
+            ...selectStyles,
+            control: (provided, state) => ({
+              ...selectStyles.control(provided, state),
+              minHeight: '36px', // Match counter height
+            }),
+          }}
+          menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
+          menuPosition="fixed"
+        />
+      </motion.div>
+      
       <Counter
         label={selectedCategory === 'couple' ? 'No. of Couples' : 'No. of Individuals'}
         value={count}
@@ -313,30 +332,6 @@ const CountersSection = ({ daysRange, setDaysRange, count, setCount, selectedCat
     </motion.div>
   );
 };
-
-// ------------------- Days Range Select -------------------
-const DaysRangeSelect = ({ daysRange, setDaysRange, daysOptions }) => (
-  <motion.div
-    className="flex-1 w-full sm:w-auto"
-    initial={{ opacity: 0, y: 10 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true, margin: '-30px' }}
-    transition={{ duration: 0.3 }}
-  >
-    <label className="block text-sm font-semibold text-gray-800 mb-1">No. of Days</label>
-    <Select
-      options={daysOptions}
-      value={daysRange}
-      onChange={setDaysRange}
-      placeholder="Select Days Range"
-      classNamePrefix="react-select"
-      isClearable
-      styles={selectStyles}
-      menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
-      menuPosition="fixed"
-    />
-  </motion.div>
-);
 
 // ------------------- Counter -------------------
 const Counter = ({ label, value, onIncrement, onDecrement, onChange }) => {
@@ -379,11 +374,11 @@ const Counter = ({ label, value, onIncrement, onDecrement, onChange }) => {
 const selectStyles = {
   control: (provided, state) => ({
     ...provided,
-    minHeight: '32px',
+    minHeight: '36px', // Slightly increased to match counter height
     fontSize: '0.85rem',
-    borderColor: state && state.isFocused ? '#10b981' : '#d1d5db',
-    boxShadow: state && state.isFocused ? '0 0 0 1px #10b981' : null,
-    '&:hover': { borderColor: state && state.isFocused ? '#10b981' : '#d1d5db' },
+    borderColor: state.isFocused ? '#10b981' : '#d1d5db',
+    boxShadow: state.isFocused ? '0 0 0 1px #10b981' : null,
+    '&:hover': { borderColor: state.isFocused ? '#10b981' : '#d1d5db' },
     borderRadius: '8px',
   }),
   menu: (provided) => ({
@@ -397,8 +392,8 @@ const selectStyles = {
   option: (provided, state) => ({
     ...provided,
     borderRadius: '6px',
-    backgroundColor: state && state.isSelected ? '#a7f3d0' : state && state.isFocused ? '#d1fae5' : 'white',
-    color: state && state.isSelected ? '#065f46' : '#1e293b',
+    backgroundColor: state.isSelected ? '#a7f3d0' : state.isFocused ? '#d1fae5' : 'white',
+    color: state.isSelected ? '#065f46' : '#1e293b',
     margin: '4px 0',
     padding: '8px 12px',
     transition: 'all 0.15s ease-out',

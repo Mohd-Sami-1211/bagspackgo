@@ -8,6 +8,7 @@ import PersonalDetails from 'src/components/home/TripSection/PersonalDetails';
 
 const GuideDetails = ({ guide }) => {
   const searchParams = useSearchParams();
+  const router = useRouter();
   
   // Get parameters from URL with validation
   const category = ['individual', 'couple', 'group'].includes(searchParams.get('category'))
@@ -93,7 +94,6 @@ const GuideDetails = ({ guide }) => {
   const total = basePrice - discount + platformFee + taxes;
   const nights = numDays + 1;
 
-  const router = useRef();
   const [activeTab, setActiveTab] = useState('dayByDay');
   const [currentDay, setCurrentDay] = useState(1);
   const [acceptTerms, setAcceptTerms] = useState(false);
@@ -331,6 +331,62 @@ const GuideDetails = ({ guide }) => {
   const handleDayNodeClick = (dayNumber) => {
     setCurrentDay(dayNumber);
     // Auto-scroll will be handled by the useEffect above
+  };
+
+  // Handle navigation to review page
+  const handleReviewJourney = () => {
+    // Prepare all trip data with proper structure
+    const tripData = {
+      itenaries: itenaries,
+      arrivalDeparture: arrivalDepartureData,
+      personalDetails: {
+        contactDetails: personalDetailsData.contactDetails || {},
+        personalDetails: personalDetailsData.personalDetails || [],
+        children: personalDetailsData.children || []
+      },
+      guide: guide,
+      selectedPackage: selectedPackage,
+      tripConfig: {
+        category,
+        days: priceDetails.days,
+        daysRange,
+        count: numPeople,
+        date: dateParam,
+        packageId
+      }
+    };
+
+    // Store in localStorage
+    localStorage.setItem('tripData', JSON.stringify(tripData));
+
+    // Create query params
+    const params = new URLSearchParams();
+    params.set('category', category);
+    params.set('daysRange', daysRange || '');
+    params.set('count', numPeople);
+    if (dateParam) params.set('date', dateParam);
+    if (packageId) params.set('packageId', packageId);
+    
+    // Debug logging
+    console.log('Navigating to review page with guide ID:', guide.id);
+    console.log('Guide object:', guide);
+    console.log('Path being used:', `/user/trip/guidelist/tripdetails/${guide.id}/reviewjourney`);
+    console.log('Full URL:', `/user/trip/guidelist/tripdetails/${guide.id}/reviewjourney?${params.toString()}`);
+
+    // Try different route options:
+    
+    // Option 1: Original path
+    // router.push(`/user/trip/guidelist/tripdetails/${guide.id}/reviewjourney?${params.toString()}`);
+    
+    // Option 2: Simpler path (common pattern)
+    // router.push(`/trip/review/${guide.id}?${params.toString()}`);
+    
+    // Option 3: Check if guide.id exists and use a fallback
+    const guideId = guide?.id || guide?._id || 'unknown';
+    router.push(`/user/trip/guidelist/tripdetails/${guideId}/reviewjourney?${params.toString()}`);
+    
+    // Option 4: If you have a separate review page route
+    // router.push(`/review-journey?guideId=${guideId}&${params.toString()}`);
   };
 
   return (
@@ -762,43 +818,7 @@ const GuideDetails = ({ guide }) => {
 
                   <button
                     type="button"
-                    onClick={() => {
-                      // Prepare all trip data with proper structure
-                      const tripData = {
-                        itenaries: itenaries,
-                        arrivalDeparture: arrivalDepartureData,
-                        personalDetails: {
-                          contactDetails: personalDetailsData.contactDetails || {},
-                          personalDetails: personalDetailsData.personalDetails || [],
-                          children: personalDetailsData.children || []
-                        },
-                        guide: guide,
-                        selectedPackage: selectedPackage,
-                        tripConfig: {
-                          category,
-                          days: priceDetails.days,
-                          daysRange,
-                          count: numPeople,
-                          date: dateParam,
-                          packageId
-                        }
-                      };
-
-                      // Store in localStorage
-                      localStorage.setItem('tripData', JSON.stringify(tripData));
-
-                      // Navigate to review page
-                      const params = new URLSearchParams();
-                      params.set('category', category);
-                      params.set('daysRange', daysRange || '');
-                      params.set('count', numPeople);
-                      if (dateParam) params.set('date', dateParam);
-                      if (packageId) params.set('packageId', packageId);
-
-                      router.push(
-                        `/user/trip/guidelist/tripdetails/${guide.id}/reviewjourney?${params.toString()}`
-                      );
-                    }}
+                    onClick={handleReviewJourney}
                     className={`px-4 sm:px-5 py-2.5 text-white rounded-lg transition-colors flex items-center text-sm shadow-sm hover:shadow-md ${
                       isPremiumPackage
                         ? 'bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600'

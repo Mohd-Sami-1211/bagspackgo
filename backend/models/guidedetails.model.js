@@ -28,7 +28,8 @@ const guidedetailsSchema = new mongoose.Schema(
     },
 
     destinationId: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Destination",
       required: true,
     },
 
@@ -37,25 +38,11 @@ const guidedetailsSchema = new mongoose.Schema(
       required: true,
     },
 
-    instagram: {
-      type: String,
-      default: "",
-    },
+    instagram: { type: String, default: "" },
+    facebook: { type: String, default: "" },
 
-    facebook: {
-      type: String,
-      default: "",
-    },
-
-    licenseFile: {
-      type: String, // store file path or URL
-      required: true,
-    },
-
-    idFile: {
-      type: String, // store file path or URL
-      required: true,
-    },
+    licenseFile: { type: String, required: true },
+    idFile: { type: String, required: true },
 
     availability: {
       trips: { type: Boolean, default: true },
@@ -63,10 +50,7 @@ const guidedetailsSchema = new mongoose.Schema(
       mergers: { type: Boolean, default: true },
     },
 
-    agree: {
-      type: Boolean,
-      required: true,
-    },
+    agree: { type: Boolean, required: true },
 
     status: {
       type: String,
