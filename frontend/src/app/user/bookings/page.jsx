@@ -1,8 +1,9 @@
 'use client';
 import { Suspense } from 'react';
 import BookingMainContent from 'src/components/home/BookingSection/BookingMainContent';
-
+import { useFetchProvider } from 'src/customHook/fetchDetails';
 export default function BookingsPage() {
+  useFetchProvider();
   return (
     <Suspense fallback={
       <div className="flex justify-center items-center h-64">

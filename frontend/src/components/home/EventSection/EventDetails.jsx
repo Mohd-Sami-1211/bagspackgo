@@ -127,6 +127,12 @@ const EventDetails = ({ event, guide }) => {
     formData.eventId = event?.eventId;
     formData.userId = user?._id;
     console.log('Form submitted with data:', formData);
+    const guideRes = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/guideInfo?eventId=${event?.eventId}` , 
+      {formData} , 
+      { headers: { "Content-Type": "multipart/form-data" } } 
+    );
+    const guide = guideRes?.data?.data?.name
+    formData.guide = guide;
     const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/eventbooking` , 
       {formData} , 
       { headers: { "Content-Type": "multipart/form-data" } } 

@@ -16,6 +16,8 @@ export async function POST(req) {
     const amountStr = formData.get('formData[amount]');
     const amount = Number(amountStr.replace(/,/g, '')); 
     const userId = formData.get('formData[userId]');
+    const guide = formData.get('formData[guide]');
+    console.log(guide)
     // 1. Fetch contact details
     const email = formData.get('formData[contactDetails][email]');
     const mobileNumber = formData.get('formData[contactDetails][phone]');
@@ -89,7 +91,8 @@ export async function POST(req) {
       amount,
       userId,
       razorpayOrderId: razorpayOrder.id, 
-      status: "pending"
+      status: "pending",
+      guide
     });
 
     const savedBooking = await bookingData.save();

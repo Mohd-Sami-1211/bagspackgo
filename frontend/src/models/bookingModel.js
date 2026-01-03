@@ -30,7 +30,8 @@ const bookingSchema = new mongoose.Schema({
     razorpayOrderId : {type : String},
     status: {type : String},
     paymentId : {type : String},
-    paidAt : {type : Date}
+    paidAt : {type : Date},
+    guide : {type : String}
 })
-// mongoose.deleteModel && mongoose.deleteModel("booking");
+mongoose.deleteModel && mongoose.deleteModel("booking");
 export const bookingModel = mongoose.models.booking || mongoose.model("booking", bookingSchema);

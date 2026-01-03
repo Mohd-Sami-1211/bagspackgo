@@ -9,7 +9,7 @@ export async function POST(req) {
     const eventId = formData.get('formData[eventId]')
     const companyId = String(formData.get('formData[companyId]'));
     const title = formData.get('formData[title]');
-    const eventType = formData.get('formData[eventType]');
+    const eventType = formData.get('formData[eventType]') + ' Event';
     const location = formData.get('formData[location]');
     const date = formData.get('formData[date]');
     const duration = parseInt(formData.get('formData[duration]'), 10);

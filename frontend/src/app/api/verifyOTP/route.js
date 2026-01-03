@@ -21,8 +21,7 @@ export async function POST(req) {
     if (otpRecord.verified) {
       return NextResponse.json({ error: 'OTP already used' }, { status: 200 });
     }
-
-    // Mark as verified
+    
     otpRecord.verified = true;
     await otpRecord.save();
 

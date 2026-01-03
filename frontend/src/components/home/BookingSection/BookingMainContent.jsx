@@ -1,79 +1,19 @@
 'use client';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaClipboardList, FaUsers, FaHeart, FaFilter, FaCalendarAlt, FaHistory } from 'react-icons/fa';
 import BookingCard from 'src/components/home/BookingSection/BookingCard';
 import MergerCard from 'src/components/home/BookingSection/MergerCard';
+import { useSelector } from 'react-redux';
+import axios from 'axios';
 
 const BookingMainContent = () => {
   const [activeTab, setActiveTab] = useState('upcoming-bookings');
-
-  // ===== Sample Data (3 current, 2 past, 2 mergers) =====
-  const currentBookings = [
-    {
-      id: 1,
-      category: 'Trek',
-      name: 'Annapurna Base Camp Trek',
-      guide: 'Rajesh Thapa',
-      date: '2025-11-15',
-      duration: '10 days',
-      people: 4,
-      destination: 'Pokhara, Nepal',
-      price: 90000,
-      image: 'https://images.unsplash.com/photo-1509644851229-fe68a58f0e1a'
-    },
-    {
-      id: 2,
-      category: 'Trip',
-      name: 'Goa Luxury Beach Getaway',
-      guide: 'Anjali Mehta',
-      date: '2025-12-05',
-      duration: '3 days',
-      people: 2,
-      destination: 'Goa, India',
-      price: 35000,
-      image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e'
-    },
-    {
-      id: 3,
-      category: 'Event',
-      name: 'Mountain Biking Championship',
-      guide: 'Arun Patil',
-      date: '2025-01-20',
-      duration: '1 day',
-      people: 1,
-      destination: 'Manali, India',
-      price: 5000,
-      image: 'https://images.unsplash.com/photo-1504711434969-e33886168f5c'
-    }
-  ];
-
-  const pastBookings = [
-    {
-      id: 4,
-      category: 'Trek',
-      name: 'Everest View Trek',
-      guide: 'Mingma Sherpa',
-      date: '2025-05-10',
-      duration: '7 days',
-      people: 3,
-      destination: 'Kathmandu, Nepal',
-      price: 70000,
-      image: 'https://images.unsplash.com/photo-1533587851505-d119e13fa0d9'
-    },
-    {
-      id: 5,
-      category: 'Trip',
-      name: 'Kerala Backwaters Experience',
-      guide: 'Ajay Menon',
-      date: '2025-02-12',
-      duration: '5 days',
-      people: 2,
-      destination: 'Alleppey, India',
-      price: 45000,
-      image: 'https://images.unsplash.com/photo-1541417904950-b855846fe074'
-    }
-  ];
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const user = useSelector((store) => store?.user?.currentUser);
+  console.log(user);
 
   const mergers = [
     {
@@ -108,6 +48,59 @@ const BookingMainContent = () => {
     // can be filled later; left empty to show fallback UI
   ];
 
+  // ===== Fetch bookings from API =====
+  useEffect(() => {
+    async function fetchData() {
+      if (!user?._id) return;
+      
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await axios.get(`/api/userBookings?userId=${user._id}`);
+        const apiBookings = response?.data?.data || [];
+        setBookings(apiBookings);
+        console.log('API bookings:', apiBookings);
+      } catch (err) {
+        console.error('Error fetching bookings:', err);
+        setError('Failed to load bookings. Please try again.');
+        setBookings([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    if (user?._id) {
+      fetchData();
+    }
+  }, [user]);
+
+  // ===== Separate upcoming vs past bookings =====
+  const { upcomingBookings, pastBookings: actualPastBookings } = useMemo(() => {
+    const now = new Date();
+    const upcoming = [];
+    const past = [];
+    
+    bookings.forEach(booking => {
+      const bookingDate = new Date(booking.date);
+      if (bookingDate >= now) {
+        upcoming.push(booking);
+      } else {
+        past.push(booking);
+      }
+    });
+    
+    // Sort upcoming by date (ascending)
+    upcoming.sort((a, b) => new Date(a.date) - new Date(b.date));
+    
+    // Sort past by date (descending - most recent first)
+    past.sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    return {
+      upcomingBookings: upcoming,
+      pastBookings: past
+    };
+  }, [bookings]);
+
   // ===== Filters state =====
   const [bookingStatusFilter, setBookingStatusFilter] = useState('all');
   const [bookingCategoryFilter, setBookingCategoryFilter] = useState('all');
@@ -118,28 +111,44 @@ const BookingMainContent = () => {
 
   // ===== Derived filtered lists =====
   const filteredCurrentBookings = useMemo(() => {
-    return currentBookings.filter((b) => {
+    return upcomingBookings.filter((b) => {
+      // Determine category from eventType
+      const getCategory = (eventType) => {
+        if (eventType?.toLowerCase().includes('trek')) return 'Trek';
+        if (eventType?.toLowerCase().includes('tour')) return 'Tour';
+        return 'Event';
+      };
+      
+      const category = getCategory(b.eventType);
       const statusMatch =
         bookingStatusFilter === 'all' ||
         (bookingStatusFilter === 'upcoming' && new Date(b.date) >= new Date()) ||
         (bookingStatusFilter === 'completed' && new Date(b.date) < new Date() ||
         (bookingStatusFilter === 'cancelled' && b.status === 'cancelled'));
-      const categoryMatch = bookingCategoryFilter === 'all' || b.category === bookingCategoryFilter;
+      const categoryMatch = bookingCategoryFilter === 'all' || category === bookingCategoryFilter;
       return statusMatch && categoryMatch;
     });
-  }, [currentBookings, bookingStatusFilter, bookingCategoryFilter]);
+  }, [upcomingBookings, bookingStatusFilter, bookingCategoryFilter]);
 
   const filteredPastBookings = useMemo(() => {
-    return pastBookings.filter((b) => {
+    return actualPastBookings.filter((b) => {
+      // Determine category from eventType
+      const getCategory = (eventType) => {
+        if (eventType?.toLowerCase().includes('trek')) return 'Trek';
+        if (eventType?.toLowerCase().includes('trip')) return 'Trip';
+        return 'Event';
+      };
+      
+      const category = getCategory(b.eventType);
       const statusMatch =
         bookingStatusFilter === 'all' ||
         (bookingStatusFilter === 'upcoming' && new Date(b.date) >= new Date()) ||
         (bookingStatusFilter === 'completed' && new Date(b.date) < new Date() ||
         (bookingStatusFilter === 'cancelled' && b.status === 'cancelled'));
-      const categoryMatch = bookingCategoryFilter === 'all' || b.category === bookingCategoryFilter;
+        const categoryMatch = bookingCategoryFilter === 'all' || category === bookingCategoryFilter;
       return statusMatch && categoryMatch;
     });
-  }, [pastBookings, bookingStatusFilter, bookingCategoryFilter]);
+  }, [actualPastBookings, bookingStatusFilter, bookingCategoryFilter]);
 
   const filteredMergers = useMemo(() => {
     return mergers.filter((m) => {
@@ -192,6 +201,38 @@ const BookingMainContent = () => {
     </div>
   );
 
+  // ===== Loading and Error States =====
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading your bookings...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center text-red-600">
+          <div className="w-16 h-16 border-4 border-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="text-2xl">!</span>
+          </div>
+          <h3 className="text-lg font-semibold mb-2">Error Loading Bookings</h3>
+          <p>{error}</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="mt-4 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col md:flex-row gap-6 mx-auto max-w-7xl mb-16 bg-gradient-to-br from-green-50 to-blue-50 rounded-2xl shadow-lg py-6 px-4">
       {/* SIDEBAR */}
@@ -228,13 +269,18 @@ const BookingMainContent = () => {
             >
               <SectionHeader>
                 <h2 className="text-2xl font-bold text-green-600">My Bookings</h2>
-                <button 
-                  onClick={() => setShowFilters(!showFilters)}
-                  className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-full border border-gray-200 text-gray-600 hover:bg-gray-50"
-                >
-                  <FaFilter className="text-xs" />
-                  Filters
-                </button>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-gray-500">
+                    {filteredCurrentBookings.length} upcoming {filteredCurrentBookings.length === 1 ? 'booking' : 'bookings'}
+                  </span>
+                  <button 
+                    onClick={() => setShowFilters(!showFilters)}
+                    className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-full border border-gray-200 text-gray-600 hover:bg-gray-50"
+                  >
+                    <FaFilter className="text-xs" />
+                    Filters
+                  </button>
+                </div>
               </SectionHeader>
 
               {/* Filters for bookings */}
@@ -307,12 +353,21 @@ const BookingMainContent = () => {
               <div className="grid grid-cols-1 gap-4">
                 {filteredCurrentBookings.length ? (
                   filteredCurrentBookings.map((b) => (
-                    <BookingCard key={b.id} booking={b} onClick={() => alert(`Open booking: ${b.name}`)} />
+                    <BookingCard 
+                      key={b._id} 
+                      booking={b} 
+                      onClick={() => {
+                        // You can show more details or navigate to booking details page
+                        alert(`Booking Details:\n\n${b.title}\n${b.about?.substring(0, 200)}...`);
+                      }} 
+                    />
                   ))
                 ) : (
                   <Fallback
                     title="No upcoming bookings"
-                    subtitle="Looks like you don't have any upcoming bookings — explore trips and add to your bookings!"
+                    subtitle={bookings.length === 0 ? 
+                      "You haven't booked any events yet. Explore events to get started!" : 
+                      "No upcoming bookings match your filters."}
                   />
                 )}
               </div>
@@ -331,13 +386,18 @@ const BookingMainContent = () => {
             >
               <SectionHeader>
                 <h2 className="text-2xl font-bold text-green-600">Past Bookings</h2>
-                <button 
-                  onClick={() => setShowFilters(!showFilters)}
-                  className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-full border border-gray-200 text-gray-600 hover:bg-gray-50"
-                >
-                  <FaFilter className="text-xs" />
-                  Filters
-                </button>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-gray-500">
+                    {filteredPastBookings.length} past {filteredPastBookings.length === 1 ? 'booking' : 'bookings'}
+                  </span>
+                  <button 
+                    onClick={() => setShowFilters(!showFilters)}
+                    className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-full border border-gray-200 text-gray-600 hover:bg-gray-50"
+                  >
+                    <FaFilter className="text-xs" />
+                    Filters
+                  </button>
+                </div>
               </SectionHeader>
 
               {/* Filters for bookings */}
@@ -410,7 +470,12 @@ const BookingMainContent = () => {
               <div className="grid grid-cols-1 gap-4">
                 {filteredPastBookings.length ? (
                   filteredPastBookings.map((b) => (
-                    <BookingCard key={b.id} booking={b} past onClick={() => alert(`Open booking: ${b.name}`)} />
+                    <BookingCard 
+                      key={b._id} 
+                      booking={b} 
+                      past 
+                      onClick={() => alert(`View past booking: ${b.title}`)} 
+                    />
                   ))
                 ) : (
                   <Fallback
