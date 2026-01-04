@@ -33,5 +33,5 @@ const bookingSchema = new mongoose.Schema({
     paidAt : {type : Date},
     guide : {type : String}
 })
-mongoose.deleteModel && mongoose.deleteModel("booking");
+// mongoose.deleteModel && mongoose.deleteModel("booking");
 export const bookingModel = mongoose.models.booking || mongoose.model("booking", bookingSchema);
