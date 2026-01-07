@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   User,
@@ -13,6 +13,7 @@ import {
   HelpCircle,
   ArrowLeft,
 } from 'lucide-react';
+import { useRouter, usePathname } from 'next/navigation';
 
 const menuItems = [
   { id: 'profile', label: 'Your Profile', icon: User },
@@ -25,26 +26,47 @@ const menuItems = [
   { id: 'help', label: 'Help & Support', icon: HelpCircle },
 ];
 
-export default function SettingsPage() {
+export default function SettingsForm() {
   const [active, setActive] = useState(null);
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // Check if we're on the packages page
+  useEffect(() => {
+    if (pathname.includes('/settings/packages')) {
+      setActive('packages');
+    }
+  }, [pathname]);
+
+  const handleMenuItemClick = (id) => {
+    setActive(id);
+    if (id === 'packages') {
+      router.push('/serviceprovider/dashboard/settings/packages');
+    }
+  };
+
+  const handleBack = () => {
+    setActive(null);
+    router.push('/serviceprovider/dashboard/settings');
+  };
 
   return (
     <div className="w-full min-h-screen bg-gray-50 -mt-6">
       {/* MENU LIST */}
-      {!active && (
+      {!active && !pathname.includes('/settings/packages') && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3 }}
-          className=" mx-auto w-full"
+          className="mx-auto w-full"
         >
-          <h1 className="text-2xl font-bold px-4 py-6 ">Settings</h1>
-          <div className="divide-y  shadow-sm rounded-xl overflow-hidden">
+          <h1 className="text-2xl font-bold px-4 py-6">Settings</h1>
+          <div className="divide-y shadow-sm rounded-xl overflow-hidden">
             {menuItems.map(({ id, label, icon: Icon }) => (
               <button
                 key={id}
                 className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition"
-                onClick={() => setActive(id)}
+                onClick={() => handleMenuItemClick(id)}
               >
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-lg bg-emerald-100 text-emerald-600">
@@ -59,8 +81,8 @@ export default function SettingsPage() {
         </motion.div>
       )}
 
-      {/* CONTENT VIEW */}
-      {active && (
+      {/* CONTENT VIEW - Only show for non-packages items */}
+      {active && active !== 'packages' && !pathname.includes('/settings/packages') && (
         <motion.div
           key={active}
           initial={{ opacity: 0, x: 40 }}
@@ -68,7 +90,6 @@ export default function SettingsPage() {
           transition={{ duration: 0.3 }}
           className="w-full min-h-screen bg-white mt-4 rounded-2xl"
         >
-          {/* HEADER */}
           <div className="flex items-center gap-3 border-b px-4 py-4">
             <button
               className="p-2 rounded-full hover:bg-gray-100"
@@ -81,11 +102,9 @@ export default function SettingsPage() {
             </h2>
           </div>
 
-          {/* CONTENT */}
           <div className="px-5 py-6">
             {active === 'profile' && <ProfileContent />}
             {active === 'account' && <AccountContent />}
-            {active === 'packages' && <PackagesContent />}
             {active === 'transactions' && <TransactionsContent />}
             {active === 'bookings' && <BookingsContent />}
             {active === 'notifications' && <NotificationsContent />}
@@ -98,7 +117,6 @@ export default function SettingsPage() {
   );
 }
 
-/* -------------------- CONTENT COMPONENTS -------------------- */
 
 function ProfileContent() {
   return (
@@ -124,21 +142,6 @@ function AccountContent() {
       <button className="w-full rounded-lg border px-4 py-2 hover:bg-gray-50 transition">Change Email</button>
       <button className="w-full rounded-lg border px-4 py-2 hover:bg-gray-50 transition">Change Phone Number</button>
       <button className="w-full rounded-lg border px-4 py-2 text-red-500 hover:bg-red-50 transition">Delete Account</button>
-    </div>
-  );
-}
-
-function PackagesContent() {
-  return (
-    <div>
-      <p className="text-sm text-gray-500 mb-3">Your active travel packages.</p>
-      <div className="rounded-lg border p-4 flex justify-between items-center">
-        <div>
-          <p className="font-medium">Premium Travel Pack</p>
-          <p className="text-sm text-gray-500">Valid till: Dec 2025</p>
-        </div>
-        <button className="rounded-lg bg-emerald-600 text-white px-4 py-2">Renew</button>
-      </div>
     </div>
   );
 }
