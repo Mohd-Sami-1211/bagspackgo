@@ -21,7 +21,10 @@ import {
   Check,
   Edit2,
   ExternalLink,
-  AlertCircle
+  AlertCircle,
+  FileText,
+  Heart,
+  User
 } from 'lucide-react';
 
 // Mock destinations - in real app, this would come from data.json
@@ -38,6 +41,17 @@ const destinations = [
   { id: 10, name: 'Chennai', country: 'India' },
 ];
 
+// Agenda options
+const agendaOptions = [
+  { value: 'arrival', label: 'Arrival & Check-in' },
+  { value: 'city-tour', label: 'City Tour' },
+  { value: 'travel-day', label: 'Travel Day' },
+  { value: 'adventure', label: 'Adventure Activities' },
+  { value: 'cultural', label: 'Cultural Experience' },
+  { value: 'leisure', label: 'Leisure Day' },
+  { value: 'departure', label: 'Departure' },
+];
+
 const NewPackage = () => {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -45,11 +59,13 @@ const NewPackage = () => {
   const [showUnsavedAlert, setShowUnsavedAlert] = useState(false);
   const [currentDayEditing, setCurrentDayEditing] = useState(null);
   const [daysCount, setDaysCount] = useState(3);
+  const [validationErrors, setValidationErrors] = useState({});
   
   // Package Info State
   const [packageInfo, setPackageInfo] = useState({
     name: '',
-    type: 'budget',
+    packageType: 'individual', // 'individual' or 'couple'
+    packageCategory: 'budget', // 'budget' or 'premium'
     pricePerPerson: '',
     discountEnabled: false,
     discountPercentage: '',
@@ -69,9 +85,12 @@ const NewPackage = () => {
 
   // Activities State
   const [activities, setActivities] = useState([
-    { id: 1, name: 'Mountain Trekking', details: 'Guided trek through scenic mountain trails' },
-    { id: 2, name: 'Local Culture Experience', details: 'Visit to traditional villages and cultural sites' },
-    { id: 3, name: 'Adventure Sports', details: 'Optional adventure activities available' },
+    { id: 1, name: '', details: '' },
+  ]);
+
+  // Terms and Conditions State
+  const [termsAndConditions, setTermsAndConditions] = useState([
+    { id: 1, text: '' },
   ]);
 
   // Itinerary State
@@ -80,6 +99,8 @@ const NewPackage = () => {
       day: i + 1,
       location: '',
       agenda: '',
+      travelFrom: '',
+      travelTo: '',
       pickupTime: '',
       hotelName: '',
       activities: [],
@@ -94,6 +115,7 @@ const NewPackage = () => {
     { id: 'inclusives', name: 'Inclusives', icon: <Check size={18} /> },
     { id: 'activities', name: 'Activities', icon: <Navigation size={18} /> },
     { id: 'itinerary', name: 'Itinerary', icon: <MapPin size={18} /> },
+    { id: 'terms', name: 'Terms & Conditions', icon: <FileText size={18} /> },
   ];
 
   // Handle back navigation with unsaved changes warning
@@ -110,6 +132,8 @@ const NewPackage = () => {
           day: itinerary.length + i + 1,
           location: '',
           agenda: '',
+          travelFrom: '',
+          travelTo: '',
           pickupTime: '',
           hotelName: '',
           activities: [],
@@ -124,17 +148,106 @@ const NewPackage = () => {
     }
   }, [daysCount, itinerary.length]);
 
+  // Auto-switch to tab with validation errors
+  useEffect(() => {
+    // When validation errors change and we're not on the correct tab,
+    // automatically switch to the tab with the first error
+    if (Object.keys(validationErrors).length > 0) {
+      const firstError = Object.keys(validationErrors)[0];
+      let targetTab = activeTab;
+      
+      if (firstError.startsWith('packageName') || firstError.startsWith('price') || firstError.startsWith('destination')) {
+        targetTab = 'package-info';
+      } else if (firstError.startsWith('inclusive_')) {
+        targetTab = 'inclusives';
+      } else if (firstError.startsWith('day_')) {
+        targetTab = 'itinerary';
+      }
+      
+      if (targetTab !== activeTab) {
+        setActiveTab(targetTab);
+        
+        // Scroll to error after tab switch
+        setTimeout(() => {
+          const element = document.querySelector(`[data-error="${firstError}"]`);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Add highlight effect to the error field
+            element.classList.add('ring-2', 'ring-red-500');
+            setTimeout(() => {
+              element.classList.remove('ring-2', 'ring-red-500');
+            }, 2000);
+          }
+        }, 300);
+      }
+    }
+  }, [validationErrors, activeTab]);
+
+  // Validate form before submission
+  const validateForm = () => {
+    const errors = {};
+
+    // Package Info Validation
+    if (!packageInfo.name.trim()) errors.packageName = 'Package name is required';
+    if (!packageInfo.pricePerPerson) errors.price = `${packageInfo.packageType === 'individual' ? 'Price per person' : 'Price per couple'} is required`;
+    if (!packageInfo.destination) errors.destination = 'Destination is required';
+    
+    // Validate inclusive titles if included
+    Object.entries(inclusives).forEach(([key, value]) => {
+      if (value.included && !value.title.trim()) {
+        errors[`inclusive_${key}`] = `Title is required for ${key}`;
+      }
+    });
+
+    // Validate itinerary
+    itinerary.forEach((day, index) => {
+      if (!day.location.trim()) {
+        errors[`day_${index}_location`] = `Day ${index + 1} location is required`;
+      }
+      if (!day.agenda.trim()) {
+        errors[`day_${index}_agenda`] = `Day ${index + 1} agenda is required`;
+      }
+      if (day.agenda === 'travel-day' && (!day.travelFrom.trim() || !day.travelTo.trim())) {
+        errors[`day_${index}_travel`] = `Travel from and to locations are required for travel day`;
+      }
+    });
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      // Show alert about validation errors
+      const errorCount = Object.keys(validationErrors).length;
+      alert(`Please fill in all required fields. There are ${errorCount} error(s) to fix.`);
+      
+      // Ensure we're on the correct tab and scroll to first error
+      const firstError = Object.keys(validationErrors)[0];
+      const element = document.querySelector(`[data-error="${firstError}"]`);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        element.classList.add('ring-2', 'ring-red-500');
+        setTimeout(() => {
+          element.classList.remove('ring-2', 'ring-red-500');
+        }, 2000);
+      }
+      
+      return;
+    }
+
     setIsSubmitting(true);
     
     try {
       const formData = {
         packageInfo,
         inclusives,
-        activities,
+        activities: activities.filter(a => a.name.trim() && a.details.trim()),
         itinerary,
+        termsAndConditions: termsAndConditions.filter(t => t.text.trim()),
       };
       
       console.log('Form data:', formData);
@@ -160,6 +273,15 @@ const NewPackage = () => {
     if (field === 'days') {
       setDaysCount(parseInt(value) || 1);
     }
+    
+    // Clear validation error for this field
+    if (validationErrors[field]) {
+      setValidationErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
   };
 
   // Inclusives Handlers
@@ -171,6 +293,15 @@ const NewPackage = () => {
         included: !prev[service].included
       }
     }));
+    
+    // Clear validation error for this service
+    if (validationErrors[`inclusive_${service}`]) {
+      setValidationErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[`inclusive_${service}`];
+        return newErrors;
+      });
+    }
   };
 
   const handleInclusiveDetailChange = (service, index, value) => {
@@ -194,6 +325,15 @@ const NewPackage = () => {
         title: value
       }
     }));
+    
+    // Clear validation error for this service
+    if (validationErrors[`inclusive_${service}`]) {
+      setValidationErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[`inclusive_${service}`];
+        return newErrors;
+      });
+    }
   };
 
   // Activities Handlers
@@ -203,7 +343,9 @@ const NewPackage = () => {
   };
 
   const handleRemoveActivity = (id) => {
-    setActivities(activities.filter(activity => activity.id !== id));
+    if (activities.length > 1) {
+      setActivities(activities.filter(activity => activity.id !== id));
+    }
   };
 
   const handleActivityChange = (id, field, value) => {
@@ -214,18 +356,69 @@ const NewPackage = () => {
     ));
   };
 
+  // Terms and Conditions Handlers
+  const handleAddTerm = () => {
+    const newId = termsAndConditions.length > 0 ? Math.max(...termsAndConditions.map(t => t.id)) + 1 : 1;
+    setTermsAndConditions([...termsAndConditions, { id: newId, text: '' }]);
+  };
+
+  const handleRemoveTerm = (id) => {
+    if (termsAndConditions.length > 1) {
+      setTermsAndConditions(termsAndConditions.filter(term => term.id !== id));
+    }
+  };
+
+  const handleTermChange = (id, value) => {
+    setTermsAndConditions(termsAndConditions.map(term => 
+      term.id === id 
+        ? { ...term, text: value.slice(0, 200) }
+        : term
+    ));
+  };
+
   // Itinerary Handlers
   const handleDayEdit = (dayIndex) => {
     setCurrentDayEditing(dayIndex);
   };
 
   const handleDaySave = (dayIndex, data) => {
+    // Validate day data
+    if (!data.location.trim() || !data.agenda.trim()) {
+      setValidationErrors(prev => ({
+        ...prev,
+        [`day_${dayIndex}_location`]: !data.location.trim() ? 'Location is required' : undefined,
+        [`day_${dayIndex}_agenda`]: !data.agenda.trim() ? 'Agenda is required' : undefined,
+        [`day_${dayIndex}_travel`]: data.agenda === 'travel-day' && (!data.travelFrom.trim() || !data.travelTo.trim()) 
+          ? 'Travel from and to locations are required' 
+          : undefined,
+      }));
+      return;
+    }
+
+    if (data.agenda === 'travel-day' && (!data.travelFrom.trim() || !data.travelTo.trim())) {
+      setValidationErrors(prev => ({
+        ...prev,
+        [`day_${dayIndex}_travel`]: 'Travel from and to locations are required for travel day',
+      }));
+      return;
+    }
+
     const updatedItinerary = [...itinerary];
     updatedItinerary[dayIndex] = {
       ...data,
       isCompleted: true,
     };
     setItinerary(updatedItinerary);
+    
+    // Clear validation errors for this day
+    setValidationErrors(prev => {
+      const newErrors = { ...prev };
+      delete newErrors[`day_${dayIndex}_location`];
+      delete newErrors[`day_${dayIndex}_agenda`];
+      delete newErrors[`day_${dayIndex}_travel`];
+      return newErrors;
+    });
+    
     setCurrentDayEditing(null);
   };
 
@@ -237,6 +430,16 @@ const NewPackage = () => {
         [field]: value
       };
       setItinerary(updatedItinerary);
+      
+      // Clear validation error for this field
+      if (validationErrors[`day_${dayIndex}_${field}`] || validationErrors[`day_${dayIndex}_travel`]) {
+        setValidationErrors(prev => {
+          const newErrors = { ...prev };
+          delete newErrors[`day_${dayIndex}_${field}`];
+          delete newErrors[`day_${dayIndex}_travel`];
+          return newErrors;
+        });
+      }
     }
   };
 
@@ -260,13 +463,30 @@ const NewPackage = () => {
     return (price - (price * discount / 100)).toFixed(2);
   };
 
+  // Get price label based on package type
+  const getPriceLabel = () => {
+    return packageInfo.packageType === 'individual' ? 'Price per Person (₹) *' : 'Price per Couple (₹) *';
+  };
+
+  // Get discount label based on package type
+  const getDiscountMinPeopleLabel = () => {
+    return packageInfo.packageType === 'individual' ? 'Minimum People Required' : 'Minimum Couples Required';
+  };
+
+  // Get discount description based on package type
+  const getDiscountDescription = () => {
+    const minPeople = packageInfo.discountMinPeople || 2;
+    const unit = packageInfo.packageType === 'individual' ? 'people' : 'couples';
+    return `Applied when ${minPeople} or more ${unit} book together`;
+  };
+
   // Render active tab content
   const renderTabContent = () => {
     switch (activeTab) {
       case 'package-info':
         return (
           <div className="space-y-6">
-            <div>
+            <div data-error="packageName">
               <label className="block text-sm font-semibold text-gray-800 mb-2">
                 Package Name *
               </label>
@@ -274,10 +494,13 @@ const NewPackage = () => {
                 type="text"
                 value={packageInfo.name}
                 onChange={(e) => handlePackageInfoChange('name', e.target.value)}
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                className={`w-full border rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all ${validationErrors.packageName ? 'border-red-500 ring-2 ring-red-500' : 'border-gray-300'}`}
                 placeholder="Eg: Premium Himalayan Trek Adventure"
                 required
               />
+              {validationErrors.packageName && (
+                <p className="mt-1 text-sm text-red-600">{validationErrors.packageName}</p>
+              )}
             </div>
 
             <div>
@@ -287,35 +510,69 @@ const NewPackage = () => {
               <div className="grid grid-cols-2 gap-4">
                 <button
                   type="button"
-                  onClick={() => handlePackageInfoChange('type', 'budget')}
-                  className={`p-4 rounded-xl border-2 transition-all ${packageInfo.type === 'budget' ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 hover:border-gray-300'}`}
+                  onClick={() => handlePackageInfoChange('packageType', 'individual')}
+                  className={`p-4 rounded-xl border-2 transition-all ${packageInfo.packageType === 'individual' ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 hover:border-gray-300'}`}
                 >
                   <div className="text-center">
-                    <div className={`text-lg font-semibold ${packageInfo.type === 'budget' ? 'text-emerald-700' : 'text-gray-700'}`}>
-                      Budget
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <User size={20} className={packageInfo.packageType === 'individual' ? 'text-emerald-600' : 'text-gray-500'} />
                     </div>
-                    <div className="text-sm text-gray-500 mt-1">Affordable packages</div>
+                    <div className={`text-lg font-semibold ${packageInfo.packageType === 'individual' ? 'text-emerald-700' : 'text-gray-700'}`}>
+                      Individual
+                    </div>
                   </div>
                 </button>
                 <button
                   type="button"
-                  onClick={() => handlePackageInfoChange('type', 'premium')}
-                  className={`p-4 rounded-xl border-2 transition-all ${packageInfo.type === 'premium' ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 hover:border-gray-300'}`}
+                  onClick={() => handlePackageInfoChange('packageType', 'couple')}
+                  className={`p-4 rounded-xl border-2 transition-all ${packageInfo.packageType === 'couple' ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 hover:border-gray-300'}`}
                 >
                   <div className="text-center">
-                    <div className={`text-lg font-semibold ${packageInfo.type === 'premium' ? 'text-emerald-700' : 'text-gray-700'}`}>
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <Heart size={20} className={packageInfo.packageType === 'couple' ? 'text-emerald-600' : 'text-gray-500'} />
+                    </div>
+                    <div className={`text-lg font-semibold ${packageInfo.packageType === 'couple' ? 'text-emerald-700' : 'text-gray-700'}`}>
+                      Couple
+                    </div>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-800 mb-3">
+                Package Category *
+              </label>
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  type="button"
+                  onClick={() => handlePackageInfoChange('packageCategory', 'budget')}
+                  className={`p-4 rounded-xl border-2 transition-all ${packageInfo.packageCategory === 'budget' ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 hover:border-gray-300'}`}
+                >
+                  <div className="text-center">
+                    <div className={`text-lg font-semibold ${packageInfo.packageCategory === 'budget' ? 'text-emerald-700' : 'text-gray-700'}`}>
+                      Budget
+                    </div>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handlePackageInfoChange('packageCategory', 'premium')}
+                  className={`p-4 rounded-xl border-2 transition-all ${packageInfo.packageCategory === 'premium' ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 hover:border-gray-300'}`}
+                >
+                  <div className="text-center">
+                    <div className={`text-lg font-semibold ${packageInfo.packageCategory === 'premium' ? 'text-emerald-700' : 'text-gray-700'}`}>
                       Premium
                     </div>
-                    <div className="text-sm text-gray-500 mt-1">Luxury experiences</div>
                   </div>
                 </button>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
+              <div data-error="price">
                 <label className="block text-sm font-semibold text-gray-800 mb-2">
-                  Price per Person (₹) *
+                  {getPriceLabel()}
                 </label>
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500">₹</span>
@@ -323,11 +580,15 @@ const NewPackage = () => {
                     type="number"
                     value={packageInfo.pricePerPerson}
                     onChange={(e) => handlePackageInfoChange('pricePerPerson', e.target.value)}
-                    className="w-full border border-gray-300 rounded-xl pl-10 pr-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                    className={`w-full border rounded-xl pl-10 pr-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all ${validationErrors.price ? 'border-red-500 ring-2 ring-red-500' : 'border-gray-300'}`}
                     placeholder="Enter amount"
                     required
+                    min="0"
                   />
                 </div>
+                {validationErrors.price && (
+                  <p className="mt-1 text-sm text-red-600">{validationErrors.price}</p>
+                )}
               </div>
 
               <div>
@@ -360,13 +621,13 @@ const NewPackage = () => {
               </div>
             </div>
 
-            <div className="bg-gray-50 p-4 rounded-xl">
+            <div className="bg-emerald-50 p-4 rounded-xl">
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={packageInfo.discountEnabled}
                   onChange={(e) => handlePackageInfoChange('discountEnabled', e.target.checked)}
-                  className="w-5 h-5 text-emerald-600 focus:ring-emerald-500 rounded"
+                  className="w-5 h-5 text-emerald-600 focus:ring-emerald-500 rounded checked:bg-emerald-600 checked:border-emerald-600"
                 />
                 <span className="text-sm font-semibold text-gray-800">Apply Group Discount</span>
               </label>
@@ -398,7 +659,7 @@ const NewPackage = () => {
                     
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Minimum People Required
+                        {getDiscountMinPeopleLabel()}
                       </label>
                       <div className="flex items-center gap-3">
                         <button
@@ -438,7 +699,7 @@ const NewPackage = () => {
                         <span className="text-xl font-bold text-emerald-600">₹{calculateDiscountedPrice()}</span>
                       </div>
                       <div className="text-sm text-gray-500 mt-2">
-                        Applied when {packageInfo.discountMinPeople || 2} or more people book together
+                        {getDiscountDescription()}
                       </div>
                     </div>
                   )}
@@ -446,14 +707,14 @@ const NewPackage = () => {
               )}
             </div>
 
-            <div>
+            <div data-error="destination">
               <label className="block text-sm font-semibold text-gray-800 mb-2">
                 Destination *
               </label>
               <select
                 value={packageInfo.destination}
                 onChange={(e) => handlePackageInfoChange('destination', e.target.value)}
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                className={`w-full border rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all ${validationErrors.destination ? 'border-red-500 ring-2 ring-red-500' : 'border-gray-300'}`}
                 required
               >
                 <option value="">Select a destination</option>
@@ -463,6 +724,9 @@ const NewPackage = () => {
                   </option>
                 ))}
               </select>
+              {validationErrors.destination && (
+                <p className="mt-1 text-sm text-red-600">{validationErrors.destination}</p>
+              )}
             </div>
           </div>
         );
@@ -499,6 +763,7 @@ const NewPackage = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
                   className="bg-white border rounded-xl overflow-hidden"
+                  data-error={`inclusive_${service}`}
                 >
                   <div className={`p-4 flex items-center justify-between ${data.included ? 'bg-emerald-50 border-emerald-200' : 'border-gray-200'}`}>
                     <div className="flex items-center gap-3">
@@ -512,7 +777,7 @@ const NewPackage = () => {
                               type="checkbox"
                               checked={data.included}
                               onChange={() => handleInclusiveToggle(service)}
-                              className="w-5 h-5 text-emerald-600 focus:ring-emerald-500 rounded"
+                              className="w-5 h-5 text-emerald-600 focus:ring-emerald-500 rounded checked:bg-emerald-600 checked:border-emerald-600"
                             />
                             <span className="font-semibold text-gray-800">{labels[service]}</span>
                           </label>
@@ -533,15 +798,19 @@ const NewPackage = () => {
                     >
                       <div className="mb-4">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Section Title
+                          Section Title *
                         </label>
                         <input
                           type="text"
                           value={data.title}
                           onChange={(e) => handleInclusiveTitleChange(service, e.target.value)}
-                          className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                          className={`w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none ${validationErrors[`inclusive_${service}`] ? 'border-red-500 ring-2 ring-red-500' : 'border-gray-300'}`}
                           placeholder={`Eg: Luxury ${labels[service]}`}
+                          required
                         />
+                        {validationErrors[`inclusive_${service}`] && (
+                          <p className="mt-1 text-sm text-red-600">{validationErrors[`inclusive_${service}`]}</p>
+                        )}
                       </div>
                       
                       <div className="space-y-3">
@@ -576,7 +845,7 @@ const NewPackage = () => {
         return (
           <div className="space-y-6">
             <div className="text-center mb-8">
-              <h3 className="text-lg font-semibold text-gray-800">Package Activities</h3>
+              <h3 className="text-lg font-semibold text-gray-800">Package Activities (Optional)</h3>
               <p className="text-gray-600 mt-1">Define the activities included in your package</p>
             </div>
 
@@ -624,13 +893,15 @@ const NewPackage = () => {
                         </div>
                       </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveActivity(activity.id)}
-                      className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"
-                    >
-                      <Trash2 size={20} />
-                    </button>
+                    {activities.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveActivity(activity.id)}
+                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"
+                      >
+                        <Trash2 size={20} />
+                      </button>
+                    )}
                   </div>
                 </motion.div>
               ))}
@@ -674,7 +945,7 @@ const NewPackage = () => {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
+                <div data-error={`day_${currentDayEditing}_location`}>
                   <label className="block text-sm font-semibold text-gray-800 mb-2">
                     Location *
                   </label>
@@ -682,31 +953,82 @@ const NewPackage = () => {
                     type="text"
                     value={dayData.location}
                     onChange={(e) => handleDayChange(currentDayEditing, 'location', e.target.value)}
-                    className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                    className={`w-full border rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none ${validationErrors[`day_${currentDayEditing}_location`] ? 'border-red-500 ring-2 ring-red-500' : 'border-gray-300'}`}
                     placeholder="City, Region"
+                    required
                   />
+                  {validationErrors[`day_${currentDayEditing}_location`] && (
+                    <p className="mt-1 text-sm text-red-600">{validationErrors[`day_${currentDayEditing}_location`]}</p>
+                  )}
                 </div>
 
-                <div>
+                <div data-error={`day_${currentDayEditing}_agenda`}>
                   <label className="block text-sm font-semibold text-gray-800 mb-2">
                     Agenda Type *
                   </label>
                   <select
                     value={dayData.agenda}
                     onChange={(e) => handleDayChange(currentDayEditing, 'agenda', e.target.value)}
-                    className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                    className={`w-full border rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none ${validationErrors[`day_${currentDayEditing}_agenda`] ? 'border-red-500 ring-2 ring-red-500' : 'border-gray-300'}`}
+                    required
                   >
                     <option value="">Select Agenda</option>
-                    <option value="arrival">Arrival & Check-in</option>
-                    <option value="city-tour">City Tour</option>
-                    <option value="travel-day">Travel Day</option>
-                    <option value="adventure">Adventure Activities</option>
-                    <option value="cultural">Cultural Experience</option>
-                    <option value="leisure">Leisure Day</option>
-                    <option value="departure">Departure</option>
+                    {agendaOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
                   </select>
+                  {validationErrors[`day_${currentDayEditing}_agenda`] && (
+                    <p className="mt-1 text-sm text-red-600">{validationErrors[`day_${currentDayEditing}_agenda`]}</p>
+                  )}
                 </div>
               </div>
+
+              {dayData.agenda === 'travel-day' && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  className="bg-emerald-50 border border-emerald-200 rounded-xl p-6"
+                  data-error={`day_${currentDayEditing}_travel`}
+                >
+                  <div className="flex items-center gap-3 mb-4">
+                    <Navigation size={20} className="text-emerald-600" />
+                    <h4 className="font-semibold text-emerald-800">Travel Details</h4>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        From *
+                      </label>
+                      <input
+                        type="text"
+                        value={dayData.travelFrom}
+                        onChange={(e) => handleDayChange(currentDayEditing, 'travelFrom', e.target.value)}
+                        className={`w-full border rounded-lg px-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none ${validationErrors[`day_${currentDayEditing}_travel`] ? 'border-red-500 ring-2 ring-red-500' : 'border-gray-300'}`}
+                        placeholder="Starting location"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        To *
+                      </label>
+                      <input
+                        type="text"
+                        value={dayData.travelTo}
+                        onChange={(e) => handleDayChange(currentDayEditing, 'travelTo', e.target.value)}
+                        className={`w-full border rounded-lg px-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none ${validationErrors[`day_${currentDayEditing}_travel`] ? 'border-red-500 ring-2 ring-red-500' : 'border-gray-300'}`}
+                        placeholder="Destination"
+                        required
+                      />
+                    </div>
+                  </div>
+                  {validationErrors[`day_${currentDayEditing}_travel`] && (
+                    <p className="mt-2 text-sm text-red-600">{validationErrors[`day_${currentDayEditing}_travel`]}</p>
+                  )}
+                </motion.div>
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
@@ -801,11 +1123,16 @@ const NewPackage = () => {
                       </div>
                       <div>
                         <h4 className="font-semibold text-gray-800">
-                          {day.agenda ? day.agenda.charAt(0).toUpperCase() + day.agenda.slice(1) : 'Unplanned Day'}
+                          {day.agenda ? agendaOptions.find(a => a.value === day.agenda)?.label || day.agenda : 'Unplanned Day'}
                         </h4>
                         <p className="text-sm text-gray-500 mt-1">
                           {day.location || 'Location not set'} • {day.hotelName || 'Accommodation not set'}
                         </p>
+                        {day.agenda === 'travel-day' && day.travelFrom && day.travelTo && (
+                          <p className="text-sm text-emerald-600 mt-1">
+                            Travel: {day.travelFrom} → {day.travelTo}
+                          </p>
+                        )}
                         {day.highlights.some(h => h) && (
                           <div className="flex flex-wrap gap-1 mt-2">
                             {day.highlights.filter(h => h).map((highlight, idx) => (
@@ -838,10 +1165,28 @@ const NewPackage = () => {
                   </div>
                   
                   {index === 0 && !day.isCompleted && (
-                    <div className="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-lg">
-                      <p className="text-sm text-blue-700">
+                    <div className="mt-4 p-3 bg-emerald-50 border border-emerald-100 rounded-lg">
+                      <p className="text-sm text-emerald-700">
                         <strong>Note:</strong> Day 1 should include arrival details and initial activities.
                       </p>
+                    </div>
+                  )}
+                  
+                  {validationErrors[`day_${index}_location`] && (
+                    <div className="mt-3 p-2 bg-red-50 border border-red-100 rounded-lg">
+                      <p className="text-sm text-red-600">Location is required for Day {day.day}</p>
+                    </div>
+                  )}
+                  
+                  {validationErrors[`day_${index}_agenda`] && (
+                    <div className="mt-3 p-2 bg-red-50 border border-red-100 rounded-lg">
+                      <p className="text-sm text-red-600">Agenda is required for Day {day.day}</p>
+                    </div>
+                  )}
+                  
+                  {validationErrors[`day_${index}_travel`] && (
+                    <div className="mt-3 p-2 bg-red-50 border border-red-100 rounded-lg">
+                      <p className="text-sm text-red-600">Travel details are required for Day {day.day}</p>
                     </div>
                   )}
                 </motion.div>
@@ -856,6 +1201,78 @@ const NewPackage = () => {
           </div>
         );
 
+      case 'terms':
+        return (
+          <div className="space-y-6">
+            <div className="text-center mb-8">
+              <h3 className="text-lg font-semibold text-gray-800">Terms & Conditions (Optional)</h3>
+              <p className="text-gray-600 mt-1">Define the terms and conditions for your package (max 200 characters each)</p>
+            </div>
+
+            <div className="space-y-4">
+              {termsAndConditions.map((term, index) => (
+                <motion.div
+                  key={term.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="bg-white border border-gray-200 rounded-xl p-6"
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center font-bold">
+                      {index + 1}
+                    </div>
+                    <div className="flex-1">
+                      <div className="relative">
+                        <textarea
+                          value={term.text}
+                          onChange={(e) => handleTermChange(term.id, e.target.value)}
+                          className="w-full border border-gray-300 rounded-lg px-4 py-3 pr-16 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none resize-none"
+                          rows="3"
+                          placeholder={`Term ${index + 1} (e.g., Cancellation policy, Refund terms, etc.)`}
+                          maxLength={200}
+                        />
+                        <div className="absolute right-3 bottom-3 text-xs text-gray-500">
+                          {term.text.length}/200
+                        </div>
+                      </div>
+                    </div>
+                    {termsAndConditions.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveTerm(term.id)}
+                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"
+                      >
+                        <Trash2 size={20} />
+                      </button>
+                    )}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={handleAddTerm}
+              className="w-full border-2 border-dashed border-gray-300 rounded-xl py-4 hover:border-emerald-500 hover:bg-emerald-50 transition-all flex items-center justify-center gap-2"
+            >
+              <Plus size={20} className="text-emerald-600" />
+              <span className="font-medium text-emerald-600">Add New Term</span>
+            </button>
+
+            <div className="bg-gray-50 p-4 rounded-xl mt-6">
+              <h4 className="font-semibold text-gray-800 mb-2">Important Guidelines:</h4>
+              <ul className="text-sm text-gray-600 space-y-1">
+                <li>• Clearly state cancellation and refund policies</li>
+                <li>• Mention any age restrictions or requirements</li>
+                <li>• Specify what's not included in the package</li>
+                <li>• Include health and safety guidelines</li>
+                <li>• Mention force majeure conditions</li>
+              </ul>
+            </div>
+          </div>
+        );
+
       default:
         return null;
     }
@@ -863,8 +1280,8 @@ const NewPackage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* Header */}
-      <div className="bg-white border-b sticky top-0 z-50 shadow-sm">
+      {/* Fixed Header */}
+      <div className="bg-white border-b top-0 z-50 shadow-sm">
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -901,7 +1318,7 @@ const NewPackage = () => {
         </div>
       </div>
 
-      <div className="p-6">
+      <div className="p-6 pt-8">
         <form id="packageForm" onSubmit={handleSubmit} className="max-w-5xl mx-auto">
           {/* Tabs Navigation */}
           <div className="bg-white rounded-2xl shadow-lg mb-6 overflow-hidden">
@@ -978,7 +1395,7 @@ const NewPackage = () => {
                 </button>
               )}
               
-              {activeTab === 'itinerary' && currentDayEditing === null && (
+              {activeTab === 'terms' && (
                 <button
                   type="submit"
                   disabled={isSubmitting}
