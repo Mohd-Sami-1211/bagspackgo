@@ -23,6 +23,7 @@ import {
   ExternalLink,
   AlertCircle
 } from 'lucide-react';
+import axios from 'axios';
 
 // Mock destinations - in real app, this would come from data.json
 const destinations = [
@@ -138,11 +139,15 @@ const NewPackage = () => {
       };
       
       console.log('Form data:', formData);
+      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/addPackage` , formData , {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+      console.log(res);
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // // Simulate API call
+      // await new Promise(resolve => setTimeout(resolve, 1500));
       
-      router.push('/serviceprovider/dashboard/settings/packages');
+      // router.push('/serviceprovider/dashboard/settings/packages');
     } catch (error) {
       console.error('Error creating package:', error);
     } finally {

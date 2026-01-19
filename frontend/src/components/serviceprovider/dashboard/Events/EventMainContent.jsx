@@ -5,6 +5,8 @@ import { motion } from 'framer-motion';
 import { Calendar, MapPin, Clock, Users, Plus, Edit3, Eye, Trash2, PlayCircle, CheckCircle2, Share2, Loader2 } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import axios from 'axios';
+import { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 
 // Helper to calculate event status based on date/time & duration
 function calculateStatus(event) {
@@ -281,7 +283,7 @@ export default function EventMainContent() {
   const handleDeleteEvent = async (eventId) => {
     try {
       const res = await axios.delete(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/deleteEvent/${eventId}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/deleteEvent/?eventId=${eventId}`,
         { withCredentials: true }
       );
       

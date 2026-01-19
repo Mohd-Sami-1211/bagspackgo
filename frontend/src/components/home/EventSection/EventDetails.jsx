@@ -34,7 +34,6 @@ const EventDetails = ({ event, guide }) => {
   const [activeTab, setActiveTab] = useState('details');
   const [bookingSlots, setBookingSlots] = useState(1);
   const [bookingStep, setBookingStep] = useState(1);
-  const [error, seterror] = useState("")
   const [formData, setFormData] = useState({
     contactDetails: {
       email: 'thekavisharma26@gmail.com',
