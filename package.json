@@ -13,6 +13,7 @@
     "@radix-ui/react-slot": "^1.2.3",
     "class-variance-authority": "^0.7.1",
     "countries-list": "^3.1.1",
+    "dotenv": "^17.3.1",
     "framer-motion": "^12.9.4",
     "lucide-react": "^0.503.0",
     "mongoose": "^9.2.1",
