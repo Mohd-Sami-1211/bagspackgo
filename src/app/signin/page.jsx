@@ -1,10 +1,11 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { Eye, EyeOff, Lock, Mail, ArrowRight, Loader2, CheckCircle2 } from 'lucide-react';
 
 export default function SignInPage() {
   const [role, setRole] = useState('user');
@@ -13,11 +14,12 @@ export default function SignInPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
   const router = useRouter();
   const searchParams = useSearchParams();
   const { onLogin } = useAuth();
 
-  // Auto-select role from URL query param (e.g. /signin?role=provider)
+  // Auto-select role from URL
   useEffect(() => {
     const roleParam = searchParams.get('role');
     if (roleParam === 'provider' || roleParam === 'user') {
@@ -33,7 +35,6 @@ export default function SignInPage() {
       setError('Please enter your email or mobile number');
       return;
     }
-
     if (!password) {
       setError('Please enter your password');
       return;
@@ -55,185 +56,204 @@ export default function SignInPage() {
       const data = await res.json();
 
       if (data.success) {
-        // Update global auth state
         onLogin(data.user);
 
-        // Redirect based on role
-        if (data.user.role === 'provider') {
-          router.push('/serviceprovider');
-        } else {
-          router.push('/user/trip');
-        }
+        // Slight delay for animation
+        setTimeout(() => {
+          if (data.user.role === 'provider') {
+            router.push('/serviceprovider/dashboard');
+          } else {
+            router.push('/user/trip');
+          }
+        }, 500);
       } else {
         setError(data.message);
+        setLoading(false);
       }
     } catch (err) {
       setError('Network error. Please try again.');
-    } finally {
       setLoading(false);
     }
   };
 
-  // Eye icon component
-  const EyeIcon = () => (
-    <button
-      type="button"
-      onClick={() => setShowPassword(!showPassword)}
-      className="absolute right-0 top-3 text-gray-400 hover:text-gray-600 p-1"
-    >
-      {showPassword ? (
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-        </svg>
-      ) : (
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-        </svg>
-      )}
-    </button>
-  );
-
-  // Loading spinner
-  const LoadingSpinner = ({ text }) => (
-    <span className="flex items-center justify-center gap-2">
-      <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-      </svg>
-      {text}
-    </span>
-  );
-
   return (
-    <div className="flex flex-1 min-h-screen mx-auto">
-      {/* Travel Hero Panel */}
-      <div className="hidden md:block md:w-1/2 relative">
+    <div className="min-h-[100dvh] w-full flex bg-white font-sans text-gray-900 overflow-x-hidden">
+
+      {/* 🎨 LEFT: Immersive Image Panel (Hidden on tiny screens, Full on Mobile via absolute) */}
+      <div className="fixed inset-0 md:relative md:w-1/2 lg:w-[55%] xl:w-[60%] flex-shrink-0 bg-black z-0">
         <Image
           src="/images/signin.jpg"
-          alt="Travel Hero"
+          alt="Travel Adventure"
           fill
-          className="object-cover"
+          className="object-cover opacity-60 md:opacity-100" // Dark overlay on mobile
+          priority
         />
-        <div className="absolute inset-0 bg-black/25" />
-        <div className="absolute inset-0 flex flex-col p-12 text-white">
-          <h2 className="text-4xl font-bold mb-4 mx-auto">Welcome Back</h2>
-          <p className="text-xl mb-6 pl-8">
-            {role === 'user'
-              ? 'Continue your journey and discover unforgettable experiences.'
-              : 'Manage your services and connect with travelers.'}
-          </p>
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-1 bg-green-400 ml-8"></div>
-            <span className="text-sm font-medium">Explore the world</span>
-          </div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent md:bg-black/30 md:via-transparent" />
+
+        {/* Hero Text */}
+        <div className="hidden md:block absolute bottom-0 left-0 p-8 md:p-12 lg:p-16 text-white max-w-2xl z-10 w-full mb-16 md:mb-0">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.8 }}
+          >
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6 tracking-tight">
+              {role === 'user' ? 'Explore the Unseen.' : 'Share the Adventure.'}
+            </h1>
+            <p className="text-lg md:text-xl text-white/90 font-light max-w-md leading-relaxed hidden sm:block">
+              {role === 'user'
+                ? 'Join a community of 50,000+ travelers discovering the world\'s hidden gems.'
+                : 'Connect with travelers worldwide and grow your business with our intuitive tools.'}
+            </p>
+
+
+          </motion.div>
         </div>
       </div>
 
-      {/* Sign In Form */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5 }}
-        className="flex flex-1 items-center justify-center p-8 bg-green-100"
-      >
-        <div className="bg-white/90 backdrop-blur-md border border-white/40 shadow-lg rounded-xl p-8 w-full max-w-md">
-          <div className="text-center mb-6">
-            <Image
-              src="/images/logo.svg"
-              alt="Logo"
-              width={160}
-              height={160}
-              className="mx-auto mb-4 rounded-3xl"
-            />
-            <h2 className="text-3xl font-bold text-green-800">Sign In</h2>
+      {/* 📝 RIGHT: Form Section (Glassmorphism on Mobile, White on Desktop) */}
+      <div className="relative w-full md:w-1/2 lg:w-[45%] xl:w-[40%] flex items-center justify-center p-4 sm:p-8 z-10">
+
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6 }}
+          className="w-full max-w-[420px] bg-white/95 backdrop-blur-xl md:bg-white rounded-2xl md:rounded-none shadow-2xl md:shadow-none p-6 sm:p-10 border border-white/20 md:border-none"
+        >
+          {/* Header */}
+          <div className="text-center md:text-left mb-10">
+            <Link href="/" className="inline-block mb-8">
+              <div className="w-[140px] h-[45px] relative">
+                <Image src="/images/logo.svg" alt="BagspackGo" fill className="object-contain" />
+              </div>
+            </Link>
+            <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Welcome back</h2>
+            <p className="text-gray-500 mt-2 text-sm">Please enter your details to sign in.</p>
           </div>
 
           {/* Role Toggle */}
-          <div className="flex gap-3 justify-center mb-6">
-            {['user', 'provider'].map((t) => (
-              <motion.button
-                key={t}
-                onClick={() => {
-                  setRole(t);
-                  setError('');
-                }}
-                whileTap={{ scale: 0.95 }}
-                className={`px-5 py-2 rounded-full font-medium transition ${role === t
-                  ? 'bg-green-400 text-white'
-                  : 'bg-white text-green-800 border-b-2 border-green-300'
+          <div className="p-1 bg-gray-100/80 rounded-xl flex mb-8 relative">
+            <motion.div
+              className="absolute top-1 bottom-1 bg-white rounded-lg shadow-sm border border-black/5 z-0"
+              initial={false}
+              animate={{
+                left: role === 'user' ? '4px' : '50%',
+                width: 'calc(50% - 4px)'
+              }}
+              transition={{ type: "spring", stiffness: 400, damping: 30 }}
+            />
+            {['user', 'provider'].map((r) => (
+              <button
+                key={r}
+                onClick={() => { setRole(r); setError(''); }}
+                className={`flex-1 relative z-10 py-2.5 text-sm font-medium text-center transition-colors duration-200 ${role === r ? 'text-gray-900' : 'text-gray-500 hover:text-gray-700'
                   }`}
               >
-                {t === 'user' ? 'User' : 'Service Provider'}
-              </motion.button>
+                {r === 'user' ? 'Traveler' : 'Service Provider'}
+              </button>
             ))}
           </div>
 
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            {/* Email / Phone */}
-            <div className="relative">
-              <input
-                type="text"
-                value={identifier}
-                onChange={(e) => setIdentifier(e.target.value)}
-                required
-                className="peer w-full bg-transparent border-b-2 border-gray-400 pt-4 pb-1 text-black placeholder-transparent focus:outline-none"
-                placeholder="Email / Mobile Number"
-              />
-              <label className="absolute left-0 -top-2 text-sm text-gray-500 peer-placeholder-shown:text-base peer-placeholder-shown:top-4 peer-focus:-top-1 peer-focus:text-sm transition-all duration-200 ease-in-out pointer-events-none">
-                Email / Mobile Number
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-5">
+
+            {/* Identifier Input */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-gray-700 uppercase tracking-wider pl-1">
+                Email / Mobile
               </label>
+              <div className="relative group">
+                <input
+                  type="text"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
+                  className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none pl-11 text-gray-900 placeholder-gray-400 font-medium"
+                  placeholder="name@example.com"
+                />
+                <Mail className="w-5 h-5 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors group-focus-within:text-emerald-500" />
+              </div>
             </div>
 
-            {/* Password */}
-            <div className="relative">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="peer w-full bg-transparent border-b-2 border-gray-400 pt-4 pb-1 pr-10 text-black placeholder-transparent focus:outline-none"
-                placeholder="Password"
-              />
-              <label className="absolute left-0 -top-2 text-sm text-gray-500 peer-placeholder-shown:text-base peer-placeholder-shown:top-4 peer-focus:-top-1 peer-focus:text-sm transition-all duration-200 ease-in-out pointer-events-none">
-                Password
-              </label>
-              <EyeIcon />
+            {/* Password Input */}
+            <div className="space-y-1.5">
+              <div className="flex justify-between items-center pl-1 pr-1">
+                <label className="text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                  Password
+                </label>
+                <Link href="#" className="text-xs font-medium text-emerald-600 hover:text-emerald-700 transition-colors">
+                  Forgot Password?
+                </Link>
+              </div>
+              <div className="relative group">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none pl-11 pr-11 text-gray-900 placeholder-gray-400 font-medium"
+                  placeholder="Enter your password"
+                />
+                <Lock className="w-5 h-5 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors group-focus-within:text-emerald-500" />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none p-1"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
             </div>
 
-            {/* Error */}
-            {error && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-red-500 text-sm text-center"
-              >
-                {error}
-              </motion.div>
-            )}
+            {/* Error Message */}
+            <AnimatePresence>
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0, y: -10 }}
+                  animate={{ opacity: 1, height: 'auto', y: 0 }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="bg-red-50 text-red-600 text-sm px-4 py-3 rounded-xl border border-red-100 flex items-center gap-2"
+                >
+                  <div className="w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0" />
+                  {error}
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-            {/* Submit */}
+            {/* Submit Button */}
             <motion.button
               type="submit"
               disabled={loading}
-              whileHover={{ scale: loading ? 1 : 1.02 }}
-              whileTap={{ scale: loading ? 1 : 0.98 }}
-              className={`w-full bg-gradient-to-r from-green-400 to-green-500 text-white py-3 rounded-lg font-semibold shadow hover:shadow-lg transition ${loading ? 'opacity-70 cursor-not-allowed' : ''
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.98 }}
+              className={`w-full py-3.5 rounded-xl font-bold text-white shadow-lg shadow-emerald-500/30 flex items-center justify-center gap-2 transition-all ${loading
+                ? 'bg-emerald-400 cursor-not-allowed'
+                : 'bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700'
                 }`}
             >
-              {loading ? <LoadingSpinner text="Signing In..." /> : 'Sign In'}
+              {loading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span>Signing in...</span>
+                </>
+              ) : (
+                <>
+                  <span>Sign In</span>
+                  <ArrowRight className="w-5 h-5" />
+                </>
+              )}
             </motion.button>
           </form>
 
-          {/* Links */}
-          <div className="mt-4 text-center text-black">
-            Don&apos;t have an account?{' '}
-            <Link href="/signup" className="underline text-blue-600 hover:text-blue-900">
-              Sign up
-            </Link>
+          {/* Footer */}
+          <div className="mt-8 text-center">
+            <p className="text-gray-500 text-sm">
+              Don&apos;t have an account?{' '}
+              <Link href={`/signup?role=${role}`} className="text-emerald-600 font-bold hover:text-emerald-700 transition-colors">
+                Sign up for free
+              </Link>
+            </p>
           </div>
-        </div>
-      </motion.div>
+        </motion.div>
+      </div>
     </div>
   );
 }
