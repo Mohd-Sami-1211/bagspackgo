@@ -11,14 +11,27 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+
+// Get initials from name: "Mohd Samiullah" → "MS"
+function getInitials(name) {
+  if (!name) return "?";
+  const words = name.trim().split(/\s+/);
+  if (words.length >= 2) return (words[0][0] + words[1][0]).toUpperCase();
+  return words[0][0].toUpperCase();
+}
 
 export default function Sidebar({ isCollapsed }) {
   const pathname = usePathname();
+  const { user } = useAuth();
 
   const completion = 65;
   const radius = 20;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (completion / 100) * circumference;
+
+  const displayName = user?.username || "Service Provider";
+  const initials = getInitials(displayName);
 
   const items = [
     { name: "Dashboard", icon: LayoutDashboard, href: "/serviceprovider/dashboard" },
@@ -81,7 +94,7 @@ export default function Sidebar({ isCollapsed }) {
                       </defs>
                     </svg>
                     <div className="flex items-center justify-center w-full h-full text-sm font-bold text-emerald-700 bg-emerald-100 rounded-full">
-                      UA
+                      {initials}
                     </div>
                   </div>
 
@@ -92,8 +105,8 @@ export default function Sidebar({ isCollapsed }) {
                 </div>
 
                 {/* Name + small message */}
-                <div className="flex flex-col">
-                  <h2 className="font-semibold text-gray-900">Upland Adventures</h2>
+                <div className="flex flex-col min-w-0">
+                  <h2 className="font-semibold text-gray-900 truncate">{displayName}</h2>
                   <Link
                     href="#"
                     className="text-xs text-emerald-600 hover:underline mt-1"
@@ -142,7 +155,7 @@ export default function Sidebar({ isCollapsed }) {
                       </defs>
                     </svg>
                     <div className="flex items-center justify-center w-full h-full text-xs font-bold text-emerald-700 bg-emerald-100 rounded-full">
-                      UA
+                      {initials}
                     </div>
                   </div>
 
@@ -169,14 +182,13 @@ export default function Sidebar({ isCollapsed }) {
               >
                 <Link
                   href={item.href}
-                  className={`flex items-center gap-4 rounded-xl px-4 py-3 hover:bg-emerald-50 transition-colors ${
-                    active ? "bg-emerald-50 text-emerald-800 font-medium" : "text-gray-700"
-                  } ${isCollapsed ? "justify-center" : ""}`}
+                  className={`flex items-center gap-4 rounded-xl px-4 py-3 hover:bg-emerald-50 transition-colors ${active ? "bg-emerald-50 text-emerald-800 font-medium" : "text-gray-700"
+                    } ${isCollapsed ? "justify-center" : ""}`}
                 >
                   <item.icon size={22} />
                   <AnimatePresence mode="wait">
                     {!isCollapsed && (
-                      <motion.span 
+                      <motion.span
                         key={`text-${item.name}`}
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
@@ -196,30 +208,29 @@ export default function Sidebar({ isCollapsed }) {
       </div>
 
       {/* Logout */}
-        <div className="p-4 border-t bg-white">
-      <Link
-        href="/serviceprovider/dashboard/logout"
-        className={`flex items-center gap-4 w-full text-gray-700 hover:text-red-500 transition px-4 py-3 rounded-xl hover:bg-red-50 ${
-          isCollapsed ? 'justify-center' : ''
-        }`}
-      >
-        <LogOut size={22} />
-        <AnimatePresence mode="wait">
-          {!isCollapsed && (
-            <motion.span
-              key="logout-text"
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -10 }}
-              transition={{ duration: 0.2 }}
-              className="text-sm"
-            >
-              Logout
-            </motion.span>
-          )}
-        </AnimatePresence>
-      </Link>
-    </div>
+      <div className="p-4 border-t bg-white">
+        <Link
+          href="/serviceprovider/dashboard/logout"
+          className={`flex items-center gap-4 w-full text-gray-700 hover:text-red-500 transition px-4 py-3 rounded-xl hover:bg-red-50 ${isCollapsed ? 'justify-center' : ''
+            }`}
+        >
+          <LogOut size={22} />
+          <AnimatePresence mode="wait">
+            {!isCollapsed && (
+              <motion.span
+                key="logout-text"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                transition={{ duration: 0.2 }}
+                className="text-sm"
+              >
+                Logout
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </Link>
+      </div>
     </motion.aside>
   );
 }

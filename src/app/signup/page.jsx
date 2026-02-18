@@ -641,8 +641,8 @@ export default function SignUpPage() {
                 whileHover={{ scale: loading ? 1 : 1.02 }}
                 whileTap={{ scale: loading ? 1 : 0.98 }}
                 className={`w-full bg-gradient-to-r from-green-400 to-green-500 text-white py-3 rounded-lg font-semibold shadow hover:shadow-lg transition mt-6 ${loading || !passwordCheck.isValid || userData.password !== userData.confirmPassword
-                    ? 'opacity-50 cursor-not-allowed'
-                    : ''
+                  ? 'opacity-50 cursor-not-allowed'
+                  : ''
                   }`}
               >
                 {loading ? <LoadingSpinner text="Creating Account..." /> : 'Complete Registration'}
@@ -666,7 +666,7 @@ export default function SignUpPage() {
                 Your {role === 'user' ? 'traveler' : 'service provider'} account has been created successfully.
               </p>
               <motion.button
-                onClick={() => router.push('/signin')}
+                onClick={() => router.push(`/signin?role=${role === 'user' ? 'user' : 'provider'}`)}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 className="w-full bg-gradient-to-r from-green-400 to-green-500 text-white py-3 rounded-lg font-semibold shadow hover:shadow-lg transition"

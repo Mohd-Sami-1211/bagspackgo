@@ -2,20 +2,18 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { LogOut, AlertTriangle, CheckCircle2, XCircle } from 'lucide-react';
+import { LogOut, AlertTriangle, XCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 
 export default function LogoutPage() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const router = useRouter();
+  const { logout } = useAuth();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setIsLoggingOut(true);
-    // Simulate API logout delay
-    setTimeout(() => {
-      // Clear auth tokens or perform actual logout logic here
-      router.push('/signin'); // Redirect to login page after logout
-    }, 1500);
+    await logout(); // Calls /api/auth/logout, clears cookie, redirects to /signin
   };
 
   return (
@@ -48,9 +46,8 @@ export default function LogoutPage() {
             whileTap={{ scale: 0.97 }}
             onClick={handleLogout}
             disabled={isLoggingOut}
-            className={`flex items-center justify-center gap-2 px-5 py-2 rounded-lg bg-emerald-600 text-white font-medium hover:bg-emerald-700 transition ${
-              isLoggingOut ? 'opacity-70 cursor-not-allowed' : ''
-            }`}
+            className={`flex items-center justify-center gap-2 px-5 py-2 rounded-lg bg-emerald-600 text-white font-medium hover:bg-emerald-700 transition ${isLoggingOut ? 'opacity-70 cursor-not-allowed' : ''
+              }`}
           >
             {isLoggingOut ? (
               <svg

@@ -1,9 +1,10 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 
 export default function SignInPage() {
   const [role, setRole] = useState('user');
@@ -13,6 +14,16 @@ export default function SignInPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { onLogin } = useAuth();
+
+  // Auto-select role from URL query param (e.g. /signin?role=provider)
+  useEffect(() => {
+    const roleParam = searchParams.get('role');
+    if (roleParam === 'provider' || roleParam === 'user') {
+      setRole(roleParam);
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -44,9 +55,8 @@ export default function SignInPage() {
       const data = await res.json();
 
       if (data.success) {
-        // Store user info in localStorage
-        localStorage.setItem('role', data.user.role);
-        localStorage.setItem('user', JSON.stringify(data.user));
+        // Update global auth state
+        onLogin(data.user);
 
         // Redirect based on role
         if (data.user.role === 'provider') {
@@ -150,8 +160,8 @@ export default function SignInPage() {
                 }}
                 whileTap={{ scale: 0.95 }}
                 className={`px-5 py-2 rounded-full font-medium transition ${role === t
-                    ? 'bg-green-400 text-white'
-                    : 'bg-white text-green-800 border-b-2 border-green-300'
+                  ? 'bg-green-400 text-white'
+                  : 'bg-white text-green-800 border-b-2 border-green-300'
                   }`}
               >
                 {t === 'user' ? 'User' : 'Service Provider'}

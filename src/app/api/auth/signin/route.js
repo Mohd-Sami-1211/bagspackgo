@@ -3,6 +3,7 @@ import dbConnect from "@/lib/db";
 import { User } from "@/models/user.model";
 import { Guide } from "@/models/guide.model";
 import { sanitizeString, sanitizeEmail, sanitizePhone } from "@/lib/sanitize";
+import { generateToken, getTokenCookieOptions } from "@/lib/auth";
 import bcrypt from "bcryptjs";
 
 const MAX_LOGIN_ATTEMPTS = 5;
@@ -82,8 +83,8 @@ export async function POST(request) {
 
         // ──────────────── Check Account Status ────────────────
 
-        // Check if account is active
-        if (!account.isActive) {
+        // Handle old documents that don't have isActive field (default: true)
+        if (account.isActive === false) {
             return NextResponse.json(
                 { success: false, message: "Your account has been deactivated. Please contact support." },
                 { status: 403 }
@@ -109,14 +110,11 @@ export async function POST(request) {
         const isPasswordValid = await bcrypt.compare(password, account.password);
 
         if (!isPasswordValid) {
-            // Increment failed login attempts
             account.loginAttempts = (account.loginAttempts || 0) + 1;
 
-            // Lock account if max attempts reached
             if (account.loginAttempts >= MAX_LOGIN_ATTEMPTS) {
                 account.lockUntil = new Date(Date.now() + LOCK_DURATION);
-                await account.save();
-
+                await account.save({ validateBeforeSave: false });
                 return NextResponse.json(
                     {
                         success: false,
@@ -126,8 +124,7 @@ export async function POST(request) {
                 );
             }
 
-            await account.save();
-
+            await account.save({ validateBeforeSave: false });
             const remaining = MAX_LOGIN_ATTEMPTS - account.loginAttempts;
             return NextResponse.json(
                 {
@@ -140,14 +137,24 @@ export async function POST(request) {
 
         // ──────────────── Login Successful ────────────────
 
-        // Reset login attempts on successful login
+        // Reset login attempts
         if (account.loginAttempts > 0 || account.lockUntil) {
             account.loginAttempts = 0;
             account.lockUntil = null;
-            await account.save();
+            await account.save({ validateBeforeSave: false });
         }
 
-        return NextResponse.json(
+        // Generate JWT token
+        const token = generateToken({
+            userId: account._id.toString(),
+            username: account.username,
+            role: accountRole,
+            email: account.email,
+            phone: account.phone,
+        });
+
+        // Create response with JWT cookie
+        const response = NextResponse.json(
             {
                 success: true,
                 message: "Login successful!",
@@ -161,6 +168,12 @@ export async function POST(request) {
             },
             { status: 200 }
         );
+
+        // Set HTTP-only cookie
+        const cookieOptions = getTokenCookieOptions(token);
+        response.cookies.set(cookieOptions);
+
+        return response;
     } catch (error) {
         console.error("Signin Error:", error);
         return NextResponse.json(
