@@ -102,7 +102,7 @@ export async function sendWelcomeEmail(email, name, role) {
                 
                 <!-- Header Banner -->
                 <div style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 50%, #15803d 100%); padding: 40px 32px; text-align: center;">
-                    <h1 style="color: white; font-size: 32px; margin: 0 0 8px;">Welcome to nagspackgo!</h1>
+                    <h1 style="color: white; font-size: 32px; margin: 0 0 8px;">Welcome to bagspackgo!</h1>
                     <p style="color: rgba(255,255,255,0.85); font-size: 16px; margin: 0;">Your adventure begins now 🌍</p>
                 </div>
 
