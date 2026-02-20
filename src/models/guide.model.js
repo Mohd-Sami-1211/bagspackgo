@@ -50,6 +50,16 @@ const guideSchema = new mongoose.Schema(
             type: Date,
             default: null,
         },
+        // Tracks the provider's application lifecycle
+        // "none" = hasn't submitted the application form yet (first login)
+        // "pending" = submitted form, waiting for admin review
+        // "approved" = admin approved, full dashboard access granted
+        // "rejected" = admin rejected the application
+        applicationStatus: {
+            type: String,
+            enum: ["none", "pending", "approved", "rejected"],
+            default: "none",
+        },
     },
     { timestamps: true }
 );

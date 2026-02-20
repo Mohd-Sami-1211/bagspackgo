@@ -1,12 +1,13 @@
 'use client';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 
 export default function ServiceProviderLayout({ children }) {
   const { user, isAuthenticated, loading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     // Wait until auth check is complete
@@ -23,7 +24,28 @@ export default function ServiceProviderLayout({ children }) {
       router.replace('/user/trip');
       return;
     }
-  }, [loading, isAuthenticated, user, router]);
+
+    const status = user?.applicationStatus || 'none';
+
+    // Smart routing based on application status:
+    // 1. "none" or "rejected" → Show registration form (/serviceprovider)
+    // 2. "pending" → Show pending/status page (/serviceprovider)
+    // 3. "approved" → Allow dashboard access (/serviceprovider/dashboard/...)
+
+    if (status === 'approved') {
+      // If approved and on the root serviceprovider page, redirect to dashboard
+      if (pathname === '/serviceprovider') {
+        router.replace('/serviceprovider/dashboard');
+      }
+      // Otherwise, they're already on a valid dashboard route — let them be
+    } else {
+      // Not yet approved: block access to dashboard routes
+      if (pathname.startsWith('/serviceprovider/dashboard')) {
+        router.replace('/serviceprovider');
+      }
+      // If on /serviceprovider, let the page render (form or pending status)
+    }
+  }, [loading, isAuthenticated, user, router, pathname]);
 
   // Show loading while checking auth
   if (loading) {

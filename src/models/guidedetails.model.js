@@ -28,8 +28,7 @@ const guidedetailsSchema = new mongoose.Schema(
         },
 
         destinationId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Destination",
+            type: String,
             required: true,
         },
 
@@ -54,8 +53,14 @@ const guidedetailsSchema = new mongoose.Schema(
 
         status: {
             type: String,
-            enum: ["submitted", "pending", "approved"],
+            enum: ["submitted", "pending", "approved", "rejected"],
             default: "submitted",
+        },
+
+        // Admin can leave notes when reviewing (reason for rejection, etc.)
+        adminNotes: {
+            type: String,
+            default: "",
         },
     },
     { timestamps: true }

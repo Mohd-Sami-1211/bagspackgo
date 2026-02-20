@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -8,6 +8,14 @@ import { useAuth } from '@/context/AuthContext';
 import { Eye, EyeOff, Lock, Mail, ArrowRight, Loader2, CheckCircle2 } from 'lucide-react';
 
 export default function SignInPage() {
+  return (
+    <Suspense fallback={<div className="min-h-[100dvh] flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-emerald-500" /></div>}>
+      <SignInContent />
+    </Suspense>
+  );
+}
+
+function SignInContent() {
   const [role, setRole] = useState('user');
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
@@ -61,7 +69,13 @@ export default function SignInPage() {
         // Slight delay for animation
         setTimeout(() => {
           if (data.user.role === 'provider') {
-            router.push('/serviceprovider/dashboard');
+            // Service provider layout will check applicationStatus and route accordingly
+            // (form → pending → dashboard)
+            if (data.user.applicationStatus === 'approved') {
+              router.push('/serviceprovider/dashboard');
+            } else {
+              router.push('/serviceprovider');
+            }
           } else {
             router.push('/user/trip');
           }

@@ -55,12 +55,13 @@ export function AuthProvider({ children }) {
     return (
         <AuthContext.Provider
             value={{
-                user,         // Current user object or null
+                user,         // Current user object or null (includes applicationStatus for providers)
                 loading,      // True while checking session
                 isAuthenticated: !!user,
+                applicationStatus: user?.applicationStatus || null,
                 logout,       // Call this to log out
                 onLogin,      // Call this after successful login
-                checkAuth,    // Re-check auth (useful after token refresh)
+                checkAuth,    // Re-check auth (useful after token refresh or status change)
             }}
         >
             {children}

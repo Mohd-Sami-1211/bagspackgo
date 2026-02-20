@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
+import dbConnect from "@/lib/db";
+import { Guide } from "@/models/guide.model";
 
 /**
  * GET /api/auth/me
  * Returns the currently authenticated user's info from the JWT session.
- * Used by the frontend to check if user is logged in.
+ * For providers, also fetches live applicationStatus from MongoDB.
  */
 export async function GET() {
     try {
@@ -17,17 +19,33 @@ export async function GET() {
             );
         }
 
+        // Build the user response
+        const userResponse = {
+            id: user.userId,
+            username: user.username,
+            email: user.email,
+            phone: user.phone,
+            role: user.role,
+        };
+
+        // For providers, fetch the live applicationStatus from the database
+        // (JWT may have stale data if admin approved/rejected after login)
+        if (user.role === "provider") {
+            try {
+                await dbConnect();
+                const guide = await Guide.findById(user.userId).select("applicationStatus").lean();
+                userResponse.applicationStatus = guide?.applicationStatus || "none";
+            } catch (dbErr) {
+                console.error("DB lookup for applicationStatus failed:", dbErr);
+                userResponse.applicationStatus = "none";
+            }
+        }
+
         return NextResponse.json(
             {
                 success: true,
                 authenticated: true,
-                user: {
-                    id: user.userId,
-                    username: user.username,
-                    email: user.email,
-                    phone: user.phone,
-                    role: user.role,
-                },
+                user: userResponse,
             },
             { status: 200 }
         );

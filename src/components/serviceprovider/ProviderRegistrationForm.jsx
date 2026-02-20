@@ -1,552 +1,432 @@
 'use client';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
-import { 
-  Send, 
-  Hourglass, 
-  CheckCircle2, 
-  MessageCircle, 
-  MapPin, 
-  Building, 
-  Mail, 
-  Phone, 
-  Map, 
-  Instagram, 
-  Facebook, 
-  FileText, 
-  IdCard,
-  ChevronRight,
-  Clock,
-  HelpCircle,
-  ArrowLeft
+import {
+    Building2, Mail, Phone, MapPin, Instagram, Facebook,
+    FileText, IdCard, ChevronRight, ChevronLeft, AlertTriangle,
+    Loader2, CheckCircle2, Upload, X, Sparkles, Shield, Globe, Map,
 } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 import destinationsData from 'src/data/data.json';
 
-// Modern form field component
-function FormField({ label, hint, error, children, required, icon: Icon }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="space-y-2"
-    >
-      <label className="text-sm font-medium flex items-center gap-2">
-        {Icon && <Icon className="h-4 w-4 text-emerald-500" />}
-        {label}
-        {required && <span className="text-rose-500">*</span>}
-      </label>
-      {children}
-      {hint && <div className="text-xs text-neutral-500 flex items-center gap-1"><HelpCircle className="h-3 w-3" /> {hint}</div>}
-      {error && <div className="text-xs text-rose-600">{error}</div>}
-    </motion.div>
-  );
-}
+const STEPS = [
+    { id: 1, title: 'Business Info', subtitle: 'Tell us about your company' },
+    { id: 2, title: 'Location & Social', subtitle: 'Where do you operate?' },
+    { id: 3, title: 'Documents & Services', subtitle: 'Verify your business' },
+];
 
-// Progress status with modern design
-function ProgressStatus({ step = 'submitted' }) {
-  const STEPS = [
-    { id: 'submitted', label: 'Submitted', icon: Send, color: 'bg-blue-500' },
-    { id: 'pending', label: 'Under Review', icon: Hourglass, color: 'bg-amber-500' },
-    { id: 'approved', label: 'Approved', icon: CheckCircle2, color: 'bg-emerald-500' },
-  ];
+const slideVariants = {
+    enter: (dir) => ({ x: dir > 0 ? 80 : -80, opacity: 0 }),
+    center: { x: 0, opacity: 1, transition: { duration: 0.4, ease: [.22, 1, .36, 1] } },
+    exit: (dir) => ({ x: dir > 0 ? -80 : 80, opacity: 0, transition: { duration: 0.3 } }),
+};
 
-  const activeIndex = STEPS.findIndex(s => s.id === step);
-  
-  return (
-    <div className="flex flex-col items-center gap-6 py-4">
-      <div className="flex items-center justify-center gap-4 sm:gap-8 w-full">
-        {STEPS.map((s, idx) => {
-          const Icon = s.icon;
-          const active = idx <= activeIndex;
-          const completed = idx < activeIndex;
-          
-          return (
-            <div key={s.id} className="flex items-center">
-              <div className="flex flex-col items-center">
-                <div className={`h-12 w-12 rounded-full ${active ? s.color : 'bg-gray-200'} flex items-center justify-center text-white transition-all duration-500 shadow-lg`}>
-                  <Icon className="h-5 w-5" />
-                </div>
-                <span className={`text-xs mt-2 font-medium ${active ? 'text-gray-800' : 'text-gray-400'}`}>
-                  {s.label}
-                </span>
-              </div>
-              
-              {idx < STEPS.length - 1 && (
-                <div className={`h-1 w-16 sm:w-24 mx-2 sm:mx-4 rounded-full ${completed ? s.color : 'bg-gray-200'} transition-all duration-500`} />
-              )}
-            </div>
-          );
-        })}
-      </div>
-      
-      <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="text-center text-sm text-gray-600 max-w-md"
-      >
-        {step === 'submitted' && "We've received your application and will begin processing shortly."}
-        {step === 'pending' && "Our team is reviewing your application. This usually takes 1-2 business days."}
-        {step === 'approved' && "Congratulations! Your application has been approved. Welcome to BagspackGo!"}
-      </motion.div>
-    </div>
-  );
-}
-
-export default function ProviderRegistrationForm() {
-  const [form, setForm] = useState({
-    companyName: '',
-    companyMail: '',
-    companyMobile: '',
-    destinationId: '',
-    address: '',
-    instagram: '',
-    facebook: '',
-    licenseFile: null,
-    idFile: null,
-    availability: { trips: true, treks: true, mergers: true },
-    agree: false,
-  });
-  
-  const [errors, setErrors] = useState({});
-  const [activeTab, setActiveTab] = useState('form');
-  const [status, setStatus] = useState('submitted');
-  const [submitted, setSubmitted] = useState(false);
-
-// Process destinations data
-const destinations = useMemo(() => {
-  const dests = destinationsData.destinations || [];
-  return dests
-    .filter(d => d && d.value && d.label)
-    .map(d => ({
-      value: d.value,
-      label: d.label
-    }));
-}, []);
-
-  // Validate form
-  const validateForm = () => {
-    const newErrors = {};
-    
-    if (!form.companyName.trim()) newErrors.companyName = 'Company name is required';
-    if (!form.companyMail.trim()) newErrors.companyMail = 'Email is required';
-    if (!form.companyMobile.trim()) newErrors.companyMobile = 'Mobile number is required';
-    if (!form.destinationId) newErrors.destinationId = 'Please select a destination';
-    if (!form.address.trim()) newErrors.address = 'Address is required';
-    if (!form.licenseFile) newErrors.licenseFile = 'License file is required';
-    if (!form.idFile) newErrors.idFile = 'ID proof is required';
-    if (!form.agree) newErrors.agree = 'You must agree to the terms';
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  function update(path, value) {
-    setForm(prev => ({ ...prev, [path]: value }));
-    // Clear error when field is updated
-    if (errors[path]) {
-      setErrors(prev => ({ ...prev, [path]: '' }));
-    }
-  }
-
-  function updateAvail(key) {
-    setForm(prev => ({ ...prev, availability: { ...prev.availability, [key]: !prev.availability[key] } }));
-  }
-
-  function onSubmit(e) {
-    e.preventDefault();
-    
-    if (!validateForm()) return;
-    
-    setSubmitted(true);
-    setStatus('submitted');
-    
-    // Simulate process
-    setTimeout(() => setStatus('pending'), 2000);
-    setTimeout(() => setStatus('approved'), 6000);
-     setTimeout(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, 100);
-  }
-
-  // File upload handler with style
-  const FileUpload = ({ onChange, accept, label, error, required }) => {
-    const [fileName, setFileName] = useState('');
-    
-    const handleFileChange = (e) => {
-      const file = e.target.files?.[0];
-      if (file) {
-        setFileName(file.name);
-        onChange(file);
-      }
-    };
-    
+function FloatingInput({ label, icon: Icon, error, children, required }) {
     return (
-      <div className="space-y-2">
-        <label className="text-sm font-medium flex items-center gap-2">
-          <FileText className="h-4 w-4 text-emerald-500" />
-          {label}
-          {required && <span className="text-rose-500">*</span>}
-        </label>
-        
-        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-2xl cursor-pointer hover:border-emerald-400 transition-colors p-4 text-center">
-          <div className="flex flex-col items-center justify-center pt-5 pb-6">
-            <FileText className="w-8 h-8 mb-3 text-gray-400" />
-            <p className="mb-2 text-sm text-gray-500">
-              <span className="font-semibold">Click to upload</span> or drag and drop
-            </p>
-            <p className="text-xs text-gray-500">{accept}</p>
-          </div>
-          <input 
-            type="file" 
-            className="hidden" 
-            onChange={handleFileChange}
-            accept={accept}
-          />
-        </label>
-        
-        {fileName && (
-          <p className="text-sm text-emerald-600 flex items-center gap-1">
-            <CheckCircle2 className="h-4 w-4" />
-            {fileName}
-          </p>
-        )}
-        
-        {error && <p className="text-xs text-rose-600">{error}</p>}
-      </div>
+        <div className="space-y-1.5">
+            <label className="text-xs font-bold text-gray-500 uppercase tracking-widest pl-1 flex items-center gap-1.5">
+                {Icon && <Icon className="h-3.5 w-3.5 text-emerald-500" />}
+                {label}
+                {required && <span className="text-rose-400">*</span>}
+            </label>
+            {children}
+            {error && (
+                <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} className="text-xs text-rose-500 pl-1 flex items-center gap-1">
+                    <AlertTriangle className="h-3 w-3" /> {error}
+                </motion.p>
+            )}
+        </div>
     );
-  };
+}
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-blue-50 to-purple-50 py-6 px-4">
-     <div className="max-w-6xl mx-auto">
-  {/* Main Card - Conditionally remove white background when submitted */}
-  <motion.div
-    initial={{ opacity: 0, scale: 0.95 }}
-    animate={{ opacity: 1, scale: 1 }}
-    className={`rounded-3xl shadow-xl overflow-hidden border border-gray-100 ${
-      !submitted ? 'bg-white' : 'bg-transparent border-transparent shadow-none'
-    }`}
-  >
-    <AnimatePresence mode="wait">
-      {activeTab === 'form' && (
-        <motion.div
-          key="form"
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -20 }}
-          transition={{ duration: 0.3 }}
-          className="p-6 md:p-8"
-        >
-          {!submitted ? (
-            <>
-              {/* Header - Only shown when form is not submitted */}
-              <motion.div
-                initial={{ y: -20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                className="text-center mb-8"
-              >
-                <div className="flex justify-center mb-4">
-                  <div className="relative w-60 h-28 rounded-3xl bg-white">
-                    <Image
-                      src="/images/logo.svg"
-                      alt="BagspackGo"
-                      fill
-                      className="object-contain"
-                    />
-                  </div>
-                </div>
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-green-600 to-green-700 bg-clip-text text-transparent">
-                  Join Our Provider Network
-                </h1>
-                <p className="text-gray-600 mt-2 max-w-2xl mx-auto">
-                  Become part of BagspackGo and offer amazing experiences to travelers worldwide
-                </p>
-              </motion.div>
+function FileUploadCard({ label, icon: Icon, accept, error, required, onSelect }) {
+    const ref = useRef(null);
+    const [file, setFile] = useState(null);
+    const [dragOver, setDragOver] = useState(false);
+    const handleFile = (f) => { if (f) { setFile(f); onSelect(f); } };
 
-              <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Company Details */}
-                <FormField label="Company Name" required error={errors.companyName} icon={Building}>
-                  <input
-                    value={form.companyName}
-                    onChange={e => update('companyName', e.target.value)}
-                    className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all"
-                    placeholder="Enter your company name"
-                  />
-                </FormField>
-
-                <FormField label="Company Email" required error={errors.companyMail} icon={Mail}>
-                  <input
-                    type="email"
-                    value={form.companyMail}
-                    onChange={e => update('companyMail', e.target.value)}
-                    className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all"
-                    placeholder="company@email.com"
-                  />
-                </FormField>
-
-                <FormField label="Company Mobile" required error={errors.companyMobile} icon={Phone}>
-                  <input
-                    inputMode="numeric"
-                    value={form.companyMobile}
-                    onChange={e => update('companyMobile', e.target.value)}
-                    className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all"
-                    placeholder="+91 9876543210"
-                  />
-                </FormField>
-
-                <FormField 
-                  label="Operating Location" 
-                  required 
-                  error={errors.destinationId}
-                  hint="Primary destination for your operations"
-                  icon={MapPin}
-                >
-                  <div className="relative">
-                    <select
-                      value={form.destinationId}
-                      onChange={e => update('destinationId', e.target.value)}
-                      className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all appearance-none"
-                    >
-                      <option value="">Select your primary destination</option>
-                      {destinations.map(d => (
-                        <option key={d.value} value={d.value}>{d.label}</option>
-                      ))}
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                      <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                      </svg>
+    return (
+        <div className="space-y-1.5">
+            <label className="text-xs font-bold text-gray-500 uppercase tracking-widest pl-1 flex items-center gap-1.5">
+                <Icon className="h-3.5 w-3.5 text-emerald-500" />
+                {label}
+                {required && <span className="text-rose-400">*</span>}
+            </label>
+            <motion.div
+                whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
+                onClick={() => ref.current?.click()}
+                onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFile(e.dataTransfer.files[0]); }}
+                className={`relative cursor-pointer rounded-2xl border-2 border-dashed p-5 transition-all text-center ${dragOver ? 'border-emerald-400 bg-emerald-50/50'
+                        : file ? 'border-emerald-300 bg-emerald-50/30'
+                            : error ? 'border-rose-300 bg-rose-50/30'
+                                : 'border-gray-200 bg-gray-50/50 hover:border-gray-300 hover:bg-gray-50'
+                    }`}
+            >
+                <input ref={ref} type="file" className="hidden" accept={accept} onChange={(e) => handleFile(e.target.files?.[0])} />
+                {file ? (
+                    <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                            <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                        </div>
+                        <div className="text-left min-w-0 flex-1">
+                            <p className="text-sm font-semibold text-gray-800 truncate">{file.name}</p>
+                            <p className="text-xs text-gray-400">{(file.size / 1024).toFixed(1)} KB</p>
+                        </div>
+                        <button type="button" onClick={(e) => { e.stopPropagation(); setFile(null); onSelect(null); }}
+                            className="h-8 w-8 rounded-lg bg-gray-100 hover:bg-red-50 flex items-center justify-center transition-colors">
+                            <X className="h-4 w-4 text-gray-500 hover:text-red-500" />
+                        </button>
                     </div>
-                  </div>
-                </FormField>
-
-                <div className="md:col-span-2">
-                  <FormField label="Full Address" required error={errors.address} icon={Map}>
-                    <textarea
-                      value={form.address}
-                      onChange={e => update('address', e.target.value)}
-                      className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all min-h-[100px]"
-                      placeholder="Enter your complete business address"
-                    />
-                  </FormField>
-                </div>
-
-                {/* Social Media */}
-                <FormField label="Instagram" icon={Instagram}>
-                  <div className="flex items-center">
-                    <span className="px-3 py-3 bg-gray-100 rounded-l-xl border border-r-0 border-gray-200 text-gray-500">@</span>
-                    <input
-                      value={form.instagram}
-                      onChange={e => update('instagram', e.target.value)}
-                      className="w-full rounded-r-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all"
-                      placeholder="yourusername"
-                    />
-                  </div>
-                </FormField>
-
-                <FormField label="Facebook" icon={Facebook}>
-                  <input
-                    value={form.facebook}
-                    onChange={e => update('facebook', e.target.value)}
-                    className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all"
-                    placeholder="https://facebook.com/yourpage"
-                  />
-                </FormField>
-
-                {/* File Uploads */}
-                <FileUpload
-                  onChange={file => update('licenseFile', file)}
-                  accept=".pdf,.jpg,.png"
-                  label="Business License"
-                  error={errors.licenseFile}
-                  required
-                />
-
-                <FileUpload
-                  onChange={file => update('idFile', file)}
-                  accept=".pdf,.jpg,.png"
-                  label="Owner ID Proof"
-                  error={errors.idFile}
-                  required
-                />
-
-                {/* Availability */}
-                <div className="md:col-span-2">
-                  <FormField label="Services Offered" required>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      {[
-                        { key: 'trips', label: 'Trips', icon: '🚗' },
-                        { key: 'treks', label: 'Treks', icon: '🏔️' },
-                        { key: 'mergers', label: 'Mergers', icon: '👥' },
-                      ].map((service) => (
-                        <label
-                          key={service.key}
-                          className={`flex flex-col items-center p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                            form.availability[service.key]
-                              ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
-                              : 'border-gray-200 hover:border-gray-300'
-                          }`}
-                        >
-                          <span className="text-2xl mb-2">{service.icon}</span>
-                          <input
-                            type="checkbox"
-                            checked={form.availability[service.key]}
-                            onChange={() => updateAvail(service.key)}
-                            className="hidden"
-                          />
-                          <span className="text-sm font-medium">{service.label}</span>
-                        </label>
-                      ))}
+                ) : (
+                    <div className="py-3">
+                        <Upload className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+                        <p className="text-sm text-gray-500"><span className="font-semibold text-emerald-600">Click to upload</span> or drag and drop</p>
+                        <p className="text-xs text-gray-400 mt-1">PDF, JPG, PNG up to 10MB</p>
                     </div>
-                  </FormField>
-                </div>
+                )}
+            </motion.div>
+            {error && (
+                <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} className="text-xs text-rose-500 pl-1 flex items-center gap-1">
+                    <AlertTriangle className="h-3 w-3" /> {error}
+                </motion.p>
+            )}
+        </div>
+    );
+}
 
-                {/* Terms */}
-                <div className="md:col-span-2">
-                  <label className={`flex items-start gap-3 rounded-xl p-4 border-2 transition-all ${
-                    form.agree ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200'
-                  } ${errors.agree ? 'border-rose-500' : ''}`}>
-                    <input
-                      type="checkbox"
-                      checked={form.agree}
-                      onChange={e => update('agree', e.target.checked)}
-                      className="mt-1"
-                    />
-                    <span className="text-sm">
-                      I agree to the{' '}
-                      <Link href="/terms" className="text-emerald-600 hover:underline font-medium">
-                        Terms & Conditions
-                      </Link>{' '}
-                      and{' '}
-                      <Link href="/privacy" className="text-emerald-600 hover:underline font-medium">
-                        Privacy Policy
-                      </Link>
-                    </span>
-                  </label>
-                  {errors.agree && <p className="text-xs text-rose-600 mt-1">{errors.agree}</p>}
-                </div>
+export default function ProviderRegistrationForm({ rejected = false }) {
+    const { checkAuth } = useAuth();
+    const router = useRouter();
+    const [step, setStep] = useState(1);
+    const [direction, setDirection] = useState(1);
+    const [form, setForm] = useState({
+        companyName: '', companyMail: '', companyMobile: '', destinationId: '',
+        address: '', instagram: '', facebook: '', licenseFile: null, idFile: null,
+        availability: { trips: true, treks: true, mergers: true }, agree: false,
+    });
+    const [errors, setErrors] = useState({});
+    const [submitting, setSubmitting] = useState(false);
+    const [submitted, setSubmitted] = useState(false);
+    const [apiError, setApiError] = useState('');
 
-                {/* Submit Button */}
-                <div className="md:col-span-2 flex justify-center mt-4">
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    type="submit"
-                    className="bg-gradient-to-r from-green-500 to-green-600 text-white px-8 py-4 rounded-xl font-medium flex items-center gap-2 shadow-lg hover:shadow-emerald-200 transition-all"
-                  >
-                    Submit Application
-                    <ChevronRight className="h-5 w-5" />
-                  </motion.button>
-                </div>
-              </form>
-            </>
-          ) : (
-            // Success message after submission - Centered with compact design
-            <div className="flex justify-center items-center min-h-[80vh] py-8">
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex flex-col items-center justify-center text-center w-full max-w-xl mx-auto p-8 bg-white rounded-2xl shadow-lg"
-              >
-                <div className="flex justify-center mb-5">
-                  <div className="relative w-60 h-20">
-                    <Image
-                      src="/images/logo.svg"
-                      alt="BagspackGo"
-                      fill
-                      className="object-contain"
-                    />
-                  </div>
-                </div>
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-                  className="mb-6"
-                >
-                  <CheckCircle2 className="h-20 w-20 text-green-600 mx-auto" />
+    const destinations = useMemo(() => {
+        return (destinationsData.destinations || [])
+            .filter(d => d?.value && d?.label)
+            .map(d => ({ value: d.value, label: d.label }));
+    }, []);
+
+    function update(key, val) {
+        setForm(prev => ({ ...prev, [key]: val }));
+        if (errors[key]) setErrors(prev => ({ ...prev, [key]: '' }));
+        if (apiError) setApiError('');
+    }
+
+    function toggleAvail(key) {
+        setForm(prev => ({ ...prev, availability: { ...prev.availability, [key]: !prev.availability[key] } }));
+    }
+
+    function validateStep(s) {
+        const e = {};
+        if (s === 1) {
+            if (!form.companyName.trim()) e.companyName = 'Required';
+            if (!form.companyMail.trim()) e.companyMail = 'Required';
+            else if (!/\S+@\S+\.\S+/.test(form.companyMail)) e.companyMail = 'Invalid email';
+            if (!form.companyMobile.trim()) e.companyMobile = 'Required';
+        }
+        if (s === 2) {
+            if (!form.destinationId) e.destinationId = 'Select a destination';
+            if (!form.address.trim()) e.address = 'Required';
+        }
+        if (s === 3) {
+            if (!form.licenseFile) e.licenseFile = 'Required';
+            if (!form.idFile) e.idFile = 'Required';
+            if (!form.agree) e.agree = 'You must agree';
+        }
+        setErrors(e);
+        return Object.keys(e).length === 0;
+    }
+
+    function goNext() { if (validateStep(step)) { setDirection(1); setStep(s => s + 1); } }
+    function goBack() { setDirection(-1); setStep(s => s - 1); }
+
+    async function onSubmit(e) {
+        e.preventDefault();
+        if (!validateStep(3)) return;
+        setSubmitting(true);
+        setApiError('');
+        try {
+            const res = await fetch('/api/provider/apply', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    companyName: form.companyName, companyMail: form.companyMail,
+                    companyMobile: form.companyMobile, destinationId: form.destinationId,
+                    address: form.address, instagram: form.instagram, facebook: form.facebook,
+                    licenseFile: form.licenseFile ? 'uploaded' : '',
+                    idFile: form.idFile ? 'uploaded' : '',
+                    availability: form.availability, agree: form.agree,
+                }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                setSubmitted(true);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                await checkAuth();
+                setTimeout(() => router.replace('/serviceprovider'), 3000);
+            } else {
+                setApiError(data.message || 'Something went wrong.');
+            }
+        } catch {
+            setApiError('Network error. Check your connection.');
+        } finally {
+            setSubmitting(false);
+        }
+    }
+
+    if (submitted) {
+        return (
+            <div className="min-h-[100dvh] w-full flex items-center justify-center bg-gradient-to-br from-emerald-50 via-white to-blue-50 p-4">
+                <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+                    className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-10 text-center border border-gray-100">
+                    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+                        className="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <CheckCircle2 className="w-12 h-12 text-emerald-600" />
+                    </motion.div>
+                    <h2 className="text-3xl font-bold text-gray-900 mb-3">Application Submitted!</h2>
+                    <p className="text-gray-500 mb-8 leading-relaxed">
+                        Thank you for applying. Our team will review your application within <span className="font-semibold text-emerald-600">1-2 business days</span>.
+                    </p>
+                    <div className="flex items-center justify-center gap-2 text-sm text-gray-400">
+                        <Loader2 className="h-4 w-4 animate-spin" /> Redirecting to status page...
+                    </div>
                 </motion.div>
-                <h2 className="text-2xl font-bold text-gray-800 mb-4">
-                  Application Submitted!
-                </h2>
-                <p className="text-gray-600 mb-6">
-                  Thank you for your application. We've received your information and will begin processing it shortly.
-                </p>
-                <motion.button
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => {
-                    setActiveTab('status');
-                    setTimeout(() => {
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }, 100);
-                  
-                  }}
-                  className="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-3 rounded-xl font-medium flex items-center gap-2 shadow-md hover:shadow-lg transition-all"
-                >
-                  Track Application Status
-                  <ChevronRight className="h-5 w-5" />
-                </motion.button>
-              </motion.div>
             </div>
-          )}
-        </motion.div>
-      )}
+        );
+    }
 
-      {activeTab === 'status' && (
-        <motion.div
-          key="status"
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -20 }}
-          transition={{ duration: 0.3 }}
-          className="p-6 md:p-8"
-        >
-          
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-green-600 mb-2">
-              Application Status
-            </h2>
-            <p className="text-gray-600 ">
-              Track the progress of your provider application
-            </p>
-          </div>
-
-          <ProgressStatus step={status} />
-
-          <div className="mt-8 p-6 bg-gray-50 rounded-2xl border border-gray-200">
-            <div className="flex items-center gap-3 mb-4">
-              <Clock className="h-5 w-5 text-gray-500" />
-              <h3 className="font-medium text-gray-800">Having trouble?</h3>
+    return (
+        <div className="min-h-[100dvh] w-full flex bg-white font-sans text-gray-900 overflow-x-hidden">
+            {/* LEFT: Immersive Image Panel */}
+            <div className="fixed inset-0 md:relative md:w-1/2 lg:w-[55%] flex-shrink-0 bg-black z-0">
+                <Image src="/images/signin.jpg" alt="Service Provider" fill className="object-cover opacity-50 md:opacity-100" priority />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/20 md:bg-gradient-to-t md:from-black/80 md:via-black/30 md:to-transparent" />
+                <div className="hidden md:flex flex-col justify-end absolute inset-0 p-8 lg:p-14 text-white z-10">
+                    <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.8 }} className="max-w-lg mb-12">
+                        <div className="flex items-center gap-2 mb-6">
+                            <div className="h-1 w-8 bg-emerald-400 rounded-full" />
+                            <span className="text-emerald-400 text-sm font-semibold tracking-wider uppercase">Partner Program</span>
+                        </div>
+                        <h1 className="text-4xl lg:text-5xl xl:text-6xl font-bold leading-[1.1] mb-5 tracking-tight">
+                            {rejected ? 'Resubmit &\nGet Approved' : 'Grow Your\nTravel Business'}
+                        </h1>
+                        <p className="text-lg text-white/80 leading-relaxed max-w-md">
+                            Join 2,000+ verified service providers reaching millions of travelers across India.
+                        </p>
+                        <div className="flex flex-wrap gap-3 mt-8">
+                            {[{ icon: Shield, text: 'Verified Partners' }, { icon: Globe, text: '15+ Destinations' }, { icon: Sparkles, text: 'Premium Tools' }].map((b) => (
+                                <div key={b.text} className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full text-sm">
+                                    <b.icon className="h-4 w-4 text-emerald-400" />
+                                    <span className="text-white/90">{b.text}</span>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="mt-12 flex gap-3">
+                            {STEPS.map((s) => (
+                                <div key={s.id}><div className={`h-2 rounded-full transition-all duration-500 ${step >= s.id ? 'w-10 bg-emerald-400' : 'w-6 bg-white/20'}`} /></div>
+                            ))}
+                        </div>
+                    </motion.div>
+                </div>
             </div>
-            <p className="text-sm text-gray-600 mb-4">
-              If you have any questions or need assistance with your application, our support team is here to help.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Link
-                href="/help"
-                className="flex items-center gap-2 text-emerald-600 hover:text-emerald-700 font-medium text-sm"
-              >
-                <MessageCircle className="h-4 w-4" />
-                Contact Support
-              </Link>
-              <a
-                href="mailto:providers@bagspackgo.com"
-                className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium text-sm"
-              >
-                <Mail className="h-4 w-4" />
-                Email Us
-              </a>
+
+            {/* RIGHT: Form Panel */}
+            <div className="relative w-full md:w-1/2 lg:w-[45%] flex items-start md:items-center justify-center p-4 sm:p-6 md:p-8 z-10 min-h-[100dvh] overflow-y-auto">
+                <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}
+                    className="w-full max-w-[480px] bg-white/95 backdrop-blur-xl md:bg-white rounded-3xl md:rounded-none shadow-2xl md:shadow-none p-6 sm:p-8 border border-white/20 md:border-none my-4 md:my-0">
+                    {/* Header */}
+                    <div className="mb-6">
+                        <Link href="/" className="inline-block mb-5">
+                            <div className="w-[130px] h-[40px] relative">
+                                <Image src="/images/logo.svg" alt="BagspackGo" fill className="object-contain" />
+                            </div>
+                        </Link>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
+                                    {rejected ? 'Resubmit Application' : 'Provider Application'}
+                                </h2>
+                                <p className="text-gray-500 text-sm mt-1">{STEPS[step - 1].subtitle}</p>
+                            </div>
+                            <span className="text-sm font-bold text-emerald-600 bg-emerald-50 px-3.5 py-1.5 rounded-full whitespace-nowrap">
+                                {step} / {STEPS.length}
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Progress bar */}
+                    <div className="relative h-1.5 bg-gray-100 rounded-full mb-6 overflow-hidden">
+                        <motion.div className="absolute inset-y-0 left-0 bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full"
+                            initial={false} animate={{ width: `${(step / STEPS.length) * 100}%` }} transition={{ duration: 0.5, ease: [.22, 1, .36, 1] }} />
+                    </div>
+
+                    {/* Rejection notice */}
+                    {rejected && step === 1 && (
+                        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+                            className="mb-5 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3">
+                            <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                            <div>
+                                <p className="text-sm font-semibold text-amber-800">Previous application rejected</p>
+                                <p className="text-xs text-amber-600 mt-0.5">Review your details and resubmit.</p>
+                            </div>
+                        </motion.div>
+                    )}
+
+                    {/* API Error */}
+                    <AnimatePresence>
+                        {apiError && (
+                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+                                className="mb-5 bg-red-50 text-red-600 text-sm px-4 py-3 rounded-xl border border-red-100 flex items-center gap-2">
+                                <div className="w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0" /> {apiError}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
+                    <form onSubmit={step === 3 ? onSubmit : (e) => { e.preventDefault(); goNext(); }}>
+                        <AnimatePresence mode="wait" custom={direction}>
+                            {step === 1 && (
+                                <motion.div key="step1" custom={direction} variants={slideVariants} initial="enter" animate="center" exit="exit" className="space-y-4">
+                                    <FloatingInput label="Company Name" icon={Building2} error={errors.companyName} required>
+                                        <div className="relative group">
+                                            <input value={form.companyName} onChange={e => update('companyName', e.target.value)}
+                                                className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none pl-11 font-medium placeholder-gray-400"
+                                                placeholder="e.g. Mountain Adventures Pvt Ltd" />
+                                            <Building2 className="w-5 h-5 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors group-focus-within:text-emerald-500" />
+                                        </div>
+                                    </FloatingInput>
+                                    <FloatingInput label="Business Email" icon={Mail} error={errors.companyMail} required>
+                                        <div className="relative group">
+                                            <input type="email" value={form.companyMail} onChange={e => update('companyMail', e.target.value)}
+                                                className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none pl-11 font-medium placeholder-gray-400"
+                                                placeholder="company@email.com" />
+                                            <Mail className="w-5 h-5 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors group-focus-within:text-emerald-500" />
+                                        </div>
+                                    </FloatingInput>
+                                    <FloatingInput label="Business Phone" icon={Phone} error={errors.companyMobile} required>
+                                        <div className="relative group">
+                                            <input inputMode="numeric" value={form.companyMobile} onChange={e => update('companyMobile', e.target.value)}
+                                                className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none pl-11 font-medium placeholder-gray-400"
+                                                placeholder="+91 98765 43210" />
+                                            <Phone className="w-5 h-5 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors group-focus-within:text-emerald-500" />
+                                        </div>
+                                    </FloatingInput>
+                                </motion.div>
+                            )}
+
+                            {step === 2 && (
+                                <motion.div key="step2" custom={direction} variants={slideVariants} initial="enter" animate="center" exit="exit" className="space-y-4">
+                                    <FloatingInput label="Primary Destination" icon={MapPin} error={errors.destinationId} required>
+                                        <div className="relative group">
+                                            <select value={form.destinationId} onChange={e => update('destinationId', e.target.value)}
+                                                className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none pl-11 font-medium appearance-none text-gray-700">
+                                                <option value="">Select your operating location</option>
+                                                {destinations.map(d => (<option key={d.value} value={d.value}>{d.label}</option>))}
+                                            </select>
+                                            <MapPin className="w-5 h-5 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors group-focus-within:text-emerald-500" />
+                                            <ChevronRight className="w-4 h-4 text-gray-400 absolute right-3.5 top-1/2 -translate-y-1/2 rotate-90" />
+                                        </div>
+                                    </FloatingInput>
+                                    <FloatingInput label="Business Address" icon={Map} error={errors.address} required>
+                                        <textarea value={form.address} onChange={e => update('address', e.target.value)} rows={3}
+                                            className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none font-medium placeholder-gray-400 resize-none"
+                                            placeholder="Full address including city, state, and PIN code" />
+                                    </FloatingInput>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <FloatingInput label="Instagram" icon={Instagram}>
+                                            <div className="relative group">
+                                                <input value={form.instagram} onChange={e => update('instagram', e.target.value)}
+                                                    className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none pl-11 font-medium placeholder-gray-400 text-sm"
+                                                    placeholder="@handle" />
+                                                <Instagram className="w-5 h-5 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors group-focus-within:text-pink-500" />
+                                            </div>
+                                        </FloatingInput>
+                                        <FloatingInput label="Facebook" icon={Facebook}>
+                                            <div className="relative group">
+                                                <input value={form.facebook} onChange={e => update('facebook', e.target.value)}
+                                                    className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none pl-11 font-medium placeholder-gray-400 text-sm"
+                                                    placeholder="Page URL" />
+                                                <Facebook className="w-5 h-5 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors group-focus-within:text-blue-500" />
+                                            </div>
+                                        </FloatingInput>
+                                    </div>
+                                </motion.div>
+                            )}
+
+                            {step === 3 && (
+                                <motion.div key="step3" custom={direction} variants={slideVariants} initial="enter" animate="center" exit="exit" className="space-y-4">
+                                    <FileUploadCard label="Business License / Registration" icon={FileText} accept=".pdf,.jpg,.png" error={errors.licenseFile} required onSelect={f => update('licenseFile', f)} />
+                                    <FileUploadCard label="Owner ID Proof (Aadhaar / PAN)" icon={IdCard} accept=".pdf,.jpg,.png" error={errors.idFile} required onSelect={f => update('idFile', f)} />
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-bold text-gray-500 uppercase tracking-widest pl-1">Services You Offer</label>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            {[
+                                                { key: 'trips', label: 'Trips', emoji: String.fromCodePoint(0x1F697) },
+                                                { key: 'treks', label: 'Treks', emoji: String.fromCodePoint(0x1F3D4) },
+                                                { key: 'mergers', label: 'Mergers', emoji: String.fromCodePoint(0x1F465) },
+                                            ].map(s => (
+                                                <motion.button key={s.key} type="button" whileTap={{ scale: 0.95 }} onClick={() => toggleAvail(s.key)}
+                                                    className={`flex flex-col items-center gap-1.5 p-3 rounded-2xl border-2 transition-all ${form.availability[s.key] ? 'border-emerald-500 bg-emerald-50 shadow-sm' : 'border-gray-200 bg-white hover:border-gray-300'
+                                                        }`}>
+                                                    <span className="text-xl">{s.emoji}</span>
+                                                    <span className={`text-xs font-bold ${form.availability[s.key] ? 'text-emerald-700' : 'text-gray-500'}`}>{s.label}</span>
+                                                </motion.button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <label className={`flex items-start gap-3 rounded-2xl p-4 border-2 transition-all cursor-pointer ${form.agree ? 'border-emerald-500 bg-emerald-50/50'
+                                            : errors.agree ? 'border-rose-300 bg-rose-50/30' : 'border-gray-200 hover:border-gray-300'
+                                        }`}>
+                                        <input type="checkbox" checked={form.agree} onChange={e => update('agree', e.target.checked)}
+                                            className="mt-0.5 h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500" />
+                                        <span className="text-sm text-gray-600 leading-relaxed">
+                                            {"I agree to BagspackGo's "}
+                                            <Link href="/terms" className="text-emerald-600 font-semibold hover:underline">Terms</Link>
+                                            {" & "}
+                                            <Link href="/privacy" className="text-emerald-600 font-semibold hover:underline">Privacy Policy</Link>
+                                        </span>
+                                    </label>
+                                    {errors.agree && <p className="text-xs text-rose-500 pl-1">{errors.agree}</p>}
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+
+                        <div className="flex items-center gap-3 mt-7">
+                            {step > 1 && (
+                                <motion.button type="button" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={goBack}
+                                    className="px-5 py-3.5 rounded-xl font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors flex items-center gap-1.5">
+                                    <ChevronLeft className="h-4 w-4" /> Back
+                                </motion.button>
+                            )}
+                            <motion.button type="submit" disabled={submitting} whileHover={{ scale: submitting ? 1 : 1.01 }} whileTap={{ scale: submitting ? 1 : 0.98 }}
+                                className={`flex-1 py-3.5 rounded-xl font-bold text-white shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 transition-all ${submitting ? 'bg-emerald-400 cursor-not-allowed' : 'bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700'
+                                    }`}>
+                                {submitting ? (<><Loader2 className="h-5 w-5 animate-spin" /> Submitting...</>)
+                                    : step === 3 ? (<>{rejected ? 'Resubmit Application' : 'Submit Application'} <Sparkles className="h-4 w-4" /></>)
+                                        : (<>Continue <ChevronRight className="h-5 w-5" /></>)}
+                            </motion.button>
+                        </div>
+                    </form>
+
+                    <p className="text-center text-xs text-gray-400 mt-6">
+                        {"Already a partner? "}
+                        <Link href="/signin?role=provider" className="text-emerald-600 font-semibold hover:underline">Sign in</Link>
+                    </p>
+                </motion.div>
             </div>
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  </motion.div>
-</div>
-    </div>
-  );
+        </div>
+    );
 }

@@ -153,18 +153,26 @@ export async function POST(request) {
             phone: account.phone,
         });
 
+        // Build user response object
+        const userResponse = {
+            id: account._id,
+            username: account.username,
+            email: account.email,
+            phone: account.phone,
+            role: accountRole,
+        };
+
+        // For providers, include applicationStatus so frontend can route correctly
+        if (accountRole === "provider") {
+            userResponse.applicationStatus = account.applicationStatus || "none";
+        }
+
         // Create response with JWT cookie
         const response = NextResponse.json(
             {
                 success: true,
                 message: "Login successful!",
-                user: {
-                    id: account._id,
-                    username: account.username,
-                    email: account.email,
-                    phone: account.phone,
-                    role: accountRole,
-                },
+                user: userResponse,
             },
             { status: 200 }
         );
