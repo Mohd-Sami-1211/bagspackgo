@@ -87,7 +87,7 @@ const AboutUs = () => {
               <h3 className="text-3xl font-bold text-gray-900 mb-6">Your Travel Companion</h3>
               <div className="space-y-4 text-gray-600 leading-relaxed">
                 <p>
-                  BagspackGo connects you directly with verified local guides and travel experts. 
+                  bagspackgo connects you directly with verified local guides and travel experts. 
                   We believe in authentic experiences, transparent pricing, and personalized adventures 
                   that create lasting memories.
                 </p>

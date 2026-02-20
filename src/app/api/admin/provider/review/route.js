@@ -3,6 +3,9 @@ import mongoose from "mongoose";
 import dbConnect from "@/lib/db";
 import { Guide } from "@/models/guide.model";
 import { GuideDetails } from "@/models/guidedetails.model";
+import { sendApprovalEmail } from "@/lib/otp-service";
+
+const ADMIN_SECRET = process.env.ADMIN_SECRET || "bagspackgo_dev_admin_secret";
 
 /**
  * GET /api/admin/provider/review
@@ -10,10 +13,15 @@ import { GuideDetails } from "@/models/guidedetails.model";
  * Use this to find the guideId you need for approving/rejecting.
  *
  * Usage (browser console):
- *   fetch('/api/admin/provider/review').then(r => r.json()).then(console.log)
+ *   fetch('/api/admin/provider/review', { headers: { 'x-admin-secret': 'your_secret' } }).then(r => r.json()).then(console.log)
  */
-export async function GET() {
+export async function GET(request) {
     try {
+        const reqSecret = request.headers.get("x-admin-secret");
+        if (reqSecret !== ADMIN_SECRET) {
+            return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+        }
+
         await dbConnect();
 
         const guides = await Guide.find({})
@@ -61,10 +69,15 @@ export async function GET() {
  *     })
  *   }).then(r => r.json()).then(console.log)
  *
- * TODO: Add proper admin authentication when admin panel is built.
+ * TODO: Add proper JWT/session admin authentication when admin panel is built.
  */
 export async function PATCH(request) {
     try {
+        const reqSecret = request.headers.get("x-admin-secret");
+        if (reqSecret !== ADMIN_SECRET) {
+            return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+        }
+
         await dbConnect();
 
         const body = await request.json();
@@ -122,6 +135,14 @@ export async function PATCH(request) {
         guideDetails.status = newStatus;
         guideDetails.adminNotes = adminNotes || "";
         await guideDetails.save();
+
+        if (newStatus === "approved") {
+            try {
+                await sendApprovalEmail(guide.email, guideDetails.companyname, guide.username);
+            } catch (err) {
+                console.error("Failed to send approval email:", err);
+            }
+        }
 
         return NextResponse.json(
             {

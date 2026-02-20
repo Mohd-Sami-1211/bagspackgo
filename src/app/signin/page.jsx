@@ -138,7 +138,7 @@ function SignInContent() {
           <div className="text-center md:text-left mb-10">
             <Link href="/" className="inline-block mb-8">
               <div className="w-[140px] h-[45px] relative">
-                <Image src="/images/logo.svg" alt="BagspackGo" fill className="object-contain" />
+                <Image src="/images/logo.svg" alt="bagspackgo" fill className="object-contain" />
               </div>
             </Link>
             <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Welcome back</h2>

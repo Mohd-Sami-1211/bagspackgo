@@ -33,9 +33,9 @@ export default function ServiceProviderLayout({ children }) {
     // 3. "approved" → Allow dashboard access (/serviceprovider/dashboard/...)
 
     if (status === 'approved') {
-      // If approved and on the root serviceprovider page, redirect to dashboard
+      // If approved and on the root serviceprovider page, redirect to welcome message
       if (pathname === '/serviceprovider') {
-        router.replace('/serviceprovider/dashboard');
+        router.replace('/serviceprovider/welcome');
       }
       // Otherwise, they're already on a valid dashboard route — let them be
     } else {

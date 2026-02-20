@@ -200,7 +200,7 @@ export default function SignUpPage() {
               {/* Header */}
               <div className="mb-8">
                 <Link href="/" className="inline-block mb-6">
-                  <Image src="/images/logo.svg" alt="BagspackGo" width={140} height={40} className="object-contain" />
+                  <Image src="/images/logo.svg" alt="bagspackgo" width={140} height={40} className="object-contain" />
                 </Link>
                 <div className="flex items-center justify-between">
                   <h2 className="text-3xl font-bold text-gray-900">Sign Up</h2>

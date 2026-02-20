@@ -203,12 +203,12 @@ const adventures = [
 
 const faqs = [
   {
-    question: "What is BagspackGo?",
-    answer: "BagspackGo is a travel platform that connects tourists directly with local tour guides and small travel firms. It allows travelers to plan personalized trips, manage itineraries, and even join or create group trips with other like-minded travelers."
+    question: "What is bagspackgo?",
+    answer: "bagspackgo is a travel platform that connects tourists directly with local tour guides and small travel firms. It allows travelers to plan personalized trips, manage itineraries, and even join or create group trips with other like-minded travelers."
   },
   {
-    question: "How BagspackGo differs from traditional travel agencies?",
-    answer: "Unlike traditional agencies, BagspackGo gives travelers direct access to verified local guides, full itinerary customization, transparent pricing, and a unique group travel feature called 'Merger' for solo or social adventurers."
+    question: "How bagspackgo differs from traditional travel agencies?",
+    answer: "Unlike traditional agencies, bagspackgo gives travelers direct access to verified local guides, full itinerary customization, transparent pricing, and a unique group travel feature called 'Merger' for solo or social adventurers."
   },
   {
     question: "What is the Merger feature?",
@@ -219,15 +219,15 @@ const faqs = [
     answer: "You can travel solo if you prefer. Merger is an optional feature designed for those looking to connect and travel with others who have similar plans."
   },
   {
-    question: "How do I book a tour on BagspackGo?",
+    question: "How do I book a tour on bagspackgo?",
     answer: "Simply search by destination, travel dates, and number of travelers. Browse available guides, view their services and ratings, and once you find the right one, you can connect and book directly through the platform."
   },
   {
     question: "Can I customize my itinerary after booking a guide?",
-    answer: "Yes! BagspackGo lets you collaborate with your chosen guide to add or remove services, activities, and local experiences based on your preferences."
+    answer: "Yes! bagspackgo lets you collaborate with your chosen guide to add or remove services, activities, and local experiences based on your preferences."
   },
   {
-    question: "Are the guides on BagspackGo verified?",
+    question: "Are the guides on bagspackgo verified?",
     answer: "Yes, all guides go through a verification process that includes identity checks, service quality screening, and community reviews from previous travelers."
   },
   {
@@ -236,7 +236,7 @@ const faqs = [
   },
   {
     question: "Is there a way to communicate with other travelers?",
-    answer: "Yes! BagspackGo includes a community chat where travelers can share tips, ask questions, and connect before, during, and after their trips."
+    answer: "Yes! bagspackgo includes a community chat where travelers can share tips, ask questions, and connect before, during, and after their trips."
   },
   {
     question: "What languages are supported on the platform?",

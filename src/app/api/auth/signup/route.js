@@ -163,7 +163,7 @@ export async function POST(request) {
             return NextResponse.json(
                 {
                     success: true,
-                    message: "Account created successfully! Welcome to BagsPackGo.",
+                    message: "Account created successfully! Welcome to bagspackgo.",
                     user: {
                         id: newUser._id,
                         username: newUser.username,

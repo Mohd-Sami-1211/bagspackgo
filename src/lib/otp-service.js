@@ -71,7 +71,7 @@ export async function sendOTPSMS(phone, otp) {
 
     // TODO: Replace with actual SMS provider (Twilio, MSG91, etc.)
     // await twilioClient.messages.create({
-    //     body: `Your BagsPackGo verification code is: ${otp}`,
+    //     body: `Your bagspackgo verification code is: ${otp}`,
     //     to: `+91${phone}`,
     //     from: process.env.TWILIO_PHONE_NUMBER
     // });
@@ -154,7 +154,7 @@ export async function sendWelcomeEmail(email, name, role) {
                         Need help? Just reply to this email — we're here for you.
                     </p>
                     <p style="color: #9ca3af; font-size: 11px; margin: 0;">
-                        © ${new Date().getFullYear()} BagsPackGo. All rights reserved.
+                        © ${new Date().getFullYear()} bagspackgo. All rights reserved.
                     </p>
                 </div>
             </div>
@@ -168,6 +168,71 @@ export async function sendWelcomeEmail(email, name, role) {
     } catch (error) {
         // Don't throw — welcome email failure shouldn't block signup
         console.error("Welcome email failed:", error.message);
+        return false;
+    }
+}
+
+/**
+ * Send Approval Email to Provider and Company
+ * @param {string} providerEmail - Provider's email address
+ * @param {string} companyName - Provider's company name
+ * @param {string} providerName - Provider's user name
+ * @returns {Promise<boolean>}
+ */
+export async function sendApprovalEmail(providerEmail, companyName, providerName) {
+    const providerMailOptions = {
+        from: `"bagspackgo" <${process.env.GMAIL_USER}>`,
+        to: providerEmail,
+        subject: `Your Application is Approved! Welcome to bagspackgo 🎉`,
+        html: `
+            <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
+                <div style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 50%, #15803d 100%); padding: 40px 32px; text-align: center;">
+                    <h1 style="color: white; font-size: 32px; margin: 0 0 8px;">Congratulations!</h1>
+                    <p style="color: rgba(255,255,255,0.85); font-size: 16px; margin: 0;">Your provider application has been approved 🚀</p>
+                </div>
+                <div style="background: white; padding: 36px 32px;">
+                    <p style="color: #374151; font-size: 18px; margin: 0 0 16px;">Hi <strong>${providerName || companyName}</strong> 👋</p>
+                    <p style="color: #4b5563; font-size: 15px; line-height: 1.6; margin: 0 0 16px;">
+                        Great news! We have reviewed your application for <strong>${companyName}</strong> and you are officially approved to join bagspackgo as a Service Provider.
+                    </p>
+                    <div style="background: #f0fdf4; border-left: 4px solid #22c55e; border-radius: 8px; padding: 20px; margin: 0 0 28px;">
+                        <p style="color: #166534; font-size: 14px; font-weight: 600; margin: 0 0 12px;">What you can do now:</p>
+                        <ul style="color: #4b5563; font-size: 14px; line-height: 1.8; margin: 0; padding-left: 20px;">
+                            <li>Access your complete provider dashboard</li>
+                            <li>Create and manage your trips & treks</li>
+                            <li>View and manage bookings and customers</li>
+                        </ul>
+                    </div>
+                    <div style="text-align: center; margin: 0 0 16px;">
+                        <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/serviceprovider" style="display: inline-block; background: linear-gradient(135deg, #22c55e, #16a34a); color: white; text-decoration: none; padding: 14px 40px; border-radius: 8px; font-size: 16px; font-weight: 600;">Go to Dashboard</a>
+                    </div>
+                </div>
+            </div>
+        `,
+    };
+
+    const companyMailOptions = {
+        from: `"bagspackgo System" <${process.env.GMAIL_USER}>`,
+        to: process.env.GMAIL_USER, // sending backwards to our own platform email
+        subject: `New Provider Approved: ${companyName}`,
+        html: `
+            <div style="font-family: Arial, sans-serif; padding: 20px;">
+                <h2 style="color: #16a34a;">Provider Approved Successfully</h2>
+                <p><strong>Company:</strong> ${companyName}</p>
+                <p><strong>Provider Email:</strong> ${providerEmail}</p>
+                <p><strong>Provider Name:</strong> ${providerName}</p>
+                <p>This provider has been granted access to their dashboard.</p>
+            </div>
+        `,
+    };
+
+    try {
+        await transporter.sendMail(providerMailOptions);
+        await transporter.sendMail(companyMailOptions);
+        console.log(`✅ Approval emails sent for ${companyName}`);
+        return true;
+    } catch (error) {
+        console.error("Approval email failed:", error.message);
         return false;
     }
 }

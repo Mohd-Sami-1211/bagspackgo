@@ -19,7 +19,7 @@ export default function ProviderNavbar({ isSidebarCollapsed, setIsSidebarCollaps
             <div className="relative h-9 w-32">
               <img
                 src="/images/logo.svg"
-                alt="BagspackGo"
+                alt="bagspackgo"
                 className="object-contain rounded-2xl"
               />
             </div>

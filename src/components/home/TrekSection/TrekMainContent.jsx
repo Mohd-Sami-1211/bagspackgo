@@ -102,7 +102,7 @@ const faqs = [
   },
   {
     question: "Is travel insurance required?",
-    answer: "While BagspackGo doesn't require insurance, some guides may recommend or require it for high-altitude treks. It's advisable to have insurance that covers trekking activities."
+    answer: "While bagspackgo doesn't require insurance, some guides may recommend or require it for high-altitude treks. It's advisable to have insurance that covers trekking activities."
   },
   {
     question: "Can I join as a solo traveler?",
