@@ -44,7 +44,8 @@ function EventCard({ event, onAction }) {
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ translateY: -2 }}
       transition={{ duration: 0.2 }}
-      className="w-full rounded-2xl border border-neutral-200 bg-white shadow-sm hover:shadow-md transition-shadow"
+      className="w-full rounded-2xl border border-neutral-200 bg-white shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+      onClick={() => onAction('view', event)}
     >
       <div className="p-6">
         <div className="flex items-start justify-between mb-4">
@@ -98,7 +99,7 @@ function EventCard({ event, onAction }) {
           )}
         </div>
 
-        <div className="flex items-center justify-between pt-4 border-t border-neutral-100">
+        <div className="flex items-center justify-between pt-4 border-t border-neutral-100" onClick={(e) => e.stopPropagation()}>
           <div className="flex items-center gap-2 flex-wrap">
             {event.displayStatus === 'Upcoming' && (
               <>
@@ -229,8 +230,23 @@ export default function EventMainContent() {
   async function handleAction(type, event) {
     switch (type) {
       case 'publish':
-        // TODO: Call PATCH API to publish a draft event
-        alert(`Publish event: ${event.title} (coming soon)`);
+        if (confirm(`Are you sure you want to publish "${event.title}"? It will be visible to users immediately.`)) {
+          try {
+            const res = await fetch(`/api/provider/events/${event.id}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ action: 'publish' }),
+            });
+            const data = await res.json();
+            if (data.success) {
+              fetchEvents();
+            } else {
+              alert(data.message || 'Failed to publish');
+            }
+          } catch (err) {
+            alert('Network error');
+          }
+        }
         break;
       case 'delete':
         if (confirm(`Are you sure you want to delete "${event.title}"?`)) {
@@ -241,9 +257,14 @@ export default function EventMainContent() {
       case 'view':
       case 'edit':
       case 'manage':
+        router.push(`/serviceprovider/dashboard/events/${event.id}`);
+        break;
       case 'share':
-      case 'analytics':
-        alert(`${type.charAt(0).toUpperCase() + type.slice(1)}: ${event.title} (coming soon)`);
+        if (navigator.share) {
+          navigator.share({ title: event.title, text: `Check out ${event.title}!` });
+        } else {
+          alert('Share link copied! (coming soon)');
+        }
         break;
       default:
         break;
@@ -311,8 +332,8 @@ export default function EventMainContent() {
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
               className={`pb-3 px-1 font-medium text-sm border-b-2 transition-colors ${activeTab === tab.key
-                  ? 'border-emerald-500 text-emerald-700'
-                  : 'border-transparent text-neutral-500 hover:text-neutral-700'
+                ? 'border-emerald-500 text-emerald-700'
+                : 'border-transparent text-neutral-500 hover:text-neutral-700'
                 }`}
             >
               {tab.label}
