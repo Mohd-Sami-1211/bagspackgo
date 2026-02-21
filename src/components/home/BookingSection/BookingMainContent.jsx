@@ -1,5 +1,5 @@
 'use client';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaClipboardList, FaUsers, FaHeart, FaFilter, FaCalendarAlt, FaHistory } from 'react-icons/fa';
 import BookingCard from 'src/components/home/BookingSection/BookingCard';
@@ -8,105 +8,42 @@ import MergerCard from 'src/components/home/BookingSection/MergerCard';
 const BookingMainContent = () => {
   const [activeTab, setActiveTab] = useState('upcoming-bookings');
 
-  // ===== Sample Data (3 current, 2 past, 2 mergers) =====
-  const currentBookings = [
-    {
-      id: 1,
-      category: 'Trek',
-      name: 'Annapurna Base Camp Trek',
-      guide: 'Rajesh Thapa',
-      date: '2025-11-15',
-      duration: '10 days',
-      people: 4,
-      destination: 'Pokhara, Nepal',
-      price: 90000,
-      image: 'https://images.unsplash.com/photo-1509644851229-fe68a58f0e1a'
-    },
-    {
-      id: 2,
-      category: 'Trip',
-      name: 'Goa Luxury Beach Getaway',
-      guide: 'Anjali Mehta',
-      date: '2025-12-05',
-      duration: '3 days',
-      people: 2,
-      destination: 'Goa, India',
-      price: 35000,
-      image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e'
-    },
-    {
-      id: 3,
-      category: 'Event',
-      name: 'Mountain Biking Championship',
-      guide: 'Arun Patil',
-      date: '2025-01-20',
-      duration: '1 day',
-      people: 1,
-      destination: 'Manali, India',
-      price: 5000,
-      image: 'https://images.unsplash.com/photo-1504711434969-e33886168f5c'
-    }
-  ];
+  // ===== Booking Data from API =====
+  const [currentBookings, setCurrentBookings] = useState([]);
+  const [pastBookings, setPastBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const pastBookings = [
-    {
-      id: 4,
-      category: 'Trek',
-      name: 'Everest View Trek',
-      guide: 'Mingma Sherpa',
-      date: '2025-05-10',
-      duration: '7 days',
-      people: 3,
-      destination: 'Kathmandu, Nepal',
-      price: 70000,
-      image: 'https://images.unsplash.com/photo-1533587851505-d119e13fa0d9'
-    },
-    {
-      id: 5,
-      category: 'Trip',
-      name: 'Kerala Backwaters Experience',
-      guide: 'Ajay Menon',
-      date: '2025-02-12',
-      duration: '5 days',
-      people: 2,
-      destination: 'Alleppey, India',
-      price: 45000,
-      image: 'https://images.unsplash.com/photo-1541417904950-b855846fe074'
+  useEffect(() => {
+    async function fetchBookings() {
+      try {
+        const res = await fetch('/api/user/bookings');
+        const data = await res.json();
+        if (data.success) {
+          const now = new Date();
+          const upcoming = [];
+          const past = [];
+          data.data.forEach(b => {
+            if (new Date(b.date) >= now || b.status === "confirmed") {
+              upcoming.push(b);
+            } else {
+              past.push(b);
+            }
+          });
+          setCurrentBookings(upcoming);
+          setPastBookings(past);
+        }
+      } catch (err) {
+        console.error('Failed to fetch bookings:', err);
+      } finally {
+        setLoading(false);
+      }
     }
-  ];
+    fetchBookings();
+  }, []);
 
-  const mergers = [
-    {
-      id: 1,
-      name: 'Himalayan Explorers Group',
-      location: 'Multiple destinations',
-      guide: 'Ramesh',
-      date: '2025-12-01',
-      price: 76000,
-      status: 'active',
-      image: 'https://images.unsplash.com/photo-1509644851229-fe68a58f0e1a',
-      destination: 'Kashmir',
-      members: '8/10',
-      capacity: '10'
-    },
-    {
-      id: 2,
-      name: 'Uttarakhand Trail Mix',
-      location: 'Uttarakhand',
-      guide: 'Sneha',
-      date: '2025-09-10',
-      price: 26000,
-      status: 'active',
-      image: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470',
-      destination: 'Uttarakhand',
-      members: '6/12',
-      capacity: '12'
-    }
-  ];
-
-  const wishlist = [
-    // can be filled later; left empty to show fallback UI
-  ];
+  // Hardcoded placeholders for Mergers & Wishlist as they weren't requested
+  const mergers = [];
+  const wishlist = [];
 
   // ===== Filters state =====
   const [bookingStatusFilter, setBookingStatusFilter] = useState('all');
@@ -123,7 +60,7 @@ const BookingMainContent = () => {
         bookingStatusFilter === 'all' ||
         (bookingStatusFilter === 'upcoming' && new Date(b.date) >= new Date()) ||
         (bookingStatusFilter === 'completed' && new Date(b.date) < new Date() ||
-        (bookingStatusFilter === 'cancelled' && b.status === 'cancelled'));
+          (bookingStatusFilter === 'cancelled' && b.status === 'cancelled'));
       const categoryMatch = bookingCategoryFilter === 'all' || b.category === bookingCategoryFilter;
       return statusMatch && categoryMatch;
     });
@@ -135,7 +72,7 @@ const BookingMainContent = () => {
         bookingStatusFilter === 'all' ||
         (bookingStatusFilter === 'upcoming' && new Date(b.date) >= new Date()) ||
         (bookingStatusFilter === 'completed' && new Date(b.date) < new Date() ||
-        (bookingStatusFilter === 'cancelled' && b.status === 'cancelled'));
+          (bookingStatusFilter === 'cancelled' && b.status === 'cancelled'));
       const categoryMatch = bookingCategoryFilter === 'all' || b.category === bookingCategoryFilter;
       return statusMatch && categoryMatch;
     });
@@ -153,9 +90,8 @@ const BookingMainContent = () => {
   const SidebarButton = ({ tab, icon: Icon, label }) => (
     <button
       onClick={() => setActiveTab(tab)}
-      className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all w-full text-left ${
-        activeTab === tab ? 'bg-gradient-to-r from-green-400 to-green-500 text-white shadow-md' : 'text-gray-700 hover:bg-gray-50'
-      }`}
+      className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all w-full text-left ${activeTab === tab ? 'bg-gradient-to-r from-green-400 to-green-500 text-white shadow-md' : 'text-gray-700 hover:bg-gray-50'
+        }`}
     >
       <Icon />
       {label}
@@ -165,9 +101,8 @@ const BookingMainContent = () => {
   const FilterButton = ({ active, children, onClick }) => (
     <button
       onClick={onClick}
-      className={`px-3 py-1.5 text-sm rounded-full border transition-all ${
-        active ? 'bg-green-50 border-green-500 text-green-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'
-      }`}
+      className={`px-3 py-1.5 text-sm rounded-full border transition-all ${active ? 'bg-green-50 border-green-500 text-green-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'
+        }`}
     >
       {children}
     </button>
@@ -228,7 +163,7 @@ const BookingMainContent = () => {
             >
               <SectionHeader>
                 <h2 className="text-2xl font-bold text-green-600">My Bookings</h2>
-                <button 
+                <button
                   onClick={() => setShowFilters(!showFilters)}
                   className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-full border border-gray-200 text-gray-600 hover:bg-gray-50"
                 >
@@ -244,26 +179,26 @@ const BookingMainContent = () => {
                     <div>
                       <label className="block text-xs font-medium text-gray-500 mb-1">Status</label>
                       <div className="flex flex-wrap gap-2">
-                        <FilterButton 
-                          active={bookingStatusFilter === 'all'} 
+                        <FilterButton
+                          active={bookingStatusFilter === 'all'}
                           onClick={() => setBookingStatusFilter('all')}
                         >
                           All
                         </FilterButton>
-                        <FilterButton 
-                          active={bookingStatusFilter === 'upcoming'} 
+                        <FilterButton
+                          active={bookingStatusFilter === 'upcoming'}
                           onClick={() => setBookingStatusFilter('upcoming')}
                         >
                           Upcoming
                         </FilterButton>
-                        <FilterButton 
-                          active={bookingStatusFilter === 'completed'} 
+                        <FilterButton
+                          active={bookingStatusFilter === 'completed'}
                           onClick={() => setBookingStatusFilter('completed')}
                         >
                           Completed
                         </FilterButton>
-                        <FilterButton 
-                          active={bookingStatusFilter === 'cancelled'} 
+                        <FilterButton
+                          active={bookingStatusFilter === 'cancelled'}
                           onClick={() => setBookingStatusFilter('cancelled')}
                         >
                           Cancelled
@@ -274,26 +209,26 @@ const BookingMainContent = () => {
                     <div>
                       <label className="block text-xs font-medium text-gray-500 mb-1">Category</label>
                       <div className="flex flex-wrap gap-2">
-                        <FilterButton 
-                          active={bookingCategoryFilter === 'all'} 
+                        <FilterButton
+                          active={bookingCategoryFilter === 'all'}
                           onClick={() => setBookingCategoryFilter('all')}
                         >
                           All
                         </FilterButton>
-                        <FilterButton 
-                          active={bookingCategoryFilter === 'Trip'} 
+                        <FilterButton
+                          active={bookingCategoryFilter === 'Trip'}
                           onClick={() => setBookingCategoryFilter('Trip')}
                         >
                           Trips
                         </FilterButton>
-                        <FilterButton 
-                          active={bookingCategoryFilter === 'Trek'} 
+                        <FilterButton
+                          active={bookingCategoryFilter === 'Trek'}
                           onClick={() => setBookingCategoryFilter('Trek')}
                         >
                           Treks
                         </FilterButton>
-                        <FilterButton 
-                          active={bookingCategoryFilter === 'Event'} 
+                        <FilterButton
+                          active={bookingCategoryFilter === 'Event'}
                           onClick={() => setBookingCategoryFilter('Event')}
                         >
                           Events
@@ -331,7 +266,7 @@ const BookingMainContent = () => {
             >
               <SectionHeader>
                 <h2 className="text-2xl font-bold text-green-600">Past Bookings</h2>
-                <button 
+                <button
                   onClick={() => setShowFilters(!showFilters)}
                   className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-full border border-gray-200 text-gray-600 hover:bg-gray-50"
                 >
@@ -347,26 +282,26 @@ const BookingMainContent = () => {
                     <div>
                       <label className="block text-xs font-medium text-gray-500 mb-1">Status</label>
                       <div className="flex flex-wrap gap-2">
-                        <FilterButton 
-                          active={bookingStatusFilter === 'all'} 
+                        <FilterButton
+                          active={bookingStatusFilter === 'all'}
                           onClick={() => setBookingStatusFilter('all')}
                         >
                           All
                         </FilterButton>
-                        <FilterButton 
-                          active={bookingStatusFilter === 'upcoming'} 
+                        <FilterButton
+                          active={bookingStatusFilter === 'upcoming'}
                           onClick={() => setBookingStatusFilter('upcoming')}
                         >
                           Upcoming
                         </FilterButton>
-                        <FilterButton 
-                          active={bookingStatusFilter === 'completed'} 
+                        <FilterButton
+                          active={bookingStatusFilter === 'completed'}
                           onClick={() => setBookingStatusFilter('completed')}
                         >
                           Completed
                         </FilterButton>
-                        <FilterButton 
-                          active={bookingStatusFilter === 'cancelled'} 
+                        <FilterButton
+                          active={bookingStatusFilter === 'cancelled'}
                           onClick={() => setBookingStatusFilter('cancelled')}
                         >
                           Cancelled
@@ -377,26 +312,26 @@ const BookingMainContent = () => {
                     <div>
                       <label className="block text-xs font-medium text-gray-500 mb-1">Category</label>
                       <div className="flex flex-wrap gap-2">
-                        <FilterButton 
-                          active={bookingCategoryFilter === 'all'} 
+                        <FilterButton
+                          active={bookingCategoryFilter === 'all'}
                           onClick={() => setBookingCategoryFilter('all')}
                         >
                           All
                         </FilterButton>
-                        <FilterButton 
-                          active={bookingCategoryFilter === 'Trip'} 
+                        <FilterButton
+                          active={bookingCategoryFilter === 'Trip'}
                           onClick={() => setBookingCategoryFilter('Trip')}
                         >
                           Trips
                         </FilterButton>
-                        <FilterButton 
-                          active={bookingCategoryFilter === 'Trek'} 
+                        <FilterButton
+                          active={bookingCategoryFilter === 'Trek'}
                           onClick={() => setBookingCategoryFilter('Trek')}
                         >
                           Treks
                         </FilterButton>
-                        <FilterButton 
-                          active={bookingCategoryFilter === 'Event'} 
+                        <FilterButton
+                          active={bookingCategoryFilter === 'Event'}
                           onClick={() => setBookingCategoryFilter('Event')}
                         >
                           Events
@@ -434,7 +369,7 @@ const BookingMainContent = () => {
             >
               <SectionHeader>
                 <h2 className="text-2xl font-bold text-green-600">My Mergers</h2>
-                <button 
+                <button
                   onClick={() => setShowFilters(!showFilters)}
                   className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-full border border-gray-200 text-gray-600 hover:bg-gray-50"
                 >
@@ -450,20 +385,20 @@ const BookingMainContent = () => {
                     <div>
                       <label className="block text-xs font-medium text-gray-500 mb-1">Status</label>
                       <div className="flex flex-wrap gap-2">
-                        <FilterButton 
-                          active={mergerStatusFilter === 'all'} 
+                        <FilterButton
+                          active={mergerStatusFilter === 'all'}
                           onClick={() => setMergerStatusFilter('all')}
                         >
                           All
                         </FilterButton>
-                        <FilterButton 
-                          active={mergerStatusFilter === 'active'} 
+                        <FilterButton
+                          active={mergerStatusFilter === 'active'}
                           onClick={() => setMergerStatusFilter('active')}
                         >
                           Active
                         </FilterButton>
-                        <FilterButton 
-                          active={mergerStatusFilter === 'cancelled'} 
+                        <FilterButton
+                          active={mergerStatusFilter === 'cancelled'}
                           onClick={() => setMergerStatusFilter('cancelled')}
                         >
                           Cancelled
@@ -474,20 +409,20 @@ const BookingMainContent = () => {
                     <div>
                       <label className="block text-xs font-medium text-gray-500 mb-1">Destination</label>
                       <div className="flex flex-wrap gap-2">
-                        <FilterButton 
-                          active={mergerDestinationFilter === 'all'} 
+                        <FilterButton
+                          active={mergerDestinationFilter === 'all'}
                           onClick={() => setMergerDestinationFilter('all')}
                         >
                           All
                         </FilterButton>
-                        <FilterButton 
-                          active={mergerDestinationFilter === 'Kashmir'} 
+                        <FilterButton
+                          active={mergerDestinationFilter === 'Kashmir'}
                           onClick={() => setMergerDestinationFilter('Kashmir')}
                         >
                           Kashmir
                         </FilterButton>
-                        <FilterButton 
-                          active={mergerDestinationFilter === 'Uttarakhand'} 
+                        <FilterButton
+                          active={mergerDestinationFilter === 'Uttarakhand'}
                           onClick={() => setMergerDestinationFilter('Uttarakhand')}
                         >
                           Uttarakhand

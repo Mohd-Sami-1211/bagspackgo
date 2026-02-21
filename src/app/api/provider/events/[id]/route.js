@@ -3,6 +3,7 @@ import dbConnect from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { Guide } from "@/models/guide.model";
 import { Event } from "@/models/event.model";
+import { Booking } from "@/models/booking.model";
 import { sanitizeString } from "@/lib/sanitize";
 
 /**
@@ -34,6 +35,30 @@ export async function GET(request, { params }) {
             );
         }
 
+        const bookings = await Booking.find({ event: id, status: { $in: ['confirmed', 'completed'] } }).lean();
+
+        let guests = [];
+        bookings.forEach(booking => {
+            if (booking.participants && Array.isArray(booking.participants)) {
+                booking.participants.forEach(p => {
+                    guests.push({
+                        id: p._id?.toString() || Math.random().toString(),
+                        name: p.name,
+                        email: p.email || booking.contactDetails?.email,
+                        mobile: p.phone || booking.contactDetails?.phone,
+                        age: p.age,
+                        gender: p.gender,
+                        idProofType: p.idType,
+                        idProofNumber: p.idNumber,
+                        address: p.address,
+                        bookingDate: booking.createdAt,
+                        passCode: p.passCode,
+                        checkedIn: p.checkedIn || false,
+                    });
+                });
+            }
+        });
+
         return NextResponse.json({
             success: true,
             event: {
@@ -63,6 +88,7 @@ export async function GET(request, { params }) {
                 createdAt: event.createdAt,
                 updatedAt: event.updatedAt,
             },
+            guests
         });
     } catch (error) {
         console.error("Get Event Error:", error);

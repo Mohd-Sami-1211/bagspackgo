@@ -19,7 +19,7 @@ import {
   ShieldCheck,
   Smile,
   ArrowLeft,
-  Mail,Phone,Upload
+  Mail, Phone, Upload
 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -29,89 +29,90 @@ const EventDetails = ({ event, guides }) => {
   const [activeTab, setActiveTab] = useState('details');
   const [bookingSlots, setBookingSlots] = useState(1);
   const [bookingStep, setBookingStep] = useState(1);
-const [formData, setFormData] = useState({
-  contactDetails: {
-    email: '',
-    phone: ''
-  },
-  participants: Array(bookingSlots).fill().map(() => ({
-    name: '',
-    email: '',
-    phone: '',
-    age: '',
-    gender: '',
-    bloodGroup: '',
-    country: '',
-    address: '',
-    idType: '',
-    idNumber: '',
-    idPhoto: null
-  }))
-});
-const handleContactChange = (field, value) => {
-  setFormData(prev => ({
-    ...prev,
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [formData, setFormData] = useState({
     contactDetails: {
-      ...prev.contactDetails,
-      [field]: value
-    }
-  }));
-};
-const handleParticipantChange = (index, field, value) => {
-  setFormData(prev => {
-    const newParticipants = [...prev.participants];
-    newParticipants[index] = {
-      ...newParticipants[index],
-      [field]: value
-    };
-    return { ...prev, participants: newParticipants };
+      email: '',
+      phone: ''
+    },
+    participants: Array(bookingSlots).fill().map(() => ({
+      name: '',
+      email: '',
+      phone: '',
+      age: '',
+      gender: '',
+      bloodGroup: '',
+      country: '',
+      address: '',
+      idType: '',
+      idNumber: '',
+      idPhoto: null
+    }))
   });
-};
-
-const handleFileUpload = (index, field, file) => {
-  setFormData(prev => {
-    const newParticipants = [...prev.participants];
-    newParticipants[index] = {
-      ...newParticipants[index],
-      [field]: file
-    };
-    return { ...prev, participants: newParticipants };
-  });
-};
-
-// Update when bookingSlots changes
-useEffect(() => {
-  setFormData(prev => {
-    const currentLength = prev.participants.length;
-    if (bookingSlots > currentLength) {
-      // Add new empty participants
-      const newParticipants = [...prev.participants];
-      for (let i = currentLength; i < bookingSlots; i++) {
-        newParticipants.push({
-          name: '',
-          email: '',
-          phone: '',
-          age: '',
-          gender: '',
-          bloodGroup: '',
-          country: '',
-          address: '',
-          idType: '',
-          idNumber: '',
-          idPhoto: null
-        });
+  const handleContactChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      contactDetails: {
+        ...prev.contactDetails,
+        [field]: value
       }
+    }));
+  };
+  const handleParticipantChange = (index, field, value) => {
+    setFormData(prev => {
+      const newParticipants = [...prev.participants];
+      newParticipants[index] = {
+        ...newParticipants[index],
+        [field]: value
+      };
       return { ...prev, participants: newParticipants };
-    } else if (bookingSlots < currentLength) {
-      // Remove extra participants
-      return { ...prev, participants: prev.participants.slice(0, bookingSlots) };
-    }
-    return prev;
-  });
-}, [bookingSlots]);
+    });
+  };
+
+  const handleFileUpload = (index, field, file) => {
+    setFormData(prev => {
+      const newParticipants = [...prev.participants];
+      newParticipants[index] = {
+        ...newParticipants[index],
+        [field]: file
+      };
+      return { ...prev, participants: newParticipants };
+    });
+  };
+
+  // Update when bookingSlots changes
+  useEffect(() => {
+    setFormData(prev => {
+      const currentLength = prev.participants.length;
+      if (bookingSlots > currentLength) {
+        // Add new empty participants
+        const newParticipants = [...prev.participants];
+        for (let i = currentLength; i < bookingSlots; i++) {
+          newParticipants.push({
+            name: '',
+            email: '',
+            phone: '',
+            age: '',
+            gender: '',
+            bloodGroup: '',
+            country: '',
+            address: '',
+            idType: '',
+            idNumber: '',
+            idPhoto: null
+          });
+        }
+        return { ...prev, participants: newParticipants };
+      } else if (bookingSlots < currentLength) {
+        // Remove extra participants
+        return { ...prev, participants: prev.participants.slice(0, bookingSlots) };
+      }
+      return prev;
+    });
+  }, [bookingSlots]);
   const bookingSectionRef = useRef(null);
   const matchedGuide = guides?.find(g => g.id === event.eventId);
-  
+
   const formattedDate = new Date(event.date).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
@@ -130,17 +131,109 @@ useEffect(() => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleBooking = (e) => {
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    document.body.appendChild(script);
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
+
+  const handleBooking = async (e) => {
     e.preventDefault();
     if (bookingStep === 1) {
       setBookingStep(2);
       setTimeout(() => {
         bookingSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 100);
+    } else if (bookingStep === 2) {
+      setBookingStep(3);
+      setTimeout(() => {
+        bookingSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
     } else {
-      // Process booking
-      alert(`Booking confirmed for ${bookingSlots} slots!`);
-      router.push('/user/bookings');
+      // Step 3: Payment using Razorpay
+      setIsProcessingPayment(true);
+      try {
+        const amount = Math.round(event.price * bookingSlots * 1.18);
+        const orderRes = await fetch('/api/payments/create-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amount, eventId: event.id, participants: formData.participants })
+        });
+        const orderData = await orderRes.json();
+        if (!orderData.success) {
+          if (orderData.message === 'Unauthorized') {
+            alert('Please sign in to complete your booking.');
+            router.push('/signin');
+          } else {
+            alert(`Failed to initiate payment: ${orderData.message || 'Unknown error'}`);
+          }
+          setIsProcessingPayment(false);
+          return;
+        }
+
+        const options = {
+          key: orderData.key_id,
+          amount: orderData.order.amount,
+          currency: 'INR',
+          name: 'Bagspackgo',
+          description: `Booking for ${event.name}`,
+          order_id: orderData.order.id,
+          handler: async function (response) {
+            const verifyRes = await fetch('/api/payments/verify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                ...response,
+                bookingDetails: {
+                  eventId: event.id,
+                  amount,
+                  contactDetails: formData.contactDetails,
+                  participants: formData.participants
+                }
+              })
+            });
+            const verifyData = await verifyRes.json();
+            if (verifyData.success) {
+              alert('Booking successful!');
+              router.push('/user/bookings');
+            } else {
+              alert('Payment verification failed');
+            }
+            setIsProcessingPayment(false);
+          },
+          prefill: {
+            name: formData.participants[0]?.name || '',
+            email: formData.contactDetails.email,
+            contact: formData.contactDetails.phone
+          },
+          theme: { color: '#16a34a' }
+        };
+
+        if (orderData.key_id === 'rzp_test_mock_key123') {
+          console.log("Fallback mock razorpay payment in dev");
+          options.handler({
+            razorpay_payment_id: `pay_mock_${Date.now()}`,
+            razorpay_order_id: options.order_id,
+            razorpay_signature: "mock_signature_dev"
+          });
+          return;
+        }
+        const rzp = new window.Razorpay(options);
+        rzp.on('payment.failed', function (response) {
+          alert('Payment Failed: ' + response.error.description);
+          setIsProcessingPayment(false);
+        });
+        rzp.open();
+
+      } catch (err) {
+        console.error(err);
+        alert('Payment error');
+        setIsProcessingPayment(false);
+      }
     }
   };
 
@@ -163,7 +256,7 @@ useEffect(() => {
   return (
     <div className="max-w-7xl mx-auto px-2 sm:px-2 lg:px-4 py-8 -mt-16 shadow-lg rounded-2xl bg-gradient-to-br from-green-50 to-blue-50 mb-16">
       {/* Header Section */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
@@ -180,7 +273,7 @@ useEffect(() => {
                 e.target.src = '/images/events/default.jpg';
               }}
             />
-            
+
             {/* Booking Button */}
             <div className="absolute mt-1.5 left-4 right-4">
               <button
@@ -284,12 +377,12 @@ useEffect(() => {
           className="mb-12"
         >
           {/* Details Tab */}
-           {activeTab === 'details' && (
+          {activeTab === 'details' && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2">
                 <h2 className="text-xl font-bold text-gray-800 mb-4">About This Event</h2>
                 <p className="text-gray-700 mb-6">{event.description || "This exciting event offers a unique opportunity to experience the local culture and activities. Our expert guides will ensure you have a memorable time while learning about the area's history and traditions."}</p>
-                
+
                 <h3 className="text-lg font-semibold text-gray-800 mb-3">Highlights</h3>
                 <ul className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
                   {[
@@ -358,16 +451,16 @@ useEffect(() => {
             <div className="space-y-6">
               <h2 className="text-xl font-bold text-green-500 mb-2">Detailed Itinerary</h2>
               <p className="text-gray-600 mb-6">Here's what you can expect during this event:</p>
-              
+
               <div className="relative">
                 {/* Timeline line */}
                 <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-green-200"></div>
-                
+
                 {itinerary.map((item, index) => (
                   <div key={index} className="relative pl-16 pb-6 group">
                     {/* Timeline dot */}
                     <div className="absolute left-5 top-10 w-5 h-5 rounded-full bg-green-500 border-4 border-green-100 transform -translate-x-1/2 z-10"></div>
-                    
+
                     <div className="bg-green-50 p-5 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
                       <div className="flex justify-between items-start">
                         <h3 className="font-semibold text-gray-800">{item.activity}</h3>
@@ -391,7 +484,7 @@ useEffect(() => {
                   <AlertCircle className="text-yellow-500 w-6 h-6 mr-2" />
                   Important Information
                 </h2>
-                
+
                 <div className="space-y-4">
                   <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-100">
                     <h3 className="font-semibold text-yellow-800 mb-2">Cancellation Policy</h3>
@@ -447,7 +540,7 @@ useEffect(() => {
                   <Info className="text-blue-500 w-6 h-6 mr-2" />
                   Frequently Asked Questions
                 </h2>
-                
+
                 <div className="space-y-4">
                   {[
                     {
@@ -483,430 +576,409 @@ useEffect(() => {
 
           {/* Booking Tab */}
           {/* Booking Tab */}
-{activeTab === 'book' && (
-  <div ref={bookingSectionRef} className="max-w-7xl mx-auto -mt-8">
-    <div className="bg-white shadow-lg overflow-hidden border border-gray-100">
-      {/* Booking Steps Indicator */}
-      <div className="flex border-b border-gray-200 bg-gray-50">
-        <div className={`flex-1 py-4 text-center font-medium ${bookingStep === 1 ? 'text-green-600 border-b-2 border-green-600 bg-white' : 'text-gray-500'}`}>
-          <div className="flex items-center justify-center gap-2">
-            {bookingStep > 1 ? (
-              <CheckCircle className="w-5 h-5 text-green-500" />
-            ) : (
-              <span className="w-5 h-5 rounded-full bg-green-100 text-green-600 flex items-center justify-center">1</span>
-            )}
-            Select Options
-          </div>
-        </div>
-        <div className={`flex-1 py-4 text-center font-medium ${bookingStep === 2 ? 'text-green-600 border-b-2 border-green-600 bg-white' : 'text-gray-500'}`}>
-          <div className="flex items-center justify-center gap-2">
-            {bookingStep > 2 ? (
-              <CheckCircle className="w-5 h-5 text-green-500" />
-            ) : (
-              <span className={`w-5 h-5 rounded-full ${bookingStep >= 2 ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600'} flex items-center justify-center`}>2</span>
-            )}
-            Your Details
-          </div>
-        </div>
-      </div>
-
-      {bookingStep === 1 ? (
-        <div className="p-6 md:p-8 bg-gradient-to-br from-green-50 to-blue-50">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">Select Your Booking Options</h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Event Summary */}
-            <div className="bg-white/90 p-6 rounded-lg border border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                <Ticket className="text-green-500 w-5 h-5" />
-                Event Summary
-              </h3>
-              <div className="space-y-4">
-                <div>
-                  <p className="text-sm text-gray-500">Event</p>
-                  <p className="font-medium">{event.name}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Date</p>
-                  <p className="font-medium">{formattedDate}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Meeting Point</p>
-                  <p className="font-medium">{event.meetingPoint || "Main city park entrance"}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Booking Options */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                <Users className="text-purple-500 w-5 h-5" />
-                Participants
-              </h3>
-              <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <p className="text-sm text-gray-500">Price per person</p>
-                    <p className="text-xl font-bold text-green-600">₹{event.price.toLocaleString('en-IN')}</p>
-                  </div>
-                  <div className="flex items-center">
-                    <button 
-                      onClick={() => setBookingSlots(prev => Math.max(1, prev - 1))}
-                      className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors"
-                    >
-                      -
-                    </button>
-                    <span className="mx-4 text-lg font-medium">{bookingSlots}</span>
-                    <button 
-                      onClick={() => setBookingSlots(prev => Math.min(event.slotsLeft, prev + 1))}
-                      className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors"
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-
-                <div className="border-t border-gray-200 pt-4 space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Subtotal</span>
-                    <span className="font-medium">₹{(event.price * bookingSlots).toLocaleString('en-IN')}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Taxes & Fees</span>
-                    <span className="font-medium">₹{(event.price * bookingSlots * 0.18).toLocaleString('en-IN')}</span>
-                  </div>
-                  <div className="flex justify-between text-lg font-bold pt-3 border-t border-gray-200">
-                    <span>Total</span>
-                    <span className="text-green-600">
-                      ₹{Math.round(event.price * bookingSlots * 1.18).toLocaleString('en-IN')}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-8 flex justify-end">
-            <button
-              onClick={() => setBookingStep(2)}
-              className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-3 px-8 rounded-lg font-semibold transition-all shadow-md flex items-center gap-2"
-            >
-              Continue to Booking
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="px-6 py-4 md:p-8 bg-gradient-to-br from-green-50 to-blue-50 ">
-          
-          <div className="flex flex-col lg:flex-row gap-8 -mt-2">
-            {/* Left Column - Contact Form */}
-            <div className="lg:w-2/3">
-              <div className="space-y-8">
-                {/* Main Heading */}
-                <h3 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
-                  <User className="h-6 w-6 text-green-600 mr-2" />
-                  Participant Information
-                </h3>
-                
-                {/* Contact Information Section */}
-                <div className="bg-white/50 rounded-xl shadow-sm border border-gray-200 p-6">
-                  <h4 className="text-lg font-semibold text-gray-800 mb-5 flex items-center">
-                    <span className="w-7 h-7 flex items-center justify-center bg-white text-green-800 rounded-full mr-3">
-                      1
-                    </span>
-                    Primary Contact Information
-                  </h4>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Email */}
-                    <div>
-                      <label htmlFor="primary-email" className="block text-sm font-medium text-gray-700 mb-1">
-                        Email Address <span className="text-red-500">*</span>
-                      </label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <Mail className="h-5 w-5 text-gray-400" />
-                        </div>
-                        <input
-                          type="email"
-                          id="primary-email"
-                          className="pl-10 w-full p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-700"
-                          placeholder="your@email.com"
-                          required
-                        />
-                      </div>
+          {activeTab === 'book' && (
+            <div ref={bookingSectionRef} className="max-w-7xl mx-auto -mt-8">
+              <div className="bg-white shadow-lg overflow-hidden border border-gray-100">
+                {/* Booking Steps Indicator */}
+                <div className="flex border-b border-gray-200 bg-gray-50">
+                  <div className={`flex-1 py-4 text-center font-medium ${bookingStep === 1 ? 'text-green-600 border-b-2 border-green-600 bg-white' : 'text-gray-500'}`}>
+                    <div className="flex items-center justify-center gap-2">
+                      {bookingStep > 1 ? (
+                        <CheckCircle className="w-5 h-5 text-green-500" />
+                      ) : (
+                        <span className="w-5 h-5 rounded-full bg-green-100 text-green-600 flex items-center justify-center">1</span>
+                      )}
+                      Select Options
                     </div>
-
-                    {/* Mobile */}
-                    <div>
-                      <label htmlFor="primary-phone" className="block text-sm font-medium text-gray-700 mb-1">
-                        Mobile Number <span className="text-red-500">*</span>
-                      </label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <Phone className="h-5 w-5 text-gray-400" />
-                        </div>
-                        <input
-                          type="tel"
-                          id="primary-phone"
-                          className="pl-10 w-full p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-700"
-                          placeholder="9876543210"
-                          maxLength="10"
-                          required
-                        />
-                      </div>
+                  </div>
+                  <div className={`flex-1 py-4 text-center font-medium ${bookingStep === 2 ? 'text-green-600 border-b-2 border-green-600 bg-white' : 'text-gray-500'}`}>
+                    <div className="flex items-center justify-center gap-2">
+                      {bookingStep > 2 ? (
+                        <CheckCircle className="w-5 h-5 text-green-500" />
+                      ) : (
+                        <span className={`w-5 h-5 rounded-full ${bookingStep >= 2 ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600'} flex items-center justify-center`}>2</span>
+                      )}
+                      Your Details
+                    </div>
+                  </div>
+                  <div className={`flex-1 py-4 text-center font-medium ${bookingStep === 3 ? 'text-green-600 border-b-2 border-green-600 bg-white' : 'text-gray-500'}`}>
+                    <div className="flex items-center justify-center gap-2">
+                      {bookingStep > 3 ? (
+                        <CheckCircle className="w-5 h-5 text-green-500" />
+                      ) : (
+                        <span className={`w-5 h-5 rounded-full ${bookingStep >= 3 ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600'} flex items-center justify-center`}>3</span>
+                      )}
+                      Confirmation
                     </div>
                   </div>
                 </div>
 
-                {/* Participant Details Section */}
-                <div className="bg-white/50 rounded-xl shadow-sm border border-gray-200 p-6">
-                  <h4 className="text-lg font-semibold text-gray-800 mb-5 flex items-center">
-                    <span className="w-7 h-7 flex items-center justify-center bg-white text-green-800 rounded-full mr-3">
-                      2
-                    </span>
-                    Participant Details ({bookingSlots} {bookingSlots === 1 ? 'Person' : 'People'})
-                  </h4>
+                {bookingStep === 1 ? (
+                  <div className="p-6 md:p-8 bg-gradient-to-br from-green-50 to-blue-50">
+                    <h2 className="text-2xl font-bold text-gray-800 mb-6">Select Your Booking Options</h2>
 
-                  {Array.from({ length: bookingSlots }).map((_, index) => (
-                    <div key={index} className="border border-gray-200 rounded-lg p-5 mb-6 bg-white">
-                      <h5 className="text-md font-medium text-gray-700 mb-4 flex items-center">
-                        <User className="h-5 w-5 text-green-600 mr-2" />
-                        Participant {index + 1}
-                      </h5>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* Name */}
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Full Name <span className="text-red-500">*</span>
-                          </label>
-                          <input
-                            type="text"
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-700"
-                            placeholder="Enter full name"
-                            required
-                          />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      {/* Event Summary */}
+                      <div className="bg-white/90 p-6 rounded-lg border border-gray-200">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                          <Ticket className="text-green-500 w-5 h-5" />
+                          Event Summary
+                        </h3>
+                        <div className="space-y-4">
+                          <div>
+                            <p className="text-sm text-gray-500">Event</p>
+                            <p className="font-medium">{event.name}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-500">Date</p>
+                            <p className="font-medium">{formattedDate}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-500">Meeting Point</p>
+                            <p className="font-medium">{event.meetingPoint || "Main city park entrance"}</p>
+                          </div>
                         </div>
+                      </div>
 
-                        {/* Gender */}
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Gender <span className="text-red-500">*</span>
-                          </label>
-                          <select
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-700 appearance-none pr-10"
-                            required
-                          >
-                            <option value="">Select gender</option>
-                            <option value="male">Male</option>
-                            <option value="female">Female</option>
-                            <option value="other">Other</option>
-                          </select>
-                        </div>
-
-                        {/* Age */}
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Age <span className="text-red-500">*</span>
-                          </label>
-                          <input
-                            type="number"
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-700"
-                            placeholder="Enter age"
-                            min="1"
-                            max="100"
-                            required
-                          />
-                        </div>
-
-                        {/* Blood Group */}
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Blood Group <span className="text-red-500">*</span>
-                          </label>
-                          <select
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-700 appearance-none pr-10"
-                            required
-                          >
-                            <option value="">Select blood group</option>
-                            <option value="A+">A+</option>
-                            <option value="A-">A-</option>
-                            <option value="B+">B+</option>
-                            <option value="B-">B-</option>
-                            <option value="AB+">AB+</option>
-                            <option value="AB-">AB-</option>
-                            <option value="O+">O+</option>
-                            <option value="O-">O-</option>
-                          </select>
-                        </div>
-
-                        {/* Country */}
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Country <span className="text-red-500">*</span>
-                          </label>
-                          <select
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-700 appearance-none pr-10"
-                            required
-                          >
-                            <option value="">Select country</option>
-                            <option value="India">India</option>
-                            <option value="USA">United States</option>
-                            <option value="UK">United Kingdom</option>
-                            <option value="Canada">Canada</option>
-                            <option value="Australia">Australia</option>
-                          </select>
-                        </div>
-
-                        {/* Address */}
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Address <span className="text-red-500">*</span>
-                          </label>
-                          <input
-                            type="text"
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-700"
-                            placeholder="Full address"
-                            required
-                          />
-                        </div>
-
-                        {/* ID Proof Section */}
-                        <div className="md:col-span-2 border-t border-gray-200 pt-4 mt-2">
-                          <label className="block text-sm font-medium text-gray-700 mb-3">
-                            Identification Proof <span className="text-red-500">*</span>
-                          </label>
-                          
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            {/* ID Type */}
+                      {/* Booking Options */}
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                          <Users className="text-purple-500 w-5 h-5" />
+                          Participants
+                        </h3>
+                        <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+                          <div className="flex items-center justify-between mb-6">
                             <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">
-                                ID Type <span className="text-red-500">*</span>
-                              </label>
-                              <select
-                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-700 appearance-none pr-10"
-                                required
+                              <p className="text-sm text-gray-500">Price per person</p>
+                              <p className="text-xl font-bold text-green-600">₹{event.price.toLocaleString('en-IN')}</p>
+                            </div>
+                            <div className="flex items-center">
+                              <button
+                                onClick={() => setBookingSlots(prev => Math.max(1, prev - 1))}
+                                className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors"
                               >
-                                <option value="">Select ID type</option>
-                                <option value="passport">Passport</option>
-                                <option value="aadhaar">Aadhaar Card</option>
-                                <option value="driving-license">Driving License</option>
-                                <option value="pan-card">PAN Card</option>
-                              </select>
+                                -
+                              </button>
+                              <span className="mx-4 text-lg font-medium">{bookingSlots}</span>
+                              <button
+                                onClick={() => setBookingSlots(prev => Math.min(event.slotsLeft, prev + 1))}
+                                className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors"
+                              >
+                                +
+                              </button>
                             </div>
-                            
-                            {/* ID Number */}
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">
-                                ID Number <span className="text-red-500">*</span>
-                              </label>
-                              <input
-                                type="text"
-                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-700"
-                                placeholder="ID number"
-                                required
-                              />
+                          </div>
+
+                          <div className="border-t border-gray-200 pt-4 space-y-3">
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Subtotal</span>
+                              <span className="font-medium">₹{(event.price * bookingSlots).toLocaleString('en-IN')}</span>
                             </div>
-                            
-                            {/* ID Upload */}
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Upload ID <span className="text-red-500">*</span>
-                              </label>
-                              <div className="relative">
-                                <label className="flex flex-col items-center justify-center w-full h-12 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
-                                  <div className="flex items-center justify-center px-4 py-2">
-                                    <Upload className="w-5 h-5 text-gray-400 mr-2" />
-                                    <span className="text-sm text-gray-600">Choose file</span>
-                                  </div>
-                                  <input type="file" className="hidden" required />
-                                </label>
-                              </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Taxes & Fees</span>
+                              <span className="font-medium">₹{(event.price * bookingSlots * 0.18).toLocaleString('en-IN')}</span>
+                            </div>
+                            <div className="flex justify-between text-lg font-bold pt-3 border-t border-gray-200">
+                              <span>Total</span>
+                              <span className="text-green-600">
+                                ₹{Math.round(event.price * bookingSlots * 1.18).toLocaleString('en-IN')}
+                              </span>
                             </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  ))}
-                </div>
 
-                {/* Payment Security Section */}
-                <div className="bg-green-200/40 rounded-xl shadow-sm border border-gray-200 p-6">
-                  <h4 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
-                    <ShieldCheck className="h-5 w-5 text-blue-500 mr-2" />
-                    Payment Security
-                  </h4>
-                  <p className="text-sm text-black">
-                    Your payment is processed securely using 256-bit SSL encryption. We never store your credit card details.
-                  </p>
-                </div>
-              </div>
-            </div>
+                    <div className="mt-8 flex justify-end">
+                      <button
+                        onClick={() => setBookingStep(2)}
+                        className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-3 px-8 rounded-lg font-semibold transition-all shadow-md flex items-center gap-2"
+                      >
+                        Continue to Booking
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="px-6 py-4 md:p-8 bg-gradient-to-br from-green-50 to-blue-50 ">
 
-            {/* Right Column - Order Summary */}
-            <div className="lg:w-1/3 mt-16">
-              <div className="sticky top-6">
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 shadow-sm">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                    <List className="text-amber-500 w-5 h-5" />
-                    Order Summary
-                  </h3>
-                  <div className="space-y-4">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Event</span>
-                      <span className="font-medium text-right">{event.name}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Date</span>
-                      <span className="font-medium">{formattedDate}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Participants</span>
-                      <span className="font-medium">{bookingSlots}</span>
-                    </div>
-                    <div className="border-t border-gray-200 pt-4 mt-2">
-                      <div className="flex justify-between mb-2">
-                        <span className="text-gray-600">Subtotal</span>
-                        <span className="font-medium">₹{(event.price * bookingSlots).toLocaleString('en-IN')}</span>
+                    <div className="flex flex-col lg:flex-row gap-8 -mt-2">
+                      {/* Left Column - Contact Form */}
+                      <div className="lg:w-2/3">
+                        {bookingStep === 2 ? (
+                          <div className="space-y-8">
+                            {/* Main Heading */}
+                            <h3 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
+                              <User className="h-6 w-6 text-green-600 mr-2" />
+                              Participant Information
+                            </h3>
+
+                            {/* Contact Information Section */}
+                            <div className="bg-white/50 rounded-xl shadow-sm border border-gray-200 p-6">
+                              <h4 className="text-lg font-semibold text-gray-800 mb-5 flex items-center">
+                                <span className="w-7 h-7 flex items-center justify-center bg-white text-green-800 rounded-full mr-3">
+                                  1
+                                </span>
+                                Primary Contact Information
+                              </h4>
+
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* Email */}
+                                <div>
+                                  <label htmlFor="primary-email" className="block text-sm font-medium text-gray-700 mb-1">
+                                    Email Address <span className="text-red-500">*</span>
+                                  </label>
+                                  <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                      <Mail className="h-5 w-5 text-gray-400" />
+                                    </div>
+                                    <input
+                                      type="email"
+                                      id="primary-email"
+                                      value={formData.contactDetails.email}
+                                      onChange={e => handleContactChange('email', e.target.value)}
+                                      className="pl-10 w-full p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-700"
+                                      placeholder="your@email.com"
+                                      required
+                                    />
+                                  </div>
+                                </div>
+
+                                {/* Mobile */}
+                                <div>
+                                  <label htmlFor="primary-phone" className="block text-sm font-medium text-gray-700 mb-1">
+                                    Mobile Number <span className="text-red-500">*</span>
+                                  </label>
+                                  <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                      <Phone className="h-5 w-5 text-gray-400" />
+                                    </div>
+                                    <input
+                                      type="tel"
+                                      id="primary-phone"
+                                      value={formData.contactDetails.phone}
+                                      onChange={e => handleContactChange('phone', e.target.value)}
+                                      className="pl-10 w-full p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-700"
+                                      placeholder="9876543210"
+                                      maxLength="10"
+                                      required
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Participant Details Section */}
+                            <div className="bg-white/50 rounded-xl shadow-sm border border-gray-200 p-6">
+                              <h4 className="text-lg font-semibold text-gray-800 mb-5 flex items-center">
+                                <span className="w-7 h-7 flex items-center justify-center bg-white text-green-800 rounded-full mr-3">
+                                  2
+                                </span>
+                                Participant Details ({bookingSlots} {bookingSlots === 1 ? 'Person' : 'People'})
+                              </h4>
+
+                              {Array.from({ length: bookingSlots }).map((_, index) => (
+                                <div key={index} className="border border-gray-200 rounded-lg p-5 mb-6 bg-white">
+                                  <h5 className="text-md font-medium text-gray-700 mb-4 flex items-center">
+                                    <User className="h-5 w-5 text-green-600 mr-2" />
+                                    Participant {index + 1}
+                                  </h5>
+
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {/* Name */}
+                                    <div>
+                                      <label className="block text-sm font-medium text-gray-700 mb-1">Full Name <span className="text-red-500">*</span></label>
+                                      <input type="text" value={formData.participants[index]?.name || ''} onChange={e => handleParticipantChange(index, 'name', e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-700" placeholder="Enter full name" required />
+                                    </div>
+
+                                    {/* Email */}
+                                    <div>
+                                      <label className="block text-sm font-medium text-gray-700 mb-1">Email <span className="text-red-500">*</span></label>
+                                      <input type="email" value={formData.participants[index]?.email || ''} onChange={e => handleParticipantChange(index, 'email', e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-700" placeholder="Email address" required />
+                                    </div>
+
+                                    {/* Mobile */}
+                                    <div>
+                                      <label className="block text-sm font-medium text-gray-700 mb-1">Mobile <span className="text-red-500">*</span></label>
+                                      <input type="tel" value={formData.participants[index]?.phone || ''} onChange={e => handleParticipantChange(index, 'phone', e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-700" placeholder="Mobile number" required />
+                                    </div>
+
+                                    {/* Gender */}
+                                    <div>
+                                      <label className="block text-sm font-medium text-gray-700 mb-1">Gender <span className="text-red-500">*</span></label>
+                                      <select value={formData.participants[index]?.gender || ''} onChange={e => handleParticipantChange(index, 'gender', e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-700 appearance-none pr-10" required>
+                                        <option value="">Select gender</option>
+                                        <option value="male">Male</option>
+                                        <option value="female">Female</option>
+                                        <option value="other">Other</option>
+                                      </select>
+                                    </div>
+
+                                    {/* Age */}
+                                    <div>
+                                      <label className="block text-sm font-medium text-gray-700 mb-1">Age <span className="text-red-500">*</span></label>
+                                      <input type="number" value={formData.participants[index]?.age || ''} onChange={e => handleParticipantChange(index, 'age', e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-700" placeholder="Enter age" min="1" max="100" required />
+                                    </div>
+
+                                    {/* Blood Group */}
+                                    <div>
+                                      <label className="block text-sm font-medium text-gray-700 mb-1">Blood Group <span className="text-red-500">*</span></label>
+                                      <select value={formData.participants[index]?.bloodGroup || ''} onChange={e => handleParticipantChange(index, 'bloodGroup', e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-700 appearance-none pr-10" required>
+                                        <option value="">Select blood group</option><option value="A+">A+</option><option value="A-">A-</option><option value="B+">B+</option><option value="B-">B-</option><option value="AB+">AB+</option><option value="AB-">AB-</option><option value="O+">O+</option><option value="O-">O-</option>
+                                      </select>
+                                    </div>
+
+                                    {/* Country */}
+                                    <div>
+                                      <label className="block text-sm font-medium text-gray-700 mb-1">Country <span className="text-red-500">*</span></label>
+                                      <select value={formData.participants[index]?.country || ''} onChange={e => handleParticipantChange(index, 'country', e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-700 appearance-none pr-10" required>
+                                        <option value="">Select country</option><option value="India">India</option><option value="USA">United States</option><option value="UK">United Kingdom</option><option value="Canada">Canada</option><option value="Australia">Australia</option>
+                                      </select>
+                                    </div>
+
+                                    {/* Address */}
+                                    <div>
+                                      <label className="block text-sm font-medium text-gray-700 mb-1">Address <span className="text-red-500">*</span></label>
+                                      <input type="text" value={formData.participants[index]?.address || ''} onChange={e => handleParticipantChange(index, 'address', e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-700" placeholder="Full address" required />
+                                    </div>
+
+                                    {/* ID Proof Section */}
+                                    <div className="md:col-span-2 border-t border-gray-200 pt-4 mt-2">
+                                      <label className="block text-sm font-medium text-gray-700 mb-3">Identification Proof <span className="text-red-500">*</span></label>
+                                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div>
+                                          <label className="block text-sm font-medium text-gray-700 mb-1">ID Type <span className="text-red-500">*</span></label>
+                                          <select value={formData.participants[index]?.idType || ''} onChange={e => handleParticipantChange(index, 'idType', e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-700 appearance-none pr-10" required>
+                                            <option value="">Select ID type</option><option value="passport">Passport</option><option value="aadhaar">Aadhaar Card</option><option value="driving-license">Driving License</option><option value="pan-card">PAN Card</option>
+                                          </select>
+                                        </div>
+                                        <div>
+                                          <label className="block text-sm font-medium text-gray-700 mb-1">ID Number <span className="text-red-500">*</span></label>
+                                          <input type="text" value={formData.participants[index]?.idNumber || ''} onChange={e => handleParticipantChange(index, 'idNumber', e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-700" placeholder="ID number" required />
+                                        </div>
+                                        <div>
+                                          <label className="block text-sm font-medium text-gray-700 mb-1">Upload ID <span className="text-red-500">*</span></label>
+                                          <div className="relative">
+                                            <label className="flex flex-col items-center justify-center w-full h-12 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                                              <div className="flex items-center justify-center px-4 py-2">
+                                                <Upload className="w-5 h-5 text-gray-400 mr-2" />
+                                                <span className="text-sm text-gray-600">Choose file</span>
+                                              </div>
+                                              <input type="file" onChange={e => handleFileUpload(index, 'idPhoto', e.target.files[0])} className="hidden" />
+                                            </label>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+
+                            {/* Payment Security Section */}
+                            <div className="bg-green-200/40 rounded-xl shadow-sm border border-gray-200 p-6">
+                              <h4 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+                                <ShieldCheck className="h-5 w-5 text-blue-500 mr-2" />
+                                Payment Security
+                              </h4>
+                              <p className="text-sm text-black">
+                                Your payment is processed securely using 256-bit SSL encryption. We never store your credit card details.
+                              </p>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="space-y-6">
+                            <h3 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
+                              <CheckCircle className="h-6 w-6 text-green-600 mr-2" />
+                              Review Information
+                            </h3>
+                            <div className="bg-white/50 rounded-xl shadow-sm border border-gray-200 p-6">
+                              <h4 className="font-semibold text-gray-800 mb-2">Primary Contact</h4>
+                              <p className="text-sm text-gray-600">Email: {formData.contactDetails.email}</p>
+                              <p className="text-sm text-gray-600">Phone: {formData.contactDetails.phone}</p>
+                            </div>
+                            {formData.participants.map((p, i) => (
+                              <div key={i} className="bg-white/50 rounded-xl shadow-sm border border-gray-200 p-6">
+                                <h4 className="font-semibold text-gray-800 mb-2">Participant {i + 1}: {p.name || 'Not filled'}</h4>
+                                <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
+                                  <p>Age: {p.age}</p>
+                                  <p>Gender: {p.gender}</p>
+                                  <p>Blood Group: {p.bloodGroup}</p>
+                                  <p>Phone: {p.phone}</p>
+                                  <p>Email: {p.email}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                      <div className="flex justify-between mb-2">
-                        <span className="text-gray-600">Taxes (18%)</span>
-                        <span className="font-medium">₹{(event.price * bookingSlots * 0.18).toLocaleString('en-IN')}</span>
-                      </div>
-                      <div className="flex justify-between text-lg font-bold pt-3 border-t border-gray-200">
-                        <span>Total</span>
-                        <span className="text-green-600">
-                          ₹{Math.round(event.price * bookingSlots * 1.18).toLocaleString('en-IN')}
-                        </span>
+
+                      {/* Right Column - Order Summary */}
+                      <div className="lg:w-1/3 mt-16">
+                        <div className="sticky top-6">
+                          <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 shadow-sm">
+                            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                              <List className="text-amber-500 w-5 h-5" />
+                              Order Summary
+                            </h3>
+                            <div className="space-y-4">
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">Event</span>
+                                <span className="font-medium text-right">{event.name}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">Date</span>
+                                <span className="font-medium">{formattedDate}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">Participants</span>
+                                <span className="font-medium">{bookingSlots}</span>
+                              </div>
+                              <div className="border-t border-gray-200 pt-4 mt-2">
+                                <div className="flex justify-between mb-2">
+                                  <span className="text-gray-600">Subtotal</span>
+                                  <span className="font-medium">₹{(event.price * bookingSlots).toLocaleString('en-IN')}</span>
+                                </div>
+                                <div className="flex justify-between mb-2">
+                                  <span className="text-gray-600">Taxes (18%)</span>
+                                  <span className="font-medium">₹{(event.price * bookingSlots * 0.18).toLocaleString('en-IN')}</span>
+                                </div>
+                                <div className="flex justify-between text-lg font-bold pt-3 border-t border-gray-200">
+                                  <span>Total</span>
+                                  <span className="text-green-600">
+                                    ₹{Math.round(event.price * bookingSlots * 1.18).toLocaleString('en-IN')}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="mt-6 pt-6 border-t border-gray-200">
+                              <button
+                                onClick={handleBooking}
+                                disabled={isProcessingPayment}
+                                className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-3 px-4 rounded-lg font-semibold transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-50"
+                              >
+                                {bookingStep === 2 ? (
+                                  <>Review & Next <ChevronRight className="w-5 h-5" /></>
+                                ) : (
+                                  <><CreditCard className="w-5 h-5" /> {isProcessingPayment ? "Processing..." : "Confirm & Pay"}</>
+                                )}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
-
-                  <div className="mt-6 pt-6 border-t border-gray-200">
-                    <button
-                      onClick={handleBooking}
-                      className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-3 px-4 rounded-lg font-semibold transition-all shadow-md flex items-center justify-center gap-2"
-                    >
-                      <CreditCard className="w-5 h-5" />
-                      Confirm & Pay
-                    </button>
-                  </div>
-                </div>
+                )}
               </div>
             </div>
-          </div>
-        </div>
-      )}
-    </div>
-  </div>
-)}
+          )}
         </motion.div>
-        
-      </div>
-    </div>
-);
+
+      </div >
+    </div >
+  );
 };
 
 export default EventDetails;

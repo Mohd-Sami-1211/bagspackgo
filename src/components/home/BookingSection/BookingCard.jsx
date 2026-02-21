@@ -76,12 +76,27 @@ const BookingCard = ({ booking, onClick }) => {
 
         <div className="flex flex-col items-start">
           <p className="text-gray-400 text-xs">Amount Paid</p>
-          <div className="mt-1">
+          <div className="mt-1 flex gap-2 items-center">
             <span className="inline-flex items-center px-3 py-1 rounded-full bg-green-500 text-white font-bold">
               {rupee(booking.price)}
             </span>
           </div>
         </div>
+
+        {booking.passUrl && (
+          <div className="flex flex-col items-start sm:col-span-1">
+            <p className="text-gray-400 text-xs">Tickets</p>
+            <div className="mt-1">
+              <a
+                href={booking.passUrl}
+                onClick={e => e.stopPropagation()}
+                className="inline-flex items-center px-3 py-1 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold transition shadow"
+              >
+                View Pass
+              </a>
+            </div>
+          </div>
+        )}
       </div>
     </motion.div>
   );

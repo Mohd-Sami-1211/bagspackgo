@@ -5,12 +5,29 @@ import { X, Check, ChevronDown, ChevronUp, RefreshCcw, ArrowDown } from 'lucide-
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import EventCard from 'src/components/home/EventSection/EventCard';
-import data from 'src/data/data.json';
+import initialData from 'src/data/data.json';
 import { Search, Calendar, User, Tag, MapPin } from 'lucide-react';
 import GuideCard from 'src/components/home/EventSection/GuideCard';
 
 const EventMainContent = () => {
   // State for events and filters
+  const [data, setData] = useState({ ...initialData, events: [] });
+
+  useEffect(() => {
+    async function fetchEvents() {
+      try {
+        const res = await fetch('/api/events');
+        const json = await res.json();
+        if (json.success) {
+          setData(prev => ({ ...prev, events: json.events }));
+        }
+      } catch (err) {
+        console.error('Failed to fetch events:', err);
+      }
+    }
+    fetchEvents();
+  }, []);
+
   const [filteredEvents, setFilteredEvents] = useState([]);
   const [displayedEvents, setDisplayedEvents] = useState([]);
   const [displayCount, setDisplayCount] = useState(6);
@@ -20,7 +37,7 @@ const EventMainContent = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSearch, setActiveSearch] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  
+
   // Filter states
   const [filters, setFilters] = useState({
     destination: [],
@@ -38,13 +55,13 @@ const EventMainContent = () => {
   // Priority scoring function (reusable)
   const getPriorityScore = (text, query) => {
     if (!text || !query) return 0;
-    
+
     const textStr = String(text);
     const queryStr = String(query);
-    
+
     const lowerText = textStr.toLowerCase();
     const lowerQuery = queryStr.toLowerCase();
-    
+
     if (lowerText.startsWith(lowerQuery)) return 3;
     if (lowerText.includes(lowerQuery)) return 2;
     if (lowerText.split(' ').some(word => word.startsWith(lowerQuery))) return 1;
@@ -57,22 +74,22 @@ const EventMainContent = () => {
       resetSearch();
       return;
     }
-    
+
     const trimmedQuery = query.trim();
     setSearchQuery(trimmedQuery);
     setActiveSearch(true);
     setShowSuggestions(false);
-    
+
     // Search both events and guides
     const foundEvents = getFilteredEvents(trimmedQuery);
     const foundGuides = getFilteredGuides(trimmedQuery);
-    
+
     // Combine results with type indicators
     const combinedResults = [
       ...foundEvents.map(event => ({ ...event, type: 'event' })),
       ...foundGuides.map(guide => ({ ...guide, type: 'guide' }))
     ].sort((a, b) => b.priority - a.priority);
-    
+
     setDisplayedEvents(combinedResults);
   };
 
@@ -88,7 +105,7 @@ const EventMainContent = () => {
   const getPrioritySuggestions = useMemo(() => {
     const generateSuggestions = (query) => {
       if (!query || !query.trim()) return [];
-      
+
       const q = query.toLowerCase();
       const categories = [
         {
@@ -131,7 +148,7 @@ const EventMainContent = () => {
         const items = category.data
           .map(item => {
             let priority = 0;
-            
+
             category.fields.forEach(field => {
               const value = item[field.name] || item;
               priority += getPriorityScore(value, q) * field.weight;
@@ -158,17 +175,17 @@ const EventMainContent = () => {
   const getFilteredEvents = useMemo(() => {
     const filterEvents = (query) => {
       if (!query || !query.trim()) return [];
-      
+
       const q = query.toLowerCase();
       return (data.events || [])
         .map(event => {
           let priority = 0;
-          
+
           // Direct matches
           priority += getPriorityScore(event?.name, q) * 3;
           priority += getPriorityScore(event?.title, q) * 3;
           priority += getPriorityScore(event?.type, q) * 2;
-          
+
           // Destination matches
           if (event.destination) {
             const destination = (data.destinations || [])
@@ -188,14 +205,14 @@ const EventMainContent = () => {
               }
             }
           }
-          
+
           // Guide matches
           if (event.guideId) {
             const guide = (data.guides || [])
               .find(g => g.id === event.guideId);
             priority += getPriorityScore(guide?.name, q) * 2;
           }
-          
+
           return { ...event, priority };
         })
         .filter(event => event.priority > 0)
@@ -209,7 +226,7 @@ const EventMainContent = () => {
   const getFilteredGuides = useMemo(() => {
     const filterGuides = (query) => {
       if (!query || !query.trim()) return [];
-      
+
       const q = query.toLowerCase();
       return (data.guides || [])
         .map(guide => ({
@@ -229,21 +246,21 @@ const EventMainContent = () => {
 
     // Destination filter
     if (filters.destination.length > 0) {
-      results = results.filter(event => 
+      results = results.filter(event =>
         filters.destination.includes(event.destinationId)
       );
     }
 
     // Organizer filter
     if (filters.organizer.length > 0) {
-      results = results.filter(event => 
+      results = results.filter(event =>
         filters.organizer.some(orgId => event.eventId.startsWith(orgId))
       );
     }
 
     // Category filter
     if ((filters.type || []).length > 0) {
-      results = results.filter(event => 
+      results = results.filter(event =>
         (filters.type || []).includes(event.type)
       );
     }
@@ -253,14 +270,14 @@ const EventMainContent = () => {
       const today = new Date();
       switch (filters.date) {
         case 'Today':
-          results = results.filter(event => 
+          results = results.filter(event =>
             new Date(event.date).toDateString() === today.toDateString()
           );
           break;
         case 'Tomorrow':
           const tomorrow = new Date(today);
           tomorrow.setDate(today.getDate() + 1);
-          results = results.filter(event => 
+          results = results.filter(event =>
             new Date(event.date).toDateString() === tomorrow.toDateString()
           );
           break;
@@ -288,8 +305,8 @@ const EventMainContent = () => {
       results = results.filter(event => {
         const eventDate = new Date(event.date);
         if (filters.dateRange.start && filters.dateRange.end) {
-          return eventDate >= new Date(filters.dateRange.start) && 
-                 eventDate <= new Date(filters.dateRange.end);
+          return eventDate >= new Date(filters.dateRange.start) &&
+            eventDate <= new Date(filters.dateRange.end);
         } else if (filters.dateRange.start) {
           return eventDate >= new Date(filters.dateRange.start);
         } else if (filters.dateRange.end) {
@@ -331,13 +348,13 @@ const EventMainContent = () => {
     }
 
     setFilteredEvents(results);
-  }, [filters]);
+  }, [filters, data.events]);
 
   // Update displayed events
   useEffect(() => {
-    const hasFilters = Object.values(filters).some(filter => 
-      Array.isArray(filter) ? filter.length > 0 : filter !== null && 
-      !(typeof filter === 'object' && filter.start === null && filter.end === null)
+    const hasFilters = Object.values(filters).some(filter =>
+      Array.isArray(filter) ? filter.length > 0 : filter !== null &&
+        !(typeof filter === 'object' && filter.start === null && filter.end === null)
     );
 
     if (hasFilters) {
@@ -433,7 +450,7 @@ const EventMainContent = () => {
   // Get filtered organizers based on selected destinations
   const getFilteredOrganizers = () => {
     if (filters.destination.length === 0) return data.guides;
-    return data.guides.filter(guide => 
+    return data.guides.filter(guide =>
       filters.destination.includes(guide.location)
     );
   };
@@ -478,9 +495,9 @@ const EventMainContent = () => {
     performSearch(searchQuery);
   };
 
-  const hasFilters = Object.values(filters).some(filter => 
-    Array.isArray(filter) ? filter.length > 0 : filter !== null && 
-    !(typeof filter === 'object' && filter.start === null && filter.end === null)
+  const hasFilters = Object.values(filters).some(filter =>
+    Array.isArray(filter) ? filter.length > 0 : filter !== null &&
+      !(typeof filter === 'object' && filter.start === null && filter.end === null)
   );
 
   if (data.events.length === 0) {
@@ -502,14 +519,14 @@ const EventMainContent = () => {
           <div className="w-full bg-white/90 p-4 mb-3 rounded-lg">
             {/* Destination Filter */}
             <div className={`mb-6 shadow-sm p-3 rounded-lg ${filters.destination.length > 0 ? 'bg-green-50' : ''}`}>
-              <div 
+              <div
                 className="flex justify-between items-center cursor-pointer"
                 onClick={() => toggleDropdown('destination')}
               >
                 <h3 className="text-gray-700">Destination</h3>
                 <div className="flex items-center">
                   {filters.destination.length > 0 && (
-                    <button 
+                    <button
                       onClick={(e) => {
                         e.stopPropagation();
                         clearAppliedFilter('destination');
@@ -523,7 +540,7 @@ const EventMainContent = () => {
                   {openDropdown === 'destination' ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                 </div>
               </div>
-              
+
               <AnimatePresence>
                 {openDropdown === 'destination' && (
                   <motion.div
@@ -543,12 +560,12 @@ const EventMainContent = () => {
                       />
                       <div className="max-h-48 overflow-y-auto">
                         {data.destinations
-                          .filter(dest => 
+                          .filter(dest =>
                             dest.label.toLowerCase().includes(destinationSearch.toLowerCase())
                           )
                           .map(dest => (
-                            <div 
-                              key={dest.value} 
+                            <div
+                              key={dest.value}
                               className={`flex items-center p-2 hover:bg-[#d1fae5] rounded-md cursor-pointer ${tempFilters.destination.includes(dest.value) ? 'bg-[#a7f3d0]' : ''}`}
                               onClick={() => handleTempFilterChange('destination', dest.value)}
                             >
@@ -565,7 +582,7 @@ const EventMainContent = () => {
                       </div>
                     </div>
                     <div className="flex justify-end gap-2 p-2 border-t border-gray-200">
-                      <button 
+                      <button
                         className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded-md"
                         onClick={() => {
                           setOpenDropdown(null);
@@ -574,7 +591,7 @@ const EventMainContent = () => {
                       >
                         Cancel
                       </button>
-                      <button 
+                      <button
                         className="px-3 py-1 text-sm bg-green-500 hover:bg-green-600 text-white rounded-md"
                         onClick={applyFilters}
                       >
@@ -588,14 +605,14 @@ const EventMainContent = () => {
 
             {/* Organizer Filter */}
             <div className={`mb-6 shadow-sm p-3 rounded-lg ${(filters.organizer || []).length > 0 ? 'bg-green-50' : ''}`}>
-              <div 
+              <div
                 className="flex justify-between items-center cursor-pointer"
                 onClick={() => toggleDropdown('organizer')}
               >
                 <h3 className="text-gray-700">Organizer</h3>
                 <div className="flex items-center">
                   {(filters.organizer || []).length > 0 && (
-                    <button 
+                    <button
                       onClick={(e) => {
                         e.stopPropagation();
                         clearAppliedFilter('organizer');
@@ -609,7 +626,7 @@ const EventMainContent = () => {
                   {openDropdown === 'organizer' ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                 </div>
               </div>
-              
+
               <AnimatePresence>
                 {openDropdown === 'organizer' && (
                   <motion.div
@@ -635,11 +652,10 @@ const EventMainContent = () => {
                             return orgName.includes(searchTerm);
                           })
                           .map(org => (
-                            <div 
-                              key={org.id} 
-                              className={`flex items-center p-2 hover:bg-[#d1fae5] rounded-md cursor-pointer ${
-                                (tempFilters.organizer || []).includes(org.id) ? 'bg-[#a7f3d0]' : ''
-                              }`}
+                            <div
+                              key={org.id}
+                              className={`flex items-center p-2 hover:bg-[#d1fae5] rounded-md cursor-pointer ${(tempFilters.organizer || []).includes(org.id) ? 'bg-[#a7f3d0]' : ''
+                                }`}
                               onClick={() => handleTempFilterChange('organizer', org.id)}
                             >
                               <div className="flex items-center">
@@ -655,7 +671,7 @@ const EventMainContent = () => {
                       </div>
                     </div>
                     <div className="flex justify-end gap-2 p-2 border-t border-gray-200">
-                      <button 
+                      <button
                         className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded-md"
                         onClick={() => {
                           setOpenDropdown(null);
@@ -664,7 +680,7 @@ const EventMainContent = () => {
                       >
                         Cancel
                       </button>
-                      <button 
+                      <button
                         className="px-3 py-1 text-sm bg-green-500 hover:bg-green-600 text-white rounded-md"
                         onClick={applyFilters}
                       >
@@ -678,14 +694,14 @@ const EventMainContent = () => {
 
             {/* Event Type Filter */}
             <div className={`mb-6 shadow-sm p-3 rounded-lg ${(filters.type || []).length > 0 ? 'bg-green-50' : ''}`}>
-              <div 
+              <div
                 className="flex justify-between items-center cursor-pointer"
                 onClick={() => toggleDropdown('type')}
               >
                 <h3 className="text-gray-700">Event Type</h3>
                 <div className="flex items-center">
                   {(filters.type || []).length > 0 && (
-                    <button 
+                    <button
                       onClick={(e) => {
                         e.stopPropagation();
                         clearAppliedFilter('type');
@@ -699,7 +715,7 @@ const EventMainContent = () => {
                   {openDropdown === 'type' ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                 </div>
               </div>
-              
+
               <AnimatePresence>
                 {openDropdown === 'type' && (
                   <motion.div
@@ -719,13 +735,13 @@ const EventMainContent = () => {
                       />
                       <div className="max-h-48 overflow-y-auto">
                         {Array.from(new Set(data.events?.map(event => event.type) || []))
-                          .filter(type => 
+                          .filter(type =>
                             type && typeof type === 'string' && type.toLowerCase().includes((typeSearch || '').toLowerCase())
                           )
                           .sort((a, b) => a.localeCompare(b))
                           .map(type => (
-                            <div 
-                              key={type} 
+                            <div
+                              key={type}
                               className={`flex items-center p-2 hover:bg-[#d1fae5] rounded-md cursor-pointer ${(tempFilters.type || []).includes(type) ? 'bg-[#a7f3d0]' : ''}`}
                               onClick={() => {
                                 setTempFilters(prev => {
@@ -733,7 +749,7 @@ const EventMainContent = () => {
                                   const newTypes = currentTypes.includes(type)
                                     ? currentTypes.filter(t => t !== type)
                                     : [...currentTypes, type];
-                                  return {...prev, type: newTypes};
+                                  return { ...prev, type: newTypes };
                                 });
                               }}
                             >
@@ -750,7 +766,7 @@ const EventMainContent = () => {
                       </div>
                     </div>
                     <div className="flex justify-end gap-2 p-2 border-t border-gray-200">
-                      <button 
+                      <button
                         className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded-md"
                         onClick={() => {
                           setOpenDropdown(null);
@@ -759,7 +775,7 @@ const EventMainContent = () => {
                       >
                         Cancel
                       </button>
-                      <button 
+                      <button
                         className="px-3 py-1 text-sm bg-green-500 hover:bg-green-600 text-white rounded-md"
                         onClick={applyFilters}
                       >
@@ -773,14 +789,14 @@ const EventMainContent = () => {
 
             {/* Date Filter */}
             <div className={`mb-6 shadow-sm p-3 rounded-lg ${filters.date || filters.dateRange.start || filters.dateRange.end ? 'bg-green-50' : ''}`}>
-              <div 
+              <div
                 className="flex justify-between items-center cursor-pointer"
                 onClick={() => toggleDropdown('date')}
               >
                 <h3 className="text-gray-700">Date</h3>
                 <div className="flex items-center">
                   {(filters.date || filters.dateRange.start || filters.dateRange.end) && (
-                    <button 
+                    <button
                       onClick={(e) => {
                         e.stopPropagation();
                         clearAppliedFilter('date');
@@ -794,7 +810,7 @@ const EventMainContent = () => {
                   {openDropdown === 'date' ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                 </div>
               </div>
-              
+
               <AnimatePresence>
                 {openDropdown === 'date' && (
                   <motion.div
@@ -822,7 +838,7 @@ const EventMainContent = () => {
                           </button>
                         ))}
                       </div>
-                      
+
                       <div className="flex items-center mb-4">
                         <input
                           type="checkbox"
@@ -847,20 +863,20 @@ const EventMainContent = () => {
                         />
                         <label htmlFor="dateRange">Date Range</label>
                       </div>
-                      
+
                       {tempFilters.dateRange.start !== null && (
                         <div className="mb-4">
                           <div className="relative">
                             <div className="flex border border-gray-300 rounded-md mb-2 h-10">
-                              <div 
+                              <div
                                 className={`w-1/2 p-0.7 text-center cursor-pointer flex items-center justify-center ${activeDateField === 'start' ? 'bg-green-100' : ''}`}
                                 onClick={() => setActiveDateField('start')}
                               >
                                 {tempFilters.dateRange.start ? (
                                   <div className="flex items-center">
                                     <span className="text-sm">{formatDate(tempFilters.dateRange.start)}</span>
-                                    <X 
-                                      className="ml-2 text-black hover:text-red-600" 
+                                    <X
+                                      className="ml-2 text-black hover:text-red-600"
                                       size={14}
                                       onClick={(e) => {
                                         e.stopPropagation();
@@ -875,15 +891,15 @@ const EventMainContent = () => {
                                   <span className="text-sm text-black">Start date</span>
                                 )}
                               </div>
-                              <div 
+                              <div
                                 className={`w-1/2 p-0.7 text-center cursor-pointer flex items-center justify-center ${activeDateField === 'end' ? 'bg-green-100' : ''}`}
                                 onClick={() => setActiveDateField('end')}
                               >
                                 {tempFilters.dateRange.end ? (
                                   <div className="flex items-center">
                                     <span className="text-sm">{formatDate(tempFilters.dateRange.end)}</span>
-                                    <X 
-                                      className="ml-2 text-black hover:text-red-600" 
+                                    <X
+                                      className="ml-2 text-black hover:text-red-600"
                                       size={14}
                                       onClick={(e) => {
                                         e.stopPropagation();
@@ -916,7 +932,7 @@ const EventMainContent = () => {
                       )}
                     </div>
                     <div className="flex justify-end gap-2 p-2 border-t border-gray-200">
-                      <button 
+                      <button
                         className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded-md"
                         onClick={() => {
                           setOpenDropdown(null);
@@ -925,7 +941,7 @@ const EventMainContent = () => {
                       >
                         Cancel
                       </button>
-                      <button 
+                      <button
                         className="px-3 py-1 text-sm bg-green-500 hover:bg-green-600 text-white rounded-md"
                         onClick={applyFilters}
                       >
@@ -939,14 +955,14 @@ const EventMainContent = () => {
 
             {/* Sort Filter */}
             <div className={`mb-6 shadow-sm p-3 rounded-lg ${filters.sort ? 'bg-green-50' : ''}`}>
-              <div 
+              <div
                 className="flex justify-between items-center cursor-pointer"
                 onClick={() => toggleDropdown('sort')}
               >
                 <h3 className="text-gray-700">Sort</h3>
                 <div className="flex items-center">
                   {filters.sort && (
-                    <button 
+                    <button
                       onClick={(e) => {
                         e.stopPropagation();
                         clearAppliedFilter('sort');
@@ -959,7 +975,7 @@ const EventMainContent = () => {
                   {openDropdown === 'sort' ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                 </div>
               </div>
-              
+
               <AnimatePresence>
                 {openDropdown === 'sort' && (
                   <motion.div
@@ -979,8 +995,8 @@ const EventMainContent = () => {
                           'Date: Nearest First',
                           'Date: Farthest First'
                         ].map(option => (
-                          <div 
-                            key={option} 
+                          <div
+                            key={option}
                             className={`flex items-center p-2 hover:bg-[#d1fae5] rounded-md cursor-pointer ${tempFilters.sort === option ? 'bg-[#a7f3d0]' : ''}`}
                             onClick={() => setTempFilters(prev => ({ ...prev, sort: option }))}
                           >
@@ -997,13 +1013,13 @@ const EventMainContent = () => {
                       </div>
                     </div>
                     <div className="flex justify-end gap-2 p-2 border-t border-gray-200">
-                      <button 
+                      <button
                         className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded-md"
                         onClick={() => setOpenDropdown(null)}
                       >
                         Cancel
                       </button>
-                      <button 
+                      <button
                         className="px-3 py-1 text-sm bg-green-500 hover:bg-green-600 text-white rounded-md"
                         onClick={applyFilters}
                       >
@@ -1023,7 +1039,7 @@ const EventMainContent = () => {
               <RefreshCcw className="mr-2" size={16} />
               Reset All Filters
             </button>
-        </div>
+          </div>
         </div>
 
         {/* Right Content Section (75%) */}
@@ -1032,7 +1048,7 @@ const EventMainContent = () => {
             <h2 className="text-2xl font-bold text-gray-800">
               {activeSearch ? 'Search Results' : hasFilters ? 'Your Events' : 'Top Events'}
             </h2>
-            
+
             {/* Enhanced Search Bar */}
             <div className="relative w-1/2">
               <div className="relative flex">
@@ -1052,19 +1068,19 @@ const EventMainContent = () => {
                   onKeyDown={handleKeyDown}
                 />
                 {searchQuery && (
-                  <X 
+                  <X
                     className="absolute right-8 top-2.5 text-gray-400 cursor-pointer hover:text-gray-600"
                     size={18}
                     onClick={resetSearch}
                   />
                 )}
-                <Search 
-                  className="absolute right-3 top-2.5 text-gray-400 cursor-pointer hover:text-gray-600" 
+                <Search
+                  className="absolute right-3 top-2.5 text-gray-400 cursor-pointer hover:text-gray-600"
                   size={18}
                   onClick={handleSearchClick}
                 />
               </div>
-              
+
               {/* Suggestions Dropdown */}
               {showSuggestions && searchQuery && !activeSearch && (
                 <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-80 overflow-y-auto">
@@ -1084,11 +1100,11 @@ const EventMainContent = () => {
                           item.title,
                           itemIndex
                         ].filter(Boolean);
-                        
+
                         const uniqueKey = keyParts.join('-');
-                        
+
                         return (
-                          <div 
+                          <div
                             key={uniqueKey}
                             className="flex items-center p-2 hover:bg-green-50 rounded-md cursor-pointer"
                             onMouseDown={(e) => e.preventDefault()}
@@ -1107,86 +1123,86 @@ const EventMainContent = () => {
               )}
             </div>
           </div>
-<div className="flex flex-wrap gap-2 mb-6">
-  {/* Destination Filters */}
-  {(filters.destination || []).map(destId => {
-    const destination = data.destinations.find(d => d.value === destId);
-    return (
-      <div key={`dest-${destId}`} className="flex items-center bg-green-400 text-white px-3 py-1 rounded-full text-sm">
-        {destination?.label || destId}
-        <X 
-          size={14} 
-          className="ml-1 cursor-pointer hover:text-red-500"
-          onClick={() => clearAppliedFilter('destination', destId)}
-        />
-      </div>
-    );
-  })}
+          <div className="flex flex-wrap gap-2 mb-6">
+            {/* Destination Filters */}
+            {(filters.destination || []).map(destId => {
+              const destination = data.destinations.find(d => d.value === destId);
+              return (
+                <div key={`dest-${destId}`} className="flex items-center bg-green-400 text-white px-3 py-1 rounded-full text-sm">
+                  {destination?.label || destId}
+                  <X
+                    size={14}
+                    className="ml-1 cursor-pointer hover:text-red-500"
+                    onClick={() => clearAppliedFilter('destination', destId)}
+                  />
+                </div>
+              );
+            })}
 
-  {/* Organizer Filters */}
-  {(filters.organizer || []).map(orgId => {
-    const organizer = data.guides.find(g => g.id === orgId);
-    return (
-      <div key={`org-${orgId}`} className="flex items-center bg-green-400 text-white px-3 py-1 rounded-full text-sm">
-        {organizer?.name || orgId}
-        <X 
-          size={14} 
-          className="ml-1 cursor-pointer hover:text-red-500"
-          onClick={() => clearAppliedFilter('organizer', orgId)}
-        />
-      </div>
-    );
-  })}
+            {/* Organizer Filters */}
+            {(filters.organizer || []).map(orgId => {
+              const organizer = data.guides.find(g => g.id === orgId);
+              return (
+                <div key={`org-${orgId}`} className="flex items-center bg-green-400 text-white px-3 py-1 rounded-full text-sm">
+                  {organizer?.name || orgId}
+                  <X
+                    size={14}
+                    className="ml-1 cursor-pointer hover:text-red-500"
+                    onClick={() => clearAppliedFilter('organizer', orgId)}
+                  />
+                </div>
+              );
+            })}
 
-  {/* Type Filters */}
-  {(filters.type || []).map(type => (
-    <div key={`type-${type}`} className="flex items-center bg-green-400 text-white px-3 py-1 rounded-full text-sm">
-      {type}
-      <X 
-        size={14} 
-        className="ml-1 cursor-pointer hover:text-red-500"
-        onClick={() => clearAppliedFilter('type', type)}
-      />
-    </div>
-  ))}
+            {/* Type Filters */}
+            {(filters.type || []).map(type => (
+              <div key={`type-${type}`} className="flex items-center bg-green-400 text-white px-3 py-1 rounded-full text-sm">
+                {type}
+                <X
+                  size={14}
+                  className="ml-1 cursor-pointer hover:text-red-500"
+                  onClick={() => clearAppliedFilter('type', type)}
+                />
+              </div>
+            ))}
 
-  {/* Date Filter */}
-  {filters.date && (
-    <div className="flex items-center bg-green-400 text-white px-3 py-1 rounded-full text-sm">
-      {filters.date}
-      <X 
-        size={14} 
-        className="ml-1 cursor-pointer hover:text-red-500"
-        onClick={() => clearAppliedFilter('date')}
-      />
-    </div>
-  )}
+            {/* Date Filter */}
+            {filters.date && (
+              <div className="flex items-center bg-green-400 text-white px-3 py-1 rounded-full text-sm">
+                {filters.date}
+                <X
+                  size={14}
+                  className="ml-1 cursor-pointer hover:text-red-500"
+                  onClick={() => clearAppliedFilter('date')}
+                />
+              </div>
+            )}
 
-  {/* Date Range Filter */}
-  {(filters.dateRange?.start || filters.dateRange?.end) && (
-    <div className="flex items-center bg-green-400 text-white px-3 py-1 rounded-full text-sm">
-      {filters.dateRange.start ? formatDate(filters.dateRange.start) : 'Any'} - 
-      {filters.dateRange.end ? formatDate(filters.dateRange.end) : 'Any'}
-      <X 
-        size={14} 
-        className="ml-1 cursor-pointer hover:text-red-500"
-        onClick={() => clearAppliedFilter('dateRange')}
-      />
-    </div>
-  )}
+            {/* Date Range Filter */}
+            {(filters.dateRange?.start || filters.dateRange?.end) && (
+              <div className="flex items-center bg-green-400 text-white px-3 py-1 rounded-full text-sm">
+                {filters.dateRange.start ? formatDate(filters.dateRange.start) : 'Any'} -
+                {filters.dateRange.end ? formatDate(filters.dateRange.end) : 'Any'}
+                <X
+                  size={14}
+                  className="ml-1 cursor-pointer hover:text-red-500"
+                  onClick={() => clearAppliedFilter('dateRange')}
+                />
+              </div>
+            )}
 
-  {/* Sort Filter */}
-  {filters.sort && (
-    <div className="flex items-center bg-green-400 text-white px-3 py-1 rounded-full text-sm">
-      {filters.sort}
-      <X 
-        size={14} 
-        className="ml-1 cursor-pointer hover:text-red-500"
-        onClick={() => clearAppliedFilter('sort')}
-      />
-    </div>
-  )}
-</div>
+            {/* Sort Filter */}
+            {filters.sort && (
+              <div className="flex items-center bg-green-400 text-white px-3 py-1 rounded-full text-sm">
+                {filters.sort}
+                <X
+                  size={14}
+                  className="ml-1 cursor-pointer hover:text-red-500"
+                  onClick={() => clearAppliedFilter('sort')}
+                />
+              </div>
+            )}
+          </div>
           {/* Search Results Section */}
           {activeSearch ? (
             <div className="space-y-8">
@@ -1199,7 +1215,7 @@ const EventMainContent = () => {
                   <div className="space-y-6">
                     {displayedEvents.map((item) => (
                       item.type === 'event' ? (
-                        <EventCard key={`event-${item.eventId}`} event={item} guides={data.guides}/>
+                        <EventCard key={`event-${item.eventId}`} event={item} guides={data.guides} />
                       ) : (
                         <GuideCard key={`guide-${item.id}`} guide={item} />
                       )
@@ -1239,7 +1255,7 @@ const EventMainContent = () => {
             displayedEvents.length > 0 ? (
               <div className="space-y-6">
                 {displayedEvents.map((event) => (
-                  <EventCard key={event.eventId} event={event} guides={data.guides}/>
+                  <EventCard key={event.eventId} event={event} guides={data.guides} />
                 ))}
                 {!hasFilters && filteredEvents.length > displayCount && (
                   <div className="mt-8 flex justify-center">
@@ -1261,7 +1277,7 @@ const EventMainContent = () => {
                 </div>
                 <h3 className="text-lg font-medium text-gray-700 mb-2">No events found</h3>
                 <p className="text-gray-500 text-sm">Try adjusting your filters to see more results</p>
-                <button 
+                <button
                   className="mt-4 px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors"
                   onClick={resetAllFilters}
                 >

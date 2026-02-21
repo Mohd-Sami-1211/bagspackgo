@@ -10,54 +10,7 @@ import {
     PlayCircle, Image, Route, Phone, CreditCard, Home, User
 } from 'lucide-react';
 
-// ── Mock guest data (will come from bookings API later) ──
-const mockGuests = [
-    {
-        id: 'G001',
-        name: 'Rahul Sharma',
-        age: 28,
-        gender: 'Male',
-        mobile: '+91 9876543210',
-        email: 'rahul.sharma@email.com',
-        idProofType: 'Aadhaar Card',
-        idProofNumber: 'XXXX-XXXX-4567',
-        idProofImage: null,
-        address: 'B-12, Sector 15, Noida, UP',
-        bookingDate: '2025-06-01',
-        passCode: 'BPG-EVT-001-G001',
-        checkedIn: true,
-    },
-    {
-        id: 'G002',
-        name: 'Priya Kapoor',
-        age: 24,
-        gender: 'Female',
-        mobile: '+91 9123456789',
-        email: 'priya.k@email.com',
-        idProofType: 'PAN Card',
-        idProofNumber: 'ABCDE1234F',
-        idProofImage: null,
-        address: '45, MG Road, Bangalore, Karnataka',
-        bookingDate: '2025-06-02',
-        passCode: 'BPG-EVT-001-G002',
-        checkedIn: false,
-    },
-    {
-        id: 'G003',
-        name: 'Amit Verma',
-        age: 32,
-        gender: 'Male',
-        mobile: '+91 8765432109',
-        email: 'amit.verma@email.com',
-        idProofType: 'Driving License',
-        idProofNumber: 'DL-0420110012345',
-        idProofImage: null,
-        address: '12, Nehru Place, New Delhi',
-        bookingDate: '2025-06-03',
-        passCode: 'BPG-EVT-001-G003',
-        checkedIn: true,
-    },
-];
+// ── Guests state mapped dynamically below ──
 
 const mockReviews = [
     {
@@ -150,6 +103,7 @@ function CollapsibleSection({ title, icon: Icon, children, defaultOpen = false }
 export default function EventDetailView({ eventId }) {
     const router = useRouter();
     const [event, setEvent] = useState(null);
+    const [guests, setGuests] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [activeTab, setActiveTab] = useState('details');
@@ -183,6 +137,7 @@ export default function EventDetailView({ eventId }) {
             if (data.success) {
                 setEvent(data.event);
                 setEditData(data.event);
+                setGuests(data.guests || []);
             } else {
                 setError(data.message || 'Event not found');
             }
@@ -242,7 +197,7 @@ export default function EventDetailView({ eventId }) {
     const handleScan = () => {
         const trimmed = scanInput.trim();
         if (!trimmed) return;
-        const found = mockGuests.find(g => g.passCode === trimmed);
+        const found = guests.find(g => g.passCode === trimmed);
         if (found) {
             setScanResult({ success: true, guest: found });
         } else {
@@ -318,8 +273,8 @@ export default function EventDetailView({ eventId }) {
                         <div className="flex items-center gap-3">
                             <h1 className="text-2xl font-bold text-neutral-900">{event.title}</h1>
                             <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${viewMode === 'live' ? 'bg-emerald-100 text-emerald-800' :
-                                    viewMode === 'upcoming' ? 'bg-blue-100 text-blue-800' :
-                                        'bg-neutral-100 text-neutral-700'
+                                viewMode === 'upcoming' ? 'bg-blue-100 text-blue-800' :
+                                    'bg-neutral-100 text-neutral-700'
                                 }`}>
                                 {viewMode === 'live' && <PlayCircle className="w-3 h-3" />}
                                 {viewMode === 'upcoming' && <Clock className="w-3 h-3" />}
@@ -387,8 +342,8 @@ export default function EventDetailView({ eventId }) {
                             key={tab.key}
                             onClick={() => setActiveTab(tab.key)}
                             className={`pb-3 px-1 font-medium text-sm border-b-2 transition-colors flex items-center gap-2 ${activeTab === tab.key
-                                    ? 'border-emerald-500 text-emerald-700'
-                                    : 'border-transparent text-neutral-500 hover:text-neutral-700'
+                                ? 'border-emerald-500 text-emerald-700'
+                                : 'border-transparent text-neutral-500 hover:text-neutral-700'
                                 }`}
                         >
                             <tab.icon className="w-4 h-4" />
@@ -575,7 +530,7 @@ export default function EventDetailView({ eventId }) {
                         <div className="flex items-center justify-between">
                             <div>
                                 <h2 className="text-xl font-semibold text-neutral-900">Guest List</h2>
-                                <p className="text-neutral-500 text-sm">{mockGuests.length} guests registered • {mockGuests.filter(g => g.checkedIn).length} checked in</p>
+                                <p className="text-neutral-500 text-sm">{guests.length} guests registered • {guests.filter(g => g.checkedIn).length} checked in</p>
                             </div>
                             <button className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-neutral-200 text-sm font-medium hover:bg-neutral-50 transition">
                                 <Download className="w-4 h-4" />
@@ -601,7 +556,7 @@ export default function EventDetailView({ eventId }) {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {mockGuests.map((guest, i) => (
+                                        {guests.map((guest, i) => (
                                             <tr key={guest.id} className="border-b border-neutral-100 last:border-0 hover:bg-neutral-50 transition">
                                                 <td className="px-4 py-4 text-neutral-500">{i + 1}</td>
                                                 <td className="px-4 py-4">
@@ -629,8 +584,8 @@ export default function EventDetailView({ eventId }) {
                                                 </td>
                                                 <td className="px-4 py-4">
                                                     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${guest.checkedIn
-                                                            ? 'bg-emerald-100 text-emerald-800'
-                                                            : 'bg-yellow-100 text-yellow-800'
+                                                        ? 'bg-emerald-100 text-emerald-800'
+                                                        : 'bg-yellow-100 text-yellow-800'
                                                         }`}>
                                                         {guest.checkedIn ? <UserCheck className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
                                                         {guest.checkedIn ? 'Checked In' : 'Pending'}
@@ -658,7 +613,7 @@ export default function EventDetailView({ eventId }) {
                                 </table>
                             </div>
 
-                            {mockGuests.length === 0 && (
+                            {guests.length === 0 && (
                                 <div className="text-center py-12">
                                     <Users className="w-10 h-10 text-neutral-300 mx-auto mb-3" />
                                     <p className="text-neutral-500">No guests have booked this event yet.</p>
@@ -668,7 +623,7 @@ export default function EventDetailView({ eventId }) {
 
                         {/* Guest Detail Cards (mobile friendly) */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:hidden">
-                            {mockGuests.map((guest) => (
+                            {guests.map((guest) => (
                                 <div key={guest.id} className="bg-white rounded-xl border border-neutral-200 p-4">
                                     <div className="flex items-center justify-between mb-3">
                                         <div>
@@ -745,8 +700,8 @@ export default function EventDetailView({ eventId }) {
                                         animate={{ opacity: 1, scale: 1 }}
                                         exit={{ opacity: 0, scale: 0.95 }}
                                         className={`rounded-2xl border-2 p-6 ${scanResult.success
-                                                ? 'border-emerald-300 bg-emerald-50'
-                                                : 'border-red-300 bg-red-50'
+                                            ? 'border-emerald-300 bg-emerald-50'
+                                            : 'border-red-300 bg-red-50'
                                             }`}
                                     >
                                         {scanResult.success ? (
@@ -804,15 +759,15 @@ export default function EventDetailView({ eventId }) {
                             {/* Quick Stats */}
                             <div className="grid grid-cols-3 gap-4 mt-8">
                                 <div className="bg-white rounded-xl border border-neutral-200 p-4 text-center">
-                                    <p className="text-3xl font-bold text-neutral-900">{mockGuests.length}</p>
+                                    <p className="text-3xl font-bold text-neutral-900">{guests.length}</p>
                                     <p className="text-neutral-500 text-sm">Total Guests</p>
                                 </div>
                                 <div className="bg-white rounded-xl border border-neutral-200 p-4 text-center">
-                                    <p className="text-3xl font-bold text-emerald-600">{mockGuests.filter(g => g.checkedIn).length}</p>
+                                    <p className="text-3xl font-bold text-emerald-600">{guests.filter(g => g.checkedIn).length}</p>
                                     <p className="text-neutral-500 text-sm">Checked In</p>
                                 </div>
                                 <div className="bg-white rounded-xl border border-neutral-200 p-4 text-center">
-                                    <p className="text-3xl font-bold text-yellow-600">{mockGuests.filter(g => !g.checkedIn).length}</p>
+                                    <p className="text-3xl font-bold text-yellow-600">{guests.filter(g => !g.checkedIn).length}</p>
                                     <p className="text-neutral-500 text-sm">Pending</p>
                                 </div>
                             </div>
