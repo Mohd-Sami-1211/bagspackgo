@@ -144,8 +144,8 @@ export default function DownloadPassPage() {
                 >
                     {/* Pass Header Banner */}
                     <div className="bg-gradient-to-r from-gray-900 to-gray-800 p-8 text-white relative flex flex-col items-center text-center overflow-hidden">
-                        <div className="flex items-center justify-center gap-2 mb-5">
-                            <span className="text-2xl font-black tracking-tight text-white border-b-2 border-emerald-500 pb-1 uppercase shadow-sm">BAGSPACKGO</span>
+                        <div className="flex items-center justify-center mb-5 bg-white p-3 rounded-xl shadow-sm inline-flex">
+                            <img src="/images/logo.png" alt="BAGSPACKGO" className="h-10 w-auto object-contain" crossOrigin="anonymous" />
                         </div>
                         <CheckCircle className="w-12 h-12 text-emerald-400 mb-3 opacity-90" />
                         <h1 className="text-2xl sm:text-3xl font-extrabold mb-1 tracking-tight">Booking Confirmed</h1>

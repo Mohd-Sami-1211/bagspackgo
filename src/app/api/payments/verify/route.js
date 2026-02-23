@@ -4,6 +4,7 @@ import dbConnect from '@/lib/db';
 import { Booking } from '@/models/booking.model';
 import { Event } from '@/models/event.model';
 import { getCurrentUser } from '@/lib/auth';
+import { sendBookingConfirmationEmail } from '@/lib/otp-service';
 
 const RAZORPAY_SECRET = process.env.RAZORPAY_KEY_SECRET || 'rzp_test_mock_secret123';
 
@@ -53,10 +54,26 @@ export async function POST(request) {
 
             await newBooking.save();
 
-            // Update Event bookedSlots
-            await Event.findByIdAndUpdate(bookingDetails.eventId, {
+            // Update Event bookedSlots and get event details for the email
+            const eventInfo = await Event.findByIdAndUpdate(bookingDetails.eventId, {
                 $inc: { bookedSlots: passes.length }
             });
+
+            // Send Email Asynchronously
+            if (bookingDetails.contactDetails?.email && eventInfo) {
+                const mailDetails = {
+                    title: eventInfo.title,
+                    orderId: razorpay_order_id,
+                    slots: passes.length,
+                    amount: bookingDetails.amount,
+                    formattedDate: new Date(eventInfo.date).toLocaleDateString('en-US', {
+                        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+                    }),
+                    location: eventInfo.location?.city || eventInfo.location || 'TBD'
+                };
+                sendBookingConfirmationEmail(bookingDetails.contactDetails.email, user.username || bookingDetails.contactDetails.name || 'Traveler', mailDetails, newBooking._id.toString())
+                    .catch(err => console.error("Failed to send booking pass email:", err));
+            }
 
             return NextResponse.json({
                 success: true,
