@@ -60,19 +60,20 @@ const NewPackage = () => {
   const [currentDayEditing, setCurrentDayEditing] = useState(null);
   const [daysCount, setDaysCount] = useState(3);
   const [validationErrors, setValidationErrors] = useState({});
-  
+
   // Package Info State
   const [packageInfo, setPackageInfo] = useState({
     name: '',
     packageType: 'individual', // 'individual' or 'couple'
     packageCategory: 'budget', // 'budget' or 'premium'
-    pricePerPerson: '',
-    discountEnabled: false,
-    discountPercentage: '',
-    discountMinPeople: '',
     destination: '',
     days: 3,
   });
+
+  // Pricing Tiers State
+  const [pricingTiers, setPricingTiers] = useState([
+    { id: 1, minPeople: 1, maxPeople: 2, price: '', discount: '' }
+  ]);
 
   // Inclusives State
   const [inclusives, setInclusives] = useState({
@@ -155,7 +156,7 @@ const NewPackage = () => {
     if (Object.keys(validationErrors).length > 0) {
       const firstError = Object.keys(validationErrors)[0];
       let targetTab = activeTab;
-      
+
       if (firstError.startsWith('packageName') || firstError.startsWith('price') || firstError.startsWith('destination')) {
         targetTab = 'package-info';
       } else if (firstError.startsWith('inclusive_')) {
@@ -163,10 +164,10 @@ const NewPackage = () => {
       } else if (firstError.startsWith('day_')) {
         targetTab = 'itinerary';
       }
-      
+
       if (targetTab !== activeTab) {
         setActiveTab(targetTab);
-        
+
         // Scroll to error after tab switch
         setTimeout(() => {
           const element = document.querySelector(`[data-error="${firstError}"]`);
@@ -189,9 +190,14 @@ const NewPackage = () => {
 
     // Package Info Validation
     if (!packageInfo.name.trim()) errors.packageName = 'Package name is required';
-    if (!packageInfo.pricePerPerson) errors.price = `${packageInfo.packageType === 'individual' ? 'Price per person' : 'Price per couple'} is required`;
     if (!packageInfo.destination) errors.destination = 'Destination is required';
-    
+
+    // Pricing Validation
+    const hasValidTier = pricingTiers.some(tier => tier.price && parseInt(tier.price) > 0);
+    if (!hasValidTier) {
+      errors.price = 'At least one pricing tier with a valid price is required';
+    }
+
     // Validate inclusive titles if included
     Object.entries(inclusives).forEach(([key, value]) => {
       if (value.included && !value.title.trim()) {
@@ -219,12 +225,12 @@ const NewPackage = () => {
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       // Show alert about validation errors
       const errorCount = Object.keys(validationErrors).length;
       alert(`Please fill in all required fields. There are ${errorCount} error(s) to fix.`);
-      
+
       // Ensure we're on the correct tab and scroll to first error
       const firstError = Object.keys(validationErrors)[0];
       const element = document.querySelector(`[data-error="${firstError}"]`);
@@ -235,31 +241,66 @@ const NewPackage = () => {
           element.classList.remove('ring-2', 'ring-red-500');
         }, 2000);
       }
-      
+
       return;
     }
 
     setIsSubmitting(true);
-    
+
     try {
       const formData = {
         packageInfo,
+        pricingTiers: pricingTiers.filter(t => t.price && parseInt(t.price) > 0),
         inclusives,
         activities: activities.filter(a => a.name.trim() && a.details.trim()),
         itinerary,
         termsAndConditions: termsAndConditions.filter(t => t.text.trim()),
       };
-      
+
       console.log('Form data:', formData);
-      
+
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1500));
-      
+
       router.push('/serviceprovider/dashboard/settings/packages');
     } catch (error) {
       console.error('Error creating package:', error);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // Pricing Tier Handlers
+  const handleAddPricingTier = () => {
+    const newId = pricingTiers.length > 0 ? Math.max(...pricingTiers.map(t => t.id)) + 1 : 1;
+    let nextMin = 1;
+    let nextMax = 2;
+    if (pricingTiers.length > 0) {
+      const lastTier = pricingTiers[pricingTiers.length - 1];
+      nextMin = parseInt(lastTier.maxPeople) + 1 || 1;
+      nextMax = nextMin + 2;
+    }
+    setPricingTiers([...pricingTiers, { id: newId, minPeople: nextMin, maxPeople: nextMax, price: '', discount: '' }]);
+  };
+
+  const handleRemovePricingTier = (id) => {
+    if (pricingTiers.length > 1) {
+      setPricingTiers(pricingTiers.filter(term => term.id !== id));
+    }
+  };
+
+  const handlePricingTierChange = (id, field, value) => {
+    setPricingTiers(pricingTiers.map(tier =>
+      tier.id === id
+        ? { ...tier, [field]: value }
+        : tier
+    ));
+    if (field === 'price' && validationErrors.price) {
+      setValidationErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.price;
+        return newErrors;
+      });
     }
   };
 
@@ -269,11 +310,11 @@ const NewPackage = () => {
       ...prev,
       [field]: value
     }));
-    
+
     if (field === 'days') {
       setDaysCount(parseInt(value) || 1);
     }
-    
+
     // Clear validation error for this field
     if (validationErrors[field]) {
       setValidationErrors(prev => {
@@ -293,7 +334,7 @@ const NewPackage = () => {
         included: !prev[service].included
       }
     }));
-    
+
     // Clear validation error for this service
     if (validationErrors[`inclusive_${service}`]) {
       setValidationErrors(prev => {
@@ -307,7 +348,7 @@ const NewPackage = () => {
   const handleInclusiveDetailChange = (service, index, value) => {
     const newDetails = [...inclusives[service].details];
     newDetails[index] = value.slice(0, 100); // Word limit
-    
+
     setInclusives(prev => ({
       ...prev,
       [service]: {
@@ -325,7 +366,7 @@ const NewPackage = () => {
         title: value
       }
     }));
-    
+
     // Clear validation error for this service
     if (validationErrors[`inclusive_${service}`]) {
       setValidationErrors(prev => {
@@ -349,8 +390,8 @@ const NewPackage = () => {
   };
 
   const handleActivityChange = (id, field, value) => {
-    setActivities(activities.map(activity => 
-      activity.id === id 
+    setActivities(activities.map(activity =>
+      activity.id === id
         ? { ...activity, [field]: field === 'details' ? value.slice(0, 150) : value }
         : activity
     ));
@@ -369,8 +410,8 @@ const NewPackage = () => {
   };
 
   const handleTermChange = (id, value) => {
-    setTermsAndConditions(termsAndConditions.map(term => 
-      term.id === id 
+    setTermsAndConditions(termsAndConditions.map(term =>
+      term.id === id
         ? { ...term, text: value.slice(0, 200) }
         : term
     ));
@@ -388,8 +429,8 @@ const NewPackage = () => {
         ...prev,
         [`day_${dayIndex}_location`]: !data.location.trim() ? 'Location is required' : undefined,
         [`day_${dayIndex}_agenda`]: !data.agenda.trim() ? 'Agenda is required' : undefined,
-        [`day_${dayIndex}_travel`]: data.agenda === 'travel-day' && (!data.travelFrom.trim() || !data.travelTo.trim()) 
-          ? 'Travel from and to locations are required' 
+        [`day_${dayIndex}_travel`]: data.agenda === 'travel-day' && (!data.travelFrom.trim() || !data.travelTo.trim())
+          ? 'Travel from and to locations are required'
           : undefined,
       }));
       return;
@@ -409,7 +450,7 @@ const NewPackage = () => {
       isCompleted: true,
     };
     setItinerary(updatedItinerary);
-    
+
     // Clear validation errors for this day
     setValidationErrors(prev => {
       const newErrors = { ...prev };
@@ -418,7 +459,7 @@ const NewPackage = () => {
       delete newErrors[`day_${dayIndex}_travel`];
       return newErrors;
     });
-    
+
     setCurrentDayEditing(null);
   };
 
@@ -430,7 +471,7 @@ const NewPackage = () => {
         [field]: value
       };
       setItinerary(updatedItinerary);
-      
+
       // Clear validation error for this field
       if (validationErrors[`day_${dayIndex}_${field}`] || validationErrors[`day_${dayIndex}_travel`]) {
         setValidationErrors(prev => {
@@ -453,31 +494,9 @@ const NewPackage = () => {
     }
   };
 
-  // Calculate discounted price
-  const calculateDiscountedPrice = () => {
-    if (!packageInfo.discountEnabled || !packageInfo.pricePerPerson || !packageInfo.discountPercentage) {
-      return packageInfo.pricePerPerson;
-    }
-    const price = parseFloat(packageInfo.pricePerPerson);
-    const discount = parseFloat(packageInfo.discountPercentage);
-    return (price - (price * discount / 100)).toFixed(2);
-  };
-
-  // Get price label based on package type
-  const getPriceLabel = () => {
-    return packageInfo.packageType === 'individual' ? 'Price per Person (₹) *' : 'Price per Couple (₹) *';
-  };
-
-  // Get discount label based on package type
-  const getDiscountMinPeopleLabel = () => {
-    return packageInfo.packageType === 'individual' ? 'Minimum People Required' : 'Minimum Couples Required';
-  };
-
-  // Get discount description based on package type
-  const getDiscountDescription = () => {
-    const minPeople = packageInfo.discountMinPeople || 2;
-    const unit = packageInfo.packageType === 'individual' ? 'people' : 'couples';
-    return `Applied when ${minPeople} or more ${unit} book together`;
+  // Get pricing label based on package type
+  const getPricingUnitLabel = () => {
+    return packageInfo.packageType === 'individual' ? 'People' : 'Couples';
   };
 
   // Render active tab content
@@ -570,27 +589,6 @@ const NewPackage = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div data-error="price">
-                <label className="block text-sm font-semibold text-gray-800 mb-2">
-                  {getPriceLabel()}
-                </label>
-                <div className="relative">
-                  <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500">₹</span>
-                  <input
-                    type="number"
-                    value={packageInfo.pricePerPerson}
-                    onChange={(e) => handlePackageInfoChange('pricePerPerson', e.target.value)}
-                    className={`w-full border rounded-xl pl-10 pr-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all ${validationErrors.price ? 'border-red-500 ring-2 ring-red-500' : 'border-gray-300'}`}
-                    placeholder="Enter amount"
-                    required
-                    min="0"
-                  />
-                </div>
-                {validationErrors.price && (
-                  <p className="mt-1 text-sm text-red-600">{validationErrors.price}</p>
-                )}
-              </div>
-
               <div>
                 <label className="block text-sm font-semibold text-gray-800 mb-2">
                   Number of Days *
@@ -619,114 +617,126 @@ const NewPackage = () => {
                   </button>
                 </div>
               </div>
+
+              <div data-error="destination">
+                <label className="block text-sm font-semibold text-gray-800 mb-2">
+                  Destination *
+                </label>
+                <select
+                  value={packageInfo.destination}
+                  onChange={(e) => handlePackageInfoChange('destination', e.target.value)}
+                  className={`w-full border rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all ${validationErrors.destination ? 'border-red-500 ring-2 ring-red-500' : 'border-gray-300'}`}
+                  required
+                >
+                  <option value="">Select a destination</option>
+                  {destinations.map((dest) => (
+                    <option key={dest.id} value={dest.name}>
+                      {dest.name}, {dest.country}
+                    </option>
+                  ))}
+                </select>
+                {validationErrors.destination && (
+                  <p className="mt-1 text-sm text-red-600">{validationErrors.destination}</p>
+                )}
+              </div>
             </div>
 
-            <div className="bg-emerald-50 p-4 rounded-xl">
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={packageInfo.discountEnabled}
-                  onChange={(e) => handlePackageInfoChange('discountEnabled', e.target.checked)}
-                  className="w-5 h-5 text-emerald-600 focus:ring-emerald-500 rounded checked:bg-emerald-600 checked:border-emerald-600"
-                />
-                <span className="text-sm font-semibold text-gray-800">Apply Group Discount</span>
-              </label>
-              
-              {packageInfo.discountEnabled && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  className="mt-4 space-y-4"
+            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm" data-error="price">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800">Pricing Tiers *</h3>
+                  <p className="text-sm text-gray-500">Set different prices based on the number of {getPricingUnitLabel()}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleAddPricingTier}
+                  className="flex items-center gap-2 text-sm text-emerald-600 font-medium hover:text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg transition"
                 >
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Discount Percentage (%)
-                      </label>
-                      <div className="relative">
+                  <Plus size={16} /> Add Range
+                </button>
+              </div>
+
+              {validationErrors.price && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg flex items-center gap-2">
+                  <AlertCircle size={16} />
+                  {validationErrors.price}
+                </div>
+              )}
+
+              <div className="space-y-3">
+                {/* Header built with grid to align with table rows */}
+                <div className="grid grid-cols-12 gap-4 px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 hidden md:grid">
+                  <div className="col-span-4">Number of {getPricingUnitLabel()}</div>
+                  <div className="col-span-4">Price per Range (₹)</div>
+                  <div className="col-span-3">Discount (%) (Optional)</div>
+                  <div className="col-span-1 border-gray-100 text-right"></div>
+                </div>
+
+                <AnimatePresence>
+                  {pricingTiers.map((tier, index) => (
+                    <motion.div
+                      key={tier.id}
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center bg-gray-50 p-3 md:p-2 rounded-xl border border-gray-200 relative"
+                    >
+                      <div className="md:col-span-4 flex items-center gap-2">
+                        <span className="text-sm font-medium text-gray-700 min-w-8 text-center bg-white border border-gray-200 px-2 py-1 rounded">
+                          {tier.minPeople}
+                        </span>
+                        <span className="text-gray-400">to</span>
                         <input
                           type="number"
-                          value={packageInfo.discountPercentage}
-                          onChange={(e) => handlePackageInfoChange('discountPercentage', e.target.value)}
-                          className="w-full border border-gray-300 rounded-xl pl-10 pr-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
-                          placeholder="10"
+                          value={tier.maxPeople}
+                          onChange={(e) => handlePricingTierChange(tier.id, 'maxPeople', e.target.value)}
+                          className="w-16 border border-gray-300 rounded-lg px-2 py-1.5 text-center focus:ring-2 focus:ring-emerald-500 outline-none text-sm"
+                          min={tier.minPeople}
+                          placeholder="Max"
+                        />
+                        <span className="text-sm text-gray-500 hidden md:inline">{getPricingUnitLabel().toLowerCase()}</span>
+                      </div>
+
+                      <div className="md:col-span-4 relative">
+                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">₹</span>
+                        <input
+                          type="number"
+                          value={tier.price}
+                          onChange={(e) => handlePricingTierChange(tier.id, 'price', e.target.value)}
+                          className="w-full border border-gray-300 rounded-lg pl-7 pr-3 py-1.5 focus:ring-2 focus:ring-emerald-500 outline-none text-sm"
+                          placeholder="Price"
+                          min="0"
+                        />
+                      </div>
+
+                      <div className="md:col-span-3 relative">
+                        <input
+                          type="number"
+                          value={tier.discount}
+                          onChange={(e) => handlePricingTierChange(tier.id, 'discount', e.target.value)}
+                          className="w-full border border-gray-300 rounded-lg pr-7 pl-3 py-1.5 focus:ring-2 focus:ring-emerald-500 outline-none text-sm"
+                          placeholder="Discount"
                           min="0"
                           max="100"
                         />
-                        <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500">%</span>
+                        <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">%</span>
                       </div>
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        {getDiscountMinPeopleLabel()}
-                      </label>
-                      <div className="flex items-center gap-3">
-                        <button
-                          type="button"
-                          onClick={() => handlePackageInfoChange('discountMinPeople', Math.max(1, parseInt(packageInfo.discountMinPeople || 2) - 1))}
-                          className="w-10 h-10 flex items-center justify-center border border-gray-300 rounded-lg hover:bg-gray-50 transition"
-                        >
-                          <span className="text-xl">−</span>
-                        </button>
-                        <input
-                          type="number"
-                          value={packageInfo.discountMinPeople}
-                          onChange={(e) => handlePackageInfoChange('discountMinPeople', e.target.value)}
-                          className="flex-1 border border-gray-300 rounded-xl px-4 py-3 text-center focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
-                          min="1"
-                          placeholder="2"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => handlePackageInfoChange('discountMinPeople', parseInt(packageInfo.discountMinPeople || 1) + 1)}
-                          className="w-10 h-10 flex items-center justify-center border border-gray-300 rounded-lg hover:bg-gray-50 transition"
-                        >
-                          <span className="text-xl">+</span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {packageInfo.pricePerPerson && packageInfo.discountPercentage && (
-                    <div className="bg-white p-4 rounded-lg border border-emerald-100">
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-600">Original Price:</span>
-                        <span className="text-lg font-semibold">₹{packageInfo.pricePerPerson}</span>
-                      </div>
-                      <div className="flex items-center justify-between mt-2">
-                        <span className="text-gray-600">Discounted Price:</span>
-                        <span className="text-xl font-bold text-emerald-600">₹{calculateDiscountedPrice()}</span>
-                      </div>
-                      <div className="text-sm text-gray-500 mt-2">
-                        {getDiscountDescription()}
-                      </div>
-                    </div>
-                  )}
-                </motion.div>
-              )}
-            </div>
 
-            <div data-error="destination">
-              <label className="block text-sm font-semibold text-gray-800 mb-2">
-                Destination *
-              </label>
-              <select
-                value={packageInfo.destination}
-                onChange={(e) => handlePackageInfoChange('destination', e.target.value)}
-                className={`w-full border rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all ${validationErrors.destination ? 'border-red-500 ring-2 ring-red-500' : 'border-gray-300'}`}
-                required
-              >
-                <option value="">Select a destination</option>
-                {destinations.map((dest) => (
-                  <option key={dest.id} value={dest.name}>
-                    {dest.name}, {dest.country}
-                  </option>
-                ))}
-              </select>
-              {validationErrors.destination && (
-                <p className="mt-1 text-sm text-red-600">{validationErrors.destination}</p>
-              )}
+                      <div className="md:col-span-1 flex justify-end absolute md:relative top-2 right-2 md:top-auto md:right-auto">
+                        {pricingTiers.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => handleRemovePricingTier(tier.id)}
+                            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        )}
+                      </div>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
             </div>
           </div>
         );
@@ -747,7 +757,7 @@ const NewPackage = () => {
                 guidance: <Users size={20} />,
                 pickupDropoff: <Navigation size={20} />,
               };
-              
+
               const labels = {
                 food: 'Food & Dining',
                 transport: 'Transport',
@@ -812,7 +822,7 @@ const NewPackage = () => {
                           <p className="mt-1 text-sm text-red-600">{validationErrors[`inclusive_${service}`]}</p>
                         )}
                       </div>
-                      
+
                       <div className="space-y-3">
                         <label className="block text-sm font-medium text-gray-700">
                           Details (max 100 characters each)
@@ -921,7 +931,7 @@ const NewPackage = () => {
       case 'itinerary':
         if (currentDayEditing !== null) {
           const dayData = itinerary[currentDayEditing];
-          
+
           return (
             <motion.div
               initial={{ opacity: 0 }}
@@ -1144,7 +1154,7 @@ const NewPackage = () => {
                         )}
                       </div>
                     </div>
-                    
+
                     <button
                       type="button"
                       onClick={() => handleDayEdit(index)}
@@ -1163,7 +1173,7 @@ const NewPackage = () => {
                       )}
                     </button>
                   </div>
-                  
+
                   {index === 0 && !day.isCompleted && (
                     <div className="mt-4 p-3 bg-emerald-50 border border-emerald-100 rounded-lg">
                       <p className="text-sm text-emerald-700">
@@ -1171,19 +1181,19 @@ const NewPackage = () => {
                       </p>
                     </div>
                   )}
-                  
+
                   {validationErrors[`day_${index}_location`] && (
                     <div className="mt-3 p-2 bg-red-50 border border-red-100 rounded-lg">
                       <p className="text-sm text-red-600">Location is required for Day {day.day}</p>
                     </div>
                   )}
-                  
+
                   {validationErrors[`day_${index}_agenda`] && (
                     <div className="mt-3 p-2 bg-red-50 border border-red-100 rounded-lg">
                       <p className="text-sm text-red-600">Agenda is required for Day {day.day}</p>
                     </div>
                   )}
-                  
+
                   {validationErrors[`day_${index}_travel`] && (
                     <div className="mt-3 p-2 bg-red-50 border border-red-100 rounded-lg">
                       <p className="text-sm text-red-600">Travel details are required for Day {day.day}</p>
@@ -1358,8 +1368,8 @@ const NewPackage = () => {
                 <motion.div
                   className="h-full bg-emerald-500"
                   initial={{ width: 0 }}
-                  animate={{ 
-                    width: `${((tabs.findIndex(tab => tab.id === activeTab) + 1) / tabs.length) * 100}%` 
+                  animate={{
+                    width: `${((tabs.findIndex(tab => tab.id === activeTab) + 1) / tabs.length) * 100}%`
                   }}
                   transition={{ duration: 0.3 }}
                 />
@@ -1380,7 +1390,7 @@ const NewPackage = () => {
                   Previous
                 </button>
               )}
-              
+
               {tabs.findIndex(tab => tab.id === activeTab) < tabs.length - 1 && (
                 <button
                   type="button"
@@ -1394,7 +1404,7 @@ const NewPackage = () => {
                   <ChevronRight size={18} />
                 </button>
               )}
-              
+
               {activeTab === 'terms' && (
                 <button
                   type="submit"
@@ -1436,11 +1446,11 @@ const NewPackage = () => {
                   <p className="text-gray-600">You have unsaved changes for this day.</p>
                 </div>
               </div>
-              
+
               <p className="text-gray-700 mb-6">
                 If you go back without saving, all details entered for Day {currentDayEditing + 1} will be lost.
               </p>
-              
+
               <div className="flex gap-3">
                 <button
                   onClick={() => {
