@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus,
   Edit,
@@ -25,88 +25,77 @@ const Packages = () => {
   const [activeTab, setActiveTab] = useState('active');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
 
-  // Mock data for packages
-  const [packages, setPackages] = useState([
-    {
-      id: 1,
-      title: 'Premium Himalayan Trek',
-      type: 'premium',
-      price: '₹25,999',
-      originalPrice: '₹32,999',
-      destination: 'Himachal Pradesh',
-      duration: '7 Days',
-      status: 'active',
-      bookings: 42,
-      rating: 4.8,
-      features: ['Private Guide', 'Luxury Stay', 'All Meals Included', 'Adventure Sports'],
-    },
-    {
-      id: 2,
-      title: 'Goa Beach Retreat',
-      type: 'normal',
-      price: '₹12,499',
-      originalPrice: '₹15,999',
-      destination: 'Goa',
-      duration: '5 Days',
-      status: 'active',
-      bookings: 78,
-      rating: 4.2,
-      features: ['Beachfront Hotel', 'Breakfast Included', 'Water Sports'],
-    },
-    {
-      id: 3,
-      title: 'Kerala Backwater Luxury',
-      type: 'premium',
-      price: '₹32,999',
-      originalPrice: '₹38,999',
-      destination: 'Kerala',
-      duration: '6 Days',
-      status: 'active',
-      bookings: 23,
-      rating: 4.9,
-      features: ['Houseboat Stay', 'Ayurvedic Spa', 'Private Chef', 'Cultural Shows'],
-    },
-    {
-      id: 4,
-      title: 'Rajasthan Heritage Tour',
-      type: 'normal',
-      price: '₹18,500',
-      destination: 'Rajasthan',
-      duration: '8 Days',
-      status: 'inactive',
-      bookings: 0,
-      rating: 4.5,
-      features: ['Heritage Hotels', 'Guided Tours', 'Traditional Meals'],
-    },
-    {
-      id: 5,
-      title: 'Ladakh Bike Adventure',
-      type: 'premium',
-      price: '₹45,000',
-      originalPrice: '₹52,000',
-      destination: 'Ladakh',
-      duration: '10 Days',
-      status: 'active',
-      bookings: 15,
-      rating: 4.7,
-      features: ['Royal Enfield Bike', 'Support Vehicle', 'Camping', 'Oxygen Cylinders'],
-    },
-  ]);
+  const [packages, setPackages] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const filteredPackages = packages.filter(pkg => 
+  // Fetch packages on mount
+  useEffect(() => {
+    const fetchPackages = async () => {
+      try {
+        const res = await fetch('/api/provider/packages');
+        const data = await res.json();
+        if (data.success) {
+          // Re-map db package object to match existing UI
+          const mappedPackages = data.packages.map(p => {
+            // get minimum price among tiers
+            let minPrice = 'N/A';
+            if (p.pricingTiers && p.pricingTiers.length > 0) {
+              const prices = p.pricingTiers.map(t => parseInt(t.price)).filter(val => !isNaN(val));
+              if (prices.length > 0) {
+                minPrice = `₹${Math.min(...prices).toLocaleString('en-IN')}`;
+              }
+            }
+
+            return {
+              id: p._id,
+              title: p.name,
+              type: p.packageType,
+              price: minPrice,
+              destination: p.destination,
+              duration: `${p.days} Days`,
+              status: p.status || 'active',
+              bookings: 0, // placeholder since not yet added
+              rating: p.rating || 0,
+              features: p.activities ? p.activities.slice(0, 3).map(a => a.name) : [],
+            };
+          });
+          setPackages(mappedPackages);
+        }
+      } catch (error) {
+        console.error('Failed to fetch packages:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchPackages();
+  }, []);
+
+  const filteredPackages = packages.filter(pkg =>
     activeTab === 'active' ? pkg.status === 'active' : pkg.status === 'inactive'
   );
 
   const togglePackageStatus = (id) => {
-    setPackages(packages.map(pkg => 
-      pkg.id === id 
+    setPackages(packages.map(pkg =>
+      pkg.id === id
         ? { ...pkg, status: pkg.status === 'active' ? 'inactive' : 'active' }
         : pkg
     ));
   };
 
-  const deletePackage = (id) => {
-    setPackages(packages.filter(pkg => pkg.id !== id));
+  const deletePackage = async (id) => {
+    try {
+      const res = await fetch(`/api/provider/packages?id=${id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (data.success) {
+        setPackages(packages.filter(pkg => pkg.id !== id));
+      } else {
+        alert(data.message || 'Failed to delete package');
+      }
+    } catch (error) {
+      console.error('Error deleting package:', error);
+      alert('Internal error when deleting package');
+    }
     setShowDeleteConfirm(null);
   };
 
@@ -162,7 +151,7 @@ const Packages = () => {
               >
                 <MoreVertical size={20} />
               </button>
-              
+
               {showOptions && (
                 <div className="absolute right-0 mt-2 w-48 bg-white border rounded-lg shadow-lg z-10">
                   <button
@@ -184,7 +173,7 @@ const Packages = () => {
                       </>
                     )}
                   </button>
-                  <button 
+                  <button
                     onClick={() => {
                       // Handle edit - redirect to edit page or open modal
                       setShowOptions(false);
@@ -307,7 +296,7 @@ const Packages = () => {
                 </span>
               </div>
             </div>
-            
+
             <button
               onClick={handleAddNewPackage}
               className="bg-emerald-600 text-white px-4 py-3 rounded-lg hover:bg-emerald-700 transition flex items-center gap-2"
@@ -343,13 +332,17 @@ const Packages = () => {
 
       {/* Packages Grid */}
       <div className="p-6">
-        {filteredPackages.length === 0 ? (
+        {isLoading ? (
+          <div className="flex justify-center items-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-600"></div>
+          </div>
+        ) : filteredPackages.length === 0 ? (
           <div className="text-center py-12">
             <Package size={64} className="mx-auto text-gray-300 mb-4" />
             <h3 className="text-lg font-semibold text-gray-700">No {activeTab} packages found</h3>
             <p className="text-gray-500 mt-1">
-              {activeTab === 'active' 
-                ? 'All your packages are currently inactive' 
+              {activeTab === 'active'
+                ? 'All your packages are currently inactive'
                 : 'All your packages are currently active'}
             </p>
             <button

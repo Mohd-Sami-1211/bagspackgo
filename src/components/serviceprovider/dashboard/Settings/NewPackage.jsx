@@ -259,12 +259,22 @@ const NewPackage = () => {
 
       console.log('Form data:', formData);
 
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const res = await fetch('/api/provider/packages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+
+      const result = await res.json();
+
+      if (!res.ok) {
+        throw new Error(result.message || 'Failed to create package');
+      }
 
       router.push('/serviceprovider/dashboard/settings/packages');
     } catch (error) {
       console.error('Error creating package:', error);
+      alert(error.message);
     } finally {
       setIsSubmitting(false);
     }
