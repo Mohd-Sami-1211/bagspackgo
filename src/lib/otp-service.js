@@ -58,7 +58,7 @@ export async function sendOTPEmail(email, otp) {
 }
 
 /**
- * Send OTP via SMS (console-based for now)
+ * Send OTP via SMS (console-based for now) Later we will use the SMS services for OTP verification
  * @param {string} phone - 10-digit phone number
  * @param {string} otp - 4-digit OTP code
  * @returns {Promise<boolean>}
