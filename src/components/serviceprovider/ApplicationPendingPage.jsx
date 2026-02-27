@@ -109,7 +109,7 @@ export default function ApplicationPendingPage() {
 
     return (
         <div className="min-h-[100dvh] w-full flex items-center justify-center bg-[#FAFAFA] text-gray-900 overflow-x-hidden p-4 sm:p-8 lg:p-12 relative -mt-5">
-            {/* Elegant Background Elements */}
+            
             <div className="absolute top-0 left-0 w-full h-[45vh] bg-gradient-to-b from-amber-100/60 to-transparent pointer-events-none" />
             <motion.div className="absolute -top-32 -right-32 w-96 h-96 bg-amber-200/40 rounded-full blur-[100px] pointer-events-none" animate={{ scale: [1, 1.1, 1], opacity: [0.5, 0.7, 0.5] }} transition={{ duration: 8, repeat: Infinity }} />
             <motion.div className="absolute top-[40%] -left-32 w-80 h-80 bg-orange-100/40 rounded-full blur-[80px] pointer-events-none" animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }} transition={{ duration: 10, repeat: Infinity }} />
