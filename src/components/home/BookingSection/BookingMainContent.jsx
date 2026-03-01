@@ -16,22 +16,55 @@ const BookingMainContent = () => {
   useEffect(() => {
     async function fetchBookings() {
       try {
-        const res = await fetch('/api/user/bookings');
-        const data = await res.json();
-        if (data.success) {
-          const now = new Date();
-          const upcoming = [];
-          const past = [];
-          data.data.forEach(b => {
-            if (new Date(b.date) >= now || b.status === "confirmed") {
-              upcoming.push(b);
-            } else {
-              past.push(b);
-            }
+        // Fetch both event bookings and trip bookings in parallel
+        const [eventsRes, tripsRes] = await Promise.all([
+          fetch('/api/user/bookings'),
+          fetch('/api/user/trip-bookings'),
+        ]);
+        const [eventsData, tripsData] = await Promise.all([eventsRes.json(), tripsRes.json()]);
+
+        const now = new Date();
+        const upcoming = [];
+        const past = [];
+
+        // Event bookings
+        if (eventsData.success && eventsData.data) {
+          eventsData.data.forEach(b => {
+            if (new Date(b.date) >= now || b.status === "confirmed") upcoming.push(b);
+            else past.push(b);
           });
-          setCurrentBookings(upcoming);
-          setPastBookings(past);
         }
+
+        // Trip package bookings — normalize to same shape
+        if (tripsData.success && tripsData.data) {
+          tripsData.data.forEach(b => {
+            const normalized = {
+              id: b.id,
+              type: 'trip',
+              title: b.packageName,
+              date: b.startDate,
+              endDate: b.endDate,
+              destination: b.destination,
+              guide: b.guideName,
+              category: b.category,
+              status: b.status,
+              amount: b.totalAmount,
+              numPeople: b.numPeople,
+              bookingRef: b.bookingRef,
+              days: b.days,
+            };
+            if (b.status === 'confirmed' && new Date(b.startDate) >= now) upcoming.push(normalized);
+            else if (b.status === 'confirmed') past.push(normalized);
+            else upcoming.push(normalized); // pending bookings in upcoming
+          });
+        }
+
+        // Sort by date descending
+        upcoming.sort((a, b) => new Date(b.date) - new Date(a.date));
+        past.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        setCurrentBookings(upcoming);
+        setPastBookings(past);
       } catch (err) {
         console.error('Failed to fetch bookings:', err);
       } finally {

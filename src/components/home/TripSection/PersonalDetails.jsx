@@ -2,11 +2,11 @@
 import { useState, useEffect } from 'react';
 import { User, Mail, Phone, ChevronDown, Plus, Minus, Image, Upload, ArrowLeft, ArrowRight } from 'lucide-react';
 
-const PersonalDetails = ({ 
+const PersonalDetails = ({
   category = 'individual',
-  count = 1,     
+  count = 1,
   onNext,
-  onSave 
+  onSave
 }) => {
   // Contact details state
   const [contactDetails, setContactDetails] = useState({
@@ -34,7 +34,7 @@ const PersonalDetails = ({
     const initializeDetails = () => {
       if (category === 'couple') {
         return Array.from({ length: count }, (_, i) => [
-          { 
+          {
             type: 'male',
             coupleId: i,
             name: '',
@@ -46,7 +46,7 @@ const PersonalDetails = ({
             idImage: null,
             idImagePreview: ''
           },
-          { 
+          {
             type: 'female',
             coupleId: i,
             name: '',
@@ -95,11 +95,11 @@ const PersonalDetails = ({
       ...newDetails[index],
       [field]: value
     };
-    
+
     if (field === 'idType') {
       newDetails[index].idNumber = '';
     }
-    
+
     setPersonalDetails(newDetails);
     if (errors[`personal_${index}_${field}`]) {
       setErrors(prev => ({ ...prev, [`personal_${index}_${field}`]: '' }));
@@ -112,11 +112,11 @@ const PersonalDetails = ({
       ...newChildren[index],
       [field]: value
     };
-    
+
     if (field === 'idType') {
       newChildren[index].idNumber = '';
     }
-    
+
     setChildren(newChildren);
     if (errors[`child_${index}_${field}`]) {
       setErrors(prev => ({ ...prev, [`child_${index}_${field}`]: '' }));
@@ -248,7 +248,19 @@ const PersonalDetails = ({
     return isValid;
   };
 
+  // Keep parent (GuideDetails) in sync with changes automatically
+  useEffect(() => {
+    if (onSave) {
+      onSave({
+        contactDetails,
+        personalDetails,
+        children
+      });
+    }
+  }, [contactDetails, personalDetails, children]);
+
   const handleSubmit = (e) => {
+
     e.preventDefault();
     if (validateForm()) {
       const formData = {
@@ -273,7 +285,7 @@ const PersonalDetails = ({
           <h5 className="text-md font-medium text-gray-700 mb-4">
             Couple {coupleIndex + 1}
           </h5>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {couple.map((person, personIndex) => (
               <div key={`person-${coupleIndex}-${personIndex}`} className="space-y-4">
@@ -281,7 +293,7 @@ const PersonalDetails = ({
                   <User className="h-4 w-4 text-green-600 mr-2" />
                   {person.type === 'male' ? 'Male' : 'Female'} Traveler
                 </h6>
-                
+
                 {/* Name */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -388,18 +400,18 @@ const PersonalDetails = ({
                           <p className="mb-2 text-sm text-gray-500">Click to upload</p>
                           <p className="text-xs text-gray-500">PNG, JPG (MAX. 2MB)</p>
                         </div>
-                        <input 
-                          type="file" 
-                          className="hidden" 
+                        <input
+                          type="file"
+                          className="hidden"
                           accept="image/*"
                           onChange={(e) => handleIdImageUpload('personal', coupleIndex * 2 + personIndex, e)}
                         />
                       </label>
                       {person.idImagePreview && (
                         <div className="ml-4 w-24 h-24 border border-gray-200 rounded overflow-hidden">
-                          <img 
-                            src={person.idImagePreview} 
-                            alt="ID preview" 
+                          <img
+                            src={person.idImagePreview}
+                            alt="ID preview"
                             className="w-full h-full object-cover"
                           />
                         </div>
@@ -547,18 +559,18 @@ const PersonalDetails = ({
                       <p className="mb-2 text-sm text-gray-500">Click to upload</p>
                       <p className="text-xs text-gray-500">PNG, JPG (MAX. 2MB)</p>
                     </div>
-                    <input 
-                      type="file" 
-                      className="hidden" 
+                    <input
+                      type="file"
+                      className="hidden"
                       accept="image/*"
                       onChange={(e) => handleIdImageUpload('personal', index, e)}
                     />
                   </label>
                   {detail.idImagePreview && (
                     <div className="ml-4 w-24 h-24 border border-gray-200 rounded overflow-hidden">
-                      <img 
-                        src={detail.idImagePreview} 
-                        alt="ID preview" 
+                      <img
+                        src={detail.idImagePreview}
+                        alt="ID preview"
                         className="w-full h-full object-cover"
                       />
                     </div>
@@ -575,7 +587,7 @@ const PersonalDetails = ({
   return (
     <div className="space-y-8">
       <h3 className="text-2xl font-semibold text-gray-800 mb-6">Personal Details</h3>
-      
+
       {/* Contact Details Section */}
       <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-xl shadow-sm border border-gray-200 p-6">
         <h4 className="text-lg font-semibold text-gray-800 mb-5 flex items-center">
@@ -672,7 +684,7 @@ const PersonalDetails = ({
                   className="absolute top-3 right-5 p-1 text-sm text-gray-500 hover:text-white hover:bg-red-500  rounded-xl"
                 >
                   Remove
-                  
+
                 </button>
 
                 <h5 className="text-md font-medium text-gray-700 mb-4 flex items-center">
@@ -790,18 +802,18 @@ const PersonalDetails = ({
                             <p className="mb-2 text-sm text-gray-500">Click to upload</p>
                             <p className="text-xs text-gray-500">PNG, JPG (MAX. 2MB)</p>
                           </div>
-                          <input 
-                            type="file" 
-                            className="hidden" 
+                          <input
+                            type="file"
+                            className="hidden"
                             accept="image/*"
                             onChange={(e) => handleIdImageUpload('child', index, e)}
                           />
                         </label>
                         {child.idImagePreview && (
                           <div className="ml-4 w-24 h-24 border border-gray-200 rounded overflow-hidden">
-                            <img 
-                              src={child.idImagePreview} 
-                              alt="ID preview" 
+                            <img
+                              src={child.idImagePreview}
+                              alt="ID preview"
                               className="w-full h-full object-cover"
                             />
                           </div>
@@ -816,7 +828,7 @@ const PersonalDetails = ({
         )}
       </div>
 
-      
+
     </div>
   );
 };

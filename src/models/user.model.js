@@ -24,12 +24,11 @@ const userSchema = new mongoose.Schema(
         },
         password: {
             type: String,
-            required: [true, "Password is required"],
-            minlength: [8, "Password must be at least 8 characters"],
+            default: '',  // Optional for OTP-only users
         },
         dob: {
             type: Date,
-            required: [true, "Date of birth is required"],
+            default: null,
         },
         role: {
             type: String,

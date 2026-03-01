@@ -4,7 +4,6 @@ import dbConnect from '@/lib/db';
 import { Booking } from '@/models/booking.model';
 import { Event } from '@/models/event.model';
 import { getCurrentUser } from '@/lib/auth';
-import { sendBookingConfirmationEmail } from '@/lib/otp-service';
 
 const RAZORPAY_SECRET = process.env.RAZORPAY_KEY_SECRET || 'rzp_test_mock_secret123';
 

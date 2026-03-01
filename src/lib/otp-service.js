@@ -236,3 +236,93 @@ export async function sendApprovalEmail(providerEmail, companyName, providerName
         return false;
     }
 }
+
+/**
+ * Send trip booking confirmation to user and provider
+ */
+export async function sendTripBookingConfirmation({ userEmail, userName, providerEmail, providerName, bookingRef, packageName, destination, startDate, endDate, numPeople, totalAmount }) {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const formattedStart = startDate ? new Date(startDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : 'TBD';
+    const formattedEnd = endDate ? new Date(endDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : 'TBD';
+
+    // Email to user
+    if (userEmail) {
+        const userMail = {
+            from: `"bagspackgo" <${process.env.GMAIL_USER}>`,
+            to: userEmail,
+            subject: `✅ Booking Confirmed — ${packageName} | Ref: ${bookingRef}`,
+            html: `
+                <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 580px; margin: 0 auto; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.10);">
+                    <div style="background: linear-gradient(135deg, #22c55e, #16a34a); padding: 36px 32px; text-align: center;">
+                        <div style="background: white; width: 64px; height: 64px; border-radius: 50%; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; font-size: 32px;">✅</div>
+                        <h1 style="color: white; margin: 0; font-size: 26px;">Booking Confirmed!</h1>
+                        <p style="color: rgba(255,255,255,0.85); margin: 8px 0 0;">Your adventure is locked in 🎉</p>
+                    </div>
+                    <div style="background: white; padding: 36px 32px;">
+                        <p style="color: #374151; font-size: 16px;">Hi <strong>${userName}</strong>,</p>
+                        <p style="color: #4b5563; line-height: 1.6;">Your trip package booking has been confirmed. Here are the details:</p>
+                        <div style="background: #f0fdf4; border-radius: 12px; padding: 24px; margin: 20px 0;">
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <tr><td style="color: #6b7280; padding: 6px 0; font-size: 14px;">Booking Ref</td><td style="color: #111827; font-weight: 700; font-size: 14px; text-align: right;">${bookingRef}</td></tr>
+                                <tr><td style="color: #6b7280; padding: 6px 0; font-size: 14px;">Package</td><td style="color: #111827; font-weight: 600; font-size: 14px; text-align: right;">${packageName}</td></tr>
+                                <tr><td style="color: #6b7280; padding: 6px 0; font-size: 14px;">Destination</td><td style="color: #111827; font-size: 14px; text-align: right;">${destination}</td></tr>
+                                <tr><td style="color: #6b7280; padding: 6px 0; font-size: 14px;">Start Date</td><td style="color: #111827; font-size: 14px; text-align: right;">${formattedStart}</td></tr>
+                                <tr><td style="color: #6b7280; padding: 6px 0; font-size: 14px;">End Date</td><td style="color: #111827; font-size: 14px; text-align: right;">${formattedEnd}</td></tr>
+                                <tr><td style="color: #6b7280; padding: 6px 0; font-size: 14px;">Travellers</td><td style="color: #111827; font-size: 14px; text-align: right;">${numPeople}</td></tr>
+                                <tr style="border-top: 1px solid #d1fae5;"><td style="color: #16a34a; padding: 12px 0 0; font-size: 16px; font-weight: 700;">Total Paid</td><td style="color: #16a34a; font-size: 16px; font-weight: 700; text-align: right; padding-top: 12px;">₹${Number(totalAmount).toLocaleString('en-IN')}</td></tr>
+                            </table>
+                        </div>
+                        <p style="color: #4b5563; font-size: 14px; line-height: 1.6;">Your guide <strong>${providerName}</strong> will be in touch with you soon regarding pickup details.</p>
+                        <div style="text-align: center; margin: 28px 0 8px;">
+                            <a href="${appUrl}/user/bookings" style="background: linear-gradient(135deg, #22c55e, #16a34a); color: white; text-decoration: none; padding: 14px 36px; border-radius: 8px; font-size: 15px; font-weight: 600; display: inline-block;">View My Bookings →</a>
+                        </div>
+                    </div>
+                    <div style="background: #f9fafb; padding: 20px 32px; text-align: center; border-top: 1px solid #e5e7eb;">
+                        <p style="color: #9ca3af; font-size: 12px; margin: 0;">© ${new Date().getFullYear()} bagspackgo. All rights reserved.</p>
+                    </div>
+                </div>
+            `,
+        };
+        try { await transporter.sendMail(userMail); } catch (e) { console.error('User booking email failed:', e.message); }
+    }
+
+    // Email to provider
+    if (providerEmail) {
+        const providerMail = {
+            from: `"bagspackgo" <${process.env.GMAIL_USER}>`,
+            to: providerEmail,
+            subject: `🎒 New Booking Received — ${packageName} | Ref: ${bookingRef}`,
+            html: `
+                <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 580px; margin: 0 auto; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.10);">
+                    <div style="background: linear-gradient(135deg, #f59e0b, #d97706); padding: 36px 32px; text-align: center;">
+                        <h1 style="color: white; margin: 0; font-size: 26px;">New Booking!</h1>
+                        <p style="color: rgba(255,255,255,0.85); margin: 8px 0 0;">A traveller has booked your package</p>
+                    </div>
+                    <div style="background: white; padding: 36px 32px;">
+                        <p style="color: #374151; font-size: 16px;">Hi <strong>${providerName}</strong>,</p>
+                        <p style="color: #4b5563; line-height: 1.6;">Great news! <strong>${userName}</strong> has just booked your <strong>${packageName}</strong> package.</p>
+                        <div style="background: #fffbeb; border-radius: 12px; padding: 24px; margin: 20px 0;">
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <tr><td style="color: #6b7280; padding: 6px 0; font-size: 14px;">Booking Ref</td><td style="color: #111827; font-weight: 700; font-size: 14px; text-align: right;">${bookingRef}</td></tr>
+                                <tr><td style="color: #6b7280; padding: 6px 0; font-size: 14px;">Traveller</td><td style="color: #111827; font-weight: 600; font-size: 14px; text-align: right;">${userName}</td></tr>
+                                <tr><td style="color: #6b7280; padding: 6px 0; font-size: 14px;">Package</td><td style="color: #111827; font-size: 14px; text-align: right;">${packageName}</td></tr>
+                                <tr><td style="color: #6b7280; padding: 6px 0; font-size: 14px;">Destination</td><td style="color: #111827; font-size: 14px; text-align: right;">${destination}</td></tr>
+                                <tr><td style="color: #6b7280; padding: 6px 0; font-size: 14px;">Start Date</td><td style="color: #111827; font-size: 14px; text-align: right;">${formattedStart}</td></tr>
+                                <tr><td style="color: #6b7280; padding: 6px 0; font-size: 14px;">Travellers</td><td style="color: #111827; font-size: 14px; text-align: right;">${numPeople}</td></tr>
+                                <tr style="border-top: 1px solid #fde68a;"><td style="color: #d97706; padding: 12px 0 0; font-size: 16px; font-weight: 700;">Amount</td><td style="color: #d97706; font-size: 16px; font-weight: 700; text-align: right; padding-top: 12px;">₹${Number(totalAmount).toLocaleString('en-IN')}</td></tr>
+                            </table>
+                        </div>
+                        <div style="text-align: center; margin: 28px 0 8px;">
+                            <a href="${appUrl}/serviceprovider/dashboard" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; text-decoration: none; padding: 14px 36px; border-radius: 8px; font-size: 15px; font-weight: 600; display: inline-block;">View Dashboard →</a>
+                        </div>
+                    </div>
+                    <div style="background: #f9fafb; padding: 20px 32px; text-align: center; border-top: 1px solid #e5e7eb;">
+                        <p style="color: #9ca3af; font-size: 12px; margin: 0;">© ${new Date().getFullYear()} bagspackgo. All rights reserved.</p>
+                    </div>
+                </div>
+            `,
+        };
+        try { await transporter.sendMail(providerMail); } catch (e) { console.error('Provider booking email failed:', e.message); }
+    }
+}
+
