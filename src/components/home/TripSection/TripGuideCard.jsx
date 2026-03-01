@@ -3,23 +3,23 @@ import { motion } from 'framer-motion';
 import { Star, MapPin, Users, Calendar, Crown } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
-const GuideCard = ({ guide, category, daysRange, count = 1, date, selectedPackage }) => {
+const GuideCard = ({ guide, category, daysRange, peopleRange, date, selectedPackage }) => {
   // If a specific package is provided, use it. Otherwise, find one based on daysRange
   const matchedPackage = selectedPackage || (() => {
     if (!daysRange) return null;
-    
+
     const [minDays, maxDays] = daysRange.split('-').map(Number);
-    const matchingPackages = guide.packages?.filter(pkg => 
+    const matchingPackages = guide.packages?.filter(pkg =>
       pkg.days >= minDays && pkg.days <= maxDays
     );
-    
+
     // Return the first matching package (or you could implement logic to choose the "best" one)
     return matchingPackages?.length > 0 ? matchingPackages[0] : null;
   })();
-  
+
   // Check if it's a premium package
   const isPremiumPackage = matchedPackage?.type === 'premium';
-  
+
   // Calculate price based on matched package or fallback to daily rate
   let pricePerPerson;
   let totalPrice;
@@ -30,7 +30,8 @@ const GuideCard = ({ guide, category, daysRange, count = 1, date, selectedPackag
     // Use package price
     pricePerPerson = Number(matchedPackage.price[category] || matchedPackage.price.individual || 0);
     numDays = matchedPackage.days; // Use actual days from package
-    totalPrice = pricePerPerson * Math.max(1, Number(count) || 1);
+    const baseCount = peopleRange ? parseInt(peopleRange.split('-')[0]) || 1 : 1;
+    totalPrice = pricePerPerson * Math.max(1, baseCount);
     daysLabel = `${numDays} day${numDays > 1 ? 's' : ''}`; // e.g., "3 days"
   } else {
     // Fallback to daily rate calculation
@@ -41,18 +42,20 @@ const GuideCard = ({ guide, category, daysRange, count = 1, date, selectedPackag
     } else {
       numDays = 1; // Default
     }
-    const numPeople = Math.max(1, Number(count) || 1);
+    const baseCount = peopleRange ? parseInt(peopleRange.split('-')[0]) || 1 : 1;
+    const numPeople = Math.max(1, baseCount);
     totalPrice = pricePerPerson * numPeople * numDays;
     daysLabel = daysRange ? `${daysRange} days` : 'Custom days';
   }
 
-  const numPeople = Math.max(1, Number(count) || 1);
+  const baseCount = peopleRange ? parseInt(peopleRange.split('-')[0]) || 1 : 1;
+  const numPeople = Math.max(1, baseCount);
   const peopleText = category === 'couple' ? 'couple' : 'person';
   const router = useRouter();
 
   // Function to get package type label
   const getCategoryLabel = () => {
-    switch(category) {
+    switch (category) {
       case 'individual': return 'Individual';
       case 'couple': return 'Couple';
       case 'group': return 'Group';
@@ -84,7 +87,7 @@ const GuideCard = ({ guide, category, daysRange, count = 1, date, selectedPackag
               <span className="text-xs font-semibold">Premium Package</span>
             </div>
           )}
-          
+
           <div className="flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-5">
             {/* Logo */}
             <div className="flex-shrink-0 self-center sm:self-start">
@@ -208,18 +211,19 @@ const GuideCard = ({ guide, category, daysRange, count = 1, date, selectedPackag
               const params = new URLSearchParams();
               params.set('category', category);
               params.set('daysRange', daysRange || '');
-              params.set('count', count);
+
+              const baseCount = peopleRange ? parseInt(peopleRange.split('-')[0]) || 1 : 1;
+              params.set('count', baseCount);
               if (matchedPackage) {
                 params.set('packageId', matchedPackage.id);
               }
               if (date) params.set('date', date.toISOString());
               router.push(`/user/trip/guidelist/tripdetails/${guide.id}?${params.toString()}`);
             }}
-            className={`w-full py-2 sm:py-3 rounded-lg font-medium transition-colors text-sm sm:text-base ${
-              isPremiumPackage 
-                ? 'bg-gradient-to-r from-amber-50 to-yellow-50 hover:from-amber-100 hover:to-yellow-100 text-amber-900 hover:text-amber-950 border border-amber-300' 
+            className={`w-full py-2 sm:py-3 rounded-lg font-medium transition-colors text-sm sm:text-base ${isPremiumPackage
+                ? 'bg-gradient-to-r from-amber-50 to-yellow-50 hover:from-amber-100 hover:to-yellow-100 text-amber-900 hover:text-amber-950 border border-amber-300'
                 : 'bg-white hover:bg-[#d4f7d4] text-gray-600 hover:text-gray-900'
-            }`}
+              }`}
           >
             {isPremiumPackage ? 'View Premium' : 'View Details'}
           </motion.button>

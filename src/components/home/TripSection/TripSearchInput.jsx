@@ -11,7 +11,7 @@ import { useRouter } from 'next/navigation';
 const TripSearchInput = forwardRef(({ compactMode = false, onSearch }, ref) => {
   const router = useRouter();
   const [daysRange, setDaysRange] = useState(null);
-  const [count, setCount] = useState(1);
+  const [peopleRange, setPeopleRange] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('individual');
   const [selectedDestination, setSelectedDestination] = useState(null);
   const [startDate, setStartDate] = useState(null);
@@ -26,7 +26,7 @@ const TripSearchInput = forwardRef(({ compactMode = false, onSearch }, ref) => {
       category: selectedCategory,
       date: startDate?.toISOString() || '',
       daysRange: daysRange?.value || '',
-      count,
+      peopleRange: peopleRange?.value || '',
     }),
   }));
 
@@ -35,7 +35,7 @@ const TripSearchInput = forwardRef(({ compactMode = false, onSearch }, ref) => {
     setError(null);
     setTimeout(() => {
       setDaysRange(null);
-      setCount(1);
+      setPeopleRange(null);
       setStartDate(null);
       setDateInput('');
       setSelectedCategory('individual');
@@ -85,7 +85,7 @@ const TripSearchInput = forwardRef(({ compactMode = false, onSearch }, ref) => {
       category: selectedCategory,
       date: startDate?.toISOString() || '',
       daysRange: daysRange?.value || '',
-      count: count.toString(),
+      peopleRange: peopleRange?.value || '',
     };
 
     const filteredParams = Object.fromEntries(
@@ -122,9 +122,8 @@ const TripSearchInput = forwardRef(({ compactMode = false, onSearch }, ref) => {
       whileInView="onscreen"
       viewport={{ once: true, amount: 0.2 }}
       variants={scrollVariants}
-      className={`bg-white/90 rounded-2xl shadow-lg p-2 w-full max-w-full ${
-        compactMode ? 'md:max-w-4xl' : 'md:max-w-5xl min-h-[180px]'
-      } hover:shadow-xl transition-shadow duration-300`}
+      className={`bg-white/90 rounded-2xl shadow-lg p-2 w-full max-w-full ${compactMode ? 'md:max-w-4xl' : 'md:max-w-5xl min-h-[180px]'
+        } hover:shadow-xl transition-shadow duration-300`}
     >
       <motion.div
         initial="hidden"
@@ -143,7 +142,7 @@ const TripSearchInput = forwardRef(({ compactMode = false, onSearch }, ref) => {
         </motion.div>
 
         <motion.div variants={itemVariants} className="flex-[2] bg-[#C3EFE6] rounded-xl p-3 flex flex-col justify-between w-full md:w-auto">
-          <CountersSection daysRange={daysRange} setDaysRange={setDaysRange} count={count} setCount={setCount} selectedCategory={selectedCategory} />
+          <CountersSection daysRange={daysRange} setDaysRange={setDaysRange} peopleRange={peopleRange} setPeopleRange={setPeopleRange} selectedCategory={selectedCategory} />
 
           <div className="flex flex-col sm:flex-row gap-3 sm:items-end mt-3">
             <motion.div variants={itemVariants} className="flex-1 relative z-[60] w-full">
@@ -276,13 +275,21 @@ const CategorySelect = ({ selectedCategory, setSelectedCategory }) => (
 );
 
 // ------------------- Counters Section -------------------
-const CountersSection = ({ daysRange, setDaysRange, count, setCount, selectedCategory }) => {
+const CountersSection = ({ daysRange, setDaysRange, peopleRange, setPeopleRange, selectedCategory }) => {
   const daysOptions = [
     { value: '0-3', label: '0-3 days' },
     { value: '3-5', label: '3-5 days' },
     { value: '5-7', label: '5-7 days' },
     { value: '7-9', label: '7-9 days' },
     { value: 'other', label: 'Others' }
+  ];
+
+  const peopleOptions = [
+    { value: '1-2', label: selectedCategory === 'couple' ? '1-2 Couples' : '1-2 People' },
+    { value: '3-5', label: selectedCategory === 'couple' ? '3-5 Couples' : '3-5 People' },
+    { value: '6-9', label: selectedCategory === 'couple' ? '6-9 Couples' : '6-9 People' },
+    { value: '10-15', label: selectedCategory === 'couple' ? '10-15 Couples' : '10-15 People' },
+    { value: '15+', label: selectedCategory === 'couple' ? '15+ Couples' : '15+ People' }
   ];
 
   return (
@@ -307,68 +314,48 @@ const CountersSection = ({ daysRange, setDaysRange, count, setCount, selectedCat
             ...selectStyles,
             control: (provided, state) => ({
               ...selectStyles.control(provided, state),
-              minHeight: '36px', // Match counter height
+              minHeight: '36px', // Match height
             }),
           }}
           menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
           menuPosition="fixed"
         />
       </motion.div>
-      
-      <Counter
-        label={selectedCategory === 'couple' ? 'No. of Couples' : 'No. of Individuals'}
-        value={count}
-        onIncrement={() => setCount((prev) => prev + 1)}
-        onDecrement={() => setCount((prev) => Math.max(1, prev - 1))}
-        onChange={(e) => {
-          const value = e.target.value;
-          if (value === '') setCount(1);
-          else {
-            const numValue = parseInt(value);
-            if (!isNaN(numValue)) setCount(Math.max(1, numValue));
-          }
-        }}
-      />
+
+      {/* People Range Select Dropdown */}
+      <motion.div
+        className="flex-1 w-full sm:w-auto"
+        initial={{ opacity: 0, y: 10 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: '-30px' }}
+        transition={{ duration: 0.3, delay: 0.1 }}
+      >
+        <label className="block text-sm font-semibold text-gray-800 mb-1">
+          {selectedCategory === 'couple' ? 'No. of Couples' : 'No. of People'}
+        </label>
+        <Select
+          options={peopleOptions}
+          value={peopleRange}
+          onChange={setPeopleRange}
+          placeholder="Select Range"
+          classNamePrefix="react-select"
+          isClearable
+          styles={{
+            ...selectStyles,
+            control: (provided, state) => ({
+              ...selectStyles.control(provided, state),
+              minHeight: '36px', // Match height
+            }),
+          }}
+          menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
+          menuPosition="fixed"
+        />
+      </motion.div>
     </motion.div>
   );
 };
 
-// ------------------- Counter -------------------
-const Counter = ({ label, value, onIncrement, onDecrement, onChange }) => {
-  const [inputValue, setInputValue] = useState(value.toString());
-  const inputRef = useRef(null);
 
-  useEffect(() => {
-    setInputValue(value.toString());
-  }, [value]);
-
-  const handleChange = (e) => {
-    const newValue = e.target.value;
-    setInputValue(newValue);
-    if (newValue === '') onChange({ target: { value: '' } });
-    else if (/^\d+$/.test(newValue)) onChange(e);
-  };
-
-  const handleBlur = () => {
-    if (inputValue === '') {
-      setInputValue('1');
-      onChange({ target: { value: '1' } });
-    }
-  };
-
-  const handleFocus = (e) => e.target.select();
-
-  return (
-    <motion.div className="flex-1 w-full sm:w-auto" initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-30px' }} transition={{ duration: 0.3 }}>
-      <label className="block text-sm font-semibold text-gray-800 mb-1">{label}</label>
-      <div className="flex items-center bg-white rounded-lg border border-gray-300 h-9">
-        <motion.button className="px-2 text-gray-600 hover:bg-green-100 focus:outline-none focus:ring-1 focus:ring-green-400 rounded-l-md text-sm" onClick={onDecrement} whileTap={{ scale: 0.9 }}>-</motion.button>
-        <input ref={inputRef} type="text" inputMode="numeric" pattern="[0-9]*" value={inputValue} onChange={handleChange} onBlur={handleBlur} onFocus={handleFocus} className="flex-1 text-center border-x border-gray-300 text-sm focus:outline-none" />
-        <motion.button className="px-2 text-gray-600 hover:bg-green-100 focus:outline-none focus:ring-1 focus:ring-green-400 rounded-r-md text-sm" onClick={onIncrement} whileTap={{ scale: 0.9 }}>+</motion.button>
-      </div>
-    </motion.div>
-  );
-};
 
 // ------------------- Select Styles -------------------
 const selectStyles = {

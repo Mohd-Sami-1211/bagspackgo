@@ -14,13 +14,13 @@ const SearchResults = () => {
   const searchParams = useSearchParams();
   const searchInputRef = useRef(null);
   const [searchTimeout, setSearchTimeout] = useState(null);
-  
+
   // UI state
   const [isEditing, setIsEditing] = useState(false);
   const [isApplying, setIsApplying] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showSortDropdown, setShowSortDropdown] = useState(false);
-  
+
   // Filter/sort state
   const [sortOption, setSortOption] = useState('rating-desc');
   const [searchQuery, setSearchQuery] = useState('');
@@ -34,14 +34,14 @@ const SearchResults = () => {
   };
 
   const destination = getValidParam('destination', '');
-  const category = ['individual', 'couple', 'group'].includes(searchParams.get('category')) 
-    ? searchParams.get('category') 
+  const category = ['individual', 'couple', 'group'].includes(searchParams.get('category'))
+    ? searchParams.get('category')
     : 'individual';
   const daysRange = getValidParam('daysRange', '');
-  const count = Math.max(1, parseInt(getValidParam('count', '1')));
+  const peopleRange = getValidParam('peopleRange', '');
   const dateParam = searchParams.get('date');
-  const date = dateParam && !isNaN(new Date(dateParam).getTime()) 
-    ? new Date(dateParam) 
+  const date = dateParam && !isNaN(new Date(dateParam).getTime())
+    ? new Date(dateParam)
     : null;
 
   // Days range options (should match the options in TripSearchInput)
@@ -51,6 +51,14 @@ const SearchResults = () => {
     { value: '5-7', label: '5-7 days' },
     { value: '7-9', label: '7-9 days' },
     { value: 'other', label: 'Others' }
+  ];
+
+  const peopleOptions = [
+    { value: '1-2', label: category === 'couple' ? '1-2 Couples' : '1-2 People' },
+    { value: '3-5', label: category === 'couple' ? '3-5 Couples' : '3-5 People' },
+    { value: '6-9', label: category === 'couple' ? '6-9 Couples' : '6-9 People' },
+    { value: '10-15', label: category === 'couple' ? '10-15 Couples' : '10-15 People' },
+    { value: '15+', label: category === 'couple' ? '15+ Couples' : '15+ People' }
   ];
 
   // Get label for display
@@ -67,7 +75,7 @@ const SearchResults = () => {
 
     // Parse the days range (e.g., "3-5" -> minDays=3, maxDays=5)
     const [minDays, maxDays] = daysRange.split('-').map(Number);
-    
+
     // Get all packages within this range
     return guide.packages.filter(pkg => {
       const packageDays = pkg.days;
@@ -81,7 +89,9 @@ const SearchResults = () => {
   const [editableDaysRange, setEditableDaysRange] = useState(
     daysOptions.find(opt => opt.value === daysRange) || null
   );
-  const [editableCount, setEditableCount] = useState(count);
+  const [editablePeopleRange, setEditablePeopleRange] = useState(
+    peopleOptions.find(opt => opt.value === peopleRange) || null
+  );
   const [editableDate, setEditableDate] = useState(date);
 
   // Debounced search function
@@ -99,14 +109,14 @@ const SearchResults = () => {
       setLoading(true);
       try {
         let results = data.guides;
-        
+
         // Filter by destination if specified
         if (destination) {
-          results = results.filter(guide => 
+          results = results.filter(guide =>
             guide.location.toLowerCase().includes(destination.toLowerCase())
           );
         }
-        
+
         // Filter by days range if specified
         if (daysRange) {
           results = results.filter(guide => {
@@ -114,15 +124,15 @@ const SearchResults = () => {
             return packagesInRange.length > 0; // Show guides that have at least one package in range
           });
         }
-        
+
         // Apply search query filters
         if (searchQuery) {
           const query = searchQuery.toLowerCase();
-          results = results.filter(guide => 
+          results = results.filter(guide =>
             guide.name.toLowerCase().includes(query)
           );
         }
-        
+
         // Sort results
         results = sortGuides(results, sortOption);
         setGuides(results);
@@ -154,18 +164,18 @@ const SearchResults = () => {
 
   const handleApplyChanges = () => {
     setIsApplying(true);
-    
+
     const params = {
       destination: editableDestination || destination,
       category: editableCategory || category,
       daysRange: editableDaysRange?.value || '',
-      count: editableCount || count,
+      peopleRange: editablePeopleRange?.value || '',
       ...(editableDate && { date: editableDate.toISOString() })
     };
 
     const queryString = new URLSearchParams(params).toString();
     router.push(`/user/trip/guidelist?${queryString}`);
-    
+
     // Reset editing state after navigation
     setIsEditing(false);
     setIsApplying(false);
@@ -175,7 +185,7 @@ const SearchResults = () => {
     setEditableDestination(destination);
     setEditableCategory(category);
     setEditableDaysRange(daysOptions.find(opt => opt.value === daysRange) || null);
-    setEditableCount(count);
+    setEditablePeopleRange(peopleOptions.find(opt => opt.value === peopleRange) || null);
     setEditableDate(date);
     setIsEditing(false);
   };
@@ -211,7 +221,7 @@ const SearchResults = () => {
             <h2 className="text-xl font-bold text-gray-800">
               {isEditing ? 'Modify Your Trip' : `Your Trip to ${destination || 'All Destinations'}`}
             </h2>
-            
+
             {isEditing ? (
               <div className="flex gap-3">
                 <motion.button
@@ -372,10 +382,10 @@ const SearchResults = () => {
                 <p className="font-medium text-xs sm:text-sm h-[32px] sm:h-[36px] flex items-center text-gray-900">
                   {date
                     ? date.toLocaleDateString('en-US', {
-                        day: 'numeric',
-                        month: 'short',
-                        year: 'numeric',
-                      })
+                      day: 'numeric',
+                      month: 'short',
+                      year: 'numeric',
+                    })
                     : 'Not specified'}
                 </p>
               )}
@@ -421,57 +431,44 @@ const SearchResults = () => {
               )}
             </div>
 
-            {/* Count Field */}
+            {/* People Range Field */}
             <div className="bg-gradient-to-br from-green-50 to-blue-50 p-2.5 sm:p-3 rounded-lg">
               <label className="block text-[11px] sm:text-xs text-gray-900 mb-0.5 sm:mb-1">
                 {category === 'couple' ? 'Couples' : 'People'}
               </label>
               {isEditing ? (
-                <div className="flex items-center h-[32px] sm:h-[36px] bg-white border border-gray-300 rounded overflow-hidden focus-within:ring-1 focus-within:ring-green-500 focus-within:border-green-500">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setEditableCount((prev) => Math.max(1, prev === '' ? 0 : parseInt(prev) - 1))
-                    }
-                    className="px-2 text-gray-600 hover:bg-gray-100 h-full flex items-center"
-                  >
-                    -
-                  </button>
-                  <input
-                    type="number"
-                    min="1"
-                    value={editableCount}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setEditableCount(value === '' ? '' : Math.max(1, parseInt(value) || 1));
-                    }}
-                    onBlur={(e) => {
-                      if (e.target.value === '' || e.target.value === '0') {
-                        setEditableCount(1);
-                      }
-                    }}
-                    className="flex-1 text-center border-x border-gray-300 text-xs sm:text-sm h-full w-12 focus:outline-none font-medium text-gray-900"
-                  />
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setEditableCount((prev) => (prev === '' ? 2 : parseInt(prev) + 1))
-                    }
-                    className="px-2 text-gray-600 hover:bg-gray-100 h-full flex items-center"
-                  >
-                    +
-                  </button>
-                </div>
+                <Select
+                  options={peopleOptions}
+                  value={editablePeopleRange}
+                  onChange={setEditablePeopleRange}
+                  placeholder="Select range"
+                  classNamePrefix="react-select"
+                  isClearable
+                  styles={{
+                    ...inlineSelectStyles,
+                    control: (provided, state) => ({
+                      ...provided,
+                      height: '32px',
+                      minHeight: '32px',
+                      fontSize: '13px',
+                      fontWeight: '500',
+                      borderColor: state.isFocused ? '#10b981' : '#d1d5db',
+                      boxShadow: state.isFocused ? '0 0 0 1px #10b981' : 'none',
+                      '&:hover': {
+                        borderColor: state.isFocused ? '#10b981' : '#d1d5db',
+                      },
+                    }),
+                    singleValue: (provided) => ({
+                      ...provided,
+                      color: '#111827',
+                      fontSize: '13px',
+                      fontWeight: '500',
+                    }),
+                  }}
+                />
               ) : (
                 <p className="font-medium text-xs sm:text-sm h-[32px] sm:h-[36px] flex items-center text-gray-900">
-                  {count}{' '}
-                  {category === 'couple'
-                    ? count === 1
-                      ? 'couple'
-                      : 'couples'
-                    : count === 1
-                    ? 'person'
-                    : 'people'}
+                  {peopleOptions.find(opt => opt.value === peopleRange)?.label || 'Any'}
                 </p>
               )}
             </div>
@@ -490,7 +487,7 @@ const SearchResults = () => {
               </span>
             )}
           </h3>
-          
+
           <div className="flex items-center gap-3">
             {/* Sort By Dropdown */}
             <div className="relative">
@@ -509,7 +506,7 @@ const SearchResults = () => {
                       {activeFilter === 'price-asc' && 'Lowest Price'}
                       {activeFilter === 'reviews-desc' && 'Most Reviews'}
                     </span>
-                    <div 
+                    <div
                       onClick={clearFilter}
                       className="text-green-600 hover:text-green-800 ml-1 cursor-pointer"
                     >
@@ -523,7 +520,7 @@ const SearchResults = () => {
                   </>
                 )}
               </motion.div>
-              
+
               {/* Dropdown Menu */}
               {showSortDropdown && (
                 <motion.div
@@ -580,7 +577,7 @@ const SearchResults = () => {
               />
               <SearchIcon className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
               {searchQuery && (
-                <div 
+                <div
                   onClick={() => {
                     setSearchQuery('');
                     searchInputRef.current?.focus();
@@ -609,7 +606,7 @@ const SearchResults = () => {
             guides.map((guide, index) => {
               // Get all packages for this guide within the selected range
               const packagesInRange = getPackagesInRange(guide, daysRange);
-              
+
               // If no daysRange selected, show all packages (or just the guide)
               if (!daysRange || packagesInRange.length === 0) {
                 return (
@@ -619,18 +616,18 @@ const SearchResults = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
                   >
-                    <GuideCard 
+                    <GuideCard
                       guide={guide}
                       category={category}
                       daysRange={daysRange}
-                      count={count}  
+                      peopleRange={peopleRange}
                       date={date}
                       packagesInRange={packagesInRange}
                     />
                   </motion.div>
                 );
               }
-              
+
               // If there are packages in range, create a card for EACH package
               return packagesInRange.map((pkg, pkgIndex) => (
                 <motion.div
@@ -639,11 +636,11 @@ const SearchResults = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: (index * 0.05) + (pkgIndex * 0.02) }}
                 >
-                  <GuideCard 
+                  <GuideCard
                     guide={guide}
                     category={category}
                     daysRange={daysRange}
-                    count={count}  
+                    peopleRange={peopleRange}
                     date={date}
                     selectedPackage={pkg} // Pass the specific package
                   />
@@ -696,8 +693,8 @@ const inlineSelectStyles = {
     backgroundColor: state.isSelected
       ? '#d1fae5'
       : state.isFocused
-      ? '#ecfdf5'
-      : 'white',
+        ? '#ecfdf5'
+        : 'white',
     color: state.isSelected ? '#065f46' : '#374151',
     '&:active': {
       backgroundColor: '#d1fae5',
