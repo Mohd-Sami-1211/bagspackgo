@@ -9,6 +9,10 @@ export async function GET(req) {
         if (!user) {
             return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
         }
+        // Providers & admins cannot use user booking routes
+        if (user.role !== 'user') {
+            return NextResponse.json({ success: false, message: 'Access denied. This endpoint is for users only.' }, { status: 403 });
+        }
 
         await dbConnect();
 

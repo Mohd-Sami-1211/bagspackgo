@@ -31,9 +31,11 @@ export async function POST(req) {
             termsAndConditions
         } = data;
 
-        if (!packageInfo || !packageInfo.name || !packageInfo.destination || !packageInfo.days) {
-            return NextResponse.json({ success: false, message: 'Missing required package info' }, { status: 400 });
+        if (!packageInfo || !packageInfo.name || !packageInfo.destination) {
+            return NextResponse.json({ success: false, message: 'Missing required package info (name or destination)' }, { status: 400 });
         }
+
+        const days = parseInt(packageInfo.days) || 1;
 
         if (!pricingTiers || pricingTiers.length === 0) {
             return NextResponse.json({ success: false, message: 'At least one pricing tier is required' }, { status: 400 });
@@ -41,16 +43,16 @@ export async function POST(req) {
 
         const newPackage = new Package({
             provider: user.userId,
-            name: packageInfo.name,
+            name: packageInfo.name.trim(),
             packageType: packageInfo.packageType || 'individual',
             packageCategory: packageInfo.packageCategory || 'budget',
-            destination: packageInfo.destination,
-            days: packageInfo.days,
+            destination: packageInfo.destination.trim(),
+            days,
             pricingTiers: pricingTiers.map(tier => ({
-                minPeople: tier.minPeople,
-                maxPeople: tier.maxPeople,
-                price: tier.price,
-                discount: tier.discount || 0
+                minPeople: parseInt(tier.minPeople) || 1,
+                maxPeople: parseInt(tier.maxPeople) || 2,
+                price: parseFloat(tier.price) || 0,
+                discount: parseFloat(tier.discount) || 0
             })),
             inclusives: {
                 food: inclusives?.food,
@@ -59,22 +61,22 @@ export async function POST(req) {
                 guidance: inclusives?.guidance,
                 pickupDropoff: inclusives?.pickupDropoff
             },
-            activities: activities?.map(a => ({
+            activities: (activities || []).map(a => ({
                 name: a.name,
                 details: a.details
             })),
-            itinerary: itinerary?.map(day => ({
+            itinerary: (itinerary || []).map(day => ({
                 day: day.day,
-                location: day.location,
-                agenda: day.agenda,
-                travelFrom: day.travelFrom,
-                travelTo: day.travelTo,
-                pickupTime: day.pickupTime,
-                hotelName: day.hotelName,
-                activities: day.activities,
-                highlights: day.highlights
+                location: day.location || '',
+                agenda: day.agenda || '',
+                travelFrom: day.travelFrom || '',
+                travelTo: day.travelTo || '',
+                pickupTime: day.pickupTime || '',
+                hotelName: day.hotelName || '',
+                activities: day.activities || [],
+                highlights: (day.highlights || []).filter(h => h && h.trim())
             })),
-            termsAndConditions: termsAndConditions?.map(t => t.text)
+            termsAndConditions: (termsAndConditions || []).map(t => typeof t === 'string' ? t : t.text)
         });
 
         await newPackage.save();
@@ -94,6 +96,7 @@ export async function POST(req) {
     }
 }
 
+
 export async function GET(req) {
     try {
         const user = await getCurrentUser(req);
@@ -112,6 +115,41 @@ export async function GET(req) {
     } catch (error) {
         console.error('Error fetching provider packages:', error);
         return NextResponse.json({ success: false, message: 'Failed to fetch packages' }, { status: 500 });
+    }
+}
+
+export async function PATCH(req) {
+    try {
+        const user = await getCurrentUser(req);
+        if (!user || user.role !== 'provider') {
+            return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
+        }
+
+        const url = new URL(req.url);
+        const packageId = url.searchParams.get('id');
+
+        if (!packageId) {
+            return NextResponse.json({ success: false, message: 'Package ID required' }, { status: 400 });
+        }
+
+        await dbConnect();
+
+        const packageItem = await Package.findOne({ _id: packageId, provider: user.userId });
+        if (!packageItem) {
+            return NextResponse.json({ success: false, message: 'Package not found or unauthorized' }, { status: 404 });
+        }
+
+        // Toggle status — treat legacy 'published' as 'active'
+        const currentStatus = packageItem.status;
+        const isCurrentlyActive = currentStatus === 'active' || currentStatus === 'published';
+        const newStatus = isCurrentlyActive ? 'inactive' : 'active';
+        packageItem.status = newStatus;
+        await packageItem.save();
+
+        return NextResponse.json({ success: true, newStatus }, { status: 200 });
+    } catch (error) {
+        console.error('Error updating package status:', error);
+        return NextResponse.json({ success: false, message: 'Failed to update package status' }, { status: 500 });
     }
 }
 

@@ -108,24 +108,17 @@ const SearchResults = () => {
     const fetchGuides = async () => {
       setLoading(true);
       try {
-        let results = data.guides;
+        const params = new URLSearchParams();
+        if (destination) params.set('destination', destination);
+        if (daysRange) params.set('daysRange', daysRange);
+        if (peopleRange) params.set('peopleRange', peopleRange);
+        if (category) params.set('category', category);
 
-        // Filter by destination if specified
-        if (destination) {
-          results = results.filter(guide =>
-            guide.location.toLowerCase().includes(destination.toLowerCase())
-          );
-        }
+        const res = await fetch(`/api/public/trips?${params.toString()}`);
+        const json = await res.json();
+        let results = json.success ? json.data : [];
 
-        // Filter by days range if specified
-        if (daysRange) {
-          results = results.filter(guide => {
-            const packagesInRange = getPackagesInRange(guide, daysRange);
-            return packagesInRange.length > 0; // Show guides that have at least one package in range
-          });
-        }
-
-        // Apply search query filters
+        // Apply local guide name search query filter
         if (searchQuery) {
           const query = searchQuery.toLowerCase();
           results = results.filter(guide =>
@@ -147,7 +140,7 @@ const SearchResults = () => {
     return () => {
       if (searchTimeout) clearTimeout(searchTimeout);
     };
-  }, [destination, daysRange, sortOption, searchQuery]);
+  }, [destination, daysRange, peopleRange, category, sortOption, searchQuery]);
 
   const sortGuides = (guides, option) => {
     const [field, order] = option.split('-');

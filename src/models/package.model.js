@@ -15,12 +15,12 @@ const inclusiveDetailSchema = new mongoose.Schema({
 
 const itineraryDaySchema = new mongoose.Schema({
     day: { type: Number, required: true },
-    location: { type: String, required: true },
-    agenda: { type: String, required: true },
-    travelFrom: { type: String },
-    travelTo: { type: String },
-    pickupTime: { type: String },
-    hotelName: { type: String },
+    location: { type: String, default: '' },
+    agenda: { type: String, default: '' },
+    travelFrom: { type: String, default: '' },
+    travelTo: { type: String, default: '' },
+    pickupTime: { type: String, default: '' },
+    hotelName: { type: String, default: '' },
     activities: [{ type: String }],
     highlights: [{ type: String }]
 });
@@ -52,7 +52,7 @@ const packageSchema = new mongoose.Schema({
 
     termsAndConditions: [{ type: String }],
 
-    status: { type: String, enum: ['draft', 'published'], default: 'published' },
+    status: { type: String, enum: ['draft', 'active', 'inactive'], default: 'active' },
 
     // Stats for the package
     reviews: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Review' }],

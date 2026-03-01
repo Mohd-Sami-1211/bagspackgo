@@ -46,6 +46,10 @@ const Packages = () => {
               }
             }
 
+            // Normalize status: treat legacy 'published' as 'active'
+            const rawStatus = p.status || 'active';
+            const displayStatus = rawStatus === 'published' ? 'active' : rawStatus;
+
             return {
               id: p._id,
               title: p.name,
@@ -53,8 +57,8 @@ const Packages = () => {
               price: minPrice,
               destination: p.destination,
               duration: `${p.days} Days`,
-              status: p.status || 'active',
-              bookings: 0, // placeholder since not yet added
+              status: displayStatus,
+              bookings: 0,
               rating: p.rating || 0,
               features: p.activities ? p.activities.slice(0, 3).map(a => a.name) : [],
             };
@@ -75,12 +79,21 @@ const Packages = () => {
     activeTab === 'active' ? pkg.status === 'active' : pkg.status === 'inactive'
   );
 
-  const togglePackageStatus = (id) => {
-    setPackages(packages.map(pkg =>
-      pkg.id === id
-        ? { ...pkg, status: pkg.status === 'active' ? 'inactive' : 'active' }
-        : pkg
-    ));
+  const togglePackageStatus = async (id) => {
+    try {
+      const res = await fetch(`/api/provider/packages?id=${id}`, { method: 'PATCH' });
+      const data = await res.json();
+      if (data.success) {
+        setPackages(packages.map(pkg =>
+          pkg.id === id ? { ...pkg, status: data.newStatus } : pkg
+        ));
+      } else {
+        alert(data.message || 'Failed to update status');
+      }
+    } catch (error) {
+      console.error('Error toggling status:', error);
+      alert('Internal error when updating package status');
+    }
   };
 
   const deletePackage = async (id) => {

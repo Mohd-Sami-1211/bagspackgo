@@ -15,6 +15,9 @@ export async function POST(request) {
         if (!user) {
             return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
         }
+        if (user.role !== 'user') {
+            return NextResponse.json({ success: false, message: 'Only users can make bookings.' }, { status: 403 });
+        }
 
         const { amount, eventId, participants } = await request.json();
 

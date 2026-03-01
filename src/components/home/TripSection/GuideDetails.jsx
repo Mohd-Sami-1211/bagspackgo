@@ -9,7 +9,7 @@ import PersonalDetails from 'src/components/home/TripSection/PersonalDetails';
 const GuideDetails = ({ guide }) => {
   const searchParams = useSearchParams();
   const router = useRouter();
-  
+
   // Get parameters from URL with validation
   const category = ['individual', 'couple', 'group'].includes(searchParams.get('category'))
     ? searchParams.get('category')
@@ -31,32 +31,32 @@ const GuideDetails = ({ guide }) => {
     if (packageId) {
       return guide.packages?.find(pkg => pkg.id === packageId);
     }
-    
+
     if (daysRange) {
       const [minDays, maxDays] = daysRange.split('-').map(Number);
-      const packagesInRange = guide.packages?.filter(pkg => 
+      const packagesInRange = guide.packages?.filter(pkg =>
         pkg.days >= minDays && pkg.days <= maxDays
       );
       return packagesInRange?.[0]; // Return first package in range
     }
-    
+
     return null;
   };
 
   const selectedPackage = findSelectedPackage();
   const isPremiumPackage = selectedPackage?.type === 'premium';
-  
+
   // Use actual package days if available, otherwise use days from range
   const getTripDuration = () => {
     if (selectedPackage) {
       return selectedPackage.days; // Use actual package days
     }
-    
+
     if (daysRange) {
       const [minDays, maxDays] = daysRange.split('-').map(Number);
       return Math.round((minDays + maxDays) / 2); // Average for non-package selection
     }
-    
+
     return 3; // Default
   };
 
@@ -160,12 +160,12 @@ const GuideDetails = ({ guide }) => {
     if (!viewingDay && currentDay && dayCardRefs.current[currentDay - 1]) {
       const dayCard = dayCardRefs.current[currentDay - 1];
       const container = document.querySelector('.day-cards-container');
-      
+
       if (dayCard && container) {
         const cardTop = dayCard.offsetTop;
         const containerTop = container.offsetTop;
         const scrollPosition = cardTop - containerTop - 20; // 20px offset
-        
+
         container.scrollTo({
           top: scrollPosition,
           behavior: 'smooth'
@@ -190,17 +190,22 @@ const GuideDetails = ({ guide }) => {
     }
   }, [currentDay]);
 
-  // Initialize itineraries with correct dates - BASED ON ACTUAL PACKAGE DAYS
+  // Initialize itineraries using REAL package itinerary data if available
   useEffect(() => {
-    // Ensure we have a valid date
     const startDate = selectedStartDate && !isNaN(selectedStartDate.getTime())
       ? new Date(selectedStartDate)
       : new Date();
 
+    const pkgItinerary = selectedPackage?.itinerary || [];
+    const pkgActivities = selectedPackage?.activities || [];
+
     const initialItenaries = Array.from({ length: numDays }, (_, i) => {
       const dayDate = new Date(startDate);
       dayDate.setDate(dayDate.getDate() + i);
-      
+
+      // Use real itinerary if available for this day
+      const realDay = pkgItinerary.find(d => d.day === i + 1) || pkgItinerary[i];
+
       return {
         dayNumber: i + 1,
         date: dayDate.toLocaleDateString('en-US', {
@@ -209,19 +214,32 @@ const GuideDetails = ({ guide }) => {
           month: 'short',
           day: 'numeric'
         }),
-        rawDate: dayDate, // Store the Date object for calculations
-        destination: defaultPackage.destination,
-        location: defaultPackage.locations[i % defaultPackage.locations.length],
+        rawDate: dayDate,
+        destination: selectedPackage?.destination || guide.location,
+        location: realDay?.location || `Day ${i + 1}`,
+        agenda: realDay?.agenda || '',
+        travelFrom: realDay?.travelFrom || '',
+        travelTo: realDay?.travelTo || '',
+        pickupTime: realDay?.pickupTime || '',
         departure: {
-          time: defaultPackage.departureTime,
-          address: defaultPackage.departureAddress
+          time: realDay?.pickupTime || '09:00',
+          address: realDay?.travelFrom || 'Meeting Point'
         },
-        hotel: defaultPackage.hotel,
-        activities: defaultPackage.activities
+        hotel: {
+          name: realDay?.hotelName || 'Hotel TBD',
+          location: realDay?.location || '',
+          price: ''
+        },
+        activities: pkgActivities.map((a, idx) => ({
+          id: idx + 1,
+          name: a.name,
+          location: realDay?.location || '',
+          duration: ''
+        }))
       };
     });
     setItenaries(initialItenaries);
-  }, [numDays, selectedStartDate]);
+  }, [numDays, selectedStartDate, selectedPackage]);
 
   const [bookingData, setBookingData] = useState({
     category: 'individual',
@@ -236,38 +254,29 @@ const GuideDetails = ({ guide }) => {
     setPersonalDetailsCompleted(true);
   };
 
-  const packageInclusions = [
-    {
-      icon: <Utensils className="h-5 w-5 text-green-600" />,
-      title: "Food",
-      description: "All meals included (Breakfast, Lunch & Dinner)",
-      items: ["Vegetarian & Non-veg options", "Local cuisine experience", "Bottled water"]
-    },
-    {
-      icon: <Car className="h-5 w-5 text-green-600" />,
-      title: "Transport",
-      description: "Comfortable private transportation",
-      items: ["AC Vehicle", "Pickup/Drop from airport", "All inter-city transfers"]
-    },
-    {
-      icon: <Hotel className="h-5 w-5 text-green-600" />,
-      title: "Accommodation",
-      description: "Quality stays included",
-      items: ["3-4 Star Hotels", "Daily housekeeping", "All taxes included"]
-    },
-    {
-      icon: <ShieldCheck className="h-5 w-5 text-green-600" />,
-      title: "Guidance",
-      description: "Complete experienced guidance",
-      items: ["Local expert guide", "24/7 support", "Trip planning assistance"]
-    },
-    {
-      icon: <Mountain className="h-5 w-5 text-green-600" />,
-      title: "Explorations",
-      description: "Curated experiences included",
-      items: ["City tours", "Cultural experiences", "Adventure activities"]
-    }
-  ];
+  // Build real package inclusions from the provider's package data
+  const inclusiveIconMap = {
+    food: <Utensils className="h-5 w-5 text-green-600" />,
+    transport: <Car className="h-5 w-5 text-green-600" />,
+    accommodation: <Hotel className="h-5 w-5 text-green-600" />,
+    guidance: <ShieldCheck className="h-5 w-5 text-green-600" />,
+    pickupDropoff: <Map className="h-5 w-5 text-green-600" />,
+  };
+
+  const packageInclusions = selectedPackage?.inclusives
+    ? Object.entries(selectedPackage.inclusives)
+      .filter(([, val]) => val?.included)
+      .map(([key, val]) => ({
+        icon: inclusiveIconMap[key] || <ShieldCheck className="h-5 w-5 text-green-600" />,
+        title: val.title || key.charAt(0).toUpperCase() + key.slice(1),
+        description: val.title || '',
+        items: (val.details || []).filter(d => d && d.trim())
+      }))
+    : [
+      // Fallback if no real data
+      { icon: <Utensils className="h-5 w-5 text-green-600" />, title: "Food", description: "Meals included", items: [] },
+      { icon: <Car className="h-5 w-5 text-green-600" />, title: "Transport", description: "Transport included", items: [] },
+    ];
 
   const handleViewDay = (dayNumber) => {
     setViewingDay(dayNumber);
@@ -308,7 +317,7 @@ const GuideDetails = ({ guide }) => {
   const formatTimeWithAMPM = (time) => {
     if (!time) return '';
     if (time.includes('AM') || time.includes('PM')) return time;
-    
+
     const [hours, minutes] = time.split(':');
     const hourNum = parseInt(hours, 10);
     const ampm = hourNum >= 12 ? 'PM' : 'AM';
@@ -366,7 +375,7 @@ const GuideDetails = ({ guide }) => {
     params.set('count', numPeople);
     if (dateParam) params.set('date', dateParam);
     if (packageId) params.set('packageId', packageId);
-    
+
     // Debug logging
     console.log('Navigating to review page with guide ID:', guide.id);
     console.log('Guide object:', guide);
@@ -374,17 +383,17 @@ const GuideDetails = ({ guide }) => {
     console.log('Full URL:', `/user/trip/guidelist/tripdetails/${guide.id}/reviewjourney?${params.toString()}`);
 
     // Try different route options:
-    
+
     // Option 1: Original path
     // router.push(`/user/trip/guidelist/tripdetails/${guide.id}/reviewjourney?${params.toString()}`);
-    
+
     // Option 2: Simpler path (common pattern)
     // router.push(`/trip/review/${guide.id}?${params.toString()}`);
-    
+
     // Option 3: Check if guide.id exists and use a fallback
     const guideId = guide?.id || guide?._id || 'unknown';
     router.push(`/user/trip/guidelist/tripdetails/${guideId}/reviewjourney?${params.toString()}`);
-    
+
     // Option 4: If you have a separate review page route
     // router.push(`/review-journey?guideId=${guideId}&${params.toString()}`);
   };
@@ -394,11 +403,10 @@ const GuideDetails = ({ guide }) => {
       {/* Guide Card - Made Responsive */}
       <div className="w-full bg-white pb-6 sm:pb-8 md:pb-10">
         <div className="max-w-7xl mx-auto">
-          <div className={`relative shadow-xl rounded-2xl sm:rounded-3xl lg:rounded-full px-4 sm:px-6 py-4 sm:py-5 flex flex-col sm:flex-row items-center justify-between w-full max-w-4xl mx-auto gap-4 sm:gap-6 lg:gap-0 ${
-            isPremiumPackage 
-              ? 'bg-gradient-to-r from-amber-400 to-yellow-400' 
-              : 'bg-green-300'
-          }`}>
+          <div className={`relative shadow-xl rounded-2xl sm:rounded-3xl lg:rounded-full px-4 sm:px-6 py-4 sm:py-5 flex flex-col sm:flex-row items-center justify-between w-full max-w-4xl mx-auto gap-4 sm:gap-6 lg:gap-0 ${isPremiumPackage
+            ? 'bg-gradient-to-r from-amber-400 to-yellow-400'
+            : 'bg-green-300'
+            }`}>
             {/* Premium Badge - Fixed positioning */}
             {isPremiumPackage && (
               <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 z-10">
@@ -418,16 +426,14 @@ const GuideDetails = ({ guide }) => {
 
             {/* Guide Info - Responsive */}
             <div className="flex items-center w-full sm:w-auto justify-center sm:justify-start">
-              <div className={`w-14 h-14 sm:w-16 sm:h-16 lg:w-20 lg:h-20 rounded-full flex items-center justify-center shadow-md border-2 flex-shrink-0 ${
-                isPremiumPackage 
-                  ? 'bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-200' 
-                  : 'bg-white border-green-100'
-              }`}>
-                <div className={`text-sm sm:text-base lg:text-lg font-bold ${
-                  isPremiumPackage 
-                    ? 'bg-gradient-to-r from-amber-600 to-yellow-600 bg-clip-text text-transparent' 
-                    : 'bg-gradient-to-r from-green-500 to-green-600 bg-clip-text text-transparent'
+              <div className={`w-14 h-14 sm:w-16 sm:h-16 lg:w-20 lg:h-20 rounded-full flex items-center justify-center shadow-md border-2 flex-shrink-0 ${isPremiumPackage
+                ? 'bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-200'
+                : 'bg-white border-green-100'
                 }`}>
+                <div className={`text-sm sm:text-base lg:text-lg font-bold ${isPremiumPackage
+                  ? 'bg-gradient-to-r from-amber-600 to-yellow-600 bg-clip-text text-transparent'
+                  : 'bg-gradient-to-r from-green-500 to-green-600 bg-clip-text text-transparent'
+                  }`}>
                   {guide.name.split(' ').map(n => n[0]).join('')}
                 </div>
               </div>
@@ -492,13 +498,12 @@ const GuideDetails = ({ guide }) => {
               <button
                 key={tab.key}
                 onClick={() => !isTabDisabled(tab.key) && setActiveTab(tab.key)}
-                className={`flex-1 text-center text-xs sm:text-sm font-medium py-3 transition-all ${
-                  activeTab === tab.key
-                    ? 'text-green-600 border-b-2 border-green-600 bg-white'
-                    : isTabDisabled(tab.key)
-                      ? 'text-gray-400 bg-gray-50 cursor-not-allowed'
-                      : 'text-gray-500 hover:text-gray-700 bg-gray-50'
-                }`}
+                className={`flex-1 text-center text-xs sm:text-sm font-medium py-3 transition-all ${activeTab === tab.key
+                  ? 'text-green-600 border-b-2 border-green-600 bg-white'
+                  : isTabDisabled(tab.key)
+                    ? 'text-gray-400 bg-gray-50 cursor-not-allowed'
+                    : 'text-gray-500 hover:text-gray-700 bg-gray-50'
+                  }`}
                 disabled={isTabDisabled(tab.key)}
               >
                 {tab.label}
@@ -546,7 +551,7 @@ const GuideDetails = ({ guide }) => {
                       }
                       guide={guide}
                       isEditing={false}
-                      setIsEditing={() => {}}
+                      setIsEditing={() => { }}
                     />
                   </div>
                 ) : (
@@ -556,9 +561,8 @@ const GuideDetails = ({ guide }) => {
                       <div className="relative h-full">
                         <div className="absolute left-1/2 top-0 h-full w-1.5 bg-gray-100 rounded-full -translate-x-1/2">
                           <div
-                            className={`w-1.5 rounded-full transition-all duration-500 ${
-                              isPremiumPackage ? 'bg-gradient-to-b from-amber-400 to-yellow-400' : 'bg-green-400'
-                            }`}
+                            className={`w-1.5 rounded-full transition-all duration-500 ${isPremiumPackage ? 'bg-gradient-to-b from-amber-400 to-yellow-400' : 'bg-green-400'
+                              }`}
                             style={{ height: `${(currentDay / numDays) * 100}%` }}
                           ></div>
                         </div>
@@ -575,17 +579,16 @@ const GuideDetails = ({ guide }) => {
                                 onClick={() => handleDayNodeClick(dayNum)}
                               >
                                 <div
-                                  className={`absolute left-1/2 transform -translate-x-1/2 w-10 h-10 flex items-center justify-center rounded-full text-sm font-semibold transition-all duration-300 ${
-                                    isCurrent
-                                      ? isPremiumPackage
-                                        ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white ring-4 ring-amber-200 scale-110 shadow-lg'
-                                        : 'bg-green-500 text-white ring-4 ring-green-200 scale-110 shadow-lg'
-                                      : isActive
+                                  className={`absolute left-1/2 transform -translate-x-1/2 w-10 h-10 flex items-center justify-center rounded-full text-sm font-semibold transition-all duration-300 ${isCurrent
+                                    ? isPremiumPackage
+                                      ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white ring-4 ring-amber-200 scale-110 shadow-lg'
+                                      : 'bg-green-500 text-white ring-4 ring-green-200 scale-110 shadow-lg'
+                                    : isActive
                                       ? isPremiumPackage
                                         ? 'bg-gradient-to-r from-amber-400 to-yellow-400 text-white shadow-md'
                                         : 'bg-green-400 text-white shadow-md'
                                       : 'bg-gray-200 text-gray-600'
-                                  }`}
+                                    }`}
                                 >
                                   {dayNum}
                                 </div>
@@ -599,13 +602,13 @@ const GuideDetails = ({ guide }) => {
                     {/* Mobile Timeline - Centered with line through node centers */}
                     <div className="block md:hidden mb-4">
                       <div className="flex justify-center">
-                        <div 
+                        <div
                           className="relative flex items-center overflow-x-auto scrollbar-hide px-4 py-4 max-w-full"
                           ref={scrollContainerRef}
                         >
                           {/* Connecting line - positioned at exact center of nodes */}
                           <div className="absolute top-9 left-0 right-0 h-1 bg-gray-300 z-0"></div>
-                          
+
                           <div className="flex items-center justify-center space-x-8 sm:space-x-12 mx-auto px-4">
                             {itenaries.map((day, index) => {
                               const dayNum = index + 1;
@@ -657,32 +660,29 @@ const GuideDetails = ({ guide }) => {
                           <div
                             key={index}
                             ref={(el) => (dayCardRefs.current[index] = el)}
-                            className={`p-4 sm:p-5 rounded-lg border transition-all group ${
-                              isCurrentDay
-                                ? isPremiumPackage
-                                  ? 'border-amber-300 bg-gradient-to-br from-amber-50 to-white ring-1 ring-amber-100 shadow-lg'
-                                  : 'border-green-300 bg-green-50 ring-1 ring-green-100 shadow-lg'
-                                : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
-                            } cursor-pointer`}
+                            className={`p-4 sm:p-5 rounded-lg border transition-all group ${isCurrentDay
+                              ? isPremiumPackage
+                                ? 'border-amber-300 bg-gradient-to-br from-amber-50 to-white ring-1 ring-amber-100 shadow-lg'
+                                : 'border-green-300 bg-green-50 ring-1 ring-green-100 shadow-lg'
+                              : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
+                              } cursor-pointer`}
                             onClick={() => handleDayNodeClick(dayNum)}
                           >
                             <div className="flex justify-between items-start">
                               <div className="w-full">
                                 <h4 className="font-medium text-gray-900 flex items-center">
-                                  <span className={`w-7 h-7 flex items-center justify-center rounded-full mr-3 text-sm font-semibold ${
-                                    isCurrentDay
-                                      ? isPremiumPackage
-                                        ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white'
-                                        : 'bg-green-500 text-white'
-                                      : isPremiumPackage
+                                  <span className={`w-7 h-7 flex items-center justify-center rounded-full mr-3 text-sm font-semibold ${isCurrentDay
+                                    ? isPremiumPackage
+                                      ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white'
+                                      : 'bg-green-500 text-white'
+                                    : isPremiumPackage
                                       ? 'bg-gradient-to-r from-amber-100 to-yellow-100 text-amber-600'
                                       : 'bg-green-100 text-green-600'
-                                  }`}>
+                                    }`}>
                                     {day.dayNumber}
                                   </span>
-                                  <span className={`font-semibold text-sm sm:text-base ${
-                                    isPremiumPackage ? 'text-amber-600' : 'text-green-600'
-                                  }`}>
+                                  <span className={`font-semibold text-sm sm:text-base ${isPremiumPackage ? 'text-amber-600' : 'text-green-600'
+                                    }`}>
                                     {day.location}
                                   </span>
                                 </h4>
@@ -748,11 +748,10 @@ const GuideDetails = ({ guide }) => {
 
                             <div className="mt-3 sm:mt-5 ml-10">
                               <button
-                                className={`flex items-center text-xs sm:text-sm group ${
-                                  isCurrentDay
-                                    ? isPremiumPackage ? 'text-amber-700' : 'text-green-700'
-                                    : isPremiumPackage ? 'text-amber-600' : 'text-green-600'
-                                } font-medium`}
+                                className={`flex items-center text-xs sm:text-sm group ${isCurrentDay
+                                  ? isPremiumPackage ? 'text-amber-700' : 'text-green-700'
+                                  : isPremiumPackage ? 'text-amber-600' : 'text-green-600'
+                                  } font-medium`}
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   handleViewDay(dayNum);
@@ -773,11 +772,10 @@ const GuideDetails = ({ guide }) => {
                   <div className="flex justify-end mt-4 sm:mt-6">
                     <button
                       onClick={handleNextTab}
-                      className={`px-4 py-2 text-white rounded-lg hover:from-green-600 hover:to-green-700 flex items-center text-sm shadow-sm transition-colors ${
-                        isPremiumPackage
-                          ? 'bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600'
-                          : 'bg-gradient-to-br from-green-400 to-green-600'
-                      }`}
+                      className={`px-4 py-2 text-white rounded-lg hover:from-green-600 hover:to-green-700 flex items-center text-sm shadow-sm transition-colors ${isPremiumPackage
+                        ? 'bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600'
+                        : 'bg-gradient-to-br from-green-400 to-green-600'
+                        }`}
                     >
                       Next <ArrowRight className="ml-2 h-4 w-4" />
                     </button>
@@ -788,7 +786,7 @@ const GuideDetails = ({ guide }) => {
 
             {activeTab === 'arrivalDeparture' && (
               <div>
-                <ArrDep 
+                <ArrDep
                   defaultDestination={guide.location}
                   onNext={handleArrDepSubmit}
                   onBack={handleBack}
@@ -819,11 +817,10 @@ const GuideDetails = ({ guide }) => {
                   <button
                     type="button"
                     onClick={handleReviewJourney}
-                    className={`px-4 sm:px-5 py-2.5 text-white rounded-lg transition-colors flex items-center text-sm shadow-sm hover:shadow-md ${
-                      isPremiumPackage
-                        ? 'bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600'
-                        : 'bg-green-600 hover:bg-green-700'
-                    }`}
+                    className={`px-4 sm:px-5 py-2.5 text-white rounded-lg transition-colors flex items-center text-sm shadow-sm hover:shadow-md ${isPremiumPackage
+                      ? 'bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600'
+                      : 'bg-green-600 hover:bg-green-700'
+                      }`}
                   >
                     Review Journey
                     <ArrowRight className="h-4 w-4 ml-2 transition-transform group-hover:translate-x-1" />
@@ -835,16 +832,14 @@ const GuideDetails = ({ guide }) => {
         </div>
 
         <div className="w-full lg:w-4/12 mt-6 lg:mt-0">
-          <div className={`rounded-xl shadow-md overflow-hidden border mb-6 sm:mb-12 ${
-            isPremiumPackage 
-              ? 'border-amber-200 bg-gradient-to-b from-white to-amber-50' 
-              : 'border-gray-100 bg-white'
-          }`}>
-            <div className={`px-4 sm:px-5 py-3 ${
-              isPremiumPackage 
-                ? 'bg-gradient-to-r from-amber-500 to-yellow-500' 
-                : 'bg-green-500'
+          <div className={`rounded-xl shadow-md overflow-hidden border mb-6 sm:mb-12 ${isPremiumPackage
+            ? 'border-amber-200 bg-gradient-to-b from-white to-amber-50'
+            : 'border-gray-100 bg-white'
             }`}>
+            <div className={`px-4 sm:px-5 py-3 ${isPremiumPackage
+              ? 'bg-gradient-to-r from-amber-500 to-yellow-500'
+              : 'bg-green-500'
+              }`}>
               <h2 className="text-white font-semibold text-base">What's Included</h2>
             </div>
 
@@ -852,9 +847,8 @@ const GuideDetails = ({ guide }) => {
               <div className="space-y-4 sm:space-y-5">
                 {packageInclusions.map((item, index) => (
                   <div key={index} className="flex items-start">
-                    <div className={`flex-shrink-0 p-1.5 sm:p-2 rounded-lg mr-3 sm:mr-4 ${
-                      isPremiumPackage ? 'bg-gradient-to-br from-amber-100 to-yellow-100' : 'bg-green-50'
-                    }`}>
+                    <div className={`flex-shrink-0 p-1.5 sm:p-2 rounded-lg mr-3 sm:mr-4 ${isPremiumPackage ? 'bg-gradient-to-br from-amber-100 to-yellow-100' : 'bg-green-50'
+                      }`}>
                       {item.icon}
                     </div>
                     <div className="min-w-0">
@@ -879,11 +873,10 @@ const GuideDetails = ({ guide }) => {
                 <h4 className="font-medium text-gray-800 mb-2 text-sm sm:text-base">Activities Included</h4>
                 <div className="flex flex-wrap gap-1.5 sm:gap-2">
                   {guide.activitiesAvailable?.slice(0, 6).map((activity, i) => (
-                    <span key={i} className={`px-2 sm:px-2.5 py-1 text-xs rounded-full ${
-                      isPremiumPackage
-                        ? 'bg-gradient-to-r from-amber-100 to-yellow-100 text-amber-700'
-                        : 'bg-green-50 text-green-700'
-                    }`}>
+                    <span key={i} className={`px-2 sm:px-2.5 py-1 text-xs rounded-full ${isPremiumPackage
+                      ? 'bg-gradient-to-r from-amber-100 to-yellow-100 text-amber-700'
+                      : 'bg-green-50 text-green-700'
+                      }`}>
                       {activity}
                     </span>
                   ))}
@@ -895,7 +888,7 @@ const GuideDetails = ({ guide }) => {
                 </div>
               </div>
 
-              
+
             </div>
           </div>
         </div>

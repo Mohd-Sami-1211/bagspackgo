@@ -1,7 +1,7 @@
 // components/common/Navbar.jsx
 'use client';
 import Image from 'next/image';
-import { CalendarCheck, Headphones, LogIn, UserPlus, LogOut, ChevronDown } from 'lucide-react';
+import { CalendarCheck, Headphones, LogIn, UserPlus, LogOut, ChevronDown, LayoutDashboard } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 
@@ -19,14 +19,18 @@ export default function Navbar() {
   const { user, isAuthenticated, loading, logout } = useAuth();
   const dropdownRef = useRef(null);
 
-  // Animate Sign In / Sign Up toggle (only when not logged in)
+  // Only treat as "user authenticated" if the role is 'user' (not provider/admin)
+  const isUserAccount = isAuthenticated && user?.role === 'user';
+  const isProviderAccount = isAuthenticated && user?.role === 'provider';
+
+  // Animate Sign In / Sign Up toggle (only when not logged in as user)
   useEffect(() => {
-    if (isAuthenticated) return;
+    if (isUserAccount) return;
     const interval = setInterval(() => {
       setShowSignIn((prev) => !prev);
     }, 3000);
     return () => clearInterval(interval);
-  }, [isAuthenticated]);
+  }, [isUserAccount]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -91,8 +95,50 @@ export default function Navbar() {
         {loading ? (
           // Loading skeleton
           <div className="w-24 h-8 bg-white/30 rounded animate-pulse" />
-        ) : isAuthenticated && user ? (
-          // ✅ Logged in — show initials + name + dropdown
+        ) : isProviderAccount ? (
+          // 🟡 Logged in as PROVIDER — show provider pill, not a user account
+          <div className="relative" ref={dropdownRef}>
+            <button
+              onClick={() => setShowDropdown(!showDropdown)}
+              className="flex items-center gap-2 bg-white text-amber-600 rounded-full px-3 py-1 hover:bg-amber-50 transition-colors text-sm font-semibold border border-amber-200"
+            >
+              <LayoutDashboard size={14} />
+              <span className="hidden sm:inline">Provider</span>
+              <ChevronDown size={12} className={`transition-transform duration-200 ${showDropdown ? 'rotate-180' : ''}`} />
+            </button>
+
+            {showDropdown && (
+              <div className="absolute right-0 top-full mt-2 bg-white rounded-xl shadow-lg border border-gray-100 py-2 w-52 z-50 overflow-hidden">
+                <div className="px-4 py-2 border-b border-gray-100">
+                  <p className="text-xs text-amber-600 font-semibold uppercase tracking-wide">Provider Account</p>
+                  <p className="text-sm font-semibold text-gray-800 truncate mt-0.5">{user.username}</p>
+                  <p className="text-xs text-gray-500 truncate">{user.email || user.phone}</p>
+                </div>
+                {/* Go to Dashboard */}
+                <a
+                  href="/serviceprovider/dashboard"
+                  className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-amber-600 hover:bg-amber-50 transition-colors"
+                  onClick={() => setShowDropdown(false)}
+                >
+                  <LayoutDashboard size={16} />
+                  Go to Dashboard
+                </a>
+                {/* Logout */}
+                <button
+                  onClick={() => {
+                    setShowDropdown(false);
+                    logout();
+                  }}
+                  className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                >
+                  <LogOut size={16} />
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
+        ) : isUserAccount ? (
+          // ✅ Logged in as USER — show initials + name + dropdown
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setShowDropdown(!showDropdown)}

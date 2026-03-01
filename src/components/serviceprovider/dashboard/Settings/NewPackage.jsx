@@ -24,22 +24,17 @@ import {
   AlertCircle,
   FileText,
   Heart,
-  User
+  User,
+  PartyPopper
 } from 'lucide-react';
+import dataJson from 'src/data/data.json';
 
-// Mock destinations - in real app, this would come from data.json
-const destinations = [
-  { id: 1, name: 'Goa', country: 'India' },
-  { id: 2, name: 'Manali', country: 'India' },
-  { id: 3, name: 'Kerala', country: 'India' },
-  { id: 4, name: 'Rajasthan', country: 'India' },
-  { id: 5, name: 'Ladakh', country: 'India' },
-  { id: 6, name: 'Sikkim', country: 'India' },
-  { id: 7, name: 'Andaman', country: 'India' },
-  { id: 8, name: 'Mumbai', country: 'India' },
-  { id: 9, name: 'Delhi', country: 'India' },
-  { id: 10, name: 'Chennai', country: 'India' },
-];
+// Use the same destination list used throughout the app
+const destinations = dataJson.destinations.map((d, i) => ({
+  id: i + 1,
+  name: d.label,
+  value: d.value
+}));
 
 // Agenda options
 const agendaOptions = [
@@ -55,6 +50,7 @@ const agendaOptions = [
 const NewPackage = () => {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const [activeTab, setActiveTab] = useState('package-info');
   const [showUnsavedAlert, setShowUnsavedAlert] = useState(false);
   const [currentDayEditing, setCurrentDayEditing] = useState(null);
@@ -184,7 +180,7 @@ const NewPackage = () => {
     }
   }, [validationErrors, activeTab]);
 
-  // Validate form before submission
+  // Validate form before submission - RETURNS errors object directly
   const validateForm = () => {
     const errors = {};
 
@@ -205,34 +201,37 @@ const NewPackage = () => {
       }
     });
 
-    // Validate itinerary
+    // NOTE: Itinerary validation is optional — providers can fill it partially
+    // Only validate day items that are marked as completed
     itinerary.forEach((day, index) => {
-      if (!day.location.trim()) {
-        errors[`day_${index}_location`] = `Day ${index + 1} location is required`;
-      }
-      if (!day.agenda.trim()) {
-        errors[`day_${index}_agenda`] = `Day ${index + 1} agenda is required`;
-      }
-      if (day.agenda === 'travel-day' && (!day.travelFrom.trim() || !day.travelTo.trim())) {
-        errors[`day_${index}_travel`] = `Travel from and to locations are required for travel day`;
+      if (day.isCompleted) {
+        if (!day.location.trim()) {
+          errors[`day_${index}_location`] = `Day ${index + 1} location is required`;
+        }
+        if (!day.agenda.trim()) {
+          errors[`day_${index}_agenda`] = `Day ${index + 1} agenda is required`;
+        }
+        if (day.agenda === 'travel-day' && (!day.travelFrom.trim() || !day.travelTo.trim())) {
+          errors[`day_${index}_travel`] = `Travel from and to locations are required for travel day`;
+        }
       }
     });
 
     setValidationErrors(errors);
-    return Object.keys(errors).length === 0;
+    return errors; // Return errors directly, not relying on state
   };
 
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!validateForm()) {
-      // Show alert about validation errors
-      const errorCount = Object.keys(validationErrors).length;
+    const errors = validateForm();
+    if (Object.keys(errors).length > 0) {
+      const errorCount = Object.keys(errors).length;
       alert(`Please fill in all required fields. There are ${errorCount} error(s) to fix.`);
 
-      // Ensure we're on the correct tab and scroll to first error
-      const firstError = Object.keys(validationErrors)[0];
+      // Scroll to first error
+      const firstError = Object.keys(errors)[0];
       const element = document.querySelector(`[data-error="${firstError}"]`);
       if (element) {
         element.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -241,7 +240,6 @@ const NewPackage = () => {
           element.classList.remove('ring-2', 'ring-red-500');
         }, 2000);
       }
-
       return;
     }
 
@@ -249,15 +247,25 @@ const NewPackage = () => {
 
     try {
       const formData = {
-        packageInfo,
-        pricingTiers: pricingTiers.filter(t => t.price && parseInt(t.price) > 0),
+        packageInfo: {
+          ...packageInfo,
+          days: parseInt(packageInfo.days) || 1, // Ensure days is a Number
+        },
+        pricingTiers: pricingTiers
+          .filter(t => t.price && parseInt(t.price) > 0)
+          .map(t => ({
+            minPeople: parseInt(t.minPeople) || 1,
+            maxPeople: parseInt(t.maxPeople) || 2,
+            price: parseFloat(t.price),
+            discount: parseFloat(t.discount) || 0,
+          })),
         inclusives,
         activities: activities.filter(a => a.name.trim() && a.details.trim()),
-        itinerary,
+        itinerary: itinerary.filter(day => day.location?.trim() || day.agenda?.trim()), // Only save filled-in days
         termsAndConditions: termsAndConditions.filter(t => t.text.trim()),
       };
 
-      console.log('Form data:', formData);
+      console.log('Submitting package:', formData);
 
       const res = await fetch('/api/provider/packages', {
         method: 'POST',
@@ -271,10 +279,15 @@ const NewPackage = () => {
         throw new Error(result.message || 'Failed to create package');
       }
 
-      router.push('/serviceprovider/dashboard/settings/packages');
+      // Show success animation
+      setShowSuccess(true);
+      setTimeout(() => {
+        setShowSuccess(false);
+        router.push('/serviceprovider/dashboard/settings/packages');
+      }, 2500);
     } catch (error) {
       console.error('Error creating package:', error);
-      alert(error.message);
+      alert(`Error: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -641,7 +654,7 @@ const NewPackage = () => {
                   <option value="">Select a destination</option>
                   {destinations.map((dest) => (
                     <option key={dest.id} value={dest.name}>
-                      {dest.name}, {dest.country}
+                      {dest.name}
                     </option>
                   ))}
                 </select>
@@ -1478,6 +1491,53 @@ const NewPackage = () => {
                   Continue Editing
                 </button>
               </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Success Animation Overlay */}
+      <AnimatePresence>
+        {showSuccess && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100]"
+          >
+            <motion.div
+              initial={{ scale: 0.5, opacity: 0, y: 40 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+              className="bg-white rounded-3xl shadow-2xl p-10 flex flex-col items-center text-center max-w-sm w-full mx-4"
+            >
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: [0, 1.3, 1] }}
+                transition={{ delay: 0.2, duration: 0.5 }}
+                className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mb-5"
+              >
+                <Check size={40} className="text-emerald-600" strokeWidth={3} />
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+              >
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Package Published! 🎉</h2>
+                <p className="text-gray-500 text-sm">Your package is now live and visible to users on the platform.</p>
+                <div className="mt-4 flex gap-1 justify-center">
+                  {[0, 1, 2].map(i => (
+                    <motion.div
+                      key={i}
+                      className="w-2 h-2 bg-emerald-500 rounded-full"
+                      animate={{ y: [0, -10, 0] }}
+                      transition={{ delay: 0.6 + i * 0.15, repeat: Infinity, duration: 0.6 }}
+                    />
+                  ))}
+                </div>
+              </motion.div>
             </motion.div>
           </motion.div>
         )}
