@@ -111,9 +111,9 @@ const Packages = () => {
     }
     setShowDeleteConfirm(null);
   };
-
   const handleAddNewPackage = () => {
-    router.push('/serviceprovider/dashboard/settings/packages/new');
+    const el = document.getElementById('add-package-dropdown');
+    if (el) el.classList.toggle('hidden');
   };
 
   const handleBackToSettings = () => {
@@ -310,13 +310,36 @@ const Packages = () => {
               </div>
             </div>
 
-            <button
-              onClick={handleAddNewPackage}
-              className="bg-emerald-600 text-white px-4 py-3 rounded-lg hover:bg-emerald-700 transition flex items-center gap-2"
-            >
-              <Plus size={20} />
-              Add New Package
-            </button>
+            {/* Add New Package Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => {
+                  const el = document.getElementById('add-package-dropdown');
+                  if (el) el.classList.toggle('hidden');
+                }}
+                className="bg-emerald-600 text-white px-4 py-3 rounded-lg hover:bg-emerald-700 transition flex items-center gap-2"
+              >
+                <Plus size={20} />
+                Add New Package
+              </button>
+              <div
+                id="add-package-dropdown"
+                className="hidden absolute right-0 mt-2 w-48 bg-white border rounded-lg shadow-lg z-10 overflow-hidden"
+              >
+                <button
+                  onClick={() => router.push('/serviceprovider/dashboard/settings/packages/new')}
+                  className="w-full text-left px-4 py-3 hover:bg-emerald-50 hover:text-emerald-700 transition text-sm font-medium border-b"
+                >
+                  Trip Package
+                </button>
+                <button
+                  onClick={() => router.push('/serviceprovider/dashboard/settings/packages/new-trek')}
+                  className="w-full text-left px-4 py-3 hover:bg-emerald-50 hover:text-emerald-700 transition text-sm font-medium"
+                >
+                  Trek Package
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* Tabs */}
@@ -359,7 +382,10 @@ const Packages = () => {
                 : 'All your packages are currently active'}
             </p>
             <button
-              onClick={handleAddNewPackage}
+              onClick={() => {
+                const el = document.getElementById('add-package-dropdown');
+                if (el) el.classList.remove('hidden');
+              }}
               className="mt-4 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition"
             >
               Create Your First Package

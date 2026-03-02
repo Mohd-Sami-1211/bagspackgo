@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import { TripBooking } from '@/models/tripbooking.model';
 import { Package } from '@/models/package.model';
+import { User } from '@/models/user.model';
 import { getCurrentUser } from '@/lib/auth';
 
 // GET — fetch all trip bookings for this provider's packages
@@ -9,7 +10,7 @@ export async function GET() {
     try {
         const user = await getCurrentUser();
         if (!user) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
-        if (user.role !== 'guide') return NextResponse.json({ success: false, message: 'Providers only' }, { status: 403 });
+        if (user.role !== 'provider') return NextResponse.json({ success: false, message: 'Providers only' }, { status: 403 });
 
         await dbConnect();
 
@@ -55,7 +56,7 @@ export async function GET() {
 
         return NextResponse.json({ success: true, data: formatted });
     } catch (error) {
-        console.error('Provider trip bookings error:', error);
+        console.error('Provider trip bookings error:', String(error), error.stack);
         return NextResponse.json({ success: false, message: 'Server error' }, { status: 500 });
     }
 }
