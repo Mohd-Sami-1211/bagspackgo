@@ -2,15 +2,15 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  ArrowLeft, 
-  ArrowRight, 
-  CheckCircle2, 
-  Edit, 
-  MapPin, 
-  Calendar, 
-  Users, 
-  Clock, 
+import {
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  Edit,
+  MapPin,
+  Calendar,
+  Users,
+  Clock,
   Mountain,
   Tent,
   Compass,
@@ -48,42 +48,54 @@ const ReviewTrek = ({ guide, searchParams }) => {
   // Safely extract URL parameters with defaults
   const difficulty = searchParams?.get('difficulty') || 'moderate';
   const days = parseInt(searchParams?.get('days')) || 3;
-  const count = parseInt(searchParams?.get('count')) || 1;
   const dateParam = searchParams?.get('date');
   const date = dateParam ? new Date(dateParam) : new Date();
 
   // Safely destructure trekData with fallbacks
-  const { 
-    itinerary = [], 
-    equipmentList = [],
-    medicalInfo = {},
-    emergencyContacts = [],
-    personalDetails = {
-      contactDetails: {},
-      personalDetails: [],
-    }
-  } = trekData || {};
+  const trekDetails = trekData?.trekDetails || {};
+  const itinerary = trekDetails.itinerary || [];
+  const pickupDropoff = trekData?.pickupDropoff || null;
+  const equipmentList = trekData?.equipmentList || []; // Optional fallback if present
+  const medicalInfo = trekData?.personalDetails?.medicalInfo || {};
+  const emergencyContacts = trekData?.personalDetails?.emergencyContacts || [];
+  const personalDetails = trekData?.personalDetails || {
+    contactDetails: {},
+    personalDetails: [],
+  };
+  const peopleRangeParam = searchParams?.get('peopleRange') || '1-2';
 
-  // Calculate payment details safely
+  // Extract minimum people from range for calculations
+  const minPeople = parseInt(peopleRangeParam.split('-')[0]) || parseInt(peopleRangeParam) || 1;
+  const count = parseInt(searchParams?.get('count')) || minPeople;
+
+  // Calculate payment details safely based on package pricingTiers
   const calculatePayment = () => {
-    if (!guide?.price) return {
-      basePrice: 0,
-      discount: 0,
-      equipmentFee: 0,
-      taxes: 0,
-      total: 0
-    };
-    
-    const basePrice = guide.price * days * count;
-    const discount = basePrice * 0.1; // 10% early bird discount
-    const equipmentFee = 75 * count; // Equipment rental fee
+    let pricePerPerson = guide?.price || 0;
+
+    if (guide?.pricingTiers && guide.pricingTiers.length > 0) {
+      const tier = guide.pricingTiers.find(t => {
+        if (peopleRangeParam.includes('+')) {
+          return t.maxPeople >= minPeople;
+        } else {
+          const [minP, maxP] = peopleRangeParam.split('-').map(Number);
+          return t.minPeople <= minP && t.maxPeople >= maxP;
+        }
+      });
+      if (tier && tier.price) {
+        pricePerPerson = tier.price;
+      } else {
+        // Fallback to closest tier
+        pricePerPerson = [...guide.pricingTiers].sort((a, b) => a.minPeople - b.minPeople)[0].price;
+      }
+    }
+
+    const basePrice = pricePerPerson * count;
     const taxes = basePrice * 0.05;
-    const total = basePrice - discount + equipmentFee + taxes;
-    
+    const total = basePrice + taxes;
+
     return {
+      pricePerPerson,
       basePrice,
-      discount,
-      equipmentFee,
       taxes,
       total
     };
@@ -97,7 +109,7 @@ const ReviewTrek = ({ guide, searchParams }) => {
         const storedData = localStorage.getItem('trekData');
         if (storedData) {
           const parsedData = JSON.parse(storedData);
-          
+
           // Ensure proper structure
           const formattedData = {
             ...parsedData,
@@ -106,7 +118,7 @@ const ReviewTrek = ({ guide, searchParams }) => {
               personalDetails: parsedData.personalDetails?.personalDetails || [],
             }
           };
-          
+
           setTrekData(formattedData);
         }
       } catch (error) {
@@ -125,9 +137,126 @@ const ReviewTrek = ({ guide, searchParams }) => {
     router.push(`/user/trek/guides/trekdetails/${guide?.id}?difficulty=${difficulty}&days=${days}&count=${count}&date=${date.toISOString()}#${section}`);
   };
 
-  const handleMakePayment = () => {
-    // Payment processing logic
-    alert('Redirecting to payment gateway...');
+  const [isPaymentLoading, setIsPaymentLoading] = useState(false);
+  const [paymentError, setPaymentError] = useState('');
+
+  const handleMakePayment = async () => {
+    if (!trekData) return;
+    setIsPaymentLoading(true);
+    setPaymentError('');
+
+    const guideData = trekData.guide;
+    const config = trekData.trekConfig || {};
+    const tripDetails = trekData.trekDetails || {}; // Assuming we stored package details here
+
+    const packageId = config.trekId || tripDetails?.id || tripDetails?._id || guideData?.packageId;
+    const guideId = guideData?.provider; // guide refers to package, its provider is guideData.provider
+
+    if (!packageId || !guideId) {
+      setPaymentError(`Missing required data. Please go back and try again.`);
+      setIsPaymentLoading(false);
+      return;
+    }
+
+    try {
+      const { pricePerPerson, basePrice, taxes, total } = paymentDetails;
+      const numPeople = count;
+
+      // Create pending booking
+      const bookingRes = await fetch('/api/user/trek-bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          packageId,
+          guideId,
+          startDate: config.date || new Date().toISOString(),
+          numPeople,
+          peopleRange: peopleRangeParam,
+          baseAmount: basePrice,
+          discount: 0,
+          platformFee: 0, // Not explicitly charged here
+          taxes,
+          totalAmount: total,
+          pickupDropoff: trekData.pickupDropoff || {},
+          personalDetails: trekData.personalDetails || {},
+          packageSnapshot: {
+            name: guideData?.name || 'Trek Package',
+            destination: guideData?.location || '',
+            days: config.days || 1,
+          },
+        }),
+      });
+
+      const bookingData = await bookingRes.json();
+      if (!bookingData.success) {
+        throw new Error(bookingData.message || 'Failed to create booking');
+      }
+
+      const { bookingId } = bookingData;
+
+      // Create Razorpay order
+      const orderRes = await fetch('/api/payments/trek-create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: total || 1, bookingId }),
+      });
+      const orderData = await orderRes.json();
+      if (!orderData.success) throw new Error(orderData.message || 'Order creation failed');
+
+      const { orderId, key } = orderData;
+      const isMock = !process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || orderId?.startsWith('mock_order_');
+
+      if (isMock) {
+        // Dev mode skip Razorpay UI
+        const verifyRes = await fetch('/api/payments/trek-verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            razorpay_order_id: orderId,
+            razorpay_payment_id: `mock_pay_${Date.now()}`,
+            bookingId,
+          }),
+        });
+        const verifyData = await verifyRes.json();
+        if (!verifyData.success) throw new Error(verifyData.message || 'Verification failed');
+        router.push(`/user/trek/booking-success?bookingId=${bookingId}&ref=${verifyData.bookingRef}`);
+        return;
+      }
+
+      // Open Razorpay modal
+      const rzp = new window.Razorpay({
+        key,
+        amount: total * 100,
+        currency: 'INR',
+        order_id: orderId,
+        name: 'BagsPackGo',
+        description: `Trek: ${guideData?.name || 'Package'}`,
+        handler: async (response) => {
+          const verifyRes = await fetch('/api/payments/trek-verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              bookingId,
+            }),
+          });
+          const verifyData = await verifyRes.json();
+          if (verifyData.success) {
+            router.push(`/user/trek/booking-success?bookingId=${bookingId}&ref=${verifyData.bookingRef}`);
+          } else {
+            setPaymentError(verifyData.message || 'Payment verification failed. Contact support.');
+          }
+        },
+        modal: { ondismiss: () => setIsPaymentLoading(false) },
+      });
+      rzp.open();
+    } catch (err) {
+      console.error('[Payment] Error:', err);
+      setPaymentError(err.message || 'Payment failed. Please try again.');
+      setIsPaymentLoading(false);
+    }
   };
 
   const changeSection = (newSection) => {
@@ -139,22 +268,22 @@ const ReviewTrek = ({ guide, searchParams }) => {
   };
 
   const getDifficultyBadge = (level) => {
-    switch(level?.toLowerCase()) {
-      case 'easy': 
+    switch (level?.toLowerCase()) {
+      case 'easy':
         return <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Easy</span>;
-      case 'moderate': 
+      case 'moderate':
         return <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs">Moderate</span>;
-      case 'difficult': 
+      case 'difficult':
         return <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs">Difficult</span>;
-      case 'extreme': 
+      case 'extreme':
         return <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs">Extreme</span>;
-      default: 
+      default:
         return <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs">{level}</span>;
     }
   };
 
   const getWeatherIcon = (condition) => {
-    switch(condition?.toLowerCase()) {
+    switch (condition?.toLowerCase()) {
       case 'sunny': return <Sun className="h-5 w-5 text-yellow-500" />;
       case 'rain': return <CloudRain className="h-5 w-5 text-blue-500" />;
       case 'wind': return <Wind className="h-5 w-5 text-gray-500" />;
@@ -182,7 +311,7 @@ const ReviewTrek = ({ guide, searchParams }) => {
                 </div>
                 <h3 className="text-2xl font-bold text-gray-800">Trek Itinerary</h3>
               </div>
-              <button 
+              <button
                 onClick={() => handleEditSection('itinerary')}
                 className="flex items-center text-green-600 hover:text-green-700 text-sm font-medium px-4 py-2 rounded-lg hover:bg-green-50 transition-all"
               >
@@ -212,9 +341,9 @@ const ReviewTrek = ({ guide, searchParams }) => {
                       <div className="flex items-center mt-2">
                         <div className="flex">
                           {[...Array(5)].map((_, i) => (
-                            <Star 
-                              key={i} 
-                              className={`h-4 w-4 ${i < Math.floor(guide.rating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} 
+                            <Star
+                              key={i}
+                              className={`h-4 w-4 ${i < Math.floor(guide.rating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
                             />
                           ))}
                         </div>
@@ -297,7 +426,7 @@ const ReviewTrek = ({ guide, searchParams }) => {
               {itinerary.length > 0 ? (
                 <div className="space-y-6">
                   {itinerary.map((day, index) => (
-                    <motion.div 
+                    <motion.div
                       key={index}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -306,19 +435,17 @@ const ReviewTrek = ({ guide, searchParams }) => {
                     >
                       <div className="flex justify-between items-center mb-4">
                         <div>
-                          <h5 className="font-bold text-gray-800 text-lg">
+                          <h5 className="font-bold text-gray-800 text-lg mb-1">
                             <span className="bg-gradient-to-r from-green-400 to-green-600 text-white px-3 py-1 rounded-full text-sm mr-3">
-                              Day {day.dayNumber}
+                              Day {day.day || index + 1}
                             </span>
-                            {day.campsite || day.location}
+                            {day.title || `Day ${day.day || index + 1}`}
                           </h5>
-                          <p className="text-sm text-gray-500 mt-1">
-                            {day.rawDate ? new Date(day.rawDate).toLocaleDateString('en-US', { 
-                              weekday: 'short', 
-                              month: 'short', 
-                              day: 'numeric' 
-                            }) : 'Date not specified'}
-                          </p>
+                          {day.date && (
+                            <p className="text-sm text-gray-500 mt-2">
+                              {day.date}
+                            </p>
+                          )}
                         </div>
                         <div className="flex space-x-2">
                           <div className="bg-green-50 text-green-600 px-2 py-1 rounded-full text-xs flex items-center">
@@ -333,77 +460,40 @@ const ReviewTrek = ({ guide, searchParams }) => {
                           )}
                         </div>
                       </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="bg-green-50 rounded-lg p-4">
-                          <h6 className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
-                            <Flag className="h-5 w-5 text-green-500 mr-2" /> Start Point
-                          </h6>
-                          <p className="text-sm text-gray-700">
-                            {day.startPoint || 'Not specified'}
-                          </p>
-                          {day.startAltitude && (
-                            <p className="text-xs text-gray-500 mt-1">
-                              Altitude: {day.startAltitude}m
-                            </p>
-                          )}
-                        </div>
-                        
-                        <div className="bg-blue-50 rounded-lg p-4">
-                          <h6 className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
-                            <Flag className="h-5 w-5 text-blue-500 mr-2" /> End Point
-                          </h6>
-                          <p className="text-sm text-gray-700">
-                            {day.endPoint || 'Not specified'}
-                          </p>
-                          {day.endAltitude && (
-                            <p className="text-xs text-gray-500 mt-1">
-                              Altitude: {day.endAltitude}m
-                            </p>
-                          )}
-                        </div>
-                        
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="bg-amber-50 rounded-lg p-4">
                           <h6 className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
-                            <Tent className="h-5 w-5 text-amber-500 mr-2" /> Campsite
+                            <Tent className="h-5 w-5 text-amber-500 mr-2" /> Accommodation
                           </h6>
                           <p className="text-sm text-gray-700">
-                            {day.campsite || 'Not specified'}
+                            {day.accommodation || 'Not specified'}
                           </p>
-                          {day.campsiteAltitude && (
-                            <p className="text-xs text-gray-500 mt-1">
-                              Altitude: {day.campsiteAltitude}m
-                            </p>
-                          )}
+                        </div>
+                        <div className="bg-green-50 rounded-lg p-4">
+                          <h6 className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                            <Sun className="h-5 w-5 text-green-500 mr-2" /> Meals Included
+                          </h6>
+                          <p className="text-sm text-gray-700">
+                            {day.meals?.join(', ') || 'Not specified'}
+                          </p>
                         </div>
                       </div>
-                      
+
                       <div className="mt-6">
                         <h6 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
                           <Compass className="h-5 w-5 text-green-500 mr-2" /> Daily Trek Details
                         </h6>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div className="bg-gray-50 p-4 rounded-lg">
-                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Distance</p>
-                            <p className="font-semibold text-gray-800">
-                              {day.distance || 'N/A'} km
-                            </p>
-                          </div>
-                          <div className="bg-gray-50 p-4 rounded-lg">
                             <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Duration</p>
                             <p className="font-semibold text-gray-800">
-                              {day.duration || 'N/A'} hours
-                            </p>
-                          </div>
-                          <div className="bg-gray-50 p-4 rounded-lg">
-                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Elevation Gain</p>
-                            <p className="font-semibold text-gray-800">
-                              {day.elevationGain || 'N/A'} meters
+                              {day.duration || 'N/A'}
                             </p>
                           </div>
                         </div>
                       </div>
-                      
+
                       <div className="mt-6">
                         <h6 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
                           <Map className="h-5 w-5 text-green-500 mr-2" /> Route Description
@@ -424,7 +514,7 @@ const ReviewTrek = ({ guide, searchParams }) => {
             </div>
           </motion.div>
         );
-      
+
       case 'equipment':
         return (
           <motion.div
@@ -441,7 +531,7 @@ const ReviewTrek = ({ guide, searchParams }) => {
                 </div>
                 <h3 className="text-2xl font-bold text-gray-800">Equipment & Preparation</h3>
               </div>
-              <button 
+              <button
                 onClick={() => handleEditSection('equipment')}
                 className="flex items-center text-green-600 hover:text-green-700 text-sm font-medium px-4 py-2 rounded-lg hover:bg-green-50 transition-all"
               >
@@ -450,7 +540,7 @@ const ReviewTrek = ({ guide, searchParams }) => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
@@ -462,21 +552,20 @@ const ReviewTrek = ({ guide, searchParams }) => {
                   </div>
                   <h4 className="text-lg font-semibold text-gray-800">Required Equipment</h4>
                 </div>
-                
+
                 <div className="space-y-4">
                   {equipmentList.length > 0 ? (
                     <ul className="space-y-3">
                       {equipmentList.map((item, index) => (
-                        <motion.li 
+                        <motion.li
                           key={index}
                           initial={{ opacity: 0, y: 5 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: index * 0.05 }}
                           className="flex items-start bg-white p-3 rounded-lg shadow-sm"
                         >
-                          <div className={`p-1 rounded-full mr-3 mt-1 ${
-                            item.essential ? 'bg-red-100 text-red-500' : 'bg-blue-100 text-blue-500'
-                          }`}>
+                          <div className={`p-1 rounded-full mr-3 mt-1 ${item.essential ? 'bg-red-100 text-red-500' : 'bg-blue-100 text-blue-500'
+                            }`}>
                             {item.essential ? (
                               <AlertTriangle className="h-4 w-4" />
                             ) : (
@@ -506,7 +595,7 @@ const ReviewTrek = ({ guide, searchParams }) => {
                 </div>
               </motion.div>
 
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
@@ -518,7 +607,7 @@ const ReviewTrek = ({ guide, searchParams }) => {
                   </div>
                   <h4 className="text-lg font-semibold text-gray-800">Health & Fitness</h4>
                 </div>
-                
+
                 <div className="space-y-5">
                   <div className="bg-white p-4 rounded-lg shadow-sm">
                     <h5 className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
@@ -550,7 +639,7 @@ const ReviewTrek = ({ guide, searchParams }) => {
                       <p className="text-sm text-gray-500">No medical information provided</p>
                     )}
                   </div>
-                  
+
                   <div className="bg-white p-4 rounded-lg shadow-sm">
                     <h5 className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
                       <AlertTriangle className="h-5 w-5 text-amber-500 mr-2" />
@@ -599,7 +688,7 @@ const ReviewTrek = ({ guide, searchParams }) => {
                 </div>
                 <h3 className="text-2xl font-bold text-gray-800">Participant Details</h3>
               </div>
-              <button 
+              <button
                 onClick={() => handleEditSection('personalDetails')}
                 className="flex items-center text-green-600 hover:text-green-700 text-sm font-medium px-4 py-2 rounded-lg hover:bg-green-50 transition-all"
               >
@@ -608,7 +697,7 @@ const ReviewTrek = ({ guide, searchParams }) => {
             </div>
 
             <div className="space-y-8">
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
@@ -620,7 +709,7 @@ const ReviewTrek = ({ guide, searchParams }) => {
                   </div>
                   <h4 className="text-lg font-semibold text-gray-800">Contact Information</h4>
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="bg-white p-4 rounded-lg shadow-sm">
                     <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1 flex items-center">
@@ -641,7 +730,7 @@ const ReviewTrek = ({ guide, searchParams }) => {
                 </div>
               </motion.div>
 
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
@@ -653,11 +742,11 @@ const ReviewTrek = ({ guide, searchParams }) => {
                   </div>
                   <h4 className="text-lg font-semibold text-gray-800">Participant Details</h4>
                 </div>
-                
+
                 <div className="space-y-6">
                   {personalDetails.personalDetails?.length > 0 ? (
                     personalDetails.personalDetails.map((participant, index) => (
-                      <motion.div 
+                      <motion.div
                         key={index}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -733,50 +822,46 @@ const ReviewTrek = ({ guide, searchParams }) => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
                 className="border border-green-100 rounded-xl p-6 bg-gradient-to-br from-green-50 to-blue-50"
               >
                 <h4 className="text-lg font-semibold text-gray-800 mb-6">Price Summary</h4>
-                
+
                 <div className="space-y-4">
                   <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                    <span className="text-gray-600">Base Price</span>
-                    <span className="font-semibold">${paymentDetails.basePrice.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between items-center py-2 border-b border-gray-100 text-green-700">
-                    <span>Early Bird Discount (10%)</span>
-                    <span>-${paymentDetails.discount.toFixed(2)}</span>
+                    <span className="text-gray-600">Base Price ({count} {count > 1 ? 'people' : 'person'})</span>
+                    <span className="font-semibold">₹{paymentDetails.basePrice.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                    <span className="text-gray-600">Equipment Rental</span>
-                    <span className="font-semibold">${paymentDetails.equipmentFee.toFixed(2)}</span>
+                    <span className="text-gray-600">Price per Person</span>
+                    <span className="font-semibold text-sm">₹{paymentDetails.pricePerPerson.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between items-center py-2 border-b border-gray-100">
                     <span className="text-gray-600">Taxes (5%)</span>
-                    <span className="font-semibold">${paymentDetails.taxes.toFixed(2)}</span>
+                    <span className="font-semibold">₹{paymentDetails.taxes.toFixed(2)}</span>
                   </div>
                   <div className="pt-4 mt-2">
                     <div className="flex justify-between items-center bg-gradient-to-r from-green-100 to-green-200 p-4 rounded-lg">
                       <span className="font-bold text-lg text-gray-800">Total Amount</span>
-                      <span className="font-bold text-lg text-green-700">${paymentDetails.total.toFixed(2)}</span>
+                      <span className="font-bold text-lg text-green-700">₹{paymentDetails.total.toFixed(2)}</span>
                     </div>
                   </div>
                 </div>
               </motion.div>
 
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
                 className="border border-blue-100 rounded-xl p-6 bg-gradient-to-br from-green-50 to-blue-50"
               >
                 <h4 className="text-lg font-semibold text-gray-800 mb-6">Payment Method</h4>
-                
+
                 <div className="space-y-4">
-                  <motion.div 
+                  <motion.div
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     className="flex items-center space-x-4 p-4 border-2 border-green-300 bg-white rounded-xl shadow-sm cursor-pointer"
@@ -789,14 +874,14 @@ const ReviewTrek = ({ guide, searchParams }) => {
                       <p className="text-sm text-gray-500">Pay with Visa, Mastercard, etc.</p>
                     </div>
                   </motion.div>
-                  <motion.div 
+                  <motion.div
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     className="flex items-center space-x-4 p-4 border border-gray-200 bg-white rounded-xl shadow-sm cursor-pointer"
                   >
                     <div className="p-2 bg-green-100 rounded-lg">
                       <svg className="h-6 w-6 text-green-600" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 0C8.21 0 4.831 1.757 2.632 4.501l3.042 3.042C6.86 5.988 9.295 5 12 5c3.86 0 7 3.141 7 7h2c0-4.962-4.037-9-9-9zm9.368 4.501l-3.042 3.042C17.14 5.988 14.705 5 12 5c-3.86 0-7 3.141-7 7H3c0-4.962 4.037-9 9-9 3.79 0 7.169 1.757 9.368 4.501zM12 8c-2.209 0-4 1.791-4 4s1.791 4 4 4 4-1.791 4-4-1.791-4-4-4z"/>
+                        <path d="M12 0C8.21 0 4.831 1.757 2.632 4.501l3.042 3.042C6.86 5.988 9.295 5 12 5c3.86 0 7 3.141 7 7h2c0-4.962-4.037-9-9-9zm9.368 4.501l-3.042 3.042C17.14 5.988 14.705 5 12 5c-3.86 0-7 3.141-7 7H3c0-4.962 4.037-9 9-9 3.79 0 7.169 1.757 9.368 4.501zM12 8c-2.209 0-4 1.791-4 4s1.791 4 4 4 4-1.791 4-4-1.791-4-4-4z" />
                       </svg>
                     </div>
                     <div>
@@ -804,14 +889,14 @@ const ReviewTrek = ({ guide, searchParams }) => {
                       <p className="text-sm text-gray-500">Pay with your PayPal account</p>
                     </div>
                   </motion.div>
-                  <motion.div 
+                  <motion.div
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     className="flex items-center space-x-4 p-4 border border-gray-200 bg-white rounded-xl shadow-sm cursor-pointer"
                   >
                     <div className="p-2 bg-green-100 rounded-lg">
                       <svg className="h-6 w-6 text-green-600" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 22c-5.523 0-10-4.477-10-10S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm-1-17v8h7v-2h-5V5z"/>
+                        <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 22c-5.523 0-10-4.477-10-10S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm-1-17v8h7v-2h-5V5z" />
                       </svg>
                     </div>
                     <div>
@@ -843,7 +928,7 @@ const ReviewTrek = ({ guide, searchParams }) => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-gradient-to-br from-green-50 to-blue-50 -mt-20">
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
@@ -862,12 +947,12 @@ const ReviewTrek = ({ guide, searchParams }) => {
         {/* Background line container - spans full width */}
         <div className="absolute top-7 left-0 right-0 h-1 bg-gray-200 -translate-y-1/2 z-0">
           {/* Animated progress line with flowing effect */}
-          <motion.div 
+          <motion.div
             initial={{ width: 0 }}
             animate={{
-              width: activeSection === 'itinerary' ? '25%' : 
-                    activeSection === 'equipment' ? '50%' : 
-                    activeSection === 'personalDetails' ? '75%' : '100%'
+              width: activeSection === 'itinerary' ? '25%' :
+                activeSection === 'equipment' ? '50%' :
+                  activeSection === 'personalDetails' ? '75%' : '100%'
             }}
             transition={{ duration: 0.8, ease: "easeInOut" }}
             className="h-full relative overflow-hidden"
@@ -893,7 +978,7 @@ const ReviewTrek = ({ guide, searchParams }) => {
         <div className="flex justify-between relative z-10">
           {['itinerary', 'equipment', 'personalDetails', 'payment'].map((step, index) => {
             const isActive = activeSection === step;
-            const isCompleted = ['itinerary', 'equipment', 'personalDetails','payment'].indexOf(activeSection) > index;
+            const isCompleted = ['itinerary', 'equipment', 'personalDetails', 'payment'].indexOf(activeSection) > index;
             const stepNames = {
               itinerary: 'Itinerary',
               equipment: 'Equipment',
@@ -909,7 +994,7 @@ const ReviewTrek = ({ guide, searchParams }) => {
             };
 
             return (
-              <motion.div 
+              <motion.div
                 key={step}
                 whileHover={{ scale: 1.05 }}
                 className="flex flex-col items-center"
@@ -926,11 +1011,10 @@ const ReviewTrek = ({ guide, searchParams }) => {
                     boxShadow: { duration: 0.3 }
                   }}
                   onClick={() => !isAnimating && changeSection(step)}
-                  className={`w-14 h-14 rounded-full flex items-center justify-center shadow-md ${
-                    isActive ? 'bg-gradient-to-br from-green-400 to-green-700 text-white' : 
-                    isCompleted ? 'bg-green-500 text-white' : 
-                    'bg-white text-gray-400 border-2 border-gray-300'
-                  } transition-all duration-300 relative`}
+                  className={`w-14 h-14 rounded-full flex items-center justify-center shadow-md ${isActive ? 'bg-gradient-to-br from-green-400 to-green-700 text-white' :
+                    isCompleted ? 'bg-green-500 text-white' :
+                      'bg-white text-gray-400 border-2 border-gray-300'
+                    } transition-all duration-300 relative`}
                 >
                   {isCompleted ? (
                     <CheckCircle2 className="h-6 w-6" />
@@ -948,23 +1032,21 @@ const ReviewTrek = ({ guide, searchParams }) => {
                     />
                   )}
                 </motion.button>
-                
+
                 {/* Step label with subtle animation */}
                 <motion.div
                   initial={{ y: 0 }}
                   animate={{ y: isActive ? -2 : 0 }}
                   transition={{ type: "spring", stiffness: 300 }}
-                  className={`mt-3 text-sm font-medium ${
-                    isActive ? 'text-green-600 font-bold' : 
-                    isCompleted ? 'text-green-600' : 
-                    'text-gray-500'
-                  }`}
+                  className={`mt-3 text-sm font-medium ${isActive ? 'text-green-600 font-bold' :
+                    isCompleted ? 'text-green-600' :
+                      'text-gray-500'
+                    }`}
                 >
                   {stepNames[step]}
                 </motion.div>
-                <div className={`text-xs mt-1 ${
-                  isActive ? 'text-green-500' : 'text-gray-400'
-                }`}>
+                <div className={`text-xs mt-1 ${isActive ? 'text-green-500' : 'text-gray-400'
+                  }`}>
                   Step {index + 1}/4
                 </div>
               </motion.div>
@@ -979,7 +1061,7 @@ const ReviewTrek = ({ guide, searchParams }) => {
       </AnimatePresence>
 
       {/* Navigation Buttons */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
@@ -1018,15 +1100,22 @@ const ReviewTrek = ({ guide, searchParams }) => {
             <ArrowRight className="h-5 w-5 ml-2" />
           </motion.button>
         ) : (
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={handleMakePayment}
-            className="px-8 py-3 bg-gradient-to-r from-green-400 to-green-600 text-white rounded-xl hover:from-green-500 hover:to-green-700 flex items-center shadow-lg hover:shadow-xl transition-all"
-          >
-            Complete Payment
-            <CreditCard className="h-5 w-5 ml-2" />
-          </motion.button>
+          <div className="flex flex-col items-end">
+            {paymentError && <p className="text-red-500 text-sm mb-2">{paymentError}</p>}
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleMakePayment}
+              disabled={isPaymentLoading}
+              className={`px-8 py-3 rounded-xl flex items-center shadow-lg hover:shadow-xl transition-all ${isPaymentLoading
+                ? 'bg-gray-400 cursor-not-allowed text-white'
+                : 'bg-gradient-to-r from-green-400 to-green-600 text-white hover:from-green-500 hover:to-green-700'
+                }`}
+            >
+              {isPaymentLoading ? 'Processing...' : 'Complete Payment'}
+              <CreditCard className="h-5 w-5 ml-2" />
+            </motion.button>
+          </div>
         )}
       </motion.div>
     </div>

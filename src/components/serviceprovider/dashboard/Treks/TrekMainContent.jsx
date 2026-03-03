@@ -1,300 +1,277 @@
 'use client';
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import {
-  Calendar,
-  Users,
-  CreditCard,
-  UserCircle2,
-  MapPin,
-  Clock,
-  Mountain,
-  TrendingUp,
-  Share2,
-  CheckCircle2,
-  XCircle,
-} from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Calendar, Users, CreditCard, MapPin, Clock, Package, QrCode, Loader2, RefreshCw, ChevronDown, ChevronUp, Mountain } from 'lucide-react';
 
-// Dummy treks data
-const treksData = [
-  {
-    id: 'TR-101',
-    name: 'Kashmir Great Lakes Trek',
-    location: 'Sonamarg, Kashmir',
-    date: '2025-07-15',
-    difficulty: 'Moderate',
-    days: 7,
-    members: 8,
-    requestedBy: 'Neha Patel',
-    price: 12500,
-    status: 'Pending',
-    elevation: 13, // in 1000s of feet
-  },
-  {
-    id: 'TR-102',
-    name: 'Tarsar Marsar Lake Trek',
-    location: 'Pahalgam, Kashmir',
-    date: '2025-08-05',
-    difficulty: 'Moderate to Difficult',
-    days: 6,
-    members: 6,
-    requestedBy: 'Rahul Verma',
-    price: 11000,
-    status: 'Scheduled',
-    elevation: 13.5,
-  },
-  {
-    id: 'TR-103',
-    name: 'Gulmarg Alpine Trek',
-    location: 'Gulmarg, Kashmir',
-    date: '2025-06-20',
-    difficulty: 'Easy',
-    days: 4,
-    members: 12,
-    requestedBy: 'Sanjay Kumar',
-    price: 8500,
-    status: 'Completed',
-    elevation: 9.5,
-  },
-];
-
+/* ── Status pill ── */
 function StatusPill({ status }) {
   const map = {
-    Pending: 'bg-yellow-100 text-yellow-800',
-    Scheduled: 'bg-emerald-100 text-emerald-800',
-    Completed: 'bg-blue-100 text-blue-800',
+    confirmed: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+    pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+    cancelled: 'bg-red-100 text-red-800 border-red-200',
   };
   return (
-    <span
-      className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${
-        map[status] || 'bg-gray-100 text-gray-700'
-      }`}
-    >
-      {status}
+    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border ${map[status] || 'bg-gray-100 text-gray-700'}`}>
+      {status === 'confirmed' ? '✅ Confirmed' : status === 'pending' ? '⏳ Pending Payment' : '❌ Cancelled'}
     </span>
   );
 }
 
-// Trek Card Component
-function TrekCard({ trek, onAction }) {
+/* ── Booking Card ── */
+function TrekBookingCard({ booking }) {
+  const [expanded, setExpanded] = useState(false);
+
+  const fmtDate = (d) => d ? new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'TBD';
+  const fmtAmount = (a) => `₹${Number(a || 0).toLocaleString('en-IN')}`;
+
+  const travelers = booking.personalDetails?.personalDetails || [];
+  const contact = booking.personalDetails?.contactDetails || {};
+  const pickupDropoff = booking.pickupDropoff || {};
+  const pickupCity = pickupDropoff.pickup?.city;
+  const dropoffCity = pickupDropoff.dropoff?.city;
+
   return (
     <motion.article
       layout
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      whileHover={{ translateY: -4, boxShadow: '0 12px 24px rgba(0,0,0,0.06)' }}
-      transition={{ duration: 0.25, ease: 'easeOut' }}
-      className="w-full rounded-2xl bg-gradient-to-br from-white via-white to-neutral-50 border border-neutral-100 shadow-sm overflow-hidden"
+      whileHover={{ translateY: -2, boxShadow: '0 8px 24px rgba(0,0,0,0.07)' }}
+      transition={{ duration: 0.2 }}
+      className="w-full rounded-2xl bg-white border border-neutral-100 shadow-sm overflow-hidden"
     >
-      {/* Hero area */}
-      <div className="flex gap-4 p-6 md:p-8 items-start">
-        {/* Trek Icon */}
-        <div className="min-w-[90px] flex-shrink-0">
-          <div className="w-20 h-20 rounded-xl bg-gradient-to-tr from-green-50 to-emerald-50 flex items-center justify-center border border-neutral-100">
-            <Mountain className="w-10 h-10 text-emerald-600" />
-          </div>
+      {/* Header */}
+      <div className="flex gap-4 p-5 md:p-6 items-start">
+        {/* Icon */}
+        <div className="shrink-0 w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-50 to-green-100 border border-emerald-100 flex items-center justify-center">
+          <Mountain className="w-6 h-6 text-emerald-600" />
         </div>
 
-        {/* Trek Info */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-start gap-3">
-            <h3 className="text-lg md:text-xl font-semibold text-neutral-900 flex items-center gap-3 truncate">
-              <span className="truncate">{trek.name}</span>
-            </h3>
-
-            <div className="ml-auto flex items-center gap-3">
-              <span className="text-sm text-neutral-500">{trek.id}</span>
-              <StatusPill status={trek.status} />
+          {/* Title row */}
+          <div className="flex items-start justify-between gap-3 flex-wrap">
+            <div className="min-w-0">
+              <h3 className="text-base md:text-lg font-semibold text-gray-900 truncate">{booking.packageName}</h3>
+              <p className="text-sm text-gray-500 mt-0.5 flex items-center gap-1">
+                <MapPin className="w-3 h-3" /> {booking.destination}
+              </p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="text-xs text-gray-400 font-mono">{booking.bookingRef}</span>
+              <StatusPill status={booking.status} />
             </div>
           </div>
 
-          <p className="mt-2 text-sm text-neutral-600 truncate flex items-center gap-1">
-            <MapPin className="w-4 h-4 text-emerald-600" /> {trek.location}
-          </p>
-
-          <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm text-neutral-600">
+          {/* Stats row */}
+          <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm text-gray-600">
             <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              <div className="truncate">{trek.date}</div>
+              <Calendar className="w-4 h-4 text-emerald-500" />
+              <span>{fmtDate(booking.startDate)}</span>
             </div>
             <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4" />
-              <div>{trek.days} days</div>
+              <Clock className="w-4 h-4 text-emerald-500" />
+              <span>{booking.days} days</span>
             </div>
             <div className="flex items-center gap-2">
-              <Users className="w-4 h-4" />
-              <div>{trek.members} members</div>
+              <Users className="w-4 h-4 text-emerald-500" />
+              <span>{booking.numPeople} person(s)</span>
             </div>
             <div className="flex items-center gap-2">
-              <TrendingUp className="w-4 h-4" />
-              <div>{trek.difficulty}</div>
+              <CreditCard className="w-4 h-4 text-emerald-500" />
+              <span className="font-semibold text-emerald-700">{fmtAmount(booking.totalAmount)}</span>
             </div>
           </div>
 
-          {/* Elevation + Price */}
-          <div className="mt-3 flex items-center justify-between text-sm text-neutral-600">
-            <span>Elevation: {trek.elevation}k ft</span>
-            <div className="font-semibold text-emerald-700 flex items-center gap-2">
-              <CreditCard className="w-4 h-4" /> ₹{trek.price.toLocaleString()}
-            </div>
+          {/* Booked by */}
+          <div className="mt-3 text-sm text-gray-500">
+            Booked by <span className="font-medium text-gray-800">{booking.bookedBy}</span>
+            {booking.bookedByEmail && <span className="text-gray-400"> · {booking.bookedByEmail}</span>}
+            {booking.bookedByPhone && <span className="text-gray-400"> · {booking.bookedByPhone}</span>}
           </div>
 
-          {/* Actions row */}
-          <div className="mt-5 flex items-center gap-3">
-            {trek.status === 'Pending' && (
-              <>
-                <button
-                  onClick={() => onAction('approve', trek)}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white text-sm font-medium shadow-md hover:brightness-95 focus:outline-none"
-                >
-                  <CheckCircle2 className="w-4 h-4" /> Approve
-                </button>
-                <button
-                  onClick={() => onAction('decline', trek)}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-neutral-200 text-sm font-medium hover:bg-neutral-50 focus:outline-none"
-                >
-                  <XCircle className="w-4 h-4" /> Decline
-                </button>
-              </>
-            )}
-
-            {trek.status === 'Scheduled' && (
-              <button
-                onClick={() => onAction('cancel', trek)}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-neutral-200 text-sm font-medium hover:bg-neutral-50 focus:outline-none"
-              >
-                Cancel
-              </button>
-            )}
-
-            {trek.status === 'Completed' && (
-              <>
-                <button
-                  onClick={() => onAction('feedback', trek)}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-neutral-200 text-sm font-medium hover:bg-neutral-50 focus:outline-none"
-                >
-                  Feedback
-                </button>
-                <button
-                  onClick={() => onAction('share', trek)}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-neutral-200 text-sm font-medium hover:bg-neutral-50 focus:outline-none"
-                >
-                  <Share2 className="w-4 h-4" /> Share
-                </button>
-              </>
-            )}
-
-            <button
-              onClick={() => onAction('details', trek)}
-              className="ml-auto text-sm font-medium text-emerald-600 hover:underline"
-            >
-              View Details
-            </button>
-          </div>
+          {/* Expand button */}
+          <button
+            onClick={() => setExpanded(v => !v)}
+            className="mt-3 flex items-center gap-1 text-xs text-emerald-600 hover:underline font-medium"
+          >
+            {expanded ? <><ChevronUp className="w-3 h-3" /> Hide details</> : <><ChevronDown className="w-3 h-3" /> View traveller details</>}
+          </button>
         </div>
       </div>
 
+      {/* Expanded details */}
+      <AnimatePresence>
+        {expanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden border-t border-gray-100 bg-gray-50 px-5 md:px-6 py-4 space-y-4"
+          >
+            {/* Contact */}
+            {(contact.email || contact.mobile) && (
+              <div>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Contact</p>
+                <p className="text-sm text-gray-700">{contact.email}{contact.mobile ? ` · ${contact.mobile}` : ''}</p>
+              </div>
+            )}
+
+            {/* Travellers */}
+            {travelers.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Travellers</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {travelers.map((t, i) => (
+                    <div key={i} className="bg-white rounded-lg p-3 border border-gray-100 text-sm">
+                      <p className="font-medium text-gray-800">{t.name || `Traveller ${i + 1}`}</p>
+                      <p className="text-gray-500 text-xs mt-0.5">{t.gender} · Age {t.age} · {t.nationality}</p>
+                      {t.idType && <p className="text-gray-400 text-xs">{t.idType}: {t.idNumber}</p>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Travel info */}
+            {(pickupCity || dropoffCity) && (
+              <div>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Travel Info</p>
+                <div className="grid grid-cols-2 gap-3 text-sm text-gray-600">
+                  {pickupCity && <div><span className="font-medium">Pickup:</span> {pickupCity}{pickupDropoff.pickup?.time ? `, ${pickupDropoff.pickup.time}` : ''}</div>}
+                  {dropoffCity && <div><span className="font-medium">Dropoff:</span> {dropoffCity}{pickupDropoff.dropoff?.time ? `, ${pickupDropoff.dropoff.time}` : ''}</div>}
+                </div>
+              </div>
+            )}
+
+            {/* Dates */}
+            <div className="flex gap-4 text-sm text-gray-600">
+              <div><span className="font-medium">Start:</span> {fmtDate(booking.startDate)}</div>
+              <div><span className="font-medium">End:</span> {fmtDate(booking.endDate)}</div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Footer */}
-      <div className="border-t border-neutral-100 px-6 py-3 bg-gradient-to-t from-transparent to-white">
-        <div className="text-xs text-neutral-500 flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <svg
-              width="10"
-              height="10"
-              viewBox="0 0 10 10"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              aria-hidden
-            >
-              <circle cx="5" cy="5" r="5" fill="#10B981" />
-            </svg>
-            <span>
-              {trek.status === 'Pending'
-                ? 'Awaiting approval'
-                : trek.status === 'Scheduled'
-                ? 'Trek scheduled'
-                : 'Trek completed'}
-            </span>
-          </div>
-          <div className="ml-auto text-right">
-            <span className="font-medium text-neutral-700">Requested by</span>
-            <div className="text-xs text-neutral-500">{trek.requestedBy}</div>
-          </div>
+      <div className="border-t border-neutral-100 px-5 py-2 bg-gradient-to-t from-white to-transparent">
+        <div className="text-xs text-neutral-400 flex items-center gap-2">
+          <QrCode className="w-3 h-3" />
+          <span>Ref: {booking.bookingRef}</span>
+          <span className="ml-auto">Booked {new Date(booking.createdAt).toLocaleDateString('en-IN')}</span>
         </div>
       </div>
     </motion.article>
   );
 }
 
-// Main Trek Component
+/* ── Main component ── */
+const FILTERS = ['All', 'confirmed', 'pending', 'cancelled'];
+
 export default function TrekMainContent() {
   const [filter, setFilter] = useState('All');
-  const [treks, setTreks] = useState(treksData);
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const filteredTreks =
-    filter === 'All' ? treks : treks.filter((t) => t.status === filter);
+  const fetchBookings = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/provider/trek-bookings');
+      const data = await res.json();
+      if (data.success) {
+        setBookings(data.data || []);
+      } else {
+        setError(data.message || 'Failed to load bookings');
+      }
+    } catch (e) {
+      setError('Network error. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  function handleAction(type, trek) {
-    if (type === 'approve') {
-      setTreks((prev) =>
-        prev.map((p) => (p.id === trek.id ? { ...p, status: 'Scheduled' } : p))
-      );
-    }
-    if (type === 'decline') {
-      setTreks((prev) =>
-        prev.map((p) => (p.id === trek.id ? { ...p, status: 'Declined' } : p))
-      );
-    }
-    if (type === 'cancel') {
-      setTreks((prev) =>
-        prev.map((p) => (p.id === trek.id ? { ...p, status: 'Cancelled' } : p))
-      );
-    }
-    if (type === 'feedback') {
-      alert(`Open feedback for ${trek.name}`);
-    }
-    if (type === 'share') {
-      alert('Share trek dialog');
-    }
-    if (type === 'details') {
-      alert(`Go to details for ${trek.id}`);
-    }
-  }
+  useEffect(() => { fetchBookings(); }, []);
+
+  const filtered = filter === 'All' ? bookings : bookings.filter(b => b.status === filter);
+
+  const counts = {
+    All: bookings.length,
+    confirmed: bookings.filter(b => b.status === 'confirmed').length,
+    pending: bookings.filter(b => b.status === 'pending').length,
+    cancelled: bookings.filter(b => b.status === 'cancelled').length,
+  };
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4 gap-3">
-        <h2 className="text-xl font-semibold">Treks</h2>
-        <div className="flex-1" />
-
-        <div className="flex items-center gap-2 flex-wrap">
-          {['All', 'Pending', 'Scheduled', 'Completed'].map((f) => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`px-4 py-2 rounded-full text-sm font-medium border transition ${
-                filter === f
-                  ? 'bg-emerald-500 text-white border-emerald-500'
-                  : 'bg-white text-neutral-700 hover:bg-neutral-50'
-              }`}
-            >
-              {f}
-            </button>
-          ))}
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        <div>
+          <h2 className="text-xl font-bold text-gray-900">Trek Bookings</h2>
+          <p className="text-sm text-gray-500 mt-0.5">All bookings for your trek packages</p>
         </div>
+        <div className="flex-1" />
+        <button
+          onClick={fetchBookings}
+          disabled={loading}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 text-sm text-gray-600 hover:bg-gray-50 transition disabled:opacity-50"
+        >
+          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          Refresh
+        </button>
       </div>
 
-      <div className="grid grid-cols-1 gap-5">
-        {filteredTreks.length === 0 ? (
-          <div className="p-6 rounded-xl border border-dashed border-neutral-200 text-center text-neutral-500">
-            No treks found
-          </div>
-        ) : (
-          filteredTreks.map((trek) => (
-            <TrekCard key={trek.id} trek={trek} onAction={handleAction} />
-          ))
-        )}
+      {/* Filters */}
+      <div className="flex items-center gap-2 flex-wrap">
+        {FILTERS.map(f => (
+          <button
+            key={f}
+            onClick={() => setFilter(f)}
+            className={`px-4 py-2 rounded-full text-sm font-medium border transition flex items-center gap-1.5 ${filter === f ? 'bg-emerald-500 text-white border-emerald-500 shadow-md' : 'bg-white text-neutral-700 border-neutral-200 hover:bg-neutral-50'
+              }`}
+          >
+            <span className="capitalize">{f === 'All' ? 'All' : f}</span>
+            <span className={`text-xs rounded-full px-1.5 py-0.5 ${filter === f ? 'bg-white/25 text-white' : 'bg-gray-100 text-gray-600'}`}>
+              {counts[f]}
+            </span>
+          </button>
+        ))}
       </div>
+
+      {/* Content */}
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <Loader2 className="w-10 h-10 text-emerald-500 animate-spin mx-auto mb-3" />
+            <p className="text-gray-500 text-sm">Loading bookings...</p>
+          </div>
+        </div>
+      ) : error ? (
+        <div className="p-6 rounded-xl border border-red-100 bg-red-50 text-center text-red-600">
+          <p>{error}</p>
+          <button onClick={fetchBookings} className="mt-3 text-sm underline text-red-500">Try again</button>
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="py-16 rounded-2xl border border-dashed border-neutral-200 bg-neutral-50 text-center">
+          <Mountain className="w-12 h-12 text-neutral-300 mx-auto mb-3" />
+          <h3 className="text-base font-medium text-neutral-600">
+            {filter === 'All' ? 'No bookings yet' : `No ${filter} bookings`}
+          </h3>
+          <p className="text-sm text-neutral-400 mt-1">
+            {filter === 'All'
+              ? 'When users book your packages, they will appear here.'
+              : `You have no ${filter} trek bookings.`}
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-4">
+          <AnimatePresence mode="popLayout">
+            {filtered.map(booking => (
+              <TrekBookingCard key={booking.id} booking={booking} />
+            ))}
+          </AnimatePresence>
+        </div>
+      )}
     </div>
   );
 }

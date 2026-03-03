@@ -37,50 +37,44 @@ const TrekGuideDetails = ({ guide }) => {
   const [personalDetailsCompleted, setPersonalDetailsCompleted] = useState(false);
   const [selectedStartDate, setSelectedStartDate] = useState(new Date());
 
-  // Find the specific trek package
-  const trekPackage = Array.isArray(guide.trekPackages)
-    ? guide.trekPackages.find(pkg => pkg?.trekId?.toString() === trekId?.toString())
-    : null;
+  // The 'guide' prop is actually the Package document we fetched
+  const trekPackage = guide;
 
-  const pricePerPerson = trekPackage?.price ?? 0;
-  const duration = trekPackage?.duration ?? 'N/A';
+  const priceObj = trekPackage?.pricingTiers && trekPackage.pricingTiers.length > 0
+    ? [...trekPackage.pricingTiers].sort((a, b) => a.minPeople - b.minPeople)[0]
+    : { price: 0 };
 
-  // Default trek itinerary data
+  const pricePerPerson = priceObj.price ?? 0;
+  const duration = trekPackage?.days ?? 1;
+
+  // Default trek itinerary data mapping
   const defaultTrek = {
     name: trekPackage?.name || 'Standard Trek',
-    difficulty: trekPackage?.difficulty || 'Moderate',
-    altitude: trekPackage?.altitude || '12,000 ft',
-    baseCamp: trekPackage?.baseCamp || 'Base Camp Village',
-    highlights: trekPackage?.highlights || ['Scenic views', 'Forest trail', 'Mountain summit'],
-    itinerary: trekPackage?.itinerary || [
-      {
-        day: 1,
-        title: 'Arrival at Base Camp',
-        description: 'Arrive at the base camp, meet the team, and prepare for the trek',
-        altitude: '8,000 ft',
-        duration: '4 hours',
-        meals: ['Lunch', 'Dinner'],
-        accommodation: 'Guest House'
-      },
-      {
-        day: 2,
-        title: 'Base Camp to Mid Point',
-        description: 'Trek through forests and cross small streams',
-        altitude: '10,000 ft',
-        duration: '6-7 hours',
-        meals: ['Breakfast', 'Lunch', 'Dinner'],
-        accommodation: 'Tents'
-      },
-      {
-        day: 3,
-        title: 'Summit Day',
-        description: 'Early morning start for the summit push',
-        altitude: '12,000 ft',
-        duration: '8-9 hours',
-        meals: ['Breakfast', 'Lunch', 'Dinner'],
-        accommodation: 'Tents'
-      }
-    ]
+    difficulty: trekPackage?.trekLevel || 'Moderate',
+    altitude: trekPackage?.altitude || 'Dependent on route',
+    baseCamp: trekPackage?.destination || 'Base Camp',
+    highlights: Array.isArray(trekPackage?.itinerary)
+      ? trekPackage.itinerary.flatMap(day => day.highlights || [])
+      : ['Scenic views', 'Forest trail', 'Mountain summit'],
+    itinerary: Array.isArray(trekPackage?.itinerary) && trekPackage.itinerary.length > 0
+      ? trekPackage.itinerary.map(day => ({
+        day: day.day,
+        title: `Day ${day.day}`,
+        description: day.agenda || 'Trekking day',
+        duration: 'Variable',
+        meals: ['As per inclusives'],
+        accommodation: 'As per inclusives'
+      }))
+      : [
+        {
+          day: 1,
+          title: 'Arrival at Base Camp',
+          description: 'Arrive at the base camp, meet the team, and prepare for the trek',
+          duration: '4 hours',
+          meals: ['Dinner'],
+          accommodation: 'Guest House'
+        }
+      ]
   };
 
   // Initialize itineraries
@@ -380,6 +374,7 @@ const TrekGuideDetails = ({ guide }) => {
               <div>
                 <PickupDropoff
                   defaultLocation={defaultTrek.baseCamp}
+                  pickupDropCities={trekPackage?.pickupDropCities || []}
                   onNext={handlePickupDropoffSubmit}
                   onBack={handleBack}
                   startDate={selectedStartDate}
@@ -420,7 +415,7 @@ const TrekGuideDetails = ({ guide }) => {
                         },
                         guide: guide,
                         trekConfig: {
-                          trekId,
+                          trekId: trekPackage._id,
                           peopleRangeParam,
                           date: selectedStartDate.toISOString()
                         },
@@ -432,7 +427,7 @@ const TrekGuideDetails = ({ guide }) => {
 
                       // Navigate to review page
                       router.push(
-                        `/user/trek/guidelist/trekdetails/${guide.id}/reviewjourney?trekId=${trekId}&peopleRange=${peopleRangeParam}`
+                        `/user/trek/guidelist/trekdetails/${guide.provider?._id || guide.provider}/reviewjourney?trekId=${trekPackage._id}&peopleRange=${peopleRangeParam}`
                       );
                     }}
                     className="px-5 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center shadow-sm hover:shadow-md"
@@ -493,7 +488,7 @@ const TrekGuideDetails = ({ guide }) => {
 
         </div>
       </div>
-    </div>
+    </div >
   );
 };
 

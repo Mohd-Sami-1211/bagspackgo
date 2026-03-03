@@ -16,12 +16,13 @@ const BookingMainContent = () => {
   useEffect(() => {
     async function fetchBookings() {
       try {
-        // Fetch both event bookings and trip bookings in parallel
-        const [eventsRes, tripsRes] = await Promise.all([
+        // Fetch event, trip, and trek bookings in parallel
+        const [eventsRes, tripsRes, treksRes] = await Promise.all([
           fetch('/api/user/bookings'),
           fetch('/api/user/trip-bookings'),
+          fetch('/api/user/trek-bookings'),
         ]);
-        const [eventsData, tripsData] = await Promise.all([eventsRes.json(), tripsRes.json()]);
+        const [eventsData, tripsData, treksData] = await Promise.all([eventsRes.json(), tripsRes.json(), treksRes.json()]);
 
         const now = new Date();
         const upcoming = [];
@@ -47,6 +48,30 @@ const BookingMainContent = () => {
               destination: b.destination,
               guide: b.guideName,
               category: b.category,
+              status: b.status,
+              amount: b.totalAmount,
+              numPeople: b.numPeople,
+              bookingRef: b.bookingRef,
+              days: b.days,
+            };
+            if (b.status === 'confirmed' && new Date(b.startDate) >= now) upcoming.push(normalized);
+            else if (b.status === 'confirmed') past.push(normalized);
+            else upcoming.push(normalized); // pending bookings in upcoming
+          });
+        }
+
+        // Trek bookings — normalize to same shape
+        if (treksData.success && treksData.data) {
+          treksData.data.forEach(b => {
+            const normalized = {
+              id: b.id,
+              type: 'Trek',
+              title: b.packageName,
+              date: b.startDate,
+              endDate: b.endDate,
+              destination: b.destination,
+              guide: b.guideName,
+              category: b.category || 'Trek',
               status: b.status,
               amount: b.totalAmount,
               numPeople: b.numPeople,
