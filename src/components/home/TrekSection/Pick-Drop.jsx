@@ -2,7 +2,7 @@
 import { MapPin, Calendar, Clock, Car, ArrowLeft, ArrowRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
-const PickupDropoff = ({ defaultLocation, onNext, onBack, startDate, duration }) => {
+const PickupDropoff = ({ defaultLocation, onNext, onBack, startDate, duration, pickupDropCities }) => {
   const [pickupData, setPickupData] = useState({
     location: defaultLocation || '',
     address: '',
@@ -104,16 +104,16 @@ const PickupDropoff = ({ defaultLocation, onNext, onBack, startDate, duration })
     }
 
     setErrors(newErrors);
-    
+
     // If pickup is complete but dropoff has errors, switch to dropoff section
-    if (isValid === false && 
-        !newErrors.pickup.location && 
-        !newErrors.pickup.address && 
-        !newErrors.pickup.time &&
-        (newErrors.dropoff.location || newErrors.dropoff.address || newErrors.dropoff.time)) {
+    if (isValid === false &&
+      !newErrors.pickup.location &&
+      !newErrors.pickup.address &&
+      !newErrors.pickup.time &&
+      (newErrors.dropoff.location || newErrors.dropoff.address || newErrors.dropoff.time)) {
       setActiveSection('dropoff');
     }
-    
+
     return isValid;
   };
 
@@ -141,6 +141,17 @@ const PickupDropoff = ({ defaultLocation, onNext, onBack, startDate, duration })
       day: 'numeric'
     });
   };
+
+  const formattedCities = {};
+  if (pickupDropCities && pickupDropCities.length > 0) {
+    pickupDropCities.forEach(cityObj => {
+      formattedCities[cityObj.cityName] = cityObj.locations.map(l => l.name);
+    });
+  } else if (defaultLocation) {
+    formattedCities[defaultLocation] = ['Default Station/Airport'];
+  } else {
+    formattedCities['Select City'] = ['N/A'];
+  }
 
   return (
     <div className="bg-white rounded-xl shadow-sm p-6">
@@ -180,17 +191,24 @@ const PickupDropoff = ({ defaultLocation, onNext, onBack, startDate, duration })
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-1 flex items-center">
                   <MapPin className="h-4 w-4 mr-2 text-green-600" />
-                  Pickup Location*
+                  Pickup City*
                 </label>
-                <input
-                  type="text"
-                  value={pickupData.location}
-                  onChange={(e) => handleInputChange('pickup', 'location', e.target.value)}
-                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
-                    errors.pickup.location ? 'border-red-500 bg-red-50' : 'border-gray-300'
-                  }`}
-                  placeholder="City or town name"
-                />
+                <div className="relative">
+                  <select
+                    value={pickupData.location}
+                    onChange={(e) => {
+                      handleInputChange('pickup', 'location', e.target.value);
+                      handleInputChange('pickup', 'address', ''); // reset address
+                    }}
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${errors.pickup.location ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                      }`}
+                  >
+                    <option value="">Select pickup city</option>
+                    {Object.keys(formattedCities).map(city => (
+                      <option key={`pickup-${city}`} value={city}>{city}</option>
+                    ))}
+                  </select>
+                </div>
                 {errors.pickup.location && (
                   <p className="mt-1 text-sm text-red-600 flex items-center">
                     <span className="mr-1">⚠</span> {errors.pickup.location}
@@ -201,17 +219,22 @@ const PickupDropoff = ({ defaultLocation, onNext, onBack, startDate, duration })
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-1 flex items-center">
                   <MapPin className="h-4 w-4 mr-2 text-green-600" />
-                  Pickup Address*
+                  Pickup Location*
                 </label>
-                <input
-                  type="text"
-                  value={pickupData.address}
-                  onChange={(e) => handleInputChange('pickup', 'address', e.target.value)}
-                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
-                    errors.pickup.address ? 'border-red-500 bg-red-50' : 'border-gray-300'
-                  }`}
-                  placeholder="Hotel, landmark, or exact address"
-                />
+                <div className="relative">
+                  <select
+                    value={pickupData.address}
+                    onChange={(e) => handleInputChange('pickup', 'address', e.target.value)}
+                    disabled={!pickupData.location}
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${errors.pickup.address ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                      } ${!pickupData.location ? 'bg-gray-50 text-gray-400' : ''}`}
+                  >
+                    <option value="">Select pickup point</option>
+                    {pickupData.location && formattedCities[pickupData.location]?.map(address => (
+                      <option key={`pickup-addr-${address}`} value={address}>{address}</option>
+                    ))}
+                  </select>
+                </div>
                 {errors.pickup.address && (
                   <p className="mt-1 text-sm text-red-600 flex items-center">
                     <span className="mr-1">⚠</span> {errors.pickup.address}
@@ -239,9 +262,8 @@ const PickupDropoff = ({ defaultLocation, onNext, onBack, startDate, duration })
                     type="time"
                     value={pickupData.time}
                     onChange={(e) => handleInputChange('pickup', 'time', e.target.value)}
-                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
-                      errors.pickup.time ? 'border-red-500 bg-red-50' : 'border-gray-300'
-                    }`}
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${errors.pickup.time ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                      }`}
                   />
                   {errors.pickup.time && (
                     <p className="mt-1 text-sm text-red-600 flex items-center">
@@ -256,17 +278,24 @@ const PickupDropoff = ({ defaultLocation, onNext, onBack, startDate, duration })
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-1 flex items-center">
                   <MapPin className="h-4 w-4 mr-2 text-green-600" />
-                  Drop-off Location*
+                  Drop-off City*
                 </label>
-                <input
-                  type="text"
-                  value={dropoffData.location}
-                  onChange={(e) => handleInputChange('dropoff', 'location', e.target.value)}
-                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
-                    errors.dropoff.location ? 'border-red-500 bg-red-50' : 'border-gray-300'
-                  }`}
-                  placeholder="City or town name"
-                />
+                <div className="relative">
+                  <select
+                    value={dropoffData.location}
+                    onChange={(e) => {
+                      handleInputChange('dropoff', 'location', e.target.value);
+                      handleInputChange('dropoff', 'address', ''); // reset address
+                    }}
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${errors.dropoff.location ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                      }`}
+                  >
+                    <option value="">Select drop-off city</option>
+                    {Object.keys(formattedCities).map(city => (
+                      <option key={`dropoff-${city}`} value={city}>{city}</option>
+                    ))}
+                  </select>
+                </div>
                 {errors.dropoff.location && (
                   <p className="mt-1 text-sm text-red-600 flex items-center">
                     <span className="mr-1">⚠</span> {errors.dropoff.location}
@@ -277,17 +306,22 @@ const PickupDropoff = ({ defaultLocation, onNext, onBack, startDate, duration })
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-1 flex items-center">
                   <MapPin className="h-4 w-4 mr-2 text-green-600" />
-                  Drop-off Address*
+                  Drop-off Location*
                 </label>
-                <input
-                  type="text"
-                  value={dropoffData.address}
-                  onChange={(e) => handleInputChange('dropoff', 'address', e.target.value)}
-                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
-                    errors.dropoff.address ? 'border-red-500 bg-red-50' : 'border-gray-300'
-                  }`}
-                  placeholder="Hotel, landmark, or exact address"
-                />
+                <div className="relative">
+                  <select
+                    value={dropoffData.address}
+                    onChange={(e) => handleInputChange('dropoff', 'address', e.target.value)}
+                    disabled={!dropoffData.location}
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${errors.dropoff.address ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                      } ${!dropoffData.location ? 'bg-gray-50 text-gray-400' : ''}`}
+                  >
+                    <option value="">Select drop-off point</option>
+                    {dropoffData.location && formattedCities[dropoffData.location]?.map(address => (
+                      <option key={`dropoff-addr-${address}`} value={address}>{address}</option>
+                    ))}
+                  </select>
+                </div>
                 {errors.dropoff.address && (
                   <p className="mt-1 text-sm text-red-600 flex items-center">
                     <span className="mr-1">⚠</span> {errors.dropoff.address}
@@ -315,9 +349,8 @@ const PickupDropoff = ({ defaultLocation, onNext, onBack, startDate, duration })
                     type="time"
                     value={dropoffData.time}
                     onChange={(e) => handleInputChange('dropoff', 'time', e.target.value)}
-                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
-                      errors.dropoff.time ? 'border-red-500 bg-red-50' : 'border-gray-300'
-                    }`}
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${errors.dropoff.time ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                      }`}
                   />
                   {errors.dropoff.time && (
                     <p className="mt-1 text-sm text-red-600 flex items-center">

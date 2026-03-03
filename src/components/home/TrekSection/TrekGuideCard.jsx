@@ -3,23 +3,29 @@ import { motion } from 'framer-motion';
 import { Star, MapPin, Clock, Award, User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
-const TrekGuideCard = ({ guide, trekId, individuals = 1 }) => {
+const TrekGuideCard = ({ pkg, peopleRange, date }) => {
   const router = useRouter();
-  const trekPackage = Array.isArray(guide.trekPackages)
-    ? guide.trekPackages.find(pkg => pkg?.trekId?.toString() === trekId?.toString())
-    : null;
 
-  const pricePerPerson = trekPackage?.price ?? 0;
-  const duration = trekPackage?.duration ?? 'N/A';
-  const totalPrice = pricePerPerson * individuals;
+  // If the component receives a `pkg` instead of a guide
+  if (!pkg) return null;
+
+  const priceObj = pkg.pricingTiers && pkg.pricingTiers.length > 0
+    ? [...pkg.pricingTiers].sort((a, b) => a.minPeople - b.minPeople)[0]
+    : { price: 0 };
+
+  const pricePerPerson = priceObj.price ?? 0;
+  const duration = pkg.days ? `${pkg.days} Days` : 'N/A';
 
   const handleViewDetails = () => {
     const params = new URLSearchParams();
-    params.set('trekId', trekId);
-    params.set('individuals', individuals);
-    
-    router.push(`/user/trek/guidelist/trekdetails/${guide.id}?${params.toString()}`);
+    if (peopleRange) params.set('peopleRange', peopleRange);
+    if (date) params.set('date', date.toISOString());
+
+    // assuming guide/provider info is populated in pkg.provider
+    router.push(`/user/trek/guidelist/trekdetails/${pkg.provider?._id || pkg.provider}?trekId=${pkg._id}&${params.toString()}`);
   };
+
+  const providerName = pkg.provider?.companyname || pkg.provider?.username || 'Expert Guide';
 
   return (
     <motion.div
@@ -43,35 +49,35 @@ const TrekGuideCard = ({ guide, trekId, individuals = 1 }) => {
         {/* Left Side */}
         <div className="w-full md:w-4/5 p-6">
           <div className="flex items-start gap-5">
-            {/* Guide Image */}
+            {/* Package/Guide Image */}
             <div className="flex-shrink-0">
               <div className="bg-gray-200 rounded-lg w-16 h-16 flex items-center justify-center overflow-hidden">
-                {guide.image ? (
-                  <img src={guide.image} alt={guide.name} className="w-full h-full object-cover" />
+                {pkg.photos && pkg.photos.length > 0 ? (
+                  <img src={pkg.photos[0]} alt={pkg.name} className="w-full h-full object-cover" />
                 ) : (
-                  <span className="text-gray-500 text-xs text-center">Image</span>
+                  <span className="text-gray-500 text-xs text-center border p-2">Trek<br />Image</span>
                 )}
               </div>
             </div>
 
-            {/* Guide Info */}
+            {/* Info */}
             <div className="flex-1">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <h3 className="text-xl font-bold text-gray-800">{guide.name}</h3>
+                <h3 className="text-xl font-bold text-gray-800">{pkg.name}</h3>
                 <div className="flex items-center gap-1 bg-green-50 px-2 py-1 rounded-full">
                   <Star className="h-4 w-4 text-green-600 fill-green-600" />
                   <span className="text-sm font-medium text-green-800">
-                    {guide.rating} ({guide.reviews} reviews)
+                    {pkg.rating || 4.5} ({pkg.totalRatings || 10} reviews)
                   </span>
                 </div>
               </div>
 
-              <p className="text-gray-600 mt-1 text-sm">{guide.bio}</p>
+              <p className="text-gray-600 mt-1 text-sm">Organized by {providerName} • Level: <span className="capitalize">{pkg.trekLevel || 'Moderate'}</span></p>
 
               <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="flex items-center gap-2">
                   <MapPin className="h-4 w-4 text-blue-500" />
-                  <span className="text-sm text-gray-700 capitalize">{guide.location}</span>
+                  <span className="text-sm text-gray-700 capitalize">{pkg.destination}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Clock className="h-4 w-4 text-purple-500" />
@@ -79,12 +85,12 @@ const TrekGuideCard = ({ guide, trekId, individuals = 1 }) => {
                 </div>
                 <div className="flex items-center gap-2">
                   <Award className="h-4 w-4 text-amber-500" />
-                  <span className="text-sm text-gray-700">{guide.touristsHandled || 0}+ treks</span>
+                  <span className="text-sm text-gray-700">Certified</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <User className="h-4 w-4 text-green-500" />
                   <span className="text-sm text-gray-700">
-                    {individuals} {individuals > 1 ? 'people' : 'person'}
+                    {peopleRange ? `${peopleRange} people` : 'Range TBD'}
                   </span>
                 </div>
               </div>
@@ -93,16 +99,13 @@ const TrekGuideCard = ({ guide, trekId, individuals = 1 }) => {
                 <div></div>
                 <div className="text-right">
                   <div className="inline-flex flex-col items-end bg-green-50 px-3 py-2 rounded-lg">
+                    <p className="text-sm text-gray-600 mb-0.5">Starting from</p>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-green-800">Price/person:</span>
                       <span className="text-lg font-bold text-green-600">
                         ₹{pricePerPerson.toLocaleString('en-IN')}
                       </span>
+                      <span className="text-sm font-semibold text-green-800">/person</span>
                     </div>
-                    <p className="text-sm text-gray-600 mt-1">
-                      <span className="font-medium">Total:</span>{' '}
-                      ₹{totalPrice.toLocaleString('en-IN')}
-                    </p>
                   </div>
                 </div>
               </div>

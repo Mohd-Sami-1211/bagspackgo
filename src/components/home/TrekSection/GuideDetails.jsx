@@ -1,23 +1,37 @@
 'use client';
-import { Star, MapPin, Users,Clock, Calendar, Share2, Heart, ChevronRight, ArrowRight, ArrowLeft, Mountain, Compass, Flag, Map, Backpack, Tent, Sun, Moon, Thermometer, CloudRain, Wind } from 'lucide-react';
+import { Star, MapPin, Users, Clock, Calendar, Share2, Heart, ChevronRight, ArrowRight, ArrowLeft, Mountain, Compass, Flag, Map, Backpack, Tent, Sun, Moon, Thermometer, CloudRain, Wind } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import TrekItenary from 'src/components/home/TrekSection/Itenary';
+
 import PickupDropoff from 'src/components/home/TrekSection/Pick-Drop';
 import PersonalDetails from 'src/components/home/TrekSection/PersonalDetails';
 
 const TrekGuideDetails = ({ guide }) => {
   const searchParams = useSearchParams();
-  
+
   // Get parameters from URL with validation
   const trekId = searchParams.get('trekId') || '';
-  const individuals = Math.max(1, parseInt(searchParams.get('individuals')) || 1);
+  // Calculate min and max people limits from peopleRangeParam
+  const peopleRangeParam = searchParams.get('peopleRange') || '';
+  let minPeople = 1;
+  let maxPeople = 1;
+
+  if (peopleRangeParam) {
+    if (peopleRangeParam.includes('+')) {
+      minPeople = parseInt(peopleRangeParam);
+      maxPeople = parseInt(peopleRangeParam);
+    } else {
+      const limits = peopleRangeParam.split('-');
+      if (limits.length === 2 && !isNaN(parseInt(limits[0])) && !isNaN(parseInt(limits[1]))) {
+        minPeople = parseInt(limits[0]);
+        maxPeople = parseInt(limits[1]);
+      }
+    }
+  }
 
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('itenary');
-  const [currentDay, setCurrentDay] = useState(1);
   const [acceptTerms, setAcceptTerms] = useState(false);
-  const [viewingDay, setViewingDay] = useState(null);
   const [itenaries, setItenaries] = useState([]);
   const [pickupDropoffCompleted, setPickupDropoffCompleted] = useState(false);
   const [personalDetailsCompleted, setPersonalDetailsCompleted] = useState(false);
@@ -30,7 +44,6 @@ const TrekGuideDetails = ({ guide }) => {
 
   const pricePerPerson = trekPackage?.price ?? 0;
   const duration = trekPackage?.duration ?? 'N/A';
-  const totalPrice = pricePerPerson * individuals;
 
   // Default trek itinerary data
   const defaultTrek = {
@@ -72,14 +85,14 @@ const TrekGuideDetails = ({ guide }) => {
 
   // Initialize itineraries
   useEffect(() => {
-    const startDate = selectedStartDate && !isNaN(selectedStartDate.getTime()) 
-      ? new Date(selectedStartDate) 
+    const startDate = selectedStartDate && !isNaN(selectedStartDate.getTime())
+      ? new Date(selectedStartDate)
       : new Date();
 
     const initialItenaries = defaultTrek.itinerary.map((day, i) => {
       const dayDate = new Date(startDate);
       dayDate.setDate(dayDate.getDate() + i);
-      
+
       return {
         ...day,
         date: dayDate.toLocaleDateString('en-US', {
@@ -153,21 +166,12 @@ const TrekGuideDetails = ({ guide }) => {
     }
   ];
 
-  const handleViewDay = (dayNumber) => {
-    setViewingDay(dayNumber);
-    setCurrentDay(dayNumber); 
-  };
-
-  const handleBackToList = () => {
-    setViewingDay(null);
-  };
-
   const handleNextTab = () => {
-    if (activeTab === 'itenary' && !viewingDay) {
+    if (activeTab === 'itenary') {
       setActiveTab('pickupDropoff');
     } else if (activeTab === 'pickupDropoff' && pickupDropoffCompleted) {
       setActiveTab('personalDetails');
-    } 
+    }
   };
 
   const handleBack = () => {
@@ -175,8 +179,6 @@ const TrekGuideDetails = ({ guide }) => {
       setActiveTab('itenary');
     } else if (activeTab === 'personalDetails') {
       setActiveTab('pickupDropoff');
-    } else {
-      setViewingDay(null);
     }
   };
 
@@ -191,7 +193,7 @@ const TrekGuideDetails = ({ guide }) => {
   const formatTimeWithAMPM = (time) => {
     if (!time) return '';
     if (time.includes('AM') || time.includes('PM')) return time;
-    
+
     const [hours, minutes] = time.split(':');
     const hourNum = parseInt(hours, 10);
     const ampm = hourNum >= 12 ? 'PM' : 'AM';
@@ -254,7 +256,7 @@ const TrekGuideDetails = ({ guide }) => {
                 </div>
                 <div className="bg-white/90 px-3 py-2 rounded-xl text-xs text-center shadow-md backdrop-blur-sm">
                   <p className="text-gray-500">People:</p>
-                  <p className="font-semibold text-gray-800">{individuals}</p>
+                  <p className="font-semibold text-gray-800">{peopleRangeParam ? `${peopleRangeParam}` : 'Not Set'}</p>
                 </div>
               </div>
               <div className="flex gap-2">
@@ -281,13 +283,12 @@ const TrekGuideDetails = ({ guide }) => {
               <button
                 key={tab.key}
                 onClick={() => !isTabDisabled(tab.key) && setActiveTab(tab.key)}
-                className={`w-full text-center text-sm font-medium py-3 transition-all ${
-                  activeTab === tab.key
-                    ? 'text-green-600 border-b-2 border-green-600 bg-white'
-                    : isTabDisabled(tab.key)
-                      ? 'text-gray-400 bg-gray-50 cursor-not-allowed'
-                      : 'text-gray-500 hover:text-gray-700 bg-gray-50'
-                }`}
+                className={`w-full text-center text-sm font-medium py-3 transition-all ${activeTab === tab.key
+                  ? 'text-green-600 border-b-2 border-green-600 bg-white'
+                  : isTabDisabled(tab.key)
+                    ? 'text-gray-400 bg-gray-50 cursor-not-allowed'
+                    : 'text-gray-500 hover:text-gray-700 bg-gray-50'
+                  }`}
                 disabled={isTabDisabled(tab.key)}
               >
                 {tab.label}
@@ -299,182 +300,85 @@ const TrekGuideDetails = ({ guide }) => {
             {activeTab === 'itenary' && (
               <>
                 <div className="flex justify-between items-center mb-5">
-                  <h3 className="text-lg font-semibold text-green-500 ml-5">
-                    {viewingDay ? `Day ${viewingDay}` : 'Trek Itinerary'}
+                  <h3 className="text-xl font-semibold text-green-600">
+                    Trek Itinerary
                   </h3>
                 </div>
 
-                {viewingDay ? (
-                  <div>
-                    <button
-                      onClick={handleBack}
-                      className="flex items-center text-green-600 mb-4 hover:text-green-700 transition-colors text-sm"
+                <div className="space-y-4">
+                  {itenaries.map((day, index) => (
+                    <div
+                      key={index}
+                      className="p-5 rounded-lg border border-gray-200 bg-white hover:shadow-md transition-shadow"
                     >
-                      <ArrowLeft className="h-4 w-4 mr-1" />
-                      Back to itinerary
-                    </button>
-
-                    <TrekItenary 
-                      day={itenaries[viewingDay - 1]} 
-                      difficulty={defaultTrek.difficulty}
-                      maxAltitude={defaultTrek.altitude}
-                      onBack={handleBackToList}
-                    />
-                  </div>
-                ) : (
-                  <div className="flex">
-                    <div className="w-1/4 pr-5">
-                      <div className="relative h-full">
-                        <div className="absolute left-1/2 top-0 h-full w-1.5 bg-gray-100 rounded-full -translate-x-1/2">
-                          <div
-                            className="bg-green-400 w-1.5 rounded-full transition-all duration-500"
-                            style={{ height: `${(currentDay / itenaries.length) * 100}%` }}
-                          ></div>
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="flex items-center">
+                          <span className="w-8 h-8 flex items-center justify-center bg-green-100 text-green-600 rounded-lg mr-3 text-sm font-bold shadow-sm">
+                            Day {day.day}
+                          </span>
+                          <div>
+                            <h4 className="text-lg font-bold text-gray-800">{day.title}</h4>
+                            <p className="text-sm text-gray-500 mt-0.5 flex items-center">
+                              <Calendar className="h-4 w-4 mr-1 text-gray-400" />
+                              <span className="font-medium text-gray-600">{day.date}</span>
+                            </p>
+                          </div>
                         </div>
-                        <div className="h-full flex flex-col justify-between">
-                          {itenaries.map((day, index) => {
-                            const dayNum = index + 1;
-                            const isActive = dayNum <= currentDay;
-                            const isCurrent = dayNum === currentDay;
-                            return (
-                              <div
-                                key={dayNum}
-                                className="relative flex items-center justify-center cursor-pointer"
-                                style={{ height: '104px' }}
-                                onClick={() => {
-                                  setCurrentDay(dayNum);
-                                  handleViewDay(dayNum);
-                                }}
-                              >
-                                <div
-                                  className={`absolute left-1/2 transform -translate-x-1/2 w-10 h-10 flex items-center justify-center rounded-full text-sm font-semibold transition-all duration-300 ${
-                                    isCurrent
-                                      ? 'bg-green-500 text-white ring-4 ring-green-200 scale-110 shadow-lg'
-                                      : isActive
-                                      ? 'bg-green-400 text-white shadow-md'
-                                      : 'bg-gray-200 text-gray-600'
-                                  }`}
-                                >
-                                  {dayNum}
-                                </div>
-                              </div>
-                            );
-                          })}
+                      </div>
+
+                      <p className="text-gray-600 text-sm mb-4 leading-relaxed">
+                        {day.description}
+                      </p>
+
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-gray-100 pt-4">
+                        <div className="flex items-center space-x-3">
+                          <div className="p-2 bg-blue-50 rounded-lg text-blue-500">
+                            <Mountain className="h-4 w-4" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500 font-medium">Altitude</p>
+                            <p className="text-sm text-gray-800 font-medium">{day.altitude}</p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center space-x-3">
+                          <div className="p-2 bg-amber-50 rounded-lg text-amber-500">
+                            <Clock className="h-4 w-4" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500 font-medium">Duration</p>
+                            <p className="text-sm text-gray-800 font-medium">{day.duration}</p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center space-x-3">
+                          <div className="p-2 bg-purple-50 rounded-lg text-purple-500">
+                            <Tent className="h-4 w-4" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500 font-medium">Accommodation</p>
+                            <p className="text-sm text-gray-800 font-medium">{day.accommodation}</p>
+                          </div>
                         </div>
                       </div>
                     </div>
+                  ))}
+                </div>
 
-                    <div className="w-3/4 space-y-4">
-                      {itenaries.map((day, index) => {
-                        const dayNum = index + 1;
-                        const isCurrentDay = dayNum === currentDay;
-                        
-                        return (
-                          <div
-                            key={index}
-                            className={`p-5 rounded-lg border transition-all group ${
-                              isCurrentDay
-                                ? 'border-green-300 bg-green-50 ring-1 ring-green-100 shadow-lg'
-                                : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
-                            } cursor-pointer`}
-                            onClick={() => {
-                              setCurrentDay(dayNum);
-                              handleViewDay(dayNum);
-                            }}
-                          >
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <h4 className="font-medium text-gray-900 flex items-center">
-                                  <span className={`w-7 h-7 flex items-center justify-center ${
-                                    isCurrentDay ? 'bg-green-500 text-white' : 'bg-green-100 text-green-600'
-                                  } rounded-full mr-3 text-sm font-semibold`}>
-                                    {day.day}
-                                  </span>
-                                  <span className="text-green-600 font-semibold">{day.title}</span>
-                                </h4>
-                                <p className="text-sm text-gray-500 mt-1.5 ml-10 flex items-center">
-                                  <Calendar className="h-4 w-4 mr-2 text-gray-400" />
-                                  <span className="font-medium text-gray-600">{day.date}</span>
-                                </p>
-                              </div>
-                            </div>
-
-                            <div className="mt-4 grid grid-cols-3 gap-5 ml-10">
-                              <div className="flex items-start space-x-3">
-                                <div className="p-2 bg-blue-50 rounded-lg">
-                                  <Mountain className="h-5 w-5 text-blue-500" />
-                                </div>
-                                <div>
-                                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Altitude</p>
-                                  <p className="text-sm text-gray-800 mt-1">
-                                    <span className="font-medium">{day.altitude}</span>
-                                  </p>
-                                </div>
-                              </div>
-
-                              <div className="flex items-start space-x-3">
-                                <div className="p-2 bg-amber-50 rounded-lg">
-                                  <Clock className="h-5 w-5 text-amber-500" />
-                                </div>
-                                <div>
-                                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</p>
-                                  <p className="text-sm text-gray-800 mt-1">
-                                    <span className="font-medium">{day.duration}</span>
-                                  </p>
-                                </div>
-                              </div>
-
-                              <div className="flex items-start space-x-3">
-                                <div className="p-2 bg-purple-50 rounded-lg">
-                                  <Tent className="h-5 w-5 text-purple-500" />
-                                </div>
-                                <div>
-                                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Stay</p>
-                                  <p className="text-sm text-gray-800 mt-1">
-                                    <span className="font-medium">{day.accommodation}</span>
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="mt-5 ml-10">
-                              <button
-                                className={`flex items-center text-sm group ${
-                                  isCurrentDay ? 'text-green-700 font-medium' : 'text-green-600'
-                                }`}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setCurrentDay(dayNum);
-                                  handleViewDay(dayNum);
-                                }}
-                              >
-                                <span>View details</span>
-                                <ChevronRight className="ml-1.5 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {!viewingDay && (
-                  <div className="flex justify-end mt-6">
-                    <button
-                      onClick={handleNextTab}
-                      className="px-4 py-2 bg-gradient-to-br from-green-400 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 flex items-center text-sm shadow-sm transition-colors"
-                    >
-                      Next <ArrowRight className="ml-2 h-4 w-4" />
-                    </button>
-                  </div>
-                )}
+                <div className="flex justify-end mt-6">
+                  <button
+                    onClick={handleNextTab}
+                    className="px-4 py-2 bg-gradient-to-br from-green-400 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 flex items-center text-sm shadow-sm transition-colors"
+                  >
+                    Next <ArrowRight className="ml-2 h-4 w-4" />
+                  </button>
+                </div>
               </>
             )}
 
             {activeTab === 'pickupDropoff' && (
               <div>
-                <PickupDropoff 
+                <PickupDropoff
                   defaultLocation={defaultTrek.baseCamp}
                   onNext={handlePickupDropoffSubmit}
                   onBack={handleBack}
@@ -487,7 +391,8 @@ const TrekGuideDetails = ({ guide }) => {
             {activeTab === 'personalDetails' && (
               <div>
                 <PersonalDetails
-                  count={individuals}
+                  minPeople={minPeople}
+                  maxPeople={maxPeople}
                   onSave={handleSavePersonalDetails}
                   onNext={handleNextTab}
                   isTrek={true}
@@ -516,7 +421,7 @@ const TrekGuideDetails = ({ guide }) => {
                         guide: guide,
                         trekConfig: {
                           trekId,
-                          individuals,
+                          peopleRangeParam,
                           date: selectedStartDate.toISOString()
                         },
                         trekDetails: defaultTrek
@@ -527,7 +432,7 @@ const TrekGuideDetails = ({ guide }) => {
 
                       // Navigate to review page
                       router.push(
-                        `/user/trek/guidelist/trekdetails/${guide.id}/reviewjourney?trekId=${trekId}&individuals=${individuals}`
+                        `/user/trek/guidelist/trekdetails/${guide.id}/reviewjourney?trekId=${trekId}&peopleRange=${peopleRangeParam}`
                       );
                     }}
                     className="px-5 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center shadow-sm hover:shadow-md"
@@ -546,7 +451,7 @@ const TrekGuideDetails = ({ guide }) => {
             <div className="px-5 py-3">
               <h2 className="text-green-500 font-semibold text-base">What's Included</h2>
             </div>
-            
+
             <div className="p-5">
               <div className="space-y-5">
                 {packageInclusions.map((item, index) => (
@@ -571,7 +476,7 @@ const TrekGuideDetails = ({ guide }) => {
                   </div>
                 ))}
               </div>
-              
+
               <div className="mt-6 pt-4 border-t border-gray-200">
                 <h4 className="font-medium text-gray-800 mb-2">Trek Highlights</h4>
                 <div className="flex flex-wrap gap-2">

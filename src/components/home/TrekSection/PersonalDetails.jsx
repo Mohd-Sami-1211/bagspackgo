@@ -1,11 +1,12 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { User, Mail, Phone, ChevronDown, Plus, Minus, Upload, ArrowLeft, ArrowRight, Mountain,PersonStanding, BriefcaseMedical , Backpack } from 'lucide-react';
+import { User, Mail, Phone, ChevronDown, Plus, Minus, Upload, ArrowLeft, ArrowRight, Mountain, PersonStanding, BriefcaseMedical, Backpack } from 'lucide-react';
 
-const PersonalDetails = ({ 
-  count = 1,     
+const PersonalDetails = ({
+  minPeople = 1,
+  maxPeople = 1,
   onNext,
-  onSave 
+  onSave
 }) => {
   // Contact details state
   const [contactDetails, setContactDetails] = useState({
@@ -28,7 +29,8 @@ const PersonalDetails = ({
   // Initialize trekker details
   useEffect(() => {
     const initializeDetails = () => {
-      return Array.from({ length: count }, (_, i) => ({
+      // Start with minPeople forms by default
+      return Array.from({ length: minPeople }, (_, i) => ({
         name: '',
         gender: '',
         age: '',
@@ -44,7 +46,42 @@ const PersonalDetails = ({
     };
 
     setTrekkerDetails(initializeDetails());
-  }, [count]);
+  }, [minPeople]);
+
+  const handleAddTrekker = () => {
+    if (trekkerDetails.length < maxPeople) {
+      setTrekkerDetails([...trekkerDetails, {
+        name: '',
+        gender: '',
+        age: '',
+        nationality: '',
+        idType: '',
+        idNumber: '',
+        idImage: null,
+        idImagePreview: '',
+        medicalConditions: '',
+        trekkingExperience: '',
+        bloodGroup: ''
+      }]);
+    }
+  };
+
+  const handleRemoveTrekker = (indexToRemove) => {
+    if (trekkerDetails.length > minPeople) {
+      const newDetails = trekkerDetails.filter((_, index) => index !== indexToRemove);
+      setTrekkerDetails(newDetails);
+
+      // Clean up errors referring to this trekker or later trailing trekkers
+      const newErrors = { ...errors };
+      Object.keys(newErrors).forEach(key => {
+        if (key.startsWith(`trekker_${indexToRemove}_`) ||
+          (parseInt(key.split('_')[1]) >= indexToRemove)) {
+          delete newErrors[key];
+        }
+      });
+      setErrors(newErrors);
+    }
+  };
 
   const handleContactChange = (field, value) => {
     setContactDetails(prev => ({
@@ -62,11 +99,11 @@ const PersonalDetails = ({
       ...newDetails[index],
       [field]: value
     };
-    
+
     if (field === 'idType') {
       newDetails[index].idNumber = '';
     }
-    
+
     setTrekkerDetails(newDetails);
     if (errors[`trekker_${index}_${field}`]) {
       setErrors(prev => ({ ...prev, [`trekker_${index}_${field}`]: '' }));
@@ -180,7 +217,7 @@ const PersonalDetails = ({
         <PersonStanding className="h-6 w-6 text-green-600 mr-2" />
         Trekker Details
       </h3>
-      
+
       {/* Contact Details Section */}
       <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-xl shadow-sm border border-gray-200 p-6">
         <h4 className="text-lg font-semibold text-gray-800 mb-5 flex items-center">
@@ -261,19 +298,41 @@ const PersonalDetails = ({
 
       {/* Trekker Details Section */}
       <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-xl shadow-sm border border-gray-200 p-6">
-        <h4 className="text-lg font-semibold text-gray-800 mb-5 flex items-center">
-          <span className="w-7 h-7 flex items-center justify-center bg-white text-green-800 rounded-full mr-3">
-            2
-          </span>
-          Trekker Information ({count} {count === 1 ? 'Person' : 'People'})
+        <h4 className="text-lg font-semibold text-gray-800 mb-5 flex items-center justify-between">
+          <div className="flex items-center">
+            <span className="w-7 h-7 flex items-center justify-center bg-white text-green-800 rounded-full mr-3">
+              2
+            </span>
+            Trekker Information ({trekkerDetails.length} {trekkerDetails.length === 1 ? 'Person' : 'People'})
+          </div>
+          {trekkerDetails.length < maxPeople && (
+            <button
+              onClick={handleAddTrekker}
+              type="button"
+              className="px-3 py-1.5 bg-green-100 text-green-700 hover:bg-green-200 text-sm font-medium rounded-lg flex items-center transition-colors"
+            >
+              <Plus className="w-4 h-4 mr-1" /> Add Traveller
+            </button>
+          )}
         </h4>
 
         {trekkerDetails.map((trekker, index) => (
-          <div key={index} className="border border-gray-200 rounded-lg p-5 mb-6 bg-white">
-            <h5 className="text-md font-medium text-gray-700 mb-4 flex items-center">
-              <User className="h-5 w-5 text-green-600 mr-2" />
-              Trekker {index + 1}
-            </h5>
+          <div key={index} className="border border-gray-200 rounded-lg p-5 mb-6 bg-white relative">
+            <div className="flex justify-between items-center mb-4">
+              <h5 className="text-md font-medium text-gray-700 flex items-center">
+                <User className="h-5 w-5 text-green-600 mr-2" />
+                Trekker {index + 1}
+              </h5>
+              {index >= minPeople && (
+                <button
+                  type="button"
+                  onClick={() => handleRemoveTrekker(index)}
+                  className="text-red-500 hover:text-red-700 text-sm font-medium flex items-center p-1 rounded-md hover:bg-red-50 transition-colors"
+                >
+                  <Minus className="w-4 h-4 mr-1" /> Remove
+                </button>
+              )}
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Name */}
@@ -460,18 +519,18 @@ const PersonalDetails = ({
                         <p className="mb-2 text-sm text-gray-500">Click to upload</p>
                         <p className="text-xs text-gray-500">PNG, JPG (MAX. 2MB)</p>
                       </div>
-                      <input 
-                        type="file" 
-                        className="hidden" 
+                      <input
+                        type="file"
+                        className="hidden"
                         accept="image/*"
                         onChange={(e) => handleIdImageUpload(index, e)}
                       />
                     </label>
                     {trekker.idImagePreview && (
                       <div className="ml-4 w-24 h-24 border border-gray-200 rounded overflow-hidden">
-                        <img 
-                          src={trekker.idImagePreview} 
-                          alt="ID preview" 
+                        <img
+                          src={trekker.idImagePreview}
+                          alt="ID preview"
                           className="w-full h-full object-cover"
                         />
                       </div>

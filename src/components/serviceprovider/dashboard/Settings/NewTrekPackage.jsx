@@ -78,11 +78,11 @@ export default function NewTrekPackage() {
     pickupDropoff: { included: false, title: '', details: ['', '', ''] },
   });
 
-  // 3. Itinerary State - just simple preset sections per day
+  // 3. Itinerary State - simple empty preset sections per day
   const [itinerary, setItinerary] = useState(
     Array.from({ length: 3 }, (_, i) => ({
       day: i + 1,
-      sections: ['Morning departure & trek start', 'Mid-day breaks & sights', 'Evening camp & dinner']
+      sections: ['']
     }))
   );
 
@@ -109,7 +109,7 @@ export default function NewTrekPackage() {
       if (daysCount > itinerary.length) {
         const newDays = Array.from({ length: daysCount - itinerary.length }, (_, i) => ({
           day: itinerary.length + i + 1,
-          sections: ['Morning details', 'Afternoon details', 'Evening details']
+          sections: ['']
         }));
         setItinerary([...itinerary, ...newDays]);
       } else {
@@ -416,9 +416,23 @@ export default function NewTrekPackage() {
                   <div>
                     <label className="block text-sm font-semibold text-gray-800 mb-2">Number of Days *</label>
                     <input
-                      type="number"
                       value={packageInfo.days}
-                      onChange={(e) => setPackageInfo({ ...packageInfo, days: Math.max(1, parseInt(e.target.value)) })}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === '') {
+                          setPackageInfo({ ...packageInfo, days: '' });
+                        } else {
+                          const parsed = parseInt(val);
+                          if (!isNaN(parsed)) {
+                            setPackageInfo({ ...packageInfo, days: Math.max(1, parsed) });
+                          }
+                        }
+                      }}
+                      onBlur={() => {
+                        if (packageInfo.days === '') {
+                          setPackageInfo({ ...packageInfo, days: 1 });
+                        }
+                      }}
                       className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 outline-none"
                       min="1"
                     />

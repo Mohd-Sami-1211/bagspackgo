@@ -9,12 +9,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 
 const TrekSearchInput = forwardRef((props, ref) => {
-  const [count, setCount] = useState(1);
   const router = useRouter();
   const [selectedDestination, setSelectedDestination] = useState(null);
   const [selectedTrek, setSelectedTrek] = useState(null);
   const [startDate, setStartDate] = useState(null);
   const [dateInput, setDateInput] = useState('');
+  const [peopleRange, setPeopleRange] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
   const [trekOptions, setTrekOptions] = useState([]);
   const [errors, setErrors] = useState({
@@ -29,14 +29,14 @@ const TrekSearchInput = forwardRef((props, ref) => {
       destination: selectedDestination,
       trek: selectedTrek,
       date: startDate,
-      count,
+      peopleRange: peopleRange?.value || ''
     }),
   }));
 
   const handleReset = () => {
     setIsSearching(true);
     setTimeout(() => {
-      setCount(1);
+      setPeopleRange(null);
       setStartDate(null);
       setDateInput('');
       setSelectedDestination(null);
@@ -57,24 +57,24 @@ const TrekSearchInput = forwardRef((props, ref) => {
       trek: '',
       date: ''
     };
-    
+
     let isValid = true;
-    
+
     if (!selectedDestination) {
       newErrors.destination = 'Please select a destination';
       isValid = false;
     }
-    
+
     if (!selectedTrek) {
       newErrors.trek = 'Please select a trek';
       isValid = false;
     }
-    
+
     if (!startDate) {
       newErrors.date = 'Please select a date';
       isValid = false;
     }
-    
+
     setErrors(newErrors);
     return isValid;
   };
@@ -83,19 +83,20 @@ const TrekSearchInput = forwardRef((props, ref) => {
     setSelectedDestination(destination);
     setSelectedTrek(null);
     setErrors(prev => ({ ...prev, destination: '', trek: '' }));
-    
+
     if (destination) {
       if (data?.treks && Array.isArray(data.treks)) {
-        const filteredTreks = data.treks.filter(trek => 
+        const filteredTreks = data.treks.filter(trek =>
           trek.destinationId && trek.destinationId.toString() === destination.value.toString()
         );
-        setTrekOptions(
-          filteredTreks.map(trek => ({
+        setTrekOptions([
+          { value: 'all_treks', label: 'All Treks' },
+          ...filteredTreks.map(trek => ({
             value: trek.id,
             label: trek.name,
             ...trek
           }))
-        );
+        ]);
       }
     } else {
       setTrekOptions([]);
@@ -152,16 +153,24 @@ const TrekSearchInput = forwardRef((props, ref) => {
     }
 
     setIsSearching(true);
-    
+
     const queryParams = new URLSearchParams({
       destination: selectedDestination.value,
       trek: selectedTrek.value,
       date: startDate.toISOString(),
-      count: count.toString()
+      peopleRange: peopleRange?.value || ''
     }).toString();
 
     router.push(`/user/trek/guidelist?${queryParams}`);
   };
+
+  const peopleOptions = [
+    { value: '1-2', label: '1-2 People' },
+    { value: '3-5', label: '3-5 People' },
+    { value: '6-9', label: '6-9 People' },
+    { value: '10-15', label: '10-15 People' },
+    { value: '15+', label: '15+ People' }
+  ];
 
   const containerVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -216,14 +225,14 @@ const TrekSearchInput = forwardRef((props, ref) => {
       variants={scrollVariants}
       className="bg-white/90 rounded-2xl shadow-lg p-2 w-full max-w-5xl min-h-[180px] hover:shadow-xl transition-shadow duration-300"
     >
-      <motion.div 
+      <motion.div
         initial="hidden"
         animate="visible"
         variants={containerVariants}
         className="flex flex-col md:flex-row gap-3 mt-0.5"
       >
         {/* Left Section */}
-        <motion.div 
+        <motion.div
           variants={itemVariants}
           className="flex-[1.2] bg-[#C3EFE6] rounded-xl p-3 space-y-3"
         >
@@ -251,7 +260,7 @@ const TrekSearchInput = forwardRef((props, ref) => {
               menuPosition="fixed"
             />
             {errors.destination && (
-              <motion.p 
+              <motion.p
                 initial={{ opacity: 0, y: -5 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="text-red-500 text-xs mt-1"
@@ -283,7 +292,7 @@ const TrekSearchInput = forwardRef((props, ref) => {
               isDisabled={!selectedDestination}
             />
             {errors.trek && (
-              <motion.p 
+              <motion.p
                 initial={{ opacity: 0, y: -5 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="text-red-500 text-xs mt-1"
@@ -295,13 +304,13 @@ const TrekSearchInput = forwardRef((props, ref) => {
         </motion.div>
 
         {/* Right Section */}
-        <motion.div 
+        <motion.div
           variants={itemVariants}
           className="flex-[2] bg-[#C3EFE6] rounded-xl p-3 flex flex-col justify-between"
         >
           <div className="flex gap-4">
             {/* Date Picker */}
-            <motion.div 
+            <motion.div
               variants={itemVariants}
               className="flex-1 relative z-[60]"
             >
@@ -310,7 +319,7 @@ const TrekSearchInput = forwardRef((props, ref) => {
                 selected={startDate}
                 onChange={handleDateChange}
                 customInput={
-                  <motion.div 
+                  <motion.div
                     className="relative"
                     whileHover={{ scale: 1.01 }}
                     whileTap={{ scale: 0.99 }}
@@ -338,7 +347,7 @@ const TrekSearchInput = forwardRef((props, ref) => {
                 wrapperClassName="w-full"
               />
               {errors.date && (
-                <motion.p 
+                <motion.p
                   initial={{ opacity: 0, y: -5 }}
                   animate={{ opacity: 1, y: 0 }}
                   className="text-red-500 text-xs mt-1"
@@ -348,26 +357,30 @@ const TrekSearchInput = forwardRef((props, ref) => {
               )}
             </motion.div>
 
-            {/* Counter */}
-            <div className="flex-1">
-              <Counter 
-                label="No. of Individuals"
-                value={count}
-                onIncrement={() => setCount(prev => prev + 1)}
-                onDecrement={() => setCount(prev => Math.max(1, prev - 1))}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (value === "") {
-                    setCount(1);
-                  } else {
-                    const numValue = parseInt(value);
-                    if (!isNaN(numValue)) {
-                      setCount(Math.max(1, numValue));
-                    }
-                  }
+            {/* People Range */}
+            <motion.div
+              variants={itemVariants}
+              className="flex-1 w-full relative z-[50]"
+            >
+              <label className="block text-sm font-semibold text-gray-800 mb-1">No. of People</label>
+              <Select
+                options={peopleOptions}
+                value={peopleRange}
+                onChange={setPeopleRange}
+                placeholder="Select Range"
+                classNamePrefix="react-select"
+                isClearable
+                styles={{
+                  ...selectStyles,
+                  control: (provided, state) => ({
+                    ...selectStyles.control(provided, state),
+                    minHeight: '34px',
+                  }),
                 }}
+                menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
+                menuPosition="fixed"
               />
-            </div>
+            </motion.div>
           </div>
 
           {/* Buttons */}
@@ -421,76 +434,6 @@ const TrekSearchInput = forwardRef((props, ref) => {
   );
 });
 
-const Counter = ({ label, value, onIncrement, onDecrement, onChange }) => {
-  const [inputValue, setInputValue] = useState(value.toString());
-  const inputRef = useRef(null);
-
-  useEffect(() => {
-    setInputValue(value.toString());
-  }, [value]);
-
-  const handleChange = (e) => {
-    const newValue = e.target.value;
-    setInputValue(newValue);
-    
-    if (newValue === "") {
-      onChange({ target: { value: "" } });
-    } else if (/^\d*$/.test(newValue)) {
-      onChange(e);
-    }
-  };
-
-  const handleBlur = () => {
-    if (inputValue === "") {
-      setInputValue("1");
-      onChange({ target: { value: "1" } });
-    }
-  };
-
-  const handleFocus = (e) => {
-    e.target.select();
-  };
-
-  return (
-    <motion.div 
-      className="w-full"
-      initial={{ opacity: 0, y: 10 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-30px" }}
-      transition={{ duration: 0.3 }}
-    >
-      <label className="block text-sm font-semibold text-gray-800 mb-1">{label}</label>
-      <div className="flex items-center bg-white rounded-lg border border-gray-300 h-9">
-        <motion.button 
-          className="px-2 text-gray-600 hover:bg-green-100 focus:outline-none focus:ring-1 focus:ring-green-400 rounded-l-md text-sm"
-          onClick={onDecrement}
-          whileTap={{ scale: 0.9 }}
-        >
-          -
-        </motion.button>
-        <input
-          ref={inputRef}
-          type="text"
-          inputMode="numeric"
-          pattern="[0-9]*"
-          value={inputValue}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          onFocus={handleFocus}
-          className="flex-1 text-center border-x border-gray-300 text-sm focus:outline-none "
-        />
-        <motion.button 
-          className="px-2 text-gray-600 hover:bg-green-100 focus:outline-none focus:ring-1 focus:ring-green-400 rounded-r-md text-sm"
-          onClick={onIncrement}
-          whileTap={{ scale: 0.9 }}
-        >
-          +
-        </motion.button>
-      </div>
-    </motion.div>
-  );
-};
-
 const selectStyles = {
   control: (provided, state) => ({
     ...provided,
@@ -519,12 +462,12 @@ const selectStyles = {
   option: (provided, state) => ({
     ...provided,
     borderRadius: '6px',
-    backgroundColor: state.isSelected 
+    backgroundColor: state.isSelected
       ? '#a7f3d0'
-      : state.isFocused 
+      : state.isFocused
         ? '#d1fae5'
         : 'white',
-    color: state.isSelected 
+    color: state.isSelected
       ? '#065f46'
       : '#1e293b',
     margin: '4px 0',

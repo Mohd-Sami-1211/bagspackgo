@@ -574,216 +574,84 @@ const GuideDetails = ({ guide }) => {
                     />
                   </div>
                 ) : (
-                  <div className="flex flex-col md:flex-row">
-                    {/* Timeline for medium screens and up */}
-                    <div className="hidden md:block md:w-1/4 pr-5">
-                      <div className="relative h-full">
-                        <div className="absolute left-1/2 top-0 h-full w-1.5 bg-gray-100 rounded-full -translate-x-1/2">
-                          <div
-                            className={`w-1.5 rounded-full transition-all duration-500 ${isPremiumPackage ? 'bg-gradient-to-b from-amber-400 to-yellow-400' : 'bg-green-400'
-                              }`}
-                            style={{ height: `${(currentDay / numDays) * 100}%` }}
-                          ></div>
-                        </div>
-                        <div className="h-full flex flex-col justify-between">
-                          {itenaries.map((day, index) => {
-                            const dayNum = index + 1;
-                            const isActive = dayNum <= currentDay;
-                            const isCurrent = dayNum === currentDay;
-                            return (
-                              <div
-                                key={dayNum}
-                                className="relative flex items-center justify-center cursor-pointer"
-                                style={{ height: '104px' }}
-                                onClick={() => handleDayNodeClick(dayNum)}
-                              >
-                                <div
-                                  className={`absolute left-1/2 transform -translate-x-1/2 w-10 h-10 flex items-center justify-center rounded-full text-sm font-semibold transition-all duration-300 ${isCurrent
-                                    ? isPremiumPackage
-                                      ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white ring-4 ring-amber-200 scale-110 shadow-lg'
-                                      : 'bg-green-500 text-white ring-4 ring-green-200 scale-110 shadow-lg'
-                                    : isActive
-                                      ? isPremiumPackage
-                                        ? 'bg-gradient-to-r from-amber-400 to-yellow-400 text-white shadow-md'
-                                        : 'bg-green-400 text-white shadow-md'
-                                      : 'bg-gray-200 text-gray-600'
-                                    }`}
-                                >
-                                  {dayNum}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    </div>
+                  <div className="flex flex-col space-y-4">
+                    {itenaries.map((day, index) => {
+                      const dayNum = index + 1;
 
-                    {/* Mobile Timeline - Centered with line through node centers */}
-                    <div className="block md:hidden mb-4">
-                      <div className="flex justify-center">
+                      return (
                         <div
-                          className="relative flex items-center overflow-x-auto scrollbar-hide px-4 py-4 max-w-full"
-                          ref={scrollContainerRef}
+                          key={index}
+                          className={`p-4 sm:p-5 rounded-lg border transition-all hover:border-gray-300 hover:shadow-md cursor-pointer ${isPremiumPackage ? 'bg-amber-50' : 'bg-white'}`}
+                          onClick={() => handleViewDay(dayNum)}
                         >
-                          {/* Connecting line - positioned at exact center of nodes */}
-                          <div className="absolute top-9 left-0 right-0 h-1 bg-gray-300 z-0"></div>
-
-                          <div className="flex items-center justify-center space-x-8 sm:space-x-12 mx-auto px-4">
-                            {itenaries.map((day, index) => {
-                              const dayNum = index + 1;
-                              const isActive = dayNum <= currentDay;
-                              const isCurrent = dayNum === currentDay;
-
-                              return (
-                                <div
-                                  key={dayNum}
-                                  className="relative z-10 flex flex-col items-center flex-shrink-0"
-                                >
-                                  <div className="h-12 flex items-center justify-center">
-                                    <button
-                                      onClick={() => handleDayNodeClick(dayNum)}
-                                      className={`
-                                        flex-shrink-0 flex items-center justify-center rounded-full font-semibold 
-                                        transition-all duration-300 relative z-20
-                                        ${isCurrent ? 'w-12 h-12 scale-110 ring-4 shadow-lg' : ''}
-                                        ${!isCurrent && isActive ? 'w-10 h-10 shadow-md' : ''}
-                                        ${!isActive ? 'w-10 h-10 bg-gray-200 text-gray-600' : ''}
-                                        ${isCurrent && isPremiumPackage ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white ring-amber-300' : ''}
-                                        ${isCurrent && !isPremiumPackage ? 'bg-green-500 text-white ring-green-300' : ''}
-                                        ${!isCurrent && isActive && isPremiumPackage ? 'bg-gradient-to-r from-amber-400 to-yellow-400 text-white' : ''}
-                                        ${!isCurrent && isActive && !isPremiumPackage ? 'bg-green-400 text-white' : ''}
-                                      `}
-                                      ref={(el) => (nodeRefs.current[index] = el)}
-                                    >
-                                      {dayNum}
-                                    </button>
-                                  </div>
-                                  <span className="text-xs text-gray-600 mt-2 font-medium whitespace-nowrap">
-                                    Day {dayNum}
-                                  </span>
-                                </div>
-                              );
-                            })}
+                          <div className="flex justify-between items-start">
+                            <div className="w-full">
+                              <h4 className="font-medium text-gray-900 flex items-center">
+                                <span className={`w-7 h-7 flex items-center justify-center rounded-full mr-3 text-sm font-semibold ${isPremiumPackage ? 'bg-amber-500 text-white' : 'bg-green-500 text-white'}`}>
+                                  {day.dayNumber}
+                                </span>
+                                <span className={`font-semibold text-sm sm:text-base ${isPremiumPackage ? 'text-amber-600' : 'text-green-600'}`}>
+                                  {day.location}
+                                </span>
+                              </h4>
+                              <p className="text-xs sm:text-sm text-gray-500 mt-1.5 ml-10 flex items-center">
+                                <Calendar className="h-3 w-3 mr-2" />
+                                <span className="font-medium text-gray-600">{day.date}</span>
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                      </div>
-                    </div>
 
-                    {/* Day Cards Container with auto-scroll */}
-                    <div className="w-full md:w-3/4 space-y-3 sm:space-y-4 day-cards-container max-h-[600px] overflow-y-auto">
-                      {itenaries.map((day, index) => {
-                        const dayNum = index + 1;
-                        const isCurrentDay = dayNum === currentDay;
-
-                        return (
-                          <div
-                            key={index}
-                            ref={(el) => (dayCardRefs.current[index] = el)}
-                            className={`p-4 sm:p-5 rounded-lg border transition-all group ${isCurrentDay
-                              ? isPremiumPackage
-                                ? 'border-amber-300 bg-gradient-to-br from-amber-50 to-white ring-1 ring-amber-100 shadow-lg'
-                                : 'border-green-300 bg-green-50 ring-1 ring-green-100 shadow-lg'
-                              : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
-                              } cursor-pointer`}
-                            onClick={() => handleDayNodeClick(dayNum)}
-                          >
-                            <div className="flex justify-between items-start">
-                              <div className="w-full">
-                                <h4 className="font-medium text-gray-900 flex items-center">
-                                  <span className={`w-7 h-7 flex items-center justify-center rounded-full mr-3 text-sm font-semibold ${isCurrentDay
-                                    ? isPremiumPackage
-                                      ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white'
-                                      : 'bg-green-500 text-white'
-                                    : isPremiumPackage
-                                      ? 'bg-gradient-to-r from-amber-100 to-yellow-100 text-amber-600'
-                                      : 'bg-green-100 text-green-600'
-                                    }`}>
-                                    {day.dayNumber}
-                                  </span>
-                                  <span className={`font-semibold text-sm sm:text-base ${isPremiumPackage ? 'text-amber-600' : 'text-green-600'
-                                    }`}>
-                                    {day.location}
-                                  </span>
-                                </h4>
-                                <p className="text-xs sm:text-sm text-gray-500 mt-1.5 ml-10 flex items-center">
-                                  <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-2 text-gray-400" />
-                                  <span className="font-medium text-gray-600">{day.date}</span>
+                          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 ml-10">
+                            <div className="flex items-start">
+                              <Clock className="h-4 w-4 mr-2 text-blue-500 mt-0.5" />
+                              <div>
+                                <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Departure</p>
+                                <p className="text-sm text-gray-800 mt-1">
+                                  {day.departure?.time && (
+                                    <>
+                                      <span className="font-medium">{formatTimeWithAMPM(day.departure.time)}</span>
+                                      <span className="block text-gray-600 text-xs mt-0.5 truncate">from {day.departure.address}</span>
+                                    </>
+                                  )}
                                 </p>
                               </div>
                             </div>
 
-                            <div className="mt-3 sm:mt-4 grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5 ml-10">
-                              <div className="flex items-start space-x-2 sm:space-x-3">
-                                <div className="p-1.5 sm:p-2 bg-blue-50 rounded-lg flex-shrink-0">
-                                  <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500" />
-                                </div>
-                                <div className="min-w-0">
-                                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Departure</p>
-                                  <p className="text-xs sm:text-sm text-gray-800 mt-1">
-                                    {day.departure?.time && (
-                                      <>
-                                        <span className="font-medium">{formatTimeWithAMPM(day.departure.time)}</span>
-                                        <span className="block text-gray-600 text-xs sm:text-sm mt-0.5 truncate">
-                                          from {day.departure.address}
-                                        </span>
-                                      </>
-                                    )}
-                                  </p>
-                                </div>
-                              </div>
-
-                              <div className="flex items-start space-x-2 sm:space-x-3">
-                                <div className="p-1.5 sm:p-2 bg-amber-50 rounded-lg flex-shrink-0">
-                                  <Hotel className="h-4 w-4 sm:h-5 sm:w-5 text-amber-500" />
-                                </div>
-                                <div className="min-w-0">
-                                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Hotel</p>
-                                  <p className="text-xs sm:text-sm text-gray-800 mt-1">
-                                    {day.hotel?.name ? (
-                                      <span className="font-medium truncate">{day.hotel.name}</span>
-                                    ) : (
-                                      <span className="text-gray-400">Not selected</span>
-                                    )}
-                                  </p>
-                                </div>
-                              </div>
-
-                              <div className="flex items-start space-x-2 sm:space-x-3">
-                                <div className="p-1.5 sm:p-2 bg-purple-50 rounded-lg flex-shrink-0">
-                                  <Map className="h-4 w-4 sm:h-5 sm:w-5 text-purple-500" />
-                                </div>
-                                <div className="min-w-0">
-                                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Activities</p>
-                                  <p className="text-xs sm:text-sm text-gray-800 mt-1">
-                                    {day.activities?.length > 0 ? (
-                                      <span className="font-medium">{day.activities.length} selected</span>
-                                    ) : (
-                                      <span className="text-gray-400">No activities</span>
-                                    )}
-                                  </p>
-                                </div>
+                            <div className="flex items-start">
+                              <Hotel className="h-4 w-4 mr-2 text-amber-500 mt-0.5" />
+                              <div>
+                                <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Hotel</p>
+                                <p className="text-sm text-gray-800 mt-1">
+                                  {day.hotel?.name ? <span className="font-medium">{day.hotel.name}</span> : <span className="text-gray-400">Not selected</span>}
+                                </p>
                               </div>
                             </div>
 
-                            <div className="mt-3 sm:mt-5 ml-10">
-                              <button
-                                className={`flex items-center text-xs sm:text-sm group ${isCurrentDay
-                                  ? isPremiumPackage ? 'text-amber-700' : 'text-green-700'
-                                  : isPremiumPackage ? 'text-amber-600' : 'text-green-600'
-                                  } font-medium`}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleViewDay(dayNum);
-                                }}
-                              >
-                                <span>View details</span>
-                                <ChevronRight className="ml-1.5 h-3 w-3 sm:h-4 sm:w-4 transition-transform group-hover:translate-x-0.5" />
-                              </button>
+                            <div className="flex items-start">
+                              <Map className="h-4 w-4 mr-2 text-purple-500 mt-0.5" />
+                              <div>
+                                <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Activities</p>
+                                <p className="text-sm text-gray-800 mt-1">
+                                  {day.activities?.length > 0 ? <span className="font-medium">{day.activities.length} selected</span> : <span className="text-gray-400">No activities</span>}
+                                </p>
+                              </div>
                             </div>
                           </div>
-                        );
-                      })}
-                    </div>
+
+                          <div className="mt-4 ml-10">
+                            <button
+                              className={`flex items-center text-sm font-medium ${isPremiumPackage ? 'text-amber-600 hover:text-amber-700' : 'text-green-600 hover:text-green-700'}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleViewDay(dayNum);
+                              }}
+                            >
+                              View Details <ChevronRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
 
@@ -819,7 +687,8 @@ const GuideDetails = ({ guide }) => {
               <div>
                 <PersonalDetails
                   category={category}
-                  count={count}
+                  minPeople={numPeople}
+                  maxPeople={numPeople}
                   onSave={handleSavePersonalDetails}
                   onNext={handleNextTab}
                 />
