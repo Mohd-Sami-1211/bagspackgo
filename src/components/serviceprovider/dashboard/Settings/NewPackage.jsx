@@ -71,6 +71,10 @@ const NewPackage = () => {
     { id: 1, minPeople: 1, maxPeople: 2, price: '', discount: '' }
   ]);
 
+  const [pickupDropCities, setPickupDropCities] = useState([
+    { id: 1, cityName: '', locations: [{ id: 1, name: '', mapLink: '' }] }
+  ]);
+
   // Inclusives State
   const [inclusives, setInclusives] = useState({
     food: { included: false, title: '', details: ['', '', ''] },
@@ -259,6 +263,10 @@ const NewPackage = () => {
             price: parseFloat(t.price),
             discount: parseFloat(t.discount) || 0,
           })),
+        pickupDropCities: pickupDropCities.filter(c => c.cityName.trim()).map(c => ({
+          cityName: c.cityName,
+          locations: c.locations.filter(l => l.name.trim()).map(l => ({ name: l.name, mapLink: l.mapLink }))
+        })),
         inclusives,
         activities: activities.filter(a => a.name.trim() && a.details.trim()),
         itinerary: itinerary.filter(day => day.location?.trim() || day.agenda?.trim()), // Only save filled-in days
@@ -759,6 +767,78 @@ const NewPackage = () => {
                     </motion.div>
                   ))}
                 </AnimatePresence>
+              </div>
+            </div>
+
+            {/* Pickup & Drop Off Locations */}
+            <div className="bg-emerald-50/50 p-6 rounded-xl border border-emerald-100 mt-6 md:col-span-12">
+              <div className="flex justify-between items-center mb-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800">Pickup & Drop Off Locations</h3>
+                  <p className="text-sm text-gray-500">Add cities and specific locations for your customers</p>
+                </div>
+                <button type="button" onClick={() => {
+                  setPickupDropCities([...pickupDropCities, { id: Date.now(), cityName: '', locations: [{ id: Date.now(), name: '', mapLink: '' }] }]);
+                }} className="text-sm bg-white text-emerald-600 border border-emerald-200 px-3 py-1.5 rounded-lg flex items-center gap-2 hover:bg-emerald-100">
+                  <Plus size={16} /> Add City
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {pickupDropCities.map((city, cIdx) => (
+                  <div key={city.id} className="bg-white p-4 rounded-xl border border-emerald-100 shadow-sm transition-all focus-within:ring-2 focus-within:ring-emerald-100">
+                    <div className="flex justify-between items-center mb-4">
+                      <input
+                        type="text"
+                        placeholder="City Name (e.g., Delhi, Srinagar)"
+                        value={city.cityName}
+                        onChange={e => {
+                          const newCities = [...pickupDropCities];
+                          newCities[cIdx].cityName = e.target.value;
+                          setPickupDropCities(newCities);
+                        }}
+                        className="font-semibold text-gray-800 bg-transparent border-b border-gray-200 outline-none w-1/2 md:w-1/3 py-1 px-2 focus:border-emerald-500"
+                      />
+                      <button type="button" onClick={() => setPickupDropCities(pickupDropCities.filter(c => c.id !== city.id))} className="text-gray-400 hover:text-red-500 p-2 rounded-lg hover:bg-red-50">
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+
+                    <div className="space-y-3 pl-2 sm:pl-4 border-l-2 border-emerald-50 sm:ml-2 mt-2">
+                      {city.locations.map((loc, lIdx) => (
+                        <div key={loc.id} className="flex flex-col sm:flex-row gap-3 items-end sm:items-center">
+                          <input type="text" placeholder="Location Name (e.g., Airport, ISBT)" value={loc.name} onChange={e => {
+                            const newCities = [...pickupDropCities];
+                            newCities[cIdx].locations[lIdx].name = e.target.value;
+                            setPickupDropCities(newCities);
+                          }} className="w-full sm:flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-emerald-500" />
+                          <input type="text" placeholder="Google Maps Link (Optional)" value={loc.mapLink} onChange={e => {
+                            const newCities = [...pickupDropCities];
+                            newCities[cIdx].locations[lIdx].mapLink = e.target.value;
+                            setPickupDropCities(newCities);
+                          }} className="w-full sm:flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-emerald-500" />
+
+                          {city.locations.length > 1 && (
+                            <button type="button" onClick={() => {
+                              const newCities = [...pickupDropCities];
+                              newCities[cIdx].locations = newCities[cIdx].locations.filter(l => l.id !== loc.id);
+                              setPickupDropCities(newCities);
+                            }} className="text-red-400 hover:text-red-600 shrink-0 p-2 w-full sm:w-auto flex justify-center hover:bg-red-50 rounded-lg">
+                              <span className="sm:hidden text-sm mr-2">Remove</span><X size={18} />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                      <button type="button" onClick={() => {
+                        const newCities = [...pickupDropCities];
+                        newCities[cIdx].locations.push({ id: Date.now(), name: '', mapLink: '' });
+                        setPickupDropCities(newCities);
+                      }} className="text-emerald-600 text-xs font-semibold flex items-center gap-1 mt-2 hover:bg-emerald-50 px-2 py-1.5 rounded-lg w-fit">
+                        <Plus size={14} /> Add Location
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>

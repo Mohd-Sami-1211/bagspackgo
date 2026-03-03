@@ -44,20 +44,25 @@ export async function POST(req) {
         const newPackage = new Package({
             provider: user.userId,
             name: packageInfo.name.trim(),
+            category: packageInfo.category || 'trip',
             packageType: packageInfo.packageType || 'individual',
             packageCategory: packageInfo.packageCategory || 'budget',
             destination: packageInfo.destination.trim(),
             days,
+            trekName: packageInfo.trekName || '',
+            trekLevel: packageInfo.trekLevel || '',
+            photos: data.photos || [],
             pricingTiers: pricingTiers.map(tier => ({
                 minPeople: parseInt(tier.minPeople) || 1,
                 maxPeople: parseInt(tier.maxPeople) || 2,
                 price: parseFloat(tier.price) || 0,
                 discount: parseFloat(tier.discount) || 0
             })),
+            pickupDropCities: data.pickupDropCities || [],
             inclusives: {
                 food: inclusives?.food,
                 transport: inclusives?.transport,
-                accommodation: inclusives?.accommodation,
+                accommodation: inclusives?.accommodation || inclusives?.camping,
                 guidance: inclusives?.guidance,
                 pickupDropoff: inclusives?.pickupDropoff
             },

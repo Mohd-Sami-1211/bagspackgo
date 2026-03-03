@@ -23,6 +23,7 @@ import {
 const Packages = () => {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('active');
+  const [viewCategory, setViewCategory] = useState('trip');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
 
   const [packages, setPackages] = useState([]);
@@ -53,6 +54,7 @@ const Packages = () => {
             return {
               id: p._id,
               title: p.name,
+              category: p.category || 'trip',
               type: p.packageType,
               price: minPrice,
               destination: p.destination,
@@ -76,7 +78,8 @@ const Packages = () => {
   }, []);
 
   const filteredPackages = packages.filter(pkg =>
-    activeTab === 'active' ? pkg.status === 'active' : pkg.status === 'inactive'
+    (activeTab === 'active' ? pkg.status === 'active' : pkg.status === 'inactive') &&
+    (pkg.category === viewCategory)
   );
 
   const togglePackageStatus = async (id) => {
@@ -343,25 +346,44 @@ const Packages = () => {
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-1 mt-6">
-            <button
-              onClick={() => setActiveTab('active')}
-              className={`px-4 py-2 rounded-lg font-medium transition ${activeTab === 'active' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-            >
-              <div className="flex items-center gap-2">
-                <CheckCircle size={16} />
-                Active Packages ({packages.filter(p => p.status === 'active').length})
-              </div>
-            </button>
-            <button
-              onClick={() => setActiveTab('inactive')}
-              className={`px-4 py-2 rounded-lg font-medium transition ${activeTab === 'inactive' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-            >
-              <div className="flex items-center gap-2">
-                <XCircle size={16} />
-                Inactive Packages ({packages.filter(p => p.status === 'inactive').length})
-              </div>
-            </button>
+          <div className="flex flex-col sm:flex-row justify-between gap-4 mt-6 items-start sm:items-center">
+            {/* Category Toggle */}
+            <div className="flex bg-gray-100 p-1 rounded-xl">
+              <button
+                onClick={() => setViewCategory('trip')}
+                className={`px-6 py-2 rounded-lg font-semibold transition ${viewCategory === 'trip' ? 'bg-white shadow-sm text-emerald-700' : 'text-gray-600 hover:text-gray-900'}`}
+              >
+                Trip Packages ({packages.filter(p => p.category === 'trip').length})
+              </button>
+              <button
+                onClick={() => setViewCategory('trek')}
+                className={`px-6 py-2 rounded-lg font-semibold transition ${viewCategory === 'trek' ? 'bg-white shadow-sm text-emerald-700' : 'text-gray-600 hover:text-gray-900'}`}
+              >
+                Trek Packages ({packages.filter(p => p.category === 'trek').length})
+              </button>
+            </div>
+
+            {/* Status Tabs */}
+            <div className="flex gap-1">
+              <button
+                onClick={() => setActiveTab('active')}
+                className={`px-4 py-2 rounded-lg font-medium transition ${activeTab === 'active' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+              >
+                <div className="flex items-center gap-2">
+                  <CheckCircle size={16} />
+                  Active ({packages.filter(p => p.status === 'active' && p.category === viewCategory).length})
+                </div>
+              </button>
+              <button
+                onClick={() => setActiveTab('inactive')}
+                className={`px-4 py-2 rounded-lg font-medium transition ${activeTab === 'inactive' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+              >
+                <div className="flex items-center gap-2">
+                  <XCircle size={16} />
+                  Inactive ({packages.filter(p => p.status === 'inactive' && p.category === viewCategory).length})
+                </div>
+              </button>
+            </div>
           </div>
         </div>
       </div>
