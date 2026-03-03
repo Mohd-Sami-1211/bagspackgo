@@ -4,8 +4,7 @@ import { User, Mail, Phone, ChevronDown, Plus, Minus, Image, Upload, ArrowLeft, 
 
 const PersonalDetails = ({
   category = 'individual',
-  minPeople = 1,
-  maxPeople = 1,
+  count = 1,
   onNext,
   onSave
 }) => {
@@ -17,6 +16,8 @@ const PersonalDetails = ({
 
   // Personal details state
   const [personalDetails, setPersonalDetails] = useState([]);
+  const [children, setChildren] = useState([]);
+  const [childCount, setChildCount] = useState(0);
   const [errors, setErrors] = useState({});
 
   // ID proof options
@@ -28,11 +29,11 @@ const PersonalDetails = ({
     { value: 'dl', label: 'Driving License', maxLength: 15 }
   ];
 
-  // Initialize personal details based on category and minPeople
+  // Initialize personal details based on category and count
   useEffect(() => {
     const initializeDetails = () => {
       if (category === 'couple') {
-        return Array.from({ length: minPeople }, (_, i) => [
+        return Array.from({ length: count }, (_, i) => [
           {
             type: 'male',
             coupleId: i,
@@ -59,7 +60,7 @@ const PersonalDetails = ({
           }
         ]).flat();
       } else {
-        return Array.from({ length: minPeople }, (_, i) => ({
+        return Array.from({ length: count }, (_, i) => ({
           type: 'individual',
           name: '',
           gender: '',
@@ -74,66 +75,9 @@ const PersonalDetails = ({
     };
 
     setPersonalDetails(initializeDetails());
-  }, [category, minPeople]);
-
-  const handleAddTraveler = () => {
-    const currentUnits = category === 'couple' ? personalDetails.length / 2 : personalDetails.length;
-    if (currentUnits < maxPeople) {
-      if (category === 'couple') {
-        setPersonalDetails([...personalDetails,
-        {
-          type: 'male',
-          coupleId: currentUnits,
-          name: '',
-          gender: 'male',
-          age: '',
-          nationality: '',
-          idType: '',
-          idNumber: '',
-          idImage: null,
-          idImagePreview: ''
-        },
-        {
-          type: 'female',
-          coupleId: currentUnits,
-          name: '',
-          gender: 'female',
-          age: '',
-          nationality: '',
-          idType: '',
-          idNumber: '',
-          idImage: null,
-          idImagePreview: ''
-        }
-        ]);
-      } else {
-        setPersonalDetails([...personalDetails, {
-          type: 'individual',
-          name: '',
-          gender: '',
-          age: '',
-          nationality: '',
-          idType: '',
-          idNumber: '',
-          idImage: null,
-          idImagePreview: ''
-        }]);
-      }
-    }
-  };
-
-  const handleRemoveTraveler = (indexToRemoveUnit) => {
-    const currentUnits = category === 'couple' ? personalDetails.length / 2 : personalDetails.length;
-    if (currentUnits > minPeople) {
-      let newDetails;
-      if (category === 'couple') {
-        newDetails = personalDetails.filter((p) => p.coupleId !== indexToRemoveUnit);
-      } else {
-        newDetails = personalDetails.filter((_, idx) => idx !== indexToRemoveUnit);
-      }
-      setPersonalDetails(newDetails);
-    }
-  };
+    setChildren([]);
+    setChildCount(0);
+  }, [category, count]);
 
   const handleContactChange = (field, value) => {
     setContactDetails(prev => ({
@@ -162,6 +106,23 @@ const PersonalDetails = ({
     }
   };
 
+  const handleChildChange = (index, field, value) => {
+    const newChildren = [...children];
+    newChildren[index] = {
+      ...newChildren[index],
+      [field]: value
+    };
+
+    if (field === 'idType') {
+      newChildren[index].idNumber = '';
+    }
+
+    setChildren(newChildren);
+    if (errors[`child_${index}_${field}`]) {
+      setErrors(prev => ({ ...prev, [`child_${index}_${field}`]: '' }));
+    }
+  };
+
   const handleIdImageUpload = (type, index, e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -173,9 +134,34 @@ const PersonalDetails = ({
         newDetails[index].idImage = file;
         newDetails[index].idImagePreview = reader.result;
         setPersonalDetails(newDetails);
+      } else {
+        const newChildren = [...children];
+        newChildren[index].idImage = file;
+        newChildren[index].idImagePreview = reader.result;
+        setChildren(newChildren);
       }
     };
     reader.readAsDataURL(file);
+  };
+
+  const addChild = () => {
+    setChildren([...children, {
+      name: '',
+      gender: '',
+      age: '',
+      idType: '',
+      idNumber: '',
+      idImage: null,
+      idImagePreview: ''
+    }]);
+    setChildCount(childCount + 1);
+  };
+
+  const removeChild = (index) => {
+    const newChildren = [...children];
+    newChildren.splice(index, 1);
+    setChildren(newChildren);
+    setChildCount(childCount - 1);
   };
 
   const validateForm = () => {

@@ -2,7 +2,7 @@
 import { MapPin, Calendar, Clock, Car, ArrowLeft, ArrowRight, ChevronDown } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
-const ArrDep = ({ defaultLocation, onNext, onBack, startDate, duration, pickupDropCities }) => {
+const ArrDep = ({ defaultLocation, onNext, onBack, startDate, duration }) => {
   const [formData, setFormData] = useState({
     arrival: {
       city: defaultLocation || '',
@@ -48,7 +48,7 @@ const ArrDep = ({ defaultLocation, onNext, onBack, startDate, duration, pickupDr
         [field]: value
       }
     }));
-
+    
     if (errors[`${section}_${field}`]) {
       setErrors(prev => ({
         ...prev,
@@ -88,7 +88,7 @@ const ArrDep = ({ defaultLocation, onNext, onBack, startDate, duration, pickupDr
     }
 
     setErrors(newErrors);
-
+    
     if (
       !isValid &&
       !newErrors.arrival_city &&
@@ -98,7 +98,7 @@ const ArrDep = ({ defaultLocation, onNext, onBack, startDate, duration, pickupDr
     ) {
       setActiveSection('departure');
     }
-
+    
     return isValid;
   };
 
@@ -131,17 +131,11 @@ const ArrDep = ({ defaultLocation, onNext, onBack, startDate, duration, pickupDr
     });
   };
 
-  const formattedCities = {};
-  if (pickupDropCities && pickupDropCities.length > 0) {
-    pickupDropCities.forEach(cityObj => {
-      formattedCities[cityObj.cityName] = cityObj.locations.map(l => l.name);
-    });
-  } else if (defaultLocation) {
-    formattedCities[defaultLocation] = ['Default Station/Airport'];
-  } else {
-    // Fallback if no data is provided
-    formattedCities['Select City'] = ['N/A'];
-  }
+  const cities = {
+    'New York': ['JFK Airport', 'LaGuardia Airport', 'Manhattan Downtown'],
+    'Los Angeles': ['LAX Airport', 'Downtown LA', 'Santa Monica'],
+    'Chicago': ["O'Hare Airport", 'Midway Airport', 'Downtown Chicago']
+  };
 
   return (
     <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6 md:p-8">
@@ -164,20 +158,22 @@ const ArrDep = ({ defaultLocation, onNext, onBack, startDate, duration, pickupDr
         <div className="flex flex-wrap mb-6 sm:mb-8 border-b border-gray-200">
           <button
             onClick={() => setActiveSection('arrival')}
-            className={`px-3 sm:px-4 py-2 font-medium text-sm flex items-center ${activeSection === 'arrival'
-              ? 'text-green-600 border-b-2 border-green-600'
-              : 'text-gray-500 hover:text-gray-700'
-              }`}
+            className={`px-3 sm:px-4 py-2 font-medium text-sm flex items-center ${
+              activeSection === 'arrival'
+                ? 'text-green-600 border-b-2 border-green-600'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
           >
             <Car className="h-4 w-4 mr-2" />
             Arrival Details
           </button>
           <button
             onClick={() => setActiveSection('departure')}
-            className={`px-3 sm:px-4 py-2 font-medium text-sm flex items-center ${activeSection === 'departure'
-              ? 'text-green-600 border-b-2 border-green-600'
-              : 'text-gray-500 hover:text-gray-700'
-              }`}
+            className={`px-3 sm:px-4 py-2 font-medium text-sm flex items-center ${
+              activeSection === 'departure'
+                ? 'text-green-600 border-b-2 border-green-600'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
           >
             <Car className="h-4 w-4 mr-2" />
             Departure Details
@@ -206,11 +202,12 @@ const ArrDep = ({ defaultLocation, onNext, onBack, startDate, duration, pickupDr
                   <select
                     value={formData.arrival.city}
                     onChange={(e) => handleInputChange('arrival', 'city', e.target.value)}
-                    className={`w-full px-3 sm:px-4 py-2 sm:py-2.5 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 appearance-none pr-10 text-sm sm:text-base ${errors.arrival_city ? 'border-red-500 bg-red-50' : 'border-gray-300'
-                      }`}
+                    className={`w-full px-3 sm:px-4 py-2 sm:py-2.5 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 appearance-none pr-10 text-sm sm:text-base ${
+                      errors.arrival_city ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                    }`}
                   >
                     <option value="">Select arrival city</option>
-                    {Object.keys(formattedCities).map(city => (
+                    {Object.keys(cities).map(city => (
                       <option key={`arrival-${city}`} value={city}>{city}</option>
                     ))}
                   </select>
@@ -234,11 +231,12 @@ const ArrDep = ({ defaultLocation, onNext, onBack, startDate, duration, pickupDr
                     value={formData.arrival.pickupAddress}
                     onChange={(e) => handleInputChange('arrival', 'pickupAddress', e.target.value)}
                     disabled={!formData.arrival.city}
-                    className={`w-full px-3 sm:px-4 py-2 sm:py-2.5 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 appearance-none pr-10 text-sm sm:text-base ${errors.arrival_pickupAddress ? 'border-red-500 bg-red-50' : 'border-gray-300'
-                      } ${!formData.arrival.city ? 'bg-gray-50 text-gray-400' : ''}`}
+                    className={`w-full px-3 sm:px-4 py-2 sm:py-2.5 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 appearance-none pr-10 text-sm sm:text-base ${
+                      errors.arrival_pickupAddress ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                    } ${!formData.arrival.city ? 'bg-gray-50 text-gray-400' : ''}`}
                   >
                     <option value="">Select pickup address</option>
-                    {formData.arrival.city && formattedCities[formData.arrival.city]?.map(address => (
+                    {formData.arrival.city && cities[formData.arrival.city]?.map(address => (
                       <option key={`arrival-addr-${address}`} value={address}>{address}</option>
                     ))}
                   </select>
@@ -272,8 +270,9 @@ const ArrDep = ({ defaultLocation, onNext, onBack, startDate, duration, pickupDr
                     type="time"
                     value={formData.arrival.time}
                     onChange={(e) => handleInputChange('arrival', 'time', e.target.value)}
-                    className={`w-full px-3 sm:px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm sm:text-base ${errors.arrival_time ? 'border-red-500 bg-red-50' : 'border-gray-300'
-                      }`}
+                    className={`w-full px-3 sm:px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm sm:text-base ${
+                      errors.arrival_time ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                    }`}
                   />
                   {errors.arrival_time && (
                     <p className="mt-1 text-xs sm:text-sm text-red-600 flex items-center">
@@ -305,11 +304,12 @@ const ArrDep = ({ defaultLocation, onNext, onBack, startDate, duration, pickupDr
                     <select
                       value={formData.departure.city}
                       onChange={(e) => handleInputChange('departure', 'city', e.target.value)}
-                      className={`w-full px-3 sm:px-4 py-2 sm:py-2.5 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 appearance-none pr-10 text-sm sm:text-base ${errors.departure_city ? 'border-red-500 bg-red-50' : 'border-gray-300'
-                        }`}
+                      className={`w-full px-3 sm:px-4 py-2 sm:py-2.5 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 appearance-none pr-10 text-sm sm:text-base ${
+                        errors.departure_city ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                      }`}
                     >
                       <option value="">Select departure city</option>
-                      {Object.keys(formattedCities).map(city => (
+                      {Object.keys(cities).map(city => (
                         <option key={`departure-${city}`} value={city}>{city}</option>
                       ))}
                     </select>
@@ -333,11 +333,12 @@ const ArrDep = ({ defaultLocation, onNext, onBack, startDate, duration, pickupDr
                       value={formData.departure.dropoffAddress}
                       onChange={(e) => handleInputChange('departure', 'dropoffAddress', e.target.value)}
                       disabled={!formData.departure.city}
-                      className={`w-full px-3 sm:px-4 py-2 sm:py-2.5 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 appearance-none pr-10 text-sm sm:text-base ${errors.departure_dropoffAddress ? 'border-red-500 bg-red-50' : 'border-gray-300'
-                        } ${!formData.departure.city ? 'bg-gray-50 text-gray-400' : ''}`}
+                      className={`w-full px-3 sm:px-4 py-2 sm:py-2.5 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 appearance-none pr-10 text-sm sm:text-base ${
+                        errors.departure_dropoffAddress ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                      } ${!formData.departure.city ? 'bg-gray-50 text-gray-400' : ''}`}
                     >
                       <option value="">Select drop-off address</option>
-                      {formData.departure.city && formattedCities[formData.departure.city]?.map(address => (
+                      {formData.departure.city && cities[formData.departure.city]?.map(address => (
                         <option key={`departure-addr-${address}`} value={address}>{address}</option>
                       ))}
                     </select>
@@ -371,8 +372,9 @@ const ArrDep = ({ defaultLocation, onNext, onBack, startDate, duration, pickupDr
                       type="time"
                       value={formData.departure.time}
                       onChange={(e) => handleInputChange('departure', 'time', e.target.value)}
-                      className={`w-full px-3 sm:px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm sm:text-base ${errors.departure_time ? 'border-red-500 bg-red-50' : 'border-gray-300'
-                        }`}
+                      className={`w-full px-3 sm:px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm sm:text-base ${
+                        errors.departure_time ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                      }`}
                     />
                     {errors.departure_time && (
                       <p className="mt-1 text-xs sm:text-sm text-red-600 flex items-center">
