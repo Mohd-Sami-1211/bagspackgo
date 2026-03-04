@@ -208,15 +208,7 @@ const faqs = [
   },
   {
     question: "How bagspackgo differs from traditional travel agencies?",
-    answer: "Unlike traditional agencies, bagspackgo gives travelers direct access to verified local guides, full itinerary customization, transparent pricing, and a unique group travel feature called 'Merger' for solo or social adventurers."
-  },
-  {
-    question: "What is the Merger feature?",
-    answer: "Merger allows solo travelers or small groups to create or join a travel room. You can select a guide, propose a travel plan, and let others join the journey—making group travel easier, safer, and more social."
-  },
-  {
-    question: "Can I travel solo or do I have to join a group using Merger?",
-    answer: "You can travel solo if you prefer. Merger is an optional feature designed for those looking to connect and travel with others who have similar plans."
+    answer: "Unlike traditional agencies, bagspackgo gives travelers direct access to verified local guides, full itinerary customization, and transparent pricing."
   },
   {
     question: "How do I book a tour on bagspackgo?",
@@ -390,7 +382,7 @@ const AdventureSlider = () => {
   const toggleFlip = () => {
     const newFlippedState = !isFlipped;
     setIsFlipped(newFlippedState);
-    
+
     if (newFlippedState) {
       clearInterval(intervalRef.current);
     } else if (isAutoPlaying) {
@@ -403,12 +395,12 @@ const AdventureSlider = () => {
       {/* Header outside the colored background */}
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 mb-16 -mt-16">
         <div className="text-center pt-20">
-          <motion.h2 
+          <motion.h2
             className="text-4xl md:text-5xl font-bold text-gray-800 mb-4"
             initial={{ scale: 0.9 }}
             whileInView={{ scale: 1 }}
-            transition={{ 
-              duration: 0.5, 
+            transition={{
+              duration: 0.5,
               delay: 0.2,
               type: "spring",
               stiffness: 100
@@ -416,12 +408,12 @@ const AdventureSlider = () => {
           >
             Thrill Seeker's <span className="text-green-600">Paradise</span>
           </motion.h2>
-          <motion.div 
+          <motion.div
             className="h-1 bg-gradient-to-r from-amber-400 to-amber-600 mx-auto w-24 rounded-full mb-12"
             initial={{ width: 0 }}
             whileInView={{ width: 96 }}
-            transition={{ 
-              duration: 0.8, 
+            transition={{
+              duration: 0.8,
               delay: 0.3,
               type: "spring",
               stiffness: 50
@@ -435,7 +427,7 @@ const AdventureSlider = () => {
         {/* Decorative elements */}
         <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-blue-50/30 to-transparent -z-0" />
         <div className="absolute bottom-0 left-0 w-40 h-40 rounded-full bg-amber-400/10 blur-3xl -z-0" />
-        
+
         <div className="max-w-7xl mx-auto px-4 relative z-10">
           {/* Main slider */}
           <div className="relative">
@@ -451,7 +443,7 @@ const AdventureSlider = () => {
                   transition={{ type: "spring", stiffness: 300, damping: 30 }}
                   className="absolute inset-0"
                 >
-                  <VideoCard 
+                  <VideoCard
                     media={adventures[currentIndex].media}
                     name={adventures[currentIndex].name}
                     description={adventures[currentIndex].description}
@@ -516,12 +508,12 @@ const Testimonials = () => {
     <section className="px-4 py-16 max-w-7xl mx-auto">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 mb-16 -mt-16">
         <div className="text-center pt-20">
-          <motion.h2 
+          <motion.h2
             className="text-4xl md:text-5xl font-bold text-gray-800 mb-4"
             initial={{ scale: 0.9 }}
             whileInView={{ scale: 1 }}
-            transition={{ 
-              duration: 0.5, 
+            transition={{
+              duration: 0.5,
               delay: 0.2,
               type: "spring",
               stiffness: 100
@@ -529,12 +521,12 @@ const Testimonials = () => {
           >
             Travel <span className="text-green-600">Stories</span>
           </motion.h2>
-          <motion.div 
+          <motion.div
             className="h-1 bg-gradient-to-r from-amber-400 to-amber-600 mx-auto w-24 rounded-full mb-12"
             initial={{ width: 0 }}
             whileInView={{ width: 96 }}
-            transition={{ 
-              duration: 0.8, 
+            transition={{
+              duration: 0.8,
               delay: 0.3,
               type: "spring",
               stiffness: 50
@@ -555,9 +547,9 @@ const Testimonials = () => {
               viewport={{ once: true }}
             >
               <div className="flex items-center mb-4">
-                <img 
-                  src={testimonial.image} 
-                  alt={testimonial.name} 
+                <img
+                  src={testimonial.image}
+                  alt={testimonial.name}
                   className="w-12 h-12 rounded-full object-cover mr-4"
                 />
                 <div>
@@ -566,8 +558,8 @@ const Testimonials = () => {
                 </div>
                 <div className="ml-auto flex items-center">
                   {[...Array(5)].map((_, i) => (
-                    <Star 
-                      key={i} 
+                    <Star
+                      key={i}
                       className={`w-5 h-5 ${i < testimonial.rating ? 'text-amber-400 fill-amber-400' : 'text-gray-300'}`}
                     />
                   ))}
@@ -594,12 +586,12 @@ const PopularDestinations = () => {
     <section className="px-4 py-16 max-w-7xl mx-auto">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 mb-16 -mt-16">
         <div className="text-center pt-20">
-          <motion.h2 
+          <motion.h2
             className="text-4xl md:text-5xl font-bold text-gray-800 mb-4"
             initial={{ scale: 0.9 }}
             whileInView={{ scale: 1 }}
-            transition={{ 
-              duration: 0.5, 
+            transition={{
+              duration: 0.5,
               delay: 0.2,
               type: "spring",
               stiffness: 100
@@ -607,12 +599,12 @@ const PopularDestinations = () => {
           >
             Kashmir Crown <span className="text-green-600">Jewels</span>
           </motion.h2>
-          <motion.div 
+          <motion.div
             className="h-1 bg-gradient-to-r from-amber-400 to-amber-600 mx-auto w-24 rounded-full mb-12"
             initial={{ width: 0 }}
             whileInView={{ width: 96 }}
-            transition={{ 
-              duration: 0.8, 
+            transition={{
+              duration: 0.8,
               delay: 0.3,
               type: "spring",
               stiffness: 50
@@ -620,7 +612,7 @@ const PopularDestinations = () => {
           />
         </div>
       </div>
-      
+
       <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-3xl p-6 md:p-8 backdrop-blur-sm border border-blue-100 shadow-sm">
         <div className="space-y-16">
           {destinations.map((category) => (
@@ -628,8 +620,8 @@ const PopularDestinations = () => {
               <h3 className={`text-2xl font-semibold ${category.textColor} bg-gradient-to-r ${category.color} py-2 px-4 rounded-lg inline-block shadow-md`}>
                 {category.category}
               </h3>
-              <DestinationSlider 
-                places={category.places} 
+              <DestinationSlider
+                places={category.places}
                 categoryColor={category.color}
                 textColor={category.textColor}
               />
@@ -648,48 +640,48 @@ export default function TripMainContent() {
   };
 
   return (
-   <div className="w-full">
-  {/* Wrapper div with responsive height and bottom padding */}
-  <div className="relative h-[45vh] sm:h-[70vh] md:h-[60vh] pb-24 sm:pb-32 md:pb-0 "> 
-    
-    {/* Hero Section */}
-    <section 
-      id="trip-page" 
-      className="relative h-[25vh] sm:h-[64vh] md:h-[60vh] w-full overflow-hidden bg-cover bg-center bg-no-repeat"
-      style={{
-        backgroundImage: "url('/images/hero.svg')",
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat'
-      }}
-    >
-    </section>
+    <div className="w-full">
+      {/* Wrapper div with responsive height and bottom padding */}
+      <div className="relative h-[45vh] sm:h-[70vh] md:h-[60vh] pb-24 sm:pb-32 md:pb-0 ">
 
-    {/* Search Input Container */}
-    <div className="absolute top-[10vh] sm:top-[35vh] md:top-[40vh] w-full flex items-center justify-center px-4 sm:px-6 lg:px-8 z-10">
-      <div className="w-full max-w-4xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          className="w-full"
+        {/* Hero Section */}
+        <section
+          id="trip-page"
+          className="relative h-[25vh] sm:h-[64vh] md:h-[60vh] w-full overflow-hidden bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: "url('/images/hero.svg')",
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat'
+          }}
         >
-          <TripSearchInput />
-        </motion.div>
-      </div>
-    </div>
-  </div>
+        </section>
 
-  {/* Rest of the sections */}
-  <div className='mt-80 sm:mt-16 md:mt-24 '> 
-    <AdContent />
-  </div>
-  <PopularDestinations />
-  <AdventureSlider />
-  <Testimonials />
-  <AboutUs />
-  <FAQ faqs={faqs} activeIndex={activeIndex} toggleFAQ={toggleFAQ} />
-</div>
+        {/* Search Input Container */}
+        <div className="absolute top-[10vh] sm:top-[35vh] md:top-[40vh] w-full flex items-center justify-center px-4 sm:px-6 lg:px-8 z-10">
+          <div className="w-full max-w-4xl mx-auto">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="w-full"
+            >
+              <TripSearchInput />
+            </motion.div>
+          </div>
+        </div>
+      </div>
+
+      {/* Rest of the sections */}
+      <div className='mt-80 sm:mt-16 md:mt-24 '>
+        <AdContent />
+      </div>
+      <PopularDestinations />
+      <AdventureSlider />
+      <Testimonials />
+      <AboutUs />
+      <FAQ faqs={faqs} activeIndex={activeIndex} toggleFAQ={toggleFAQ} />
+    </div>
 
 
 

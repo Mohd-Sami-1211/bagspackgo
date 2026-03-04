@@ -107,7 +107,7 @@ export default function ProviderRegistrationForm({ rejected = false }) {
     const [form, setForm] = useState({
         companyName: '', companyMail: '', companyMobile: '', destinationId: '',
         address: '', instagram: '', facebook: '', licenseFile: null, idFile: null,
-        availability: { trips: true, treks: true, mergers: true }, agree: false,
+        availability: { trips: true, treks: true }, agree: false,
     });
     const [errors, setErrors] = useState({});
     const [submitting, setSubmitting] = useState(false);
@@ -350,7 +350,6 @@ export default function ProviderRegistrationForm({ rejected = false }) {
                                                 {[
                                                     { key: 'trips', label: 'Trips', emoji: String.fromCodePoint(0x1F697) },
                                                     { key: 'treks', label: 'Treks', emoji: String.fromCodePoint(0x1F3D4) },
-                                                    { key: 'mergers', label: 'Mergers', emoji: String.fromCodePoint(0x1F465) },
                                                 ].map(s => (
                                                     <motion.button key={s.key} type="button" whileTap={{ scale: 0.95 }} onClick={() => toggleAvail(s.key)}
                                                         className={`flex flex-col items-center gap-1.5 p-3 rounded-2xl border-2 transition-all ${form.availability[s.key] ? 'border-emerald-500 bg-emerald-50 shadow-sm' : 'border-gray-200 bg-white hover:border-gray-300'

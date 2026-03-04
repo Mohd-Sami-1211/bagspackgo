@@ -4,19 +4,19 @@ const Footer = () => {
   return (
     <footer className="bg-gradient-to-br from-green-200 to-blue-100 text-gray-800">
       <div className="w-full mx-auto px-10 py-6 grid grid-cols-1 md:grid-cols-4 gap-8">
-        
+
         {/* Brand Info */}
         <div>
           <div className="flex items-center space-x-2">
-                     <a href="/" className="inline-block w-[150px] h-[40px] overflow-hidden relative rounded-3xl bg-white">
-                       <Image 
-                         src="/images/logo.svg" 
-                         alt="Logo" 
-                         fill 
-                         className="object-contain" 
-                         priority 
-                       />
-                     </a>
+            <a href="/" className="inline-block w-[150px] h-[40px] overflow-hidden relative rounded-3xl bg-white">
+              <Image
+                src="/images/logo.svg"
+                alt="Logo"
+                fill
+                className="object-contain"
+                priority
+              />
+            </a>
           </div>
           <p className="mt-2 text-sm text-gray-800 font-bold">
             Just pack your bags, We've got the rest...
@@ -30,7 +30,6 @@ const Footer = () => {
             <li><a href="/" className="text-sm px-2 py-1 hover:text-black hover:bg-white/40 transition-colors">Home</a></li>
             <li><a href="/about" className="text-sm px-2 py-1 hover:text-black hover:bg-white/40 transition-colors">About Us</a></li>
             <li><a href="/user/events" className="text-sm px-2 py-1 hover:text-black hover:bg-white/40 transition-colors">Events</a></li>
-            <li><a href="/user/merger" className="text-sm px-2 py-1 hover:text-black hover:bg-white/40 transition-colors">Merger</a></li>
           </ul>
         </div>
 

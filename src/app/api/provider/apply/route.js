@@ -95,7 +95,7 @@ export async function POST(request) {
             guideDetails.facebook = facebook;
             guideDetails.licenseFile = licenseFile;
             guideDetails.idFile = idFile;
-            guideDetails.availability = body.availability || { trips: true, treks: true, mergers: true };
+            guideDetails.availability = body.availability || { trips: true, treks: true };
             guideDetails.agree = true;
             guideDetails.status = "pending";
             guideDetails.adminNotes = "";
@@ -113,7 +113,7 @@ export async function POST(request) {
                 facebook,
                 licenseFile,
                 idFile,
-                availability: body.availability || { trips: true, treks: true, mergers: true },
+                availability: body.availability || { trips: true, treks: true },
                 agree: true,
                 status: "pending",
             });

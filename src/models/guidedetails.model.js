@@ -46,7 +46,6 @@ const guidedetailsSchema = new mongoose.Schema(
         availability: {
             trips: { type: Boolean, default: true },
             treks: { type: Boolean, default: true },
-            mergers: { type: Boolean, default: true },
         },
 
         agree: { type: Boolean, required: true },

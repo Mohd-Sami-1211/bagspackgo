@@ -14,7 +14,6 @@ const earnings = [
 const pipeline = [
   { name: 'Trips', scheduled: 12, pending: 3 },
   { name: 'Treks', scheduled: 8, pending: 2 },
-  { name: 'Mergers', scheduled: 5, pending: 1 },
   { name: 'Events', scheduled: 2, pending: 0 },
 ];
 
@@ -22,11 +21,11 @@ const pipeline = [
 function OverviewStats() {
   const cards = [
     { label: 'Total Bookings (30d)', value: 128, sub: '+12% vs last month' },
-    { label: 'Approval Queue', value: 5, sub: '2 Trips • 2 Treks • 1 Merger' },
+    { label: 'Approval Queue', value: 4, sub: '2 Trips • 2 Treks' },
     { label: 'Avg. Rating', value: '4.7', sub: 'based on 186 reviews' },
     { label: 'Earnings (30d)', value: '₹ 2,48,500', sub: '+18% vs last month' },
   ];
-  
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {cards.map((c, index) => (
@@ -70,8 +69,8 @@ function OverviewGraphs() {
               <XAxis dataKey="name" />
               <YAxis />
               <Tooltip />
-              <Bar dataKey="scheduled" fill="#34D399" radius={[6,6,0,0]} />
-              <Bar dataKey="pending" fill="#A7F3D0" radius={[6,6,0,0]} />
+              <Bar dataKey="scheduled" fill="#34D399" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="pending" fill="#A7F3D0" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -93,11 +92,11 @@ export default function DashboardMainContent() {
           <h1 className="text-2xl font-bold text-green-700">Dashboard Overview</h1>
           <p className="text-neutral-600">Welcome back! Here's what's happening with your business today.</p>
         </motion.div>
-        
+
         <div className="grid gap-6">
           <OverviewStats />
           <OverviewGraphs />
-          
+
           {/* Additional content sections */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="rounded-xl border bg-white p-4">
@@ -121,7 +120,7 @@ export default function DashboardMainContent() {
                 ))}
               </div>
             </div>
-            
+
             <div className="rounded-xl border bg-white p-4">
               <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
               <div className="grid grid-cols-2 gap-3">

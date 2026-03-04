@@ -37,7 +37,6 @@ export default function Sidebar({ isCollapsed }) {
     { name: "Dashboard", icon: LayoutDashboard, href: "/serviceprovider/dashboard" },
     { name: "Trips", icon: BarChart3, href: "/serviceprovider/dashboard/trips" },
     { name: "Treks", icon: Mountain, href: "/serviceprovider/dashboard/treks" },
-    { name: "Mergers", icon: UsersRound, href: "/serviceprovider/dashboard/mergers" },
     { name: "Events", icon: CalendarDays, href: "/serviceprovider/dashboard/events" },
     { name: "Settings", icon: Settings, href: "/serviceprovider/dashboard/settings" },
   ];

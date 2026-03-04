@@ -18,9 +18,7 @@ export default function RootLayout({ children }) {
     pathname === '/user/trek/guidelist' ||
     pathname?.includes('/tripdetails') ||
     pathname?.includes('/trekdetails') ||
-    pathname?.includes('/mergerdetails') ||
     pathname?.includes('/eventdetails') ||
-    pathname?.includes('/createmerger') ||
     pathname?.includes('/bookings') ||
     pathname?.includes('/help') ||
     pathname?.includes('/signin') ||

@@ -3,8 +3,6 @@ import { useMemo, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaClipboardList, FaUsers, FaHeart, FaFilter, FaCalendarAlt, FaHistory } from 'react-icons/fa';
 import BookingCard from 'src/components/home/BookingSection/BookingCard';
-import MergerCard from 'src/components/home/BookingSection/MergerCard';
-
 const BookingMainContent = () => {
   const [activeTab, setActiveTab] = useState('upcoming-bookings');
 
@@ -99,15 +97,11 @@ const BookingMainContent = () => {
     fetchBookings();
   }, []);
 
-  // Hardcoded placeholders for Mergers & Wishlist as they weren't requested
-  const mergers = [];
   const wishlist = [];
 
   // ===== Filters state =====
   const [bookingStatusFilter, setBookingStatusFilter] = useState('all');
   const [bookingCategoryFilter, setBookingCategoryFilter] = useState('all');
-  const [mergerStatusFilter, setMergerStatusFilter] = useState('all');
-  const [mergerDestinationFilter, setMergerDestinationFilter] = useState('all');
   const [wishlistSort, setWishlistSort] = useState('recent');
   const [showFilters, setShowFilters] = useState(false);
 
@@ -135,14 +129,6 @@ const BookingMainContent = () => {
       return statusMatch && categoryMatch;
     });
   }, [pastBookings, bookingStatusFilter, bookingCategoryFilter]);
-
-  const filteredMergers = useMemo(() => {
-    return mergers.filter((m) => {
-      const statusMatch = mergerStatusFilter === 'all' || m.status === mergerStatusFilter;
-      const destMatch = mergerDestinationFilter === 'all' || m.destination === mergerDestinationFilter;
-      return statusMatch && destMatch;
-    });
-  }, [mergers, mergerStatusFilter, mergerDestinationFilter]);
 
   // ===== Small UI components =====
   const SidebarButton = ({ tab, icon: Icon, label }) => (
@@ -200,7 +186,6 @@ const BookingMainContent = () => {
         <div className="mb-3 px-2 mt-4">
           <h4 className="text-sm font-semibold text-gray-600 mb-2">Others</h4>
           <div className="space-y-1">
-            <SidebarButton tab="mergers" icon={FaUsers} label="My Mergers" />
             <SidebarButton tab="wishlist" icon={FaHeart} label="Wishlist" />
           </div>
         </div>
@@ -409,97 +394,6 @@ const BookingMainContent = () => {
                   <Fallback
                     title="No past bookings"
                     subtitle="You don't have any past bookings that match the filters."
-                  />
-                )}
-              </div>
-            </motion.section>
-          )}
-
-          {/* MERGERS */}
-          {activeTab === 'mergers' && (
-            <motion.section
-              key="mergers"
-              initial={{ opacity: 0, x: 16 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -16 }}
-              transition={{ duration: 0.25 }}
-              className="space-y-6"
-            >
-              <SectionHeader>
-                <h2 className="text-2xl font-bold text-green-600">My Mergers</h2>
-                <button
-                  onClick={() => setShowFilters(!showFilters)}
-                  className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-full border border-gray-200 text-gray-600 hover:bg-gray-50"
-                >
-                  <FaFilter className="text-xs" />
-                  Filters
-                </button>
-              </SectionHeader>
-
-              {/* Merger filters */}
-              {showFilters && (
-                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-500 mb-1">Status</label>
-                      <div className="flex flex-wrap gap-2">
-                        <FilterButton
-                          active={mergerStatusFilter === 'all'}
-                          onClick={() => setMergerStatusFilter('all')}
-                        >
-                          All
-                        </FilterButton>
-                        <FilterButton
-                          active={mergerStatusFilter === 'active'}
-                          onClick={() => setMergerStatusFilter('active')}
-                        >
-                          Active
-                        </FilterButton>
-                        <FilterButton
-                          active={mergerStatusFilter === 'cancelled'}
-                          onClick={() => setMergerStatusFilter('cancelled')}
-                        >
-                          Cancelled
-                        </FilterButton>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-medium text-gray-500 mb-1">Destination</label>
-                      <div className="flex flex-wrap gap-2">
-                        <FilterButton
-                          active={mergerDestinationFilter === 'all'}
-                          onClick={() => setMergerDestinationFilter('all')}
-                        >
-                          All
-                        </FilterButton>
-                        <FilterButton
-                          active={mergerDestinationFilter === 'Kashmir'}
-                          onClick={() => setMergerDestinationFilter('Kashmir')}
-                        >
-                          Kashmir
-                        </FilterButton>
-                        <FilterButton
-                          active={mergerDestinationFilter === 'Uttarakhand'}
-                          onClick={() => setMergerDestinationFilter('Uttarakhand')}
-                        >
-                          Uttarakhand
-                        </FilterButton>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 gap-4">
-                {filteredMergers.length ? (
-                  filteredMergers.map((m) => (
-                    <MergerCard key={m.id} merger={m} onClick={() => alert(`Open merger: ${m.name}`)} />
-                  ))
-                ) : (
-                  <Fallback
-                    title="No mergers yet"
-                    subtitle="Create or join a merger (group) to travel with others — matches will show here."
                   />
                 )}
               </div>

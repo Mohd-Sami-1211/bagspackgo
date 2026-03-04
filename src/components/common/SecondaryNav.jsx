@@ -9,7 +9,6 @@ import { useRef, useState, useEffect } from 'react';
 const tabs = [
   { label: 'Trip', icon: <Plane size={18} />, path: '/user/trip' },
   { label: 'Trek', icon: <Mountain size={18} />, path: '/user/trek' },
-  { label: 'Merger', icon: <Users size={18} />, path: '/user/merger' },
   { label: 'Events', icon: <CalendarDays size={18} />, path: '/user/events' },
   { label: 'Community', icon: <Globe2 size={18} />, path: '/user/community' },
 ];
@@ -49,7 +48,7 @@ export default function SecondaryNav() {
               restDelta: 0.001,
             }}
           />
-          
+
           {tabs.map((tab, idx) => {
             const isActive = pathname?.startsWith(tab.path);
             return (
@@ -57,9 +56,8 @@ export default function SecondaryNav() {
                 key={tab.label}
                 href={tab.path}
                 ref={el => tabRefs.current[idx] = el}
-                className={`relative py-4 flex items-center gap-2 ${
-                  isActive ? 'text-green-600 font-semibold' : 'hover:text-green-500'
-                }`}
+                className={`relative py-4 flex items-center gap-2 ${isActive ? 'text-green-600 font-semibold' : 'hover:text-green-500'
+                  }`}
               >
                 <motion.span
                   animate={{
