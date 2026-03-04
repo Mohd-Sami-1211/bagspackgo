@@ -1,5 +1,5 @@
 'use client';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FiHeart,
@@ -39,80 +39,30 @@ const CommunityMainContent = () => {
   const [reviewForm, setReviewForm] = useState({ name: '', title: '', content: '', rating: 5 });
   const fileInputRef = useRef(null);
 
-  const [stories, setStories] = useState([
-    {
-      id: 1,
-      name: 'Priya Sharma',
-      handle: '@priya_explores',
-      photo: 'https://i.pravatar.cc/150?u=priya',
-      date: '2h ago',
-      content: 'Just completed the Tarsar Marsar trek with bagspackgo! The alpine lakes were absolutely mesmerizing. Our guide was incredibly knowledgeable and truly felt like a local friend showing us around. Can\'t wait for my next adventure! 🏔️✨',
-      likes: 124,
-      comments: 18,
-      media: 'https://images.unsplash.com/photo-1542314831-c6a42032597b?auto=format&fit=crop&q=80',
-      liked: false,
-      location: 'Tarsar Lake, Kashmir'
-    },
-    {
-      id: 2,
-      name: 'Rahul Verma',
-      handle: '@rahul_travels',
-      photo: 'https://i.pravatar.cc/150?u=rahul',
-      date: '5h ago',
-      content: 'Waking up to a view of the snow-capped Dhauladhar range... nothing beats this feeling. Massive thanks to our amazing team for setting up the perfect camp site. ⛺️☕️',
-      likes: 89,
-      comments: 5,
-      media: null,
-      liked: true,
-      location: 'Triund, Himachal Pradesh'
-    },
-    {
-      id: 3,
-      name: 'Sarah Jenkins',
-      handle: '@sarah.wanderlust',
-      photo: 'https://i.pravatar.cc/150?u=sarah',
-      date: '1d ago',
-      content: 'The valley of flowers was in full bloom! I\'ve never seen so many vibrant colors in one place. Truly a paradise on earth. 🌺🌿',
-      likes: 215,
-      comments: 32,
-      media: 'https://images.unsplash.com/photo-1596422846543-75c6fc197f07?auto=format&fit=crop&q=80',
-      liked: false,
-      location: 'Valley of Flowers, Uttarakhand'
-    }
-  ]);
+  const [stories, setStories] = useState([]);
+  const [reviews, setReviews] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const [reviews, setReviews] = useState([
-    {
-      id: 1,
-      name: 'Amit Patel',
-      photo: 'https://i.pravatar.cc/150?u=amit',
-      date: '1 week ago',
-      rating: 5,
-      title: 'Flawless Experience',
-      content: 'bagspackgo completely changed the way I travel. The platform is so intuitive, and booking a verified local guide gave us peace of mind. The entire trip was customized to our pace.',
-      helpful: 42
-    },
-    {
-      id: 2,
-      name: 'Jessica T.',
-      photo: 'https://i.pravatar.cc/150?u=jess',
-      date: '2 weeks ago',
-      rating: 5,
-      title: 'Highly Recommended for Solo Travelers',
-      content: 'As a solo female traveler, safety is my top priority. The verification process for guides made me feel secure. My guide in Manali was respectful, informative, and a fantastic photographer to boot!',
-      helpful: 38
-    },
-    {
-      id: 3,
-      name: 'Karan Singh',
-      photo: 'https://i.pravatar.cc/150?u=karan',
-      date: '1 month ago',
-      rating: 4,
-      title: 'Great service, slight delay',
-      content: 'Everything was wonderful, the views, the food, the guide. The only issue was a slight delay in our pickup on day 1 due to traffic, but they handled it professionally.',
-      helpful: 15
-    }
-  ]);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [storiesRes, reviewsRes] = await Promise.all([
+          fetch('/api/community/stories'),
+          fetch('/api/community/reviews')
+        ]);
+        const storiesData = await storiesRes.json();
+        const reviewsData = await reviewsRes.json();
+
+        if (storiesData.success) setStories(storiesData.data);
+        if (reviewsData.success) setReviews(reviewsData.data);
+      } catch (error) {
+        console.error("Error fetching community data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   const reviewStats = {
     average: 4.8,
@@ -126,23 +76,35 @@ const CommunityMainContent = () => {
     ]
   };
 
-  const handleLike = (id) => {
+  const handleLike = async (id) => {
+    // Optimistic cache update
     setStories(stories.map(story =>
-      story.id === id ? {
+      story._id === id ? {
         ...story,
-        likes: story.liked ? story.likes - 1 : story.likes + 1,
-        liked: !story.liked
+        likes: (story.likes || 0) + 1,
+        liked: true
       } : story
     ));
+    try {
+      await fetch(`/api/community/stories/${id}/like`, { method: 'PATCH' });
+    } catch (e) {
+      console.error(e);
+    }
   };
 
-  const handleHelpful = (id) => {
+  const handleHelpful = async (id) => {
+    // Optimistic cache update
     setReviews(reviews.map(review =>
-      review.id === id ? {
+      review._id === id ? {
         ...review,
-        helpful: review.helpful + 1 // simplified interaction
+        helpful: (review.helpful || 0) + 1
       } : review
     ));
+    try {
+      await fetch(`/api/community/reviews/${id}/helpful`, { method: 'PATCH' });
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const handleImageUpload = (e) => {
@@ -156,47 +118,63 @@ const CommunityMainContent = () => {
     }
   };
 
-  const submitStory = (e) => {
+  const submitStory = async (e) => {
     e.preventDefault();
     if (!storyForm.content.trim() || !storyForm.name.trim()) return;
 
-    const newStory = {
-      id: Date.now(),
+    const newStoryData = {
       name: storyForm.name,
       handle: `@${storyForm.name.toLowerCase().replace(/\s+/g, '').substring(0, 15)}`,
       photo: `https://ui-avatars.com/api/?name=${encodeURIComponent(storyForm.name)}&background=10b981&color=fff`,
-      date: 'Just now',
       content: storyForm.content,
-      likes: 0,
-      comments: 0,
       media: storyForm.imagePreview,
-      liked: false,
       location: storyForm.location || ''
     };
 
-    setStories([newStory, ...stories]);
-    setStoryForm({ name: '', content: '', location: '', imagePreview: null });
-    setShowStoryModal(false);
+    try {
+      const res = await fetch('/api/community/stories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newStoryData)
+      });
+      const data = await res.json();
+      if (data.success) {
+        setStories([data.data, ...stories]);
+        setStoryForm({ name: '', content: '', location: '', imagePreview: null });
+        setShowStoryModal(false);
+      }
+    } catch (error) {
+      console.error("Error posting story:", error);
+    }
   };
 
-  const submitReview = (e) => {
+  const submitReview = async (e) => {
     e.preventDefault();
     if (!reviewForm.title.trim() || !reviewForm.content.trim() || !reviewForm.name.trim()) return;
 
-    const newReview = {
-      id: Date.now(),
+    const newReviewData = {
       name: reviewForm.name,
       photo: `https://ui-avatars.com/api/?name=${encodeURIComponent(reviewForm.name)}&background=f59e0b&color=fff`,
-      date: 'Just now',
       rating: reviewForm.rating,
       title: reviewForm.title,
-      content: reviewForm.content,
-      helpful: 0
+      content: reviewForm.content
     };
 
-    setReviews([newReview, ...reviews]);
-    setReviewForm({ name: '', title: '', content: '', rating: 5 });
-    setShowReviewModal(false);
+    try {
+      const res = await fetch('/api/community/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newReviewData)
+      });
+      const data = await res.json();
+      if (data.success) {
+        setReviews([data.data, ...reviews]);
+        setReviewForm({ name: '', title: '', content: '', rating: 5 });
+        setShowReviewModal(false);
+      }
+    } catch (error) {
+      console.error("Error posting review:", error);
+    }
   };
 
   return (
@@ -276,7 +254,7 @@ const CommunityMainContent = () => {
                     {stories.map((story, i) => (
                       <motion.div
                         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
-                        key={story.id}
+                        key={story._id}
                         className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden"
                       >
                         <div className="p-6 pb-4">
@@ -288,7 +266,7 @@ const CommunityMainContent = () => {
                                 <div className="text-sm text-gray-500 flex items-center gap-1.5 mt-0.5">
                                   <span className="font-medium text-emerald-600/80">{story.handle}</span>
                                   <span className="text-gray-300">•</span>
-                                  <span>{story.date}</span>
+                                  <span>{story.createdAt ? new Date(story.createdAt).toLocaleDateString() : 'Just now'}</span>
                                 </div>
                               </div>
                             </div>
@@ -318,7 +296,7 @@ const CommunityMainContent = () => {
                           <div className="flex items-center justify-between border-t border-gray-100 pt-4">
                             <div className="flex items-center gap-8">
                               <button
-                                onClick={() => handleLike(story.id)}
+                                onClick={() => handleLike(story._id)}
                                 className={`flex items-center gap-2 font-bold text-sm transition-colors ${story.liked ? 'text-rose-500' : 'text-gray-500 hover:text-rose-500'}`}
                               >
                                 <motion.div whileTap={{ scale: 0.8 }} className={`p-2 rounded-full ${story.liked ? 'bg-rose-50' : 'hover:bg-rose-50'}`}>
@@ -391,7 +369,7 @@ const CommunityMainContent = () => {
                     {reviews.map((review, i) => (
                       <motion.div
                         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
-                        key={review.id}
+                        key={review._id}
                         className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
                       >
                         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-5 gap-4">
@@ -399,7 +377,7 @@ const CommunityMainContent = () => {
                             <img src={review.photo} className="w-14 h-14 rounded-full object-cover border-2 border-gray-100" alt="" />
                             <div>
                               <div className="font-bold text-[17px] text-gray-900">{review.name}</div>
-                              <div className="text-sm font-medium text-gray-500 mt-0.5">{review.date}</div>
+                              <div className="text-sm font-medium text-gray-500 mt-0.5">{review.createdAt ? new Date(review.createdAt).toLocaleDateString() : 'Just now'}</div>
                             </div>
                           </div>
                           <div className="flex bg-amber-50 px-3 py-1.5 rounded-full border border-amber-100 w-fit text-amber-500 text-lg gap-1">
@@ -417,7 +395,7 @@ const CommunityMainContent = () => {
                         <div className="flex items-center gap-3 pt-5 border-t border-gray-100">
                           <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Was this helpful?</span>
                           <button
-                            onClick={() => handleHelpful(review.id)}
+                            onClick={() => handleHelpful(review._id)}
                             className="flex items-center gap-1.5 text-sm font-bold text-gray-500 hover:text-emerald-600 bg-gray-50 hover:bg-emerald-50 px-4 py-2 rounded-full transition-colors border border-gray-100 hover:border-emerald-200"
                           >
                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" /></svg>
