@@ -1213,11 +1213,11 @@ const EventMainContent = () => {
                     {displayedEvents.length} results matching "{searchQuery}"
                   </h3>
                   <div className="space-y-6">
-                    {displayedEvents.map((item) => (
+                    {displayedEvents.map((item, index) => (
                       item.type === 'event' ? (
-                        <EventCard key={`event-${item.eventId}`} event={item} guides={data.guides} />
+                        <EventCard key={`event-${item.id || item._id || index}`} event={item} guides={data.guides} />
                       ) : (
-                        <GuideCard key={`guide-${item.id}`} guide={item} />
+                        <GuideCard key={`guide-${item.id || item._id || index}`} guide={item} />
                       )
                     ))}
                   </div>
@@ -1254,8 +1254,8 @@ const EventMainContent = () => {
             /* Original Events Display */
             displayedEvents.length > 0 ? (
               <div className="space-y-6">
-                {displayedEvents.map((event) => (
-                  <EventCard key={event.eventId} event={event} guides={data.guides} />
+                {displayedEvents.map((event, index) => (
+                  <EventCard key={`event-${event.id || event._id || index}`} event={event} guides={data.guides} />
                 ))}
                 {!hasFilters && filteredEvents.length > displayCount && (
                   <div className="mt-8 flex justify-center">

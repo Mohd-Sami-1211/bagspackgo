@@ -32,7 +32,7 @@ export async function POST(request) {
         const options = {
             amount: Math.round(amount * 100), // paise
             currency: 'INR',
-            receipt: `trip_${bookingId}_${Date.now()}`,
+            receipt: `tr_${bookingId.toString().slice(-8)}_${Date.now().toString(36)}`,
             notes: { bookingId, userId: user.userId },
         };
 

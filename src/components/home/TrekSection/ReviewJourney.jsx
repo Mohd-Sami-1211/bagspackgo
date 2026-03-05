@@ -43,6 +43,17 @@ const ReviewTrek = ({ guide, searchParams }) => {
     if (storedData) {
       setTrekData(JSON.parse(storedData));
     }
+
+    // Load Razorpay script
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    document.body.appendChild(script);
+    return () => {
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
+    };
   }, []);
 
   // Safely extract URL parameters with defaults

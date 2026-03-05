@@ -31,7 +31,7 @@ export async function POST(request) {
         const options = {
             amount: Math.round(amount * 100), // amount in paise
             currency: "INR",
-            receipt: `receipt_${Date.now()}_${user.userId}`,
+            receipt: `re_${user.userId.toString().slice(-8)}_${Date.now().toString(36)}`,
             notes: {
                 eventId,
                 userId: user.userId,
