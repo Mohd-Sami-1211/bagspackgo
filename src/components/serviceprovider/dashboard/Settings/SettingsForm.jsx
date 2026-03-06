@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import {
   User,
@@ -12,6 +12,23 @@ import {
   Shield,
   HelpCircle,
   ArrowLeft,
+  Camera,
+  Upload,
+  Building2,
+  Mail,
+  Phone,
+  MapPin,
+  Globe,
+  Instagram,
+  Facebook,
+  Twitter,
+  Award,
+  Map,
+  Building,
+  Save,
+  CheckCircle2,
+  Edit2,
+  X,
 } from 'lucide-react';
 import { useRouter, usePathname } from 'next/navigation';
 
@@ -119,21 +136,373 @@ export default function SettingsForm() {
 
 
 function ProfileContent() {
+  const [isHovering, setIsHovering] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [isEditing, setIsEditing] = useState(false); // NEW EDIT MODE STATE
+  const fileInputRef = useRef(null);
+
+  const handleSave = () => {
+    setIsSaved(true);
+    setTimeout(() => {
+      setIsSaved(false);
+      setIsEditing(false); // Switch to readonly mode after saving
+    }, 2000);
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+  };
+
+  // Dynamic Styles based on isEditing state
+  const baseInputStyles = "w-full py-3 rounded-xl transition-all text-sm outline-none";
+  const editableStyles = "border border-emerald-200 bg-white shadow-inner focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 hover:border-emerald-300 text-gray-900 placeholder:text-gray-400";
+  const readonlyStyles = "border border-transparent bg-transparent text-gray-800 font-semibold cursor-default placeholder:text-transparent";
+
+  const currentTheme = isEditing ? editableStyles : readonlyStyles;
+
+  const inputClasses = `${baseInputStyles} pl-11 pr-4 ${currentTheme}`;
+  const textareaClasses = `${baseInputStyles} pr-4 resize-none ${currentTheme}`;
+  const selectClasses = `${baseInputStyles} px-4 ${currentTheme} ${!isEditing && "appearance-none"}`;
+  const labelClasses = "block text-[11px] font-bold text-gray-500 mb-1.5 uppercase tracking-wider pl-1";
+  const cardClasses = `bg-white rounded-3xl border ${isEditing ? 'border-emerald-100 shadow-[0_8px_30px_rgba(16,185,129,0.08)]' : 'border-gray-100 shadow-sm'} p-6 md:p-8 relative overflow-hidden transition-all duration-300`;
+  const iconWrapperClasses = `absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none transition-colors ${isEditing ? 'text-emerald-500' : 'text-gray-400'}`;
+
   return (
-    <div className="space-y-4">
-      <p className="text-sm text-gray-500">Update your personal information.</p>
-      <div className="grid gap-3">
-        <input className="rounded-lg border px-3 py-2" placeholder="Full Name" defaultValue="Mohd Sami" />
-        <input className="rounded-lg border px-3 py-2" placeholder="Email" defaultValue="sami@example.com" />
-        <input className="rounded-lg border px-3 py-2" placeholder="Phone" defaultValue="+91 98XXXXXX" />
-        <input className="rounded-lg border px-3 py-2" placeholder="Location" defaultValue="New Delhi, India" />
+    <div className="max-w-6xl mx-auto space-y-8 pb-12 animate-in fade-in duration-500">
+
+      {/* Brand New Clean Header Concept */}
+      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 md:p-8 mb-8 flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-8 transition-all relative overflow-hidden">
+
+        {/* Logo Avatar Section */}
+        <div className="flex flex-col items-center gap-2 shrink-0 z-10">
+          <div className={`relative ${isEditing ? 'cursor-pointer group/logo' : ''}`}
+            onMouseEnter={() => isEditing && setIsHovering(true)}
+            onMouseLeave={() => isEditing && setIsHovering(false)}
+            onClick={() => isEditing && fileInputRef.current?.click()}
+          >
+            <div className={`w-32 h-32 md:w-36 md:h-36 rounded-full flex items-center justify-center overflow-hidden transition-all duration-300 ${isEditing ? 'border-2 border-emerald-400 border-dashed bg-emerald-100/60' : 'border-4 border-emerald-100 bg-emerald-50 shadow-md'}`}>
+              <div className="text-4xl md:text-5xl font-black tracking-tighter text-emerald-600">MS</div>
+
+              {/* Hover Overlay Only active when editing */}
+              {isEditing && (
+                <div className={`absolute inset-0 rounded-full bg-emerald-600/90 backdrop-blur-sm flex flex-col items-center justify-center transition-all duration-300 z-20 ${isHovering ? 'opacity-100' : 'opacity-0'}`}>
+                  <Camera size={26} className="text-white mb-1" />
+                  <span className="text-white text-[10px] font-bold uppercase tracking-wider text-center px-4 leading-tight mt-1">Change<br />Image</span>
+                </div>
+              )}
+            </div>
+            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" disabled={!isEditing} />
+          </div>
+
+          {/* Subtle text under logo during edit mode */}
+          {isEditing && (
+            <span className="text-emerald-600 text-[11px] font-bold uppercase tracking-wider flex items-center gap-1 mt-1">
+              <Upload size={12} /> Upload Logo
+            </span>
+          )}
+        </div>
+
+        {/* Profile Info & Helper Text */}
+        <div className="flex-1 text-center md:text-left flex flex-col justify-center min-h-[8rem] md:min-h-[10rem] z-10 w-full">
+          <h3 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight mb-2">Mohd Sami</h3>
+          <p className="text-gray-500 font-medium flex items-center justify-center md:justify-start gap-2 text-lg mb-5">
+            <Building2 size={20} className="text-emerald-600" /> Bagspackgo Travels
+          </p>
+
+          {!isEditing ? (
+            <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
+              <span className="bg-gray-100 text-gray-700 border border-gray-200 text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5"><Shield size={14} className="text-emerald-500" /> Verified Partner</span>
+              <span className="text-gray-400 text-sm font-medium">Member since 2024</span>
+            </div>
+          ) : (
+            <div className="bg-emerald-50/80 rounded-xl p-4 border border-emerald-100 w-full max-w-lg mx-auto md:mx-0">
+              <p className="text-emerald-700 text-sm font-medium flex items-center gap-3">
+                <Edit2 size={16} className="text-emerald-600" />
+                Update your company information below. Changes will be instantly visible to your customers.
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Toggle Action Buttons */}
+        <div className="flex items-center gap-3 w-full md:w-auto justify-center md:justify-end mt-4 md:mt-0 z-10 pt-2 lg:pt-0">
+          {!isEditing ? (
+            <button
+              onClick={() => setIsEditing(true)}
+              className="flex items-center gap-2.5 rounded-xl bg-gray-900 text-white px-7 py-3.5 font-bold hover:bg-gray-800 transition-all shadow-md hover:-translate-y-0.5 active:translate-y-0"
+            >
+              <Edit2 size={18} /> Edit Profile
+            </button>
+          ) : (
+            <div className="flex flex-col sm:flex-row gap-3 w-full">
+              <button
+                onClick={handleCancel}
+                className="flex items-center justify-center gap-2 rounded-xl bg-white border border-gray-200 text-gray-600 px-6 py-3 font-bold hover:bg-gray-50 transition-all flex-1 sm:flex-none"
+              >
+                <X size={18} /> Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                className="flex items-center justify-center gap-2 rounded-xl bg-emerald-600 text-white px-8 py-3 font-bold hover:bg-emerald-700 transition-all shadow-lg flex-1 sm:flex-none hover:-translate-y-0.5 active:translate-y-0"
+              >
+                {isSaved ? <CheckCircle2 size={18} className="text-white" /> : <Save size={18} />}
+                {isSaved ? 'Saved!' : 'Save Changes'}
+              </button>
+            </div>
+          )}
+        </div>
+
       </div>
-      <button className="rounded-lg bg-emerald-600 text-white px-5 py-2 hover:bg-emerald-700 transition">
-        Save Changes
-      </button>
+
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+
+        {/* Left/Main Column - Forms */}
+        <div className="xl:col-span-2 space-y-8">
+
+          {/* General Information Section */}
+          <div className={cardClasses}>
+            <div className={`absolute top-0 right-0 w-32 h-32 bg-emerald-50 rounded-bl-[100px] -z-10 transition-opacity duration-300 ${isEditing ? 'opacity-100' : 'opacity-40'}`}></div>
+            <div className="flex items-center gap-3 mb-8">
+              <div className="p-3 bg-emerald-100/50 rounded-2xl text-emerald-600">
+                <User size={22} className="stroke-[2.5]" />
+              </div>
+              <div>
+                <h4 className="text-lg font-bold text-gray-900">General Details</h4>
+                <p className="text-xs text-emerald-600/70 font-medium mt-0.5">
+                  {isEditing ? 'Edit your public business information below.' : 'Your public business information.'}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
+              <div className="space-y-1 group">
+                <label className={labelClasses}>Full Name</label>
+                <div className="relative">
+                  <div className={iconWrapperClasses}><User size={18} /></div>
+                  <input type="text" className={inputClasses} placeholder="e.g. Mohd Sami" defaultValue="Mohd Sami" readOnly={!isEditing} />
+                </div>
+              </div>
+
+              <div className="space-y-1 group">
+                <label className={labelClasses}>Company Name</label>
+                <div className="relative">
+                  <div className={iconWrapperClasses}><Building2 size={18} /></div>
+                  <input type="text" className={inputClasses} placeholder="e.g. Bagspackgo Travels" defaultValue="Bagspackgo Travels" readOnly={!isEditing} />
+                </div>
+              </div>
+
+              <div className="space-y-1 group">
+                <label className={labelClasses}>Email Address</label>
+                <div className="relative">
+                  <div className={iconWrapperClasses}><Mail size={18} /></div>
+                  <input type="email" className={inputClasses} placeholder="sami@example.com" defaultValue="sami@example.com" readOnly={!isEditing} />
+                </div>
+              </div>
+
+              <div className="space-y-1 group">
+                <label className={labelClasses}>Mobile Number</label>
+                <div className="relative">
+                  <div className={iconWrapperClasses}><Phone size={18} /></div>
+                  <input type="tel" className={inputClasses} placeholder="+91 98XXXXXX" defaultValue="+91 9876543210" readOnly={!isEditing} />
+                </div>
+              </div>
+
+              <div className="md:col-span-2 space-y-1 group">
+                <label className={labelClasses}>Company Address</label>
+                <div className="relative">
+                  <div className={`absolute top-3.5 left-3.5 pointer-events-none transition-colors ${isEditing ? 'text-emerald-500' : 'text-gray-400'}`}>
+                    <MapPin size={18} />
+                  </div>
+                  <textarea rows={2} className={`${textareaClasses} pl-11`} placeholder="Enter full address" defaultValue="123 Adventure Street, New Delhi, India" readOnly={!isEditing}></textarea>
+                </div>
+              </div>
+
+              <div className="md:col-span-2 space-y-1 group">
+                <label className={labelClasses}>Bio / About Company</label>
+                <textarea rows={3} className={`${textareaClasses} px-4 py-3`} placeholder="Tell your customers about your services and passion for travel..." defaultValue="We specialize in bringing the best trekking and tripping experiences across the Himalayas. Adventure is our middle name!" readOnly={!isEditing}></textarea>
+              </div>
+
+              <div className="md:col-span-2 space-y-1 group">
+                <label className={labelClasses}>Speciality</label>
+                <div className="relative">
+                  <div className={iconWrapperClasses}><Award size={18} /></div>
+                  <input type="text" className={inputClasses} placeholder="e.g. High Altitude Treks, Luxury Trips" defaultValue="High Altitude Expeditions & Backpacking" readOnly={!isEditing} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Bank Details Section */}
+          <div className={`${cardClasses} ${isEditing ? 'border-blue-100 shadow-[0_8px_30px_rgba(59,130,246,0.08)]' : ''}`}>
+            <div className={`absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-bl-[100px] -z-10 transition-opacity duration-300 ${isEditing ? 'opacity-100' : 'opacity-40'}`}></div>
+            <div className="flex items-center gap-3 mb-8">
+              <div className="p-3 bg-blue-100/50 rounded-2xl text-blue-600">
+                <Building size={22} className="stroke-[2.5]" />
+              </div>
+              <div className="flex-1">
+                <h4 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                  Payout Settings
+                  <span className="bg-blue-100 text-blue-700 text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-bold">Secure</span>
+                </h4>
+                <p className="text-xs text-blue-600/70 font-medium mt-0.5">Where we will send your earnings.</p>
+              </div>
+            </div>
+
+            <div className={`p-6 rounded-[1.5rem] border grid grid-cols-1 md:grid-cols-2 gap-6 relative overflow-hidden transition-colors duration-300 ${isEditing ? 'bg-blue-50/50 border-blue-100' : 'bg-gray-50/50 border-gray-100'}`}>
+              {/* Decorative background element for bank card feel */}
+              <div className="absolute -right-10 -bottom-10 opacity-5 pointer-events-none">
+                <CreditCard size={150} />
+              </div>
+
+              <div className="md:col-span-2 space-y-1 group relative z-10">
+                <label className={labelClasses}>Account Holder Name</label>
+                <div className="relative">
+                  <div className={`absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none transition-colors ${isEditing ? 'text-blue-500' : 'text-gray-400'}`}><User size={18} /></div>
+                  <input type="text" className={`${inputClasses.replace('focus:ring-emerald-500/20', 'focus:ring-blue-500/20').replace('focus:border-emerald-500', 'focus:border-blue-500')} ${isEditing && 'border-blue-200 hover:border-blue-300'}`} placeholder="Name exactly as per bank records" defaultValue="Mohd Samiullah" readOnly={!isEditing} />
+                </div>
+              </div>
+
+              <div className="space-y-1 group relative z-10">
+                <label className={labelClasses}>Bank Name</label>
+                <div className="relative">
+                  <div className={`absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none transition-colors ${isEditing ? 'text-blue-500' : 'text-gray-400'}`}><Building size={18} /></div>
+                  <input type="text" className={`${inputClasses.replace('focus:ring-emerald-500/20', 'focus:ring-blue-500/20').replace('focus:border-emerald-500', 'focus:border-blue-500')} ${isEditing && 'border-blue-200 hover:border-blue-300'}`} placeholder="e.g. HDFC Bank" defaultValue="HDFC Bank" readOnly={!isEditing} />
+                </div>
+              </div>
+
+              <div className="space-y-1 group relative z-10">
+                <label className={labelClasses}>Account Type</label>
+                <select className={`${selectClasses.replace('focus:ring-emerald-500/20', 'focus:ring-blue-500/20').replace('focus:border-emerald-500', 'focus:border-blue-500')} ${isEditing && 'border-blue-200 hover:border-blue-300'}`} disabled={!isEditing}>
+                  <option value="savings">Savings Account</option>
+                  <option value="current">Current Account</option>
+                </select>
+              </div>
+
+              <div className="space-y-1 group relative z-10">
+                <label className={labelClasses}>Account Number</label>
+                <div className="relative">
+                  <div className={`absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none transition-colors ${isEditing ? 'text-blue-500' : 'text-gray-400'}`}><CreditCard size={18} /></div>
+                  <input type="text" className={`${inputClasses.replace('focus:ring-emerald-500/20', 'focus:ring-blue-500/20').replace('focus:border-emerald-500', 'focus:border-blue-500')} font-mono tracking-widest ${isEditing && 'border-blue-200 hover:border-blue-300'}`} placeholder="XXXXXXXXXX" defaultValue={!isEditing ? "••••••••1234" : ""} readOnly={!isEditing} />
+                </div>
+              </div>
+
+              <div className="space-y-1 group relative z-10">
+                <label className={labelClasses}>IFSC Code</label>
+                <input type="text" className={`${baseInputStyles} px-4 font-mono uppercase tracking-widest ${isEditing ? 'border border-blue-200 bg-white shadow-inner focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 hover:border-blue-300 text-gray-900 placeholder:text-gray-400' : readonlyStyles}`} placeholder="e.g. HDFC0001234" defaultValue="HDFC0001234" readOnly={!isEditing} />
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        {/* Right Column - Sidecards */}
+        <div className="xl:col-span-1 space-y-8">
+
+          {/* Platform Experience */}
+          <div className={cardClasses}>
+            <div className="flex items-center gap-3 mb-6 border-b border-gray-100 pb-4">
+              <div className="p-2.5 bg-amber-100 rounded-xl text-amber-600">
+                <Award size={20} className="stroke-[2.5]" />
+              </div>
+              <h4 className="text-base font-bold text-gray-900">Experience</h4>
+            </div>
+
+            <div className="space-y-4">
+              {/* Treks */}
+              <div className={`group flex justify-between items-center p-4 rounded-2xl border transition-all ${isEditing ? 'border-emerald-200 bg-emerald-50/50 shadow-inner focus-within:ring-2 focus-within:ring-emerald-500/20 focus-within:border-emerald-500' : 'border-gray-100 bg-white shadow-sm'}`}>
+                <label className="text-sm text-gray-600 flex items-center gap-3 font-semibold pointer-events-none transition-colors">
+                  <div className={`p-2 rounded-lg transition-colors ${isEditing ? 'bg-emerald-100 text-emerald-700' : 'bg-emerald-50 text-emerald-600'}`}>
+                    <Map size={18} />
+                  </div>
+                  Treks Hosted
+                </label>
+                <div className="relative flex items-center">
+                  <input type="number" className={`text-right bg-transparent border-none font-black text-lg outline-none focus:ring-0 transition-all ${isEditing ? 'w-24 text-emerald-800 bg-white pl-3 pr-8 py-2 rounded-xl shadow-inner border border-emerald-300 pointer-events-auto cursor-text focus:border-emerald-500' : 'w-16 p-0 text-gray-800 pointer-events-none'}`} defaultValue={42} readOnly={!isEditing} />
+                  {isEditing && <Edit2 size={14} className="absolute right-3 text-emerald-400 pointer-events-none" />}
+                </div>
+              </div>
+
+              {/* Trips */}
+              <div className={`group flex justify-between items-center p-4 rounded-2xl border transition-all ${isEditing ? 'border-teal-200 bg-teal-50/50 shadow-inner focus-within:ring-2 focus-within:ring-teal-500/20 focus-within:border-teal-500' : 'border-gray-100 bg-white shadow-sm'}`}>
+                <label className="text-sm text-gray-600 flex items-center gap-3 font-semibold pointer-events-none transition-colors">
+                  <div className={`p-2 rounded-lg transition-colors ${isEditing ? 'bg-teal-100 text-teal-700' : 'bg-teal-50 text-teal-600'}`}>
+                    <Globe size={18} />
+                  </div>
+                  Trips Hosted
+                </label>
+                <div className="relative flex items-center">
+                  <input type="number" className={`text-right bg-transparent border-none font-black text-lg outline-none focus:ring-0 transition-all ${isEditing ? 'w-24 text-teal-800 bg-white pl-3 pr-8 py-2 rounded-xl shadow-inner border border-teal-300 pointer-events-auto cursor-text focus:border-teal-500' : 'w-16 p-0 text-gray-800 pointer-events-none'}`} defaultValue={128} readOnly={!isEditing} />
+                  {isEditing && <Edit2 size={14} className="absolute right-3 text-teal-400 pointer-events-none" />}
+                </div>
+              </div>
+
+              {/* Events */}
+              <div className={`group flex justify-between items-center p-4 rounded-2xl border transition-all ${isEditing ? 'border-blue-200 bg-blue-50/50 shadow-inner focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500' : 'border-gray-100 bg-white shadow-sm'}`}>
+                <label className="text-sm text-gray-600 flex items-center gap-3 font-semibold pointer-events-none transition-colors">
+                  <div className={`p-2 rounded-lg transition-colors ${isEditing ? 'bg-blue-100 text-blue-700' : 'bg-blue-50 text-blue-600'}`}>
+                    <Calendar size={18} />
+                  </div>
+                  Events
+                </label>
+                <div className="relative flex items-center">
+                  <input type="number" className={`text-right bg-transparent border-none font-black text-lg outline-none focus:ring-0 transition-all ${isEditing ? 'w-24 text-blue-800 bg-white pl-3 pr-8 py-2 rounded-xl shadow-inner border border-blue-300 pointer-events-auto cursor-text focus:border-blue-500' : 'w-16 p-0 text-gray-800 pointer-events-none'}`} defaultValue={15} readOnly={!isEditing} />
+                  {isEditing && <Edit2 size={14} className="absolute right-3 text-blue-400 pointer-events-none" />}
+                </div>
+              </div>
+            </div>
+            {isEditing && <p className="text-[11px] text-emerald-600/70 mt-5 text-center px-4 font-bold uppercase tracking-wider">Update stats to build trust.</p>}
+          </div>
+
+          {/* Social Links Form */}
+          <div className={cardClasses}>
+            <div className="flex items-center gap-3 mb-6 border-b border-gray-100 pb-4">
+              <div className="p-2.5 bg-indigo-100 rounded-xl text-indigo-600">
+                <Globe size={20} className="stroke-[2.5]" />
+              </div>
+              <h4 className="text-base font-bold text-gray-900">Web & Social</h4>
+            </div>
+
+            <div className="space-y-4">
+              <div className="space-y-1.5 group">
+                <label className={labelClasses}>Website</label>
+                <div className="relative">
+                  <div className={iconWrapperClasses}><Globe size={16} /></div>
+                  <input type="url" className={`${inputClasses} py-2.5`} placeholder="https://" defaultValue="https://bagspackgo.com" readOnly={!isEditing} />
+                </div>
+              </div>
+
+              <div className="space-y-1.5 group">
+                <label className={labelClasses}>Instagram</label>
+                <div className="relative">
+                  <div className={iconWrapperClasses}><Instagram size={16} /></div>
+                  <input type="text" className={`${inputClasses} py-2.5`} placeholder="@username" defaultValue="@bagspackgo" readOnly={!isEditing} />
+                </div>
+              </div>
+
+              <div className="space-y-1.5 group">
+                <label className={labelClasses}>Facebook</label>
+                <div className="relative">
+                  <div className={iconWrapperClasses}><Facebook size={16} /></div>
+                  <input type="text" className={`${inputClasses} py-2.5`} placeholder="Page URL" readOnly={!isEditing} />
+                </div>
+              </div>
+
+              <div className="space-y-1.5 group">
+                <label className={labelClasses}>Twitter / X</label>
+                <div className="relative">
+                  <div className={iconWrapperClasses}><Twitter size={16} /></div>
+                  <input type="text" className={`${inputClasses} py-2.5`} placeholder="@username" readOnly={!isEditing} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
     </div>
   );
 }
+
 
 function AccountContent() {
   return (
