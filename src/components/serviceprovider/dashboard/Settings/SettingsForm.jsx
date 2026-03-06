@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, Suspense } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import {
   User,
@@ -30,7 +30,7 @@ import {
   Edit2,
   X,
 } from 'lucide-react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 
 const menuItems = [
   { id: 'profile', label: 'Your Profile', icon: User },
@@ -48,14 +48,16 @@ export default function SettingsForm() {
   const router = useRouter();
   const pathname = usePathname();
 
-  // Check if we're on the packages page
+  const searchParams = useSearchParams();
+
+  // Check if we're on the packages page or have edit param
   useEffect(() => {
     if (pathname.includes('/settings/packages')) {
       setActive('packages');
-    } else if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('edit') === 'true') {
+    } else if (searchParams.get('edit') === 'true') {
       setActive('profile');
     }
-  }, [pathname]);
+  }, [pathname, searchParams]);
 
   const handleMenuItemClick = (id) => {
     setActive(id);
@@ -122,7 +124,7 @@ export default function SettingsForm() {
           </div>
 
           <div className="px-5 py-6">
-            {active === 'profile' && <Suspense fallback={<div>Loading...</div>}><ProfileContent /></Suspense>}
+            {active === 'profile' && <ProfileContent initialEditMode={searchParams.get('edit') === 'true'} />}
             {active === 'account' && <AccountContent />}
             {active === 'transactions' && <TransactionsContent />}
             {active === 'bookings' && <BookingsContent />}
@@ -144,11 +146,21 @@ function getInitials(name) {
   return words[0][0].toUpperCase();
 }
 
-function ProfileContent() {
+function ProfileContent({ initialEditMode = false }) {
   const [isHovering, setIsHovering] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(initialEditMode);
   const fileInputRef = useRef(null);
+
+  // Crop modal state
+  const [cropModal, setCropModal] = useState(false);
+  const [cropSrc, setCropSrc] = useState(null);
+  const [cropZoom, setCropZoom] = useState(1);
+  const [cropOffset, setCropOffset] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const cropCanvasRef = useRef(null);
+  const cropImgRef = useRef(null);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -174,12 +186,6 @@ function ProfileContent() {
     createdAt: null
   });
   const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('edit') === 'true') {
-      setIsEditing(true);
-    }
-  }, []);
 
   useEffect(() => {
     async function loadProfile() {
@@ -235,6 +241,8 @@ function ProfileContent() {
       });
       if (res.ok) {
         setIsSaved(true);
+        // Force sidebar and other listeners to update
+        window.dispatchEvent(new Event('profileUpdated'));
         setTimeout(() => {
           setIsSaved(false);
           setIsEditing(false);
@@ -254,16 +262,84 @@ function ProfileContent() {
   const handleLogoUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
-    if (file.size > 2 * 1024 * 1024) {
-      alert("Logo image must be less than 2MB.");
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Logo image must be less than 5MB.");
       return;
     }
-
     const reader = new FileReader();
-    reader.onload = (e) => setFormData(prev => ({ ...prev, logo: e.target.result }));
+    reader.onload = (ev) => {
+      setCropSrc(ev.target.result);
+      setCropZoom(1);
+      setCropOffset({ x: 0, y: 0 });
+      setCropModal(true);
+    };
     reader.readAsDataURL(file);
+    // reset input so same file can be re-selected
+    e.target.value = '';
   };
+
+  // Draw the crop preview onto canvas
+  const drawCrop = () => {
+    const canvas = cropCanvasRef.current;
+    const img = cropImgRef.current;
+    if (!canvas || !img) return;
+    const SIZE = 280;
+    canvas.width = SIZE;
+    canvas.height = SIZE;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, SIZE, SIZE);
+    // Circular clip
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(SIZE / 2, SIZE / 2, SIZE / 2, 0, Math.PI * 2);
+    ctx.clip();
+    const iw = img.naturalWidth;
+    const ih = img.naturalHeight;
+    const scale = Math.max(SIZE / iw, SIZE / ih) * cropZoom;
+    const sw = iw * scale;
+    const sh = ih * scale;
+    const dx = (SIZE - sw) / 2 + cropOffset.x;
+    const dy = (SIZE - sh) / 2 + cropOffset.y;
+    ctx.drawImage(img, dx, dy, sw, sh);
+    ctx.restore();
+  };
+
+  const handleCropConfirm = () => {
+    const canvas = cropCanvasRef.current;
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+    setFormData(prev => ({ ...prev, logo: dataUrl }));
+    setCropModal(false);
+    setCropSrc(null);
+  };
+
+  const handleCropMouseDown = (e) => {
+    setIsDragging(true);
+    setDragStart({ x: e.clientX - cropOffset.x, y: e.clientY - cropOffset.y });
+  };
+  const handleCropMouseMove = (e) => {
+    if (!isDragging) return;
+    setCropOffset({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y });
+  };
+  const handleCropMouseUp = () => setIsDragging(false);
+
+  // Touch support
+  const handleCropTouchStart = (e) => {
+    const t = e.touches[0];
+    setIsDragging(true);
+    setDragStart({ x: t.clientX - cropOffset.x, y: t.clientY - cropOffset.y });
+  };
+  const handleCropTouchMove = (e) => {
+    if (!isDragging) return;
+    const t = e.touches[0];
+    setCropOffset({ x: t.clientX - dragStart.x, y: t.clientY - dragStart.y });
+  };
+
+  // Redraw whenever crop params change
+  useEffect(() => {
+    if (cropModal && cropSrc && cropImgRef.current?.complete) {
+      drawCrop();
+    }
+  }, [cropZoom, cropOffset, cropModal]);
 
   // Dynamic Styles based on isEditing state
   const baseInputStyles = "w-full py-3 rounded-xl transition-all text-sm outline-none";
@@ -281,6 +357,63 @@ function ProfileContent() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-12 animate-in fade-in duration-500">
+
+      {/* ── Crop Modal ── */}
+      {cropModal && cropSrc && (
+        <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl shadow-2xl p-6 w-full max-w-sm flex flex-col items-center gap-5">
+            <h3 className="text-lg font-bold text-gray-900 tracking-tight">Adjust your logo</h3>
+            <p className="text-xs text-gray-500 -mt-3 text-center">Drag to reposition · Use slider to zoom</p>
+
+            {/* Hidden img used for drawing */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img ref={cropImgRef} src={cropSrc} alt="" className="hidden" onLoad={drawCrop} />
+
+            {/* Circular crop preview */}
+            <div className="relative w-[280px] h-[280px] rounded-full overflow-hidden ring-4 ring-emerald-400 ring-offset-2 cursor-grab active:cursor-grabbing select-none"
+              onMouseDown={handleCropMouseDown}
+              onMouseMove={handleCropMouseMove}
+              onMouseUp={handleCropMouseUp}
+              onMouseLeave={handleCropMouseUp}
+              onTouchStart={handleCropTouchStart}
+              onTouchMove={handleCropTouchMove}
+              onTouchEnd={handleCropMouseUp}
+            >
+              <canvas ref={cropCanvasRef} width={280} height={280} className="w-full h-full" />
+            </div>
+
+            {/* Zoom slider */}
+            <div className="w-full flex items-center gap-3">
+              <span className="text-xs text-gray-400 font-bold">−</span>
+              <input
+                type="range"
+                min={0.5}
+                max={3}
+                step={0.02}
+                value={cropZoom}
+                onChange={(e) => setCropZoom(parseFloat(e.target.value))}
+                className="flex-1 accent-emerald-500 cursor-pointer"
+              />
+              <span className="text-xs text-gray-400 font-bold">+</span>
+            </div>
+
+            <div className="flex gap-3 w-full">
+              <button
+                onClick={() => { setCropModal(false); setCropSrc(null); }}
+                className="flex-1 py-3 rounded-xl border border-gray-200 text-gray-600 font-bold hover:bg-gray-50 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCropConfirm}
+                className="flex-1 py-3 rounded-xl bg-emerald-600 text-white font-bold hover:bg-emerald-700 transition shadow-lg"
+              >
+                Apply
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Brand New Clean Header Concept */}
       <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 md:p-8 mb-8 flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-8 transition-all relative overflow-hidden">

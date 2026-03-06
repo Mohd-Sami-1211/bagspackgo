@@ -41,6 +41,13 @@ export default function Sidebar({ isCollapsed }) {
       }
     }
     fetchProfile();
+
+    const handleProfileUpdate = () => {
+      fetchProfile();
+    };
+
+    window.addEventListener('profileUpdated', handleProfileUpdate);
+    return () => window.removeEventListener('profileUpdated', handleProfileUpdate);
   }, []);
 
   let completion = 0;
@@ -66,9 +73,19 @@ export default function Sidebar({ isCollapsed }) {
     completion = 25; // Default some basic progress
   }
 
-  const radius = 20;
+  // Progress ring math — expanded avatar is 56px (w-14), strokeWidth 3px
+  // radius = (56/2) - (3/2) = 26.5, so the stroke sits exactly on the edge
+  const size = 56;
+  const strokeWidth = 3;
+  const radius = (size / 2) - (strokeWidth / 2);
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (completion / 100) * circumference;
+
+  // Collapsed ring: 48px (w-12)
+  const sizeCollapsed = 48;
+  const radiusCollapsed = (sizeCollapsed / 2) - (strokeWidth / 2);
+  const circumferenceCollapsed = 2 * Math.PI * radiusCollapsed;
+  const offsetCollapsed = circumferenceCollapsed - (completion / 100) * circumferenceCollapsed;
 
   const displayName = profileData?.companyname || user?.username || "Service Provider";
   const initials = getInitials(displayName);
@@ -102,29 +119,34 @@ export default function Sidebar({ isCollapsed }) {
                 className="flex items-center gap-3"
               >
                 {/* Circle with progress ring and initials */}
-                <div className="relative">
-                  <div className="relative w-14 h-14">
-                    <svg className="absolute top-0 left-0 w-full h-full -rotate-90">
+                <Link href="/serviceprovider/dashboard/profile" className="relative group cursor-pointer block flex-shrink-0">
+                  <div className="relative w-14 h-14 group-hover:scale-105 transition-transform duration-300">
+                    {/* SVG ring wraps tightly around the 56px container */}
+                    <svg
+                      width={size}
+                      height={size}
+                      className="absolute top-0 left-0 -rotate-90"
+                      style={{ transform: 'rotate(-90deg)' }}
+                    >
                       <circle
-                        cx="50%"
-                        cy="50%"
+                        cx={size / 2}
+                        cy={size / 2}
                         r={radius}
                         stroke="#e5e7eb"
-                        strokeWidth="4"
+                        strokeWidth={strokeWidth}
                         fill="transparent"
                       />
                       <circle
-                        cx="50%"
-                        cy="50%"
+                        cx={size / 2}
+                        cy={size / 2}
                         r={radius}
                         stroke="url(#progressGradient)"
-                        strokeWidth="4"
+                        strokeWidth={strokeWidth}
                         fill="transparent"
                         strokeDasharray={circumference}
                         strokeDashoffset={offset}
                         strokeLinecap="round"
                       />
-                      {/* Gradient for progress ring */}
                       <defs>
                         <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
                           <stop offset="0%" stopColor="#34d399" />
@@ -132,26 +154,41 @@ export default function Sidebar({ isCollapsed }) {
                         </linearGradient>
                       </defs>
                     </svg>
-                    <div className="flex items-center justify-center w-full h-full text-sm font-bold text-emerald-700 bg-emerald-100 rounded-full">
-                      {initials}
+                    {/* Inner avatar — inset by strokeWidth so ring is visible */}
+                    <div
+                      className="absolute flex items-center justify-center text-sm font-bold text-emerald-700 bg-emerald-100 rounded-full overflow-hidden"
+                      style={{
+                        top: strokeWidth + 1,
+                        left: strokeWidth + 1,
+                        width: size - (strokeWidth + 1) * 2,
+                        height: size - (strokeWidth + 1) * 2,
+                      }}
+                    >
+                      {profileData?.logo ? (
+                        <img src={profileData.logo} alt="Logo" className="w-full h-full object-cover" />
+                      ) : (
+                        initials
+                      )}
                     </div>
                   </div>
 
                   {/* Percentage pill badge */}
                   {completion < 100 && (
-                    <div className="absolute -bottom-2 -right-2 bg-emerald-600 text-white text-[11px] font-medium px-2 py-0.5 rounded-full shadow-md">
+                    <div className="absolute -bottom-2 -right-2 bg-emerald-600 text-white text-[11px] font-medium px-2 py-0.5 rounded-full shadow-md z-10 transition-transform group-hover:scale-110">
                       {completion}%
                     </div>
                   )}
-                </div>
+                </Link>
 
                 {/* Name + small message */}
-                <div className="flex flex-col min-w-0">
-                  <h2 className="font-semibold text-gray-900 truncate">{displayName}</h2>
+                <div className="flex flex-col min-w-0 mb-1 flex-1">
+                  <Link href="/serviceprovider/dashboard/profile" className="font-semibold text-gray-900 truncate tracking-tight hover:text-emerald-700 transition-colors">
+                    {displayName}
+                  </Link>
                   {completion < 100 && (
                     <Link
                       href="/serviceprovider/dashboard/settings?edit=true"
-                      className="text-xs text-emerald-600 hover:underline mt-1"
+                      className="text-[11px] font-bold text-emerald-600 hover:text-emerald-700 hover:underline mt-0.5 transition-colors inline-block"
                     >
                       Complete your profile
                     </Link>
@@ -167,29 +204,33 @@ export default function Sidebar({ isCollapsed }) {
                 transition={{ duration: 0.2 }}
                 className="flex justify-center"
               >
-                <div className="relative">
-                  <div className="relative w-12 h-12">
-                    <svg className="absolute top-0 left-0 w-full h-full -rotate-90">
+                <Link href="/serviceprovider/dashboard/profile" className="relative group block cursor-pointer">
+                  <div className="relative w-12 h-12 group-hover:scale-105 transition-transform duration-300">
+                    <svg
+                      width={sizeCollapsed}
+                      height={sizeCollapsed}
+                      className="absolute top-0 left-0"
+                      style={{ transform: 'rotate(-90deg)' }}
+                    >
                       <circle
-                        cx="50%"
-                        cy="50%"
-                        r={radius}
+                        cx={sizeCollapsed / 2}
+                        cy={sizeCollapsed / 2}
+                        r={radiusCollapsed}
                         stroke="#e5e7eb"
-                        strokeWidth="4"
+                        strokeWidth={strokeWidth}
                         fill="transparent"
                       />
                       <circle
-                        cx="50%"
-                        cy="50%"
-                        r={radius}
+                        cx={sizeCollapsed / 2}
+                        cy={sizeCollapsed / 2}
+                        r={radiusCollapsed}
                         stroke="url(#progressGradientCollapsed)"
-                        strokeWidth="4"
+                        strokeWidth={strokeWidth}
                         fill="transparent"
-                        strokeDasharray={circumference}
-                        strokeDashoffset={offset}
+                        strokeDasharray={circumferenceCollapsed}
+                        strokeDashoffset={offsetCollapsed}
                         strokeLinecap="round"
                       />
-                      {/* Gradient for collapsed progress ring */}
                       <defs>
                         <linearGradient id="progressGradientCollapsed" x1="0%" y1="0%" x2="100%" y2="0%">
                           <stop offset="0%" stopColor="#34d399" />
@@ -197,18 +238,30 @@ export default function Sidebar({ isCollapsed }) {
                         </linearGradient>
                       </defs>
                     </svg>
-                    <div className="flex items-center justify-center w-full h-full text-xs font-bold text-emerald-700 bg-emerald-100 rounded-full">
-                      {initials}
+                    <div
+                      className="absolute flex items-center justify-center text-xs font-bold text-emerald-700 bg-emerald-100 rounded-full overflow-hidden"
+                      style={{
+                        top: strokeWidth + 1,
+                        left: strokeWidth + 1,
+                        width: sizeCollapsed - (strokeWidth + 1) * 2,
+                        height: sizeCollapsed - (strokeWidth + 1) * 2,
+                      }}
+                    >
+                      {profileData?.logo ? (
+                        <img src={profileData.logo} alt="Logo" className="w-full h-full object-cover" />
+                      ) : (
+                        initials
+                      )}
                     </div>
                   </div>
 
                   {/* Percentage pill badge */}
                   {completion < 100 && (
-                    <div className="absolute -bottom-2 -right-2 bg-emerald-600 text-white text-[10px] font-medium px-2 py-0.5 rounded-full shadow-md">
+                    <div className="absolute -bottom-2 -right-2 bg-emerald-600 text-white text-[10px] font-medium px-2 py-0.5 rounded-full shadow-md z-10">
                       {completion}%
                     </div>
                   )}
-                </div>
+                </Link>
               </motion.div>
             )}
           </AnimatePresence>

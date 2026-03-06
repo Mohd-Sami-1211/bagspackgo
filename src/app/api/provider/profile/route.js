@@ -4,6 +4,9 @@ import { getCurrentUser } from "@/lib/auth";
 import { Guide } from "@/models/guide.model";
 import { GuideDetails } from "@/models/guidedetails.model";
 
+export const maxDuration = 60; // Optional but good for large payload processing
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
     try {
         const user = await getCurrentUser();
@@ -95,6 +98,13 @@ export async function PUT(req) {
         // 1. Update basic Guide info (like name) if provided
         if (name) {
             await Guide.findByIdAndUpdate(user.userId, { username: name });
+        }
+
+        console.log("Receiving Profile Save request from user: ", user.userId);
+        if (logo) {
+            console.log("Logo string length received:", logo.length);
+        } else {
+            console.log("No logo received in payload.");
         }
 
         // 2. Update GuideDetails
