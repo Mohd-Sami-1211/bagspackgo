@@ -1,4 +1,5 @@
 "use client";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard,
@@ -25,12 +26,51 @@ export default function Sidebar({ isCollapsed }) {
   const pathname = usePathname();
   const { user } = useAuth();
 
-  const completion = 65;
+  const [profileData, setProfileData] = useState(null);
+
+  useEffect(() => {
+    async function fetchProfile() {
+      try {
+        const res = await fetch('/api/provider/profile');
+        if (res.ok) {
+          const { profile } = await res.json();
+          setProfileData(profile);
+        }
+      } catch (e) {
+        console.error("Failed to fetch profile in sidebar", e);
+      }
+    }
+    fetchProfile();
+  }, []);
+
+  let completion = 0;
+  if (profileData) {
+    const fieldsToTrack = [
+      'companyname', 'companyemail', 'companymobile', 'address', 'bio',
+      'speciality', 'logo', 'bankName', 'accountHolderName',
+      'accountNumber', 'ifscCode'
+    ];
+    let filled = 0;
+    fieldsToTrack.forEach(field => {
+      if (profileData[field] && profileData[field].toString().trim() !== '') {
+        filled++;
+      }
+    });
+    // Add stats as bonus or separate fields
+    if (profileData.totalTreks > 0 || profileData.totalTrips > 0 || profileData.totalEvents > 0) {
+      filled++;
+    }
+    // Totals fields: 11 fields monitored + 1 for any activity stats = 12 total points
+    completion = Math.round((filled / 12) * 100);
+  } else {
+    completion = 25; // Default some basic progress
+  }
+
   const radius = 20;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (completion / 100) * circumference;
 
-  const displayName = user?.username || "Service Provider";
+  const displayName = profileData?.companyname || user?.username || "Service Provider";
   const initials = getInitials(displayName);
 
   const items = [
@@ -98,20 +138,24 @@ export default function Sidebar({ isCollapsed }) {
                   </div>
 
                   {/* Percentage pill badge */}
-                  <div className="absolute -bottom-2 -right-2 bg-emerald-600 text-white text-[11px] font-medium px-2 py-0.5 rounded-full shadow-md">
-                    {completion}%
-                  </div>
+                  {completion < 100 && (
+                    <div className="absolute -bottom-2 -right-2 bg-emerald-600 text-white text-[11px] font-medium px-2 py-0.5 rounded-full shadow-md">
+                      {completion}%
+                    </div>
+                  )}
                 </div>
 
                 {/* Name + small message */}
                 <div className="flex flex-col min-w-0">
                   <h2 className="font-semibold text-gray-900 truncate">{displayName}</h2>
-                  <Link
-                    href="#"
-                    className="text-xs text-emerald-600 hover:underline mt-1"
-                  >
-                    Complete your profile
-                  </Link>
+                  {completion < 100 && (
+                    <Link
+                      href="/serviceprovider/dashboard/settings?edit=true"
+                      className="text-xs text-emerald-600 hover:underline mt-1"
+                    >
+                      Complete your profile
+                    </Link>
+                  )}
                 </div>
               </motion.div>
             ) : (
@@ -159,9 +203,11 @@ export default function Sidebar({ isCollapsed }) {
                   </div>
 
                   {/* Percentage pill badge */}
-                  <div className="absolute -bottom-2 -right-2 bg-emerald-600 text-white text-[10px] font-medium px-2 py-0.5 rounded-full shadow-md">
-                    {completion}%
-                  </div>
+                  {completion < 100 && (
+                    <div className="absolute -bottom-2 -right-2 bg-emerald-600 text-white text-[10px] font-medium px-2 py-0.5 rounded-full shadow-md">
+                      {completion}%
+                    </div>
+                  )}
                 </div>
               </motion.div>
             )}

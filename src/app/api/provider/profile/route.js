@@ -17,7 +17,7 @@ export async function GET() {
 
         await dbConnect();
 
-        const guide = await Guide.findById(user.userId).select("username email phone applicationStatus").lean();
+        const guide = await Guide.findById(user.userId).select("username email phone applicationStatus createdAt").lean();
         if (!guide) {
             return NextResponse.json(
                 { success: false, message: "Provider account not found" },
@@ -35,6 +35,7 @@ export async function GET() {
                     email: guide.email,
                     phone: guide.phone,
                     applicationStatus: guide.applicationStatus,
+                    createdAt: guide.createdAt,
                     ...details
                 }
             },

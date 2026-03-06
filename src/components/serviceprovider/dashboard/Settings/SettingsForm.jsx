@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import {
   User,
@@ -52,6 +52,8 @@ export default function SettingsForm() {
   useEffect(() => {
     if (pathname.includes('/settings/packages')) {
       setActive('packages');
+    } else if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('edit') === 'true') {
+      setActive('profile');
     }
   }, [pathname]);
 
@@ -120,7 +122,7 @@ export default function SettingsForm() {
           </div>
 
           <div className="px-5 py-6">
-            {active === 'profile' && <ProfileContent />}
+            {active === 'profile' && <Suspense fallback={<div>Loading...</div>}><ProfileContent /></Suspense>}
             {active === 'account' && <AccountContent />}
             {active === 'transactions' && <TransactionsContent />}
             {active === 'bookings' && <BookingsContent />}
@@ -134,11 +136,18 @@ export default function SettingsForm() {
   );
 }
 
+// Get initials from name: "Dev Himalayan" → "DH"
+function getInitials(name) {
+  if (!name) return "?";
+  const words = name.trim().split(/\s+/);
+  if (words.length >= 2) return (words[0][0] + words[1][0]).toUpperCase();
+  return words[0][0].toUpperCase();
+}
 
 function ProfileContent() {
   const [isHovering, setIsHovering] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
-  const [isEditing, setIsEditing] = useState(false); // NEW EDIT MODE STATE
+  const [isEditing, setIsEditing] = useState(false);
   const fileInputRef = useRef(null);
 
   const [formData, setFormData] = useState({
@@ -161,9 +170,16 @@ function ProfileContent() {
     accountType: 'savings',
     accountNumber: '',
     ifscCode: '',
-    logo: ''
+    logo: '',
+    createdAt: null
   });
   const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('edit') === 'true') {
+      setIsEditing(true);
+    }
+  }, []);
 
   useEffect(() => {
     async function loadProfile() {
@@ -192,6 +208,7 @@ function ProfileContent() {
             accountNumber: profile.accountNumber || '',
             ifscCode: profile.ifscCode || '',
             logo: profile.logo || '',
+            createdAt: profile.createdAt || null,
           });
         }
       } catch (err) {
@@ -279,7 +296,7 @@ function ProfileContent() {
               {formData.logo ? (
                 <img src={formData.logo} alt="Company Logo" className="w-full h-full object-cover" />
               ) : (
-                <div className="text-4xl md:text-5xl font-black tracking-tighter text-emerald-600">{formData.name ? formData.name.substring(0, 2).toUpperCase() : 'MS'}</div>
+                <div className="text-4xl md:text-5xl font-black tracking-tighter text-emerald-600">{formData.companyname ? getInitials(formData.companyname) : 'CO'}</div>
               )}
               {/* Hover Overlay Only active when editing */}
               {isEditing && (
@@ -310,7 +327,7 @@ function ProfileContent() {
           {!isEditing ? (
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
               <span className="bg-gray-100 text-gray-700 border border-gray-200 text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5"><Shield size={14} className="text-emerald-500" /> Verified Partner</span>
-              <span className="text-gray-400 text-sm font-medium">Member since 2024</span>
+              <span className="text-gray-400 text-sm font-medium">Member since {formData.createdAt ? new Date(formData.createdAt).getFullYear() : '2024'}</span>
             </div>
           ) : (
             <div className="bg-emerald-50/80 rounded-xl p-4 border border-emerald-100 w-full max-w-lg mx-auto md:mx-0">
