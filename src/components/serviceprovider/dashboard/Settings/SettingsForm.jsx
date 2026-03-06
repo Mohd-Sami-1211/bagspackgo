@@ -141,16 +141,111 @@ function ProfileContent() {
   const [isEditing, setIsEditing] = useState(false); // NEW EDIT MODE STATE
   const fileInputRef = useRef(null);
 
-  const handleSave = () => {
-    setIsSaved(true);
-    setTimeout(() => {
-      setIsSaved(false);
-      setIsEditing(false); // Switch to readonly mode after saving
-    }, 2000);
+  const [formData, setFormData] = useState({
+    name: '',
+    companyname: '',
+    companyemail: '',
+    companymobile: '',
+    address: '',
+    bio: '',
+    speciality: '',
+    website: '',
+    instagram: '',
+    facebook: '',
+    twitter: '',
+    totalTreks: 0,
+    totalTrips: 0,
+    totalEvents: 0,
+    bankName: '',
+    accountHolderName: '',
+    accountType: 'savings',
+    accountNumber: '',
+    ifscCode: '',
+    logo: ''
+  });
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadProfile() {
+      try {
+        const res = await fetch('/api/provider/profile');
+        if (res.ok) {
+          const { profile } = await res.json();
+          setFormData({
+            name: profile.name || '',
+            companyname: profile.companyname || '',
+            companyemail: profile.companyemail || '',
+            companymobile: profile.companymobile || '',
+            address: profile.address || '',
+            bio: profile.bio || '',
+            speciality: profile.speciality || '',
+            website: profile.website || '',
+            instagram: profile.instagram || '',
+            facebook: profile.facebook || '',
+            twitter: profile.twitter || '',
+            totalTreks: profile.totalTreks || 0,
+            totalTrips: profile.totalTrips || 0,
+            totalEvents: profile.totalEvents || 0,
+            bankName: profile.bankName || '',
+            accountHolderName: profile.accountHolderName || '',
+            accountType: profile.accountType || 'savings',
+            accountNumber: profile.accountNumber || '',
+            ifscCode: profile.ifscCode || '',
+            logo: profile.logo || '',
+          });
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadProfile();
+  }, []);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+
+  const handleSave = async () => {
+    try {
+      const res = await fetch('/api/provider/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+      if (res.ok) {
+        setIsSaved(true);
+        setTimeout(() => {
+          setIsSaved(false);
+          setIsEditing(false);
+        }, 2000);
+      } else {
+        console.error("Failed to save profile");
+      }
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const handleCancel = () => {
     setIsEditing(false);
+  };
+
+  const handleLogoUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      alert("Logo image must be less than 2MB.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => setFormData(prev => ({ ...prev, logo: e.target.result }));
+    reader.readAsDataURL(file);
   };
 
   // Dynamic Styles based on isEditing state
@@ -181,8 +276,11 @@ function ProfileContent() {
             onClick={() => isEditing && fileInputRef.current?.click()}
           >
             <div className={`w-32 h-32 md:w-36 md:h-36 rounded-full flex items-center justify-center overflow-hidden transition-all duration-300 ${isEditing ? 'border-2 border-emerald-400 border-dashed bg-emerald-100/60' : 'border-4 border-emerald-100 bg-emerald-50 shadow-md'}`}>
-              <div className="text-4xl md:text-5xl font-black tracking-tighter text-emerald-600">MS</div>
-
+              {formData.logo ? (
+                <img src={formData.logo} alt="Company Logo" className="w-full h-full object-cover" />
+              ) : (
+                <div className="text-4xl md:text-5xl font-black tracking-tighter text-emerald-600">{formData.name ? formData.name.substring(0, 2).toUpperCase() : 'MS'}</div>
+              )}
               {/* Hover Overlay Only active when editing */}
               {isEditing && (
                 <div className={`absolute inset-0 rounded-full bg-emerald-600/90 backdrop-blur-sm flex flex-col items-center justify-center transition-all duration-300 z-20 ${isHovering ? 'opacity-100' : 'opacity-0'}`}>
@@ -191,7 +289,7 @@ function ProfileContent() {
                 </div>
               )}
             </div>
-            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" disabled={!isEditing} />
+            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" disabled={!isEditing} onChange={handleLogoUpload} />
           </div>
 
           {/* Subtle text under logo during edit mode */}
@@ -204,9 +302,9 @@ function ProfileContent() {
 
         {/* Profile Info & Helper Text */}
         <div className="flex-1 text-center md:text-left flex flex-col justify-center min-h-[8rem] md:min-h-[10rem] z-10 w-full">
-          <h3 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight mb-2">Mohd Sami</h3>
+          <h3 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight mb-2">{formData.name || 'Mohd Sami'}</h3>
           <p className="text-gray-500 font-medium flex items-center justify-center md:justify-start gap-2 text-lg mb-5">
-            <Building2 size={20} className="text-emerald-600" /> Bagspackgo Travels
+            <Building2 size={20} className="text-emerald-600" /> {formData.companyname || 'Bagspackgo Travels'}
           </p>
 
           {!isEditing ? (
@@ -279,7 +377,7 @@ function ProfileContent() {
                 <label className={labelClasses}>Full Name</label>
                 <div className="relative">
                   <div className={iconWrapperClasses}><User size={18} /></div>
-                  <input type="text" className={inputClasses} placeholder="e.g. Mohd Sami" defaultValue="Mohd Sami" readOnly={!isEditing} />
+                  <input type="text" className={inputClasses} placeholder="e.g. Mohd Sami" name="name" value={formData.name} onChange={handleChange} readOnly={!isEditing} />
                 </div>
               </div>
 
@@ -287,7 +385,7 @@ function ProfileContent() {
                 <label className={labelClasses}>Company Name</label>
                 <div className="relative">
                   <div className={iconWrapperClasses}><Building2 size={18} /></div>
-                  <input type="text" className={inputClasses} placeholder="e.g. Bagspackgo Travels" defaultValue="Bagspackgo Travels" readOnly={!isEditing} />
+                  <input type="text" className={inputClasses} placeholder="e.g. Bagspackgo Travels" name="companyname" value={formData.companyname} onChange={handleChange} readOnly={!isEditing} />
                 </div>
               </div>
 
@@ -295,7 +393,7 @@ function ProfileContent() {
                 <label className={labelClasses}>Email Address</label>
                 <div className="relative">
                   <div className={iconWrapperClasses}><Mail size={18} /></div>
-                  <input type="email" className={inputClasses} placeholder="sami@example.com" defaultValue="sami@example.com" readOnly={!isEditing} />
+                  <input type="email" className={inputClasses} placeholder="sami@example.com" name="companyemail" value={formData.companyemail} onChange={handleChange} readOnly={!isEditing} />
                 </div>
               </div>
 
@@ -303,7 +401,7 @@ function ProfileContent() {
                 <label className={labelClasses}>Mobile Number</label>
                 <div className="relative">
                   <div className={iconWrapperClasses}><Phone size={18} /></div>
-                  <input type="tel" className={inputClasses} placeholder="+91 98XXXXXX" defaultValue="+91 9876543210" readOnly={!isEditing} />
+                  <input type="tel" className={inputClasses} placeholder="+91 XXXXXXXXXX" name="companymobile" value={formData.companymobile} onChange={handleChange} readOnly={!isEditing} />
                 </div>
               </div>
 
@@ -313,20 +411,20 @@ function ProfileContent() {
                   <div className={`absolute top-3.5 left-3.5 pointer-events-none transition-colors ${isEditing ? 'text-emerald-500' : 'text-gray-400'}`}>
                     <MapPin size={18} />
                   </div>
-                  <textarea rows={2} className={`${textareaClasses} pl-11`} placeholder="Enter full address" defaultValue="123 Adventure Street, New Delhi, India" readOnly={!isEditing}></textarea>
+                  <textarea rows={2} className={`${textareaClasses} pl-11`} placeholder="Enter full address" name="address" value={formData.address} onChange={handleChange} readOnly={!isEditing}></textarea>
                 </div>
               </div>
 
               <div className="md:col-span-2 space-y-1 group">
                 <label className={labelClasses}>Bio / About Company</label>
-                <textarea rows={3} className={`${textareaClasses} px-4 py-3`} placeholder="Tell your customers about your services and passion for travel..." defaultValue="We specialize in bringing the best trekking and tripping experiences across the Himalayas. Adventure is our middle name!" readOnly={!isEditing}></textarea>
+                <textarea rows={3} className={`${textareaClasses} px-4 py-3`} placeholder="Tell your customers about your services and passion for travel..." name="bio" value={formData.bio} onChange={handleChange} readOnly={!isEditing}></textarea>
               </div>
 
               <div className="md:col-span-2 space-y-1 group">
                 <label className={labelClasses}>Speciality</label>
                 <div className="relative">
                   <div className={iconWrapperClasses}><Award size={18} /></div>
-                  <input type="text" className={inputClasses} placeholder="e.g. High Altitude Treks, Luxury Trips" defaultValue="High Altitude Expeditions & Backpacking" readOnly={!isEditing} />
+                  <input type="text" className={inputClasses} placeholder="e.g. High Altitude Treks..." name="speciality" value={formData.speciality} onChange={handleChange} readOnly={!isEditing} />
                 </div>
               </div>
             </div>
@@ -358,7 +456,7 @@ function ProfileContent() {
                 <label className={labelClasses}>Account Holder Name</label>
                 <div className="relative">
                   <div className={`absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none transition-colors ${isEditing ? 'text-blue-500' : 'text-gray-400'}`}><User size={18} /></div>
-                  <input type="text" className={`${inputClasses.replace('focus:ring-emerald-500/20', 'focus:ring-blue-500/20').replace('focus:border-emerald-500', 'focus:border-blue-500')} ${isEditing && 'border-blue-200 hover:border-blue-300'}`} placeholder="Name exactly as per bank records" defaultValue="Mohd Samiullah" readOnly={!isEditing} />
+                  <input type="text" className={`${inputClasses.replace('focus:ring-emerald-500/20', 'focus:ring-blue-500/20').replace('focus:border-emerald-500', 'focus:border-blue-500')} ${isEditing && 'border-blue-200 hover:border-blue-300'}`} placeholder="Name exactly as per bank records" name="accountHolderName" value={formData.accountHolderName} onChange={handleChange} readOnly={!isEditing} />
                 </div>
               </div>
 
@@ -366,13 +464,13 @@ function ProfileContent() {
                 <label className={labelClasses}>Bank Name</label>
                 <div className="relative">
                   <div className={`absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none transition-colors ${isEditing ? 'text-blue-500' : 'text-gray-400'}`}><Building size={18} /></div>
-                  <input type="text" className={`${inputClasses.replace('focus:ring-emerald-500/20', 'focus:ring-blue-500/20').replace('focus:border-emerald-500', 'focus:border-blue-500')} ${isEditing && 'border-blue-200 hover:border-blue-300'}`} placeholder="e.g. HDFC Bank" defaultValue="HDFC Bank" readOnly={!isEditing} />
+                  <input type="text" className={`${inputClasses.replace('focus:ring-emerald-500/20', 'focus:ring-blue-500/20').replace('focus:border-emerald-500', 'focus:border-blue-500')} ${isEditing && 'border-blue-200 hover:border-blue-300'}`} placeholder="e.g. HDFC Bank" name="bankName" value={formData.bankName} onChange={handleChange} readOnly={!isEditing} />
                 </div>
               </div>
 
               <div className="space-y-1 group relative z-10">
                 <label className={labelClasses}>Account Type</label>
-                <select className={`${selectClasses.replace('focus:ring-emerald-500/20', 'focus:ring-blue-500/20').replace('focus:border-emerald-500', 'focus:border-blue-500')} ${isEditing && 'border-blue-200 hover:border-blue-300'}`} disabled={!isEditing}>
+                <select name="accountType" value={formData.accountType} onChange={handleChange} className={`${selectClasses.replace('focus:ring-emerald-500/20', 'focus:ring-blue-500/20').replace('focus:border-emerald-500', 'focus:border-blue-500')} ${isEditing && 'border-blue-200 hover:border-blue-300'}`} disabled={!isEditing}>
                   <option value="savings">Savings Account</option>
                   <option value="current">Current Account</option>
                 </select>
@@ -382,13 +480,13 @@ function ProfileContent() {
                 <label className={labelClasses}>Account Number</label>
                 <div className="relative">
                   <div className={`absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none transition-colors ${isEditing ? 'text-blue-500' : 'text-gray-400'}`}><CreditCard size={18} /></div>
-                  <input type="text" className={`${inputClasses.replace('focus:ring-emerald-500/20', 'focus:ring-blue-500/20').replace('focus:border-emerald-500', 'focus:border-blue-500')} font-mono tracking-widest ${isEditing && 'border-blue-200 hover:border-blue-300'}`} placeholder="XXXXXXXXXX" defaultValue={!isEditing ? "••••••••1234" : ""} readOnly={!isEditing} />
+                  <input type="text" className={`${inputClasses.replace('focus:ring-emerald-500/20', 'focus:ring-blue-500/20').replace('focus:border-emerald-500', 'focus:border-blue-500')} font-mono tracking-widest ${isEditing && 'border-blue-200 hover:border-blue-300'}`} placeholder="XXXXXXXXXX" name="accountNumber" value={!isEditing && formData.accountNumber && formData.accountNumber.length > 4 ? '••••' + formData.accountNumber.slice(-4) : formData.accountNumber} onChange={handleChange} readOnly={!isEditing} />
                 </div>
               </div>
 
               <div className="space-y-1 group relative z-10">
                 <label className={labelClasses}>IFSC Code</label>
-                <input type="text" className={`${baseInputStyles} px-4 font-mono uppercase tracking-widest ${isEditing ? 'border border-blue-200 bg-white shadow-inner focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 hover:border-blue-300 text-gray-900 placeholder:text-gray-400' : readonlyStyles}`} placeholder="e.g. HDFC0001234" defaultValue="HDFC0001234" readOnly={!isEditing} />
+                <input type="text" className={`${baseInputStyles} px-4 font-mono uppercase tracking-widest ${isEditing ? 'border border-blue-200 bg-white shadow-inner focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 hover:border-blue-300 text-gray-900 placeholder:text-gray-400' : readonlyStyles}`} placeholder="e.g. HDFC0001234" name="ifscCode" value={formData.ifscCode} onChange={handleChange} readOnly={!isEditing} />
               </div>
             </div>
           </div>
@@ -417,7 +515,7 @@ function ProfileContent() {
                   Treks Hosted
                 </label>
                 <div className="relative flex items-center">
-                  <input type="number" className={`text-right bg-transparent border-none font-black text-lg outline-none focus:ring-0 transition-all ${isEditing ? 'w-24 text-emerald-800 bg-white pl-3 pr-8 py-2 rounded-xl shadow-inner border border-emerald-300 pointer-events-auto cursor-text focus:border-emerald-500' : 'w-16 p-0 text-gray-800 pointer-events-none'}`} defaultValue={42} readOnly={!isEditing} />
+                  <input type="number" className={`text-right bg-transparent border-none font-black text-lg outline-none focus:ring-0 transition-all ${isEditing ? 'w-24 text-emerald-800 bg-white pl-3 pr-8 py-2 rounded-xl shadow-inner border border-emerald-300 pointer-events-auto cursor-text focus:border-emerald-500' : 'w-16 p-0 text-gray-800 pointer-events-none'}`} name="totalTreks" value={formData.totalTreks} onChange={handleChange} readOnly={!isEditing} />
                   {isEditing && <Edit2 size={14} className="absolute right-3 text-emerald-400 pointer-events-none" />}
                 </div>
               </div>
@@ -431,7 +529,7 @@ function ProfileContent() {
                   Trips Hosted
                 </label>
                 <div className="relative flex items-center">
-                  <input type="number" className={`text-right bg-transparent border-none font-black text-lg outline-none focus:ring-0 transition-all ${isEditing ? 'w-24 text-teal-800 bg-white pl-3 pr-8 py-2 rounded-xl shadow-inner border border-teal-300 pointer-events-auto cursor-text focus:border-teal-500' : 'w-16 p-0 text-gray-800 pointer-events-none'}`} defaultValue={128} readOnly={!isEditing} />
+                  <input type="number" className={`text-right bg-transparent border-none font-black text-lg outline-none focus:ring-0 transition-all ${isEditing ? 'w-24 text-teal-800 bg-white pl-3 pr-8 py-2 rounded-xl shadow-inner border border-teal-300 pointer-events-auto cursor-text focus:border-teal-500' : 'w-16 p-0 text-gray-800 pointer-events-none'}`} name="totalTrips" value={formData.totalTrips} onChange={handleChange} readOnly={!isEditing} />
                   {isEditing && <Edit2 size={14} className="absolute right-3 text-teal-400 pointer-events-none" />}
                 </div>
               </div>
@@ -445,7 +543,7 @@ function ProfileContent() {
                   Events
                 </label>
                 <div className="relative flex items-center">
-                  <input type="number" className={`text-right bg-transparent border-none font-black text-lg outline-none focus:ring-0 transition-all ${isEditing ? 'w-24 text-blue-800 bg-white pl-3 pr-8 py-2 rounded-xl shadow-inner border border-blue-300 pointer-events-auto cursor-text focus:border-blue-500' : 'w-16 p-0 text-gray-800 pointer-events-none'}`} defaultValue={15} readOnly={!isEditing} />
+                  <input type="number" className={`text-right bg-transparent border-none font-black text-lg outline-none focus:ring-0 transition-all ${isEditing ? 'w-24 text-blue-800 bg-white pl-3 pr-8 py-2 rounded-xl shadow-inner border border-blue-300 pointer-events-auto cursor-text focus:border-blue-500' : 'w-16 p-0 text-gray-800 pointer-events-none'}`} name="totalEvents" value={formData.totalEvents} onChange={handleChange} readOnly={!isEditing} />
                   {isEditing && <Edit2 size={14} className="absolute right-3 text-blue-400 pointer-events-none" />}
                 </div>
               </div>
@@ -467,7 +565,7 @@ function ProfileContent() {
                 <label className={labelClasses}>Website</label>
                 <div className="relative">
                   <div className={iconWrapperClasses}><Globe size={16} /></div>
-                  <input type="url" className={`${inputClasses} py-2.5`} placeholder="https://" defaultValue="https://bagspackgo.com" readOnly={!isEditing} />
+                  <input type="url" className={`${inputClasses} py-2.5`} placeholder="https://" name="website" value={formData.website} onChange={handleChange} readOnly={!isEditing} />
                 </div>
               </div>
 
@@ -475,7 +573,7 @@ function ProfileContent() {
                 <label className={labelClasses}>Instagram</label>
                 <div className="relative">
                   <div className={iconWrapperClasses}><Instagram size={16} /></div>
-                  <input type="text" className={`${inputClasses} py-2.5`} placeholder="@username" defaultValue="@bagspackgo" readOnly={!isEditing} />
+                  <input type="text" className={`${inputClasses} py-2.5`} placeholder="@username" name="instagram" value={formData.instagram} onChange={handleChange} readOnly={!isEditing} />
                 </div>
               </div>
 
@@ -483,7 +581,7 @@ function ProfileContent() {
                 <label className={labelClasses}>Facebook</label>
                 <div className="relative">
                   <div className={iconWrapperClasses}><Facebook size={16} /></div>
-                  <input type="text" className={`${inputClasses} py-2.5`} placeholder="Page URL" readOnly={!isEditing} />
+                  <input type="text" className={`${inputClasses} py-2.5`} placeholder="Page URL" name="facebook" value={formData.facebook} onChange={handleChange} readOnly={!isEditing} />
                 </div>
               </div>
 
@@ -491,7 +589,7 @@ function ProfileContent() {
                 <label className={labelClasses}>Twitter / X</label>
                 <div className="relative">
                   <div className={iconWrapperClasses}><Twitter size={16} /></div>
-                  <input type="text" className={`${inputClasses} py-2.5`} placeholder="@username" readOnly={!isEditing} />
+                  <input type="text" className={`${inputClasses} py-2.5`} placeholder="@username" name="twitter" value={formData.twitter} onChange={handleChange} readOnly={!isEditing} />
                 </div>
               </div>
             </div>

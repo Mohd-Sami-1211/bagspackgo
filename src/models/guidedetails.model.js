@@ -39,6 +39,28 @@ const guidedetailsSchema = new mongoose.Schema(
 
         instagram: { type: String, default: "" },
         facebook: { type: String, default: "" },
+        website: { type: String, default: "" },
+        youtube: { type: String, default: "" },
+        twitter: { type: String, default: "" },
+        logo: { type: String, default: "" },
+        speciality: { type: String, default: "" },
+        bio: { type: String, default: "" },
+
+        // Stats
+        totalTreks: { type: Number, default: 0 },
+        totalTrips: { type: Number, default: 0 },
+        totalEvents: { type: Number, default: 0 },
+
+        // Bank Details
+        bankName: { type: String, default: "" },
+        accountHolderName: { type: String, default: "" },
+        accountNumber: { type: String, default: "" },
+        ifscCode: { type: String, default: "" },
+        accountType: { type: String, enum: ["savings", "current"], default: "savings" },
+
+        // Legal/Tax
+        gstNumber: { type: String, default: "" },
+        panNumber: { type: String, default: "" },
 
         licenseFile: { type: String, required: true },
         idFile: { type: String, required: true },
