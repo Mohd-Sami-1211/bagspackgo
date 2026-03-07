@@ -26,7 +26,12 @@ const bookingSchema = new mongoose.Schema({
         passCode: String,
         checkedIn: { type: Boolean, default: false }
     }],
-    status: { type: String, enum: ['confirmed', 'cancelled', 'completed'], default: 'confirmed' }
+    status: { type: String, enum: ['confirmed', 'cancelled', 'completed'], default: 'confirmed' },
+    // Provider Payment details
+    providerPaymentStatus: { type: String, enum: ['pending', 'completed'], default: 'pending' },
+    providerTransactionId: { type: String, default: '' },
+    providerPaymentDate: { type: Date },
+    providerDepositedAccount: { type: String, default: '' }
 }, { timestamps: true });
 
 export const Booking = mongoose.models.Booking || mongoose.model('Booking', bookingSchema);

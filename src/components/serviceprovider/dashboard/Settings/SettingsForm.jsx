@@ -39,7 +39,9 @@ import {
   AlertCircle,
   Power,
   Banknote,
-  Clock
+  Clock,
+  Filter,
+  Loader2
 } from 'lucide-react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 
@@ -772,49 +774,180 @@ function ProfileContent({ initialEditMode = false }) {
 
 
 function PaymentsContent() {
+  const [payments, setPayments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('trip'); // 'trip', 'trek', 'event'
+  const [dateFilter, setDateFilter] = useState('all'); // '10days', '1month', '3months', 'all'
+
+  useEffect(() => {
+    async function fetchPayments() {
+      try {
+        const res = await fetch('/api/provider/payments');
+        if (res.ok) {
+          const data = await res.json();
+          setPayments(data.payments || []);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchPayments();
+  }, []);
+
+  const getFilteredPayments = () => {
+    let filtered = payments.filter(p => p.type === activeTab);
+    const now = new Date();
+    if (dateFilter === '10days') {
+      const past = new Date(now.setDate(now.getDate() - 10));
+      filtered = filtered.filter(p => new Date(p.date) >= past);
+    } else if (dateFilter === '1month') {
+      const past = new Date(now.setMonth(now.getMonth() - 1));
+      filtered = filtered.filter(p => new Date(p.date) >= past);
+    } else if (dateFilter === '3months') {
+      const past = new Date(now.setMonth(now.getMonth() - 3));
+      filtered = filtered.filter(p => new Date(p.date) >= past);
+    }
+    return filtered;
+  };
+
+  const displayedPayments = getFilteredPayments();
+
+  // Stats calculation based on ALL payments
+  const totalEarnings = payments.filter(p => p.providerPaymentStatus === 'completed').reduce((sum, p) => sum + (p.amount || 0), 0);
+  const pendingClearance = payments.filter(p => p.providerPaymentStatus !== 'completed').reduce((sum, p) => sum + (p.amount || 0), 0);
+
   return (
-    <div className="max-w-4xl mx-auto space-y-8 pb-12 animate-in fade-in duration-500">
+    <div className="max-w-5xl mx-auto space-y-8 pb-12 animate-in fade-in duration-500">
       <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 md:p-8">
-        <div className="flex items-center gap-3 mb-8">
-          <div className="p-3 bg-emerald-100 rounded-2xl text-emerald-600">
-            <Banknote size={22} className="stroke-[2.5]" />
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-emerald-100 rounded-2xl text-emerald-600">
+              <Banknote size={22} className="stroke-[2.5]" />
+            </div>
+            <div>
+              <h4 className="text-lg font-bold text-gray-900">Payments & Revenue</h4>
+              <p className="text-xs text-gray-500 font-medium mt-0.5">Track your earnings, payouts, and pending settlements.</p>
+            </div>
           </div>
-          <div>
-            <h4 className="text-lg font-bold text-gray-900">Payments & Revenue</h4>
-            <p className="text-xs text-gray-500 font-medium mt-0.5">Track your earnings, payouts, and pending settlements.</p>
+
+          {/* Date Filter */}
+          <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-1.5 self-start md:self-auto">
+            <Filter size={16} className="text-gray-400" />
+            <select
+              className="bg-transparent border-none text-sm font-semibold text-gray-700 focus:ring-0 outline-none cursor-pointer"
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+            >
+              <option value="all">All Time</option>
+              <option value="10days">Last 10 Days</option>
+              <option value="1month">Last 1 Month</option>
+              <option value="3months">Last 3 Months</option>
+            </select>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">
+        {/* Stats */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-8">
           <div className="p-5 rounded-2xl border border-gray-100 bg-gray-50 relative overflow-hidden group hover:border-emerald-200 transition-colors">
             <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity"><Banknote size={48} /></div>
-            <p className="text-sm text-gray-500 font-medium mb-1">Total Earnings</p>
-            <p className="text-3xl font-black text-gray-900">₹0</p>
-          </div>
-          <div className="p-5 rounded-2xl border border-emerald-100 bg-emerald-50 relative overflow-hidden shadow-inner">
-            <div className="absolute top-0 right-0 p-3 opacity-10 text-emerald-700"><CheckCircle2 size={48} /></div>
-            <p className="text-sm text-emerald-700 font-medium mb-1 flex items-center gap-1.5">
-              Available for Payout
-            </p>
-            <p className="text-3xl font-black text-emerald-900">₹0</p>
-            <button className="mt-3 px-4 py-1.5 bg-emerald-600 text-white text-xs font-bold rounded-lg hover:bg-emerald-700 transition shadow-sm inline-block">Withdraw Funds</button>
+            <p className="text-sm text-gray-500 font-medium mb-1">Total Received</p>
+            <p className="text-3xl font-black text-gray-900">₹{totalEarnings.toLocaleString()}</p>
           </div>
           <div className="p-5 rounded-2xl border border-amber-100 bg-amber-50 relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-3 opacity-10 text-amber-600"><Clock size={48} /></div>
             <p className="text-sm text-amber-700 font-medium mb-1 flex items-center gap-1.5">
-              Pending Clearance
+              Payment In Progress
             </p>
-            <p className="text-3xl font-black text-amber-900">₹0</p>
+            <p className="text-3xl font-black text-amber-900">₹{pendingClearance.toLocaleString()}</p>
           </div>
         </div>
 
+        {/* Tabs */}
+        <div className="flex items-center gap-2 border-b border-gray-100 mb-6 pb-2 overflow-x-auto hide-scrollbar">
+          {['trip', 'trek', 'event'].map(tab => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap ${activeTab === tab
+                  ? 'bg-emerald-600 text-white shadow-md'
+                  : 'bg-white text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+                }`}
+            >
+              {tab.charAt(0).toUpperCase() + tab.slice(1)} Bookings
+            </button>
+          ))}
+        </div>
+
+        {/* Transactions List */}
         <div className="space-y-4">
-          <h5 className="font-bold text-gray-900 text-lg">Recent Transactions</h5>
-          <div className="border border-gray-100 rounded-2xl overflow-hidden flex flex-col items-center justify-center p-12 bg-gray-50/50">
-            <CreditCard size={48} className="text-gray-300 mb-4" />
-            <h4 className="text-gray-900 font-bold mb-1">No transactions found</h4>
-            <p className="text-gray-500 font-medium text-sm">Your payouts and earning history will appear here once you receive bookings.</p>
-          </div>
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-16">
+              <Loader2 className="animate-spin text-emerald-500 mb-4" size={32} />
+              <p className="text-gray-500 font-medium">Loading payments...</p>
+            </div>
+          ) : displayedPayments.length === 0 ? (
+            <div className="border border-gray-100 rounded-2xl flex flex-col items-center justify-center p-12 bg-gray-50/50">
+              <CreditCard size={48} className="text-gray-300 mb-4" />
+              <h4 className="text-gray-900 font-bold mb-1">No bookings found</h4>
+              <p className="text-gray-500 font-medium text-sm text-center">There are no confirmed {activeTab} bookings for the selected period.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto rounded-2xl border border-gray-100 shadow-sm">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-gray-50 text-gray-500 text-[11px] uppercase tracking-wider">
+                    <th className="p-4 font-bold border-b border-gray-100">Booking / Package</th>
+                    <th className="p-4 font-bold border-b border-gray-100">Amount</th>
+                    <th className="p-4 font-bold border-b border-gray-100">Admin Payment Status</th>
+                    <th className="p-4 font-bold border-b border-gray-100 min-w-[200px]">Transaction Info</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 bg-white text-sm">
+                  {displayedPayments.map((p) => (
+                    <tr key={p._id} className="hover:bg-emerald-50/30 transition-colors">
+                      <td className="p-4">
+                        <p className="font-bold text-gray-900 mb-0.5">{p.title}</p>
+                        <p className="text-xs text-gray-500 font-medium flex gap-2">
+                          <span>Ref: {p.bookingRef ? p.bookingRef.substring(0, 8).toUpperCase() : p._id.substring(0, 8).toUpperCase()}</span>
+                          <span>&bull;</span>
+                          <span>{new Date(p.date).toLocaleDateString()}</span>
+                        </p>
+                      </td>
+                      <td className="p-4 font-black text-gray-900">
+                        ₹{p.amount?.toLocaleString()}
+                      </td>
+                      <td className="p-4 align-top">
+                        {p.providerPaymentStatus === 'completed' ? (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-100 text-emerald-700 text-xs font-bold shrink-0 mt-1">
+                            <CheckCircle2 size={14} /> Deposited
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-100 text-amber-700 text-xs font-bold shrink-0 mt-1">
+                            <Clock size={14} /> Payment in Progress
+                          </span>
+                        )}
+                      </td>
+                      <td className="p-4 text-xs font-medium text-gray-600">
+                        {p.providerPaymentStatus === 'completed' ? (
+                          <div className="space-y-1 bg-gray-50 rounded-lg p-2.5 border border-gray-100">
+                            <p className="flex justify-between gap-2"><span className="text-gray-400 font-bold uppercase text-[10px]">Txn ID:</span> <span className="text-gray-900 font-mono text-right">{p.providerTransactionId ? p.providerTransactionId.toUpperCase() : "N/A"}</span></p>
+                            <p className="flex justify-between gap-2"><span className="text-gray-400 font-bold uppercase text-[10px]">A/C:</span> <span className="text-gray-900 text-right">{p.providerDepositedAccount || "N/A"}</span></p>
+                            <p className="flex justify-between gap-2"><span className="text-gray-400 font-bold uppercase text-[10px]">Date:</span> <span className="text-gray-900 text-right">{p.providerPaymentDate ? new Date(p.providerPaymentDate).toLocaleDateString() : "N/A"}</span></p>
+                          </div>
+                        ) : (
+                          <div className="flex items-center h-full pt-1.5">
+                            <p className="text-gray-400 italic">Awaiting admin action</p>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
     </div>

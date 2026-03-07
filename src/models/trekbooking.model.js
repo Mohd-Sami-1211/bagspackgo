@@ -31,6 +31,12 @@ const trekBookingSchema = new mongoose.Schema({
     // Booking status
     status: { type: String, enum: ['pending', 'confirmed', 'cancelled'], default: 'pending' },
 
+    // Provider Payment details
+    providerPaymentStatus: { type: String, enum: ['pending', 'completed'], default: 'pending' },
+    providerTransactionId: { type: String, default: '' },
+    providerPaymentDate: { type: Date },
+    providerDepositedAccount: { type: String, default: '' },
+
     // Payment details
     paymentId: { type: String, default: '' },
     orderId: { type: String, default: '' },
