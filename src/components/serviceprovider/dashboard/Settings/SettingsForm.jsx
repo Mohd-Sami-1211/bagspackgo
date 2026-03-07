@@ -29,18 +29,26 @@ import {
   CheckCircle2,
   Edit2,
   X,
+  Lock,
+  FileCheck,
+  LifeBuoy,
+  MessageSquare,
+  Smartphone,
+  Trash2,
+  KeyRound,
+  FileText,
+  AlertCircle
 } from 'lucide-react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 
 const menuItems = [
-  { id: 'profile', label: 'Your Profile', icon: User },
-  { id: 'account', label: 'Account Settings', icon: Settings },
-  { id: 'packages', label: 'Travel Packages', icon: Package },
-  { id: 'transactions', label: 'Transactions', icon: CreditCard },
-  { id: 'bookings', label: 'Bookings', icon: Calendar },
-  { id: 'notifications', label: 'Notifications', icon: Bell },
-  { id: 'security', label: 'Security', icon: Shield },
-  { id: 'help', label: 'Help & Support', icon: HelpCircle },
+  { id: 'profile', label: 'Business Profile', icon: Building2, desc: 'Manage your public details, logo, and bank accounts' },
+  { id: 'packages', label: 'Package Management', icon: Package, desc: 'Create and edit your travel packages' },
+  { id: 'kyc', label: 'KYC & Verification', icon: FileCheck, desc: 'Upload identity and business documents' },
+  { id: 'account', label: 'Account Settings', icon: User, desc: 'Manage email, phone, and account deletion' },
+  { id: 'notifications', label: 'Notifications', icon: Bell, desc: 'Customize your email and SMS alerts' },
+  { id: 'security', label: 'Security & Login', icon: Lock, desc: 'Update passwords and secure your account' },
+  { id: 'help', label: 'Help & Support', icon: LifeBuoy, desc: 'Get in touch with the support team' },
 ];
 
 export default function SettingsForm() {
@@ -76,26 +84,36 @@ export default function SettingsForm() {
       {/* MENU LIST */}
       {!active && !pathname.includes('/settings/packages') && (
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3 }}
-          className="mx-auto w-full"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="mx-auto w-full max-w-6xl pb-12"
         >
-          <h1 className="text-2xl font-bold px-4 py-6">Settings</h1>
-          <div className="divide-y shadow-sm rounded-xl overflow-hidden">
-            {menuItems.map(({ id, label, icon: Icon }) => (
+          <div className="mb-10 px-2 space-y-1">
+            <h1 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight">Settings</h1>
+            <p className="text-gray-500 font-medium text-lg">Manage your business profile, packages, and account preferences.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 px-2">
+            {menuItems.map(({ id, label, icon: Icon, desc }) => (
               <button
                 key={id}
-                className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition"
+                className="group relative flex flex-col items-start p-6 md:p-8 bg-white border border-gray-100 rounded-[2rem] shadow-sm hover:shadow-[0_8px_30px_rgba(16,185,129,0.08)] hover:border-emerald-100 transition-all duration-300 text-left overflow-hidden hover:-translate-y-1"
                 onClick={() => handleMenuItemClick(id)}
               >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-emerald-100 text-emerald-600">
-                    <Icon size={20} />
-                  </div>
-                  <span className="text-base font-medium">{label}</span>
+                {/* Decorative background circle */}
+                <div className="absolute -right-10 -top-10 w-32 h-32 bg-emerald-50 rounded-full group-hover:scale-[2] transition-transform duration-700 ease-out opacity-0 group-hover:opacity-100 -z-0"></div>
+
+                <div className="relative z-10 p-3.5 bg-gray-50 text-gray-600 rounded-2xl group-hover:bg-emerald-500 group-hover:text-white transition-colors duration-300 mb-5 border border-gray-100 group-hover:border-emerald-400">
+                  <Icon size={26} className="stroke-[2.5]" />
                 </div>
-                <ArrowLeft size={18} className="rotate-180 text-gray-400" />
+
+                <h3 className="relative z-10 text-xl font-black text-gray-900 mb-2 group-hover:text-emerald-950 transition-colors tracking-tight">{label}</h3>
+                <p className="relative z-10 text-sm text-gray-500 font-medium leading-relaxed group-hover:text-emerald-900/70 transition-colors">{desc}</p>
+
+                <div className="relative z-10 flex items-center gap-1.5 mt-6 text-sm font-bold text-emerald-600 opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
+                  Manage Settings <ArrowLeft size={16} className="rotate-180" />
+                </div>
               </button>
             ))}
           </div>
@@ -126,8 +144,7 @@ export default function SettingsForm() {
           <div className="px-5 py-6">
             {active === 'profile' && <ProfileContent initialEditMode={searchParams.get('edit') === 'true'} />}
             {active === 'account' && <AccountContent />}
-            {active === 'transactions' && <TransactionsContent />}
-            {active === 'bookings' && <BookingsContent />}
+            {active === 'kyc' && <KYCContent />}
             {active === 'notifications' && <NotificationsContent />}
             {active === 'security' && <SecurityContent />}
             {active === 'help' && <HelpContent />}
@@ -754,78 +771,234 @@ function ProfileContent({ initialEditMode = false }) {
 
 function AccountContent() {
   return (
-    <div className="space-y-3">
-      <p className="text-sm text-gray-500">Manage your account preferences.</p>
-      <button className="w-full rounded-lg border px-4 py-2 hover:bg-gray-50 transition">Change Email</button>
-      <button className="w-full rounded-lg border px-4 py-2 hover:bg-gray-50 transition">Change Phone Number</button>
-      <button className="w-full rounded-lg border px-4 py-2 text-red-500 hover:bg-red-50 transition">Delete Account</button>
+    <div className="max-w-4xl mx-auto space-y-8 pb-12 animate-in fade-in duration-500">
+      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 md:p-8 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-gray-50 rounded-bl-[100px] -z-10"></div>
+        <div className="flex items-center gap-3 mb-8">
+          <div className="p-3 bg-gray-100 rounded-2xl text-gray-600">
+            <User size={22} className="stroke-[2.5]" />
+          </div>
+          <div>
+            <h4 className="text-lg font-bold text-gray-900">Personal Data</h4>
+            <p className="text-xs text-gray-500 font-medium mt-0.5">Manage the email and phone linked to your account.</p>
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          <div className="space-y-1.5 group">
+            <label className="block text-[11px] font-bold text-gray-500 mb-1.5 uppercase tracking-wider pl-1">Email Address</label>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="relative flex-1">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-emerald-500"><Mail size={18} /></div>
+                <input type="email" className="w-full py-3.5 pl-11 pr-4 rounded-xl border border-emerald-200 bg-white shadow-inner focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500" defaultValue="sami@example.com" />
+              </div>
+              <button className="px-6 py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition">Update</button>
+            </div>
+          </div>
+
+          <div className="space-y-1.5 group">
+            <label className="block text-[11px] font-bold text-gray-500 mb-1.5 uppercase tracking-wider pl-1">Phone Number</label>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="relative flex-1">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-emerald-500"><Phone size={18} /></div>
+                <input type="tel" className="w-full py-3.5 pl-11 pr-4 rounded-xl border border-emerald-200 bg-white shadow-inner focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500" defaultValue="+91 9876543210" />
+              </div>
+              <button className="px-6 py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition">Update</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-red-50/50 rounded-3xl border border-red-100 p-6 md:p-8">
+        <div className="flex items-start gap-4">
+          <div className="p-3 bg-red-100 rounded-xl text-red-600 mt-1">
+            <Trash2 size={24} />
+          </div>
+          <div className="flex-1">
+            <h4 className="text-lg font-bold text-gray-900 tracking-tight">Danger Zone</h4>
+            <p className="text-sm text-gray-600 font-medium mt-1 mb-4">Deleting your account is permanent. All associated data will be removed and cannot be recovered.</p>
+            <button className="px-6 py-3 bg-white border border-red-200 text-red-600 font-bold rounded-xl hover:bg-red-50 transition shadow-sm">Delete Account</button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
 
-function TransactionsContent() {
+function KYCContent() {
   return (
-    <div>
-      <p className="text-sm text-gray-500 mb-3">Your recent payments.</p>
-      <ul className="divide-y text-sm">
-        <li className="flex justify-between py-3">
-          <span>Booking #12345</span>
-          <span className="text-emerald-600">₹5000</span>
-        </li>
-        <li className="flex justify-between py-3">
-          <span>Package Upgrade</span>
-          <span className="text-emerald-600">₹2500</span>
-        </li>
-      </ul>
-    </div>
-  );
-}
+    <div className="max-w-4xl mx-auto space-y-8 pb-12 animate-in fade-in duration-500">
+      <div className="bg-amber-50 rounded-[2rem] border border-amber-200 p-6 flex flex-col sm:flex-row items-center sm:items-start gap-4">
+        <AlertCircle size={32} className="text-amber-500 shrink-0" />
+        <div>
+          <h4 className="font-bold text-amber-900 text-lg">Action Required</h4>
+          <p className="text-sm text-amber-800/80 font-medium mt-0.5">Please upload your business registration and identity documents to remove the limit on your account and receive the "Verified Partner" badge.</p>
+        </div>
+      </div>
 
-function BookingsContent() {
-  return (
-    <div>
-      <p className="text-sm text-gray-500 mb-3">Your travel reservations.</p>
-      <p className="text-gray-600">No active bookings right now.</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {[
+          { title: 'Identity Proof (Aadhaar / PAN)', status: 'pending', id: 'id' },
+          { title: 'Business Registration (GST / Trade License)', status: 'missing', id: 'business' },
+          { title: 'Canceled Cheque', status: 'missing', id: 'bank' },
+        ].map((item) => (
+          <div key={item.id} className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 group hover:border-emerald-100 hover:shadow-md transition">
+            <div className={`p-3 rounded-2xl w-max mb-5 ${item.status === 'missing' ? 'bg-gray-100 text-gray-500' : item.status === 'pending' ? 'bg-amber-100 text-amber-600' : 'bg-emerald-100 text-emerald-600'}`}>
+              <FileText size={24} className="stroke-[2.5]" />
+            </div>
+            <h5 className="font-bold text-gray-900 text-lg">{item.title}</h5>
+
+            {item.status === 'missing' && (
+              <div className="mt-4">
+                <span className="text-xs font-bold uppercase tracking-wider text-red-500 bg-red-50 px-2.5 py-1 rounded border border-red-100 inline-block mb-4">Action Needed</span>
+                <button className="w-full flex justify-center items-center gap-2 py-3 border-2 border-dashed border-gray-200 rounded-xl text-gray-500 font-semibold hover:border-emerald-400 hover:text-emerald-600 hover:bg-emerald-50 transition cursor-pointer">
+                  <Upload size={18} /> Upload File
+                </button>
+              </div>
+            )}
+            {item.status === 'pending' && (
+              <div className="mt-4">
+                <span className="text-xs font-bold uppercase tracking-wider text-amber-600 bg-amber-50 px-2.5 py-1 rounded border border-amber-200 inline-block mb-2">Under Review</span>
+                <p className="text-xs text-gray-500 font-medium">Uploaded on Mar 5, 2026. Usually takes 24 hours.</p>
+              </div>
+            )}
+            {item.status === 'verified' && (
+              <div className="mt-4 flex items-center gap-2">
+                <CheckCircle2 size={18} className="text-emerald-500" />
+                <span className="text-sm font-bold text-emerald-700">Verified Successfully</span>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
 function NotificationsContent() {
   return (
-    <div className="space-y-3">
-      <p className="text-sm text-gray-500">Choose how you want updates.</p>
-      <label className="flex items-center gap-2">
-        <input type="checkbox" defaultChecked /> Email Alerts
-      </label>
-      <label className="flex items-center gap-2">
-        <input type="checkbox" defaultChecked /> Push Notifications
-      </label>
-      <label className="flex items-center gap-2">
-        <input type="checkbox" /> SMS Alerts
-      </label>
+    <div className="max-w-4xl mx-auto space-y-8 pb-12 animate-in fade-in duration-500">
+      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 md:p-8">
+        <div className="flex items-center gap-3 mb-8">
+          <div className="p-3 bg-purple-100 rounded-2xl text-purple-600">
+            <Bell size={22} className="stroke-[2.5]" />
+          </div>
+          <div>
+            <h4 className="text-lg font-bold text-gray-900">Communication Preferences</h4>
+            <p className="text-xs text-gray-500 font-medium mt-0.5">Control how Bagspackgo alerts you about new bookings.</p>
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          <div className="flex items-center justify-between p-4 border rounded-2xl bg-gray-50/50">
+            <div className="flex items-start gap-3">
+              <Mail className="text-gray-400 mt-0.5" size={20} />
+              <div>
+                <span className="block font-bold text-gray-900">Email Notifications</span>
+                <span className="text-[13px] text-gray-500 font-medium">Receive an email for every new booking and cancellation.</span>
+              </div>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" className="sr-only peer" defaultChecked />
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+            </label>
+          </div>
+
+          <div className="flex items-center justify-between p-4 border rounded-2xl bg-gray-50/50">
+            <div className="flex items-start gap-3">
+              <Smartphone className="text-gray-400 mt-0.5" size={20} />
+              <div>
+                <span className="block font-bold text-gray-900">SMS Alerts</span>
+                <span className="text-[13px] text-gray-500 font-medium">Urgent notifications sent directly to your phone.</span>
+              </div>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" className="sr-only peer" />
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+            </label>
+          </div>
+
+          <button className="mt-4 px-6 py-3 bg-purple-600 text-white font-bold rounded-xl hover:bg-purple-700 transition shadow-sm">Save Preferences</button>
+        </div>
+      </div>
     </div>
   );
 }
 
 function SecurityContent() {
   return (
-    <div className="space-y-3">
-      <p className="text-sm text-gray-500">Update your password.</p>
-      <input type="password" className="rounded-lg border px-3 py-2 w-full" placeholder="Current Password" />
-      <input type="password" className="rounded-lg border px-3 py-2 w-full" placeholder="New Password" />
-      <input type="password" className="rounded-lg border px-3 py-2 w-full" placeholder="Confirm New Password" />
-      <button className="rounded-lg border px-5 py-2 hover:bg-gray-50 transition">
-        Update Password
-      </button>
+    <div className="max-w-4xl mx-auto space-y-8 pb-12 animate-in fade-in duration-500">
+      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 md:p-8">
+        <div className="flex items-center gap-3 mb-8">
+          <div className="p-3 bg-indigo-100 rounded-2xl text-indigo-600">
+            <KeyRound size={22} className="stroke-[2.5]" />
+          </div>
+          <div>
+            <h4 className="text-lg font-bold text-gray-900">Change Password</h4>
+            <p className="text-xs text-gray-500 font-medium mt-0.5">Ensure your account uses a long, random password.</p>
+          </div>
+        </div>
+
+        <div className="space-y-4 max-w-lg">
+          <div className="space-y-1.5">
+            <label className="block text-[11px] font-bold text-gray-500 mb-1.5 uppercase tracking-wider pl-1">Current Password</label>
+            <input type="password" className="w-full py-3.5 px-4 rounded-xl border border-indigo-200 bg-white shadow-inner focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none" placeholder="••••••••" />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="block text-[11px] font-bold text-gray-500 mb-1.5 uppercase tracking-wider pl-1">New Password</label>
+            <input type="password" className="w-full py-3.5 px-4 rounded-xl border border-indigo-200 bg-white shadow-inner focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none" placeholder="New Password" />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="block text-[11px] font-bold text-gray-500 mb-1.5 uppercase tracking-wider pl-1">Confirm New Password</label>
+            <input type="password" className="w-full py-3.5 px-4 rounded-xl border border-indigo-200 bg-white shadow-inner focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none" placeholder="Confirm Password" />
+          </div>
+
+          <div className="pt-2">
+            <button className="px-8 py-3.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition shadow-lg w-full sm:w-auto">
+              Update Password
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
 
 function HelpContent() {
   return (
-    <div>
-      <p className="text-sm text-gray-500 mb-3">Need assistance? We're here to help.</p>
-      <button className="rounded-lg bg-emerald-600 text-white px-5 py-2">Contact Support</button>
+    <div className="max-w-4xl mx-auto space-y-8 pb-12 animate-in fade-in duration-500">
+      <div className="bg-gradient-to-br from-emerald-600 to-teal-800 rounded-3xl p-8 md:p-12 text-white relative overflow-hidden shadow-xl">
+        <LifeBuoy size={120} className="absolute -right-10 -bottom-10 text-white/10" />
+
+        <h2 className="text-3xl font-black mb-3">How can we help you today?</h2>
+        <p className="text-emerald-100 max-w-lg text-lg mb-8">Whether you have questions about a booking, payments, or the platform, our specialized partner support team is here to assist.</p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <button className="flex items-center gap-3 bg-white text-emerald-900 px-6 py-4 rounded-2xl font-bold hover:shadow-lg transition hover:-translate-y-1">
+            <MessageSquare size={20} className="text-emerald-500" />
+            Live Chat
+          </button>
+          <button className="flex items-center gap-3 bg-emerald-700/50 text-white border border-emerald-500/30 px-6 py-4 rounded-2xl font-bold hover:bg-emerald-700 hover:shadow-lg transition hover:-translate-y-1 backdrop-blur-sm">
+            <Phone size={20} className="text-emerald-300" />
+            Request Callback
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div className="bg-white rounded-3xl border p-6 hover:shadow-md transition">
+          <h4 className="font-bold text-gray-900 flex items-center gap-2 mb-2"><FileText size={18} className="text-emerald-600" /> Read the Documentation</h4>
+          <p className="text-sm text-gray-500 mb-4">Learn how to create compelling travel packages and get the most out of Bagspackgo.</p>
+          <a href="#" className="text-sm font-bold text-emerald-600 hover:underline">View Guides &rarr;</a>
+        </div>
+        <div className="bg-white rounded-3xl border p-6 hover:shadow-md transition">
+          <h4 className="font-bold text-gray-900 flex items-center gap-2 mb-2"><Mail size={18} className="text-emerald-600" /> Email Support</h4>
+          <p className="text-sm text-gray-500 mb-4">Send us an email directly at partners@bagspackgo.com with your queries.</p>
+          <a href="mailto:partners@bagspackgo.com" className="text-sm font-bold text-emerald-600 hover:underline">Send Email &rarr;</a>
+        </div>
+      </div>
     </div>
   );
 }
