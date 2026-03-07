@@ -30,22 +30,24 @@ import {
   Edit2,
   X,
   Lock,
-  FileCheck,
   LifeBuoy,
   MessageSquare,
   Smartphone,
   Trash2,
   KeyRound,
   FileText,
-  AlertCircle
+  AlertCircle,
+  Power,
+  Banknote,
+  Clock
 } from 'lucide-react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 
 const menuItems = [
   { id: 'profile', label: 'Business Profile', icon: Building2, desc: 'Manage your public details, logo, and bank accounts' },
   { id: 'packages', label: 'Package Management', icon: Package, desc: 'Create and edit your travel packages' },
-  { id: 'kyc', label: 'KYC & Verification', icon: FileCheck, desc: 'Upload identity and business documents' },
-  { id: 'account', label: 'Account Settings', icon: User, desc: 'Manage email, phone, and account deletion' },
+  { id: 'payments', label: 'Payments & Revenue', icon: Banknote, desc: 'View transactions, payouts, and revenue stats' },
+  { id: 'status', label: 'Service Status', icon: Power, desc: 'Pause or resume your services temporarily' },
   { id: 'notifications', label: 'Notifications', icon: Bell, desc: 'Customize your email and SMS alerts' },
   { id: 'security', label: 'Security & Login', icon: Lock, desc: 'Update passwords and secure your account' },
   { id: 'help', label: 'Help & Support', icon: LifeBuoy, desc: 'Get in touch with the support team' },
@@ -80,14 +82,14 @@ export default function SettingsForm() {
   };
 
   return (
-    <div className="w-full min-h-screen bg-gray-50 -mt-6">
+    <div className="w-full min-h-screen bg-transparent pb-10">
       {/* MENU LIST */}
       {!active && !pathname.includes('/settings/packages') && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className="mx-auto w-full max-w-6xl pb-12"
+          className="mx-auto w-full max-w-6xl pb-12 pt-6"
         >
           <div className="mb-10 px-2 space-y-1">
             <h1 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight">Settings</h1>
@@ -143,8 +145,8 @@ export default function SettingsForm() {
 
           <div className="px-5 py-6">
             {active === 'profile' && <ProfileContent initialEditMode={searchParams.get('edit') === 'true'} />}
-            {active === 'account' && <AccountContent />}
-            {active === 'kyc' && <KYCContent />}
+            {active === 'payments' && <PaymentsContent />}
+            {active === 'status' && <ServiceStatusContent />}
             {active === 'notifications' && <NotificationsContent />}
             {active === 'security' && <SecurityContent />}
             {active === 'help' && <HelpContent />}
@@ -769,55 +771,49 @@ function ProfileContent({ initialEditMode = false }) {
 }
 
 
-function AccountContent() {
+function PaymentsContent() {
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-12 animate-in fade-in duration-500">
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 md:p-8 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-gray-50 rounded-bl-[100px] -z-10"></div>
+      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 md:p-8">
         <div className="flex items-center gap-3 mb-8">
-          <div className="p-3 bg-gray-100 rounded-2xl text-gray-600">
-            <User size={22} className="stroke-[2.5]" />
+          <div className="p-3 bg-emerald-100 rounded-2xl text-emerald-600">
+            <Banknote size={22} className="stroke-[2.5]" />
           </div>
           <div>
-            <h4 className="text-lg font-bold text-gray-900">Personal Data</h4>
-            <p className="text-xs text-gray-500 font-medium mt-0.5">Manage the email and phone linked to your account.</p>
+            <h4 className="text-lg font-bold text-gray-900">Payments & Revenue</h4>
+            <p className="text-xs text-gray-500 font-medium mt-0.5">Track your earnings, payouts, and pending settlements.</p>
           </div>
         </div>
 
-        <div className="space-y-6">
-          <div className="space-y-1.5 group">
-            <label className="block text-[11px] font-bold text-gray-500 mb-1.5 uppercase tracking-wider pl-1">Email Address</label>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div className="relative flex-1">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-emerald-500"><Mail size={18} /></div>
-                <input type="email" className="w-full py-3.5 pl-11 pr-4 rounded-xl border border-emerald-200 bg-white shadow-inner focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500" defaultValue="sami@example.com" />
-              </div>
-              <button className="px-6 py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition">Update</button>
-            </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">
+          <div className="p-5 rounded-2xl border border-gray-100 bg-gray-50 relative overflow-hidden group hover:border-emerald-200 transition-colors">
+            <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity"><Banknote size={48} /></div>
+            <p className="text-sm text-gray-500 font-medium mb-1">Total Earnings</p>
+            <p className="text-3xl font-black text-gray-900">₹0</p>
           </div>
-
-          <div className="space-y-1.5 group">
-            <label className="block text-[11px] font-bold text-gray-500 mb-1.5 uppercase tracking-wider pl-1">Phone Number</label>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div className="relative flex-1">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-emerald-500"><Phone size={18} /></div>
-                <input type="tel" className="w-full py-3.5 pl-11 pr-4 rounded-xl border border-emerald-200 bg-white shadow-inner focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500" defaultValue="+91 9876543210" />
-              </div>
-              <button className="px-6 py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition">Update</button>
-            </div>
+          <div className="p-5 rounded-2xl border border-emerald-100 bg-emerald-50 relative overflow-hidden shadow-inner">
+            <div className="absolute top-0 right-0 p-3 opacity-10 text-emerald-700"><CheckCircle2 size={48} /></div>
+            <p className="text-sm text-emerald-700 font-medium mb-1 flex items-center gap-1.5">
+              Available for Payout
+            </p>
+            <p className="text-3xl font-black text-emerald-900">₹0</p>
+            <button className="mt-3 px-4 py-1.5 bg-emerald-600 text-white text-xs font-bold rounded-lg hover:bg-emerald-700 transition shadow-sm inline-block">Withdraw Funds</button>
+          </div>
+          <div className="p-5 rounded-2xl border border-amber-100 bg-amber-50 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-3 opacity-10 text-amber-600"><Clock size={48} /></div>
+            <p className="text-sm text-amber-700 font-medium mb-1 flex items-center gap-1.5">
+              Pending Clearance
+            </p>
+            <p className="text-3xl font-black text-amber-900">₹0</p>
           </div>
         </div>
-      </div>
 
-      <div className="bg-red-50/50 rounded-3xl border border-red-100 p-6 md:p-8">
-        <div className="flex items-start gap-4">
-          <div className="p-3 bg-red-100 rounded-xl text-red-600 mt-1">
-            <Trash2 size={24} />
-          </div>
-          <div className="flex-1">
-            <h4 className="text-lg font-bold text-gray-900 tracking-tight">Danger Zone</h4>
-            <p className="text-sm text-gray-600 font-medium mt-1 mb-4">Deleting your account is permanent. All associated data will be removed and cannot be recovered.</p>
-            <button className="px-6 py-3 bg-white border border-red-200 text-red-600 font-bold rounded-xl hover:bg-red-50 transition shadow-sm">Delete Account</button>
+        <div className="space-y-4">
+          <h5 className="font-bold text-gray-900 text-lg">Recent Transactions</h5>
+          <div className="border border-gray-100 rounded-2xl overflow-hidden flex flex-col items-center justify-center p-12 bg-gray-50/50">
+            <CreditCard size={48} className="text-gray-300 mb-4" />
+            <h4 className="text-gray-900 font-bold mb-1">No transactions found</h4>
+            <p className="text-gray-500 font-medium text-sm">Your payouts and earning history will appear here once you receive bookings.</p>
           </div>
         </div>
       </div>
@@ -825,51 +821,49 @@ function AccountContent() {
   );
 }
 
-function KYCContent() {
+function ServiceStatusContent() {
+  const [isPaused, setIsPaused] = useState(false);
+
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-12 animate-in fade-in duration-500">
-      <div className="bg-amber-50 rounded-[2rem] border border-amber-200 p-6 flex flex-col sm:flex-row items-center sm:items-start gap-4">
-        <AlertCircle size={32} className="text-amber-500 shrink-0" />
-        <div>
-          <h4 className="font-bold text-amber-900 text-lg">Action Required</h4>
-          <p className="text-sm text-amber-800/80 font-medium mt-0.5">Please upload your business registration and identity documents to remove the limit on your account and receive the "Verified Partner" badge.</p>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {[
-          { title: 'Identity Proof (Aadhaar / PAN)', status: 'pending', id: 'id' },
-          { title: 'Business Registration (GST / Trade License)', status: 'missing', id: 'business' },
-          { title: 'Canceled Cheque', status: 'missing', id: 'bank' },
-        ].map((item) => (
-          <div key={item.id} className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 group hover:border-emerald-100 hover:shadow-md transition">
-            <div className={`p-3 rounded-2xl w-max mb-5 ${item.status === 'missing' ? 'bg-gray-100 text-gray-500' : item.status === 'pending' ? 'bg-amber-100 text-amber-600' : 'bg-emerald-100 text-emerald-600'}`}>
-              <FileText size={24} className="stroke-[2.5]" />
-            </div>
-            <h5 className="font-bold text-gray-900 text-lg">{item.title}</h5>
-
-            {item.status === 'missing' && (
-              <div className="mt-4">
-                <span className="text-xs font-bold uppercase tracking-wider text-red-500 bg-red-50 px-2.5 py-1 rounded border border-red-100 inline-block mb-4">Action Needed</span>
-                <button className="w-full flex justify-center items-center gap-2 py-3 border-2 border-dashed border-gray-200 rounded-xl text-gray-500 font-semibold hover:border-emerald-400 hover:text-emerald-600 hover:bg-emerald-50 transition cursor-pointer">
-                  <Upload size={18} /> Upload File
-                </button>
-              </div>
-            )}
-            {item.status === 'pending' && (
-              <div className="mt-4">
-                <span className="text-xs font-bold uppercase tracking-wider text-amber-600 bg-amber-50 px-2.5 py-1 rounded border border-amber-200 inline-block mb-2">Under Review</span>
-                <p className="text-xs text-gray-500 font-medium">Uploaded on Mar 5, 2026. Usually takes 24 hours.</p>
-              </div>
-            )}
-            {item.status === 'verified' && (
-              <div className="mt-4 flex items-center gap-2">
-                <CheckCircle2 size={18} className="text-emerald-500" />
-                <span className="text-sm font-bold text-emerald-700">Verified Successfully</span>
-              </div>
-            )}
+      <div className={`rounded-3xl border shadow-sm p-6 md:p-8 transition-colors duration-500 ${isPaused ? 'bg-amber-50/50 border-amber-200' : 'bg-white border-gray-100'}`}>
+        <div className="flex items-center gap-3 mb-8">
+          <div className="p-3 bg-emerald-100 rounded-2xl text-emerald-600">
+            <Power size={22} className="stroke-[2.5]" />
           </div>
-        ))}
+          <div>
+            <h4 className="text-lg font-bold text-gray-900">Service Status</h4>
+            <p className="text-xs text-gray-500 font-medium mt-0.5">Temporarily pause your bookings without losing your data.</p>
+          </div>
+        </div>
+
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-6 md:p-8 rounded-[2rem] border bg-white shadow-sm">
+          <div className="flex-1">
+            <h5 className="font-bold text-gray-900 text-xl mb-2 flex items-center gap-2">
+              {isPaused ? (
+                <><span className="w-3 h-3 rounded-full bg-amber-500 animate-pulse"></span> Services Paused</>
+              ) : (
+                <><span className="w-3 h-3 rounded-full bg-emerald-500"></span> Services Active</>
+              )}
+            </h5>
+            <p className="text-[15px] text-gray-500 font-medium leading-relaxed max-w-lg">
+              {isPaused
+                ? 'Your profile and packages are currently hidden from customers. You will not receive any new bookings until you resume services.'
+                : 'Your profile is visible and you are currently accepting new bookings. Pause your services if you are on vacation or cannot accept new bookings temporarily.'}
+            </p>
+          </div>
+
+          <button
+            onClick={() => setIsPaused(!isPaused)}
+            className={`px-8 py-4 rounded-xl font-bold transition-all shadow-sm shrink-0 flex items-center gap-2 text-lg ${isPaused
+              ? 'bg-emerald-600 text-white hover:bg-emerald-700 hover:-translate-y-0.5'
+              : 'bg-amber-100 text-amber-700 hover:bg-amber-200 hover:-translate-y-0.5'
+              }`}
+          >
+            <Power size={20} />
+            {isPaused ? 'Resume Services' : 'Pause Services'}
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -880,7 +874,7 @@ function NotificationsContent() {
     <div className="max-w-4xl mx-auto space-y-8 pb-12 animate-in fade-in duration-500">
       <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 md:p-8">
         <div className="flex items-center gap-3 mb-8">
-          <div className="p-3 bg-purple-100 rounded-2xl text-purple-600">
+          <div className="p-3 bg-emerald-100 rounded-2xl text-emerald-600">
             <Bell size={22} className="stroke-[2.5]" />
           </div>
           <div>
@@ -900,7 +894,7 @@ function NotificationsContent() {
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" className="sr-only peer" defaultChecked />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
             </label>
           </div>
 
@@ -914,11 +908,11 @@ function NotificationsContent() {
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" className="sr-only peer" />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
             </label>
           </div>
 
-          <button className="mt-4 px-6 py-3 bg-purple-600 text-white font-bold rounded-xl hover:bg-purple-700 transition shadow-sm">Save Preferences</button>
+          <button className="mt-4 px-6 py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition shadow-sm">Save Preferences</button>
         </div>
       </div>
     </div>
@@ -930,7 +924,7 @@ function SecurityContent() {
     <div className="max-w-4xl mx-auto space-y-8 pb-12 animate-in fade-in duration-500">
       <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 md:p-8">
         <div className="flex items-center gap-3 mb-8">
-          <div className="p-3 bg-indigo-100 rounded-2xl text-indigo-600">
+          <div className="p-3 bg-emerald-100 rounded-2xl text-emerald-600">
             <KeyRound size={22} className="stroke-[2.5]" />
           </div>
           <div>
@@ -942,21 +936,21 @@ function SecurityContent() {
         <div className="space-y-4 max-w-lg">
           <div className="space-y-1.5">
             <label className="block text-[11px] font-bold text-gray-500 mb-1.5 uppercase tracking-wider pl-1">Current Password</label>
-            <input type="password" className="w-full py-3.5 px-4 rounded-xl border border-indigo-200 bg-white shadow-inner focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none" placeholder="••••••••" />
+            <input type="password" className="w-full py-3.5 px-4 rounded-xl border border-emerald-200 bg-white shadow-inner focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none" placeholder="••••••••" />
           </div>
 
           <div className="space-y-1.5">
             <label className="block text-[11px] font-bold text-gray-500 mb-1.5 uppercase tracking-wider pl-1">New Password</label>
-            <input type="password" className="w-full py-3.5 px-4 rounded-xl border border-indigo-200 bg-white shadow-inner focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none" placeholder="New Password" />
+            <input type="password" className="w-full py-3.5 px-4 rounded-xl border border-emerald-200 bg-white shadow-inner focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none" placeholder="New Password" />
           </div>
 
           <div className="space-y-1.5">
             <label className="block text-[11px] font-bold text-gray-500 mb-1.5 uppercase tracking-wider pl-1">Confirm New Password</label>
-            <input type="password" className="w-full py-3.5 px-4 rounded-xl border border-indigo-200 bg-white shadow-inner focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none" placeholder="Confirm Password" />
+            <input type="password" className="w-full py-3.5 px-4 rounded-xl border border-emerald-200 bg-white shadow-inner focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none" placeholder="Confirm Password" />
           </div>
 
           <div className="pt-2">
-            <button className="px-8 py-3.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition shadow-lg w-full sm:w-auto">
+            <button className="px-8 py-3.5 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition shadow-lg w-full sm:w-auto">
               Update Password
             </button>
           </div>
@@ -975,28 +969,28 @@ function HelpContent() {
         <h2 className="text-3xl font-black mb-3">How can we help you today?</h2>
         <p className="text-emerald-100 max-w-lg text-lg mb-8">Whether you have questions about a booking, payments, or the platform, our specialized partner support team is here to assist.</p>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <button className="flex items-center gap-3 bg-white text-emerald-900 px-6 py-4 rounded-2xl font-bold hover:shadow-lg transition hover:-translate-y-1">
-            <MessageSquare size={20} className="text-emerald-500" />
-            Live Chat
-          </button>
-          <button className="flex items-center gap-3 bg-emerald-700/50 text-white border border-emerald-500/30 px-6 py-4 rounded-2xl font-bold hover:bg-emerald-700 hover:shadow-lg transition hover:-translate-y-1 backdrop-blur-sm">
-            <Phone size={20} className="text-emerald-300" />
+        <div className="flex flex-col sm:flex-row gap-4 max-w-xl">
+          <button className="flex-1 flex items-center justify-center gap-3 bg-white text-emerald-900 px-6 py-4 rounded-2xl font-bold hover:shadow-lg transition hover:-translate-y-1">
+            <Phone size={20} className="text-emerald-500" />
             Request Callback
           </button>
+          <a href="mailto:partners@bagspackgo.com" className="flex-1 flex items-center justify-center gap-3 bg-emerald-700/50 text-white border border-emerald-500/30 px-6 py-4 rounded-2xl font-bold hover:bg-emerald-700 hover:shadow-lg transition hover:-translate-y-1 backdrop-blur-sm">
+            <Mail size={20} className="text-emerald-300" />
+            Email Support
+          </a>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        <div className="bg-white rounded-3xl border p-6 hover:shadow-md transition">
-          <h4 className="font-bold text-gray-900 flex items-center gap-2 mb-2"><FileText size={18} className="text-emerald-600" /> Read the Documentation</h4>
-          <p className="text-sm text-gray-500 mb-4">Learn how to create compelling travel packages and get the most out of Bagspackgo.</p>
-          <a href="#" className="text-sm font-bold text-emerald-600 hover:underline">View Guides &rarr;</a>
-        </div>
-        <div className="bg-white rounded-3xl border p-6 hover:shadow-md transition">
-          <h4 className="font-bold text-gray-900 flex items-center gap-2 mb-2"><Mail size={18} className="text-emerald-600" /> Email Support</h4>
-          <p className="text-sm text-gray-500 mb-4">Send us an email directly at partners@bagspackgo.com with your queries.</p>
-          <a href="mailto:partners@bagspackgo.com" className="text-sm font-bold text-emerald-600 hover:underline">Send Email &rarr;</a>
+      <div className="grid grid-cols-1 gap-6">
+        <div className="bg-white rounded-3xl border p-6 hover:shadow-md transition group">
+          <h4 className="font-bold text-gray-900 flex items-center gap-2 mb-2">
+            <FileText size={18} className="text-emerald-600" />
+            Read the Documentation
+          </h4>
+          <p className="text-sm text-gray-500 mb-4 max-w-xl">Learn how to create compelling travel packages, track your payouts, and get the most out of Bagspackgo.</p>
+          <a href="#" className="text-sm font-bold text-emerald-600 hover:underline inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+            View Guides <ArrowLeft size={16} className="rotate-180" />
+          </a>
         </div>
       </div>
     </div>
