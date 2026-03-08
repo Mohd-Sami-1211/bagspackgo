@@ -1382,38 +1382,234 @@ function SecurityContent() {
 }
 
 function HelpContent() {
+  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState({ type: "", message: "" });
+  const [requests, setRequests] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [msgData, setMsgData] = useState({ subject: "", message: "" });
+  const [fetching, setFetching] = useState(true);
+
+  useEffect(() => {
+    fetchRequests();
+  }, []);
+
+  const fetchRequests = async () => {
+    try {
+      const res = await fetch("/api/provider/support");
+      const data = await res.json();
+      if (data.success) {
+        setRequests(data.data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch support requests:", error);
+    } finally {
+      setFetching(false);
+    }
+  };
+
+  const requestCallback = async () => {
+    setLoading(true);
+    setStatus({ type: "", message: "" });
+    try {
+      const res = await fetch("/api/provider/support", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "callback" })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setStatus({ type: "success", message: "Callback requested successfully! Our team will call you soon." });
+        fetchRequests();
+      } else {
+        setStatus({ type: "error", message: data.message });
+      }
+      setTimeout(() => setStatus({ type: "", message: "" }), 5000);
+    } catch (err) {
+      setStatus({ type: "error", message: "Failed to request callback." });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const submitMessage = async (e) => {
+    e.preventDefault();
+    if (!msgData.subject || !msgData.message) return;
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/provider/support", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "message", subject: msgData.subject, message: msgData.message })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setStatus({ type: "success", message: "Message sent! Our support team will get back to you via email." });
+        setIsModalOpen(false);
+        setMsgData({ subject: "", message: "" });
+        fetchRequests();
+      } else {
+        setStatus({ type: "error", message: data.message });
+      }
+      setTimeout(() => setStatus({ type: "", message: "" }), 5000);
+    } catch (err) {
+      setStatus({ type: "error", message: "Failed to send message." });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="max-w-4xl mx-auto space-y-8 pb-12 animate-in fade-in duration-500">
+    <div className="max-w-4xl mx-auto space-y-8 pb-12 animate-in fade-in duration-500 relative">
       <div className="bg-gradient-to-br from-emerald-600 to-teal-800 rounded-3xl p-8 md:p-12 text-white relative overflow-hidden shadow-xl">
         <LifeBuoy size={120} className="absolute -right-10 -bottom-10 text-white/10" />
 
         <h2 className="text-3xl font-black mb-3">How can we help you today?</h2>
         <p className="text-emerald-100 max-w-lg text-lg mb-8">Whether you have questions about a booking, payments, or the platform, our specialized partner support team is here to assist.</p>
 
-        <div className="flex flex-col sm:flex-row gap-4 max-w-xl">
-          <button className="flex-1 flex items-center justify-center gap-3 bg-white text-emerald-900 px-6 py-4 rounded-2xl font-bold hover:shadow-lg transition hover:-translate-y-1">
-            <Phone size={20} className="text-emerald-500" />
+        {status.message && (
+          <div className={`p-4 rounded-xl text-sm font-bold flex items-center gap-2 mb-6 max-w-xl animate-in fade-in slide-in-from-top-2 backdrop-blur-sm ${status.type === 'error' ? 'bg-rose-500/20 text-white border border-rose-500/50' : 'bg-white/20 text-white border border-white/30'}`}>
+            {status.type === 'error' ? <AlertCircle size={18} /> : <CheckCircle2 size={18} />}
+            {status.message}
+          </div>
+        )}
+
+        <div className="flex flex-col sm:flex-row gap-4 max-w-xl relative z-10">
+          <button
+            onClick={requestCallback}
+            disabled={loading}
+            className="flex-1 flex items-center justify-center gap-3 bg-white text-emerald-900 px-6 py-4 rounded-2xl font-bold hover:shadow-lg transition hover:-translate-y-1 disabled:opacity-70 disabled:hover:translate-y-0"
+          >
+            {loading ? <Loader2 size={20} className="animate-spin text-emerald-500" /> : <Phone size={20} className="text-emerald-500" />}
             Request Callback
           </button>
-          <a href="mailto:partners@bagspackgo.com" className="flex-1 flex items-center justify-center gap-3 bg-emerald-700/50 text-white border border-emerald-500/30 px-6 py-4 rounded-2xl font-bold hover:bg-emerald-700 hover:shadow-lg transition hover:-translate-y-1 backdrop-blur-sm">
+          <button
+            onClick={() => setIsModalOpen(true)}
+            disabled={loading}
+            className="flex-1 flex items-center justify-center gap-3 bg-emerald-700/50 text-white border border-emerald-500/30 px-6 py-4 rounded-2xl font-bold hover:bg-emerald-700 hover:shadow-lg transition hover:-translate-y-1 backdrop-blur-sm disabled:opacity-70 disabled:hover:translate-y-0"
+          >
             <Mail size={20} className="text-emerald-300" />
-            Email Support
-          </a>
+            Write to us
+          </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6">
-        <div className="bg-white rounded-3xl border p-6 hover:shadow-md transition group">
-          <h4 className="font-bold text-gray-900 flex items-center gap-2 mb-2">
-            <FileText size={18} className="text-emerald-600" />
-            Read the Documentation
-          </h4>
-          <p className="text-sm text-gray-500 mb-4 max-w-xl">Learn how to create compelling travel packages, track your payouts, and get the most out of Bagspackgo.</p>
-          <a href="#" className="text-sm font-bold text-emerald-600 hover:underline inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-            View Guides <ArrowLeft size={16} className="rotate-180" />
-          </a>
+      {/* Support History */}
+      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 md:p-8">
+        <div className="flex items-center gap-3 mb-8">
+          <div className="p-3 bg-gray-100 rounded-2xl text-gray-600">
+            <MessageSquare size={22} className="stroke-[2.5]" />
+          </div>
+          <div>
+            <h4 className="text-lg font-bold text-gray-900">Your Support Requests</h4>
+            <p className="text-xs text-gray-500 font-medium mt-0.5">Track the status of your callback requests and messages.</p>
+          </div>
         </div>
+
+        {fetching ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="animate-spin text-gray-300" size={32} />
+          </div>
+        ) : requests.length === 0 ? (
+          <div className="text-center py-10 px-4 border-2 border-dashed border-gray-100 rounded-2xl bg-gray-50/50">
+            <LifeBuoy size={40} className="mx-auto text-gray-300 mb-3" />
+            <h5 className="font-bold text-gray-900 mb-1">No requests yet</h5>
+            <p className="text-sm text-gray-500">When you reach out to our team, you can track it here.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {requests.map(req => (
+              <div key={req._id} className="p-5 border border-gray-100 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4 hover:border-emerald-200 transition-colors bg-gray-50/30">
+                <div className="flex items-start gap-3">
+                  <div className={`mt-0.5 p-2 rounded-lg ${req.type === 'callback' ? 'bg-amber-100 text-amber-600' : 'bg-blue-100 text-blue-600'}`}>
+                    {req.type === 'callback' ? <Phone size={16} className="stroke-[2.5]" /> : <Mail size={16} className="stroke-[2.5]" />}
+                  </div>
+                  <div>
+                    <span className="font-bold text-gray-900 block mb-0.5 uppercase tracking-wide text-[11px] opacity-60">
+                      {req.type === 'callback' ? 'Callback Request' : 'Support Message'}
+                    </span>
+                    <h5 className="font-bold text-[15px] text-gray-800">
+                      {req.type === 'callback' ? 'Please call me' : req.subject}
+                    </h5>
+                    <span className="text-xs text-gray-400 font-medium">{new Date(req.createdAt).toLocaleDateString()} at {new Date(req.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                  </div>
+                </div>
+
+                <div className="shrink-0">
+                  <span className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider ${req.status === 'resolved' ? 'bg-emerald-100 text-emerald-700' : req.status === 'in-progress' ? 'bg-blue-100 text-blue-700' : 'bg-gray-200 text-gray-600'}`}>
+                    {req.status}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
+
+      {/* Write message Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6 md:p-8">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="text-xl font-black text-gray-900">Write to us</h3>
+                  <p className="text-sm text-gray-500 font-medium">Please detail your issue and our team will email you.</p>
+                </div>
+                <button
+                  onClick={() => setIsModalOpen(false)}
+                  className="p-2 rounded-xl hover:bg-gray-100 transition-colors text-gray-500"
+                >
+                  <X size={20} className="stroke-[3]" />
+                </button>
+              </div>
+
+              <form onSubmit={submitMessage} className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="block text-[11px] font-bold text-gray-500 mb-1.5 uppercase tracking-wider pl-1">Subject</label>
+                  <input
+                    type="text"
+                    value={msgData.subject}
+                    onChange={(e) => setMsgData({ ...msgData, subject: e.target.value })}
+                    className="w-full py-3.5 px-4 rounded-xl border border-gray-200 bg-white shadow-inner focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-colors"
+                    placeholder="e.g. Question about payout"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-[11px] font-bold text-gray-500 mb-1.5 uppercase tracking-wider pl-1">Message</label>
+                  <textarea
+                    value={msgData.message}
+                    onChange={(e) => setMsgData({ ...msgData, message: e.target.value })}
+                    className="w-full py-3.5 px-4 rounded-xl border border-gray-200 bg-white shadow-inner focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-colors min-h-[120px] resize-y"
+                    placeholder="Provide as much detail as possible..."
+                    required
+                  />
+                </div>
+
+                <div className="pt-4 flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsModalOpen(false)}
+                    className="flex-1 py-3.5 rounded-xl border border-gray-200 text-gray-600 font-bold hover:bg-gray-50 transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="flex-1 py-3.5 rounded-xl bg-emerald-600 text-white font-bold hover:bg-emerald-700 transition shadow-lg flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                  >
+                    {loading ? <Loader2 size={18} className="animate-spin" /> : <MessageSquare size={18} className="stroke-[2.5]" />}
+                    {loading ? "Sending..." : "Send Message"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
