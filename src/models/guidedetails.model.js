@@ -78,6 +78,11 @@ const guidedetailsSchema = new mongoose.Schema(
             event: { type: Boolean, default: false }
         },
 
+        notifications: {
+            email: { type: Boolean, default: true },
+            sms: { type: Boolean, default: false }
+        },
+
         status: {
             type: String,
             enum: ["submitted", "pending", "approved", "rejected"],

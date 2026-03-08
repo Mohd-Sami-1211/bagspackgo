@@ -41,7 +41,8 @@ import {
   Banknote,
   Clock,
   Filter,
-  Loader2
+  Loader2,
+  ShieldCheck
 } from 'lucide-react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 
@@ -1136,6 +1137,61 @@ function ServiceStatusContent() {
 }
 
 function NotificationsContent() {
+  const [notifications, setNotifications] = useState({ email: true, sms: false });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+
+  useEffect(() => {
+    async function fetchProfile() {
+      try {
+        const res = await fetch('/api/provider/profile');
+        if (res.ok) {
+          const { profile } = await res.json();
+          if (profile?.notifications) {
+            setNotifications(profile.notifications);
+          }
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchProfile();
+  }, []);
+
+  const handleToggle = (key) => {
+    setNotifications(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    setSuccessMessage("");
+    try {
+      const res = await fetch('/api/provider/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notifications })
+      });
+      if (!res.ok) throw new Error("Failed to save preferences");
+      setSuccessMessage("Preferences saved successfully!");
+      setTimeout(() => setSuccessMessage(""), 3000);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-8 pb-12 animate-in fade-in duration-500 flex justify-center py-20">
+        <Loader2 className="animate-spin text-emerald-500" size={40} />
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-12 animate-in fade-in duration-500">
       <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 md:p-8">
@@ -1149,36 +1205,55 @@ function NotificationsContent() {
           </div>
         </div>
 
-        <div className="space-y-6">
-          <div className="flex items-center justify-between p-4 border rounded-2xl bg-gray-50/50">
-            <div className="flex items-start gap-3">
-              <Mail className="text-gray-400 mt-0.5" size={20} />
-              <div>
-                <span className="block font-bold text-gray-900">Email Notifications</span>
+        <div className="space-y-4">
+          <div className={`flex items-center justify-between p-5 border rounded-2xl transition-colors ${notifications.email ? 'border-emerald-200 bg-emerald-50/30' : 'border-gray-100 bg-gray-50/50'}`}>
+            <div className="flex items-start gap-4">
+              <div className={`p-2.5 rounded-xl ${notifications.email ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-200 text-gray-400'}`}>
+                <Mail size={22} className="stroke-[2]" />
+              </div>
+              <div className="mt-0.5">
+                <span className="block font-bold text-gray-900 text-[15px]">Email Notifications</span>
                 <span className="text-[13px] text-gray-500 font-medium">Receive an email for every new booking and cancellation.</span>
               </div>
             </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" className="sr-only peer" defaultChecked />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+            <label className="relative inline-flex items-center cursor-pointer shrink-0">
+              <input type="checkbox" className="sr-only peer" checked={notifications.email} onChange={() => handleToggle('email')} />
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600 shadow-inner"></div>
             </label>
           </div>
 
-          <div className="flex items-center justify-between p-4 border rounded-2xl bg-gray-50/50">
-            <div className="flex items-start gap-3">
-              <Smartphone className="text-gray-400 mt-0.5" size={20} />
-              <div>
-                <span className="block font-bold text-gray-900">SMS Alerts</span>
-                <span className="text-[13px] text-gray-500 font-medium">Urgent notifications sent directly to your phone.</span>
+          <div className={`flex items-center justify-between p-5 border rounded-2xl transition-colors ${notifications.sms ? 'border-emerald-200 bg-emerald-50/30' : 'border-gray-100 bg-gray-50/50'}`}>
+            <div className="flex items-start gap-4">
+              <div className={`p-2.5 rounded-xl ${notifications.sms ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-200 text-gray-400'}`}>
+                <Smartphone size={22} className="stroke-[2]" />
+              </div>
+              <div className="mt-0.5">
+                <span className="block font-bold text-gray-900 text-[15px]">SMS Alerts</span>
+                <span className="text-[13px] text-gray-500 font-medium">Urgent text message notifications sent directly to your phone.</span>
               </div>
             </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" className="sr-only peer" />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+            <label className="relative inline-flex items-center cursor-pointer shrink-0">
+              <input type="checkbox" className="sr-only peer" checked={notifications.sms} onChange={() => handleToggle('sms')} />
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600 shadow-inner"></div>
             </label>
           </div>
 
-          <button className="mt-4 px-6 py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition shadow-sm">Save Preferences</button>
+          <div className="pt-6 flex items-center justify-between">
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="px-8 py-3.5 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition shadow-lg disabled:opacity-70 flex items-center gap-2"
+            >
+              {saving ? <Loader2 size={18} className="animate-spin" /> : <ShieldCheck size={18} className="stroke-[2.5]" />}
+              {saving ? 'Saving...' : 'Save Preferences'}
+            </button>
+
+            {successMessage && (
+              <span className="text-emerald-600 font-bold text-sm bg-emerald-50 px-4 py-2 rounded-lg animate-in fade-in slide-in-from-bottom-2">
+                {successMessage}
+              </span>
+            )}
+          </div>
         </div>
       </div>
     </div>
