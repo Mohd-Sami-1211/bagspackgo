@@ -1261,8 +1261,54 @@ function NotificationsContent() {
 }
 
 function SecurityContent() {
+  const [passData, setPassData] = useState({ current: "", new: "", confirm: "" });
+  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState({ type: "", message: "" });
+
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+    if (passData.new !== passData.confirm) {
+      setStatus({ type: "error", message: "New passwords do not match." });
+      return;
+    }
+    if (passData.new.length < 8) {
+      setStatus({ type: "error", message: "New password must be at least 8 characters long." });
+      return;
+    }
+
+    setLoading(true);
+    setStatus({ type: "", message: "" });
+
+    try {
+      const res = await fetch("/api/provider/security/change-password", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          currentPassword: passData.current,
+          newPassword: passData.new
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to change password.");
+      }
+
+      setStatus({ type: "success", message: "Password updated successfully!" });
+      setPassData({ current: "", new: "", confirm: "" });
+      setTimeout(() => setStatus({ type: "", message: "" }), 5000);
+    } catch (err) {
+      setStatus({ type: "error", message: err.message });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-12 animate-in fade-in duration-500">
+
+      {/* Password Change Section */}
       <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 md:p-8">
         <div className="flex items-center gap-3 mb-8">
           <div className="p-3 bg-emerald-100 rounded-2xl text-emerald-600">
@@ -1270,33 +1316,67 @@ function SecurityContent() {
           </div>
           <div>
             <h4 className="text-lg font-bold text-gray-900">Change Password</h4>
-            <p className="text-xs text-gray-500 font-medium mt-0.5">Ensure your account uses a long, random password.</p>
+            <p className="text-xs text-gray-500 font-medium mt-0.5">Ensure your account uses a long, random password to stay secure.</p>
           </div>
         </div>
 
-        <div className="space-y-4 max-w-lg">
+        <form onSubmit={handlePasswordChange} className="space-y-5 max-w-lg">
           <div className="space-y-1.5">
             <label className="block text-[11px] font-bold text-gray-500 mb-1.5 uppercase tracking-wider pl-1">Current Password</label>
-            <input type="password" className="w-full py-3.5 px-4 rounded-xl border border-emerald-200 bg-white shadow-inner focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none" placeholder="••••••••" />
+            <input
+              type="password"
+              value={passData.current}
+              onChange={(e) => setPassData({ ...passData, current: e.target.value })}
+              className="w-full py-3.5 px-4 rounded-xl border border-emerald-200 bg-white shadow-inner focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-colors expected:border-gray-200"
+              placeholder="••••••••"
+              required
+            />
           </div>
 
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 pt-2">
             <label className="block text-[11px] font-bold text-gray-500 mb-1.5 uppercase tracking-wider pl-1">New Password</label>
-            <input type="password" className="w-full py-3.5 px-4 rounded-xl border border-emerald-200 bg-white shadow-inner focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none" placeholder="New Password" />
+            <input
+              type="password"
+              value={passData.new}
+              onChange={(e) => setPassData({ ...passData, new: e.target.value })}
+              className="w-full py-3.5 px-4 rounded-xl border border-emerald-200 bg-white shadow-inner focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-colors"
+              placeholder="New Password"
+              required
+            />
           </div>
 
           <div className="space-y-1.5">
             <label className="block text-[11px] font-bold text-gray-500 mb-1.5 uppercase tracking-wider pl-1">Confirm New Password</label>
-            <input type="password" className="w-full py-3.5 px-4 rounded-xl border border-emerald-200 bg-white shadow-inner focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none" placeholder="Confirm Password" />
+            <input
+              type="password"
+              value={passData.confirm}
+              onChange={(e) => setPassData({ ...passData, confirm: e.target.value })}
+              className="w-full py-3.5 px-4 rounded-xl border border-emerald-200 bg-white shadow-inner focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-colors"
+              placeholder="Confirm Password"
+              required
+            />
           </div>
 
-          <div className="pt-2">
-            <button className="px-8 py-3.5 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition shadow-lg w-full sm:w-auto">
-              Update Password
+          {status.message && (
+            <div className={`p-4 rounded-xl text-sm font-bold flex items-center gap-2 animate-in fade-in slide-in-from-top-2 ${status.type === 'error' ? 'bg-rose-50 text-rose-600 border border-rose-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'}`}>
+              {status.type === 'error' ? <AlertCircle size={18} /> : <CheckCircle2 size={18} />}
+              {status.message}
+            </div>
+          )}
+
+          <div className="pt-4">
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-8 py-3.5 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition shadow-lg w-full sm:w-auto flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {loading ? <Loader2 size={18} className="animate-spin" /> : <Lock size={18} className="stroke-[2.5]" />}
+              {loading ? "Updating..." : "Update Password"}
             </button>
           </div>
-        </div>
+        </form>
       </div>
+
     </div>
   );
 }
