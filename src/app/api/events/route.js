@@ -52,25 +52,39 @@ export async function GET(request) {
 
         const skip = (page - 1) * limit;
 
-        const [events, total] = await Promise.all([
+        const [eventsList, totalRaw] = await Promise.all([
             Event.find(query)
                 .sort(sortObj)
-                .skip(skip)
-                .limit(limit)
+                // Not using skip/limit here yet, wait until after filter
                 .lean(),
             Event.countDocuments(query),
         ]);
 
         // Fetch guide info for each event
-        const guideIds = [...new Set(events.map((e) => e.guide.toString()))];
+        const guideIds = [...new Set(eventsList.map((e) => e.guide.toString()))];
         const guides = await Guide.find({ _id: { $in: guideIds } })
             .select("username email")
             .lean();
-        const guideDetails = await GuideDetails.find({
+        const guideDetailsList = await GuideDetails.find({
             guide: { $in: guideIds },
         })
-            .select("guide companyname")
+            .select("guide companyname pausedServices")
             .lean();
+
+        // 🛑 Filter out paused events
+        const pausedEventGuides = new Set(
+            guideDetailsList
+                .filter(gd => gd.pausedServices?.event === true)
+                .map(gd => gd.guide.toString())
+        );
+
+        let finalEvents = eventsList.filter(e => !pausedEventGuides.has(e.guide.toString()));
+        const finalTotal = finalEvents.length;
+
+        // Apply pagination after filtering
+        finalEvents = finalEvents.slice(skip, skip + limit);
+
+
 
         const guideMap = {};
         guides.forEach((g) => {
@@ -79,7 +93,7 @@ export async function GET(request) {
                 email: g.email,
             };
         });
-        guideDetails.forEach((gd) => {
+        guideDetailsList.forEach((gd) => {
             const id = gd.guide.toString();
             if (guideMap[id]) {
                 guideMap[id].companyName = gd.companyname;
@@ -88,10 +102,10 @@ export async function GET(request) {
 
         return NextResponse.json({
             success: true,
-            total,
+            total: finalTotal,
             page,
-            totalPages: Math.ceil(total / limit),
-            events: events.map((e) => {
+            totalPages: Math.ceil(finalTotal / limit),
+            events: finalEvents.map((e) => {
                 const guideInfo = guideMap[e.guide.toString()] || {};
                 return {
                     // Map to the same shape the frontend EventCard expects

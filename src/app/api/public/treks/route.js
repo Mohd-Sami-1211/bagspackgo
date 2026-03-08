@@ -53,6 +53,25 @@ export async function GET(req) {
             }
         }
 
+        if (packages.length === 0) {
+            return NextResponse.json({ success: true, data: [] });
+        }
+
+        const providerIds = [...new Set(packages.map(p => p.provider._id.toString()))];
+
+        const guideDetailsList = await GuideDetails.find({
+            guide: { $in: providerIds }
+        }).lean();
+
+        // Filter out treks from providers who have paused treks
+        const pausedProviderIds = new Set(
+            guideDetailsList
+                .filter(gd => gd.pausedServices?.trek === true)
+                .map(gd => gd.guide.toString())
+        );
+
+        packages = packages.filter(pkg => !pausedProviderIds.has(pkg.provider._id.toString()));
+
         return NextResponse.json({ success: true, data: packages });
     } catch (error) {
         console.error('Failed to fetch public treks:', error);

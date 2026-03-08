@@ -871,8 +871,8 @@ function PaymentsContent() {
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap ${activeTab === tab
-                  ? 'bg-emerald-600 text-white shadow-md'
-                  : 'bg-white text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+                ? 'bg-emerald-600 text-white shadow-md'
+                : 'bg-white text-gray-500 hover:bg-gray-50 hover:text-gray-900'
                 }`}
             >
               {tab.charAt(0).toUpperCase() + tab.slice(1)} Bookings
@@ -955,47 +955,180 @@ function PaymentsContent() {
 }
 
 function ServiceStatusContent() {
-  const [isPaused, setIsPaused] = useState(false);
+  const [pausedServices, setPausedServices] = useState({
+    trip: false,
+    trek: false,
+    event: false
+  });
+  const [loading, setLoading] = useState(true);
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, service: null, currentValue: false });
+  const [confirmText, setConfirmText] = useState("");
+
+  useEffect(() => {
+    async function fetchProfile() {
+      try {
+        const res = await fetch('/api/provider/profile');
+        if (res.ok) {
+          const { profile } = await res.json();
+          if (profile?.pausedServices) {
+            setPausedServices(profile.pausedServices);
+          }
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchProfile();
+  }, []);
+
+  const handleToggleClick = (service) => {
+    // We only need to confirm when PAUSING (which means turning it "Off" from the user's view, so currentValue would be false, turning to true)
+    const currentValue = pausedServices[service];
+
+    // If they want to resume (currentValue is true, changing to false), just do it instantly
+    if (currentValue === true) {
+      updateServiceStatus(service, false);
+      return;
+    }
+
+    // Otherwise, they want to pause. Show confirm modal.
+    setConfirmModal({ isOpen: true, service, currentValue });
+  };
+
+  const handleConfirmPause = async () => {
+    if (confirmText.toLowerCase() !== 'confirm') return;
+
+    const service = confirmModal.service;
+    await updateServiceStatus(service, true);
+    setConfirmModal({ isOpen: false, service: null, currentValue: false });
+    setConfirmText("");
+  };
+
+  const updateServiceStatus = async (service, isPausedValue) => {
+    const backup = { ...pausedServices };
+    const updated = { ...pausedServices, [service]: isPausedValue };
+    setPausedServices(updated);
+
+    try {
+      const res = await fetch('/api/provider/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pausedServices: updated })
+      });
+      if (!res.ok) throw new Error("Failed to update status");
+    } catch (err) {
+      console.error(err);
+      setPausedServices(backup); // Revert on failure
+    }
+  };
+
+
+  if (loading) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-8 pb-12 animate-in fade-in duration-500 flex justify-center py-20">
+        <Loader2 className="animate-spin text-emerald-500" size={40} />
+      </div>
+    );
+  }
+
+  const servicesList = [
+    { id: 'trip', label: 'Trip Bookings', descOn: 'Listed and publicly bookable.', descOff: 'Hidden. Customers will see "Available soon".' },
+    { id: 'trek', label: 'Trek Bookings', descOn: 'Listed and publicly bookable.', descOff: 'Hidden. Customers will see "Available soon".' },
+    { id: 'event', label: 'Event Bookings', descOn: 'Listed and publicly bookable.', descOff: 'Hidden. Customers will see "Available soon".' },
+  ];
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-12 animate-in fade-in duration-500">
-      <div className={`rounded-3xl border shadow-sm p-6 md:p-8 transition-colors duration-500 ${isPaused ? 'bg-amber-50/50 border-amber-200' : 'bg-white border-gray-100'}`}>
+
+      {/* Confirmation Modal */}
+      {confirmModal.isOpen && (
+        <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl shadow-2xl p-6 md:p-8 w-full max-w-md">
+            <h3 className="text-xl font-black text-gray-900 mb-2">Pause {confirmModal.service.charAt(0).toUpperCase() + confirmModal.service.slice(1)} Bookings?</h3>
+            <p className="text-sm text-gray-500 font-medium mb-6">
+              This will hide all your {confirmModal.service} packages from customers. They will not be able to book them until you resume services.
+              <br /><br />
+              To proceed, please type <strong>confirm</strong> below.
+            </p>
+            <input
+              type="text"
+              className="w-full py-3.5 px-4 rounded-xl border border-rose-200 bg-rose-50/30 text-rose-900 font-bold outline-none mb-6 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 placeholder:font-normal placeholder:text-gray-400"
+              placeholder="Type confirm"
+              value={confirmText}
+              onChange={(e) => setConfirmText(e.target.value)}
+            />
+            <div className="flex gap-3 w-full">
+              <button
+                onClick={() => { setConfirmModal({ isOpen: false, service: null, currentValue: false }); setConfirmText(""); }}
+                className="flex-1 py-3 rounded-xl border border-gray-200 text-gray-600 font-bold hover:bg-gray-50 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmPause}
+                disabled={confirmText.toLowerCase() !== 'confirm'}
+                className="flex-1 py-3 rounded-xl bg-amber-500 text-white font-bold hover:bg-amber-600 transition shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Pause Services
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 md:p-8">
         <div className="flex items-center gap-3 mb-8">
           <div className="p-3 bg-emerald-100 rounded-2xl text-emerald-600">
             <Power size={22} className="stroke-[2.5]" />
           </div>
           <div>
             <h4 className="text-lg font-bold text-gray-900">Service Status</h4>
-            <p className="text-xs text-gray-500 font-medium mt-0.5">Temporarily pause your bookings without losing your data.</p>
+            <p className="text-xs text-gray-500 font-medium mt-0.5">Manage the visibility and booking status of your profile.</p>
           </div>
         </div>
 
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-6 md:p-8 rounded-[2rem] border bg-white shadow-sm">
-          <div className="flex-1">
-            <h5 className="font-bold text-gray-900 text-xl mb-2 flex items-center gap-2">
-              {isPaused ? (
-                <><span className="w-3 h-3 rounded-full bg-amber-500 animate-pulse"></span> Services Paused</>
-              ) : (
-                <><span className="w-3 h-3 rounded-full bg-emerald-500"></span> Services Active</>
-              )}
-            </h5>
-            <p className="text-[15px] text-gray-500 font-medium leading-relaxed max-w-lg">
-              {isPaused
-                ? 'Your profile and packages are currently hidden from customers. You will not receive any new bookings until you resume services.'
-                : 'Your profile is visible and you are currently accepting new bookings. Pause your services if you are on vacation or cannot accept new bookings temporarily.'}
-            </p>
-          </div>
+        <div className="space-y-4">
+          {servicesList.map((svc) => {
+            const isPaused = pausedServices[svc.id];
 
-          <button
-            onClick={() => setIsPaused(!isPaused)}
-            className={`px-8 py-4 rounded-xl font-bold transition-all shadow-sm shrink-0 flex items-center gap-2 text-lg ${isPaused
-              ? 'bg-emerald-600 text-white hover:bg-emerald-700 hover:-translate-y-0.5'
-              : 'bg-amber-100 text-amber-700 hover:bg-amber-200 hover:-translate-y-0.5'
-              }`}
-          >
-            <Power size={20} />
-            {isPaused ? 'Resume Services' : 'Pause Services'}
-          </button>
+            return (
+              <div key={svc.id} className={`flex flex-col md:flex-row md:items-center justify-between gap-6 p-6 border rounded-2xl bg-gray-50/50 transition-colors ${isPaused ? 'border-amber-100 bg-amber-50/30' : 'border-gray-100'}`}>
+                <div className="flex-1 text-left">
+                  <div className="flex items-center gap-2.5 mb-1.5">
+                    <span className="relative flex h-2.5 w-2.5 shrink-0">
+                      {!isPaused && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>}
+                      <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${isPaused ? 'bg-amber-500' : 'bg-emerald-500'}`}></span>
+                    </span>
+                    <h5 className="font-bold text-gray-900 text-[15px]">
+                      {svc.label}
+                    </h5>
+                    {isPaused && (
+                      <span className="bg-amber-100 text-amber-700 text-[10px] uppercase tracking-widest font-bold px-2 py-0.5 rounded-md ml-2">
+                        Paused
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[13px] text-gray-500 font-medium leading-relaxed">
+                    {isPaused ? svc.descOff : svc.descOn}
+                  </p>
+                </div>
+
+                <div
+                  className="relative inline-flex items-center cursor-pointer shrink-0"
+                  onClick={() => handleToggleClick(svc.id)}
+                >
+                  <div className={`w-11 h-6 rounded-full transition-colors relative shadow-inner flex items-center ${!isPaused ? 'bg-emerald-600' : 'bg-gray-200'}`}>
+                    <div className={`absolute w-5 h-5 bg-white rounded-full transition-all shadow-sm top-[2px] ${!isPaused ? 'left-[22px]' : 'left-[2px]'}`}></div>
+                  </div>
+                  <span className="ml-3 text-sm font-bold text-gray-700 w-8">
+                    {isPaused ? 'Off' : 'On'}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

@@ -67,10 +67,23 @@ export async function GET(req) {
         // Group packages by provider
         const providerIds = [...new Set(packages.map(p => p.provider.toString()))];
 
-        // Try to get GuideDetails for these providers
+        // Try to get GuideDetails for these providers to check if they have paused trip services
         const guideDetailsList = await GuideDetails.find({
             guide: { $in: providerIds }
         }).populate('guide').lean();
+
+        // 🛑 Filter out packages from providers who have paused trips
+        const pausedProviderIds = new Set(
+            guideDetailsList
+                .filter(gd => gd.pausedServices?.trip === true)
+                .map(gd => gd.guide._id.toString())
+        );
+
+        packages = packages.filter(pkg => !pausedProviderIds.has(pkg.provider.toString()));
+
+        if (packages.length === 0) {
+            return NextResponse.json({ success: true, data: [] });
+        }
 
         // For provider IDs that have no GuideDetails, use plain Guide records
         const guideDetailsProviderIds = guideDetailsList.map(gd => gd.guide._id.toString());

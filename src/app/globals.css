@@ -54,3 +54,9 @@ select:focus {
   outline: none !important;
   box-shadow: none !important;
 }
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}

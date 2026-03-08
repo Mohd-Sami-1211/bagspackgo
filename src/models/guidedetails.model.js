@@ -72,6 +72,12 @@ const guidedetailsSchema = new mongoose.Schema(
 
         agree: { type: Boolean, required: true },
 
+        pausedServices: {
+            trip: { type: Boolean, default: false },
+            trek: { type: Boolean, default: false },
+            event: { type: Boolean, default: false }
+        },
+
         status: {
             type: String,
             enum: ["submitted", "pending", "approved", "rejected"],

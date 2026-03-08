@@ -39,6 +39,7 @@ export async function GET() {
                     phone: guide.phone,
                     applicationStatus: guide.applicationStatus,
                     createdAt: guide.createdAt,
+                    pausedServices: details.pausedServices || { trip: false, trek: false, event: false },
                     ...details
                 }
             },
@@ -93,6 +94,7 @@ export async function PUT(req) {
             ifscCode,
             gstNumber,
             panNumber,
+            pausedServices,
         } = body;
 
         // 1. Update basic Guide info (like name) if provided
@@ -134,6 +136,7 @@ export async function PUT(req) {
 
         if (gstNumber !== undefined) updateFields.gstNumber = gstNumber;
         if (panNumber !== undefined) updateFields.panNumber = panNumber;
+        if (pausedServices !== undefined) updateFields.pausedServices = pausedServices;
 
         const updatedDetails = await GuideDetails.findOneAndUpdate(
             { guide: user.userId },
