@@ -113,7 +113,15 @@ export default function SingleTrekBooking() {
     const fmtDate = d => d ? new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : '—';
     const fmtAmt = a => `₹${Number(a || 0).toLocaleString('en-IN')}`;
 
-    const travelers = booking.personalDetails?.personalDetails || [];
+    // Support both old key (trekkerDetails) and new key (personalDetails) for backward compat
+    const rawTravelers =
+        booking.personalDetails?.personalDetails ||
+        booking.personalDetails?.trekkerDetails ||
+        [];
+    // If still empty (old booking with no personal details saved), show a minimal row from bookedBy
+    const travelers = rawTravelers.length > 0 ? rawTravelers : (
+        booking.bookedBy ? [{ name: booking.bookedBy, _syntheticOnly: true }] : []
+    );
     const contact = booking.personalDetails?.contactDetails || {};
     const emergency = booking.personalDetails?.emergencyContact || {};
     const pickup = booking.pickupDropoff?.pickup || {};
@@ -233,24 +241,38 @@ export default function SingleTrekBooking() {
                                         {travelers.map((t, i) => (
                                             <tr key={i} className="hover:bg-emerald-50/20 transition-colors">
                                                 <td className="px-5 py-3.5">
-                                                    <span className="w-7 h-7 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold
-                                           flex items-center justify-center border border-emerald-100">
+                                                    <span className="w-7 h-7 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold flex items-center justify-center border border-emerald-100">
                                                         {i + 1}
                                                     </span>
                                                 </td>
-                                                <td className="px-5 py-3.5 font-semibold text-gray-800">{t.name || `Trekker ${i + 1}`}</td>
-                                                <td className="px-5 py-3.5 text-neutral-500">{t.gender} · {t.age} yrs</td>
-                                                <td className="px-5 py-3.5 text-neutral-500">{t.nationality || '—'}</td>
-                                                <td className="px-5 py-3.5 text-right">
-                                                    {t.idType ? (
-                                                        <div>
-                                                            <span className="text-[9px] text-neutral-400 uppercase font-bold block tracking-widest">{t.idType}</span>
-                                                            <span className="font-mono text-xs font-bold text-gray-700 bg-neutral-50 border border-neutral-100 px-2 py-0.5 rounded-md inline-block mt-0.5">
-                                                                {t.idNumber}
-                                                            </span>
-                                                        </div>
-                                                    ) : <span className="text-neutral-300 text-xs italic">N/A</span>}
+                                                <td className="px-5 py-3.5 font-semibold text-gray-800">
+                                                    {t.name || `Trekker ${i + 1}`}
+                                                    {t._syntheticOnly && (
+                                                        <span className="ml-2 text-[10px] font-bold text-amber-500 bg-amber-50 border border-amber-100 px-1.5 py-0.5 rounded">
+                                                            account
+                                                        </span>
+                                                    )}
                                                 </td>
+                                                {t._syntheticOnly ? (
+                                                    <td colSpan={3} className="px-5 py-3.5 text-xs text-neutral-400 italic">
+                                                        Detailed trekker form was not submitted
+                                                    </td>
+                                                ) : (
+                                                    <>
+                                                        <td className="px-5 py-3.5 text-neutral-500">{t.gender || '—'} · {t.age ? `${t.age} yrs` : '—'}</td>
+                                                        <td className="px-5 py-3.5 text-neutral-500">{t.nationality || '—'}</td>
+                                                        <td className="px-5 py-3.5 text-right">
+                                                            {t.idType ? (
+                                                                <div>
+                                                                    <span className="text-[9px] text-neutral-400 uppercase font-bold block tracking-widest">{t.idType}</span>
+                                                                    <span className="font-mono text-xs font-bold text-gray-700 bg-neutral-50 border border-neutral-100 px-2 py-0.5 rounded-md inline-block mt-0.5">
+                                                                        {t.idNumber}
+                                                                    </span>
+                                                                </div>
+                                                            ) : <span className="text-neutral-300 text-xs italic">N/A</span>}
+                                                        </td>
+                                                    </>
+                                                )}
                                             </tr>
                                         ))}
                                     </tbody>
@@ -273,18 +295,9 @@ export default function SingleTrekBooking() {
                     initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18, duration: 0.35 }}
                     className="space-y-4"
                 >
-                    {/* Contact */}
-                    <SectionCard title="Booking Contact" icon={Users} accent="indigo">
-                        <div className="flex items-center gap-3 mb-4 pb-4 border-b border-neutral-50">
-                            <div className="w-11 h-11 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 text-white
-                              font-black text-lg flex items-center justify-center shadow-sm">
-                                {booking.bookedBy?.charAt(0)?.toUpperCase() || '?'}
-                            </div>
-                            <div>
-                                <p className="font-bold text-gray-900">{booking.bookedBy}</p>
-                                <p className="text-xs text-neutral-400">Primary organiser</p>
-                            </div>
-                        </div>
+                    {/* Contact Details */}
+                    <SectionCard title="Contact Details" icon={Mail} accent="indigo">
+                        <ContactRow icon={Users} label="Booked via account" value={booking.bookedBy} />
                         {contact.email && <ContactRow icon={Mail} label="Email" value={contact.email} href={`mailto:${contact.email}`} />}
                         {contact.mobile && <ContactRow icon={Phone} label="Mobile" value={contact.mobile} href={`tel:${contact.mobile}`} />}
                     </SectionCard>

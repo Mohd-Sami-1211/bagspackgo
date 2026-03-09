@@ -275,18 +275,9 @@ export default function SingleTripBooking() {
                     initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18, duration: 0.35 }}
                     className="space-y-4"
                 >
-                    {/* Contact */}
-                    <SectionCard title="Booking Contact" icon={Users} accent="indigo">
-                        <div className="flex items-center gap-3 mb-4 pb-4 border-b border-neutral-50">
-                            <div className="w-11 h-11 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 text-white
-                              font-black text-lg flex items-center justify-center shadow-sm">
-                                {booking.bookedBy?.charAt(0)?.toUpperCase() || '?'}
-                            </div>
-                            <div>
-                                <p className="font-bold text-gray-900">{booking.bookedBy}</p>
-                                <p className="text-xs text-neutral-400">Primary organiser</p>
-                            </div>
-                        </div>
+                    {/* Contact Details */}
+                    <SectionCard title="Contact Details" icon={Mail} accent="indigo">
+                        <ContactRow icon={Users} label="Booked via account" value={booking.bookedBy} />
                         {contact.email && <ContactRow icon={Mail} label="Email" value={contact.email} href={`mailto:${contact.email}`} />}
                         {contact.mobile && <ContactRow icon={Phone} label="Mobile" value={contact.mobile} href={`tel:${contact.mobile}`} />}
                     </SectionCard>

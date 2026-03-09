@@ -35,7 +35,12 @@ const TrekGuideDetails = ({ guide }) => {
   const [itenaries, setItenaries] = useState([]);
   const [pickupDropoffCompleted, setPickupDropoffCompleted] = useState(false);
   const [personalDetailsCompleted, setPersonalDetailsCompleted] = useState(false);
-  const [selectedStartDate, setSelectedStartDate] = useState(new Date());
+  const dateParam = searchParams.get('date');
+  const initialDate = dateParam && !isNaN(new Date(dateParam).getTime())
+    ? new Date(dateParam)
+    : new Date();
+
+  const [selectedStartDate, setSelectedStartDate] = useState(initialDate);
 
   // The 'guide' prop is actually the Package document we fetched
   const trekPackage = guide;
@@ -426,8 +431,9 @@ const TrekGuideDetails = ({ guide }) => {
                       localStorage.setItem('trekData', JSON.stringify(trekData));
 
                       // Navigate to review page
+                      const actualCount = personalDetailsData.personalDetails?.length || minPeople;
                       router.push(
-                        `/user/trek/guidelist/trekdetails/${guide.provider?._id || guide.provider}/reviewjourney?trekId=${trekPackage._id}&peopleRange=${peopleRangeParam}`
+                        `/user/trek/guidelist/trekdetails/${guide.provider?._id || guide.provider}/reviewjourney?trekId=${trekPackage._id}&peopleRange=${peopleRangeParam}&count=${actualCount}&date=${selectedStartDate.toISOString()}`
                       );
                     }}
                     className="px-5 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center shadow-sm hover:shadow-md"

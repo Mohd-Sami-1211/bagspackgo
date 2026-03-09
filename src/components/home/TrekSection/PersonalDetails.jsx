@@ -204,7 +204,7 @@ const PersonalDetails = ({
     if (validateForm()) {
       const formData = {
         contactDetails,
-        trekkerDetails
+        personalDetails: trekkerDetails
       };
       onSave(formData);
       onNext();
