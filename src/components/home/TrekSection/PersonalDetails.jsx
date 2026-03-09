@@ -6,7 +6,8 @@ const PersonalDetails = ({
   minPeople = 1,
   maxPeople = 1,
   onNext,
-  onSave
+  onSave,
+  onBack
 }) => {
   // Contact details state
   const [contactDetails, setContactDetails] = useState({
@@ -212,7 +213,7 @@ const PersonalDetails = ({
   };
 
   return (
-    <div className="space-y-8">
+    <form onSubmit={handleSubmit} className="space-y-8">
       <h3 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
         <PersonStanding className="h-6 w-6 text-green-600 mr-2" />
         Trekker Details
@@ -542,7 +543,25 @@ const PersonalDetails = ({
           </div>
         ))}
       </div>
-    </div>
+
+      <div className="flex justify-between pt-4 mt-8">
+        <button
+          type="button"
+          onClick={onBack}
+          className="px-5 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors flex items-center"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back
+        </button>
+        <button
+          type="submit"
+          className="px-5 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center shadow-sm hover:shadow-md group"
+        >
+          Review Trek
+          <ArrowRight className="h-4 w-4 ml-2 transition-transform group-hover:translate-x-1" />
+        </button>
+      </div>
+    </form>
   );
 };
 

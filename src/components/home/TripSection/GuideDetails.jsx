@@ -358,15 +358,15 @@ const GuideDetails = ({ guide }) => {
   };
 
   // Handle navigation to review page
-  const handleReviewJourney = () => {
+  const handleReviewJourney = (formData) => {
     // Prepare all trip data with proper structure
     const tripData = {
       itenaries: itenaries,
       arrivalDeparture: arrivalDepartureData,
       personalDetails: {
-        contactDetails: personalDetailsData.contactDetails || {},
-        personalDetails: personalDetailsData.personalDetails || [],
-        children: personalDetailsData.children || []
+        contactDetails: formData.contactDetails || {},
+        personalDetails: formData.personalDetails || [],
+        children: formData.children || []
       },
       guide: guide,
       selectedPackage: selectedPackage,
@@ -822,29 +822,9 @@ const GuideDetails = ({ guide }) => {
                   count={count}
                   onSave={handleSavePersonalDetails}
                   onNext={handleNextTab}
+                  onSubmit={handleReviewJourney}
+                  onBack={handleBack}
                 />
-                <div className="flex justify-between pt-4">
-                  <button
-                    type="button"
-                    onClick={handleBack}
-                    className="px-4 sm:px-5 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors flex items-center text-sm"
-                  >
-                    <ArrowLeft className="h-4 w-4 mr-2" />
-                    Back
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleReviewJourney}
-                    className={`px-4 sm:px-5 py-2.5 text-white rounded-lg transition-colors flex items-center text-sm shadow-sm hover:shadow-md ${isPremiumPackage
-                      ? 'bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600'
-                      : 'bg-green-600 hover:bg-green-700'
-                      }`}
-                  >
-                    Review Journey
-                    <ArrowRight className="h-4 w-4 ml-2 transition-transform group-hover:translate-x-1" />
-                  </button>
-                </div>
               </div>
             )}
           </div>

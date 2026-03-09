@@ -130,6 +130,33 @@ const TrekGuideDetails = ({ guide }) => {
   const handleSavePersonalDetails = (data) => {
     setPersonalDetailsData(data);
     setPersonalDetailsCompleted(true);
+
+    // Prepare all trek data with proper structure using fresh data directly
+    const trekData = {
+      itenaries: itenaries,
+      pickupDropoff: pickupDropoffData,
+      personalDetails: {
+        contactDetails: data.contactDetails || {},
+        personalDetails: data.personalDetails || [],
+        emergencyContacts: data.emergencyContacts || []
+      },
+      guide: guide,
+      trekConfig: {
+        trekId: trekPackage._id,
+        peopleRangeParam,
+        date: selectedStartDate.toISOString()
+      },
+      trekDetails: defaultTrek
+    };
+
+    // Store in localStorage
+    localStorage.setItem('trekData', JSON.stringify(trekData));
+
+    // Navigate to review page
+    const actualCount = data.personalDetails?.length || minPeople;
+    router.push(
+      `/user/trek/guidelist/trekdetails/${guide.provider?._id || guide.provider}/reviewjourney?trekId=${trekPackage._id}&peopleRange=${peopleRangeParam}&count=${actualCount}&date=${selectedStartDate.toISOString()}`
+    );
   };
 
   const packageInclusions = [
@@ -395,53 +422,9 @@ const TrekGuideDetails = ({ guide }) => {
                   maxPeople={maxPeople}
                   onSave={handleSavePersonalDetails}
                   onNext={handleNextTab}
+                  onBack={handleBack}
                   isTrek={true}
                 />
-                <div className="flex justify-between pt-4">
-                  <button
-                    type="button"
-                    onClick={handleBack}
-                    className="px-5 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors flex items-center"
-                  >
-                    <ArrowLeft className="h-4 w-4 mr-2" />
-                    Back
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      // Prepare all trek data with proper structure
-                      const trekData = {
-                        itenaries: itenaries,
-                        pickupDropoff: pickupDropoffData,
-                        personalDetails: {
-                          contactDetails: personalDetailsData.contactDetails || {},
-                          personalDetails: personalDetailsData.personalDetails || [],
-                          emergencyContacts: personalDetailsData.emergencyContacts || []
-                        },
-                        guide: guide,
-                        trekConfig: {
-                          trekId: trekPackage._id,
-                          peopleRangeParam,
-                          date: selectedStartDate.toISOString()
-                        },
-                        trekDetails: defaultTrek
-                      };
-
-                      // Store in localStorage
-                      localStorage.setItem('trekData', JSON.stringify(trekData));
-
-                      // Navigate to review page
-                      const actualCount = personalDetailsData.personalDetails?.length || minPeople;
-                      router.push(
-                        `/user/trek/guidelist/trekdetails/${guide.provider?._id || guide.provider}/reviewjourney?trekId=${trekPackage._id}&peopleRange=${peopleRangeParam}&count=${actualCount}&date=${selectedStartDate.toISOString()}`
-                      );
-                    }}
-                    className="px-5 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center shadow-sm hover:shadow-md"
-                  >
-                    Review Trek
-                    <ArrowRight className="h-4 w-4 ml-2 transition-transform group-hover:translate-x-1" />
-                  </button>
-                </div>
               </div>
             )}
           </div>
