@@ -85,6 +85,7 @@ export async function GET(request, { params }) {
                 status: event.status,
                 rating: event.rating,
                 reviewCount: event.reviewCount,
+                deleteRequest: event.deleteRequest || null,
                 createdAt: event.createdAt,
                 updatedAt: event.updatedAt,
             },
@@ -221,6 +222,71 @@ export async function PATCH(request, { params }) {
         });
     } catch (error) {
         console.error("Update Event Error:", error);
+        return NextResponse.json(
+            { success: false, message: error.message || "Something went wrong" },
+            { status: 500 }
+        );
+    }
+}
+
+/**
+ * DELETE /api/provider/events/[id]
+ * Submit a deletion request — admin must approve before actual deletion.
+ */
+export async function DELETE(request, { params }) {
+    try {
+        const user = await getCurrentUser();
+        if (!user || user.role !== "provider") {
+            return NextResponse.json(
+                { success: false, message: "Unauthorized" },
+                { status: 401 }
+            );
+        }
+
+        await dbConnect();
+        const { id } = await params;
+
+        const event = await Event.findOne({
+            _id: id,
+            guide: user.userId,
+        });
+
+        if (!event) {
+            return NextResponse.json(
+                { success: false, message: "Event not found" },
+                { status: 404 }
+            );
+        }
+
+        // Check if a delete request is already pending
+        if (event.deleteRequest?.requested && event.deleteRequest?.adminStatus === "pending") {
+            return NextResponse.json(
+                { success: false, message: "A deletion request for this event is already pending admin review." },
+                { status: 409 }
+            );
+        }
+
+        const body = await request.json().catch(() => ({}));
+        const reason = (body.reason || "").trim();
+
+        // Mark the delete request
+        event.deleteRequest = {
+            requested: true,
+            requestedAt: new Date(),
+            reason,
+            adminStatus: "pending",
+            adminNotes: "",
+            resolvedAt: null,
+        };
+
+        await event.save();
+
+        return NextResponse.json({
+            success: true,
+            message: "Deletion request submitted successfully. It will be reviewed by the admin.",
+        });
+    } catch (error) {
+        console.error("Delete Request Error:", error);
         return NextResponse.json(
             { success: false, message: error.message || "Something went wrong" },
             { status: 500 }

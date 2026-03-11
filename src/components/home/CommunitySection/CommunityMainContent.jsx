@@ -179,7 +179,7 @@ const CommunityMainContent = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      {/* Immersive Header */}
+      {/* Header */}
       <div className="relative bg-[#022c22] overflow-hidden">
         {/* Subtle patterned background or gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-br from-emerald-900 via-emerald-800 to-teal-900 opacity-90 blur-xl"></div>

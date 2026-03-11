@@ -146,6 +146,20 @@ const eventSchema = new mongoose.Schema(
             type: Number,
             default: 0,
         },
+
+        // Delete Request — provider submits, admin approves/rejects
+        deleteRequest: {
+            requested: { type: Boolean, default: false },
+            requestedAt: { type: Date, default: null },
+            reason: { type: String, default: "" },
+            adminStatus: {
+                type: String,
+                enum: ["pending", "approved", "rejected"],
+                default: "pending",
+            },
+            adminNotes: { type: String, default: "" },
+            resolvedAt: { type: Date, default: null },
+        },
     },
     { timestamps: true }
 );
