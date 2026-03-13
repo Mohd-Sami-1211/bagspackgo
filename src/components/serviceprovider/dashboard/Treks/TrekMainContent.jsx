@@ -201,16 +201,27 @@ export default function TrekMainContent() {
             <h2 className="text-2xl font-black text-white tracking-tight">Trek Bookings</h2>
             <p className="text-emerald-100/80 text-sm mt-0.5">All reservations for your trek packages</p>
           </div>
-          <button
-            onClick={fetchBookings}
-            disabled={loading}
-            className="self-start sm:self-auto inline-flex items-center gap-2 px-4 py-2 rounded-xl
-                       bg-white/15 backdrop-blur text-white text-sm font-semibold border border-white/20
-                       hover:bg-white/25 transition-all disabled:opacity-40"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
-          </button>
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            <Link
+              href="/serviceprovider/dashboard/settings/packages"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl
+                         bg-white text-emerald-700 text-sm font-semibold
+                         hover:bg-emerald-50 transition-all"
+            >
+              <Package className="w-4 h-4" />
+              View Packages
+            </Link>
+            <button
+              onClick={fetchBookings}
+              disabled={loading}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl
+                         bg-white/15 backdrop-blur text-white text-sm font-semibold border border-white/20
+                         hover:bg-white/25 transition-all disabled:opacity-40"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </button>
+          </div>
         </div>
       </div>
 

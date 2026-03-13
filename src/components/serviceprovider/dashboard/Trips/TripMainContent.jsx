@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Calendar, Users, MapPin, Clock,
   Package, RefreshCw, ArrowRight,
-  CheckCircle2, XCircle, Luggage, Search
+  CheckCircle2, XCircle, Luggage, Search, ExternalLink
 } from 'lucide-react';
 
 /* ── status config ── */
@@ -199,16 +199,27 @@ export default function TripMainContent() {
             <h2 className="text-2xl font-black text-white tracking-tight">Trip Bookings</h2>
             <p className="text-green-100/80 text-sm mt-0.5">All reservations for your trip packages</p>
           </div>
-          <button
-            onClick={fetchBookings}
-            disabled={loading}
-            className="self-start sm:self-auto inline-flex items-center gap-2 px-4 py-2 rounded-xl
-                       bg-white/15 backdrop-blur text-white text-sm font-semibold border border-white/20
-                       hover:bg-white/25 transition-all disabled:opacity-40"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
-          </button>
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            <Link
+              href="/serviceprovider/dashboard/settings/packages"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl
+                         bg-white text-green-700 text-sm font-semibold
+                         hover:bg-green-50 transition-all"
+            >
+              <Package className="w-4 h-4" />
+              View Packages
+            </Link>
+            <button
+              onClick={fetchBookings}
+              disabled={loading}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl
+                         bg-white/15 backdrop-blur text-white text-sm font-semibold border border-white/20
+                         hover:bg-white/25 transition-all disabled:opacity-40"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </button>
+          </div>
         </div>
       </div>
 
