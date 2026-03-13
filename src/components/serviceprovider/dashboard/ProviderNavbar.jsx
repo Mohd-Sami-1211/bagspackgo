@@ -1,13 +1,14 @@
 'use client';
 import Link from 'next/link';
-import { Bell, Menu } from 'lucide-react';
+import { Menu } from 'lucide-react';
+import NotificationPanel from './NotificationPanel';
 
 export default function ProviderNavbar({ isSidebarCollapsed, setIsSidebarCollapsed }) {
   return (
     <header className="bg-green-300 backdrop-blur border-b fixed top-0 left-0 right-0 z-50">
       <div className="mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center">
-          {/* Sidebar toggle button */}
+          {/* Sidebar toggle */}
           <button
             onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
             className="p-2 mr-2 rounded-md hover:bg-white/50 transition-colors"
@@ -27,11 +28,8 @@ export default function ProviderNavbar({ isSidebarCollapsed, setIsSidebarCollaps
         </div>
 
         <nav className="flex items-center gap-4">
-          {/* Notifications */}
-          <button className="relative p-2 rounded-xl bg-white/70 hover:bg-neutral-100 transition-colors">
-            <Bell className="h-5 w-5" />
-            <span className="absolute -top-1 -right-1 h-4 w-4 text-[10px] grid place-items-center bg-emerald-500 text-white rounded-full">3</span>
-          </button>
+          {/* Live notification bell + panel */}
+          <NotificationPanel />
         </nav>
       </div>
     </header>
