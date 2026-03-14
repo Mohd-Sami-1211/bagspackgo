@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import { OTP } from '@/models/otp.model';
 import { User } from '@/models/user.model';
+import { Guide } from '@/models/guide.model';
 import { generateToken, getTokenCookieOptions } from '@/lib/auth';
 import { sanitizeEmail, sanitizePhone } from '@/lib/sanitize';
 import { sendWelcomeEmail } from '@/lib/otp-service';
@@ -73,15 +74,27 @@ export async function POST(request) {
 
         const searchQuery = identifierType === 'email' ? { email: identifier } : { phone: identifier };
 
+        if (identifierType === 'email') {
+            const existingProvider = await Guide.findOne({ email: identifier });
+            if (existingProvider) {
+                return NextResponse.json({ success: false, message: 'Mail already used as service provider' }, { status: 403 });
+            }
+        }
+
         let user = await User.findOne(searchQuery);
+        if (user && user.role === 'provider' && identifierType === 'email') {
+            return NextResponse.json({ success: false, message: 'Mail already used as service provider' }, { status: 403 });
+        }
+
         let message = 'Logged in successfully!';
 
         if (!user) {
             const finalName = (name && name.trim().length >= 2) ? name.trim() : '';
 
+            const dummyPhone = '00' + Math.floor(10000000 + Math.random() * 90000000).toString();
             const accountData = {
                 username: finalName,
-                phone: identifierType === 'phone' ? identifier : '',
+                phone: identifierType === 'phone' ? identifier : dummyPhone,
                 email: identifierType === 'email' ? identifier : '',
                 password: '',
                 isPhoneVerified: identifierType === 'phone',
@@ -105,7 +118,7 @@ export async function POST(request) {
         const token = generateToken({
             userId: user._id.toString(),
             username: user.username,
-            role: 'user',
+            role: user.role,
             email: user.email,
             phone: user.phone,
         });
@@ -115,7 +128,7 @@ export async function POST(request) {
             username: user.username,
             email: user.email,
             phone: user.phone,
-            role: 'user',
+            role: user.role,
         };
 
         const response = NextResponse.json({

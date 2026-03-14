@@ -35,9 +35,7 @@ export async function POST(request) {
 
         await OTP.deleteMany({ identifier: email, purpose: "password_reset" });
 
-        const array = new Uint32Array(1);
-        crypto.getRandomValues(array);
-        const otpCode = (1000 + (array[0] % 9000)).toString();
+        const otpCode = Math.floor(1000 + Math.random() * 9000).toString();
 
         await OTP.create({
             identifier: email,

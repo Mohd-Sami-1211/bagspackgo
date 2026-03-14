@@ -19,7 +19,6 @@ const guideSchema = new mongoose.Schema(
         phone: {
             type: String,
             required: [true, "Phone number is required"],
-            unique: true,
             match: [/^\d{10}$/, "Phone number must be exactly 10 digits"],
         },
         password: {

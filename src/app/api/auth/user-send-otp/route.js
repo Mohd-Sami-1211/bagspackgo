@@ -2,13 +2,12 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import { OTP } from '@/models/otp.model';
 import { User } from '@/models/user.model';
+import { Guide } from '@/models/guide.model';
 import { sendOTPEmail, sendOTPSMS } from '@/lib/otp-service';
 import { sanitizeEmail, sanitizePhone } from '@/lib/sanitize';
 
 function generateOTP() {
-    const array = new Uint32Array(1);
-    crypto.getRandomValues(array);
-    return (1000 + (array[0] % 9000)).toString();
+    return Math.floor(1000 + Math.random() * 9000).toString();
 }
 
 function getIdentifierType(input) {
@@ -35,6 +34,14 @@ export async function POST(request) {
         const identifier = identifierType === 'email'
             ? sanitizeEmail(rawIdentifier)
             : sanitizePhone(rawIdentifier);
+
+        // If email is provided, check if it already belongs to a service provider
+        if (identifierType === 'email') {
+            const existingProvider = await Guide.findOne({ email: identifier });
+            if (existingProvider) {
+                return NextResponse.json({ success: false, message: 'Mail already used as service provider' }, { status: 403 });
+            }
+        }
 
         // Rate limit: 1 OTP per 60s
         const recentOTP = await OTP.findOne({

@@ -41,7 +41,6 @@ function AuthModalContent() {
     const [userStep, setUserStep] = useState('EMAIL'); // EMAIL, OTP, DETAILS
     const [userEmail, setUserEmail] = useState('');
     const [userOtp, setUserOtp] = useState(['', '', '', '']);
-    const [userPurpose, setUserPurpose] = useState('login'); // 'login' | 'signup'
     const [userDetails, setUserDetails] = useState({ name: '', phone: '' });
 
     // === PROVIDER STATE ===
@@ -51,26 +50,78 @@ function AuthModalContent() {
     const [providerOtp, setProviderOtp] = useState(['', '', '', '']);
     const [passwordCheck, setPasswordCheck] = useState({ isValid: false, errors: [], strength: 0 });
 
+    const [resendTimer, setResendTimer] = useState(0);
+
+    useEffect(() => {
+        let t;
+        if (resendTimer > 0) t = setTimeout(() => setResendTimer(r => r - 1), 1000);
+        return () => clearTimeout(t);
+    }, [resendTimer]);
+
     useEffect(() => {
         setPasswordCheck(validatePasswordClient(providerData.password));
     }, [providerData.password]);
 
-    // Reset all states when changing tabs or opening modal
+    // Reset or Restore state when opening modal
     useEffect(() => {
         if (!isAuthModalOpen) return;
         
         setError('');
         setLoading(false);
-        setUserStep('EMAIL');
-        setUserEmail('');
         setUserOtp(['', '', '', '']);
         setUserDetails({ name: '', phone: '' });
-        
+        setProviderOtp(['', '', '', '']);
+
+        // Quick persistent state restore (lasts 5 mins)
+        const savedRaw = localStorage.getItem('bgp_auth_state');
+        if (savedRaw) {
+            try {
+                const saved = JSON.parse(savedRaw);
+                const elapsedSecs = Math.floor((Date.now() - saved.timestamp) / 1000);
+                
+                if (elapsedSecs < 300) { // Under 5 minutes
+                    setTab(saved.tab || 'user');
+                    setResendTimer(Math.max(0, 60 - elapsedSecs));
+                    
+                    if (saved.tab === 'user' && saved.userStep === 'OTP') {
+                        setUserStep('OTP');
+                        setUserEmail(saved.userEmail || '');
+                    } else if (saved.tab === 'provider' && saved.providerStep === 'OTP') {
+                        setProviderMode(saved.providerMode || 'signin');
+                        setProviderStep('OTP');
+                        setProviderData(prev => ({ ...prev, email: saved.providerEmail || '' }));
+                    } else {
+                        throw new Error('Fallback cleanly');
+                    }
+                    return; // Recovered! Setup skips fallback
+                } else {
+                    localStorage.removeItem('bgp_auth_state');
+                }
+            } catch (e) {
+                // Ignore parsing errors, let it fallback to default reset
+            }
+        }
+
+        // Default Reset
+        setUserStep('EMAIL');
+        setUserEmail('');
         setProviderMode('signin');
         setProviderStep('FORM');
         setProviderData({ name: '', email: '', password: '' });
-        setProviderOtp(['', '', '', '']);
-    }, [tab, isAuthModalOpen]);
+        setResendTimer(0);
+
+    }, [isAuthModalOpen]); // Purposely removed 'tab' to retain context on tab switch
+
+    // Constantly persist steps
+    useEffect(() => {
+        if (userStep === 'OTP' || providerStep === 'OTP') {
+            localStorage.setItem('bgp_auth_state', JSON.stringify({
+                tab, userStep, userEmail, providerStep, providerMode, providerEmail: providerData.email, timestamp: Date.now()
+            }));
+        } else {
+            localStorage.removeItem('bgp_auth_state');
+        }
+    }, [userStep, providerStep, tab, userEmail, providerMode, providerData.email]);
 
 
     // ------------------------------------------------------------------------
@@ -92,6 +143,7 @@ function AuthModalContent() {
 
             if (res.ok) {
                 setUserStep('OTP');
+                setResendTimer(60);
             } else {
                 setError(data.message);
             }
@@ -118,9 +170,10 @@ function AuthModalContent() {
             const data = await res.json();
             
             if (res.ok) {
+                localStorage.removeItem('bgp_auth_state');
                 onLogin(data.user);
                 // Check if user lacks name/phone (ie. just signed up, or old account without details)
-                if (!data.user.username || data.user.username === '' || !data.user.phone) {
+                if (!data.user.username || data.user.username === '' || !data.user.phone || data.user.phone.startsWith('00')) {
                     setUserStep('DETAILS'); // Proceed to collect details BEFORE closing
                 } else {
                     closeAuthModal();
@@ -173,8 +226,9 @@ function AuthModalContent() {
                 const data = await res.json();
                 
                 if (res.ok) {
+                    localStorage.removeItem('bgp_auth_state');
                     onLogin(data.user);
-                    if (!data.user.username || data.user.username === '' || !data.user.phone) {
+                    if (!data.user.username || data.user.username === '' || !data.user.phone || data.user.phone.startsWith('00')) {
                         setUserStep('DETAILS'); // Proceed to collect missing details
                     } else {
                         closeAuthModal();
@@ -206,6 +260,7 @@ function AuthModalContent() {
             });
             const data = await res.json();
             if (res.ok) {
+                localStorage.removeItem('bgp_auth_state');
                 onLogin(data.user);
                 closeAuthModal();
                 window.location.href = '/serviceprovider/dashboard'; // Force layout refresh for provider side
@@ -234,6 +289,7 @@ function AuthModalContent() {
             const data = await res.json();
             if (res.ok) {
                 setProviderStep('OTP');
+                setResendTimer(60);
             } else {
                 setError(data.message);
             }
@@ -281,6 +337,7 @@ function AuthModalContent() {
             });
             const data = await res.json();
             if (res.ok) {
+                localStorage.removeItem('bgp_auth_state');
                 setProviderMode('signin');
                 setProviderStep('FORM');
                 setProviderData({ ...providerData, password: '' }); // Clear password, let them log in
@@ -309,6 +366,7 @@ function AuthModalContent() {
             const data = await res.json();
             if (res.ok) {
                 setProviderStep('OTP');
+                setResendTimer(60);
             } else {
                 setError(data.message);
             }
@@ -334,6 +392,7 @@ function AuthModalContent() {
             });
             const data = await res.json();
             if (res.ok) {
+                localStorage.removeItem('bgp_auth_state');
                 setProviderMode('signin');
                 setProviderStep('FORM');
                 setProviderData({ ...providerData, password: '' });
@@ -475,9 +534,19 @@ function AuthModalContent() {
                                                 ))}
                                             </div>
                                             <button type="submit" disabled={loading} className="w-full py-3.5 rounded-xl font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-500/20 transition-all flex items-center justify-center gap-2">
-                                                {loading ? <Loader2 className="animate-spin w-5 h-5" /> : 'Verify & Setup Profile'}
+                                                {loading ? <Loader2 className="animate-spin w-5 h-5" /> : 'Verify OTP'}
                                             </button>
                                         </form>
+
+                                        <p className="text-center text-sm text-gray-500 pt-4">
+                                            {resendTimer > 0 ? (
+                                                <>Resend OTP in <b>{resendTimer}s</b></>
+                                            ) : (
+                                                <button onClick={handleUserSendOtp} className="text-emerald-600 font-semibold hover:underline">
+                                                    Resend OTP
+                                                </button>
+                                            )}
+                                        </p>
                                     </motion.div>
                                 )}
 
@@ -647,6 +716,16 @@ function AuthModalContent() {
                                                 {loading ? <Loader2 className="animate-spin w-5 h-5" /> : providerMode === 'signup' ? 'Complete Sign Up' : 'Update Password'}
                                             </button>
                                         </form>
+
+                                        <p className="text-center text-sm text-gray-500 pt-4">
+                                            {resendTimer > 0 ? (
+                                                <>Resend in <b>{resendTimer}s</b></>
+                                            ) : (
+                                                <button onClick={providerMode === 'signup' ? handleProviderSignupStart : handleProviderForgotStart} className="text-emerald-600 font-semibold hover:underline">
+                                                    Resend Code
+                                                </button>
+                                            )}
+                                        </p>
                                     </motion.div>
                                 )}
                             </AnimatePresence>

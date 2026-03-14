@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import { User } from '@/models/user.model';
+import { Guide } from '@/models/guide.model';
 import { generateToken, getTokenCookieOptions } from '@/lib/auth';
 
 export async function POST(request) {
@@ -28,14 +29,23 @@ export async function POST(request) {
         const email = googlePayload.email.toLowerCase();
         const googleName = googlePayload.name || '';
         
+        const existingProvider = await Guide.findOne({ email });
+        if (existingProvider) {
+            return NextResponse.json({ success: false, message: 'Mail already used as service provider' }, { status: 403 });
+        }
+
         let user = await User.findOne({ email });
+        if (user && user.role === 'provider') {
+            return NextResponse.json({ success: false, message: 'Mail already used as service provider' }, { status: 403 });
+        }
         let message = 'Logged in successfully with Google!';
         
         if (!user) {
+            const dummyPhone = '00' + Math.floor(10000000 + Math.random() * 90000000).toString();
             user = await User.create({
                 username: googleName,
                 email: email,
-                phone: '', 
+                phone: dummyPhone, 
                 password: '',
                 isEmailVerified: true,
                 isPhoneVerified: false,

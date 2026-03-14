@@ -8,10 +8,7 @@ import { sanitizeEmail, sanitizePhone } from "@/lib/sanitize";
 
 // Generate a cryptographically random 4-digit OTP
 function generateOTP() {
-    // Use crypto for better randomness than Math.random
-    const array = new Uint32Array(1);
-    crypto.getRandomValues(array);
-    return (1000 + (array[0] % 9000)).toString();
+    return Math.floor(1000 + Math.random() * 9000).toString();
 }
 
 // Detect if input is email or phone
