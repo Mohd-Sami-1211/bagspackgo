@@ -25,7 +25,7 @@ export async function POST(request) {
     try {
         await dbConnect();
 
-        const { identifier: rawIdentifier, otp, purpose = 'login', name, dob } = await request.json();
+        const { identifier: rawIdentifier, otp, purpose = 'auth', name, dob } = await request.json();
 
         if (!rawIdentifier || !otp) {
             return NextResponse.json({ success: false, message: 'Identifier and OTP are required' }, { status: 400 });
@@ -73,28 +73,14 @@ export async function POST(request) {
 
         const searchQuery = identifierType === 'email' ? { email: identifier } : { phone: identifier };
 
-        let user;
+        let user = await User.findOne(searchQuery);
+        let message = 'Logged in successfully!';
 
-        if (purpose === 'login') {
-            // Find existing user
-            user = await User.findOne(searchQuery);
-            if (!user) {
-                return NextResponse.json({ success: false, message: 'Account not found. Please sign up.' }, { status: 404 });
-            }
-        } else if (purpose === 'signup') {
-            // Create new user account
-            if (!name || name.trim().length < 2) {
-                return NextResponse.json({ success: false, message: 'Please enter your name' }, { status: 400 });
-            }
-
-            // Check not already registered
-            const existing = await User.findOne(searchQuery);
-            if (existing) {
-                return NextResponse.json({ success: false, message: 'Account already exists. Please log in.' }, { status: 409 });
-            }
+        if (!user) {
+            const finalName = (name && name.trim().length >= 2) ? name.trim() : '';
 
             const accountData = {
-                username: name.trim(),
+                username: finalName,
                 phone: identifierType === 'phone' ? identifier : '',
                 email: identifierType === 'email' ? identifier : '',
                 password: '',
@@ -105,10 +91,11 @@ export async function POST(request) {
             if (dob) accountData.dob = new Date(dob);
 
             user = await User.create(accountData);
+            message = 'Account created! Welcome to BagsPackGo.';
 
             // Welcome email (non-blocking)
-            if (accountData.email) {
-                sendWelcomeEmail(accountData.email, name, 'user').catch(err =>
+            if (accountData.email && finalName) {
+                sendWelcomeEmail(accountData.email, finalName, 'user').catch(err =>
                     console.error('Welcome email error:', err.message)
                 );
             }
@@ -133,7 +120,7 @@ export async function POST(request) {
 
         const response = NextResponse.json({
             success: true,
-            message: purpose === 'login' ? 'Logged in successfully!' : 'Account created! Welcome to BagsPackGo.',
+            message,
             user: userResponse,
         }, { status: 200 });
 

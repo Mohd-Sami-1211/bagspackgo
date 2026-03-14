@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 
 const JWT_SECRET = process.env.JWT_SECRET || "bagspackgo-secret-key-change-in-production";
 const TOKEN_NAME = "bagspackgo_token";
-const TOKEN_MAX_AGE = 7 * 24 * 60 * 60; // 7 days in seconds
+const TOKEN_MAX_AGE = 30 * 24 * 60 * 60; // 30 days in seconds
 
 /**
  * Generate a JWT token for authenticated user

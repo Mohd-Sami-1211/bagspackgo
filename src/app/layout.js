@@ -7,6 +7,7 @@ import SecondaryNav from 'src/components/common/SecondaryNav';
 import Footer from 'src/components/common/Footer';
 import { AuthProvider } from '@/context/AuthContext';
 import { usePathname } from 'next/navigation';
+import AuthModal from '@/components/auth/AuthModal';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -42,6 +43,7 @@ export default function RootLayout({ children }) {
         className={`${inter.className} bg-white/90 text-gray-800 min-h-screen flex flex-col w-full max-w-[100vw] overflow-x-hidden`}
       >
         <AuthProvider>
+          <AuthModal />
           {/* Top Navbar (hidden for specific pages) */}
           {!hideNavbar && <Navbar />}
 

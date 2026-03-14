@@ -17,11 +17,11 @@ function getIdentifierType(input) {
     return null;
 }
 
-// POST /api/auth/user-send-otp  (login or signup OTP for users)
+    // POST /api/auth/user-send-otp  (login or signup OTP for users)
 export async function POST(request) {
     try {
         await dbConnect();
-        const { identifier: rawIdentifier, purpose = 'login' } = await request.json();
+        const { identifier: rawIdentifier, purpose = 'auth' } = await request.json();
 
         if (!rawIdentifier) {
             return NextResponse.json({ success: false, message: 'Please enter your mobile number or email' }, { status: 400 });
@@ -35,19 +35,6 @@ export async function POST(request) {
         const identifier = identifierType === 'email'
             ? sanitizeEmail(rawIdentifier)
             : sanitizePhone(rawIdentifier);
-
-        // For LOGIN: check account EXISTS
-        if (purpose === 'login') {
-            const searchQuery = identifierType === 'email' ? { email: identifier } : { phone: identifier };
-            const user = await User.findOne(searchQuery);
-            if (!user) {
-                return NextResponse.json({
-                    success: false,
-                    message: 'No account found. Please sign up first.',
-                    notRegistered: true
-                }, { status: 404 });
-            }
-        }
 
         // Rate limit: 1 OTP per 60s
         const recentOTP = await OTP.findOne({

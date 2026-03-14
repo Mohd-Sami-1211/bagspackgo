@@ -7,7 +7,11 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true); // true while checking session
+    const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const router = useRouter();
+
+    const openAuthModal = useCallback(() => setIsAuthModalOpen(true), []);
+    const closeAuthModal = useCallback(() => setIsAuthModalOpen(false), []);
 
     // Check if user is authenticated (called on app load)
     const checkAuth = useCallback(async () => {
@@ -43,7 +47,7 @@ export function AuthProvider({ children }) {
             // Clear any localStorage data
             localStorage.removeItem('role');
             localStorage.removeItem('user');
-            router.push('/signin');
+            router.push('/');
         }
     };
 
@@ -62,6 +66,9 @@ export function AuthProvider({ children }) {
                 logout,       // Call this to log out
                 onLogin,      // Call this after successful login
                 checkAuth,    // Re-check auth (useful after token refresh or status change)
+                isAuthModalOpen,
+                openAuthModal,
+                closeAuthModal,
             }}
         >
             {children}

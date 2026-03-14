@@ -16,7 +16,7 @@ function getInitials(name) {
 export default function Navbar() {
   const [showSignIn, setShowSignIn] = useState(true);
   const [showDropdown, setShowDropdown] = useState(false);
-  const { user, isAuthenticated, loading, logout } = useAuth();
+  const { user, isAuthenticated, loading, logout, openAuthModal } = useAuth();
   const dropdownRef = useRef(null);
 
   // Only treat as "user authenticated" if the role is 'user' (not provider/admin)
@@ -175,8 +175,8 @@ export default function Navbar() {
           </div>
         ) : (
           // ❌ Not logged in — show Sign In / Sign Up toggle
-          <a
-            href={showSignIn ? '/signin' : '/signup'}
+          <button
+            onClick={() => openAuthModal()}
             className="relative h-8 w-24 sm:w-28 overflow-hidden bg-white text-green-600 rounded hover:bg-green-100 transition-all duration-700 ease-in-out text-sm font-semibold flex-shrink-0"
           >
             <div
@@ -192,7 +192,7 @@ export default function Navbar() {
                 <span>Sign Up</span>
               </div>
             </div>
-          </a>
+          </button>
         )}
       </div>
     </nav>
