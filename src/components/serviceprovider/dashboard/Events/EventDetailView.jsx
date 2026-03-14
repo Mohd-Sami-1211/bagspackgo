@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -9,8 +9,112 @@ import {
     FileText, UserCheck, ScanLine, MessageSquare, Plus,
     PlayCircle, Route, Phone, Share2,
     CheckCircle2, Image as ImageIcon, Copy, Send, Check, X,
-    Sparkles, TrendingUp
+    Sparkles, TrendingUp, Camera, FlipHorizontal, Keyboard
 } from 'lucide-react';
+
+// ── QR Camera Scanner Component ──
+// Only mounted when the user explicitly opens the camera.
+// Unmounting this component = camera stops. No external stop() calls needed.
+function QrScannerCamera({ onScan, onError }) {
+    const html5QrRef = useRef(null);
+    const [facingMode, setFacingMode] = useState('environment');
+    const [started, setStarted] = useState(false);
+    // Use a stable, unique DOM ID per mount to avoid stale-element errors
+    const scannerIdRef = useRef(`qr-scanner-${Math.random().toString(36).slice(2)}`);
+    const scannerId = scannerIdRef.current;
+
+    useEffect(() => {
+        let scanner = null;
+        let stopped = false;
+
+        const run = async () => {
+            if (typeof window === 'undefined') return;
+            const { Html5Qrcode } = await import('html5-qrcode');
+            if (stopped) return;
+            scanner = new Html5Qrcode(scannerId);
+            html5QrRef.current = scanner;
+            try {
+                await scanner.start(
+                    { facingMode },
+                    { fps: 10, qrbox: { width: 200, height: 200 } },
+                    (decodedText) => { if (!stopped) onScan(decodedText); },
+                    () => {}
+                );
+                if (!stopped) setStarted(true);
+            } catch (err) {
+                if (!stopped) onError(err?.message || 'Camera access denied. Please allow camera permission and try again.');
+            }
+        };
+
+        run();
+
+        return () => {
+            stopped = true;
+            setStarted(false);
+            const s = html5QrRef.current;
+            if (s) {
+                s.stop()
+                    .catch(() => {})
+                    .finally(() => { try { s.clear(); } catch {} });
+                html5QrRef.current = null;
+            }
+        };
+    // Re-run when facingMode changes (flip camera)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [facingMode]);
+
+    const flipCamera = () => setFacingMode(f => f === 'environment' ? 'user' : 'environment');
+
+    return (
+        <div className="relative">
+            <div className="relative rounded-2xl overflow-hidden bg-neutral-900" style={{ aspectRatio: '4/3', maxHeight: '300px' }}>
+                {/* The html5-qrcode library fills this div with a <video> element */}
+                <div id={scannerId} className="w-full h-full" />
+
+                {/* Animated scanning line — shown once camera is live */}
+                {started && (
+                    <motion.div
+                        className="absolute left-1/2 -translate-x-1/2 w-[200px] h-0.5 bg-emerald-400 rounded-full"
+                        style={{ boxShadow: '0 0 10px 2px rgba(52,211,153,0.7)' }}
+                        initial={{ top: 'calc(50% - 100px)' }}
+                        animate={{ top: 'calc(50% + 100px)' }}
+                        transition={{ duration: 1.6, repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' }}
+                    />
+                )}
+
+                {/* Corner frame guides */}
+                {[
+                    'top-[calc(50%-100px)] left-[calc(50%-100px)] border-t-4 border-l-4 rounded-tl-xl',
+                    'top-[calc(50%-100px)] right-[calc(50%-100px)] border-t-4 border-r-4 rounded-tr-xl',
+                    'bottom-[calc(50%-100px)] left-[calc(50%-100px)] border-b-4 border-l-4 rounded-bl-xl',
+                    'bottom-[calc(50%-100px)] right-[calc(50%-100px)] border-b-4 border-r-4 rounded-br-xl',
+                ].map((cls, i) => (
+                    <div key={i} className={`absolute w-8 h-8 border-emerald-400 ${cls}`} />
+                ))}
+
+                {/* Initialising overlay */}
+                {!started && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-neutral-900/80">
+                        <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />
+                        <p className="text-white/70 text-sm">Starting camera…</p>
+                    </div>
+                )}
+            </div>
+
+            {/* Controls row */}
+            <div className="flex items-center gap-2 mt-3">
+                <p className="flex-1 text-xs text-neutral-500">Point camera at the QR code on the guest's booking pass</p>
+                <button
+                    onClick={flipCamera}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-neutral-100 border border-neutral-200 text-neutral-600 hover:bg-neutral-200 transition text-xs font-semibold"
+                    title="Flip camera"
+                >
+                    <FlipHorizontal className="w-4 h-4" /> Flip
+                </button>
+            </div>
+        </div>
+    );
+}
 
 // ── Mock reviews ──
 const mockReviews = [
@@ -181,9 +285,23 @@ export default function EventDetailView({ eventId }) {
     const [editData, setEditData] = useState({});
     const [saving, setSaving] = useState(false);
     const [saveMsg, setSaveMsg] = useState('');
+    // Scanner state — 'idle' | 'camera' | 'manual'
+    const [scanMode, setScanMode] = useState('idle');
     const [scanInput, setScanInput] = useState('');
     const [scanResult, setScanResult] = useState(null);
+    const [scanVerifying, setScanVerifying] = useState(false);
+    const [cameraError, setCameraError] = useState('');
     const [showShare, setShowShare] = useState(false);
+
+    // Reset scanner completely when leaving the scanner tab
+    useEffect(() => {
+        if (activeTab !== 'scanner') {
+            setScanMode('idle');
+            setScanResult(null);
+            setScanInput('');
+            setCameraError('');
+        }
+    }, [activeTab]);
 
     const getViewMode = (evt) => {
         if (!evt) return 'live';
@@ -259,15 +377,42 @@ export default function EventDetailView({ eventId }) {
         }
     };
 
-    const handleScan = () => {
-        const trimmed = scanInput.trim();
-        if (!trimmed) return;
-        const found = guests.find(g => g.passCode === trimmed);
-        setScanResult(found
-            ? { success: true, guest: found }
-            : { success: false, message: 'Pass not found. Invalid or expired pass code.' }
-        );
-    };
+    const handleVerifyCode = useCallback(async (code) => {
+        const trimmed = (code || '').trim();
+        if (!trimmed || scanVerifying) return;
+        setScanVerifying(true);
+        setScanResult(null);
+        try {
+            const res = await fetch(`/api/provider/events/${eventId}/checkin`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ passCode: trimmed }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                setScanResult({ success: true, guest: data.guest, alreadyCheckedIn: data.alreadyCheckedIn, message: data.message });
+                // Refresh guest list to update counts
+                fetchEvent();
+            } else {
+                setScanResult({ success: false, message: data.message || 'Invalid pass code.' });
+            }
+        } catch {
+            setScanResult({ success: false, message: 'Network error. Please try again.' });
+        } finally {
+            setScanVerifying(false);
+        }
+    }, [eventId, scanVerifying]);
+
+    const handleQrDetected = useCallback((decodedText) => {
+        // Prevent re-triggering if we already have a result
+        setScanResult(prev => {
+            if (prev) return prev;
+            handleVerifyCode(decodedText);
+            return prev;
+        });
+    }, [handleVerifyCode]);
+
+    const handleManualScan = () => handleVerifyCode(scanInput);
 
     const viewMode = getViewMode(event);
 
@@ -761,106 +906,275 @@ export default function EventDetailView({ eventId }) {
 
                     {/* ─────────── SCANNER TAB ─────────── */}
                     {activeTab === 'scanner' && (
-                        <motion.div key="scanner" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-6">
-                            <div className="max-w-2xl mx-auto">
-                                {/* Header */}
-                                <div className="text-center mb-8">
-                                    <div className="w-20 h-20 mx-auto mb-5 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-3xl flex items-center justify-center shadow-inner">
-                                        <ScanLine className="w-10 h-10 text-emerald-600" />
-                                    </div>
-                                    <h2 className="text-2xl font-bold text-neutral-900 mb-2">Pass Scanner</h2>
-                                    <p className="text-neutral-500 text-sm">Enter the guest pass code to verify and check-in</p>
-                                </div>
+                        <motion.div key="scanner" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-4">
+                            <div className="max-w-xl mx-auto space-y-5">
 
-                                {/* Input */}
-                                <div className="bg-white rounded-2xl border-2 border-neutral-200 p-6 mb-5 hover:border-emerald-200 transition">
-                                    <label className="block text-sm font-bold text-neutral-700 mb-3">Pass Code</label>
-                                    <div className="flex gap-3">
-                                        <input
-                                            type="text"
-                                            value={scanInput}
-                                            onChange={(e) => setScanInput(e.target.value)}
-                                            onKeyDown={(e) => e.key === 'Enter' && handleScan()}
-                                            placeholder="e.g., BPG-EVT-001-G001"
-                                            className="flex-1 px-4 py-3 rounded-xl border border-neutral-200 focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-mono tracking-wider text-sm transition"
-                                        />
+                                {/* ══ IDLE HOME SCREEN ══ */}
+                                {scanMode === 'idle' && (
+                                    <>
+                                        {/* Header */}
+                                        <div className="text-center py-4">
+                                            <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-200">
+                                                <ScanLine className="w-8 h-8 text-white" />
+                                            </div>
+                                            <h2 className="text-xl font-bold text-neutral-900 mb-1">Guest Check-In</h2>
+                                            <p className="text-neutral-500 text-sm">Choose how to verify a guest's booking pass</p>
+                                        </div>
+
+                                        {/* Action cards */}
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            {/* Camera scan */}
+                                            <button
+                                                onClick={() => { setScanResult(null); setCameraError(''); setScanMode('camera'); }}
+                                                className="group flex flex-col items-center gap-4 p-6 bg-white rounded-2xl border-2 border-neutral-200 hover:border-emerald-400 hover:shadow-lg hover:shadow-emerald-50 transition-all text-left"
+                                            >
+                                                <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center shadow-md group-hover:scale-105 transition-transform">
+                                                    <Camera className="w-7 h-7 text-white" />
+                                                </div>
+                                                <div className="text-center">
+                                                    <p className="font-bold text-neutral-900 mb-1">Scan QR Code</p>
+                                                    <p className="text-neutral-500 text-xs leading-relaxed">Open camera and point it at the QR code on the guest's booking pass</p>
+                                                </div>
+                                                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white text-xs font-bold rounded-xl group-hover:bg-emerald-700 transition">
+                                                    <Camera className="w-3.5 h-3.5" /> Open Camera
+                                                </span>
+                                            </button>
+
+                                            {/* Manual entry */}
+                                            <button
+                                                onClick={() => { setScanResult(null); setScanInput(''); setScanMode('manual'); }}
+                                                className="group flex flex-col items-center gap-4 p-6 bg-white rounded-2xl border-2 border-neutral-200 hover:border-blue-400 hover:shadow-lg hover:shadow-blue-50 transition-all text-left"
+                                            >
+                                                <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-md group-hover:scale-105 transition-transform">
+                                                    <Keyboard className="w-7 h-7 text-white" />
+                                                </div>
+                                                <div className="text-center">
+                                                    <p className="font-bold text-neutral-900 mb-1">Enter Code Manually</p>
+                                                    <p className="text-neutral-500 text-xs leading-relaxed">Type or paste the pass code from the guest's booking confirmation</p>
+                                                </div>
+                                                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white text-xs font-bold rounded-xl group-hover:bg-blue-700 transition">
+                                                    <Keyboard className="w-3.5 h-3.5" /> Enter Code
+                                                </span>
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
+
+                                {/* ══ CAMERA SCAN VIEW ══ */}
+                                {scanMode === 'camera' && (
+                                    <div className="space-y-4">
+                                        {/* Back button */}
                                         <button
-                                            onClick={handleScan}
-                                            className="px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold rounded-xl hover:opacity-90 transition flex items-center gap-2 shadow-md"
+                                            onClick={() => { setScanMode('idle'); setScanResult(null); setCameraError(''); }}
+                                            className="flex items-center gap-2 text-sm font-semibold text-neutral-600 hover:text-neutral-900 transition"
                                         >
-                                            <ScanLine className="w-5 h-5" /> Verify
+                                            <ArrowLeft className="w-4 h-4" /> Back
                                         </button>
-                                    </div>
-                                    <p className="text-xs text-neutral-400 mt-2">You can also use a barcode/QR scanner to enter the code automatically</p>
-                                </div>
 
-                                {/* Result */}
-                                <AnimatePresence>
-                                    {scanResult && (
-                                        <motion.div
-                                            initial={{ opacity: 0, scale: 0.95 }}
-                                            animate={{ opacity: 1, scale: 1 }}
-                                            exit={{ opacity: 0, scale: 0.95 }}
-                                            className={`rounded-2xl border-2 p-6 mb-6 ${scanResult.success ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50'}`}
-                                        >
-                                            {scanResult.success ? (
-                                                <div>
-                                                    <div className="flex items-center gap-3 mb-5">
-                                                        <div className="w-12 h-12 bg-emerald-600 rounded-xl flex items-center justify-center">
-                                                            <UserCheck className="w-6 h-6 text-white" />
+                                        <div className="bg-white rounded-2xl border-2 border-neutral-200 overflow-hidden">
+                                            {/* Card header */}
+                                            <div className="px-5 py-3.5 border-b border-neutral-100 flex items-center gap-2">
+                                                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                                                <span className="text-sm font-bold text-neutral-800">Camera Scanner</span>
+                                                <span className="ml-auto text-xs text-neutral-400">Auto-detects QR on guest's pass</span>
+                                            </div>
+
+                                            <div className="p-4">
+                                                {/* Camera error state */}
+                                                {cameraError ? (
+                                                    <div className="flex flex-col items-center justify-center py-8 gap-4 text-center">
+                                                        <div className="w-14 h-14 bg-red-50 rounded-2xl flex items-center justify-center">
+                                                            <AlertCircle className="w-7 h-7 text-red-500" />
                                                         </div>
                                                         <div>
-                                                            <h3 className="text-lg font-bold text-emerald-800">✓ Pass Verified</h3>
-                                                            <p className="text-emerald-600 text-sm">Guest is authorized for this event</p>
+                                                            <p className="font-semibold text-neutral-800 mb-1">Camera Unavailable</p>
+                                                            <p className="text-neutral-500 text-sm max-w-xs">{cameraError}</p>
                                                         </div>
-                                                    </div>
-                                                    <div className="grid grid-cols-2 gap-3">
-                                                        {[
-                                                            { label: 'Name', val: scanResult.guest.name },
-                                                            { label: 'Pass Code', val: scanResult.guest.passCode },
-                                                            { label: 'ID Proof', val: scanResult.guest.idProofType },
-                                                            { label: 'Status', val: scanResult.guest.checkedIn ? '✓ Already Checked In' : 'Ready to Check In' },
-                                                        ].map(f => (
-                                                            <div key={f.label} className="bg-white/70 rounded-xl p-3">
-                                                                <p className="text-emerald-600 text-xs font-semibold mb-0.5">{f.label}</p>
-                                                                <p className="font-bold text-neutral-900 text-sm">{f.val}</p>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                    {!scanResult.guest.checkedIn && (
-                                                        <button className="w-full mt-5 py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition shadow-md">
-                                                            ✓ Confirm Check-In
+                                                        <button
+                                                            onClick={() => setCameraError('')}
+                                                            className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 transition"
+                                                        >
+                                                            Retry
                                                         </button>
-                                                    )}
-                                                </div>
-                                            ) : (
-                                                <div className="flex items-center gap-4">
-                                                    <div className="w-12 h-12 bg-red-600 rounded-xl flex items-center justify-center flex-shrink-0">
-                                                        <AlertCircle className="w-6 h-6 text-white" />
                                                     </div>
-                                                    <div>
-                                                        <h3 className="text-lg font-bold text-red-800">✗ Invalid Pass</h3>
-                                                        <p className="text-red-600 text-sm">{scanResult.message}</p>
+                                                /* Result shown after scan */
+                                                ) : scanResult ? (
+                                                    <div className="space-y-4 py-2">
+                                                        <motion.div
+                                                            key="cam-result"
+                                                            initial={{ opacity: 0, scale: 0.95, y: 8 }}
+                                                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                                                            className={`rounded-2xl border-2 p-5 ${
+                                                                scanResult.success
+                                                                    ? scanResult.alreadyCheckedIn ? 'border-amber-300 bg-amber-50' : 'border-emerald-300 bg-emerald-50'
+                                                                    : 'border-red-300 bg-red-50'
+                                                            }`}
+                                                        >
+                                                            <div className="flex items-center gap-3 mb-4">
+                                                                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                                                                    !scanResult.success ? 'bg-red-600' : scanResult.alreadyCheckedIn ? 'bg-amber-500' : 'bg-emerald-600'
+                                                                }`}>
+                                                                    {scanResult.success ? <UserCheck className="w-6 h-6 text-white" /> : <X className="w-6 h-6 text-white" />}
+                                                                </div>
+                                                                <div>
+                                                                    <h3 className={`font-bold text-base ${
+                                                                        !scanResult.success ? 'text-red-800' : scanResult.alreadyCheckedIn ? 'text-amber-800' : 'text-emerald-800'
+                                                                    }`}>
+                                                                        {scanResult.success
+                                                                            ? scanResult.alreadyCheckedIn ? '⚠ Already Checked In' : '✓ Checked In!'
+                                                                            : '✗ Invalid Pass'}
+                                                                    </h3>
+                                                                    <p className={`text-sm ${
+                                                                        !scanResult.success ? 'text-red-600' : scanResult.alreadyCheckedIn ? 'text-amber-600' : 'text-emerald-600'
+                                                                    }`}>{scanResult.message}</p>
+                                                                </div>
+                                                            </div>
+                                                            {scanResult.success && (
+                                                                <div className="grid grid-cols-2 gap-2">
+                                                                    {[
+                                                                        { label: 'Name', val: scanResult.guest?.name },
+                                                                        { label: 'Pass Code', val: scanResult.guest?.passCode },
+                                                                        { label: 'ID Proof', val: scanResult.guest?.idProofType },
+                                                                        { label: 'Mobile', val: scanResult.guest?.mobile },
+                                                                    ].map(f => (
+                                                                        <div key={f.label} className="bg-white/70 rounded-xl p-3">
+                                                                            <p className="text-xs font-semibold text-neutral-500 mb-0.5">{f.label}</p>
+                                                                            <p className="font-bold text-neutral-900 text-sm break-words">{f.val || '—'}</p>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                        </motion.div>
+                                                        {/* Scan next */}
+                                                        <button
+                                                            onClick={() => setScanResult(null)}
+                                                            className="w-full py-2.5 border-2 border-neutral-200 rounded-xl text-sm font-semibold text-neutral-700 hover:bg-neutral-50 transition flex items-center justify-center gap-2"
+                                                        >
+                                                            <Camera className="w-4 h-4" /> Scan Next Guest
+                                                        </button>
                                                     </div>
-                                                </div>
-                                            )}
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
+                                                /* Verifying */
+                                                ) : scanVerifying ? (
+                                                    <div className="flex flex-col items-center justify-center py-10 gap-3">
+                                                        <Loader2 className="w-10 h-10 text-emerald-600 animate-spin" />
+                                                        <p className="text-sm font-semibold text-neutral-600">Verifying pass…</p>
+                                                    </div>
+                                                /* Live camera */
+                                                ) : (
+                                                    <QrScannerCamera
+                                                        onScan={handleQrDetected}
+                                                        onError={(msg) => setCameraError(msg)}
+                                                    />
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
 
-                                {/* Quick stats */}
-                                <div className="grid grid-cols-3 gap-4">
+                                {/* ══ MANUAL ENTRY VIEW ══ */}
+                                {scanMode === 'manual' && (
+                                    <div className="space-y-4">
+                                        {/* Back button */}
+                                        <button
+                                            onClick={() => { setScanMode('idle'); setScanResult(null); setScanInput(''); }}
+                                            className="flex items-center gap-2 text-sm font-semibold text-neutral-600 hover:text-neutral-900 transition"
+                                        >
+                                            <ArrowLeft className="w-4 h-4" /> Back
+                                        </button>
+
+                                        <div className="bg-white rounded-2xl border-2 border-neutral-200 p-6 space-y-5">
+                                            <div>
+                                                <p className="text-sm font-bold text-neutral-800 mb-1">Enter Pass Code</p>
+                                                <p className="text-xs text-neutral-500 mb-4">Type or paste the code from the guest's booking confirmation email</p>
+                                                <div className="flex gap-3">
+                                                    <input
+                                                        type="text"
+                                                        value={scanInput}
+                                                        onChange={(e) => setScanInput(e.target.value)}
+                                                        onKeyDown={(e) => e.key === 'Enter' && handleManualScan()}
+                                                        placeholder="e.g., BPG-EVT-001-G001"
+                                                        autoFocus
+                                                        className="flex-1 px-4 py-3 rounded-xl border border-neutral-200 focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-mono tracking-wider text-sm transition"
+                                                    />
+                                                    <button
+                                                        onClick={handleManualScan}
+                                                        disabled={!scanInput.trim() || scanVerifying}
+                                                        className="px-5 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold rounded-xl hover:opacity-90 transition flex items-center gap-2 shadow-md disabled:opacity-50"
+                                                    >
+                                                        {scanVerifying ? <Loader2 className="w-4 h-4 animate-spin" /> : <ScanLine className="w-4 h-4" />}
+                                                        Verify
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <AnimatePresence mode="wait">
+                                                {scanResult && (
+                                                    <motion.div
+                                                        key="manual-result"
+                                                        initial={{ opacity: 0, y: 8 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        exit={{ opacity: 0 }}
+                                                        className={`rounded-2xl border-2 p-5 ${
+                                                            scanResult.success
+                                                                ? scanResult.alreadyCheckedIn ? 'border-amber-300 bg-amber-50' : 'border-emerald-300 bg-emerald-50'
+                                                                : 'border-red-300 bg-red-50'
+                                                        }`}
+                                                    >
+                                                        <div className="flex items-center gap-3 mb-3">
+                                                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                                                                !scanResult.success ? 'bg-red-500' : scanResult.alreadyCheckedIn ? 'bg-amber-500' : 'bg-emerald-600'
+                                                            }`}>
+                                                                {scanResult.success ? <UserCheck className="w-5 h-5 text-white" /> : <X className="w-5 h-5 text-white" />}
+                                                            </div>
+                                                            <div>
+                                                                <p className={`font-bold ${
+                                                                    !scanResult.success ? 'text-red-800' : scanResult.alreadyCheckedIn ? 'text-amber-800' : 'text-emerald-800'
+                                                                }`}>
+                                                                    {scanResult.success
+                                                                        ? scanResult.alreadyCheckedIn ? '⚠ Already Checked In' : '✓ Checked In!'
+                                                                        : '✗ Invalid Pass'}
+                                                                </p>
+                                                                <p className={`text-xs ${
+                                                                    !scanResult.success ? 'text-red-600' : scanResult.alreadyCheckedIn ? 'text-amber-600' : 'text-emerald-600'
+                                                                }`}>{scanResult.message}</p>
+                                                            </div>
+                                                        </div>
+                                                        {scanResult.success && (
+                                                            <div className="grid grid-cols-2 gap-2 mt-2">
+                                                                {[
+                                                                    { label: 'Name', val: scanResult.guest?.name },
+                                                                    { label: 'Pass Code', val: scanResult.guest?.passCode },
+                                                                    { label: 'ID Type', val: scanResult.guest?.idProofType },
+                                                                    { label: 'Mobile', val: scanResult.guest?.mobile },
+                                                                ].map(f => (
+                                                                    <div key={f.label} className="bg-white/70 rounded-xl p-2.5">
+                                                                        <p className="text-xs font-semibold text-neutral-500 mb-0.5">{f.label}</p>
+                                                                        <p className="font-bold text-neutral-900 text-sm break-words">{f.val || '—'}</p>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </motion.div>
+                                                )}
+                                            </AnimatePresence>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Quick stats — always shown */}
+                                <div className="grid grid-cols-3 gap-3">
                                     {[
-                                        { label: 'Total Guests', value: guests.length, color: 'text-neutral-900' },
-                                        { label: 'Checked In', value: guests.filter(g => g.checkedIn).length, color: 'text-emerald-600' },
-                                        { label: 'Pending', value: guests.filter(g => !g.checkedIn).length, color: 'text-amber-600' },
+                                        { label: 'Total Guests', value: guests.length, color: 'text-neutral-900', bg: 'bg-white' },
+                                        { label: 'Checked In', value: guests.filter(g => g.checkedIn).length, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+                                        { label: 'Pending', value: guests.filter(g => !g.checkedIn).length, color: 'text-amber-600', bg: 'bg-amber-50' },
                                     ].map(s => (
-                                        <div key={s.label} className="bg-white rounded-2xl border border-neutral-200 p-5 text-center">
+                                        <div key={s.label} className={`${s.bg} rounded-2xl border border-neutral-200 p-4 text-center`}>
                                             <p className={`text-3xl font-bold ${s.color} mb-1`}>{s.value}</p>
                                             <p className="text-neutral-500 text-xs">{s.label}</p>
                                         </div>
                                     ))}
                                 </div>
+
                             </div>
                         </motion.div>
                     )}
