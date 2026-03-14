@@ -44,12 +44,12 @@ function InfoTile({ icon: Icon, label, value, accent = 'emerald' }) {
         teal: 'bg-teal-50 text-teal-600',
     };
     return (
-        <div className="bg-white rounded-2xl border border-neutral-100 p-5 hover:shadow-md transition-shadow">
+        <div className="bg-white rounded-2xl border border-neutral-100 p-5 hover:shadow-md transition-shadow overflow-hidden">
             <div className={`w-9 h-9 rounded-xl ${accents[accent]} flex items-center justify-center mb-3`}>
                 <Icon className="w-4.5 h-4.5" style={{ width: '18px', height: '18px' }} />
             </div>
-            <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">{label}</p>
-            <p className="font-bold text-neutral-800 text-sm leading-snug">{value || '—'}</p>
+            <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1 truncate">{label}</p>
+            <p className="font-bold text-neutral-800 text-sm leading-snug break-words overflow-hidden">{value || '—'}</p>
         </div>
     );
 }
@@ -354,7 +354,7 @@ export default function EventDetailView({ eventId }) {
 
     return (
         <>
-            <div className="space-y-6 pb-16">
+            <div className="space-y-6 pb-16 min-w-0 overflow-x-hidden">
                 {/* ── Hero Banner ── */}
                 <div className={`relative rounded-3xl overflow-hidden bg-gradient-to-r ${viewModeColors[viewMode]} min-h-[200px]`}>
                     {event.poster && (
@@ -384,20 +384,18 @@ export default function EventDetailView({ eventId }) {
                         </div>
 
                         {/* Title block */}
-                        <div className="mt-auto pt-12">
-                            <p className="text-white/70 text-sm mb-1">{event.eventType}</p>
-                            <h1 className="text-2xl md:text-3xl font-bold text-white leading-tight drop-shadow-md">{event.title}</h1>
-                            <p className="text-white/80 text-sm mt-2 flex items-center gap-2">
-                                <Calendar className="w-3.5 h-3.5" />
-                                {formattedDate}
-                                <span className="mx-1 opacity-50">•</span>
-                                <MapPin className="w-3.5 h-3.5" />
-                                {event.location}
+                        <div className="mt-auto pt-12 min-w-0 flex-1">
+                            <p className="text-white/70 text-sm mb-1 truncate">{event.eventType}</p>
+                            <h1 className="text-2xl md:text-3xl font-bold text-white leading-tight drop-shadow-md break-words">{event.title}</h1>
+                            <p className="text-white/80 text-sm mt-2 flex items-center gap-2 flex-wrap">
+                                <span className="flex items-center gap-1 flex-shrink-0"><Calendar className="w-3.5 h-3.5" />{formattedDate}</span>
+                                <span className="opacity-50">•</span>
+                                <span className="flex items-center gap-1 min-w-0"><MapPin className="w-3.5 h-3.5 flex-shrink-0" /><span className="truncate">{event.location}</span></span>
                             </p>
                         </div>
 
                         {/* Action buttons */}
-                        <div className="md:ml-auto flex items-center gap-2 flex-wrap">
+                        <div className="md:ml-auto flex items-center gap-2 flex-wrap flex-shrink-0">
                             {viewMode === 'live' && (
                                 <button
                                     onClick={() => setShowShare(true)}
@@ -529,7 +527,10 @@ export default function EventDetailView({ eventId }) {
                                         className="w-full px-4 py-3 rounded-xl border border-neutral-200 focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm text-neutral-700 leading-relaxed resize-none transition"
                                     />
                                 ) : (
-                                    <p className="text-neutral-600 leading-relaxed whitespace-pre-line text-sm">{event.about}</p>
+                                    <p className="text-neutral-600 leading-relaxed whitespace-pre-wrap break-words overflow-wrap-anywhere text-sm [overflow-wrap:anywhere]"
+                                       style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
+                                        {event.about}
+                                    </p>
                                 )}
                             </div>
 
