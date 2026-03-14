@@ -2,10 +2,19 @@
 import { Suspense, useState } from 'react';
 import Sidebar from 'src/components/serviceprovider/dashboard/Sidebar';
 import ProviderNavbar from 'src/components/serviceprovider/dashboard/ProviderNavbar';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function DashboardLayout({ children }) {
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  // isMobileOpen: controls the slide-in drawer on mobile
+  // isDesktopCollapsed: controls collapse/expand on md+ screens
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [isDesktopCollapsed, setIsDesktopCollapsed] = useState(false);
+
+  // Navbar hamburger press: toggle drawer on mobile, collapse on desktop
+  const handleNavbarToggle = () => {
+    setIsMobileOpen(prev => !prev);
+    setIsDesktopCollapsed(prev => !prev);
+  };
 
   const LoadingFallback = (
     <div className="min-h-[100dvh] w-full flex items-center justify-center bg-[#FAFAFA] relative overflow-hidden">
@@ -37,19 +46,56 @@ export default function DashboardLayout({ children }) {
         className="min-h-screen bg-neutral-50"
       >
         <ProviderNavbar
-          isSidebarCollapsed={isSidebarCollapsed}
-          setIsSidebarCollapsed={setIsSidebarCollapsed}
+          isSidebarCollapsed={isDesktopCollapsed}
+          setIsSidebarCollapsed={handleNavbarToggle}
         />
+
+        {/* ── Mobile backdrop: tap outside drawer to close ── */}
+        <AnimatePresence>
+          {isMobileOpen && (
+            <motion.div
+              key="mobile-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-30 bg-black/50 md:hidden"
+              onClick={() => setIsMobileOpen(false)}
+            />
+          )}
+        </AnimatePresence>
+
         <div className="flex pt-16">
-          <Sidebar
-            isCollapsed={isSidebarCollapsed}
-            setIsCollapsed={setIsSidebarCollapsed}
-          />
-          <main
-            className={`flex-1 overflow-auto transition-all duration-500 ease-in-out  
-              ${isSidebarCollapsed ? 'ml-20' : 'ml-72'}`}
+          {/* ── Sidebar ──
+              Mobile: off-screen by default (-translate-x-full), slides in when isMobileOpen
+              Desktop (md+): always visible, toggling isDesktopCollapsed changes its width  */}
+          <div
+            className={[
+              'fixed top-0 left-0 h-full z-40',
+              'transition-transform duration-300 ease-in-out',
+              // Mobile: slide in/out
+              isMobileOpen ? 'translate-x-0' : '-translate-x-full',
+              // Desktop: always visible
+              'md:translate-x-0',
+            ].join(' ')}
           >
-            <div className="p-6">
+            <Sidebar
+              isCollapsed={isDesktopCollapsed}
+              setIsCollapsed={setIsDesktopCollapsed}
+            />
+          </div>
+
+          {/* ── Main content ──
+              Mobile: no left margin (sidebar is overlay)
+              Desktop: margin matches sidebar width (collapsed or expanded) */}
+          <main
+            className={[
+              'flex-1 overflow-auto transition-all duration-300 ease-in-out',
+              'ml-0',
+              isDesktopCollapsed ? 'md:ml-20' : 'md:ml-72',
+            ].join(' ')}
+          >
+            <div className="p-3 sm:p-5 md:p-6">
               {children}
             </div>
           </main>

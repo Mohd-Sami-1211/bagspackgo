@@ -510,7 +510,7 @@ export default function EventDetailView({ eventId }) {
                         />
                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                    <div className="relative p-6 md:p-8 flex flex-col md:flex-row md:items-end gap-4 min-h-[200px]">
+                <div className="relative p-4 md:p-8 flex flex-col md:flex-row md:items-end gap-4 min-h-[220px]">
                         {/* Back */}
                         <button
                             onClick={() => router.push('/serviceprovider/dashboard/events')}
@@ -540,7 +540,7 @@ export default function EventDetailView({ eventId }) {
                         </div>
 
                         {/* Action buttons */}
-                        <div className="md:ml-auto flex items-center gap-2 flex-wrap flex-shrink-0">
+                        <div className="flex items-center gap-2 flex-wrap md:ml-auto flex-shrink-0">
                             {viewMode === 'live' && (
                                 <button
                                     onClick={() => setShowShare(true)}
@@ -601,7 +601,7 @@ export default function EventDetailView({ eventId }) {
                 )}
 
                 {/* ── Quick Stats Row ── */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
                     <InfoTile icon={Calendar} label="Date" value={new Date(event.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })} accent="emerald" />
                     <InfoTile icon={MapPin} label="Location" value={event.location} accent="teal" />
                     <InfoTile icon={Globe} label="Destination" value={event.destination} accent="blue" />
@@ -635,7 +635,7 @@ export default function EventDetailView({ eventId }) {
                 </div>
 
                 {/* ── Tabs ── */}
-                <div className="flex border-b border-neutral-200 gap-1">
+                <div className="flex border-b border-neutral-200 gap-1 overflow-x-auto scrollbar-none">
                     {tabs.map((tab) => (
                         <button
                             key={tab.key}
@@ -811,12 +811,12 @@ export default function EventDetailView({ eventId }) {
                     {/* ─────────── GUESTS TAB ─────────── */}
                     {activeTab === 'guests' && (
                         <motion.div key="guests" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-5">
-                            <div className="flex items-center justify-between">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                                 <div>
                                     <h2 className="text-lg font-bold text-neutral-900">Guest List</h2>
                                     <p className="text-neutral-500 text-sm">{guests.length} guests registered · {guests.filter(g => g.checkedIn).length} checked in</p>
                                 </div>
-                                <button className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-neutral-200 text-sm font-semibold text-neutral-700 hover:bg-neutral-50 transition">
+                                <button className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-neutral-200 text-sm font-semibold text-neutral-700 hover:bg-neutral-50 transition self-start">
                                     <Download className="w-4 h-4" /> Export CSV
                                 </button>
                             </div>
