@@ -1,5 +1,5 @@
 'use client';
-import { useMemo, useState, useRef } from 'react';
+import { useMemo, useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -42,11 +42,22 @@ function FloatingInput({ label, icon: Icon, error, children, required }) {
     );
 }
 
-function FileUploadCard({ label, icon: Icon, accept, error, required, onSelect }) {
+function FileUploadCard({ label, icon: Icon, accept, error, required, currentFile, onSelect }) {
     const ref = useRef(null);
-    const [file, setFile] = useState(null);
     const [dragOver, setDragOver] = useState(false);
-    const handleFile = (f) => { if (f) { setFile(f); onSelect(f); } };
+    const [previewUrl, setPreviewUrl] = useState(null);
+
+    useEffect(() => {
+        if (currentFile && currentFile.type.startsWith('image/')) {
+            const url = URL.createObjectURL(currentFile);
+            setPreviewUrl(url);
+            return () => URL.revokeObjectURL(url);
+        } else {
+            setPreviewUrl(null);
+        }
+    }, [currentFile]);
+
+    const handleFile = (f) => { if (f) { onSelect(f); } };
 
     return (
         <div className="space-y-1.5">
@@ -61,32 +72,38 @@ function FileUploadCard({ label, icon: Icon, accept, error, required, onSelect }
                 onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
                 onDragLeave={() => setDragOver(false)}
                 onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFile(e.dataTransfer.files[0]); }}
-                className={`relative cursor-pointer rounded-2xl border-2 border-dashed p-5 transition-all text-center ${dragOver ? 'border-emerald-400 bg-emerald-50/50'
-                    : file ? 'border-emerald-300 bg-emerald-50/30'
+                className={`relative cursor-pointer rounded-2xl border-2 border-dashed p-5 transition-all text-center overflow-hidden group ${dragOver ? 'border-emerald-400 bg-emerald-50/50'
+                    : currentFile ? 'border-emerald-300 bg-emerald-50/30'
                         : error ? 'border-rose-300 bg-rose-50/30'
                             : 'border-gray-200 bg-gray-50/50 hover:border-gray-300 hover:bg-gray-50'
                     }`}
             >
                 <input ref={ref} type="file" className="hidden" accept={accept} onChange={(e) => handleFile(e.target.files?.[0])} />
-                {file ? (
-                    <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                            <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-                        </div>
+                {currentFile ? (
+                    <div className="flex items-center gap-4 relative z-10 w-full h-full">
+                        {previewUrl ? (
+                            <div className="h-16 w-16 rounded-xl overflow-hidden shadow-sm flex-shrink-0 relative">
+                                <Image src={previewUrl} alt="Preview" fill className="object-cover" />
+                            </div>
+                        ) : (
+                            <div className="h-12 w-12 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                                <CheckCircle2 className="h-6 w-6 text-emerald-600" />
+                            </div>
+                        )}
                         <div className="text-left min-w-0 flex-1">
-                            <p className="text-sm font-semibold text-gray-800 truncate">{file.name}</p>
-                            <p className="text-xs text-gray-400">{(file.size / 1024).toFixed(1)} KB</p>
+                            <p className="text-sm font-bold text-gray-800 truncate">{currentFile.name}</p>
+                            <p className="text-xs text-emerald-600 font-semibold mt-0.5">Uploaded • Click or drag to replace</p>
                         </div>
-                        <button type="button" onClick={(e) => { e.stopPropagation(); setFile(null); onSelect(null); }}
-                            className="h-8 w-8 rounded-lg bg-gray-100 hover:bg-red-50 flex items-center justify-center transition-colors">
-                            <X className="h-4 w-4 text-gray-500 hover:text-red-500" />
+                        <button type="button" onClick={(e) => { e.stopPropagation(); onSelect(null); }}
+                            className="h-9 w-9 rounded-xl bg-white/80 backdrop-blur shadow-sm hover:bg-red-50 flex items-center justify-center transition-all flex-shrink-0">
+                            <X className="h-4 w-4 text-gray-600 hover:text-red-300" />
                         </button>
                     </div>
                 ) : (
-                    <div className="py-3">
-                        <Upload className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+                    <div className="py-4 relative z-10">
+                        <Upload className="h-8 w-8 text-gray-300 mx-auto mb-3 transition-transform group-hover:-translate-y-1" />
                         <p className="text-sm text-gray-500"><span className="font-semibold text-emerald-600">Click to upload</span> or drag and drop</p>
-                        <p className="text-xs text-gray-400 mt-1">PDF, JPG, PNG up to 10MB</p>
+                        <p className="text-xs text-gray-400 mt-1 uppercase font-medium tracking-wide">PDF, JPG, PNG up to 10MB</p>
                     </div>
                 )}
             </motion.div>
@@ -100,7 +117,7 @@ function FileUploadCard({ label, icon: Icon, accept, error, required, onSelect }
 }
 
 export default function ProviderRegistrationForm({ rejected = false }) {
-    const { checkAuth } = useAuth();
+    const { checkAuth, openAuthModal } = useAuth();
     const router = useRouter();
     const [step, setStep] = useState(1);
     const [direction, setDirection] = useState(1);
@@ -113,6 +130,16 @@ export default function ProviderRegistrationForm({ rejected = false }) {
     const [submitting, setSubmitting] = useState(false);
     const [submitted, setSubmitted] = useState(false);
     const [apiError, setApiError] = useState('');
+    const [destOpen, setDestOpen] = useState(false);
+    const destRef = useRef(null);
+
+    useEffect(() => {
+        function handleClickOutside(event) {
+            if (destRef.current && !destRef.current.contains(event.target)) setDestOpen(false);
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
 
     const destinations = useMemo(() => {
         return (destinationsData.destinations || [])
@@ -210,33 +237,33 @@ export default function ProviderRegistrationForm({ rejected = false }) {
     }
 
     return (
-        <div className="min-h-[100dvh] w-full flex items-center justify-center bg-[#FAFAFA] text-gray-900 overflow-x-hidden p-4 sm:p-8 lg:p-12 relative -mt-5">
+        <div className="min-h-[100dvh] w-full flex items-center justify-center bg-[#FAFAFA] text-gray-900 overflow-x-hidden p-2 sm:p-4 relative -mt-5">
             {/* Elegant Background Elements */}
             <div className="absolute top-0 left-0 w-full h-[45vh] bg-gradient-to-b from-emerald-100/60 to-transparent pointer-events-none" />
             <motion.div className="absolute -top-32 -right-32 w-96 h-96 bg-emerald-200/50 rounded-full blur-[100px] pointer-events-none" animate={{ scale: [1, 1.1, 1], opacity: [0.5, 0.7, 0.5] }} transition={{ duration: 8, repeat: Infinity }} />
             <motion.div className="absolute top-[40%] -left-32 w-80 h-80 bg-blue-100/40 rounded-full blur-[80px] pointer-events-none" animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }} transition={{ duration: 10, repeat: Infinity }} />
 
             {/* Centered Form Wrapper */}
-            <div className="relative z-10 w-full max-w-[600px] py-8">
+            <div className="relative z-10 w-full max-w-[600px] py-4">
                 <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, type: 'spring', damping: 25 }}
-                    className="w-full bg-white rounded-[2rem] sm:rounded-[2.5rem] shadow-[0_12px_40px_rgba(0,0,0,0.06)] p-6 sm:p-10 border border-gray-100/80 overflow-hidden relative">
+                    className="w-full bg-white rounded-[2rem] shadow-[0_12px_40px_rgba(0,0,0,0.06)] p-5 sm:p-6 border border-gray-100/80 overflow-hidden relative">
                     <div className="absolute inset-0 bg-gradient-to-br from-white via-white to-emerald-50/20 pointer-events-none" />
                     <div className="relative z-10">
                         {/* Header */}
-                        <div className="mb-6">
-                            <Link href="/" className="inline-block mb-5">
-                                <div className="w-[130px] h-[40px] relative">
+                        <div className="mb-4">
+                            <Link href="/" className="inline-block mb-3">
+                                <div className="w-[110px] h-[30px] relative">
                                     <Image src="/images/logo.svg" alt="bagspackgo" fill className="object-contain" />
                                 </div>
                             </Link>
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
+                                    <h2 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">
                                         {rejected ? 'Resubmit Application' : 'Provider Application'}
                                     </h2>
-                                    <p className="text-gray-500 text-sm mt-1">{STEPS[step - 1].subtitle}</p>
+                                    <p className="text-gray-500 text-xs mt-0.5">{STEPS[step - 1].subtitle}</p>
                                 </div>
-                                <span className="text-sm font-bold text-emerald-600 bg-emerald-50 px-3.5 py-1.5 rounded-full whitespace-nowrap">
+                                <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full whitespace-nowrap">
                                     {step} / {STEPS.length}
                                 </span>
                             </div>
@@ -304,14 +331,38 @@ export default function ProviderRegistrationForm({ rejected = false }) {
                                 {step === 2 && (
                                     <motion.div key="step2" custom={direction} variants={slideVariants} initial="enter" animate="center" exit="exit" className="space-y-4">
                                         <FloatingInput label="Primary Destination" icon={MapPin} error={errors.destinationId} required>
-                                            <div className="relative group">
-                                                <select value={form.destinationId} onChange={e => update('destinationId', e.target.value)}
-                                                    className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none pl-11 font-medium appearance-none text-gray-700">
-                                                    <option value="">Select your operating location</option>
-                                                    {destinations.map(d => (<option key={d.value} value={d.value}>{d.label}</option>))}
-                                                </select>
-                                                <MapPin className="w-5 h-5 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors group-focus-within:text-emerald-500" />
-                                                <ChevronRight className="w-4 h-4 text-gray-400 absolute right-3.5 top-1/2 -translate-y-1/2 rotate-90" />
+                                            <div className="relative group" ref={destRef}>
+                                                <div 
+                                                    onClick={() => setDestOpen(!destOpen)}
+                                                    className={`w-full px-4 py-3.5 bg-gray-50 border rounded-xl transition-all cursor-pointer flex items-center justify-between pl-11 group-hover:bg-white overflow-hidden ${destOpen ? 'border-emerald-500 ring-2 ring-emerald-500/20 bg-white' : 'border-gray-200 focus:border-emerald-500'}`}
+                                                >
+                                                    <span className={`font-medium ${form.destinationId ? 'text-gray-900' : 'text-gray-400'}`}>
+                                                        {form.destinationId ? destinations.find(d => d.value === form.destinationId)?.label : 'Select your operating location'}
+                                                    </span>
+                                                    <ChevronRight className={`w-4 h-4 text-gray-400 transition-transform ${destOpen ? '-rotate-90 text-emerald-500' : 'rotate-90 group-hover:text-emerald-500'}`} />
+                                                </div>
+                                                <MapPin className={`w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors ${destOpen ? 'text-emerald-500' : 'text-gray-400 group-hover:text-emerald-500'}`} />
+                                                
+                                                <AnimatePresence>
+                                                    {destOpen && (
+                                                        <motion.div 
+                                                            initial={{ opacity: 0, y: -10 }} 
+                                                            animate={{ opacity: 1, y: 0 }} 
+                                                            exit={{ opacity: 0, y: -10 }}
+                                                            className="absolute top-[calc(100%+8px)] left-0 w-full bg-white border border-gray-100 rounded-xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] z-50 max-h-60 overflow-y-auto"
+                                                        >
+                                                            {destinations.map(d => (
+                                                                <div 
+                                                                    key={d.value} 
+                                                                    onClick={() => { update('destinationId', d.value); setDestOpen(false); }}
+                                                                    className={`px-4 py-3 cursor-pointer transition-colors font-medium text-sm border-b border-gray-50 last:border-0 ${form.destinationId === d.value ? 'bg-emerald-50 text-emerald-700' : 'text-gray-700 hover:bg-gray-50 hover:text-emerald-600'}`}
+                                                                >
+                                                                    {d.label}
+                                                                </div>
+                                                            ))}
+                                                        </motion.div>
+                                                    )}
+                                                </AnimatePresence>
                                             </div>
                                         </FloatingInput>
                                         <FloatingInput label="Business Address" icon={Map} error={errors.address} required>
@@ -342,24 +393,8 @@ export default function ProviderRegistrationForm({ rejected = false }) {
 
                                 {step === 3 && (
                                     <motion.div key="step3" custom={direction} variants={slideVariants} initial="enter" animate="center" exit="exit" className="space-y-4">
-                                        <FileUploadCard label="Business License / Registration" icon={FileText} accept=".pdf,.jpg,.png" error={errors.licenseFile} required onSelect={f => update('licenseFile', f)} />
-                                        <FileUploadCard label="Owner ID Proof (Aadhaar / PAN)" icon={IdCard} accept=".pdf,.jpg,.png" error={errors.idFile} required onSelect={f => update('idFile', f)} />
-                                        <div className="space-y-2">
-                                            <label className="text-xs font-bold text-gray-500 uppercase tracking-widest pl-1">Services You Offer</label>
-                                            <div className="grid grid-cols-3 gap-2">
-                                                {[
-                                                    { key: 'trips', label: 'Trips', emoji: String.fromCodePoint(0x1F697) },
-                                                    { key: 'treks', label: 'Treks', emoji: String.fromCodePoint(0x1F3D4) },
-                                                ].map(s => (
-                                                    <motion.button key={s.key} type="button" whileTap={{ scale: 0.95 }} onClick={() => toggleAvail(s.key)}
-                                                        className={`flex flex-col items-center gap-1.5 p-3 rounded-2xl border-2 transition-all ${form.availability[s.key] ? 'border-emerald-500 bg-emerald-50 shadow-sm' : 'border-gray-200 bg-white hover:border-gray-300'
-                                                            }`}>
-                                                        <span className="text-xl">{s.emoji}</span>
-                                                        <span className={`text-xs font-bold ${form.availability[s.key] ? 'text-emerald-700' : 'text-gray-500'}`}>{s.label}</span>
-                                                    </motion.button>
-                                                ))}
-                                            </div>
-                                        </div>
+                                        <FileUploadCard label="Business License / Registration" icon={FileText} accept=".pdf,.jpg,.png" error={errors.licenseFile} required currentFile={form.licenseFile} onSelect={f => update('licenseFile', f)} />
+                                        <FileUploadCard label="Owner ID Proof (Aadhaar / PAN)" icon={IdCard} accept=".pdf,.jpg,.png" error={errors.idFile} required currentFile={form.idFile} onSelect={f => update('idFile', f)} />
                                         <label className={`flex items-start gap-3 rounded-2xl p-4 border-2 transition-all cursor-pointer ${form.agree ? 'border-emerald-500 bg-emerald-50/50'
                                             : errors.agree ? 'border-rose-300 bg-rose-50/30' : 'border-gray-200 hover:border-gray-300'
                                             }`}>
@@ -394,9 +429,9 @@ export default function ProviderRegistrationForm({ rejected = false }) {
                             </div>
                         </form>
 
-                        <p className="text-center text-xs text-gray-500 mt-6 font-medium">
+                        <p className="text-center text-xs text-gray-500 mt-4 font-medium">
                             {"Already a partner? "}
-                            <Link href="/signin?role=provider" className="text-emerald-600 font-bold hover:underline">Sign in</Link>
+                            <button type="button" onClick={() => { localStorage.setItem('bgp_auth_state', JSON.stringify({ tab: 'provider', timestamp: Date.now() })); openAuthModal(); }} className="text-emerald-600 font-bold hover:underline cursor-pointer">Sign in</button>
                         </p>
                     </div>
                 </motion.div>

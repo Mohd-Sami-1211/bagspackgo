@@ -507,7 +507,7 @@ function AuthModalContent() {
 
                                         <form onSubmit={handleUserSendOtp} className="space-y-4">
                                             <div className="relative group">
-                                                <input type="email" required value={userEmail} onChange={e => setUserEmail(e.target.value)} className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-emerald-500 outline-none transition-all" placeholder="Enter your email" />
+                                                <input type="email" required autoComplete="email" value={userEmail} onChange={e => setUserEmail(e.target.value)} className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-emerald-500 outline-none transition-all" placeholder="Enter your email" />
                                                 <Mail className="w-5 h-5 text-gray-400 absolute left-3 top-3.5 group-focus-within:text-emerald-500 transition-colors" />
                                             </div>
                                             <button type="submit" disabled={loading} className="w-full py-3.5 rounded-xl font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-500/20 transition-all flex items-center justify-center gap-2">
@@ -571,14 +571,14 @@ function AuthModalContent() {
                                             <div className="space-y-1">
                                                 <label className="text-xs font-bold text-gray-500 uppercase ml-1">Full Name</label>
                                                 <div className="relative group">
-                                                    <input type="text" required value={userDetails.name} onChange={e => setUserDetails({ ...userDetails, name: e.target.value })} className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-emerald-500 outline-none transition-all" placeholder="Enter Name" />
+                                                    <input type="text" required autoComplete="name" value={userDetails.name} onChange={e => setUserDetails({ ...userDetails, name: e.target.value })} className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-emerald-500 outline-none transition-all" placeholder="Enter Name" />
                                                     <User className="w-5 h-5 text-gray-400 absolute left-3 top-3.5 group-focus-within:text-emerald-500" />
                                                 </div>
                                             </div>
                                             <div className="space-y-1">
                                                 <label className="text-xs font-bold text-gray-500 uppercase ml-1">Mobile Number</label>
                                                 <div className="relative group">
-                                                    <input type="text" required value={userDetails.phone} onChange={e => setUserDetails({ ...userDetails, phone: e.target.value })} className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-emerald-500 outline-none transition-all" placeholder="10-digit number" />
+                                                    <input type="tel" required autoComplete="tel" value={userDetails.phone} onChange={e => setUserDetails({ ...userDetails, phone: e.target.value })} className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-emerald-500 outline-none transition-all" placeholder="10-digit number" />
                                                     <Phone className="w-5 h-5 text-gray-400 absolute left-3 top-3.5 group-focus-within:text-emerald-500" />
                                                 </div>
                                             </div>
@@ -618,14 +618,14 @@ function AuthModalContent() {
                                             {/* Name field (Signup only) */}
                                             {providerMode === 'signup' && (
                                                 <div className="relative group">
-                                                    <input type="text" required value={providerData.name} onChange={e => setProviderData({ ...providerData, name: e.target.value })} className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-emerald-500 outline-none transition-all" placeholder="Name" />
+                                                    <input type="text" required autoComplete="name" value={providerData.name} onChange={e => setProviderData({ ...providerData, name: e.target.value })} className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-emerald-500 outline-none transition-all" placeholder="Name" />
                                                     <User className="w-5 h-5 text-gray-400 absolute left-3 top-3.5 group-focus-within:text-emerald-500" />
                                                 </div>
                                             )}
 
                                             {/* Email field (Always) */}
                                             <div className="relative group">
-                                                <input type="email" required value={providerData.email} onChange={e => setProviderData({ ...providerData, email: e.target.value })} className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-emerald-500 outline-none transition-all" placeholder="Email address" />
+                                                <input type="email" required autoComplete="email" value={providerData.email} onChange={e => setProviderData({ ...providerData, email: e.target.value })} className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-emerald-500 outline-none transition-all" placeholder="Email address" />
                                                 <Mail className="w-5 h-5 text-gray-400 absolute left-3 top-3.5 group-focus-within:text-emerald-500" />
                                             </div>
 
@@ -633,7 +633,7 @@ function AuthModalContent() {
                                             {providerMode !== 'forgot' && (
                                                 <div className="space-y-1">
                                                     <div className="relative group">
-                                                        <input type="password" required value={providerData.password} onChange={e => setProviderData({ ...providerData, password: e.target.value })} className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-emerald-500 outline-none transition-all" placeholder={providerMode === 'signup' ? 'Set password' : 'Password'} />
+                                                        <input type="password" required autoComplete={providerMode === 'signup' ? "new-password" : "current-password"} value={providerData.password} onChange={e => setProviderData({ ...providerData, password: e.target.value })} className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-emerald-500 outline-none transition-all" placeholder={providerMode === 'signup' ? 'Set password' : 'Password'} />
                                                         <Key className="w-5 h-5 text-gray-400 absolute left-3 top-3.5 group-focus-within:text-emerald-500" />
                                                     </div>
                                                     
@@ -647,7 +647,7 @@ function AuthModalContent() {
                                                     {/* Confirm Password (Signup only) */}
                                                     {providerMode === 'signup' && (
                                                         <div className="relative group mt-2 space-y-1">
-                                                            <input type="password" required value={providerData.confirmPassword} onChange={e => setProviderData({ ...providerData, confirmPassword: e.target.value })} className={`w-full pl-10 pr-4 py-3 bg-gray-50 border rounded-xl focus:bg-white focus:outline-none transition-all ${providerData.confirmPassword && providerData.password !== providerData.confirmPassword ? 'border-red-400 focus:border-red-500' : 'border-gray-200 focus:border-emerald-500'}`} placeholder="Confirm password" />
+                                                            <input type="password" required autoComplete="new-password" value={providerData.confirmPassword} onChange={e => setProviderData({ ...providerData, confirmPassword: e.target.value })} className={`w-full pl-10 pr-4 py-3 bg-gray-50 border rounded-xl focus:bg-white focus:outline-none transition-all ${providerData.confirmPassword && providerData.password !== providerData.confirmPassword ? 'border-red-400 focus:border-red-500' : 'border-gray-200 focus:border-emerald-500'}`} placeholder="Confirm password" />
                                                             <Key className="w-5 h-5 text-gray-400 absolute left-3 top-3.5 group-focus-within:text-emerald-500" />
                                                         </div>
                                                     )}
@@ -716,7 +716,7 @@ function AuthModalContent() {
                                                 <div className="space-y-1">
                                                     <label className="text-xs font-bold text-gray-500 uppercase ml-1">New Password</label>
                                                     <div className="relative group">
-                                                        <input type="password" required value={providerData.password} onChange={e => setProviderData({ ...providerData, password: e.target.value })} className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-emerald-500 outline-none transition-all" placeholder="Enter new password" />
+                                                        <input type="password" required autoComplete="new-password" value={providerData.password} onChange={e => setProviderData({ ...providerData, password: e.target.value })} className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-emerald-500 outline-none transition-all" placeholder="Enter new password" />
                                                         <Key className="w-5 h-5 text-gray-400 absolute left-3 top-3.5 group-focus-within:text-emerald-500" />
                                                     </div>
                                                     {providerData.password && (
