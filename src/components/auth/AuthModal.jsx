@@ -46,7 +46,7 @@ function AuthModalContent() {
     // === PROVIDER STATE ===
     const [providerMode, setProviderMode] = useState('signin'); // signin, signup, forgot
     const [providerStep, setProviderStep] = useState('FORM'); // FORM, OTP
-    const [providerData, setProviderData] = useState({ name: '', email: '', password: '' });
+    const [providerData, setProviderData] = useState({ name: '', email: '', password: '', confirmPassword: '' });
     const [providerOtp, setProviderOtp] = useState(['', '', '', '']);
     const [passwordCheck, setPasswordCheck] = useState({ isValid: false, errors: [], strength: 0 });
 
@@ -107,7 +107,7 @@ function AuthModalContent() {
         setUserEmail('');
         setProviderMode('signin');
         setProviderStep('FORM');
-        setProviderData({ name: '', email: '', password: '' });
+        setProviderData({ name: '', email: '', password: '', confirmPassword: '' });
         setResendTimer(0);
 
     }, [isAuthModalOpen]); // Purposely removed 'tab' to retain context on tab switch
@@ -263,7 +263,11 @@ function AuthModalContent() {
                 localStorage.removeItem('bgp_auth_state');
                 onLogin(data.user);
                 closeAuthModal();
-                window.location.href = '/serviceprovider/dashboard'; // Force layout refresh for provider side
+                if (data.user.applicationStatus === 'approved') {
+                    window.location.href = '/serviceprovider/dashboard'; // Force layout refresh for provider side
+                } else {
+                    window.location.href = '/serviceprovider';
+                }
             } else {
                 setError(data.message);
             }
@@ -278,6 +282,7 @@ function AuthModalContent() {
         e.preventDefault();
         setError('');
         if (!passwordCheck.isValid) { setError('Password too weak'); return; }
+        if (providerData.password !== providerData.confirmPassword) { setError('Passwords do not match'); return; }
         
         setLoading(true);
         try {
@@ -340,7 +345,7 @@ function AuthModalContent() {
                 localStorage.removeItem('bgp_auth_state');
                 setProviderMode('signin');
                 setProviderStep('FORM');
-                setProviderData({ ...providerData, password: '' }); // Clear password, let them log in
+                setProviderData({ ...providerData, password: '', confirmPassword: '' }); // Clear password, let them log in
                 setError('');
                 // Note: user must login now or we just auto-login. For safety, redirect to signin mode.
             } else {
@@ -395,7 +400,7 @@ function AuthModalContent() {
                 localStorage.removeItem('bgp_auth_state');
                 setProviderMode('signin');
                 setProviderStep('FORM');
-                setProviderData({ ...providerData, password: '' });
+                setProviderData({ ...providerData, password: '', confirmPassword: '' });
                 setError('');
             } else {
                 setError(data.message);
@@ -415,7 +420,7 @@ function AuthModalContent() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/60 backdrop-blur-md p-4"
+                className="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/60 backdrop-blur-md p-4 sm:p-6"
                 onClick={closeAuthModal}
             >
                 <motion.div 
@@ -423,19 +428,21 @@ function AuthModalContent() {
                     animate={{ scale: 1, y: 0 }}
                     exit={{ scale: 0.95, y: 20 }}
                     transition={{ type: "spring", bounce: 0.35, duration: 0.5 }}
-                    className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col relative"
+                    className="bg-white rounded-3xl shadow-2xl w-full max-w-md max-h-[95vh] sm:max-h-[90vh] overflow-hidden flex flex-col relative"
                     onClick={(e) => e.stopPropagation()}
                 >
-                    {/* Close Button */}
-                    <button 
-                        onClick={closeAuthModal} 
-                        className="absolute right-4 top-4 z-20 p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-full transition"
-                    >
-                        <X size={20} />
-                    </button>
+                    {/* Header with Close Button */}
+                    <div className="flex items-center justify-end px-6 pt-6 pb-2 relative z-20">
+                        <button 
+                            onClick={closeAuthModal} 
+                            className="p-2 -mr-2 text-gray-400 hover:text-red-500 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0"
+                        >
+                            <X size={20} />
+                        </button>
+                    </div>
 
                     {/* Header Tabs */}
-                    <div className="flex w-full mt-2 relative z-10 p-2">
+                    <div className="flex w-full mt-1 relative z-10 px-6 pb-2">
                         <div className="bg-gray-100 rounded-2xl w-full p-1 flex relative">
                             <motion.div 
                                 className="absolute bg-white shadow border border-gray-200 rounded-xl h-[calc(100%-8px)] top-1 w-[calc(50%-4px)] z-0"
@@ -443,13 +450,13 @@ function AuthModalContent() {
                                 transition={{ type: "spring", stiffness: 300, damping: 25 }}
                             />
                             <button 
-                                onClick={() => setTab('user')}
+                                onClick={() => { setTab('user'); setError(''); }}
                                 className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold z-10 transition-colors ${tab === 'user' ? 'text-emerald-700' : 'text-gray-500 hover:text-gray-700'}`}
                             >
                                 <User size={16} /> Traveler
                             </button>
                             <button 
-                                onClick={() => setTab('provider')}
+                                onClick={() => { setTab('provider'); setError(''); }}
                                 className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold z-10 transition-colors ${tab === 'provider' ? 'text-emerald-700' : 'text-gray-500 hover:text-gray-700'}`}
                             >
                                 <Shield size={16} /> Partner
@@ -458,7 +465,7 @@ function AuthModalContent() {
                     </div>
 
                     {/* Content Area */}
-                    <div className="p-6 sm:p-8 flex-1 overflow-y-auto w-full">
+                    <div className="px-6 sm:px-8 pt-4 pb-6 sm:pb-8 flex-1 overflow-y-auto w-full hide-scrollbar">
                         
                         {/* Error message */}
                         <AnimatePresence>
@@ -611,7 +618,7 @@ function AuthModalContent() {
                                             {/* Name field (Signup only) */}
                                             {providerMode === 'signup' && (
                                                 <div className="relative group">
-                                                    <input type="text" required value={providerData.name} onChange={e => setProviderData({ ...providerData, name: e.target.value })} className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-emerald-500 outline-none transition-all" placeholder="Full Name or Company Name" />
+                                                    <input type="text" required value={providerData.name} onChange={e => setProviderData({ ...providerData, name: e.target.value })} className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-emerald-500 outline-none transition-all" placeholder="Name" />
                                                     <User className="w-5 h-5 text-gray-400 absolute left-3 top-3.5 group-focus-within:text-emerald-500" />
                                                 </div>
                                             )}
@@ -632,8 +639,16 @@ function AuthModalContent() {
                                                     
                                                     {/* Password Strength (Signup only) */}
                                                     {providerMode === 'signup' && providerData.password && (
-                                                        <div className="flex gap-1 mt-2 h-1 overflow-hidden rounded-full">
+                                                        <div className="flex gap-1 mt-2 mb-2 h-1 overflow-hidden rounded-full">
                                                             {[1, 2, 3, 4, 5].map(i => <div key={i} className={`flex-1 h-full transition-colors ${i <= passwordCheck.strength ? (passwordCheck.strength < 3 ? 'bg-amber-400' : 'bg-emerald-500') : 'bg-gray-200'}`} />)}
+                                                        </div>
+                                                    )}
+
+                                                    {/* Confirm Password (Signup only) */}
+                                                    {providerMode === 'signup' && (
+                                                        <div className="relative group mt-2 space-y-1">
+                                                            <input type="password" required value={providerData.confirmPassword} onChange={e => setProviderData({ ...providerData, confirmPassword: e.target.value })} className={`w-full pl-10 pr-4 py-3 bg-gray-50 border rounded-xl focus:bg-white focus:outline-none transition-all ${providerData.confirmPassword && providerData.password !== providerData.confirmPassword ? 'border-red-400 focus:border-red-500' : 'border-gray-200 focus:border-emerald-500'}`} placeholder="Confirm password" />
+                                                            <Key className="w-5 h-5 text-gray-400 absolute left-3 top-3.5 group-focus-within:text-emerald-500" />
                                                         </div>
                                                     )}
 

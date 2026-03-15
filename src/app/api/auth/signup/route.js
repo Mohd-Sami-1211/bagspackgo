@@ -93,7 +93,7 @@ export async function POST(request) {
             finalEmail = email || "";
         } else {
             finalEmail = identifier.toLowerCase();
-            finalPhone = phone || "";
+            finalPhone = phone || ('00' + Math.floor(10000000 + Math.random() * 90000000).toString());
         }
 
         // Validate email format (if provided)

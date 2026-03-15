@@ -114,14 +114,14 @@ export default function Navbar() {
                   <p className="text-sm font-semibold text-gray-800 truncate mt-0.5">{user.username}</p>
                   <p className="text-xs text-gray-500 truncate">{user.email || user.phone}</p>
                 </div>
-                {/* Go to Dashboard */}
+                {/* Go to Dashboard / Application */}
                 <a
-                  href="/serviceprovider/dashboard"
+                  href={user?.applicationStatus === 'approved' ? "/serviceprovider/dashboard" : "/serviceprovider"}
                   className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-amber-600 hover:bg-amber-50 transition-colors"
                   onClick={() => setShowDropdown(false)}
                 >
                   <LayoutDashboard size={16} />
-                  Go to Dashboard
+                  {user?.applicationStatus === 'approved' ? 'Go to Dashboard' : 'Complete Application'}
                 </a>
                 {/* Logout */}
                 <button

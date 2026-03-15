@@ -67,6 +67,16 @@ export default function ServiceProviderLayout({ children }) {
     return null;
   }
 
+  const status = user?.applicationStatus || 'none';
+
+  if (status === 'approved' && pathname === '/serviceprovider') {
+    return null; // waiting for redirect
+  }
+
+  if (status !== 'approved' && pathname.startsWith('/serviceprovider/dashboard')) {
+    return null; // waiting for redirect
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
