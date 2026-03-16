@@ -5,9 +5,10 @@ import Image from 'next/image';
 import Link from 'next/link';
 import {
     Clock, CheckCircle2, Send, Hourglass, Mail, LogOut,
-    RefreshCw, Shield, FileCheck, Building2,
+    RefreshCw, Shield, FileCheck, Building2, XCircle, AlertTriangle
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 
 function TimelineTracker({ currentStatus }) {
     const steps = [
@@ -72,8 +73,9 @@ function TimelineTracker({ currentStatus }) {
     );
 }
 
-export default function ApplicationPendingPage() {
+export default function ApplicationPendingPage({ onResubmit }) {
     const { user, logout, checkAuth } = useAuth();
+    const router = useRouter();
     const [appData, setAppData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -107,18 +109,26 @@ export default function ApplicationPendingPage() {
     const formatDate = (d) =>
         new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 
+    const currentStatus = appData?.application?.status || 'pending';
+    const isRejected = currentStatus === 'rejected';
+
+    const handleLogout = async () => {
+        await logout();
+        window.location.href = '/';
+    };
+
     return (
         <div className="min-h-[100dvh] w-full flex items-center justify-center bg-[#FAFAFA] text-gray-900 overflow-x-hidden p-4 sm:p-8 lg:p-12 relative -mt-5">
             
-            <div className="absolute top-0 left-0 w-full h-[45vh] bg-gradient-to-b from-amber-100/60 to-transparent pointer-events-none" />
-            <motion.div className="absolute -top-32 -right-32 w-96 h-96 bg-amber-200/40 rounded-full blur-[100px] pointer-events-none" animate={{ scale: [1, 1.1, 1], opacity: [0.5, 0.7, 0.5] }} transition={{ duration: 8, repeat: Infinity }} />
+            <div className={`absolute top-0 left-0 w-full h-[45vh] bg-gradient-to-b ${isRejected ? 'from-rose-100/60' : 'from-amber-100/60'} to-transparent pointer-events-none`} />
+            <motion.div className={`absolute -top-32 -right-32 w-96 h-96 ${isRejected ? 'bg-rose-200/40' : 'bg-amber-200/40'} rounded-full blur-[100px] pointer-events-none`} animate={{ scale: [1, 1.1, 1], opacity: [0.5, 0.7, 0.5] }} transition={{ duration: 8, repeat: Infinity }} />
             <motion.div className="absolute top-[40%] -left-32 w-80 h-80 bg-orange-100/40 rounded-full blur-[80px] pointer-events-none" animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }} transition={{ duration: 10, repeat: Infinity }} />
 
             {/* Centered Form Wrapper */}
             <div className="relative z-10 w-full max-w-[600px] py-8">
                 <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, type: 'spring', damping: 25 }}
                     className="w-full bg-white rounded-[2rem] sm:rounded-[2.5rem] shadow-[0_12px_40px_rgba(0,0,0,0.06)] p-6 sm:p-10 border border-gray-100/80 overflow-hidden relative">
-                    <div className="absolute inset-0 bg-gradient-to-br from-white via-white to-amber-50/20 pointer-events-none" />
+                    <div className={`absolute inset-0 bg-gradient-to-br from-white via-white ${isRejected ? 'to-rose-50/20' : 'to-amber-50/20'} pointer-events-none`} />
                     <div className="relative z-10">
                         {/* Header */}
                         <div className="mb-6">
@@ -135,16 +145,35 @@ export default function ApplicationPendingPage() {
 
                         {/* Status badge */}
                         <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
-                            className="flex items-center gap-3 p-4 bg-amber-50 border border-amber-200 rounded-2xl mb-6">
-                            <motion.div animate={{ rotate: [0, 15, -15, 0] }} transition={{ repeat: Infinity, duration: 4, ease: 'easeInOut' }}
-                                className="h-12 w-12 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                                <Hourglass className="h-6 w-6 text-amber-600" />
+                            className={`flex items-center gap-3 p-4 border rounded-2xl mb-6 ${isRejected ? 'bg-rose-50 border-rose-200' : 'bg-amber-50 border-amber-200'}`}>
+                            <motion.div animate={isRejected ? {} : { rotate: [0, 15, -15, 0] }} transition={isRejected ? {} : { repeat: Infinity, duration: 4, ease: 'easeInOut' }}
+                                className={`h-12 w-12 rounded-xl flex items-center justify-center flex-shrink-0 ${isRejected ? 'bg-rose-100 text-rose-600' : 'bg-amber-100 text-amber-600'}`}>
+                                {isRejected ? <XCircle className="h-6 w-6" /> : <Hourglass className="h-6 w-6" />}
                             </motion.div>
                             <div>
-                                <p className="font-bold text-amber-800">Under Review</p>
-                                <p className="text-xs text-amber-600">Our team is verifying your documents</p>
+                                <p className={`font-bold ${isRejected ? 'text-rose-800' : 'text-amber-800'}`}>
+                                    {isRejected ? 'Application Rejected' : 'Under Review'}
+                                </p>
+                                <p className={`text-xs ${isRejected ? 'text-rose-600' : 'text-amber-600'}`}>
+                                    {isRejected ? 'Please review the reason below and resubmit.' : 'Our team is verifying your documents'}
+                                </p>
                             </div>
                         </motion.div>
+
+                        {/* Admin Notes if rejected */}
+                        {isRejected && appData?.application?.adminNotes && (
+                            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
+                                <div className="bg-rose-50 border border-rose-100 p-4 rounded-2xl">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <AlertTriangle className="w-4 h-4 text-rose-500" />
+                                        <span className="text-xs font-bold text-rose-800 uppercase tracking-widest">Admin Feedback</span>
+                                    </div>
+                                    <p className="text-sm text-rose-700 italic border-l-2 border-rose-300 pl-3 py-1">
+                                        "{appData.application.adminNotes}"
+                                    </p>
+                                </div>
+                            </motion.div>
+                        )}
 
                         {/* Timeline tracker */}
                         <div className="mb-8">
@@ -180,41 +209,52 @@ export default function ApplicationPendingPage() {
                         </AnimatePresence>
 
                         {/* What happens next */}
-                        <div className="mb-6">
-                            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest pl-1 flex items-center gap-1.5 mb-3">
-                                <Shield className="h-3.5 w-3.5 text-blue-500" /> What Happens Next?
-                            </h3>
-                            <div className="space-y-2">
-                                {[
-                                    'Our team will verify your documents and details',
-                                    'You will get an email once the review is complete',
-                                    'Once approved, full dashboard access is unlocked',
-                                ].map((text, i) => (
-                                    <motion.div key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 + i * 0.1 }}
-                                        className="flex items-center gap-2.5 text-sm text-gray-600">
-                                        <div className="h-6 w-6 rounded-lg bg-emerald-50 flex items-center justify-center flex-shrink-0">
-                                            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-                                        </div>
-                                        {text}
-                                    </motion.div>
-                                ))}
+                        {!isRejected && (
+                            <div className="mb-6">
+                                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest pl-1 flex items-center gap-1.5 mb-3">
+                                    <Shield className="h-3.5 w-3.5 text-blue-500" /> What Happens Next?
+                                </h3>
+                                <div className="space-y-2">
+                                    {[
+                                        'Our team will verify your documents and details',
+                                        'You will get an email once the review is complete',
+                                        'Once approved, full dashboard access is unlocked',
+                                    ].map((text, i) => (
+                                        <motion.div key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 + i * 0.1 }}
+                                            className="flex items-center gap-2.5 text-sm text-gray-600">
+                                            <div className="h-6 w-6 rounded-lg bg-emerald-50 flex items-center justify-center flex-shrink-0">
+                                                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                                            </div>
+                                            {text}
+                                        </motion.div>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
+                        )}
 
                         {/* Action buttons */}
                         <div className="space-y-2.5">
-                            <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
-                                onClick={handleRefresh} disabled={refreshing}
-                                className="w-full py-3.5 rounded-xl font-bold text-white shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 transition-all bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed">
-                                <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-                                {refreshing ? 'Checking...' : justChecked ? 'No updates yet' : 'Check for Updates'}
-                            </motion.button>
-                            <div className="flex gap-2">
-                                <a href="mailto:providers@bagspackgo.com"
+                            {isRejected ? (
+                                <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
+                                    onClick={onResubmit}
+                                    className="w-full py-3.5 rounded-xl font-bold text-white shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 transition-all bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700">
+                                    Resubmit Application
+                                </motion.button>
+                            ) : (
+                                <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
+                                    onClick={handleRefresh} disabled={refreshing}
+                                    className="w-full py-3.5 rounded-xl font-bold text-white shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 transition-all bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                    <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+                                    {refreshing ? 'Checking...' : justChecked ? 'No updates yet' : 'Check for Updates'}
+                                </motion.button>
+                            )}
+                            
+                            <div className="flex flex-col sm:flex-row gap-2">
+                                <a href="mailto:bagspackgo01@gmail.com"
                                     className="flex-1 py-3 rounded-xl font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors flex items-center justify-center gap-2 text-sm">
-                                    <Mail className="h-4 w-4" /> Support
+                                    <Mail className="h-4 w-4" /> Write to Us
                                 </a>
-                                <button onClick={logout}
+                                <button onClick={handleLogout}
                                     className="flex-1 py-3 rounded-xl font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors flex items-center justify-center gap-2 text-sm">
                                     <LogOut className="h-4 w-4" /> Sign Out
                                 </button>
@@ -222,8 +262,11 @@ export default function ApplicationPendingPage() {
                         </div>
 
                         <p className="text-center text-xs text-gray-500 font-medium mt-6 leading-relaxed">
-                            You can safely close this page.<br />
-                            We will notify you via email when reviewed.
+                            {isRejected ? (
+                                <>Please review the feedback and update your details.<br/>If you have questions, write to us.</>
+                            ) : (
+                                <>You can safely close this page.<br/>We will notify you via email when reviewed.</>
+                            )}
                         </p>
                     </div>
                 </motion.div>

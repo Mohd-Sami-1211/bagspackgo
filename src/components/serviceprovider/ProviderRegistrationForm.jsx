@@ -42,7 +42,7 @@ function FloatingInput({ label, icon: Icon, error, children, required }) {
     );
 }
 
-function FileUploadCard({ label, icon: Icon, accept, error, required, currentFile, onSelect }) {
+function FileUploadCard({ label, icon: Icon, accept, error, required, currentFile, onSelect, onView }) {
     const ref = useRef(null);
     const [dragOver, setDragOver] = useState(false);
     const [previewUrl, setPreviewUrl] = useState(null);
@@ -60,6 +60,13 @@ function FileUploadCard({ label, icon: Icon, accept, error, required, currentFil
     }, [currentFile]);
 
     const handleFile = (f) => { if (f) { onSelect(f); } };
+
+    const handleView = (e) => {
+        e.stopPropagation();
+        if (previewUrl && onView) {
+            onView(previewUrl);
+        }
+    };
 
     return (
         <div className="space-y-1.5">
@@ -84,8 +91,11 @@ function FileUploadCard({ label, icon: Icon, accept, error, required, currentFil
                 {currentFile ? (
                     <div className="flex items-center gap-4 relative z-10 w-full h-full">
                         {previewUrl ? (
-                            <div className="h-16 w-16 rounded-xl overflow-hidden shadow-sm flex-shrink-0 relative">
-                                <Image src={previewUrl} alt="Preview" fill className="object-cover" />
+                            <div onClick={handleView} className="h-16 w-16 rounded-xl overflow-hidden shadow-sm flex-shrink-0 relative group/img cursor-pointer">
+                                <Image src={previewUrl} alt="Preview" fill className="object-cover transition-transform group-hover/img:scale-110" />
+                                <div className="absolute inset-0 bg-black/40 hidden group-hover/img:flex items-center justify-center">
+                                    <span className="text-white text-[10px] uppercase font-bold tracking-wider">View</span>
+                                </div>
                             </div>
                         ) : (
                             <div className="h-12 w-12 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0">
@@ -137,6 +147,7 @@ export default function ProviderRegistrationForm({ rejected = false }) {
     const [destOpen, setDestOpen] = useState(false);
     const destRef = useRef(null);
     const [rejectionNotes, setRejectionNotes] = useState('');
+    const [viewingImage, setViewingImage] = useState(null);
 
     useEffect(() => {
         if (rejected) {
@@ -160,9 +171,6 @@ export default function ProviderRegistrationForm({ rejected = false }) {
                             licenseFile: app.licenseFile || null,
                             idFile: app.idFile || null,
                         }));
-                        if (app.adminNotes) {
-                            setRejectionNotes(app.adminNotes);
-                        }
                     }
                 })
                 .catch(err => console.error("Failed to fetch rejected app data:", err));
@@ -325,23 +333,7 @@ export default function ProviderRegistrationForm({ rejected = false }) {
                                 initial={false} animate={{ width: `${(step / STEPS.length) * 100}%` }} transition={{ duration: 0.5, ease: [.22, 1, .36, 1] }} />
                         </div>
 
-                        {/* Rejection notice */}
-                        {rejected && step === 1 && (
-                            <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
-                                className="mb-5 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3">
-                                <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
-                                <div className="w-full">
-                                    <p className="text-sm font-semibold text-amber-800">Previous application rejected</p>
-                                    <p className="text-xs text-amber-600 mt-0.5 mb-2">Review your details and resubmit.</p>
-                                    {rejectionNotes && (
-                                        <div className="bg-amber-100/50 p-2.5 rounded-lg border border-amber-200/50 mt-1">
-                                            <span className="text-[10px] uppercase font-bold text-amber-500 tracking-wider mb-0.5 block">Admin Note</span>
-                                            <p className="text-xs font-medium text-amber-900 leading-relaxed italic">"{rejectionNotes}"</p>
-                                        </div>
-                                    )}
-                                </div>
-                            </motion.div>
-                        )}
+                        {/* Rejection notice is now handled by the ApplicationPendingPage */}
 
                         {/* API Error */}
                         <AnimatePresence>
@@ -457,8 +449,8 @@ export default function ProviderRegistrationForm({ rejected = false }) {
 
                                 {step === 3 && (
                                     <motion.div key="step3" custom={direction} variants={slideVariants} initial="enter" animate="center" exit="exit" className="space-y-4">
-                                        <FileUploadCard label="Business License / Registration" icon={FileText} accept=".pdf,.jpg,.png" error={errors.licenseFile} required currentFile={form.licenseFile} onSelect={f => update('licenseFile', f)} />
-                                        <FileUploadCard label="Owner ID Proof (Aadhaar / PAN)" icon={IdCard} accept=".pdf,.jpg,.png" error={errors.idFile} required currentFile={form.idFile} onSelect={f => update('idFile', f)} />
+                                        <FileUploadCard label="Business License / Registration" icon={FileText} accept=".pdf,.jpg,.png" error={errors.licenseFile} required currentFile={form.licenseFile} onSelect={f => update('licenseFile', f)} onView={setViewingImage} />
+                                        <FileUploadCard label="Owner ID Proof (Aadhaar / PAN)" icon={IdCard} accept=".pdf,.jpg,.png" error={errors.idFile} required currentFile={form.idFile} onSelect={f => update('idFile', f)} onView={setViewingImage} />
                                         <label className={`flex items-start gap-3 rounded-2xl p-4 border-2 transition-all cursor-pointer ${form.agree ? 'border-emerald-500 bg-emerald-50/50'
                                             : errors.agree ? 'border-rose-300 bg-rose-50/30' : 'border-gray-200 hover:border-gray-300'
                                             }`}>
@@ -500,6 +492,21 @@ export default function ProviderRegistrationForm({ rejected = false }) {
                     </div>
                 </motion.div>
             </div>
+
+            {/* Image Viewer Modal */}
+            <AnimatePresence>
+                {viewingImage && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setViewingImage(null)}>
+                        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} 
+                            className="relative max-w-4xl w-full max-h-[90vh] flex flex-col items-center justify-center p-2" onClick={e => e.stopPropagation()}>
+                            <button onClick={() => setViewingImage(null)} className="absolute -top-12 right-0 sm:-right-12 text-gray-400 hover:text-white transition-colors bg-gray-900 rounded-full p-2 shadow-xl">
+                                <X className="w-6 h-6" />
+                            </button>
+                            <img src={viewingImage} alt="Document View" className="max-w-full max-h-[85vh] object-contain rounded-xl border border-gray-700 shadow-2xl bg-black" />
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

@@ -54,6 +54,7 @@ export default function AdminApplicationsPage() {
     const [filter, setFilter] = useState('pending'); // 'pending', 'approved', 'rejected', 'all'
     const [error, setError] = useState('');
     const [rejectingApp, setRejectingApp] = useState(null);
+    const [viewingImage, setViewingImage] = useState(null);
 
     const fetchApps = useCallback(async (currentFilter) => {
         setLoading(true);
@@ -193,9 +194,9 @@ export default function AdminApplicationsPage() {
                                                 <div className="flex flex-col gap-1 w-28">
                                                     <span className="text-xs text-gray-500 font-semibold">License</span>
                                                     {app.licenseFile && app.licenseFile.startsWith('data:') ? (
-                                                        <a href={app.licenseFile} target="_blank" rel="noreferrer" className="relative w-full h-20 bg-gray-800 border border-gray-700 rounded-xl overflow-hidden block hover:border-emerald-500 transition-colors">
+                                                        <button onClick={() => setViewingImage(app.licenseFile)} className="relative w-full h-20 bg-gray-800 border border-gray-700 rounded-xl overflow-hidden block hover:border-emerald-500 transition-colors">
                                                             <img src={app.licenseFile} alt="License" className="object-cover w-full h-full" />
-                                                        </a>
+                                                        </button>
                                                     ) : (
                                                         <span className="text-xs text-red-400 bg-red-500/10 px-2 py-1 flex items-center rounded mt-1">Missing / Empty</span>
                                                     )}
@@ -204,9 +205,9 @@ export default function AdminApplicationsPage() {
                                                 <div className="flex flex-col gap-1 w-28">
                                                     <span className="text-xs text-gray-500 font-semibold">Govt ID</span>
                                                     {app.idFile && app.idFile.startsWith('data:') ? (
-                                                        <a href={app.idFile} target="_blank" rel="noreferrer" className="relative w-full h-20 bg-gray-800 border border-gray-700 rounded-xl overflow-hidden block hover:border-blue-500 transition-colors">
+                                                        <button onClick={() => setViewingImage(app.idFile)} className="relative w-full h-20 bg-gray-800 border border-gray-700 rounded-xl overflow-hidden block hover:border-blue-500 transition-colors">
                                                             <img src={app.idFile} alt="ID" className="object-cover w-full h-full" />
-                                                        </a>
+                                                        </button>
                                                     ) : (
                                                         <span className="text-xs text-red-400 bg-red-500/10 px-2 py-1 flex items-center rounded mt-1">Missing / Empty</span>
                                                     )}
@@ -261,6 +262,17 @@ export default function AdminApplicationsPage() {
             <AnimatePresence>
                 {rejectingApp && (
                     <RejectModal app={rejectingApp} onClose={() => setRejectingApp(null)} onConfirm={handleAction} />
+                )}
+                {viewingImage && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setViewingImage(null)}>
+                        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} 
+                            className="relative max-w-4xl w-full max-h-[90vh] flex flex-col items-center justify-center p-2" onClick={e => e.stopPropagation()}>
+                            <button onClick={() => setViewingImage(null)} className="absolute -top-12 right-0 sm:-right-12 text-gray-400 hover:text-white transition-colors bg-gray-900 rounded-full p-2">
+                                <X className="w-6 h-6" />
+                            </button>
+                            <img src={viewingImage} alt="Document View" className="max-w-full max-h-[85vh] object-contain rounded-xl border border-gray-700 shadow-2xl" />
+                        </motion.div>
+                    </div>
                 )}
             </AnimatePresence>
         </div>
