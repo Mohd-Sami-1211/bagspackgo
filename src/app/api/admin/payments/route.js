@@ -1,107 +1,66 @@
-import { NextResponse } from "next/server";
-import dbConnect from "@/lib/db";
-import { getCurrentUser } from "@/lib/auth";
-import { TripBooking } from "@/models/tripbooking.model";
-import { TrekBooking } from "@/models/trekbooking.model";
-import { Booking } from "@/models/booking.model";
-import { Event } from "@/models/event.model";
-import { Guide } from "@/models/guide.model";
-import { GuideDetails } from "@/models/guidedetails.model";
+import { NextResponse } from 'next/server';
+import connectDB from '@/lib/db';
+import { TripBooking } from '@/models/tripbooking.model';
+import { TrekBooking } from '@/models/trekbooking.model';
+import { Booking as EventBooking } from '@/models/booking.model';
+import { getCurrentAdmin } from '@/lib/adminAuth';
 
-export const maxDuration = 60;
-export const dynamic = 'force-dynamic';
-
-export async function GET() {
+export async function GET(req) {
     try {
-        const user = await getCurrentUser();
+        const admin = await getCurrentAdmin();
+        if (!admin) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
 
-        // Check if user is admin
-        if (!user || user.role !== "admin") {
-            return NextResponse.json(
-                { success: false, message: "Unauthorized" },
-                { status: 401 }
+        await connectDB();
+        
+        const { searchParams } = new URL(req.url);
+        const search = searchParams.get('search') || '';
+        const payoutStatus = searchParams.get('payout') || 'all'; 
+
+        let query = { status: 'confirmed' };
+        if (payoutStatus !== 'all') {
+            query.providerPaymentStatus = payoutStatus;
+        }
+
+        const [trips, treks, events] = await Promise.all([
+            TripBooking.find(query).populate('user', 'username').populate('provider', 'username').populate('package', 'name title').lean(),
+            TrekBooking.find(query).populate('user', 'username').populate('provider', 'username').populate('package', 'name title').lean(),
+            EventBooking.find(query).populate('user', 'username').populate({ path: 'event', select: 'title guide', populate: { path: 'guide', select: 'username' } }).lean()
+        ]);
+
+        const formatBooking = (b, type) => ({
+            _id: b._id,
+            model: type,
+            bookingRef: type === 'EventBooking' ? b.paymentId : b.bookingRef,
+            user: b.user?.username || 'Unknown',
+            provider: type === 'EventBooking' ? b.event?.guide?.username : b.provider?.username,
+            amount: type === 'EventBooking' ? b.amountPaid : b.totalAmount,
+            date: b.bookingDate || b.createdAt,
+            platformFee: b.platformFee || 0,
+            providerPaymentStatus: b.providerPaymentStatus || 'pending',
+            providerTransactionId: b.providerTransactionId || '',
+            providerPaymentDate: b.providerPaymentDate || null
+        });
+
+        const all = [
+            ...trips.map(t => formatBooking(t, 'TripBooking')),
+            ...treks.map(t => formatBooking(t, 'TrekBooking')),
+            ...events.map(e => formatBooking(e, 'EventBooking'))
+        ];
+
+        let filtered = all;
+        if (search) {
+            const s = search.toLowerCase();
+            filtered = all.filter(p => 
+                p.bookingRef?.toLowerCase().includes(s) || 
+                p.provider?.toLowerCase().includes(s) || 
+                p.providerTransactionId?.toLowerCase().includes(s)
             );
         }
 
-        await dbConnect();
+        filtered.sort((a,b) => new Date(b.date) - new Date(a.date));
 
-        // Fetch Bookings with confirmed status
-        const tripBookings = await TripBooking.find({ status: "confirmed" })
-            .populate("package", "title")
-            .populate("provider", "username email phone")
-            .lean();
-
-        const trekBookings = await TrekBooking.find({ status: "confirmed" })
-            .populate("package", "title")
-            .populate("provider", "username email phone")
-            .lean();
-
-        const eventBookings = await Booking.find({ status: "confirmed" })
-            .populate({
-                path: "event",
-                select: "title guide",
-                populate: { path: "guide", select: "username email phone" }
-            })
-            .lean();
-
-        // Normalize data to a common structure
-        const normalizedTrips = tripBookings.map(b => ({
-            _id: b._id,
-            type: 'trip',
-            title: b.package?.title || 'Trip Package',
-            bookingRef: b.bookingRef,
-            date: b.createdAt,
-            amount: b.totalAmount,
-            providerId: b.provider?._id || null,
-            providerName: b.provider?.username || 'Unknown',
-            providerPaymentStatus: b.providerPaymentStatus || "pending",
-            providerTransactionId: b.providerTransactionId || "",
-            providerPaymentDate: b.providerPaymentDate || null,
-            providerDepositedAccount: b.providerDepositedAccount || ""
-        }));
-
-        const normalizedTreks = trekBookings.map(b => ({
-            _id: b._id,
-            type: 'trek',
-            title: b.package?.title || 'Trek Package',
-            bookingRef: b.bookingRef,
-            date: b.createdAt,
-            amount: b.totalAmount,
-            providerId: b.provider?._id || null,
-            providerName: b.provider?.username || 'Unknown',
-            providerPaymentStatus: b.providerPaymentStatus || "pending",
-            providerTransactionId: b.providerTransactionId || "",
-            providerPaymentDate: b.providerPaymentDate || null,
-            providerDepositedAccount: b.providerDepositedAccount || ""
-        }));
-
-        const normalizedEvents = eventBookings.map(b => ({
-            _id: b._id,
-            type: 'event',
-            title: b.event?.title || 'Event',
-            bookingRef: b._id,
-            date: b.createdAt,
-            amount: b.amountPaid,
-            providerId: b.event?.guide?._id || null,
-            providerName: b.event?.guide?.username || 'Unknown',
-            providerPaymentStatus: b.providerPaymentStatus || "pending",
-            providerTransactionId: b.providerTransactionId || "",
-            providerPaymentDate: b.providerPaymentDate || null,
-            providerDepositedAccount: b.providerDepositedAccount || ""
-        }));
-
-        const allPayments = [...normalizedTrips, ...normalizedTreks, ...normalizedEvents].sort((a, b) => new Date(b.date) - new Date(a.date));
-
-        return NextResponse.json({
-            success: true,
-            payments: allPayments
-        });
-
-    } catch (error) {
-        console.error("Fetch Admin Payments Error:", error);
-        return NextResponse.json(
-            { success: false, message: "Failed to fetch payments data" },
-            { status: 500 }
-        );
+        return NextResponse.json({ success: true, payments: filtered });
+    } catch (err) {
+        return NextResponse.json({ success: false, message: 'Server error' }, { status: 500 });
     }
 }

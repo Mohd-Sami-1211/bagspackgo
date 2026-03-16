@@ -1,71 +1,44 @@
-import { NextResponse } from "next/server";
-import dbConnect from "@/lib/db";
-import { getCurrentUser } from "@/lib/auth";
-import { TripBooking } from "@/models/tripbooking.model";
-import { TrekBooking } from "@/models/trekbooking.model";
-import { Booking } from "@/models/booking.model";
+import { NextResponse } from 'next/server';
+import connectDB from '@/lib/db';
+import { TripBooking } from '@/models/tripbooking.model';
+import { TrekBooking } from '@/models/trekbooking.model';
+import { Booking as EventBooking } from '@/models/booking.model';
+import { getCurrentAdmin } from '@/lib/adminAuth';
 
-export async function PUT(req, { params }) {
+export async function PATCH(req, context) {
+    const params = await context.params;
     try {
-        const user = await getCurrentUser();
+        const admin = await getCurrentAdmin();
+        if (!admin) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
 
-        if (!user || user.role !== "admin") {
-            return NextResponse.json(
-                { success: false, message: "Unauthorized" },
-                { status: 401 }
-            );
+        await connectDB();
+        
+        const { providerTransactionId, providerDepositedAccount, model } = await req.json();
+
+        if (!providerTransactionId) {
+            return NextResponse.json({ success: false, message: 'Transaction ID required' }, { status: 400 });
         }
 
-        const { id } = await params;
-        const body = await req.json();
+        const update = {
+            providerPaymentStatus: 'completed',
+            providerTransactionId,
+            providerDepositedAccount: providerDepositedAccount || '',
+            providerPaymentDate: new Date()
+        };
 
-        // Expect type ('trip', 'trek', 'event'), trans ID, deposited account optionally
-        const { type, providerTransactionId, providerDepositedAccount } = body;
-
-        if (!['trip', 'trek', 'event'].includes(type)) {
-            return NextResponse.json(
-                { success: false, message: "Invalid booking type provided" },
-                { status: 400 }
-            );
+        let updated;
+        if (model === 'TripBooking') {
+            updated = await TripBooking.findByIdAndUpdate(params.id, update, { new: true });
+        } else if (model === 'TrekBooking') {
+            updated = await TrekBooking.findByIdAndUpdate(params.id, update, { new: true });
+        } else if (model === 'EventBooking') {
+            updated = await EventBooking.findByIdAndUpdate(params.id, update, { new: true });
         }
 
-        await dbConnect();
+        if (!updated) return NextResponse.json({ success: false, message: 'Booking not found' }, { status: 404 });
 
-        let Model;
-        if (type === 'trip') Model = TripBooking;
-        else if (type === 'trek') Model = TrekBooking;
-        else if (type === 'event') Model = Booking;
-
-        const updated = await Model.findByIdAndUpdate(
-            id,
-            {
-                $set: {
-                    providerPaymentStatus: 'completed',
-                    providerTransactionId: providerTransactionId || '',
-                    providerDepositedAccount: providerDepositedAccount || '',
-                    providerPaymentDate: new Date()
-                }
-            },
-            { new: true }
-        );
-
-        if (!updated) {
-            return NextResponse.json(
-                { success: false, message: "Booking not found" },
-                { status: 404 }
-            );
-        }
-
-        return NextResponse.json({
-            success: true,
-            message: "Payment marked as completed successfully."
-        });
-
-    } catch (error) {
-        console.error("Update Admin Payment Error:", error);
-        return NextResponse.json(
-            { success: false, message: "Server Error updating payment" },
-            { status: 500 }
-        );
+        return NextResponse.json({ success: true, payment: updated });
+    } catch (err) {
+        return NextResponse.json({ success: false, message: 'Server error' }, { status: 500 });
     }
 }

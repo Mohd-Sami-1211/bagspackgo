@@ -32,8 +32,12 @@ export async function GET() {
         // If they have an application, fetch the details
         let applicationDetails = null;
         if (guide.applicationStatus !== "none") {
+            const querySelect = guide.applicationStatus === "rejected" 
+                ? "companyname companyemail companymobile destinationId address instagram facebook website status adminNotes createdAt updatedAt licenseFile idFile availability"
+                : "companyname status adminNotes createdAt updatedAt";
+                
             applicationDetails = await GuideDetails.findOne({ guide: user.userId })
-                .select("companyname status adminNotes createdAt updatedAt")
+                .select(querySelect)
                 .lean();
         }
 
@@ -44,10 +48,20 @@ export async function GET() {
                 application: applicationDetails
                     ? {
                         companyName: applicationDetails.companyname,
+                        companyMail: applicationDetails.companyemail,
+                        companyMobile: applicationDetails.companymobile,
+                        destinationId: applicationDetails.destinationId,
+                        address: applicationDetails.address,
+                        instagram: applicationDetails.instagram,
+                        facebook: applicationDetails.facebook,
+                        website: applicationDetails.website,
                         status: applicationDetails.status,
                         adminNotes: applicationDetails.adminNotes || "",
                         submittedAt: applicationDetails.createdAt,
                         lastUpdated: applicationDetails.updatedAt,
+                        hasLicense: !!applicationDetails.licenseFile,
+                        hasId: !!applicationDetails.idFile,
+                        availability: applicationDetails.availability,
                     }
                     : null,
             },

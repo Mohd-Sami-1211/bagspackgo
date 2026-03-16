@@ -10,7 +10,8 @@ import { sanitizeString } from "@/lib/sanitize";
  * GET /api/provider/events/[id]
  * Fetch a single event by ID (must belong to the authenticated provider).
  */
-export async function GET(request, { params }) {
+export async function GET(request, context) {
+    const params = await context.params;
     try {
         const user = await getCurrentUser();
         if (!user || user.role !== "provider") {
@@ -104,7 +105,8 @@ export async function GET(request, { params }) {
  * PATCH /api/provider/events/[id]
  * Update an event (only allowed for draft/upcoming events).
  */
-export async function PATCH(request, { params }) {
+export async function PATCH(request, context) {
+    const params = await context.params;
     try {
         const user = await getCurrentUser();
         if (!user || user.role !== "provider") {
@@ -233,7 +235,8 @@ export async function PATCH(request, { params }) {
  * DELETE /api/provider/events/[id]
  * Submit a deletion request — admin must approve before actual deletion.
  */
-export async function DELETE(request, { params }) {
+export async function DELETE(request, context) {
+    const params = await context.params;
     try {
         const user = await getCurrentUser();
         if (!user || user.role !== "provider") {

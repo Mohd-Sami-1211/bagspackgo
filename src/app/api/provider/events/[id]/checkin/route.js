@@ -9,7 +9,8 @@ import { Booking } from "@/models/booking.model";
  * Verify a pass code and mark participant as checked-in.
  * Body: { passCode: "BPG-EVT-xxx-Gxxx" }
  */
-export async function POST(request, { params }) {
+export async function POST(request, context) {
+    const params = await context.params;
     try {
         const user = await getCurrentUser();
         if (!user || user.role !== "provider") {

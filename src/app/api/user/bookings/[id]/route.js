@@ -3,7 +3,8 @@ import dbConnect from '@/lib/db';
 import { Booking } from '@/models/booking.model';
 import { getCurrentUser } from '@/lib/auth';
 
-export async function GET(req, { params }) {
+export async function GET(req, context) {
+    const params = await context.params;
     try {
         const user = await getCurrentUser(req);
         if (!user) {

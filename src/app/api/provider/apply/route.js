@@ -5,6 +5,9 @@ import { Guide } from "@/models/guide.model";
 import { GuideDetails } from "@/models/guidedetails.model";
 import { sanitizeString, sanitizeEmail, sanitizePhone } from "@/lib/sanitize";
 
+export const maxDuration = 60;
+export const dynamic = 'force-dynamic';
+
 /**
  * POST /api/provider/apply
  * Submit the provider application form.
@@ -75,6 +78,7 @@ export async function POST(request) {
         const address = sanitizeString(body.address);
         const instagram = sanitizeString(body.instagram || "");
         const facebook = sanitizeString(body.facebook || "");
+        const website = sanitizeString(body.website || "");
         const destinationId = sanitizeString(body.destinationId);
 
         // For files, we store the base64/URL string (in production, use cloud storage)
@@ -93,6 +97,7 @@ export async function POST(request) {
             guideDetails.address = address;
             guideDetails.instagram = instagram;
             guideDetails.facebook = facebook;
+            guideDetails.website = website;
             guideDetails.licenseFile = licenseFile;
             guideDetails.idFile = idFile;
             guideDetails.availability = body.availability || { trips: true, treks: true };
@@ -111,6 +116,7 @@ export async function POST(request) {
                 address,
                 instagram,
                 facebook,
+                website,
                 licenseFile,
                 idFile,
                 availability: body.availability || { trips: true, treks: true },

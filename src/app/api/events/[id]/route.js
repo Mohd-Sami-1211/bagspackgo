@@ -6,7 +6,8 @@ import { Event } from "@/models/event.model";
  * GET /api/events/[id]
  * Fetch a single public (published) event by ID.
  */
-export async function GET(request, { params }) {
+export async function GET(request, context) {
+    const params = await context.params;
     try {
         await dbConnect();
         const { id } = await params;

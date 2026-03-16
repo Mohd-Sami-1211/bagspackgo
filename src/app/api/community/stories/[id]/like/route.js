@@ -2,7 +2,8 @@ import dbConnect from '@/lib/db';
 import Story from '@/models/story.model';
 import { NextResponse } from 'next/server';
 
-export async function PATCH(request, { params }) {
+export async function PATCH(request, context) {
+    const params = await context.params;
     try {
         const { id } = await params;
         await dbConnect();

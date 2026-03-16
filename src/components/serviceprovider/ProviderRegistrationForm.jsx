@@ -48,10 +48,12 @@ function FileUploadCard({ label, icon: Icon, accept, error, required, currentFil
     const [previewUrl, setPreviewUrl] = useState(null);
 
     useEffect(() => {
-        if (currentFile && currentFile.type.startsWith('image/')) {
+        if (currentFile instanceof File && currentFile.type.startsWith('image/')) {
             const url = URL.createObjectURL(currentFile);
             setPreviewUrl(url);
             return () => URL.revokeObjectURL(url);
+        } else if (typeof currentFile === 'string' && currentFile.startsWith('data:image')) {
+            setPreviewUrl(currentFile);
         } else {
             setPreviewUrl(null);
         }
@@ -91,7 +93,9 @@ function FileUploadCard({ label, icon: Icon, accept, error, required, currentFil
                             </div>
                         )}
                         <div className="text-left min-w-0 flex-1">
-                            <p className="text-sm font-bold text-gray-800 truncate">{currentFile.name}</p>
+                            <p className="text-sm font-bold text-gray-800 truncate">
+                                {currentFile instanceof File ? currentFile.name : 'Previously Uploaded Document'}
+                            </p>
                             <p className="text-xs text-emerald-600 font-semibold mt-0.5">Uploaded • Click or drag to replace</p>
                         </div>
                         <button type="button" onClick={(e) => { e.stopPropagation(); onSelect(null); }}
@@ -123,7 +127,7 @@ export default function ProviderRegistrationForm({ rejected = false }) {
     const [direction, setDirection] = useState(1);
     const [form, setForm] = useState({
         companyName: '', companyMail: '', companyMobile: '', destinationId: '',
-        address: '', instagram: '', facebook: '', licenseFile: null, idFile: null,
+        address: '', instagram: '', facebook: '', website: '', licenseFile: null, idFile: null,
         availability: { trips: true, treks: true }, agree: false,
     });
     const [errors, setErrors] = useState({});
@@ -132,6 +136,38 @@ export default function ProviderRegistrationForm({ rejected = false }) {
     const [apiError, setApiError] = useState('');
     const [destOpen, setDestOpen] = useState(false);
     const destRef = useRef(null);
+    const [rejectionNotes, setRejectionNotes] = useState('');
+
+    useEffect(() => {
+        if (rejected) {
+            fetch('/api/provider/application-status')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success && data.application) {
+                        const app = data.application;
+                        setForm(prev => ({
+                            ...prev,
+                            companyName: app.companyName || '',
+                            companyMail: app.companyMail || '',
+                            companyMobile: app.companyMobile || '',
+                            destinationId: app.destinationId || '',
+                            address: app.address || '',
+                            instagram: app.instagram || '',
+                            facebook: app.facebook || '',
+                            website: app.website || '',
+                            availability: app.availability || { trips: true, treks: true },
+                            // Load existing files so they don't have to re-upload if they don't want to
+                            licenseFile: app.licenseFile || null,
+                            idFile: app.idFile || null,
+                        }));
+                        if (app.adminNotes) {
+                            setRejectionNotes(app.adminNotes);
+                        }
+                    }
+                })
+                .catch(err => console.error("Failed to fetch rejected app data:", err));
+        }
+    }, [rejected]);
 
     useEffect(() => {
         function handleClickOutside(event) {
@@ -187,6 +223,19 @@ export default function ProviderRegistrationForm({ rejected = false }) {
         setSubmitting(true);
         setApiError('');
         try {
+            const toBase64 = file => new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+            });
+
+            let licenseBase64 = typeof form.licenseFile === 'string' ? form.licenseFile : '';
+            let idBase64 = typeof form.idFile === 'string' ? form.idFile : '';
+            
+            if (form.licenseFile instanceof File) licenseBase64 = await toBase64(form.licenseFile);
+            if (form.idFile instanceof File) idBase64 = await toBase64(form.idFile);
+
             const res = await fetch('/api/provider/apply', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -194,8 +243,9 @@ export default function ProviderRegistrationForm({ rejected = false }) {
                     companyName: form.companyName, companyMail: form.companyMail,
                     companyMobile: form.companyMobile, destinationId: form.destinationId,
                     address: form.address, instagram: form.instagram, facebook: form.facebook,
-                    licenseFile: form.licenseFile ? 'uploaded' : '',
-                    idFile: form.idFile ? 'uploaded' : '',
+                    website: form.website,
+                    licenseFile: licenseBase64,
+                    idFile: idBase64,
                     availability: form.availability, agree: form.agree,
                 }),
             });
@@ -280,9 +330,15 @@ export default function ProviderRegistrationForm({ rejected = false }) {
                             <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
                                 className="mb-5 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3">
                                 <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
-                                <div>
+                                <div className="w-full">
                                     <p className="text-sm font-semibold text-amber-800">Previous application rejected</p>
-                                    <p className="text-xs text-amber-600 mt-0.5">Review your details and resubmit.</p>
+                                    <p className="text-xs text-amber-600 mt-0.5 mb-2">Review your details and resubmit.</p>
+                                    {rejectionNotes && (
+                                        <div className="bg-amber-100/50 p-2.5 rounded-lg border border-amber-200/50 mt-1">
+                                            <span className="text-[10px] uppercase font-bold text-amber-500 tracking-wider mb-0.5 block">Admin Note</span>
+                                            <p className="text-xs font-medium text-amber-900 leading-relaxed italic">"{rejectionNotes}"</p>
+                                        </div>
+                                    )}
                                 </div>
                             </motion.div>
                         )}
@@ -369,6 +425,14 @@ export default function ProviderRegistrationForm({ rejected = false }) {
                                             <textarea value={form.address} onChange={e => update('address', e.target.value)} rows={3}
                                                 className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none font-medium placeholder-gray-400 resize-none"
                                                 placeholder="Full address including city, state, and PIN code" />
+                                        </FloatingInput>
+                                        <FloatingInput label="Company Website" icon={Globe}>
+                                            <div className="relative group">
+                                                <input type="url" value={form.website} onChange={e => update('website', e.target.value)}
+                                                    className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none pl-11 font-medium placeholder-gray-400 text-sm"
+                                                    placeholder="https://www.example.com" />
+                                                <Globe className="w-5 h-5 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors group-focus-within:text-emerald-500" />
+                                            </div>
                                         </FloatingInput>
                                         <div className="grid grid-cols-2 gap-3">
                                             <FloatingInput label="Instagram" icon={Instagram}>

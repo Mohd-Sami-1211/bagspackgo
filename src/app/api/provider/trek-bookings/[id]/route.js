@@ -3,7 +3,8 @@ import dbConnect from '@/lib/db';
 import { TrekBooking } from '@/models/trekbooking.model';
 import { getCurrentUser } from '@/lib/auth';
 
-export async function GET(request, { params }) {
+export async function GET(request, context) {
+    const params = await context.params;
     try {
         const user = await getCurrentUser();
         if (!user) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });

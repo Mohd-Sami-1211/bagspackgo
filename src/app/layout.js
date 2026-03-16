@@ -24,16 +24,19 @@ export default function RootLayout({ children }) {
     pathname?.includes('/help') ||
     pathname?.includes('/signin') ||
     pathname?.includes('/signup') ||
+    pathname?.includes('/admin') ||
     pathname?.includes('/serviceprovider');
 
   const hideNavbar =
     pathname === '/signin' ||
     pathname === '/signup' ||
+    pathname?.includes('/admin') ||
     pathname?.includes('/serviceprovider');
 
   const hideFooter =
     pathname === '/signin' ||
     pathname === '/signup' ||
+    pathname?.includes('/admin') ||
     pathname?.includes('/serviceprovider');
 
   return (
