@@ -4,146 +4,98 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Calendar, Users, MapPin, Clock,
-  Mountain, Package, RefreshCw, ArrowRight,
-  CheckCircle2, XCircle, TrendingUp, Search, Filter
+  Mountain, Package, RefreshCw, ArrowUpRight,
+  XCircle, Search, History,
 } from 'lucide-react';
 
-/* ── status config ── */
-const STATUS_CFG = {
-  confirmed: {
-    label: 'Confirmed',
-    badge: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
-    dot: 'bg-emerald-500',
-    glow: 'shadow-emerald-100',
-    bar: 'bg-gradient-to-r from-emerald-400 to-teal-500',
-    icon: CheckCircle2,
-  },
-  cancelled: {
-    label: 'Cancelled',
-    badge: 'bg-rose-50 text-rose-600 border border-rose-200',
-    dot: 'bg-rose-400',
-    glow: 'shadow-rose-100',
-    bar: 'bg-gradient-to-r from-rose-400 to-pink-400',
-    icon: XCircle,
-  },
+/* ─── helpers ─────────────────────────────────────────── */
+const fmtDate = (d) =>
+  d ? new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+const fmtAmt = (a) => `₹${Number(a || 0).toLocaleString('en-IN')}`;
+
+/* ─── status map ──────────────────────────────────────── */
+const S = {
+  confirmed: { label: 'Upcoming',  pill: 'bg-emerald-100 text-emerald-700',  bar: 'bg-emerald-500' },
+  completed: { label: 'Completed', pill: 'bg-indigo-100  text-indigo-700',   bar: 'bg-indigo-500'  },
+  cancelled: { label: 'Cancelled', pill: 'bg-rose-100    text-rose-600',     bar: 'bg-rose-400'    },
 };
 
-function StatusPill({ status }) {
-  const cfg = STATUS_CFG[status] || STATUS_CFG.confirmed;
-  return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${cfg.badge}`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
-      {cfg.label}
-    </span>
-  );
-}
+/* ─── filter tabs ─────────────────────────────────────── */
+const TABS = [
+  { key: 'confirmed', label: 'Upcoming',  Icon: Mountain  },
+  { key: 'completed', label: 'Past',      Icon: History   },
+  { key: 'cancelled', label: 'Cancelled', Icon: XCircle   },
+];
 
-/* ── stat card ── */
-function StatCard({ label, value, icon: Icon, gradient, sub }) {
+/* ─── info chip ───────────────────────────────────────── */
+function Chip({ icon: Icon, color, label }) {
   return (
-    <div className={`relative overflow-hidden rounded-2xl p-5 ${gradient} text-white shadow-lg`}>
-      <div className="absolute -top-3 -right-3 w-20 h-20 rounded-full bg-white/10" />
-      <div className="absolute -bottom-4 -right-1 w-14 h-14 rounded-full bg-white/5" />
-      <div className="relative z-10">
-        <div className="flex items-center justify-between mb-3">
-          <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center">
-            <Icon className="w-4.5 h-4.5 text-white" />
-          </div>
-          {sub !== undefined && (
-            <span className="text-[11px] font-semibold bg-white/20 px-2 py-0.5 rounded-full">{sub}</span>
-          )}
-        </div>
-        <p className="text-3xl font-black leading-none">{value}</p>
-        <p className="text-white/70 text-xs font-medium mt-1 uppercase tracking-widest">{label}</p>
-      </div>
+    <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-100 rounded-lg px-2.5 py-1.5">
+      <Icon className={`w-3 h-3 ${color} shrink-0`} />
+      <span className="text-[11px] font-medium text-gray-600 whitespace-nowrap">{label}</span>
     </div>
   );
 }
 
-/* ── single booking row ── */
-function TrekBookingRow({ booking, index }) {
-  const fmtDate = (d) =>
-    d ? new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
-  const fmtAmt = (a) => `₹${Number(a || 0).toLocaleString('en-IN')}`;
-  const cfg = STATUS_CFG[booking.status] || STATUS_CFG.confirmed;
+/* ─── card ────────────────────────────────────────────── */
+function BookingCard({ booking, index }) {
+  const s = S[booking.status] || S.confirmed;
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -6 }}
-      transition={{ duration: 0.2, delay: index * 0.04 }}
+      exit={{ opacity: 0, scale: 0.98 }}
+      transition={{ duration: 0.25, delay: index * 0.05 }}
     >
-      <Link href={`/serviceprovider/dashboard/treks/${booking.id}`} className="group block">
-        <div className="relative bg-white rounded-2xl border border-gray-100 hover:border-emerald-200 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden">
+      <Link href={`/serviceprovider/dashboard/treks/${booking.id}`}>
+        <div className="group relative bg-white border border-gray-100 rounded-2xl overflow-hidden
+                        hover:shadow-xl hover:shadow-gray-100 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer">
 
-          {/* Left accent bar */}
-          <div className={`absolute left-0 top-0 bottom-0 w-[3px] ${cfg.bar} rounded-l-2xl`} />
+          {/* Top accent strip */}
+          <div className={`h-0.5 w-full ${s.bar}`} />
 
-          <div className="pl-5 pr-4 py-4 flex flex-col sm:flex-row sm:items-center gap-4">
-
-            {/* Icon */}
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100 flex items-center justify-center shrink-0 group-hover:from-emerald-100 group-hover:to-teal-100 transition-all">
-              <Mountain className="w-5 h-5 text-emerald-600" />
-            </div>
-
-            {/* Title block */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                <span className="text-[10px] font-bold tracking-widest text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-md">
-                  #{booking.bookingRef}
+          <div className="p-4 sm:p-5">
+            {/* Row A — ref chip · date · status pill · arrow */}
+            <div className="flex items-center gap-2 mb-3 flex-wrap">
+              <code className="text-[10px] font-bold bg-gray-100 text-gray-500 px-2 py-0.5 rounded-md tracking-widest">
+                #{booking.bookingRef}
+              </code>
+              <span className="text-[11px] text-gray-400">{fmtDate(booking.createdAt)}</span>
+              <span className="ml-auto flex items-center gap-1.5">
+                <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${s.pill}`}>
+                  {s.label}
                 </span>
-                <span className="text-[11px] text-gray-400">
-                  Booked {new Date(booking.createdAt).toLocaleDateString('en-IN')}
+                <span className="w-6 h-6 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center
+                                 group-hover:bg-emerald-500 group-hover:border-emerald-400 transition-all duration-300 shrink-0">
+                  <ArrowUpRight className="w-3 h-3 text-gray-400 group-hover:text-white transition-colors" />
                 </span>
-              </div>
-              <h3 className="text-sm font-bold text-gray-900 truncate">{booking.packageName}</h3>
-              <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
-                <MapPin className="w-3 h-3 text-emerald-400 shrink-0" />
-                {booking.destination || 'Destination N/A'}
-              </p>
+              </span>
             </div>
 
-            {/* Data pills row */}
-            <div className="flex items-center gap-2 flex-shrink-0 flex-wrap sm:flex-nowrap">
-              <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-100 rounded-lg px-3 py-1.5">
-                <Calendar className="w-3.5 h-3.5 text-emerald-500" />
-                <div>
-                  <p className="text-[9px] text-gray-400 font-bold uppercase leading-none">Start</p>
-                  <p className="text-xs font-semibold text-gray-700 whitespace-nowrap">{fmtDate(booking.startDate)}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-100 rounded-lg px-3 py-1.5">
-                <Clock className="w-3.5 h-3.5 text-sky-500" />
-                <div>
-                  <p className="text-[9px] text-gray-400 font-bold uppercase leading-none">Days</p>
-                  <p className="text-xs font-semibold text-gray-700">{booking.days || '—'}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-100 rounded-lg px-3 py-1.5">
-                <Users className="w-3.5 h-3.5 text-violet-500" />
-                <div>
-                  <p className="text-[9px] text-gray-400 font-bold uppercase leading-none">People</p>
-                  <p className="text-xs font-semibold text-gray-700">{booking.numPeople}</p>
-                </div>
-              </div>
+            {/* Row B — package name + destination */}
+            <h3 className="text-[15px] font-bold text-gray-900 leading-snug mb-0.5 truncate">
+              {booking.packageName}
+            </h3>
+            <div className="flex items-center gap-1.5 text-[12px] text-gray-400 mb-4">
+              <MapPin className="w-3 h-3 text-emerald-400 shrink-0" />
+              <span className="truncate">{booking.destination || 'Destination not set'}</span>
+              <span className="text-gray-200 px-0.5">·</span>
+              <span>By <span className="text-gray-600 font-semibold">{booking.bookedBy || 'User'}</span></span>
             </div>
 
-            {/* Amount + status */}
-            <div className="flex items-center gap-3 shrink-0 sm:border-l sm:border-gray-100 sm:pl-4">
-              <div className="text-right">
-                <p className="text-[9px] text-gray-400 font-bold uppercase">Amount</p>
-                <p className="text-base font-black text-emerald-600 leading-none whitespace-nowrap">{fmtAmt(booking.totalAmount)}</p>
+            {/* Row C — chips + amount */}
+            <div className="flex items-end justify-between gap-4 flex-wrap">
+              <div className="flex items-center gap-2 flex-wrap">
+                <Chip icon={Calendar} color="text-emerald-500" label={fmtDate(booking.startDate)} />
+                <Chip icon={Clock}    color="text-sky-500"     label={`${booking.days || '—'} days`} />
+                <Chip icon={Users}    color="text-violet-500"  label={`${booking.numPeople} people`} />
               </div>
-              <StatusPill status={booking.status} />
-              <div className="w-7 h-7 rounded-full border border-gray-200 bg-gray-50 flex items-center justify-center
-                              group-hover:bg-emerald-500 group-hover:border-emerald-400 transition-all duration-300 shrink-0">
-                <ArrowRight className="w-3.5 h-3.5 text-gray-400 group-hover:text-white transition-colors" />
+              <div className="text-right shrink-0">
+                <p className="text-[10px] text-gray-400 uppercase font-bold leading-none mb-0.5">Revenue</p>
+                <p className="text-[20px] font-black text-gray-900 leading-none">{fmtAmt(booking.totalAmount)}</p>
               </div>
             </div>
-
           </div>
         </div>
       </Link>
@@ -151,163 +103,160 @@ function TrekBookingRow({ booking, index }) {
   );
 }
 
-/* ── filters ── */
-const FILTERS = ['All', 'confirmed', 'cancelled'];
-const FILTER_LABELS = { All: 'All', confirmed: 'Confirmed', cancelled: 'Cancelled' };
-
+/* ─── main ────────────────────────────────────────────── */
 export default function TrekMainContent() {
-  const [filter, setFilter] = useState('All');
-  const [search, setSearch] = useState('');
+  const [tab,      setTab]      = useState('confirmed');
+  const [search,   setSearch]   = useState('');
   const [bookings, setBookings] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [loading,  setLoading]  = useState(true);
+  const [error,    setError]    = useState('');
 
-  const fetchBookings = async () => {
+  const load = async () => {
     setLoading(true); setError('');
     try {
-      const res = await fetch('/api/provider/trek-bookings');
-      const data = await res.json();
-      if (data.success) setBookings(data.data || []);
-      else setError(data.message || 'Failed to load bookings');
-    } catch { setError('Network error. Please try again.'); }
+      const r = await fetch('/api/provider/trek-bookings');
+      const d = await r.json();
+      if (d.success) setBookings(d.data || []);
+      else setError(d.message || 'Failed to load');
+    } catch { setError('Network error.'); }
     finally { setLoading(false); }
   };
 
-  useEffect(() => { fetchBookings(); }, []);
+  useEffect(() => { load(); }, []);
 
   const counts = {
-    All: bookings.length,
     confirmed: bookings.filter(b => b.status === 'confirmed').length,
+    completed: bookings.filter(b => b.status === 'completed').length,
     cancelled: bookings.filter(b => b.status === 'cancelled').length,
   };
 
-  const filtered = (filter === 'All' ? bookings : bookings.filter(b => b.status === filter))
-    .filter(b => !search || b.packageName?.toLowerCase().includes(search.toLowerCase()) || b.bookingRef?.toLowerCase().includes(search.toLowerCase()));
+  const q    = search.toLowerCase();
+  const list = bookings
+    .filter(b => b.status === tab)
+    .filter(b => !q || b.packageName?.toLowerCase().includes(q) || b.bookingRef?.toLowerCase().includes(q));
 
   return (
-    <div className="space-y-6">
+    <div className="w-full space-y-5 pb-6">
 
-      {/* ── Header banner ── */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-emerald-600 via-teal-600 to-green-600 rounded-2xl p-6 shadow-xl shadow-emerald-100">
-        <div className="absolute inset-0 opacity-10"
-          style={{ backgroundImage: 'radial-gradient(circle at 80% 20%, white 1px, transparent 1px)', backgroundSize: '28px 28px' }} />
-        <div className="absolute -top-6 -right-6 w-32 h-32 rounded-full bg-white/10" />
-        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <Mountain className="w-5 h-5 text-emerald-200" />
-              <span className="text-emerald-200 text-xs font-bold uppercase tracking-widest">Trek Management</span>
-            </div>
-            <h2 className="text-2xl font-black text-white tracking-tight">Trek Bookings</h2>
-            <p className="text-emerald-100/80 text-sm mt-0.5">All reservations for your trek packages</p>
+      {/* ── Page header ──────────────────────────────────── */}
+      <div className="flex items-center gap-3">
+        {/* Title */}
+        <div className="flex items-center gap-2.5 flex-1 min-w-0">
+          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow shadow-emerald-200 shrink-0">
+            <Mountain className="w-3.5 h-3.5 text-white" />
           </div>
-          <div className="flex items-center gap-2 self-start sm:self-auto">
-            <Link
-              href="/serviceprovider/dashboard/settings/packages"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl
-                         bg-white text-emerald-700 text-sm font-semibold
-                         hover:bg-emerald-50 transition-all"
-            >
-              <Package className="w-4 h-4" />
-              View Packages
-            </Link>
-            <button
-              onClick={fetchBookings}
-              disabled={loading}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl
-                         bg-white/15 backdrop-blur text-white text-sm font-semibold border border-white/20
-                         hover:bg-white/25 transition-all disabled:opacity-40"
-            >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              Refresh
-            </button>
+          <div className="min-w-0">
+            <h1 className="text-[17px] font-black text-gray-900 tracking-tight truncate">Trek Bookings</h1>
+            <p className="text-[11px] text-gray-400">{bookings.length} total reservations</p>
           </div>
+        </div>
+
+        {/* Search + actions */}
+        <div className="flex items-center gap-2 shrink-0">
+          {/* Search */}
+          <div className="relative hidden sm:block w-44">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-300 pointer-events-none" />
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search…"
+              className="w-full pl-8 pr-3 py-2 text-[12px] bg-white border border-gray-200 rounded-xl placeholder-gray-300 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-50 transition-all"
+            />
+          </div>
+          <Link
+            href="/serviceprovider/dashboard/settings/packages"
+            className="flex items-center gap-1.5 text-[12px] font-semibold text-gray-500 bg-white border border-gray-200 px-3 py-2 rounded-xl hover:border-emerald-300 hover:text-emerald-600 transition-all whitespace-nowrap"
+          >
+            <Package size={13} />
+            <span className="hidden sm:inline">Packages</span>
+          </Link>
+          <button
+            onClick={load} disabled={loading}
+            className="flex items-center justify-center w-9 h-9 bg-white border border-gray-200 rounded-xl text-gray-400 hover:border-emerald-300 hover:text-emerald-600 transition-all active:scale-95 disabled:opacity-40"
+          >
+            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+          </button>
         </div>
       </div>
 
-      {/* ── Stat cards ── */}
+      {/* Mobile search */}
+      <div className="sm:hidden relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-300 pointer-events-none" />
+        <input
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Search bookings…"
+          className="w-full pl-9 pr-3 py-2.5 text-[12px] bg-white border border-gray-200 rounded-xl placeholder-gray-300 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-50 transition-all"
+        />
+      </div>
+
+      {/* ── Filter tabs (full width) ───────────────────── */}
+      <div className="flex bg-gray-100 p-1 rounded-2xl gap-1">
+        {TABS.map(({ key, label, Icon }) => (
+          <button
+            key={key}
+            onClick={() => setTab(key)}
+            className={`relative flex-1 flex items-center justify-center gap-1.5 py-2 px-1 rounded-xl text-[11px] sm:text-[12px] font-semibold transition-all duration-200
+              ${tab === key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+          >
+            {tab === key && (
+              <motion.div
+                layoutId="trek-tab-bg"
+                className="absolute inset-0 bg-white rounded-xl shadow-sm"
+                transition={{ type: 'spring', bounce: 0.2, duration: 0.35 }}
+              />
+            )}
+            <span className="relative flex items-center gap-1 sm:gap-1.5">
+              <Icon size={11} />
+              <span className="truncate">{label}</span>
+              <span className={`text-[9px] sm:text-[10px] font-bold px-1 sm:px-1.5 py-0.5 rounded-full leading-none shrink-0
+                ${tab === key ? (S[key]?.pill || 'bg-gray-100 text-gray-500') : 'bg-gray-200 text-gray-400'}`}>
+                {counts[key]}
+              </span>
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {/* ── Result label ───────────────────────────────────── */}
       {!loading && !error && (
-        <div className="grid grid-cols-3 gap-4">
-          <StatCard label="Total Bookings" value={counts.All} icon={Package}
-            gradient="bg-gradient-to-br from-emerald-500 to-teal-600" />
-          <StatCard label="Confirmed" value={counts.confirmed} icon={CheckCircle2}
-            gradient="bg-gradient-to-br from-green-500 to-emerald-600" />
-          <StatCard label="Cancelled" value={counts.cancelled} icon={XCircle}
-            gradient="bg-gradient-to-br from-rose-400 to-pink-500" />
-        </div>
+        <p className="text-[11px] text-gray-400 font-medium -mb-2 px-0.5">
+          {list.length} {S[tab]?.label.toLowerCase()} booking{list.length !== 1 ? 's' : ''}
+          {search && ` · matching "${search}"`}
+        </p>
       )}
 
-      {/* ── Toolbar: filters + search ── */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-        {/* Filter pills */}
-        <div className="flex items-center gap-1 p-1 bg-gray-100 rounded-xl">
-          {FILTERS.map(f => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center gap-2
-                ${filter === f ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-            >
-              {FILTER_LABELS[f]}
-              <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-bold min-w-[20px] text-center
-                ${filter === f ? 'bg-emerald-100 text-emerald-700' : 'bg-white/70 text-gray-500'}`}>
-                {counts[f] ?? bookings.length}
-              </span>
-            </button>
-          ))}
-        </div>
-
-        {/* Search */}
-        <div className="relative flex-1 min-w-[180px] max-w-xs">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Search by name or ref…"
-            className="w-full pl-9 pr-4 py-2 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-50 transition-all"
-          />
-        </div>
-
-        {/* Result count */}
-        {!loading && (
-          <span className="text-xs text-gray-400 font-medium sm:ml-auto shrink-0">
-            {filtered.length} result{filtered.length !== 1 ? 's' : ''}
-          </span>
-        )}
-      </div>
-
-      {/* ── Content ── */}
+      {/* ── Content ────────────────────────────────────────── */}
       {loading ? (
-        <div className="flex flex-col items-center gap-4 py-20">
-          <div className="w-10 h-10 rounded-full border-[3px] border-emerald-100 border-t-emerald-500 animate-spin" />
-          <p className="text-sm text-gray-400 font-medium">Loading bookings…</p>
+        <div className="flex flex-col items-center gap-3 py-24">
+          <div className="w-8 h-8 rounded-full border-[3px] border-gray-100 border-t-emerald-500 animate-spin" />
+          <p className="text-sm text-gray-400">Loading bookings…</p>
         </div>
       ) : error ? (
-        <div className="flex flex-col items-center gap-3 py-16 rounded-2xl border-2 border-dashed border-rose-100 bg-rose-50/30">
+        <div className="flex flex-col items-center gap-3 py-20 rounded-2xl border-2 border-dashed border-rose-100 bg-rose-50/30">
           <XCircle className="w-10 h-10 text-rose-300" />
           <p className="text-sm font-semibold text-rose-500">{error}</p>
-          <button onClick={fetchBookings} className="text-sm text-emerald-600 font-semibold hover:underline">Try again</button>
+          <button onClick={load} className="text-sm text-emerald-600 font-semibold hover:underline">Retry</button>
         </div>
-      ) : filtered.length === 0 ? (
-        <div className="flex flex-col items-center gap-4 py-20 rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50/50">
-          <div className="w-16 h-16 rounded-2xl bg-white shadow border border-gray-100 flex items-center justify-center">
-            <Mountain className="w-7 h-7 text-gray-300" />
+      ) : list.length === 0 ? (
+        <motion.div
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+          className="flex flex-col items-center gap-4 py-24 rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50/40"
+        >
+          <div className="w-14 h-14 rounded-2xl bg-white shadow-md border border-gray-100 flex items-center justify-center">
+            <Mountain className="w-6 h-6 text-gray-300" />
           </div>
           <div className="text-center">
-            <h3 className="text-sm font-bold text-gray-500">
-              {search ? 'No results found' : filter === 'All' ? 'No trek bookings yet' : `No ${filter} bookings`}
-            </h3>
-            <p className="text-xs text-gray-400 mt-1">
-              {search ? 'Try a different search term.' : 'When users book your trek packages, they will appear here.'}
+            <p className="text-sm font-bold text-gray-400">
+              {search ? `No results for "${search}"` : `No ${S[tab]?.label.toLowerCase()} bookings yet`}
             </p>
+            <p className="text-xs text-gray-300 mt-1">They'll show up here when available.</p>
           </div>
-        </div>
+        </motion.div>
       ) : (
-        <div className="flex flex-col gap-2.5">
+        <div className="flex flex-col gap-3">
           <AnimatePresence mode="popLayout">
-            {filtered.map((booking, i) => (
-              <TrekBookingRow key={booking.id} booking={booking} index={i} />
-            ))}
+            {list.map((b, i) => <BookingCard key={b.id} booking={b} index={i} />)}
           </AnimatePresence>
         </div>
       )}
