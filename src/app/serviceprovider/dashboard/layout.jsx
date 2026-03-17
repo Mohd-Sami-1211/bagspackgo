@@ -1,20 +1,43 @@
 'use client';
-import { Suspense, useState } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import Sidebar from 'src/components/serviceprovider/dashboard/Sidebar';
 import ProviderNavbar from 'src/components/serviceprovider/dashboard/ProviderNavbar';
 import { motion, AnimatePresence } from 'framer-motion';
+import { usePathname } from 'next/navigation';
 
 export default function DashboardLayout({ children }) {
-  // isMobileOpen: controls the slide-in drawer on mobile
-  // isDesktopCollapsed: controls collapse/expand on md+ screens
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isDesktopCollapsed, setIsDesktopCollapsed] = useState(false);
+  const pathname = usePathname();
 
-  // Navbar hamburger press: toggle drawer on mobile, collapse on desktop
-  const handleNavbarToggle = () => {
-    setIsMobileOpen(prev => !prev);
-    setIsDesktopCollapsed(prev => !prev);
-  };
+  // Close mobile drawer on navigation
+  useEffect(() => {
+    setIsMobileOpen(false);
+  }, [pathname]);
+
+  // Flash mobile drawer on first load to draw attention
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const hasFlashed = sessionStorage.getItem('providerSidebarFlashed');
+      // md breakpoint is 768px in Tailwind
+      if (!hasFlashed && window.innerWidth < 768) {
+        // Wait a short moment after mounting
+        const showTimer = setTimeout(() => {
+          setIsMobileOpen(true);
+          
+          // Close it after a brief flash
+          const hideTimer = setTimeout(() => {
+            setIsMobileOpen(false);
+            sessionStorage.setItem('providerSidebarFlashed', 'true');
+          }, 1200);
+          
+          return () => clearTimeout(hideTimer);
+        }, 800);
+        
+        return () => clearTimeout(showTimer);
+      }
+    }
+  }, []);
 
   const LoadingFallback = (
     <div className="min-h-[100dvh] w-full flex items-center justify-center bg-[#FAFAFA] relative overflow-hidden">
@@ -39,68 +62,61 @@ export default function DashboardLayout({ children }) {
 
   return (
     <Suspense fallback={LoadingFallback}>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.3 }}
-        className="min-h-screen bg-neutral-50"
-      >
-        <ProviderNavbar
-          isSidebarCollapsed={isDesktopCollapsed}
-          setIsSidebarCollapsed={handleNavbarToggle}
-        />
+      <div className="min-h-screen bg-neutral-50 flex">
+        {/* Desktop Sidebar */}
+        <div className="hidden md:flex flex-shrink-0 z-20">
+          <Sidebar
+            isCollapsed={isDesktopCollapsed}
+            setIsCollapsed={setIsDesktopCollapsed}
+          />
+        </div>
 
-        {/* ── Mobile backdrop: tap outside drawer to close ── */}
+        {/* Mobile Overlay */}
         <AnimatePresence>
           {isMobileOpen && (
-            <motion.div
-              key="mobile-backdrop"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="fixed inset-0 z-30 bg-black/50 md:hidden"
-              onClick={() => setIsMobileOpen(false)}
-            />
+            <>
+              <motion.div
+                key="mobile-backdrop"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                onClick={() => setIsMobileOpen(false)}
+                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
+              />
+              <motion.div
+                key="mobile-drawer"
+                initial={{ x: '-100%' }}
+                animate={{ x: 0 }}
+                exit={{ x: '-100%' }}
+                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                className="fixed top-0 left-0 h-full z-50 md:hidden flex"
+              >
+                <Sidebar
+                  isCollapsed={false}
+                  setIsCollapsed={setIsDesktopCollapsed}
+                  onClose={() => setIsMobileOpen(false)}
+                  isMobile={true}
+                />
+              </motion.div>
+            </>
           )}
         </AnimatePresence>
 
-        <div className="flex pt-16">
-          {/* ── Sidebar ──
-              Mobile: off-screen by default (-translate-x-full), slides in when isMobileOpen
-              Desktop (md+): always visible, toggling isDesktopCollapsed changes its width  */}
-          <div
-            className={[
-              'fixed top-0 left-0 h-full z-40',
-              'transition-transform duration-300 ease-in-out',
-              // Mobile: slide in/out
-              isMobileOpen ? 'translate-x-0' : '-translate-x-full',
-              // Desktop: always visible
-              'md:translate-x-0',
-            ].join(' ')}
-          >
-            <Sidebar
-              isCollapsed={isDesktopCollapsed}
-              setIsCollapsed={setIsDesktopCollapsed}
-            />
-          </div>
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden z-10">
+          {/* Top Navbar */}
+          <ProviderNavbar
+             isSidebarCollapsed={isDesktopCollapsed}
+             setIsSidebarCollapsed={setIsDesktopCollapsed}
+             onMobileToggle={() => setIsMobileOpen(true)}
+          />
 
-          {/* ── Main content ──
-              Mobile: no left margin (sidebar is overlay)
-              Desktop: margin matches sidebar width (collapsed or expanded) */}
-          <main
-            className={[
-              'flex-1 overflow-auto transition-all duration-300 ease-in-out',
-              'ml-0',
-              isDesktopCollapsed ? 'md:ml-20' : 'md:ml-72',
-            ].join(' ')}
-          >
-            <div className="p-3 sm:p-5 md:p-6">
-              {children}
-            </div>
+          <main className="flex-1 overflow-auto p-4 sm:p-5 md:p-6 pb-20 md:pb-6 relative w-full">
+            {children}
           </main>
         </div>
-      </motion.div>
+      </div>
     </Suspense>
   );
 }

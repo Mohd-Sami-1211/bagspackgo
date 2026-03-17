@@ -14,6 +14,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 
+import { X } from 'lucide-react';
+
 // Get initials from name: "Mohd Samiullah" → "MS"
 function getInitials(name) {
   if (!name) return "?";
@@ -22,7 +24,7 @@ function getInitials(name) {
   return words[0][0].toUpperCase();
 }
 
-export default function Sidebar({ isCollapsed }) {
+export default function Sidebar({ isCollapsed, onClose, isMobile }) {
   const pathname = usePathname();
   const { user } = useAuth();
 
@@ -101,22 +103,33 @@ export default function Sidebar({ isCollapsed }) {
   return (
     <motion.aside
       initial={false}
-      animate={{ width: isCollapsed ? "80px" : "288px" }}
+      animate={{ 
+        width: isCollapsed && !isMobile ? "80px" : "288px",
+        minWidth: isCollapsed && !isMobile ? "80px" : "288px" 
+      }}
       transition={{ duration: 0.3, ease: "easeInOut" }}
-      className="fixed top-0 left-0 h-full border-r bg-white shadow-xl flex flex-col z-40 overflow-hidden"
+      className="h-full border-r bg-white shadow-xl flex flex-col z-40 overflow-hidden relative"
     >
-      <div className="flex-1 flex flex-col pt-16">
+      <div className="flex-1 flex flex-col h-0 overflow-y-auto overflow-x-hidden scrollbar-thin">
         {/* Profile Section */}
-        <div className="px-4 py-6 border-b">
+        <div className="px-4 py-6 border-b relative">
+          {isMobile && onClose && (
+            <button 
+              onClick={onClose}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 p-1 bg-gray-100 rounded-md"
+            >
+              <X size={20} />
+            </button>
+          )}
           <AnimatePresence mode="wait">
-            {!isCollapsed ? (
+            {(!isCollapsed || isMobile) ? (
               <motion.div
                 key="expanded-profile"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.2 }}
-                className="flex items-center gap-3"
+                className="flex items-center gap-3 mt-4"
               >
                 {/* Circle with progress ring and initials */}
                 <Link href="/serviceprovider/dashboard/profile" className="relative group cursor-pointer block flex-shrink-0">

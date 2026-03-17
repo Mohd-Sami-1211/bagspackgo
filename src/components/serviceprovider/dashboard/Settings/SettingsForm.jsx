@@ -63,12 +63,14 @@ export default function SettingsForm() {
 
   const searchParams = useSearchParams();
 
-  // Check if we're on the packages page or have edit param
+  // Check if we're on the packages page or have edit/tab params
   useEffect(() => {
     if (pathname.includes('/settings/packages')) {
       setActive('packages');
     } else if (searchParams.get('edit') === 'true') {
       setActive('profile');
+    } else if (searchParams.get('tab')) {
+      setActive(searchParams.get('tab'));
     }
   }, [pathname, searchParams]);
 

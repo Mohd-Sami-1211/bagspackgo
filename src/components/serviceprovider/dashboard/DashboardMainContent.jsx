@@ -59,20 +59,20 @@ function avatarColor(name) {
 
 function Skeleton() {
   return (
-    <div className="min-h-screen bg-[#f8f9fb] p-5 md:p-7">
-      <div className="h-14 w-72 bg-gray-200 rounded-2xl animate-pulse mb-7" />
+    <div className="w-full max-w-7xl mx-auto animate-in fade-in duration-500">
+      <div className="h-14 w-72 bg-gray-200/60 rounded-2xl animate-pulse mb-7" />
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
         {[...Array(3)].map((_, i) => (
           <div key={i} className="h-32 rounded-[1.75rem] bg-white border border-gray-100 animate-pulse" />
         ))}
       </div>
-      <div className="grid grid-cols-3 gap-4 mb-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-5">
         {[...Array(3)].map((_, i) => (
           <div key={i} className="h-24 rounded-2xl bg-white border border-gray-100 animate-pulse" />
         ))}
       </div>
-      <div className="grid grid-cols-3 gap-4">
-        <div className="col-span-2 h-72 rounded-2xl bg-white border border-gray-100 animate-pulse" />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2 h-72 rounded-2xl bg-white border border-gray-100 animate-pulse" />
         <div className="h-72 rounded-2xl bg-white border border-gray-100 animate-pulse" />
       </div>
     </div>
@@ -257,7 +257,7 @@ export default function DashboardMainContent() {
       sub:   avgPerBooking ? `Avg ${avgPerBooking} / booking` : 'No revenue this period',
       change: s.earningsChangePct,
       icon:  IndianRupee,
-      href:  '/serviceprovider/dashboard/settings',   // → Payments & Revenue panel
+      href:  '/serviceprovider/dashboard/settings?tab=payments',   // → Payments & Revenue panel
       delay: 0,
     },
     {
@@ -306,8 +306,7 @@ export default function DashboardMainContent() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#f8f9fb]">
-      <div className="p-5 md:p-7 max-w-7xl">
+    <div className="w-full max-w-7xl mx-auto pb-4">
 
         {/* ── Enhanced Heading ──────────────────────────────── */}
         <motion.div
@@ -317,12 +316,12 @@ export default function DashboardMainContent() {
         >
           <div>
             {/* Accent bar + title */}
-            <div className="flex items-center gap-3 mb-1">
+            <div className="flex items-center gap-2 sm:gap-3 mb-1">
               <div className="flex flex-col gap-[3px]">
-                <div className="w-6 h-[3px] rounded-full bg-emerald-500" />
-                <div className="w-4 h-[3px] rounded-full bg-emerald-300" />
+                <div className="w-5 sm:w-6 h-[3px] rounded-full bg-emerald-500" />
+                <div className="w-3 sm:w-4 h-[3px] rounded-full bg-emerald-300" />
               </div>
-              <h1 className="text-xl font-black text-gray-900 tracking-tight">Dashboard</h1>
+              <h1 className="text-lg sm:text-xl font-black text-gray-900 tracking-tight">Dashboard</h1>
             </div>
             {lastUpd && (
               <p className="text-[12px] text-gray-400 pl-9">
@@ -341,10 +340,19 @@ export default function DashboardMainContent() {
             <button
               onClick={() => load(true)}
               disabled={refreshing}
-              className="flex items-center gap-1.5 bg-white border border-gray-200 text-[11px] font-medium text-gray-500 px-2.5 py-1.5 rounded-xl hover:bg-gray-50 transition-all active:scale-95"
+              className="hidden sm:flex items-center gap-1.5 bg-white border border-gray-200 text-[11px] font-medium text-gray-500 px-2.5 py-1.5 rounded-xl hover:bg-gray-50 transition-all active:scale-95"
             >
               <RefreshCw size={11} className={refreshing ? 'animate-spin' : ''} />
               Refresh
+            </button>
+            
+            {/* Mobile refresh icon only */}
+            <button
+              onClick={() => load(true)}
+              disabled={refreshing}
+              className="sm:hidden flex items-center justify-center bg-white border border-gray-200 text-gray-500 w-8 h-8 rounded-xl hover:bg-gray-50 transition-all active:scale-95"
+            >
+              <RefreshCw size={13} className={refreshing ? 'animate-spin' : ''} />
             </button>
           </div>
         </motion.div>
@@ -371,7 +379,9 @@ export default function DashboardMainContent() {
 
         {/* ── 3 Stat Cards ──────────────────────────────────── */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
-          {statCards.map(c => <StatCard key={c.label} {...c} />)}
+          {statCards.map(c => (
+            <StatCard key={c.label} {...c} />
+          ))}
         </div>
 
         {/* ── Category Tiles ────────────────────────────────── */}
@@ -379,7 +389,7 @@ export default function DashboardMainContent() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.26 }}
-          className="grid grid-cols-3 gap-4 mb-5"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-5"
         >
           {categoryTiles.map(tile => (
             <div key={tile.label} className="group bg-white border border-gray-100 rounded-2xl overflow-hidden hover:border-emerald-100 hover:shadow-[0_4px_20px_rgba(16,185,129,0.07)] transition-all duration-300">
@@ -658,8 +668,6 @@ export default function DashboardMainContent() {
         </div>
 
 
-
       </div>
-    </div>
   );
 }
