@@ -21,6 +21,30 @@ export async function POST(req) {
 
         const data = await req.json();
 
+        // ── DUPLICATE PACKAGE LOGIC ──
+        if (data.action === 'duplicate' && data.packageId) {
+            const originalPackage = await Package.findOne({ _id: data.packageId, provider: user.userId });
+            if (!originalPackage) {
+                return NextResponse.json({ success: false, message: 'Package not found' }, { status: 404 });
+            }
+
+            const clonedPackageData = originalPackage.toObject();
+            delete clonedPackageData._id;
+            delete clonedPackageData.createdAt;
+            delete clonedPackageData.updatedAt;
+            clonedPackageData.name = `Copy of ${clonedPackageData.name}`;
+            clonedPackageData.status = 'inactive';
+
+            const newPackage = new Package(clonedPackageData);
+            await newPackage.save();
+
+            return NextResponse.json({ 
+                success: true, 
+                message: 'Package duplicated successfully', 
+                packageId: newPackage._id 
+            }, { status: 201 });
+        }
+
         // Data mapping and validation
         const {
             packageInfo,
@@ -112,7 +136,17 @@ export async function GET(req) {
             return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
         }
 
-        await dbConnect();
+        const url = new URL(req.url);
+        const packageId = url.searchParams.get('id');
+
+        if (packageId) {
+            const pkg = await Package.findOne({ _id: packageId, provider: user.userId });
+            if (!pkg) {
+                 return NextResponse.json({ success: false, message: 'Package not found' }, { status: 404 });
+            }
+            return NextResponse.json({ success: true, package: pkg }, { status: 200 });
+        }
+
         const packages = await Package.find({ provider: user.userId }).sort({ createdAt: -1 });
 
         return NextResponse.json({
@@ -123,6 +157,105 @@ export async function GET(req) {
     } catch (error) {
         console.error('Error fetching provider packages:', error);
         return NextResponse.json({ success: false, message: 'Failed to fetch packages' }, { status: 500 });
+    }
+}
+
+export async function PUT(req) {
+    try {
+        const user = await getCurrentUser(req);
+        if (!user || user.role !== 'provider') {
+            return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
+        }
+
+        const url = new URL(req.url);
+        const packageId = url.searchParams.get('id');
+
+        if (!packageId) {
+            return NextResponse.json({ success: false, message: 'Package ID required' }, { status: 400 });
+        }
+
+        await dbConnect();
+
+        const data = await req.json();
+
+        const {
+            packageInfo,
+            pricingTiers,
+            inclusives,
+            inclusivesList,
+            exclusivesList,
+            activities,
+            itinerary,
+            termsAndConditions
+        } = data;
+
+        const days = parseInt(packageInfo.days) || 1;
+
+        const updateData = {
+            name: packageInfo.name.trim(),
+            category: packageInfo.category || 'trip',
+            packageType: packageInfo.packageType || 'individual',
+            packageCategory: packageInfo.packageCategory || 'budget',
+            destination: packageInfo.destination.trim(),
+            days,
+            trekName: packageInfo.trekName || '',
+            trekLevel: packageInfo.trekLevel || '',
+            photos: data.photos || [],
+            pricingTiers: pricingTiers.map(tier => ({
+                minPeople: parseInt(tier.minPeople) || 1,
+                maxPeople: parseInt(tier.maxPeople) || 2,
+                price: parseFloat(tier.price) || 0,
+                discount: parseFloat(tier.discount) || 0
+            })),
+            pickupDropCities: data.pickupDropCities || [],
+            inclusives: inclusives || null,
+            inclusivesList: (inclusivesList || []).map(i => typeof i === 'string' ? i : i.text),
+            exclusivesList: (exclusivesList || []).map(e => typeof e === 'string' ? e : e.text),
+            activities: (activities || []).map(a => ({
+                name: a.name,
+                details: a.details
+            })),
+            itinerary: (itinerary || []).map(day => ({
+                day: day.day,
+                location: day.location || '',
+                agenda: day.agenda || '',
+                travelFrom: day.travelFrom || '',
+                travelTo: day.travelTo || '',
+                pickupTime: day.pickupTime || '',
+                checkinTime: day.checkinTime || '',
+                isDayTrip: day.isDayTrip || false,
+                hotelName: day.hotelName || '',
+                hotelStars: day.hotelStars || '3',
+                hotelPhotos: day.hotelPhotos || [],
+                destinationPhotos: day.destinationPhotos || [],
+                activities: day.activities || [],
+                highlights: (day.highlights || []).filter(h => h && h.trim())
+            })),
+            termsAndConditions: (termsAndConditions || []).map(t => typeof t === 'string' ? t : t.text)
+        };
+
+        const updatedPackage = await Package.findOneAndUpdate(
+            { _id: packageId, provider: user.userId },
+            { $set: updateData },
+            { new: true }
+        );
+
+        if (!updatedPackage) {
+             return NextResponse.json({ success: false, message: 'Package not found or unauthorized' }, { status: 404 });
+        }
+
+        return NextResponse.json({
+            success: true,
+            message: 'Package updated successfully',
+            packageId: updatedPackage._id
+        }, { status: 200 });
+
+    } catch (error) {
+        console.error('Error updating package:', error);
+        return NextResponse.json({
+            success: false,
+            message: error.message || 'Internal server error'
+        }, { status: 500 });
     }
 }
 

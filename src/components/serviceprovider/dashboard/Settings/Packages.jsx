@@ -21,6 +21,8 @@ import {
   ChevronRight,
   TrendingUp,
   Award,
+  Heart,
+  User,
 } from 'lucide-react';
 
 /* ─── helpers ─────────────────────────────────────────── */
@@ -66,8 +68,9 @@ const Packages = () => {
               destination: p.destination,
               duration: `${p.days}d / ${p.nights || p.days - 1}n`,
               status: displayStatus,
-              bookings: 0, 
+              bookings: p.bookingsCount || 0, 
               rating: p.rating || 0,
+              packageType: p.packageType,
               features: p.activities ? p.activities.slice(0, 3).map(a => a.name) : [],
               lastUpdated: p.updatedAt,
             };
@@ -118,6 +121,26 @@ const Packages = () => {
     setShowDeleteConfirm(null);
   };
 
+  const duplicatePackage = async (id) => {
+    try {
+      const res = await fetch('/api/provider/packages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'duplicate', packageId: id })
+      });
+      const data = await res.json();
+      if (data.success) {
+        // Redir to the edit page of the duplicated package
+        router.push(`/serviceprovider/dashboard/settings/packages/edit/${data.packageId}`);
+      } else {
+        alert(data.message || 'Failed to duplicate package');
+      }
+    } catch (error) {
+      console.error('Error duplicating package:', error);
+      alert('Error duplicating package');
+    }
+  };
+
   const PackageCard = ({ pkg, index }) => {
     const [showOptions, setShowOptions] = useState(false);
 
@@ -138,6 +161,18 @@ const Packages = () => {
                   <span className="flex items-center gap-1.1 bg-amber-50 text-amber-600 text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider border border-amber-100">
                     <Award size={10} className="fill-amber-500" />
                     Premium
+                  </span>
+                )}
+                {pkg.packageType === 'couple' && (
+                  <span className="flex items-center gap-1 bg-rose-50 text-rose-600 text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider border border-rose-100">
+                    <Heart size={10} className="fill-rose-500" />
+                    Couple
+                  </span>
+                )}
+                {pkg.packageType === 'individual' && (
+                  <span className="flex items-center gap-1 bg-blue-50 text-blue-600 text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider border border-blue-100">
+                    <User size={10} className="fill-blue-500" />
+                    Individual
                   </span>
                 )}
                 <span className={`text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md border ${
@@ -190,7 +225,13 @@ const Packages = () => {
                           </>
                         )}
                       </button>
-                      <button className="w-full text-left px-3 py-2 text-[12px] font-medium text-gray-600 hover:bg-gray-50 flex items-center gap-2">
+                      <button 
+                        onClick={() => {
+                          duplicatePackage(pkg.id);
+                          setShowOptions(false);
+                        }}
+                        className="w-full text-left px-3 py-2 text-[12px] font-medium text-gray-600 hover:bg-gray-50 flex items-center gap-2"
+                      >
                         <RefreshCw size={14} className="text-gray-400" />
                         Duplicate
                       </button>
@@ -256,7 +297,10 @@ const Packages = () => {
                >
                 <Edit size={15} />
                </button>
-               <button className="h-9 px-3.5 bg-emerald-600 text-white rounded-xl text-[12px] font-bold hover:bg-emerald-700 transition-all shadow-md shadow-emerald-200/50 active:scale-95 flex items-center gap-1.5">
+               <button 
+                  onClick={() => router.push(`/serviceprovider/dashboard/settings/packages/view/${pkg.id}`)}
+                  className="h-9 px-3.5 bg-emerald-600 text-white rounded-xl text-[12px] font-bold hover:bg-emerald-700 transition-all shadow-md shadow-emerald-200/50 active:scale-95 flex items-center gap-1.5"
+               >
                 <Eye size={14} />
                 <span>View</span>
                </button>

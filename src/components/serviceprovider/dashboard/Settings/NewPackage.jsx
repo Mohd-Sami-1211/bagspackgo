@@ -27,7 +27,9 @@ import {
   Heart,
   User,
   PartyPopper,
-  Star
+  Star,
+  Award,
+  Shield
 } from 'lucide-react';
 import dataJson from 'src/data/data.json';
 
@@ -114,7 +116,7 @@ const CustomSelect = ({ value, onChange, options, placeholder, icon: Icon, iconC
   );
 };
 
-const NewPackage = () => {
+const NewPackage = ({ initialData = null, isEdit = false }) => {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -128,6 +130,7 @@ const NewPackage = () => {
   const [packageInfo, setPackageInfo] = useState({
     name: '',
     packageType: 'individual', // 'individual' or 'couple'
+    packageCategory: 'budget', // 'premium' or 'budget'
     destination: '',
     days: 3,
   });
@@ -179,40 +182,80 @@ const NewPackage = () => {
 
   // Load from local storage on mount
   useEffect(() => {
-    const savedData = localStorage.getItem('newTripPackageDraft');
-    if (savedData) {
-      try {
-        const parsed = JSON.parse(savedData);
-        if (parsed.packageInfo) setPackageInfo(parsed.packageInfo);
-        if (parsed.pricingTiers) setPricingTiers(parsed.pricingTiers);
-        if (parsed.pickupDropCities) setPickupDropCities(parsed.pickupDropCities);
-        if (parsed.inclusivesList) setInclusivesList(parsed.inclusivesList);
-        if (parsed.exclusivesList) setExclusivesList(parsed.exclusivesList);
-        if (parsed.activities) setActivities(parsed.activities);
-        if (parsed.termsAndConditions) setTermsAndConditions(parsed.termsAndConditions);
-        if (parsed.itinerary) setItinerary(parsed.itinerary);
-        if (parsed.daysCount) setDaysCount(parsed.daysCount);
-      } catch (e) {
-        console.error("Failed to parse saved package data", e);
+    if (isEdit && initialData) {
+      setPackageInfo({
+        name: initialData.name || '',
+        packageType: initialData.packageType || 'individual',
+        packageCategory: initialData.packageCategory || 'budget',
+        destination: initialData.destination || '',
+        days: initialData.days || 3,
+      });
+      if (initialData.pricingTiers?.length > 0) {
+        setPricingTiers(initialData.pricingTiers.map((t, i) => ({ id: i + 1, ...t })));
+      }
+      if (initialData.pickupDropCities?.length > 0) {
+        setPickupDropCities(initialData.pickupDropCities.map((c, i) => ({ 
+          id: i + 1, 
+          cityName: c.cityName,
+          locations: (c.locations || []).map((l, j) => ({ id: parseInt(`${i}${j}${Date.now()}`), ...l }))
+        })));
+      }
+      if (initialData.inclusivesList?.length > 0) {
+        setInclusivesList(initialData.inclusivesList.map((text, i) => ({ id: i + 1, text })));
+      }
+      if (initialData.exclusivesList?.length > 0) {
+        setExclusivesList(initialData.exclusivesList.map((text, i) => ({ id: i + 1, text })));
+      }
+      if (initialData.activities?.length > 0) {
+        setActivities(initialData.activities.map((a, i) => ({ id: i + 1, ...a })));
+      }
+      if (initialData.termsAndConditions?.length > 0) {
+        setTermsAndConditions(initialData.termsAndConditions.map((text, i) => ({ id: i + 1, text })));
+      }
+      if (initialData.itinerary?.length > 0) {
+        setItinerary(initialData.itinerary.map(day => ({ ...day, isCompleted: true })));
+      }
+      if (initialData.days) {
+        setDaysCount(initialData.days);
+      }
+    } else {
+      const savedData = localStorage.getItem('newTripPackageDraft');
+      if (savedData) {
+        try {
+          const parsed = JSON.parse(savedData);
+          if (parsed.packageInfo) setPackageInfo(parsed.packageInfo);
+          if (parsed.pricingTiers) setPricingTiers(parsed.pricingTiers);
+          if (parsed.pickupDropCities) setPickupDropCities(parsed.pickupDropCities);
+          if (parsed.inclusivesList) setInclusivesList(parsed.inclusivesList);
+          if (parsed.exclusivesList) setExclusivesList(parsed.exclusivesList);
+          if (parsed.activities) setActivities(parsed.activities);
+          if (parsed.termsAndConditions) setTermsAndConditions(parsed.termsAndConditions);
+          if (parsed.itinerary) setItinerary(parsed.itinerary);
+          if (parsed.daysCount) setDaysCount(parsed.daysCount);
+        } catch (e) {
+          console.error("Failed to parse saved package data", e);
+        }
       }
     }
   }, []);
 
   // Save to local storage on changes
   useEffect(() => {
-    const dataToSave = {
-      packageInfo,
-      pricingTiers,
-      pickupDropCities,
-      inclusivesList,
-      exclusivesList,
-      activities,
-      termsAndConditions,
-      itinerary,
-      daysCount
-    };
-    localStorage.setItem('newTripPackageDraft', JSON.stringify(dataToSave));
-  }, [packageInfo, pricingTiers, pickupDropCities, inclusivesList, exclusivesList, activities, termsAndConditions, itinerary, daysCount]);
+    if (!isEdit) {
+      const dataToSave = {
+        packageInfo,
+        pricingTiers,
+        pickupDropCities,
+        inclusivesList,
+        exclusivesList,
+        activities,
+        termsAndConditions,
+        itinerary,
+        daysCount
+      };
+      localStorage.setItem('newTripPackageDraft', JSON.stringify(dataToSave));
+    }
+  }, [packageInfo, pricingTiers, pickupDropCities, inclusivesList, exclusivesList, activities, termsAndConditions, itinerary, daysCount, isEdit]);
 
   // Tab configurations
   const tabs = [
@@ -370,8 +413,9 @@ const NewPackage = () => {
 
       console.log('Submitting package:', formData);
 
-      const res = await fetch('/api/provider/packages', {
-        method: 'POST',
+      const endpoint = isEdit ? `/api/provider/packages?id=${initialData._id}` : '/api/provider/packages';
+      const res = await fetch(endpoint, {
+        method: isEdit ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
       });
@@ -714,6 +758,42 @@ const NewPackage = () => {
                     </div>
                     <div className={`text-lg font-semibold ${packageInfo.packageType === 'couple' ? 'text-emerald-700' : 'text-gray-700'}`}>
                       Couple
+                    </div>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-800 mb-3">
+                Package Category *
+              </label>
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  type="button"
+                  onClick={() => handlePackageInfoChange('packageCategory', 'budget')}
+                  className={`p-4 rounded-xl border-2 transition-all ${packageInfo.packageCategory === 'budget' ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 hover:border-gray-300'}`}
+                >
+                  <div className="text-center">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <Shield size={20} className={packageInfo.packageCategory === 'budget' ? 'text-emerald-600' : 'text-gray-500'} />
+                    </div>
+                    <div className={`text-lg font-semibold ${packageInfo.packageCategory === 'budget' ? 'text-emerald-700' : 'text-gray-700'}`}>
+                      Standard / Budget
+                    </div>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handlePackageInfoChange('packageCategory', 'premium')}
+                  className={`p-4 rounded-xl border-2 transition-all ${packageInfo.packageCategory === 'premium' ? 'border-amber-500 bg-amber-50' : 'border-gray-200 hover:border-gray-300'}`}
+                >
+                  <div className="text-center">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <Award size={20} className={packageInfo.packageCategory === 'premium' ? 'text-amber-500' : 'text-gray-500'} />
+                    </div>
+                    <div className={`text-lg font-semibold ${packageInfo.packageCategory === 'premium' ? 'text-amber-600' : 'text-gray-700'}`}>
+                      Premium
                     </div>
                   </div>
                 </button>
@@ -1473,8 +1553,8 @@ const NewPackage = () => {
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${day.isCompleted ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-100 text-gray-500'}`}>
-                        <span className="font-bold text-lg">Day {day.day}</span>
+                      <div className={`min-w-[64px] h-12 px-3 rounded-xl flex items-center justify-center text-center ${day.isCompleted ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-100 text-gray-500'}`}>
+                        <span className="font-bold text-[14px] leading-none">Day {day.day}</span>
                       </div>
                       <div>
                         <h4 className="font-semibold text-gray-800">
@@ -1650,7 +1730,7 @@ const NewPackage = () => {
               <Calendar className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-[18px] font-black text-gray-900 tracking-tight leading-none mb-1">Create Trip Package</h1>
+              <h1 className="text-[18px] font-black text-gray-900 tracking-tight leading-none mb-1">{isEdit && initialData?.status !== 'inactive' ? 'Edit Trip Package' : 'Create Trip Package'}</h1>
               <p className="text-[12px] text-gray-400 font-medium">Design your perfect travel experience</p>
             </div>
           </div>
@@ -1667,7 +1747,7 @@ const NewPackage = () => {
           ) : (
             <Save size={16} />
           )}
-          <span>Publish Package</span>
+          <span>{isEdit && initialData?.status !== 'inactive' ? 'Update Package' : 'Publish Package'}</span>
         </button>
       </div>
 
@@ -1753,7 +1833,7 @@ const NewPackage = () => {
                   className="flex-1 sm:flex-none bg-emerald-600 text-white px-8 py-2.5 rounded-xl text-[13px] font-bold hover:bg-emerald-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-emerald-200"
                 >
                   <Save size={16} />
-                  {isSubmitting ? 'Publishing...' : 'Save & Publish'}
+                  {isSubmitting ? (isEdit ? 'Updating...' : 'Publishing...') : (isEdit ? 'Save Changes' : 'Save & Publish')}
                 </button>
               )}
             </div>

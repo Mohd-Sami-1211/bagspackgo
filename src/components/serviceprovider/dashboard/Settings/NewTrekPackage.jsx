@@ -83,7 +83,7 @@ const CustomSelect = ({ value, onChange, options, placeholder, disabled = false,
 };
 
 /* ─── Main Component ─────────────────────────────────────── */
-export default function NewTrekPackage() {
+export default function NewTrekPackage({ initialData = null, isEdit = false }) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -134,6 +134,60 @@ export default function NewTrekPackage() {
     { id: 'photographs', name: 'Photographs', icon: <Camera size={16} /> },
     { id: 'terms', name: 'Terms & Conditions', icon: <FileText size={16} /> },
   ];
+
+  /* ── Load Initial Data (if editing) ─────── */
+  useEffect(() => {
+    if (isEdit && initialData) {
+      setPackageInfo({
+        name: initialData.name || '',
+        category: 'trek',
+        packageType: initialData.packageType || 'individual',
+        destination: initialData.destination || '',
+        days: initialData.days || 3,
+        trekName: initialData.trekName || '',
+        customTrekName: initialData.trekName && !trekOptionsMap[initialData.destination]?.includes(initialData.trekName) && initialData.trekName !== 'Other' ? initialData.trekName : '',
+        trekLevel: initialData.trekLevel || ''
+      });
+      // Set trekking select correctly
+      if (initialData.destination && initialData.trekName) {
+        const options = trekOptionsMap[initialData.destination] || trekOptionsMap['default'];
+        if (!options.includes(initialData.trekName) && initialData.trekName !== 'Other') {
+          // If custom trek name, we set trekName to 'Other' and customTrekName to original name
+          setPackageInfo(prev => ({ ...prev, trekName: 'Other', customTrekName: initialData.trekName }));
+        }
+      }
+      
+      if (initialData.pricingTiers?.length > 0) {
+        setPricingTiers(initialData.pricingTiers.map((t, i) => ({ id: i + 1, ...t })));
+      }
+      if (initialData.pickupDropCities?.length > 0) {
+        setPickupDropCities(initialData.pickupDropCities.map((c, i) => ({ 
+          id: i + 1, 
+          cityName: c.cityName,
+          locations: (c.locations || []).map((l, j) => ({ id: parseInt(`${i}${j}${Date.now()}`), ...l }))
+        })));
+      }
+      if (initialData.inclusivesList?.length > 0) {
+        setInclusivesList(initialData.inclusivesList.map((text, i) => ({ id: i + 1, text })));
+      }
+      if (initialData.exclusivesList?.length > 0) {
+        setExclusivesList(initialData.exclusivesList.map((text, i) => ({ id: i + 1, text })));
+      }
+      // Assuming additionalPoints was mapped differently, fallback if used
+      if (initialData.termsAndConditions?.length > 0) {
+        setTermsAndConditions(initialData.termsAndConditions.map((text, i) => ({ id: i + 1, text })));
+      }
+      if (initialData.photos?.length > 0) {
+        setPhotos(initialData.photos);
+      }
+      if (initialData.itinerary?.length > 0) {
+        setItinerary(initialData.itinerary.map((day, i) => ({
+          day: day.day || i + 1,
+          sections: day.highlights?.length > 0 ? day.highlights : (day.agenda ? day.agenda.split(' | ') : [''])
+        })));
+      }
+    }
+  }, [initialData, isEdit]);
 
   /* ── Itinerary day sync ─────────────────── */
   useEffect(() => {
@@ -232,8 +286,9 @@ export default function NewTrekPackage() {
         termsAndConditions: termsAndConditions.filter(t => t.text.trim()),
         photos
       };
-      const res = await fetch('/api/provider/packages', {
-        method: 'POST',
+      const endpoint = isEdit ? `/api/provider/packages?id=${initialData._id}` : '/api/provider/packages';
+      const res = await fetch(endpoint, {
+        method: isEdit ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
       });
@@ -284,7 +339,7 @@ export default function NewTrekPackage() {
               <Tent size={20} className="text-white" />
             </div>
             <div>
-              <h1 className="text-[18px] font-black text-gray-900 tracking-tight leading-none mb-1">Create Trek Package</h1>
+              <h1 className="text-[18px] font-black text-gray-900 tracking-tight leading-none mb-1">{isEdit && initialData?.status !== 'inactive' ? 'Edit Trek Package' : 'Create Trek Package'}</h1>
               <p className="text-[12px] text-gray-400 font-medium">Design your trekking adventure package</p>
             </div>
           </div>
@@ -296,7 +351,7 @@ export default function NewTrekPackage() {
           className="w-full sm:w-auto px-6 py-2.5 bg-emerald-600 text-white rounded-xl text-[13px] font-bold hover:bg-emerald-700 shadow-lg shadow-emerald-200 transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-70"
         >
           {isSubmitting ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save size={16} />}
-          <span>Publish Trek</span>
+          <span>{isEdit && initialData?.status !== 'inactive' ? 'Update Trek' : 'Publish Trek'}</span>
         </button>
       </div>
 
