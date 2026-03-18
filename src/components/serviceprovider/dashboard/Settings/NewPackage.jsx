@@ -10,6 +10,7 @@ import {
   Plus,
   Trash2,
   ChevronRight,
+  ChevronDown,
   Calendar,
   MapPin,
   Clock,
@@ -43,7 +44,7 @@ const agendaOptions = [
   { value: 'checkout', label: 'Checkout' },
 ];
 
-const CustomSelect = ({ value, onChange, options, placeholder, icon: Icon, iconClassName = "text-gray-400", error }) => {
+const CustomSelect = ({ value, onChange, options, placeholder, icon: Icon, iconClassName = 'text-gray-400', disabled = false, error }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -63,26 +64,31 @@ const CustomSelect = ({ value, onChange, options, placeholder, icon: Icon, iconC
     <div className="relative" ref={dropdownRef}>
       <button
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className={`w-full flex items-center justify-between border ${error ? 'border-red-500 ring-2 ring-red-500' : 'border-gray-300'} rounded-xl ${Icon ? 'pl-9 pr-4 py-2.5' : 'px-4 py-3'} bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all text-left mt-0`}
+        disabled={disabled}
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        className={`w-full flex items-center justify-between rounded-xl ${
+          Icon ? 'pl-9 pr-4 py-2.5' : 'px-4 py-3'
+        } bg-white focus:outline-none transition-all text-left text-sm border
+          ${disabled ? 'bg-gray-50 text-gray-400 cursor-not-allowed border-gray-200' : 'cursor-pointer hover:border-emerald-400'}
+          ${isOpen ? 'border-emerald-500 ring-2 ring-emerald-100' : 'border-gray-200'}`}
       >
         <div className="flex items-center gap-2 overflow-hidden">
           {Icon && <Icon className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${iconClassName}`} size={16} />}
-          <span className={`truncate text-sm ${!selectedOption ? 'text-gray-500' : 'text-gray-800'}`}>
+          <span className={`truncate ${!selectedOption ? 'text-gray-400' : 'text-gray-800 font-medium'}`}>
             {selectedOption ? selectedOption.label : placeholder}
           </span>
         </div>
-        <ChevronRight size={18} className={`text-gray-400 transition-transform ${isOpen ? 'rotate-90' : ''}`} />
+        <ChevronDown size={16} className={`text-gray-400 transition-transform shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
+            initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
+            exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.15 }}
-            className="absolute z-[60] w-full mt-2 bg-white border border-gray-100 rounded-xl shadow-xl max-h-60 overflow-y-auto no-scrollbar"
+            className="absolute z-[60] w-full mt-1.5 bg-white border border-gray-100 rounded-xl shadow-xl max-h-60 overflow-y-auto no-scrollbar"
           >
             {options.map((option) => (
               <button
@@ -92,10 +98,13 @@ const CustomSelect = ({ value, onChange, options, placeholder, icon: Icon, iconC
                   onChange(option.value);
                   setIsOpen(false);
                 }}
-                className={`w-full text-left px-4 py-3 hover:bg-emerald-50 transition-colors flex items-center justify-between text-sm ${String(value) === String(option.value) ? 'bg-emerald-50 text-emerald-700 font-semibold' : 'text-gray-700 font-medium'}`}
+                className={`w-full text-left px-4 py-2.5 transition-colors flex items-center justify-between text-sm
+                  ${String(value) === String(option.value)
+                    ? 'bg-emerald-50 text-emerald-700 font-semibold'
+                    : 'text-gray-700 hover:bg-gray-50'}`}
               >
                 <span className="truncate pr-2">{option.label}</span>
-                {String(value) === String(option.value) && <Check size={16} className="text-emerald-600 shrink-0" />}
+                {String(value) === String(option.value) && <Check size={14} className="text-emerald-600 shrink-0" />}
               </button>
             ))}
           </motion.div>
@@ -119,7 +128,6 @@ const NewPackage = () => {
   const [packageInfo, setPackageInfo] = useState({
     name: '',
     packageType: 'individual', // 'individual' or 'couple'
-    packageCategory: 'budget', // 'budget' or 'premium'
     destination: '',
     days: 3,
   });
@@ -136,6 +144,7 @@ const NewPackage = () => {
   // Inclusives & Exclusives State
   const [inclusivesList, setInclusivesList] = useState([{ id: 1, text: '' }]);
   const [exclusivesList, setExclusivesList] = useState([{ id: 1, text: '' }]);
+  const [additionalPoints, setAdditionalPoints] = useState([{ id: 1, text: '' }]);
 
   // Activities State
   const [activities, setActivities] = useState([
@@ -321,20 +330,12 @@ const NewPackage = () => {
 
     const errors = validateForm();
     if (Object.keys(errors).length > 0) {
-      const errorCount = Object.keys(errors).length;
-      alert(`Please fill in all required fields. There are ${errorCount} error(s) to fix.`);
-
-      // Scroll to first error
       const firstError = Object.keys(errors)[0];
-      const element = document.querySelector(`[data-error="${firstError}"]`);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        
-        // Add a subtle brief pulse animation instead of a thick red ring on the entire section
-        element.classList.add('animate-pulse');
-        setTimeout(() => {
-          element.classList.remove('animate-pulse');
-        }, 800);
+      // Auto-switch to the tab with the first error
+      if (firstError.startsWith('packageName') || firstError.startsWith('price') || firstError.startsWith('destination')) {
+        setActiveTab('package-info');
+      } else if (firstError.startsWith('day_')) {
+        setActiveTab('itinerary');
       }
       return;
     }
@@ -361,6 +362,7 @@ const NewPackage = () => {
         })),
         inclusivesList: inclusivesList.filter(i => i.text.trim()),
         exclusivesList: exclusivesList.filter(e => e.text.trim()),
+        additionalPoints: additionalPoints.filter(p => p.text.trim()),
         activities: activities.filter(a => a.name.trim() && a.details.trim()),
         itinerary: itinerary.filter(day => day.location?.trim() || day.agenda?.trim()), // Only save filled-in days
         termsAndConditions: termsAndConditions.filter(t => t.text.trim()),
@@ -673,12 +675,12 @@ const NewPackage = () => {
                 type="text"
                 value={packageInfo.name}
                 onChange={(e) => handlePackageInfoChange('name', e.target.value)}
-                className={`w-full border rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all ${validationErrors.packageName ? 'border-red-500 ring-2 ring-red-500' : 'border-gray-300'}`}
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
                 placeholder="Eg: Premium Himalayan Trek Adventure"
                 required
               />
               {validationErrors.packageName && (
-                <p className="mt-1 text-sm text-red-600">{validationErrors.packageName}</p>
+                <p className="mt-1.5 text-[12px] text-rose-600 flex items-center gap-1"><AlertCircle size={11} />{validationErrors.packageName}</p>
               )}
             </div>
 
@@ -718,35 +720,7 @@ const NewPackage = () => {
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-gray-800 mb-3">
-                Package Category *
-              </label>
-              <div className="grid grid-cols-2 gap-4">
-                <button
-                  type="button"
-                  onClick={() => handlePackageInfoChange('packageCategory', 'budget')}
-                  className={`p-4 rounded-xl border-2 transition-all ${packageInfo.packageCategory === 'budget' ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 hover:border-gray-300'}`}
-                >
-                  <div className="text-center">
-                    <div className={`text-lg font-semibold ${packageInfo.packageCategory === 'budget' ? 'text-emerald-700' : 'text-gray-700'}`}>
-                      Budget
-                    </div>
-                  </div>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handlePackageInfoChange('packageCategory', 'premium')}
-                  className={`p-4 rounded-xl border-2 transition-all ${packageInfo.packageCategory === 'premium' ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 hover:border-gray-300'}`}
-                >
-                  <div className="text-center">
-                    <div className={`text-lg font-semibold ${packageInfo.packageCategory === 'premium' ? 'text-emerald-700' : 'text-gray-700'}`}>
-                      Premium
-                    </div>
-                  </div>
-                </button>
-              </div>
-            </div>
+
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -757,7 +731,7 @@ const NewPackage = () => {
                   <button
                     type="button"
                     onClick={() => handlePackageInfoChange('days', Math.max(1, packageInfo.days - 1))}
-                    className="w-10 h-10 flex items-center justify-center border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+                    className="w-10 h-10 flex items-center justify-center border border-gray-200 rounded-lg hover:bg-gray-50 transition"
                   >
                     <span className="text-xl">−</span>
                   </button>
@@ -765,13 +739,13 @@ const NewPackage = () => {
                     type="number"
                     value={packageInfo.days}
                     onChange={(e) => handlePackageInfoChange('days', e.target.value)}
-                    className="flex-1 border border-gray-300 rounded-xl px-4 py-3 text-center focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                    className="flex-1 border border-gray-200 rounded-xl px-4 py-3 text-center focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
                     min="1"
                   />
                   <button
                     type="button"
                     onClick={() => handlePackageInfoChange('days', packageInfo.days + 1)}
-                    className="w-10 h-10 flex items-center justify-center border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+                    className="w-10 h-10 flex items-center justify-center border border-gray-200 rounded-lg hover:bg-gray-50 transition"
                   >
                     <span className="text-xl">+</span>
                   </button>
@@ -790,7 +764,7 @@ const NewPackage = () => {
                     error={validationErrors.destination}
                   />
                 {validationErrors.destination && (
-                  <p className="mt-1 text-sm text-red-600">{validationErrors.destination}</p>
+                  <p className="mt-1.5 text-[12px] text-rose-600 flex items-center gap-1"><AlertCircle size={11} />{validationErrors.destination}</p>
                 )}
               </div>
             </div>
@@ -811,8 +785,8 @@ const NewPackage = () => {
               </div>
 
               {validationErrors.price && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg flex items-center gap-2">
-                  <AlertCircle size={16} />
+                <div className="mb-4 p-2.5 bg-rose-50 border border-rose-200 text-rose-600 text-[12px] rounded-lg flex items-center gap-2">
+                  <AlertCircle size={13} />
                   {validationErrors.price}
                 </div>
               )}
@@ -844,7 +818,7 @@ const NewPackage = () => {
                           type="number"
                           value={tier.maxPeople}
                           onChange={(e) => handlePricingTierChange(tier.id, 'maxPeople', e.target.value)}
-                          className="w-16 border border-gray-300 rounded-lg px-2 py-1.5 text-center focus:ring-2 focus:ring-emerald-500 outline-none text-sm"
+                          className="w-16 border border-gray-200 rounded-lg px-2 py-1.5 text-center focus:ring-2 focus:ring-emerald-500 outline-none text-sm"
                           min={tier.minPeople}
                           placeholder="Max"
                         />
@@ -857,7 +831,7 @@ const NewPackage = () => {
                           type="number"
                           value={tier.price}
                           onChange={(e) => handlePricingTierChange(tier.id, 'price', e.target.value)}
-                          className="w-full border border-gray-300 rounded-lg pl-7 pr-3 py-1.5 focus:ring-2 focus:ring-emerald-500 outline-none text-sm"
+                          className="w-full border border-gray-200 rounded-lg pl-7 pr-3 py-1.5 focus:ring-2 focus:ring-emerald-500 outline-none text-sm"
                           placeholder="Price"
                           min="0"
                         />
@@ -868,7 +842,7 @@ const NewPackage = () => {
                           type="number"
                           value={tier.discount}
                           onChange={(e) => handlePricingTierChange(tier.id, 'discount', e.target.value)}
-                          className="w-full border border-gray-300 rounded-lg pr-7 pl-3 py-1.5 focus:ring-2 focus:ring-emerald-500 outline-none text-sm"
+                          className="w-full border border-gray-200 rounded-lg pr-7 pl-3 py-1.5 focus:ring-2 focus:ring-emerald-500 outline-none text-sm"
                           placeholder="Discount"
                           min="0"
                           max="100"
@@ -997,7 +971,7 @@ const NewPackage = () => {
                         type="text"
                         value={item.text}
                         onChange={(e) => handleInclusiveChange(item.id, e.target.value)}
-                        className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                        className="w-full border border-gray-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
                         placeholder="e.g. 3 Nights accommodation in 4-star hotel"
                       />
                     </div>
@@ -1045,7 +1019,7 @@ const NewPackage = () => {
                         type="text"
                         value={item.text}
                         onChange={(e) => handleExclusiveChange(item.id, e.target.value)}
-                        className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none"
+                        className="w-full border border-gray-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 outline-none transition-all"
                         placeholder="e.g. Personal expenses, flights, etc."
                       />
                     </div>
@@ -1067,6 +1041,55 @@ const NewPackage = () => {
                   className="flex items-center gap-2 text-sm text-rose-600 font-medium hover:text-rose-700 bg-rose-50 px-4 py-2 rounded-lg transition mt-2 w-fit"
                 >
                   <Plus size={16} /> Add Exclusion
+                </button>
+              </div>
+            </div>
+
+            {/* Additional Points Section */}
+            <div className="bg-white p-6 rounded-xl border border-amber-100 shadow-sm mt-6">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
+                  <Navigation size={18} className="text-amber-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-800">Additional Points</h3>
+              </div>
+              <p className="text-sm text-gray-400 mb-4 ml-10">Add any other important notes or tips for your travelers</p>
+              
+              <div className="space-y-3">
+                {additionalPoints.map((item, index) => (
+                  <motion.div
+                    key={item.id}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-center gap-3"
+                  >
+                    <div className="flex-1 relative">
+                      <input
+                        type="text"
+                        value={item.text}
+                        onChange={(e) => setAdditionalPoints(additionalPoints.map(p => p.id === item.id ? { ...p, text: e.target.value } : p))}
+                        className="w-full border border-gray-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-amber-400 focus:border-amber-400 outline-none transition-all"
+                        placeholder="e.g. Travelers must be physically fit for short walks..."
+                      />
+                    </div>
+                    {additionalPoints.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => setAdditionalPoints(additionalPoints.filter(p => p.id !== item.id))}
+                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    )}
+                  </motion.div>
+                ))}
+                
+                <button
+                  type="button"
+                  onClick={() => setAdditionalPoints([...additionalPoints, { id: Date.now(), text: '' }])}
+                  className="flex items-center gap-2 text-sm text-amber-600 font-medium hover:text-amber-700 bg-amber-50 px-4 py-2 rounded-lg transition mt-2 w-fit"
+                >
+                  <Plus size={16} /> Add Point
                 </button>
               </div>
             </div>
@@ -1102,7 +1125,7 @@ const NewPackage = () => {
                           type="text"
                           value={activity.name}
                           onChange={(e) => handleActivityChange(activity.id, 'name', e.target.value)}
-                          className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                          className="w-full border border-gray-200 rounded-lg px-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
                           placeholder="Enter activity name"
                         />
                       </div>
@@ -1114,7 +1137,7 @@ const NewPackage = () => {
                           <textarea
                             value={activity.details}
                             onChange={(e) => handleActivityChange(activity.id, 'details', e.target.value)}
-                            className="w-full border border-gray-300 rounded-lg px-4 py-3 pr-16 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none resize-none"
+                            className="w-full border border-gray-200 rounded-lg px-4 py-3 pr-16 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none resize-none transition-all"
                             rows="3"
                             placeholder="Describe the activity in detail"
                             maxLength={150}
@@ -1185,12 +1208,12 @@ const NewPackage = () => {
                     type="text"
                     value={dayData.location}
                     onChange={(e) => handleDayChange(currentDayEditing, 'location', e.target.value)}
-                    className={`w-full border rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none ${validationErrors[`day_${currentDayEditing}_location`] ? 'border-red-500 ring-2 ring-red-500' : 'border-gray-300'}`}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
                     placeholder="City, Region"
                     required
                   />
                   {validationErrors[`day_${currentDayEditing}_location`] && (
-                    <p className="mt-1 text-sm text-red-600">{validationErrors[`day_${currentDayEditing}_location`]}</p>
+                    <p className="mt-1.5 text-[12px] text-rose-600 flex items-center gap-1"><AlertCircle size={11} />{validationErrors[`day_${currentDayEditing}_location`]}</p>
                   )}
                 </div>
 
@@ -1206,7 +1229,7 @@ const NewPackage = () => {
                     error={validationErrors[`day_${currentDayEditing}_agenda`]}
                   />
                   {validationErrors[`day_${currentDayEditing}_agenda`] && (
-                    <p className="mt-1 text-sm text-red-600">{validationErrors[`day_${currentDayEditing}_agenda`]}</p>
+                    <p className="mt-1.5 text-[12px] text-rose-600 flex items-center gap-1"><AlertCircle size={11} />{validationErrors[`day_${currentDayEditing}_agenda`]}</p>
                   )}
                 </div>
               </div>
@@ -1242,7 +1265,7 @@ const NewPackage = () => {
                         type="text"
                         value={dayData.travelFrom}
                         onChange={(e) => handleDayChange(currentDayEditing, 'travelFrom', e.target.value)}
-                        className={`w-full border rounded-lg px-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none ${validationErrors[`day_${currentDayEditing}_travel`] ? 'border-red-500 ring-2 ring-red-500' : 'border-gray-300'}`}
+                        className="w-full border border-gray-200 rounded-lg px-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
                         placeholder="Starting location"
                         required
                       />
@@ -1255,14 +1278,14 @@ const NewPackage = () => {
                         type="text"
                         value={dayData.travelTo}
                         onChange={(e) => handleDayChange(currentDayEditing, 'travelTo', e.target.value)}
-                        className={`w-full border rounded-lg px-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none ${validationErrors[`day_${currentDayEditing}_travel`] ? 'border-red-500 ring-2 ring-red-500' : 'border-gray-300'}`}
+                        className="w-full border border-gray-200 rounded-lg px-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
                         placeholder="Destination"
                         required
                       />
                     </div>
                   </div>
                   {validationErrors[`day_${currentDayEditing}_travel`] && (
-                    <p className="mt-2 text-sm text-red-600">{validationErrors[`day_${currentDayEditing}_travel`]}</p>
+                    <p className="mt-2 text-[12px] text-rose-600 flex items-center gap-1"><AlertCircle size={11} />{validationErrors[`day_${currentDayEditing}_travel`]}</p>
                   )}
                 </motion.div>
               )}
@@ -1363,7 +1386,7 @@ const NewPackage = () => {
                 <label className="block text-sm font-semibold text-gray-800 mb-2">
                   Destination Photographs (Optional)
                 </label>
-                <div className="border border-gray-300 rounded-xl p-4 flex flex-col gap-4">
+                <div className="border border-gray-200 rounded-xl p-4 flex flex-col gap-4">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <span className="text-sm text-gray-500">Upload multiple photos displaying the destination for this day</span>
                     <input
@@ -1406,7 +1429,7 @@ const NewPackage = () => {
                       <textarea
                         value={highlight}
                         onChange={(e) => handleHighlightChange(currentDayEditing, index, e.target.value)}
-                        className="w-full border border-gray-300 rounded-xl px-4 py-3 pr-16 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none resize-none"
+                        className="w-full border border-gray-200 rounded-xl px-4 py-3 pr-16 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none resize-none transition-all"
                         rows="2"
                         placeholder={`Highlight ${index + 1}`}
                         maxLength={100}
@@ -1505,20 +1528,20 @@ const NewPackage = () => {
                   )}
 
                   {validationErrors[`day_${index}_location`] && (
-                    <div className="mt-3 p-2 bg-red-50 border border-red-100 rounded-lg">
-                      <p className="text-sm text-red-600">Location is required for Day {day.day}</p>
+                    <div className="mt-3 p-2.5 bg-rose-50 border border-rose-100 rounded-lg flex items-center gap-2 text-[12px] text-rose-600">
+                      <AlertCircle size={13} />Location is required for Day {day.day}
                     </div>
                   )}
 
                   {validationErrors[`day_${index}_agenda`] && (
-                    <div className="mt-3 p-2 bg-red-50 border border-red-100 rounded-lg">
-                      <p className="text-sm text-red-600">Agenda is required for Day {day.day}</p>
+                    <div className="mt-3 p-2.5 bg-rose-50 border border-rose-100 rounded-lg flex items-center gap-2 text-[12px] text-rose-600">
+                      <AlertCircle size={13} />Agenda is required for Day {day.day}
                     </div>
                   )}
 
                   {validationErrors[`day_${index}_travel`] && (
-                    <div className="mt-3 p-2 bg-red-50 border border-red-100 rounded-lg">
-                      <p className="text-sm text-red-600">Travel details are required for Day {day.day}</p>
+                    <div className="mt-3 p-2.5 bg-rose-50 border border-rose-100 rounded-lg flex items-center gap-2 text-[12px] text-rose-600">
+                      <AlertCircle size={13} />Travel details are required for Day {day.day}
                     </div>
                   )}
                 </motion.div>
@@ -1559,7 +1582,7 @@ const NewPackage = () => {
                         <textarea
                           value={term.text}
                           onChange={(e) => handleTermChange(term.id, e.target.value)}
-                          className="w-full border border-gray-300 rounded-lg px-4 py-3 pr-16 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none resize-none"
+                          className="w-full border border-gray-200 rounded-lg px-4 py-3 pr-16 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none resize-none transition-all"
                           rows="3"
                           placeholder={`Term ${index + 1} (e.g., Cancellation policy, Refund terms, etc.)`}
                           maxLength={200}
@@ -1802,13 +1825,13 @@ const NewPackage = () => {
               exit={{ opacity: 0 }}
               className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm"
             />
-            <motion.div
-              initial={{ scale: 0.5, opacity: 0, y: 40 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-              className="relative bg-white rounded-[40px] shadow-2xl p-8 sm:p-10 flex flex-col items-center text-center max-w-sm w-full overflow-hidden border border-gray-100"
-            >
+              <motion.div
+                initial={{ scale: 0.5, opacity: 0, y: 40 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.8, opacity: 0 }}
+                transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+                className="relative bg-white rounded-[32px] sm:rounded-[40px] shadow-2xl p-6 sm:p-10 flex flex-col items-center text-center max-w-[calc(100%-2rem)] sm:max-w-sm w-full overflow-hidden border border-gray-100"
+              >
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 via-teal-500 to-emerald-600" />
               <motion.div
                 initial={{ scale: 0 }}
