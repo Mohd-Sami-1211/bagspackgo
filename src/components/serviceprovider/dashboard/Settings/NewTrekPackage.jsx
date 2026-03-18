@@ -52,7 +52,7 @@ export default function NewTrekPackage() {
     name: '',
     category: 'trek',
     packageType: 'individual',
-    packageCategory: 'budget',
+    packageCategory: 'budget', // Added default
     destination: '',
     days: 3,
     trekName: '',
@@ -282,53 +282,60 @@ export default function NewTrekPackage() {
 
   // UI Renderers
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      {/* Top Bar */}
-      <div className="bg-white border-b sticky top-0 z-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => router.back()}
-              className="p-2 hover:bg-gray-100 rounded-full transition"
-            >
-              <ArrowLeft size={24} className="text-gray-600" />
-            </button>
+    <div className="w-full space-y-6 pb-20">
+      
+      {/* ── Page Header ───────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => router.push('/serviceprovider/dashboard/settings/packages')}
+            className="w-10 h-10 rounded-xl bg-white border border-gray-100 flex items-center justify-center text-gray-400 hover:text-emerald-600 hover:border-emerald-100 shadow-sm transition-all active:scale-95"
+          >
+            <ArrowLeft size={18} />
+          </button>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-200">
+              <Tent size={20} className="text-white" />
+            </div>
             <div>
-              <h1 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight">Create Trek Package</h1>
-              <p className="text-sm text-gray-500 hidden sm:block">Fill in the details to publish your new trek.</p>
+              <h1 className="text-[18px] font-black text-gray-900 tracking-tight leading-none mb-1">Create Trek Package</h1>
+              <p className="text-[12px] text-gray-400 font-medium">Design your premium trekking adventure</p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-              className="bg-emerald-600 text-white px-6 py-2.5 rounded-xl font-medium shadow-sm shadow-emerald-600/20 hover:bg-emerald-700 focus:ring-4 focus:ring-emerald-100 transition disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              {isSubmitting ? (
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              ) : (
-                <Save size={18} />
-              )}
-              <span className="hidden sm:inline">Publish Package</span>
-              <span className="sm:hidden">Publish</span>
-            </button>
-          </div>
         </div>
+
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={isSubmitting}
+          className="w-full sm:w-auto px-6 py-2.5 bg-emerald-600 text-white rounded-xl text-[13px] font-bold hover:bg-emerald-700 shadow-lg shadow-emerald-200 transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+        >
+          {isSubmitting ? (
+            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          ) : (
+            <Save size={16} />
+          )}
+          <span>Publish Trek</span>
+        </button>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 flex flex-col lg:flex-row gap-8">
+      <div className="flex flex-col lg:flex-row gap-6">
         {/* Sidebar Tabs */}
         <div className="w-full lg:w-64 flex-shrink-0">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-2 sticky top-28">
-            <nav className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0 hide-scrollbar">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-1.5 sticky top-5">
+            <nav className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible pb-1 lg:pb-0 no-scrollbar">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
+                  type="button"
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl whitespace-nowrap transition-all ${activeTab === tab.id ? 'bg-emerald-50 text-emerald-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}
+                  className={`flex items-center gap-3 px-4 py-3 text-[13px] font-bold rounded-xl whitespace-nowrap transition-all ${
+                    activeTab === tab.id 
+                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' 
+                    : 'text-gray-400 hover:bg-gray-50 hover:text-gray-600 border border-transparent'
+                  }`}
                 >
-                  <div className={`${activeTab === tab.id ? 'text-emerald-600' : 'text-gray-400'}`}>
+                  <div className={`${activeTab === tab.id ? 'text-emerald-500' : 'text-gray-300'}`}>
                     {tab.icon}
                   </div>
                   {tab.name}
@@ -338,8 +345,8 @@ export default function NewTrekPackage() {
                     (tab.id === 'itinerary' && err.startsWith('itinerary')) ||
                     (tab.id === 'terms' && err === 'terms')
                   ) && (
-                      <div className="ml-auto w-2 h-2 rounded-full bg-red-500"></div>
-                    )}
+                    <div className="ml-auto w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse shadow-sm shadow-rose-200"></div>
+                  )}
                 </button>
               ))}
             </nav>
@@ -348,7 +355,7 @@ export default function NewTrekPackage() {
 
         {/* Content Area */}
         <div className="flex-1">
-          <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8">
+          <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-8">
 
             {/* 1. Package Info Tab */}
             {activeTab === 'package-info' && (
@@ -416,6 +423,7 @@ export default function NewTrekPackage() {
                   <div>
                     <label className="block text-sm font-semibold text-gray-800 mb-2">Number of Days *</label>
                     <input
+                      type="number"
                       value={packageInfo.days}
                       onChange={(e) => {
                         const val = e.target.value;
@@ -450,6 +458,36 @@ export default function NewTrekPackage() {
                       <option value="difficult">Difficult</option>
                     </select>
                     {validationErrors.trekLevel && <p className="text-sm text-red-500 mt-1">{validationErrors.trekLevel}</p>}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-800 mb-3">
+                    Package Category *
+                  </label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <button
+                      type="button"
+                      onClick={() => setPackageInfo({ ...packageInfo, packageCategory: 'budget' })}
+                      className={`p-4 rounded-xl border-2 transition-all ${packageInfo.packageCategory === 'budget' ? 'border-emerald-500 bg-emerald-50/50' : 'border-gray-200 hover:border-gray-300'}`}
+                    >
+                      <div className="text-center">
+                        <div className={`text-[15px] font-bold ${packageInfo.packageCategory === 'budget' ? 'text-emerald-700' : 'text-gray-500'}`}>
+                          Budget
+                        </div>
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPackageInfo({ ...packageInfo, packageCategory: 'premium' })}
+                      className={`p-4 rounded-xl border-2 transition-all ${packageInfo.packageCategory === 'premium' ? 'border-emerald-500 bg-emerald-50/50' : 'border-gray-200 hover:border-gray-300'}`}
+                    >
+                      <div className="text-center">
+                        <div className={`text-[15px] font-bold ${packageInfo.packageCategory === 'premium' ? 'text-emerald-700' : 'text-gray-500'}`}>
+                          Premium
+                        </div>
+                      </div>
+                    </button>
                   </div>
                 </div>
 
@@ -754,12 +792,43 @@ export default function NewTrekPackage() {
 
       <AnimatePresence>
         {showSuccess && (
-          <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 50 }}
-            className="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-white rounded-2xl shadow-2xl p-6 border border-gray-100 flex flex-col items-center justify-center z-50 text-center min-w-[300px]">
-            <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-4"><PartyPopper size={32} /></div>
-            <h3 className="text-xl font-bold text-gray-900 mb-1">Trek Published!</h3>
-            <p className="text-gray-500">Redirecting to packages...</p>
-          </motion.div>
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ scale: 0.5, opacity: 0, y: 40 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+              className="relative bg-white rounded-[40px] shadow-2xl p-10 flex flex-col items-center text-center max-w-sm w-full mx-4 overflow-hidden border border-gray-100"
+            >
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 via-teal-500 to-emerald-600" />
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: [0, 1.3, 1] }}
+                transition={{ delay: 0.2, duration: 0.5 }}
+                className="w-20 h-20 bg-emerald-50 rounded-[24px] flex items-center justify-center mb-6"
+              >
+                <Check size={40} className="text-emerald-600" strokeWidth={3} />
+              </motion.div>
+              <h2 className="text-[22px] font-black text-gray-900 mb-2">Trek Published! 🎉</h2>
+              <p className="text-[13px] text-gray-400 font-medium leading-relaxed">Your trekking adventure is now live and ready for bookings.</p>
+              <div className="mt-6 flex gap-1.5 justify-center">
+                {[0, 1, 2].map(i => (
+                  <motion.div
+                    key={i}
+                    className="w-1.5 h-1.5 bg-emerald-500 rounded-full"
+                    animate={{ y: [0, -8, 0], opacity: [0.5, 1, 0.5] }}
+                    transition={{ delay: 0.6 + i * 0.15, repeat: Infinity, duration: 0.6 }}
+                  />
+                ))}
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>

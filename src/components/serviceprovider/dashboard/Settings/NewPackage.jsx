@@ -25,7 +25,8 @@ import {
   FileText,
   Heart,
   User,
-  PartyPopper
+  PartyPopper,
+  Star
 } from 'lucide-react';
 import dataJson from 'src/data/data.json';
 
@@ -36,16 +37,73 @@ const destinations = dataJson.destinations.map((d, i) => ({
   value: d.value
 }));
 
-// Agenda options
 const agendaOptions = [
   { value: 'arrival', label: 'Arrival & Check-in' },
-  { value: 'city-tour', label: 'City Tour' },
   { value: 'travel-day', label: 'Travel Day' },
-  { value: 'adventure', label: 'Adventure Activities' },
-  { value: 'cultural', label: 'Cultural Experience' },
-  { value: 'leisure', label: 'Leisure Day' },
-  { value: 'departure', label: 'Departure' },
+  { value: 'checkout', label: 'Checkout' },
 ];
+
+const CustomSelect = ({ value, onChange, options, placeholder, icon: Icon, iconClassName = "text-gray-400", error }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const selectedOption = options.find(opt => String(opt.value) === String(value));
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className={`w-full flex items-center justify-between border ${error ? 'border-red-500 ring-2 ring-red-500' : 'border-gray-300'} rounded-xl ${Icon ? 'pl-9 pr-4 py-2.5' : 'px-4 py-3'} bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all text-left mt-0`}
+      >
+        <div className="flex items-center gap-2 overflow-hidden">
+          {Icon && <Icon className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${iconClassName}`} size={16} />}
+          <span className={`truncate text-sm ${!selectedOption ? 'text-gray-500' : 'text-gray-800'}`}>
+            {selectedOption ? selectedOption.label : placeholder}
+          </span>
+        </div>
+        <ChevronRight size={18} className={`text-gray-400 transition-transform ${isOpen ? 'rotate-90' : ''}`} />
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.15 }}
+            className="absolute z-[60] w-full mt-2 bg-white border border-gray-100 rounded-xl shadow-xl max-h-60 overflow-y-auto no-scrollbar"
+          >
+            {options.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => {
+                  onChange(option.value);
+                  setIsOpen(false);
+                }}
+                className={`w-full text-left px-4 py-3 hover:bg-emerald-50 transition-colors flex items-center justify-between text-sm ${String(value) === String(option.value) ? 'bg-emerald-50 text-emerald-700 font-semibold' : 'text-gray-700 font-medium'}`}
+              >
+                <span className="truncate pr-2">{option.label}</span>
+                {String(value) === String(option.value) && <Check size={16} className="text-emerald-600 shrink-0" />}
+              </button>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
 
 const NewPackage = () => {
   const router = useRouter();
@@ -75,14 +133,9 @@ const NewPackage = () => {
     { id: 1, cityName: '', locations: [{ id: 1, name: '', mapLink: '' }] }
   ]);
 
-  // Inclusives State
-  const [inclusives, setInclusives] = useState({
-    food: { included: false, title: '', details: ['', '', ''] },
-    transport: { included: false, title: '', details: ['', '', ''] },
-    accommodation: { included: false, title: '', details: ['', '', ''] },
-    guidance: { included: false, title: '', details: ['', '', ''] },
-    pickupDropoff: { included: false, title: '', details: ['', '', ''] },
-  });
+  // Inclusives & Exclusives State
+  const [inclusivesList, setInclusivesList] = useState([{ id: 1, text: '' }]);
+  const [exclusivesList, setExclusivesList] = useState([{ id: 1, text: '' }]);
 
   // Activities State
   const [activities, setActivities] = useState([
@@ -102,18 +155,60 @@ const NewPackage = () => {
       agenda: '',
       travelFrom: '',
       travelTo: '',
+      isDayTrip: false,
       pickupTime: '',
+      checkinTime: '',
       hotelName: '',
+      hotelStars: '3',
+      hotelPhotos: [],
+      destinationPhotos: [],
       activities: [],
       highlights: ['', '', ''],
       isCompleted: false,
     }))
   );
 
+  // Load from local storage on mount
+  useEffect(() => {
+    const savedData = localStorage.getItem('newTripPackageDraft');
+    if (savedData) {
+      try {
+        const parsed = JSON.parse(savedData);
+        if (parsed.packageInfo) setPackageInfo(parsed.packageInfo);
+        if (parsed.pricingTiers) setPricingTiers(parsed.pricingTiers);
+        if (parsed.pickupDropCities) setPickupDropCities(parsed.pickupDropCities);
+        if (parsed.inclusivesList) setInclusivesList(parsed.inclusivesList);
+        if (parsed.exclusivesList) setExclusivesList(parsed.exclusivesList);
+        if (parsed.activities) setActivities(parsed.activities);
+        if (parsed.termsAndConditions) setTermsAndConditions(parsed.termsAndConditions);
+        if (parsed.itinerary) setItinerary(parsed.itinerary);
+        if (parsed.daysCount) setDaysCount(parsed.daysCount);
+      } catch (e) {
+        console.error("Failed to parse saved package data", e);
+      }
+    }
+  }, []);
+
+  // Save to local storage on changes
+  useEffect(() => {
+    const dataToSave = {
+      packageInfo,
+      pricingTiers,
+      pickupDropCities,
+      inclusivesList,
+      exclusivesList,
+      activities,
+      termsAndConditions,
+      itinerary,
+      daysCount
+    };
+    localStorage.setItem('newTripPackageDraft', JSON.stringify(dataToSave));
+  }, [packageInfo, pricingTiers, pickupDropCities, inclusivesList, exclusivesList, activities, termsAndConditions, itinerary, daysCount]);
+
   // Tab configurations
   const tabs = [
     { id: 'package-info', name: 'Package Info', icon: <Calendar size={18} /> },
-    { id: 'inclusives', name: 'Inclusives', icon: <Check size={18} /> },
+    { id: 'inclusives', name: 'Inclusions & Exclusions', icon: <Check size={18} /> },
     { id: 'activities', name: 'Activities', icon: <Navigation size={18} /> },
     { id: 'itinerary', name: 'Itinerary', icon: <MapPin size={18} /> },
     { id: 'terms', name: 'Terms & Conditions', icon: <FileText size={18} /> },
@@ -198,12 +293,7 @@ const NewPackage = () => {
       errors.price = 'At least one pricing tier with a valid price is required';
     }
 
-    // Validate inclusive titles if included
-    Object.entries(inclusives).forEach(([key, value]) => {
-      if (value.included && !value.title.trim()) {
-        errors[`inclusive_${key}`] = `Title is required for ${key}`;
-      }
-    });
+    // No need to validate empty inclusives or exclusives since they are optional.
 
     // NOTE: Itinerary validation is optional — providers can fill it partially
     // Only validate day items that are marked as completed
@@ -239,10 +329,12 @@ const NewPackage = () => {
       const element = document.querySelector(`[data-error="${firstError}"]`);
       if (element) {
         element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        element.classList.add('ring-2', 'ring-red-500');
+        
+        // Add a subtle brief pulse animation instead of a thick red ring on the entire section
+        element.classList.add('animate-pulse');
         setTimeout(() => {
-          element.classList.remove('ring-2', 'ring-red-500');
-        }, 2000);
+          element.classList.remove('animate-pulse');
+        }, 800);
       }
       return;
     }
@@ -267,7 +359,8 @@ const NewPackage = () => {
           cityName: c.cityName,
           locations: c.locations.filter(l => l.name.trim()).map(l => ({ name: l.name, mapLink: l.mapLink }))
         })),
-        inclusives,
+        inclusivesList: inclusivesList.filter(i => i.text.trim()),
+        exclusivesList: exclusivesList.filter(e => e.text.trim()),
         activities: activities.filter(a => a.name.trim() && a.details.trim()),
         itinerary: itinerary.filter(day => day.location?.trim() || day.agenda?.trim()), // Only save filled-in days
         termsAndConditions: termsAndConditions.filter(t => t.text.trim()),
@@ -289,6 +382,7 @@ const NewPackage = () => {
 
       // Show success animation
       setShowSuccess(true);
+      localStorage.removeItem('newTripPackageDraft');
       setTimeout(() => {
         setShowSuccess(false);
         router.push('/serviceprovider/dashboard/settings/packages');
@@ -357,55 +451,39 @@ const NewPackage = () => {
   };
 
   // Inclusives Handlers
-  const handleInclusiveToggle = (service) => {
-    setInclusives(prev => ({
-      ...prev,
-      [service]: {
-        ...prev[service],
-        included: !prev[service].included
-      }
-    }));
+  const handleAddInclusive = () => {
+    const newId = inclusivesList.length > 0 ? Math.max(...inclusivesList.map(i => i.id)) + 1 : 1;
+    setInclusivesList([...inclusivesList, { id: newId, text: '' }]);
+  };
 
-    // Clear validation error for this service
-    if (validationErrors[`inclusive_${service}`]) {
-      setValidationErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[`inclusive_${service}`];
-        return newErrors;
-      });
+  const handleRemoveInclusive = (id) => {
+    if (inclusivesList.length > 1) {
+      setInclusivesList(inclusivesList.filter(item => item.id !== id));
     }
   };
 
-  const handleInclusiveDetailChange = (service, index, value) => {
-    const newDetails = [...inclusives[service].details];
-    newDetails[index] = value.slice(0, 100); // Word limit
-
-    setInclusives(prev => ({
-      ...prev,
-      [service]: {
-        ...prev[service],
-        details: newDetails
-      }
-    }));
+  const handleInclusiveChange = (id, value) => {
+    setInclusivesList(inclusivesList.map(item =>
+      item.id === id ? { ...item, text: value } : item
+    ));
   };
 
-  const handleInclusiveTitleChange = (service, value) => {
-    setInclusives(prev => ({
-      ...prev,
-      [service]: {
-        ...prev[service],
-        title: value
-      }
-    }));
+  // Exclusives Handlers
+  const handleAddExclusive = () => {
+    const newId = exclusivesList.length > 0 ? Math.max(...exclusivesList.map(i => i.id)) + 1 : 1;
+    setExclusivesList([...exclusivesList, { id: newId, text: '' }]);
+  };
 
-    // Clear validation error for this service
-    if (validationErrors[`inclusive_${service}`]) {
-      setValidationErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[`inclusive_${service}`];
-        return newErrors;
-      });
+  const handleRemoveExclusive = (id) => {
+    if (exclusivesList.length > 1) {
+      setExclusivesList(exclusivesList.filter(item => item.id !== id));
     }
+  };
+
+  const handleExclusiveChange = (id, value) => {
+    setExclusivesList(exclusivesList.map(item =>
+      item.id === id ? { ...item, text: value } : item
+    ));
   };
 
   // Activities Handlers
@@ -496,23 +574,74 @@ const NewPackage = () => {
 
   const handleDayChange = (dayIndex, field, value) => {
     if (currentDayEditing === dayIndex) {
-      const updatedItinerary = [...itinerary];
-      updatedItinerary[dayIndex] = {
-        ...updatedItinerary[dayIndex],
-        [field]: value
-      };
-      setItinerary(updatedItinerary);
+      const updateField = (val) => {
+        const updatedItinerary = [...itinerary];
+        updatedItinerary[dayIndex] = {
+          ...updatedItinerary[dayIndex],
+          [field]: val
+        };
+        setItinerary(updatedItinerary);
 
-      // Clear validation error for this field
-      if (validationErrors[`day_${dayIndex}_${field}`] || validationErrors[`day_${dayIndex}_travel`]) {
-        setValidationErrors(prev => {
-          const newErrors = { ...prev };
-          delete newErrors[`day_${dayIndex}_${field}`];
-          delete newErrors[`day_${dayIndex}_travel`];
-          return newErrors;
-        });
+        // Clear validation error for this field
+        if (validationErrors[`day_${dayIndex}_${field}`] || validationErrors[`day_${dayIndex}_travel`]) {
+          setValidationErrors(prev => {
+            const newErrors = { ...prev };
+            delete newErrors[`day_${dayIndex}_${field}`];
+            delete newErrors[`day_${dayIndex}_travel`];
+            return newErrors;
+          });
+        }
+      };
+
+      if (value instanceof File) {
+        if (value.size > 5 * 1024 * 1024) {
+          alert('File size exceeds 5MB limit.');
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = (e) => updateField(e.target.result);
+        reader.readAsDataURL(value);
+      } else {
+        updateField(value);
       }
     }
+  };
+
+  const handleDayPhotoUpload = (dayIndex, field, files) => {
+    if (currentDayEditing === dayIndex && files.length > 0) {
+      const fileArray = Array.from(files);
+      const validFiles = fileArray.filter(f => f.size <= 5 * 1024 * 1024);
+      if (validFiles.length < fileArray.length) {
+        alert('Some files exceed the 5MB limit and were skipped.');
+      }
+      
+      const promises = validFiles.map(file => {
+        return new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target.result);
+          reader.readAsDataURL(file);
+        });
+      });
+
+      Promise.all(promises).then(base64Images => {
+        const updatedItinerary = [...itinerary];
+        const existingPhotos = updatedItinerary[dayIndex][field] || [];
+        updatedItinerary[dayIndex] = {
+          ...updatedItinerary[dayIndex],
+          [field]: [...existingPhotos, ...base64Images]
+        };
+        setItinerary(updatedItinerary);
+      });
+    }
+  };
+
+  const removeDayPhoto = (dayIndex, field, photoIndex) => {
+    const updatedItinerary = [...itinerary];
+    updatedItinerary[dayIndex] = {
+      ...updatedItinerary[dayIndex],
+      [field]: updatedItinerary[dayIndex][field].filter((_, i) => i !== photoIndex)
+    };
+    setItinerary(updatedItinerary);
   };
 
   const handleHighlightChange = (dayIndex, highlightIndex, value) => {
@@ -653,19 +782,13 @@ const NewPackage = () => {
                 <label className="block text-sm font-semibold text-gray-800 mb-2">
                   Destination *
                 </label>
-                <select
-                  value={packageInfo.destination}
-                  onChange={(e) => handlePackageInfoChange('destination', e.target.value)}
-                  className={`w-full border rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all ${validationErrors.destination ? 'border-red-500 ring-2 ring-red-500' : 'border-gray-300'}`}
-                  required
-                >
-                  <option value="">Select a destination</option>
-                  {destinations.map((dest) => (
-                    <option key={dest.id} value={dest.name}>
-                      {dest.name}
-                    </option>
-                  ))}
-                </select>
+                  <CustomSelect
+                    value={packageInfo.destination}
+                    onChange={(val) => handlePackageInfoChange('destination', val)}
+                    options={destinations.map(d => ({ value: d.name, label: d.name }))}
+                    placeholder="Select a destination"
+                    error={validationErrors.destination}
+                  />
                 {validationErrors.destination && (
                   <p className="mt-1 text-sm text-red-600">{validationErrors.destination}</p>
                 )}
@@ -676,7 +799,7 @@ const NewPackage = () => {
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h3 className="text-lg font-semibold text-gray-800">Pricing Tiers *</h3>
-                  <p className="text-sm text-gray-500">Set different prices based on the number of {getPricingUnitLabel()}</p>
+                  <p className="text-sm text-gray-500">Set different prices based on the number of {getPricingUnitLabel()} <span className="text-emerald-600 font-medium">(Price should be per person)</span></p>
                 </div>
                 <button
                   type="button"
@@ -846,111 +969,107 @@ const NewPackage = () => {
 
       case 'inclusives':
         return (
-          <div className="space-y-6">
+          <div className="space-y-8">
             <div className="text-center mb-8">
-              <h3 className="text-lg font-semibold text-gray-800">Tick the services to be included</h3>
-              <p className="text-gray-600 mt-1">Select and customize what's included in your package</p>
+              <h3 className="text-lg font-semibold text-gray-800">Inclusions & Exclusions</h3>
+              <p className="text-gray-600 mt-1">Specify what is included and not included in your package</p>
             </div>
 
-            {Object.entries(inclusives).map(([service, data], index) => {
-              const icons = {
-                food: <Utensils size={20} />,
-                transport: <Car size={20} />,
-                accommodation: <Hotel size={20} />,
-                guidance: <Users size={20} />,
-                pickupDropoff: <Navigation size={20} />,
-              };
-
-              const labels = {
-                food: 'Food & Dining',
-                transport: 'Transport',
-                accommodation: 'Accommodation',
-                guidance: 'Guidance',
-                pickupDropoff: 'Pickup & Drop Off',
-              };
-
-              return (
-                <motion.div
-                  key={service}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="bg-white border rounded-xl overflow-hidden"
-                  data-error={`inclusive_${service}`}
-                >
-                  <div className={`p-4 flex items-center justify-between ${data.included ? 'bg-emerald-50 border-emerald-200' : 'border-gray-200'}`}>
-                    <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${data.included ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-100 text-gray-500'}`}>
-                        {icons[service]}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <label className="flex items-center gap-3 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={data.included}
-                              onChange={() => handleInclusiveToggle(service)}
-                              className="w-5 h-5 text-emerald-600 focus:ring-emerald-500 rounded checked:bg-emerald-600 checked:border-emerald-600"
-                            />
-                            <span className="font-semibold text-gray-800">{labels[service]}</span>
-                          </label>
-                        </div>
-                        <p className="text-sm text-gray-500 mt-1">
-                          {data.included ? 'Included in package' : 'Not included'}
-                        </p>
-                      </div>
+            {/* Inclusives Section */}
+            <div className="bg-white p-6 rounded-xl border border-emerald-100 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2 text-emerald-700">
+                  <Check size={20} />
+                  <h3 className="text-lg font-semibold">What's Included</h3>
+                </div>
+              </div>
+              
+              <div className="space-y-3">
+                {inclusivesList.map((item, index) => (
+                  <motion.div
+                    key={item.id}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-center gap-3"
+                  >
+                    <div className="flex-1 relative">
+                      <input
+                        type="text"
+                        value={item.text}
+                        onChange={(e) => handleInclusiveChange(item.id, e.target.value)}
+                        className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                        placeholder="e.g. 3 Nights accommodation in 4-star hotel"
+                      />
                     </div>
-                    <div className={`w-3 h-3 rounded-full ${data.included ? 'bg-emerald-500' : 'bg-gray-300'}`} />
-                  </div>
+                    {inclusivesList.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveInclusive(item.id)}
+                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    )}
+                  </motion.div>
+                ))}
+                
+                <button
+                  type="button"
+                  onClick={handleAddInclusive}
+                  className="flex items-center gap-2 text-sm text-emerald-600 font-medium hover:text-emerald-700 bg-emerald-50 px-4 py-2 rounded-lg transition mt-2 w-fit"
+                >
+                  <Plus size={16} /> Add Inclusion
+                </button>
+              </div>
+            </div>
 
-                  {data.included && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      className="p-6 border-t border-gray-100"
-                    >
-                      <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Section Title *
-                        </label>
-                        <input
-                          type="text"
-                          value={data.title}
-                          onChange={(e) => handleInclusiveTitleChange(service, e.target.value)}
-                          className={`w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none ${validationErrors[`inclusive_${service}`] ? 'border-red-500 ring-2 ring-red-500' : 'border-gray-300'}`}
-                          placeholder={`Eg: Luxury ${labels[service]}`}
-                          required
-                        />
-                        {validationErrors[`inclusive_${service}`] && (
-                          <p className="mt-1 text-sm text-red-600">{validationErrors[`inclusive_${service}`]}</p>
-                        )}
-                      </div>
-
-                      <div className="space-y-3">
-                        <label className="block text-sm font-medium text-gray-700">
-                          Details (max 100 characters each)
-                        </label>
-                        {data.details.map((detail, idx) => (
-                          <div key={idx} className="relative">
-                            <textarea
-                              value={detail}
-                              onChange={(e) => handleInclusiveDetailChange(service, idx, e.target.value)}
-                              className="w-full border border-gray-300 rounded-lg px-4 py-2 pr-16 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none resize-none"
-                              rows="2"
-                              placeholder={`Detail ${idx + 1}`}
-                              maxLength={100}
-                            />
-                            <div className="absolute right-3 bottom-3 text-xs text-gray-500">
-                              {detail.length}/100
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </motion.div>
-                  )}
-                </motion.div>
-              );
-            })}
+            {/* Exclusives Section */}
+            <div className="bg-white p-6 rounded-xl border border-rose-100 shadow-sm mt-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2 text-rose-700">
+                  <X size={20} />
+                  <h3 className="text-lg font-semibold">What's Excluded</h3>
+                </div>
+              </div>
+              
+              <div className="space-y-3">
+                {exclusivesList.map((item, index) => (
+                  <motion.div
+                    key={item.id}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-center gap-3"
+                  >
+                    <div className="flex-1 relative">
+                      <input
+                        type="text"
+                        value={item.text}
+                        onChange={(e) => handleExclusiveChange(item.id, e.target.value)}
+                        className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none"
+                        placeholder="e.g. Personal expenses, flights, etc."
+                      />
+                    </div>
+                    {exclusivesList.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveExclusive(item.id)}
+                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    )}
+                  </motion.div>
+                ))}
+                
+                <button
+                  type="button"
+                  onClick={handleAddExclusive}
+                  className="flex items-center gap-2 text-sm text-rose-600 font-medium hover:text-rose-700 bg-rose-50 px-4 py-2 rounded-lg transition mt-2 w-fit"
+                >
+                  <Plus size={16} /> Add Exclusion
+                </button>
+              </div>
+            </div>
           </div>
         );
 
@@ -1079,19 +1198,13 @@ const NewPackage = () => {
                   <label className="block text-sm font-semibold text-gray-800 mb-2">
                     Agenda Type *
                   </label>
-                  <select
+                  <CustomSelect
                     value={dayData.agenda}
-                    onChange={(e) => handleDayChange(currentDayEditing, 'agenda', e.target.value)}
-                    className={`w-full border rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none ${validationErrors[`day_${currentDayEditing}_agenda`] ? 'border-red-500 ring-2 ring-red-500' : 'border-gray-300'}`}
-                    required
-                  >
-                    <option value="">Select Agenda</option>
-                    {agendaOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(val) => handleDayChange(currentDayEditing, 'agenda', val)}
+                    options={agendaOptions}
+                    placeholder="Select Agenda"
+                    error={validationErrors[`day_${currentDayEditing}_agenda`]}
+                  />
                   {validationErrors[`day_${currentDayEditing}_agenda`] && (
                     <p className="mt-1 text-sm text-red-600">{validationErrors[`day_${currentDayEditing}_agenda`]}</p>
                   )}
@@ -1105,9 +1218,20 @@ const NewPackage = () => {
                   className="bg-emerald-50 border border-emerald-200 rounded-xl p-6"
                   data-error={`day_${currentDayEditing}_travel`}
                 >
-                  <div className="flex items-center gap-3 mb-4">
-                    <Navigation size={20} className="text-emerald-600" />
-                    <h4 className="font-semibold text-emerald-800">Travel Details</h4>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <Navigation size={20} className="text-emerald-600" />
+                      <h4 className="font-semibold text-emerald-800">Travel Details</h4>
+                    </div>
+                    <label className="flex items-center gap-2 cursor-pointer bg-emerald-100 px-3 py-1.5 rounded-lg border border-emerald-200">
+                      <input
+                        type="checkbox"
+                        checked={dayData.isDayTrip}
+                        onChange={(e) => handleDayChange(currentDayEditing, 'isDayTrip', e.target.checked)}
+                        className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 rounded border-emerald-300"
+                      />
+                      <span className="text-sm font-bold text-emerald-800">Day Trip</span>
+                    </label>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -1146,34 +1270,129 @@ const NewPackage = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-semibold text-gray-800 mb-2">
-                    Pick-up Time
+                    {dayData.agenda === 'arrival' ? 'Check-in Time' : 'Pick-up Time'}
                   </label>
                   <div className="relative">
                     <Clock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
                     <input
                       type="text"
-                      value={dayData.pickupTime}
-                      onChange={(e) => handleDayChange(currentDayEditing, 'pickupTime', e.target.value)}
+                      value={dayData.agenda === 'arrival' ? dayData.checkinTime : dayData.pickupTime}
+                      onChange={(e) => handleDayChange(currentDayEditing, dayData.agenda === 'arrival' ? 'checkinTime' : 'pickupTime', e.target.value)}
                       className="w-full border border-gray-300 rounded-xl pl-12 pr-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
-                      placeholder="Eg: 9:00 AM"
+                      placeholder={dayData.agenda === 'arrival' ? 'Eg: 12:00 PM' : 'Eg: 9:00 AM'}
                     />
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-800 mb-2">
-                    Hotel Name
-                  </label>
-                  <div className="relative">
-                    <Hotel className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-800 mb-2">
+                      Hotel Name
+                    </label>
+                    <div className="relative">
+                      <Hotel className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                      <input
+                        type="text"
+                        value={dayData.hotelName}
+                        onChange={(e) => handleDayChange(currentDayEditing, 'hotelName', e.target.value)}
+                        className="w-full border border-gray-300 rounded-xl pl-12 pr-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                        placeholder="Hotel accommodation for the day"
+                      />
+                    </div>
+                  </div>
+                  {dayData.hotelName && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-800 mb-2">
+                          Star Rating
+                        </label>
+                        <div className="relative">
+                          <CustomSelect
+                            value={dayData.hotelStars}
+                            onChange={(val) => handleDayChange(currentDayEditing, 'hotelStars', val)}
+                            options={[
+                              { value: '2', label: '2 Stars' },
+                              { value: '3', label: '3 Stars' },
+                              { value: '4', label: '4 Stars' },
+                              { value: '5', label: '5 Stars' }
+                            ]}
+                            placeholder="Select Stars"
+                            icon={Star}
+                            iconClassName="text-amber-500"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <label className="block text-sm font-semibold text-gray-800 truncate">
+                          Hotel Photos (Optional)
+                        </label>
+                        <div className="flex flex-col gap-3">
+                          <input
+                            type="file"
+                            multiple
+                            accept="image/*"
+                            onChange={(e) => handleDayPhotoUpload(currentDayEditing, 'hotelPhotos', e.target.files)}
+                            className="w-full text-xs text-gray-500 file:mr-2 file:py-2 file:px-3 file:rounded-lg file:border-0 file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"
+                          />
+                          {dayData.hotelPhotos && dayData.hotelPhotos.length > 0 && (
+                            <div className="flex flex-wrap gap-2">
+                              {dayData.hotelPhotos.map((photo, i) => (
+                                <div key={i} className="relative w-16 h-16 rounded-lg overflow-hidden border border-emerald-200 group">
+                                  <img src={photo} className="w-full h-full object-cover" alt="Hotel upload" />
+                                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                                    <button
+                                      type="button"
+                                      onClick={() => removeDayPhoto(currentDayEditing, 'hotelPhotos', i)}
+                                      className="text-white hover:text-red-400 p-1"
+                                    >
+                                      <Trash2 size={14} />
+                                    </button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-800 mb-2">
+                  Destination Photographs (Optional)
+                </label>
+                <div className="border border-gray-300 rounded-xl p-4 flex flex-col gap-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <span className="text-sm text-gray-500">Upload multiple photos displaying the destination for this day</span>
                     <input
-                      type="text"
-                      value={dayData.hotelName}
-                      onChange={(e) => handleDayChange(currentDayEditing, 'hotelName', e.target.value)}
-                      className="w-full border border-gray-300 rounded-xl pl-12 pr-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
-                      placeholder="Hotel accommodation for the day"
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={(e) => handleDayPhotoUpload(currentDayEditing, 'destinationPhotos', e.target.files)}
+                      className="w-full sm:w-auto text-sm file:py-2 file:px-4 file:rounded-lg file:border-0 file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
                     />
                   </div>
+                  
+                  {dayData.destinationPhotos && dayData.destinationPhotos.length > 0 && (
+                    <div className="flex flex-wrap gap-3">
+                      {dayData.destinationPhotos.map((photo, i) => (
+                        <div key={i} className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-lg overflow-hidden border border-emerald-200 group shadow-sm">
+                          <img src={photo} className="w-full h-full object-cover" alt="Destination upload" />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                            <button
+                              type="button"
+                              onClick={() => removeDayPhoto(currentDayEditing, 'destinationPhotos', i)}
+                              className="text-white hover:text-red-400 p-1 bg-black/50 rounded-md"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -1392,82 +1611,80 @@ const NewPackage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* Fixed Header */}
-      <div className="bg-white border-b top-0 z-50 shadow-sm">
-        <div className="px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={handleBack}
-                className="p-2 hover:bg-gray-100 rounded-xl transition"
-              >
-                <ArrowLeft size={24} />
-              </button>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Create New Package</h1>
-                <p className="text-gray-600 mt-1">Design your perfect travel package</p>
-              </div>
+    <div className="w-full space-y-6 pb-20">
+      
+      {/* ── Page Header ───────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleBack}
+            className="w-10 h-10 rounded-xl bg-white border border-gray-100 flex items-center justify-center text-gray-400 hover:text-emerald-600 hover:border-emerald-100 shadow-sm transition-all active:scale-95"
+          >
+            <ArrowLeft size={18} />
+          </button>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-200">
+              <Calendar className="w-5 h-5 text-white" />
             </div>
-            <button
-              type="submit"
-              form="packageForm"
-              disabled={isSubmitting}
-              className="bg-gradient-to-r from-emerald-600 to-emerald-500 text-white px-8 py-3 rounded-xl hover:from-emerald-700 hover:to-emerald-600 transition-all disabled:opacity-50 flex items-center gap-3 shadow-lg shadow-emerald-500/20"
-            >
-              {isSubmitting ? (
-                <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  Creating Package...
-                </>
-              ) : (
-                <>
-                  <Save size={20} />
-                  Save & Publish Package
-                </>
-              )}
-            </button>
+            <div>
+              <h1 className="text-[18px] font-black text-gray-900 tracking-tight leading-none mb-1">Create Trip Package</h1>
+              <p className="text-[12px] text-gray-400 font-medium">Design your perfect travel experience</p>
+            </div>
           </div>
         </div>
+
+        <button
+          type="submit"
+          form="packageForm"
+          disabled={isSubmitting}
+          className="w-full sm:w-auto px-6 py-2.5 bg-emerald-600 text-white rounded-xl text-[13px] font-bold hover:bg-emerald-700 shadow-lg shadow-emerald-200 transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+        >
+          {isSubmitting ? (
+            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          ) : (
+            <Save size={16} />
+          )}
+          <span>Publish Package</span>
+        </button>
       </div>
 
-      <div className="p-6 pt-8">
-        <form id="packageForm" onSubmit={handleSubmit} className="max-w-5xl mx-auto">
+      <div className="w-full">
+        <form id="packageForm" onSubmit={handleSubmit} className="space-y-6">
           {/* Tabs Navigation */}
-          <div className="bg-white rounded-2xl shadow-lg mb-6 overflow-hidden">
-            <div className="flex border-b border-gray-200">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="flex border-b border-gray-100 overflow-x-auto no-scrollbar">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   type="button"
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex-1 py-4 flex items-center justify-center gap-3 font-medium transition-all ${activeTab === tab.id ? 'text-emerald-600 border-b-2 border-emerald-600 bg-emerald-50' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}
+                  className={`flex-1 min-w-[120px] py-4 flex items-center justify-center gap-3 text-[13px] font-bold transition-all ${
+                    activeTab === tab.id 
+                    ? 'text-emerald-600 border-b-2 border-emerald-600 bg-emerald-50/50' 
+                    : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+                  }`}
                 >
-                  {tab.icon}
+                  <div className={activeTab === tab.id ? 'text-emerald-500' : 'text-gray-300'}>
+                    {tab.icon}
+                  </div>
                   {tab.name}
-                  {activeTab === tab.id && (
-                    <motion.div
-                      layoutId="activeTab"
-                      className="absolute bottom-0 left-0 right-0 h-0.5"
-                    />
-                  )}
                 </button>
               ))}
             </div>
 
             {/* Tab Content */}
-            <div className="p-8">
+            <div className="p-5 sm:p-8">
               {renderTabContent()}
             </div>
           </div>
 
           {/* Progress and Action Buttons */}
-          <div className="flex items-center justify-between mt-8">
-            <div className="flex items-center gap-4">
-              <div className="text-sm text-gray-600">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-6 pt-4">
+            <div className="flex items-center gap-4 w-full sm:w-auto">
+              <div className="text-[12px] font-bold text-gray-400 whitespace-nowrap">
                 Step {tabs.findIndex(tab => tab.id === activeTab) + 1} of {tabs.length}
               </div>
-              <div className="w-48 h-2 bg-gray-200 rounded-full overflow-hidden">
+              <div className="flex-1 sm:w-48 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                 <motion.div
                   className="h-full bg-emerald-500"
                   initial={{ width: 0 }}
@@ -1479,7 +1696,7 @@ const NewPackage = () => {
               </div>
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex gap-3 w-full sm:w-auto">
               {tabs.findIndex(tab => tab.id === activeTab) > 0 && (
                 <button
                   type="button"
@@ -1487,35 +1704,33 @@ const NewPackage = () => {
                     const currentIndex = tabs.findIndex(tab => tab.id === activeTab);
                     setActiveTab(tabs[currentIndex - 1].id);
                   }}
-                  className="border border-gray-300 text-gray-700 px-6 py-3 rounded-xl hover:bg-gray-50 transition flex items-center gap-2"
+                  className="flex-1 sm:flex-none border border-gray-200 text-gray-500 px-6 py-2.5 rounded-xl text-[13px] font-bold hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
                 >
-                  <ArrowLeft size={18} />
+                  <ArrowLeft size={16} />
                   Previous
                 </button>
               )}
 
-              {tabs.findIndex(tab => tab.id === activeTab) < tabs.length - 1 && (
+              {tabs.findIndex(tab => tab.id === activeTab) < tabs.length - 1 ? (
                 <button
                   type="button"
                   onClick={() => {
                     const currentIndex = tabs.findIndex(tab => tab.id === activeTab);
                     setActiveTab(tabs[currentIndex + 1].id);
                   }}
-                  className="bg-emerald-600 text-white px-6 py-3 rounded-xl hover:bg-emerald-700 transition flex items-center gap-2"
+                  className="flex-1 sm:flex-none bg-white border border-emerald-100 text-emerald-600 px-6 py-2.5 rounded-xl text-[13px] font-bold hover:bg-emerald-50 transition-all flex items-center justify-center gap-2"
                 >
-                  Next
-                  <ChevronRight size={18} />
+                  Next Step
+                  <ChevronRight size={16} />
                 </button>
-              )}
-
-              {activeTab === 'terms' && (
+              ) : (
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="bg-gradient-to-r from-emerald-600 to-emerald-500 text-white px-8 py-3 rounded-xl hover:from-emerald-700 hover:to-emerald-600 transition-all disabled:opacity-50 flex items-center gap-3 shadow-lg shadow-emerald-500/20"
+                  className="flex-1 sm:flex-none bg-emerald-600 text-white px-8 py-2.5 rounded-xl text-[13px] font-bold hover:bg-emerald-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-emerald-200"
                 >
-                  <Save size={20} />
-                  Save Package
+                  <Save size={16} />
+                  {isSubmitting ? 'Publishing...' : 'Save & Publish'}
                 </button>
               )}
             </div>
@@ -1526,31 +1741,32 @@ const NewPackage = () => {
       {/* Unsaved Changes Alert */}
       <AnimatePresence>
         {showUnsavedAlert && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-            onClick={() => setShowUnsavedAlert(false)}
-          >
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white rounded-2xl p-6 max-w-md w-full"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm"
+              onClick={() => setShowUnsavedAlert(false)}
+            />
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              className="relative bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
-                  <AlertCircle className="text-red-600" size={24} />
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-12 h-12 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center border border-rose-100">
+                  <AlertCircle size={24} />
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-900">Unsaved Changes</h3>
-                  <p className="text-gray-600">You have unsaved changes for this day.</p>
+                  <h3 className="text-[17px] font-black text-gray-900">Unsaved Changes</h3>
+                  <p className="text-[12px] text-gray-400 font-medium">Progress will be lost</p>
                 </div>
               </div>
 
-              <p className="text-gray-700 mb-6">
+              <p className="text-[13px] text-gray-500 leading-relaxed mb-6">
                 If you go back without saving, all details entered for Day {currentDayEditing + 1} will be lost.
               </p>
 
@@ -1560,43 +1776,45 @@ const NewPackage = () => {
                     setShowUnsavedAlert(false);
                     setCurrentDayEditing(null);
                   }}
-                  className="flex-1 border border-gray-300 text-gray-700 py-3 rounded-xl hover:bg-gray-50 transition"
+                  className="flex-1 px-4 py-2.5 bg-gray-50 text-gray-500 text-[13px] font-bold rounded-xl hover:bg-gray-100 transition-all"
                 >
-                  Discard Changes
+                  Discard
                 </button>
                 <button
                   onClick={() => setShowUnsavedAlert(false)}
-                  className="flex-1 bg-emerald-600 text-white py-3 rounded-xl hover:bg-emerald-700 transition"
+                  className="flex-1 px-4 py-2.5 bg-emerald-600 text-white text-[13px] font-bold rounded-xl hover:bg-emerald-700 shadow-lg shadow-emerald-200 transition-all"
                 >
-                  Continue Editing
+                  Continue
                 </button>
               </div>
             </motion.div>
-          </motion.div>
+          </div>
         )}
       </AnimatePresence>
 
       {/* Success Animation Overlay */}
       <AnimatePresence>
         {showSuccess && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100]"
-          >
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm"
+            />
             <motion.div
               initial={{ scale: 0.5, opacity: 0, y: 40 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.8, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-              className="bg-white rounded-3xl shadow-2xl p-10 flex flex-col items-center text-center max-w-sm w-full mx-4"
+              className="relative bg-white rounded-[40px] shadow-2xl p-8 sm:p-10 flex flex-col items-center text-center max-w-sm w-full overflow-hidden border border-gray-100"
             >
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 via-teal-500 to-emerald-600" />
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: [0, 1.3, 1] }}
                 transition={{ delay: 0.2, duration: 0.5 }}
-                className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mb-5"
+                className="w-20 h-20 bg-emerald-50 rounded-[24px] flex items-center justify-center mb-6"
               >
                 <Check size={40} className="text-emerald-600" strokeWidth={3} />
               </motion.div>
@@ -1605,21 +1823,21 @@ const NewPackage = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
               >
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Package Published! 🎉</h2>
-                <p className="text-gray-500 text-sm">Your package is now live and visible to users on the platform.</p>
-                <div className="mt-4 flex gap-1 justify-center">
+                <h2 className="text-[22px] font-black text-gray-900 mb-2">Success! 🎉</h2>
+                <p className="text-[13px] text-gray-400 font-medium leading-relaxed">Your package is now live and visible to users on the platform.</p>
+                <div className="mt-6 flex gap-1.5 justify-center">
                   {[0, 1, 2].map(i => (
                     <motion.div
                       key={i}
-                      className="w-2 h-2 bg-emerald-500 rounded-full"
-                      animate={{ y: [0, -10, 0] }}
+                      className="w-1.5 h-1.5 bg-emerald-500 rounded-full"
+                      animate={{ y: [0, -8, 0], opacity: [0.5, 1, 0.5] }}
                       transition={{ delay: 0.6 + i * 0.15, repeat: Infinity, duration: 0.6 }}
                     />
                   ))}
                 </div>
               </motion.div>
             </motion.div>
-          </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>

@@ -22,7 +22,12 @@ const itineraryDaySchema = new mongoose.Schema({
     pickupTime: { type: String, default: '' },
     hotelName: { type: String, default: '' },
     activities: [{ type: String }],
-    highlights: [{ type: String }]
+    highlights: [{ type: String }],
+    checkinTime: { type: String, default: '' },
+    isDayTrip: { type: Boolean, default: false },
+    hotelStars: { type: String, default: '3' },
+    hotelPhotos: [{ type: String }],
+    destinationPhotos: [{ type: String }]
 });
 
 const packageSchema = new mongoose.Schema({
@@ -49,13 +54,9 @@ const packageSchema = new mongoose.Schema({
 
     pricingTiers: [pricingTierSchema],
 
-    inclusives: {
-        food: inclusiveDetailSchema,
-        transport: inclusiveDetailSchema,
-        accommodation: inclusiveDetailSchema,
-        guidance: inclusiveDetailSchema,
-        pickupDropoff: inclusiveDetailSchema
-    },
+    inclusives: { type: mongoose.Schema.Types.Mixed },
+    inclusivesList: [{ type: String }],
+    exclusivesList: [{ type: String }],
 
     activities: [{
         name: { type: String, required: true },

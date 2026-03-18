@@ -26,6 +26,8 @@ export async function POST(req) {
             packageInfo,
             pricingTiers,
             inclusives,
+            inclusivesList,
+            exclusivesList,
             activities,
             itinerary,
             termsAndConditions
@@ -59,13 +61,9 @@ export async function POST(req) {
                 discount: parseFloat(tier.discount) || 0
             })),
             pickupDropCities: data.pickupDropCities || [],
-            inclusives: {
-                food: inclusives?.food,
-                transport: inclusives?.transport,
-                accommodation: inclusives?.accommodation || inclusives?.camping,
-                guidance: inclusives?.guidance,
-                pickupDropoff: inclusives?.pickupDropoff
-            },
+            inclusives: inclusives || null,
+            inclusivesList: (inclusivesList || []).map(i => typeof i === 'string' ? i : i.text),
+            exclusivesList: (exclusivesList || []).map(e => typeof e === 'string' ? e : e.text),
             activities: (activities || []).map(a => ({
                 name: a.name,
                 details: a.details
@@ -77,7 +75,12 @@ export async function POST(req) {
                 travelFrom: day.travelFrom || '',
                 travelTo: day.travelTo || '',
                 pickupTime: day.pickupTime || '',
+                checkinTime: day.checkinTime || '',
+                isDayTrip: day.isDayTrip || false,
                 hotelName: day.hotelName || '',
+                hotelStars: day.hotelStars || '3',
+                hotelPhotos: day.hotelPhotos || [],
+                destinationPhotos: day.destinationPhotos || [],
                 activities: day.activities || [],
                 highlights: (day.highlights || []).filter(h => h && h.trim())
             })),
