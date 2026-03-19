@@ -129,9 +129,9 @@ const TripSearchInput = forwardRef(({ compactMode = false, onSearch }, ref) => {
         initial="hidden"
         animate="visible"
         variants={containerVariants}
-        className="flex flex-col md:flex-row gap-3"
+        className="flex flex-col md:flex-row gap-2 md:gap-3"
       >
-        <motion.div variants={itemVariants} className="flex-[1.2] bg-[#C3EFE6] rounded-xl p-3 space-y-3 w-full md:w-auto">
+        <motion.div variants={itemVariants} className="flex-[1.2] bg-[#C3EFE6] rounded-xl p-2.5 sm:p-3 space-y-2 sm:space-y-3 w-full md:w-auto">
           <DestinationSelect
             selectedDestination={selectedDestination}
             setSelectedDestination={setSelectedDestination}
@@ -141,10 +141,10 @@ const TripSearchInput = forwardRef(({ compactMode = false, onSearch }, ref) => {
           <CategorySelect selectedCategory={selectedCategory} setSelectedCategory={setSelectedCategory} />
         </motion.div>
 
-        <motion.div variants={itemVariants} className="flex-[2] bg-[#C3EFE6] rounded-xl p-3 flex flex-col justify-between w-full md:w-auto">
+        <motion.div variants={itemVariants} className="flex-[2] bg-[#C3EFE6] rounded-xl p-2.5 sm:p-3 flex flex-col justify-between w-full md:w-auto">
           <CountersSection daysRange={daysRange} setDaysRange={setDaysRange} peopleRange={peopleRange} setPeopleRange={setPeopleRange} selectedCategory={selectedCategory} />
 
-          <div className="flex flex-col sm:flex-row gap-3 sm:items-end mt-3">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 sm:items-end mt-2 sm:mt-3">
             <motion.div variants={itemVariants} className="flex-1 relative z-[60] w-full">
               <label className="block text-sm font-semibold text-gray-800 mb-1">Enter Date</label>
               <DatePicker
@@ -176,11 +176,11 @@ const TripSearchInput = forwardRef(({ compactMode = false, onSearch }, ref) => {
               />
             </motion.div>
 
-            <div className="flex gap-3 flex-wrap sm:flex-nowrap justify-end w-full sm:w-auto">
+            <div className="flex gap-3 flex-wrap sm:flex-nowrap justify-center sm:justify-end w-full sm:w-auto">
               <AnimatePresence mode="wait">
                 {isSearching ? (
-                  <motion.div key="searching" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="w-32 flex justify-center">
-                    <motion.div className="h-9 w-9 rounded-full border-2 border-green-500 border-t-transparent" animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} />
+                  <motion.div key="searching" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="w-full sm:w-32 flex justify-center py-1">
+                    <motion.div className="h-8 w-8 rounded-full border-2 border-green-500 border-t-transparent" animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} />
                   </motion.div>
                 ) : (
                   <motion.button
@@ -224,10 +224,11 @@ const DestinationSelect = ({ selectedDestination, setSelectedDestination, error,
     initial={{ opacity: 0, x: -10 }}
     whileInView={{ opacity: 1, x: 0 }}
     viewport={{ once: true, margin: '-50px' }}
-    transition={{ duration: 0.3, delay: 0.2 }}
+    transition={{ duration: 0.2, delay: 0.05 }}
   >
     <label className="block text-sm font-semibold text-gray-800 mb-1">Select Destination</label>
     <Select
+      instanceId="destination-select"
       options={data.destinations}
       value={selectedDestination}
       onChange={(value) => {
@@ -259,10 +260,11 @@ const CategorySelect = ({ selectedCategory, setSelectedCategory }) => (
     initial={{ opacity: 0, x: -10 }}
     whileInView={{ opacity: 1, x: 0 }}
     viewport={{ once: true, margin: '-50px' }}
-    transition={{ duration: 0.3, delay: 0.3 }}
+    transition={{ duration: 0.2, delay: 0.1 }}
   >
     <label className="block text-sm font-semibold text-gray-800 mb-1">Choose Category</label>
     <Select
+      instanceId="category-select"
       options={data.categories}
       value={data.categories.find((cat) => cat.value === selectedCategory)}
       onChange={(option) => setSelectedCategory(option.value)}
@@ -293,7 +295,7 @@ const CountersSection = ({ daysRange, setDaysRange, peopleRange, setPeopleRange,
   ];
 
   return (
-    <motion.div className="flex gap-4 flex-wrap sm:flex-nowrap w-full" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true, margin: '-50px' }}>
+    <motion.div className="flex gap-2 sm:gap-4 w-full" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true, margin: '-50px' }}>
       {/* Days Range Select Dropdown */}
       <motion.div
         className="flex-1 w-full sm:w-auto"
@@ -304,10 +306,11 @@ const CountersSection = ({ daysRange, setDaysRange, peopleRange, setPeopleRange,
       >
         <label className="block text-sm font-semibold text-gray-800 mb-1">No. of Days</label>
         <Select
+          instanceId="days-range-select"
           options={daysOptions}
           value={daysRange}
           onChange={setDaysRange}
-          placeholder="Select Days Range"
+          placeholder="Select Range"
           classNamePrefix="react-select"
           isClearable
           styles={{
@@ -334,6 +337,7 @@ const CountersSection = ({ daysRange, setDaysRange, peopleRange, setPeopleRange,
           {selectedCategory === 'couple' ? 'No. of Couples' : 'No. of People'}
         </label>
         <Select
+          instanceId="people-range-select"
           options={peopleOptions}
           value={peopleRange}
           onChange={setPeopleRange}

@@ -77,7 +77,7 @@ export default function SecondaryNav() {
       </div>
 
       {/* Mobile: Perfectly evenly spaced grid without dividers */}
-      <div className="md:hidden grid grid-cols-5 gap-0 w-full">
+      <div className="md:hidden grid grid-cols-4 gap-0 w-full mb-2">
         {tabs.map((tab, idx) => {
           const isActive = pathname?.startsWith(tab.path);
           return (

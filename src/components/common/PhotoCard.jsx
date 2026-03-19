@@ -71,19 +71,20 @@ const PhotoCard = ({
                 src={images[currentIndex]}
                 alt={name}
                 fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                 className="object-cover transition-transform duration-500 group-hover:scale-110"
-                priority
+                loading="lazy"
               />
 
               <button
                 onClick={(e) => prevSlide(e)}
-                className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/30 p-2 rounded-full z-30 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="hidden md:flex absolute left-2 top-1/2 -translate-y-1/2 bg-black/30 p-2 rounded-full z-30 opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <ChevronLeft className="text-white" size={20} />
               </button>
               <button
                 onClick={(e) => nextSlide(e)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/30 p-2 rounded-full z-30 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="hidden md:flex absolute right-2 top-1/2 -translate-y-1/2 bg-black/30 p-2 rounded-full z-30 opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <ChevronRight className="text-white" size={20} />
               </button>

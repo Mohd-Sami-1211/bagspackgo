@@ -64,31 +64,25 @@ export default function Navbar() {
       <div className="flex items-center space-x-3 sm:space-x-4 text-white/90 text-[14px] sm:text-[15px] font-semibold relative">
 
         {/* Bookings */}
-        <div className="relative group flex items-center justify-center">
+        <div className="hidden sm:flex relative group items-center justify-center">
           <a
             href="/user/bookings"
             className="peer flex items-center gap-1 px-2 py-1 rounded hover:bg-white/20 hover:text-black transition-colors"
           >
             <CalendarCheck size={18} />
-            <span className="hidden sm:inline">Bookings</span>
+            <span>Bookings</span>
           </a>
-          <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-white text-green-700 text-xs px-2 py-[2px] rounded shadow-md opacity-0 group-hover:opacity-100 peer-focus:opacity-100 transition-all duration-200 sm:hidden">
-            Bookings
-          </span>
         </div>
 
         {/* Help */}
-        <div className="relative group flex items-center justify-center">
+        <div className="hidden sm:flex relative group items-center justify-center">
           <a
             href="/user/help"
             className="peer flex items-center gap-1 px-2 py-1 rounded hover:bg-white/20 hover:text-black transition-colors"
           >
             <Headphones size={18} />
-            <span className="hidden sm:inline">Help</span>
+            <span>Help</span>
           </a>
-          <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-white text-green-700 text-xs px-2 py-[2px] rounded shadow-md opacity-0 group-hover:opacity-100 peer-focus:opacity-100 transition-all duration-200 sm:hidden">
-            Help
-          </span>
         </div>
 
         {/* ─── Auth Section ─── */}
@@ -159,6 +153,15 @@ export default function Navbar() {
                   <p className="text-sm font-semibold text-gray-800 truncate">{user.username}</p>
                   <p className="text-xs text-gray-500 truncate">{user.email || user.phone}</p>
                 </div>
+                {/* Mobile Extra Links */}
+                <div className="sm:hidden border-b border-gray-100">
+                  <a href="/user/bookings" className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                     <CalendarCheck size={16} /> Bookings
+                  </a>
+                  <a href="/user/help" className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                     <Headphones size={16} /> Help
+                  </a>
+                </div>
                 {/* Logout */}
                 <button
                   onClick={() => {
@@ -174,25 +177,69 @@ export default function Navbar() {
             )}
           </div>
         ) : (
-          // ❌ Not logged in — show Sign In / Sign Up toggle
-          <button
-            onClick={() => openAuthModal()}
-            className="relative h-8 w-24 sm:w-28 overflow-hidden bg-white text-green-600 rounded hover:bg-green-100 transition-all duration-700 ease-in-out text-sm font-semibold flex-shrink-0"
-          >
-            <div
-              className="absolute top-0 left-0 w-full transition-transform duration-700"
-              style={{ transform: `translateY(${showSignIn ? '0%' : '-50%'})` }}
+          // ❌ Not logged in — show Sign In / Sign Up toggle (Dropdown on Mobile)
+          <div className="relative" ref={dropdownRef}>
+            {/* Desktop Button - Directly Opens Modal */}
+            <button
+              onClick={() => openAuthModal()}
+              className="hidden sm:block relative h-8 w-28 overflow-hidden bg-white text-green-600 rounded hover:bg-green-100 transition-all duration-700 ease-in-out text-sm font-semibold flex-shrink-0"
             >
-              <div className="flex items-center justify-center gap-1 h-8">
-                <LogIn size={14} />
-                <span>Sign In</span>
+              <div
+                className="absolute top-0 left-0 w-full transition-transform duration-700"
+                style={{ transform: `translateY(${showSignIn ? '0%' : '-50%'})` }}
+              >
+                <div className="flex items-center justify-center gap-1 h-8">
+                  <LogIn size={14} />
+                  <span>Sign In</span>
+                </div>
+                <div className="flex items-center justify-center gap-1 h-8">
+                  <UserPlus size={14} />
+                  <span>Sign Up</span>
+                </div>
               </div>
-              <div className="flex items-center justify-center gap-1 h-8">
-                <UserPlus size={14} />
-                <span>Sign Up</span>
+            </button>
+
+            {/* Mobile Button - Toggles Menu */}
+            <button
+              onClick={() => setShowDropdown(!showDropdown)}
+              className="sm:hidden relative h-8 w-24 overflow-hidden bg-white text-green-600 rounded hover:bg-green-100 transition-all duration-700 ease-in-out text-sm font-semibold flex-shrink-0"
+            >
+              <div
+                className="absolute top-0 left-0 w-full transition-transform duration-700"
+                style={{ transform: `translateY(${showSignIn ? '0%' : '-50%'})` }}
+              >
+                <div className="flex items-center justify-center gap-1 h-8">
+                  <LogIn size={14} />
+                  <span>Sign In</span>
+                </div>
+                <div className="flex items-center justify-center gap-1 h-8">
+                  <UserPlus size={14} />
+                  <span>Sign Up</span>
+                </div>
               </div>
-            </div>
-          </button>
+            </button>
+
+            {/* Mobile Dropdown Options */}
+            {showDropdown && (
+              <div className="absolute right-0 top-full mt-2 bg-white rounded-xl shadow-lg border border-gray-100 py-2 w-48 z-50 overflow-hidden sm:hidden">
+                <button
+                  onClick={() => {
+                    setShowDropdown(false);
+                    openAuthModal();
+                  }}
+                  className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-green-700 hover:bg-green-50 transition-colors font-semibold border-b border-gray-100"
+                >
+                  <LogIn size={16} /> Sign In / Sign Up
+                </button>
+                <a href="/user/bookings" className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                  <CalendarCheck size={16} /> Bookings
+                </a>
+                <a href="/user/help" className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                  <Headphones size={16} /> Help
+                </a>
+              </div>
+            )}
+          </div>
         )}
       </div>
     </nav>
