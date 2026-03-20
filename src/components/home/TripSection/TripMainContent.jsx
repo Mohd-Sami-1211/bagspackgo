@@ -365,11 +365,11 @@ export default function TripMainContent() {
       {/* ── Hero + Search ───────────────────────────────── */}
       <div className="relative w-full">
         <div
-          className="w-full h-[300px] sm:h-[380px] md:h-[440px] bg-center bg-cover bg-no-repeat relative overflow-hidden flex items-center justify-center text-center px-4"
+          className="w-full h-[260px] sm:h-[320px] md:h-[380px] lg:h-[400px] bg-center bg-cover bg-no-repeat relative overflow-hidden flex items-center justify-center text-center px-4"
           style={{ backgroundImage: "url('/images/hero.svg')", backgroundPosition: 'center top' }}
         >
           {/* Animated Hero Text - Creative, Clear, and Responsive */}
-          <div className="z-10 w-full flex justify-center mt-[-40px] sm:mt-[-60px] md:mt-[-100px] lg:mt-[-120px] pointer-events-none px-4 sm:px-12 md:px-24 lg:px-32 xl:px-48">
+          <div className="z-10 w-full flex justify-center mt-[-60px] sm:mt-[-60px] md:mt-[-88px] lg:mt-[-120px] pointer-events-none px-4 sm:px-12 md:px-24 lg:px-32 xl:px-48">
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 30 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -387,7 +387,7 @@ export default function TripMainContent() {
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 z-0" />
         </div>
 
-        <div className="w-full px-3 sm:px-6 lg:px-8 -mt-20 sm:-mt-28 md:-mt-40 relative z-20 pb-4">
+        <div className="w-full px-3 sm:px-6 lg:px-8 -mt-24 sm:-mt-32 md:-mt-44 lg:-mt-40 relative z-20 pb-4">
           <div className="max-w-5xl mx-auto">
             <motion.div initial={{ opacity: 0, y: 25 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: 'easeOut', delay: 0.45 }}>
               <TripSearchInput />

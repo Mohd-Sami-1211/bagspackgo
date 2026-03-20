@@ -167,7 +167,9 @@ const TripSearchInput = forwardRef(({ compactMode = false, onSearch }, ref) => {
                 dateFormat="dd/MM/yyyy"
                 showMonthDropdown
                 showYearDropdown
-                dropdownMode="select"
+                dropdownMode="scroll"
+                scrollableYearDropdown
+                yearDropdownItemNumber={100}
                 placeholderText="DD/MM/YYYY"
                 popperClassName="z-[1000]"
                 popperPlacement="bottom-start"
