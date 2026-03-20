@@ -248,6 +248,9 @@ const DestinationSelect = ({ selectedDestination, setSelectedDestination, error,
       }}
       menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
       menuPosition="fixed"
+      menuPlacement="bottom"
+      minMenuHeight={0}
+      maxMenuHeight={250}
     />
     {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
   </motion.div>
@@ -272,6 +275,11 @@ const CategorySelect = ({ selectedCategory, setSelectedCategory }) => (
       classNamePrefix="react-select"
       isClearable={false}
       styles={selectStyles}
+      menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
+      menuPosition="fixed"
+      menuPlacement="bottom"
+      minMenuHeight={0}
+      maxMenuHeight={250}
     />
   </motion.div>
 );
@@ -322,6 +330,9 @@ const CountersSection = ({ daysRange, setDaysRange, peopleRange, setPeopleRange,
           }}
           menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
           menuPosition="fixed"
+          menuPlacement="bottom"
+          minMenuHeight={0}
+          maxMenuHeight={250}
         />
       </motion.div>
 
@@ -353,6 +364,9 @@ const CountersSection = ({ daysRange, setDaysRange, peopleRange, setPeopleRange,
           }}
           menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
           menuPosition="fixed"
+          menuPlacement="bottom"
+          minMenuHeight={0}
+          maxMenuHeight={250}
         />
       </motion.div>
     </motion.div>
