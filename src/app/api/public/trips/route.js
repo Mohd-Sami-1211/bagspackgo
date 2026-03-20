@@ -14,8 +14,11 @@ export async function GET(req) {
         const peopleRange = searchParams.get('peopleRange') || '';
         const category = searchParams.get('category') || '';
 
-        // Build package query — accept both 'active' and legacy 'published'
-        const pkgQuery = { status: { $in: ['active', 'published'] } };
+        // Build package query - filter strictly for 'trip' category
+        const pkgQuery = { 
+            status: { $in: ['active', 'published'] },
+            category: 'trip' 
+        };
 
         // Filter by destination (case-insensitive)
         if (destination) {

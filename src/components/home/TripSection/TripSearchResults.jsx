@@ -1,12 +1,12 @@
 'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import GuideCard from './TripGuideCard';
 import Select from 'react-select';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { X, Calendar as CalendarIcon, Filter, Search as SearchIcon, ChevronDown } from 'lucide-react';
+import { X, Calendar as CalendarIcon, Filter, Search as SearchIcon, ChevronDown, ArrowLeft } from 'lucide-react';
 import data from 'src/data/data.json';
 
 const SearchResults = () => {
@@ -44,7 +44,6 @@ const SearchResults = () => {
     ? new Date(dateParam)
     : null;
 
-  // Days range options (should match the options in TripSearchInput)
   const daysOptions = [
     { value: '0-3', label: '0-3 days' },
     { value: '3-5', label: '3-5 days' },
@@ -61,49 +60,29 @@ const SearchResults = () => {
     { value: '15+', label: category === 'couple' ? '15+ Couples' : '15+ People' }
   ];
 
-  // Get label for display
   const getDaysRangeLabel = (value) => {
     const option = daysOptions.find(opt => opt.value === value);
     return option ? option.label : 'Any';
   };
 
-  // Function to get packages within selected range
   const getPackagesInRange = (guide, daysRange) => {
-    if (!daysRange || !guide.packages || guide.packages.length === 0) {
-      return []; // Return empty array if no days range or no packages
-    }
-
-    // Parse the days range (e.g., "3-5" -> minDays=3, maxDays=5)
+    if (!daysRange || !guide.packages || guide.packages.length === 0) return [];
     const [minDays, maxDays] = daysRange.split('-').map(Number);
-
-    // Get all packages within this range
-    return guide.packages.filter(pkg => {
-      const packageDays = pkg.days;
-      return packageDays >= minDays && packageDays <= maxDays;
-    });
+    return guide.packages.filter(pkg => pkg.days >= minDays && pkg.days <= maxDays);
   };
 
-  // Editable parameters
   const [editableDestination, setEditableDestination] = useState(destination);
   const [editableCategory, setEditableCategory] = useState(category);
-  const [editableDaysRange, setEditableDaysRange] = useState(
-    daysOptions.find(opt => opt.value === daysRange) || null
-  );
-  const [editablePeopleRange, setEditablePeopleRange] = useState(
-    peopleOptions.find(opt => opt.value === peopleRange) || null
-  );
+  const [editableDaysRange, setEditableDaysRange] = useState(daysOptions.find(opt => opt.value === daysRange) || null);
+  const [editablePeopleRange, setEditablePeopleRange] = useState(peopleOptions.find(opt => opt.value === peopleRange) || null);
   const [editableDate, setEditableDate] = useState(date);
 
-  // Debounced search function
   const handleSearchChange = useCallback((value) => {
     setSearchQuery(value);
     if (searchTimeout) clearTimeout(searchTimeout);
-    setSearchTimeout(setTimeout(() => {
-      // Search logic handled in useEffect
-    }, 300));
+    setSearchTimeout(setTimeout(() => {}, 300));
   }, [searchTimeout]);
 
-  // Fetch and filter guides
   useEffect(() => {
     const fetchGuides = async () => {
       setLoading(true);
@@ -118,15 +97,11 @@ const SearchResults = () => {
         const json = await res.json();
         let results = json.success ? json.data : [];
 
-        // Apply local guide name search query filter
         if (searchQuery) {
           const query = searchQuery.toLowerCase();
-          results = results.filter(guide =>
-            guide.name.toLowerCase().includes(query)
-          );
+          results = results.filter(guide => guide.name.toLowerCase().includes(query));
         }
 
-        // Sort results
         results = sortGuides(results, sortOption);
         setGuides(results);
       } catch (error) {
@@ -135,18 +110,14 @@ const SearchResults = () => {
         setLoading(false);
       }
     };
-
     fetchGuides();
-    return () => {
-      if (searchTimeout) clearTimeout(searchTimeout);
-    };
+    return () => { if (searchTimeout) clearTimeout(searchTimeout); };
   }, [destination, daysRange, peopleRange, category, sortOption, searchQuery]);
 
   const sortGuides = (guides, option) => {
     const [field, order] = option.split('-');
     return [...guides].sort((a, b) => {
       if (field === 'price') {
-        // For price sorting, use the base daily rate
         const aPrice = a.price[category] || a.price.individual;
         const bPrice = b.price[category] || b.price.individual;
         return order === 'desc' ? bPrice - aPrice : aPrice - bPrice;
@@ -157,7 +128,6 @@ const SearchResults = () => {
 
   const handleApplyChanges = () => {
     setIsApplying(true);
-
     const params = {
       destination: editableDestination || destination,
       category: editableCategory || category,
@@ -165,11 +135,8 @@ const SearchResults = () => {
       peopleRange: editablePeopleRange?.value || '',
       ...(editableDate && { date: editableDate.toISOString() })
     };
-
     const queryString = new URLSearchParams(params).toString();
     router.push(`/user/trip/guidelist?${queryString}`);
-
-    // Reset editing state after navigation
     setIsEditing(false);
     setIsApplying(false);
   };
@@ -207,505 +174,221 @@ const SearchResults = () => {
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-green-50 to-blue-50 -mt-20 mb-10">
-      {/* Search Parameters Bar */}
-      <div className="w-full bg-white border-b-2">
-        <div className=" px-4 py-4 mb-4">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold text-gray-800">
-              {isEditing ? 'Modify Your Trip' : `Your Trip to ${destination || 'All Destinations'}`}
-            </h2>
+      {/* Refined Header - Single Line Action Bar */}
+      <div className="w-full bg-white border-b sticky top-12 z-[60] shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 py-3">
+          <div className="flex items-center gap-3">
+            {/* Back Button */}
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={() => router.back()}
+              className="p-2 hover:bg-emerald-50 text-emerald-600 rounded-xl transition-colors shrink-0"
+            >
+              <ArrowLeft size={20} />
+            </motion.button>
 
-            {isEditing ? (
-              <div className="flex gap-3">
-                <motion.button
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleCancel}
-                  className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md text-sm font-medium"
+            {/* Search Bar */}
+            <div className="relative flex-1">
+              <input
+                type="text"
+                placeholder="Find a guide..."
+                value={searchQuery}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                className="bg-gray-50 border border-gray-100 text-gray-800 py-2 sm:py-2.5 px-4 pl-10 rounded-xl w-full focus:outline-none focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all text-sm font-medium"
+                ref={searchInputRef}
+              />
+              <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-400" />
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              {/* Sort Toggle */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowSortDropdown(!showSortDropdown)}
+                  className="p-2 sm:px-4 sm:py-2.5 bg-emerald-50 text-emerald-700 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-emerald-100 transition-colors border border-emerald-100/50 shadow-sm shrink-0"
                 >
-                  Cancel
-                </motion.button>
-                <motion.button
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleApplyChanges}
-                  disabled={isApplying}
-                  className="px-4 py-2 bg-green-500 text-white rounded-md text-sm font-medium flex items-center gap-2"
-                >
-                  {isApplying ? 'Applying...' : 'Apply Changes'}
-                </motion.button>
+                  <Filter size={18} />
+                  <span className="hidden sm:inline">Sort</span>
+                  <ChevronDown size={14} className={`hidden sm:inline transition-transform duration-300 ${showSortDropdown ? 'rotate-180' : ''}`} />
+                </button>
+                
+                <AnimatePresence>
+                  {showSortDropdown && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                      className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-[70] overflow-hidden"
+                    >
+                      {activeFilter && (
+                        <button
+                          onClick={clearFilter}
+                          className="w-full text-left px-5 py-2.5 text-xs sm:text-sm text-red-600 hover:bg-red-50 font-bold border-b border-gray-100 flex items-center justify-between"
+                        >
+                          Clear Sort
+                          <X size={14} />
+                        </button>
+                      )}
+                      {[
+                        { value: 'rating-desc', label: 'Highest Rating' },
+                        { value: 'rating-asc', label: 'Lowest Rating' },
+                        { value: 'price-desc', label: 'Highest Price' },
+                        { value: 'price-asc', label: 'Lowest Price' },
+                        { value: 'reviews-desc', label: 'Most Reviews' },
+                      ].map((opt) => (
+                        <button
+                          key={opt.value}
+                          onClick={() => handleSortChange(opt.value)}
+                          className={`w-full text-left px-5 py-2.5 text-xs sm:text-sm transition-colors ${
+                            activeFilter === opt.value ? 'bg-emerald-500 text-white font-bold' : 'text-gray-600 hover:bg-gray-50'
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
-            ) : (
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={() => setIsEditing(true)}
-                className="px-4 py-2 bg-green-100 hover:bg-green-300 hover:text-gray-900 text-gray-700 rounded-md text-sm font-medium flex items-center gap-2"
-              >
-                Modify Search
-              </motion.button>
-            )}
-          </div>
 
-          {/* Parameter Display/Edit */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4">
-            {/* Destination Field */}
-            <div className="bg-gradient-to-br from-green-50 to-blue-50 p-2.5 sm:p-3 rounded-lg">
-              <label className="block text-[11px] sm:text-xs text-gray-900 mb-0.5 sm:mb-1">Destination</label>
+              {/* Modify Button */}
               {isEditing ? (
-                <div className="relative z-50">
-                  <Select
-                    options={data.destinations}
-                    value={
-                      editableDestination
-                        ? { value: editableDestination, label: editableDestination }
-                        : null
-                    }
-                    onChange={(option) => setEditableDestination(option?.value || '')}
-                    placeholder="Enter place to search"
-                    classNamePrefix="react-select"
-                    isClearable
-                    styles={{
-                      ...inlineSelectStyles,
-                      control: (provided, state) => ({
-                        ...provided,
-                        minHeight: '32px',
-                        height: '32px',
-                        fontSize: '13px',
-                        fontWeight: '500',
-                        borderColor: state.isFocused ? '#10b981' : '#d1d5db',
-                        boxShadow: state.isFocused ? '0 0 0 1px #10b981' : 'none',
-                        '&:hover': {
-                          borderColor: state.isFocused ? '#10b981' : '#d1d5db',
-                        },
-                        width: '100%',
-                        padding: '0 0.25rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                      }),
-                      input: (provided) => ({
-                        ...provided,
-                        margin: 0,
-                        padding: 0,
-                        width: '100%',
-                        color: '#111827',
-                        fontSize: '13px',
-                        fontWeight: '500',
-                      }),
-                      placeholder: (provided) => ({
-                        ...provided,
-                        color: '#6b7280',
-                        fontSize: '13px',
-                        fontWeight: '400',
-                        width: '100%',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                      }),
-                      singleValue: (provided) => ({
-                        ...provided,
-                        color: '#111827',
-                        fontSize: '13px',
-                        fontWeight: '500',
-                        width: '100%',
-                      }),
-                    }}
-                  />
+                <div className="flex gap-2">
+                  <button onClick={handleCancel} className="px-3 sm:px-4 py-2 bg-gray-100 text-gray-600 rounded-xl text-sm font-bold hover:bg-gray-200">Cancel</button>
+                  <button onClick={handleApplyChanges} disabled={isApplying} className="px-3 sm:px-4 py-2 bg-emerald-500 text-white rounded-xl text-sm font-bold shadow-md shadow-emerald-200">
+                    {isApplying ? 'Applying...' : 'Apply'}
+                  </button>
                 </div>
               ) : (
-                <p className="font-medium text-xs sm:text-sm h-[32px] sm:h-[36px] flex items-center text-gray-900">
-                  {destination || 'Any'}
-                </p>
-              )}
-            </div>
-
-            {/* Category Field */}
-            <div className="bg-gradient-to-br from-green-50 to-blue-50 p-2.5 sm:p-3 rounded-lg">
-              <label className="block text-[11px] sm:text-xs text-gray-900 mb-0.5 sm:mb-1">Package Type</label>
-              {isEditing ? (
-                <Select
-                  options={data.categories}
-                  value={data.categories.find((cat) => cat.value === editableCategory)}
-                  onChange={(option) => setEditableCategory(option.value)}
-                  classNamePrefix="react-select"
-                  styles={{
-                    ...inlineSelectStyles,
-                    control: (provided, state) => ({
-                      ...provided,
-                      height: '32px',
-                      minHeight: '32px',
-                      fontSize: '13px',
-                      fontWeight: '500',
-                      borderColor: state.isFocused ? '#10b981' : '#d1d5db',
-                      boxShadow: state.isFocused ? '0 0 0 1px #10b981' : 'none',
-                      '&:hover': {
-                        borderColor: state.isFocused ? '#10b981' : '#d1d5db',
-                      },
-                    }),
-                    singleValue: (provided) => ({
-                      ...provided,
-                      color: '#111827',
-                      fontSize: '13px',
-                      fontWeight: '500',
-                    }),
-                  }}
-                />
-              ) : (
-                <p className="font-medium text-xs sm:text-sm h-[32px] sm:h-[36px] flex items-center text-gray-900 capitalize">
-                  {category}
-                </p>
-              )}
-            </div>
-
-            {/* Date Field */}
-            <div className="bg-gradient-to-br from-green-50 to-blue-50 p-2.5 sm:p-3 rounded-lg">
-              <label className="block text-[11px] sm:text-xs text-gray-900 mb-0.5 sm:mb-1">Travel Date</label>
-              {isEditing ? (
-                <div className="relative h-[32px] sm:h-[36px]">
-                  <DatePicker
-                    selected={editableDate}
-                    onChange={setEditableDate}
-                    placeholderText="Select date"
-                    className="w-full p-1 border border-gray-300 rounded text-xs sm:text-sm bg-white pl-2 pr-7 sm:pr-8 h-[32px] sm:h-[36px] focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500"
-                    popperClassName="z-50"
-                    calendarClassName="border-0 shadow-lg"
-                    showPopperArrow={false}
-                  />
-                  <CalendarIcon className="absolute right-2.5 sm:right-3 top-1/2 transform -translate-y-1/2 h-3.5 sm:h-4 w-3.5 sm:w-4 text-gray-400" />
-                </div>
-              ) : (
-                <p className="font-medium text-xs sm:text-sm h-[32px] sm:h-[36px] flex items-center text-gray-900">
-                  {date
-                    ? date.toLocaleDateString('en-US', {
-                      day: 'numeric',
-                      month: 'short',
-                      year: 'numeric',
-                    })
-                    : 'Not specified'}
-                </p>
-              )}
-            </div>
-
-            {/* Days Range Field */}
-            <div className="bg-gradient-to-br from-green-50 to-blue-50 p-2.5 sm:p-3 rounded-lg">
-              <label className="block text-[11px] sm:text-xs text-gray-900 mb-0.5 sm:mb-1">Duration</label>
-              {isEditing ? (
-                <Select
-                  options={daysOptions}
-                  value={editableDaysRange}
-                  onChange={setEditableDaysRange}
-                  placeholder="Select days range"
-                  classNamePrefix="react-select"
-                  isClearable
-                  styles={{
-                    ...inlineSelectStyles,
-                    control: (provided, state) => ({
-                      ...provided,
-                      height: '32px',
-                      minHeight: '32px',
-                      fontSize: '13px',
-                      fontWeight: '500',
-                      borderColor: state.isFocused ? '#10b981' : '#d1d5db',
-                      boxShadow: state.isFocused ? '0 0 0 1px #10b981' : 'none',
-                      '&:hover': {
-                        borderColor: state.isFocused ? '#10b981' : '#d1d5db',
-                      },
-                    }),
-                    singleValue: (provided) => ({
-                      ...provided,
-                      color: '#111827',
-                      fontSize: '13px',
-                      fontWeight: '500',
-                    }),
-                  }}
-                />
-              ) : (
-                <p className="font-medium text-xs sm:text-sm h-[32px] sm:h-[36px] flex items-center text-gray-900">
-                  {getDaysRangeLabel(daysRange)}
-                </p>
-              )}
-            </div>
-
-            {/* People Range Field */}
-            <div className="bg-gradient-to-br from-green-50 to-blue-50 p-2.5 sm:p-3 rounded-lg">
-              <label className="block text-[11px] sm:text-xs text-gray-900 mb-0.5 sm:mb-1">
-                {category === 'couple' ? 'Couples' : 'People'}
-              </label>
-              {isEditing ? (
-                <Select
-                  options={peopleOptions}
-                  value={editablePeopleRange}
-                  onChange={setEditablePeopleRange}
-                  placeholder="Select range"
-                  classNamePrefix="react-select"
-                  isClearable
-                  styles={{
-                    ...inlineSelectStyles,
-                    control: (provided, state) => ({
-                      ...provided,
-                      height: '32px',
-                      minHeight: '32px',
-                      fontSize: '13px',
-                      fontWeight: '500',
-                      borderColor: state.isFocused ? '#10b981' : '#d1d5db',
-                      boxShadow: state.isFocused ? '0 0 0 1px #10b981' : 'none',
-                      '&:hover': {
-                        borderColor: state.isFocused ? '#10b981' : '#d1d5db',
-                      },
-                    }),
-                    singleValue: (provided) => ({
-                      ...provided,
-                      color: '#111827',
-                      fontSize: '13px',
-                      fontWeight: '500',
-                    }),
-                  }}
-                />
-              ) : (
-                <p className="font-medium text-xs sm:text-sm h-[32px] sm:h-[36px] flex items-center text-gray-900">
-                  {peopleOptions.find(opt => opt.value === peopleRange)?.label || 'Any'}
-                </p>
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="px-3 sm:px-4 py-2 sm:py-2.5 bg-gray-900 text-white rounded-xl text-sm font-bold hover:bg-emerald-600 transition-all flex items-center gap-1.5 shadow-md shadow-gray-200 hover:shadow-emerald-200"
+                >
+                  <CalendarIcon size={16} className="hidden sm:inline" />
+                  <span>Modify</span>
+                </button>
               )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Filters and Results Section */}
-      <div className="w-full mx-auto px-4 py-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-          <h3 className="text-xl font-semibold text-gray-800">
-            {guides.length} {guides.length === 1 ? 'Guide' : 'Guides'} Available
-            {daysRange && (
-              <span className="text-sm font-normal text-gray-600 ml-2">
-                (Showing guides with {getDaysRangeLabel(daysRange)} packages)
-              </span>
-            )}
-          </h3>
-
-          <div className="flex items-center gap-3">
-            {/* Sort By Dropdown */}
-            <div className="relative">
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setShowSortDropdown(!showSortDropdown)}
-                className="px-4 py-2 bg-white/90 text-green-700 border border-gray-300 rounded-md text-sm font-medium flex items-center gap-2 cursor-pointer"
-              >
-                {activeFilter ? (
-                  <div className="flex items-center">
-                    <span>
-                      {activeFilter === 'rating-desc' && 'Highest Rating'}
-                      {activeFilter === 'rating-asc' && 'Lowest Rating'}
-                      {activeFilter === 'price-desc' && 'Highest Price'}
-                      {activeFilter === 'price-asc' && 'Lowest Price'}
-                      {activeFilter === 'reviews-desc' && 'Most Reviews'}
-                    </span>
-                    <div
-                      onClick={clearFilter}
-                      className="text-green-600 hover:text-green-800 ml-1 cursor-pointer"
-                    >
-                      <X size={16} />
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <span>Sort By</span>
-                    <ChevronDown size={16} className={`transition-transform ${showSortDropdown ? 'rotate-180' : ''}`} />
-                  </>
-                )}
-              </motion.div>
-
-              {/* Dropdown Menu */}
-              {showSortDropdown && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="absolute sm:right-0 sm:left-auto left-[0%] -translate-x-1/2 mt-2 w-56 max-w-[90vw] bg-white rounded-md shadow-lg z-50 border border-gray-200"
-                >
-                  <div className="p-2">
-                    <div
-                      className="px-3 py-2 text-sm hover:bg-green-50 rounded cursor-pointer"
-                      onClick={() => handleSortChange('rating-desc')}
-                    >
-                      Highest Rating
-                    </div>
-                    <div
-                      className="px-3 py-2 text-sm hover:bg-green-50 rounded cursor-pointer"
-                      onClick={() => handleSortChange('rating-asc')}
-                    >
-                      Lowest Rating
-                    </div>
-                    <div
-                      className="px-3 py-2 text-sm hover:bg-green-50 rounded cursor-pointer"
-                      onClick={() => handleSortChange('price-desc')}
-                    >
-                      Highest Price
-                    </div>
-                    <div
-                      className="px-3 py-2 text-sm hover:bg-green-50 rounded cursor-pointer"
-                      onClick={() => handleSortChange('price-asc')}
-                    >
-                      Lowest Price
-                    </div>
-                    <div
-                      className="px-3 py-2 text-sm hover:bg-green-50 rounded cursor-pointer"
-                      onClick={() => handleSortChange('reviews-desc')}
-                    >
-                      Most Reviews
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </div>
-
-            {/* Search Bar */}
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search guides..."
-                value={searchQuery}
-                onChange={(e) => handleSearchChange(e.target.value)}
-                className="bg-white border border-gray-300 text-gray-700 py-2 px-4 pl-10 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                ref={searchInputRef}
-              />
-              <SearchIcon className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-              {searchQuery && (
-                <div
-                  onClick={() => {
-                    setSearchQuery('');
-                    searchInputRef.current?.focus();
-                  }}
-                  className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600 cursor-pointer"
-                >
-                  <X size={16} />
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Guides List */}
-        <div className="grid gap-6">
-          {guides.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-gray-500 text-lg mb-2">
-                {daysRange ? `No guides found with ${getDaysRangeLabel(daysRange)} packages` : 'No guides found'}
-              </div>
-              <p className="text-gray-400">
-                Try adjusting your search criteria or select a different duration range
-              </p>
-            </div>
-          ) : (
-            guides.map((guide, index) => {
-              // Get all packages for this guide within the selected range
-              const packagesInRange = getPackagesInRange(guide, daysRange);
-
-              // If no daysRange selected, show all packages (or just the guide)
-              if (!daysRange || packagesInRange.length === 0) {
-                return (
-                  <motion.div
-                    key={guide.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                  >
-                    <GuideCard
-                      guide={guide}
-                      category={category}
-                      daysRange={daysRange}
-                      peopleRange={peopleRange}
-                      date={date}
-                      packagesInRange={packagesInRange}
-                    />
-                  </motion.div>
-                );
-              }
-
-              // If there are packages in range, create a card for EACH package
-              return packagesInRange.map((pkg, pkgIndex) => (
-                <motion.div
-                  key={`${guide.id}-${pkg.id}`}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: (index * 0.05) + (pkgIndex * 0.02) }}
-                >
-                  <GuideCard
-                    guide={guide}
-                    category={category}
-                    daysRange={daysRange}
-                    peopleRange={peopleRange}
-                    date={date}
-                    selectedPackage={pkg} // Pass the specific package
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        {/* Modify Form (Expandable) */}
+        <AnimatePresence>
+          {isEditing && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-visible mb-6"
+            >
+              <div className="bg-white rounded-2xl p-5 shadow-lg border border-emerald-50 mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider ml-1">Destination</label>
+                  <Select
+                    options={data.destinations}
+                    value={editableDestination ? { value: editableDestination, label: editableDestination } : null}
+                    onChange={(opt) => setEditableDestination(opt?.value || '')}
+                    classNamePrefix="react-select"
+                    styles={selectStyles}
                   />
-                </motion.div>
-              ));
-            })
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider ml-1">Type</label>
+                  <Select
+                    options={data.categories}
+                    value={data.categories.find(c => c.value === editableCategory)}
+                    onChange={(opt) => setEditableCategory(opt.value)}
+                    styles={selectStyles}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider ml-1">Date</label>
+                  <div className="relative">
+                    <DatePicker
+                      selected={editableDate}
+                      onChange={setEditableDate}
+                      className="w-full bg-gray-50 border border-gray-100 py-1.5 px-3 rounded-xl text-sm font-medium focus:ring-2 focus:ring-emerald-500/20"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider ml-1">Duration</label>
+                  <Select options={daysOptions} value={editableDaysRange} onChange={setEditableDaysRange} styles={selectStyles} />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider ml-1">Couples/People</label>
+                  <Select options={peopleOptions} value={editablePeopleRange} onChange={setEditablePeopleRange} styles={selectStyles} />
+                </div>
+              </div>
+            </motion.div>
           )}
+        </AnimatePresence>
+
+        {/* Results Body */}
+        <div className="py-6 space-y-6">
+
+
+          <div className="grid gap-6">
+            {guides.length === 0 ? (
+              <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-gray-300">
+                <p className="text-gray-400 font-medium">No results found for your filters.</p>
+              </div>
+            ) : (
+              guides.map((guide, index) => {
+                const packagesInRange = getPackagesInRange(guide, daysRange);
+                if (!daysRange || packagesInRange.length === 0) {
+                  return (
+                    <motion.div key={guide.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.05 }}>
+                      <GuideCard guide={guide} category={category} daysRange={daysRange} peopleRange={peopleRange} date={date} />
+                    </motion.div>
+                  );
+                }
+                return packagesInRange.map((pkg, pIdx) => (
+                  <motion.div key={`${guide.id}-${pkg.id}`} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: (index * 0.05) + (pIdx * 0.02) }}>
+                    <GuideCard guide={guide} category={category} daysRange={daysRange} peopleRange={peopleRange} date={date} selectedPackage={pkg} />
+                  </motion.div>
+                ));
+              })
+            )}
+          </div>
         </div>
       </div>
     </div>
   );
 };
 
-const inlineSelectStyles = {
+const selectStyles = {
   control: (provided, state) => ({
     ...provided,
-    minHeight: '30px',
-    fontSize: '0.875rem',
+    minHeight: '36px',
+    fontSize: '0.85rem',
     borderColor: state.isFocused ? '#10b981' : '#d1d5db',
-    borderRadius: '0.375rem',
-    boxShadow: state.isFocused ? '0 0 0 1px #10b981' : 'none',
-    '&:hover': { borderColor: '#10b981' },
-  }),
-  valueContainer: (provided) => ({
-    ...provided,
-    padding: '0 8px',
-  }),
-  input: (provided) => ({
-    ...provided,
-    margin: 0,
-    padding: 0,
-    color: '#374151',
-  }),
-  indicatorsContainer: (provided) => ({
-    ...provided,
-    padding: '0 4px',
-  }),
-  dropdownIndicator: (provided) => ({
-    ...provided,
-    padding: '4px',
-    color: '#6b7280',
-    '&:hover': {
-      color: '#374151',
-    },
-  }),
-  option: (provided, state) => ({
-    ...provided,
-    fontSize: '0.875rem',
-    padding: '8px 12px',
-    backgroundColor: state.isSelected
-      ? '#d1fae5'
-      : state.isFocused
-        ? '#ecfdf5'
-        : 'white',
-    color: state.isSelected ? '#065f46' : '#374151',
-    '&:active': {
-      backgroundColor: '#d1fae5',
-    },
+    boxShadow: state.isFocused ? '0 0 0 1px #10b981' : null,
+    '&:hover': { borderColor: state.isFocused ? '#10b981' : '#d1d5db' },
+    borderRadius: '8px',
+    backgroundColor: '#F9FAFB',
   }),
   menu: (provided) => ({
     ...provided,
+    zIndex: 9999,
     marginTop: '4px',
-    border: '1px solid #e5e7eb',
     boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
   }),
-  singleValue: (provided) => ({
+  menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+  menuList: (provided) => ({ ...provided, padding: '4px', fontSize: '0.85rem' }),
+  option: (provided, state) => ({
     ...provided,
-    color: '#374151',
-  }),
-  placeholder: (provided) => ({
-    ...provided,
-    color: '#9ca3af',
+    borderRadius: '6px',
+    backgroundColor: state.isSelected ? '#a7f3d0' : state.isFocused ? '#d1fae5' : 'white',
+    color: state.isSelected ? '#065f46' : '#1e293b',
+    margin: '4px 0',
+    padding: '8px 12px',
+    transition: 'all 0.15s ease-out',
+    '&:active': { backgroundColor: '#6ee7b7', color: '#064e3b' },
+    '&:hover:not(:active)': { backgroundColor: '#d1fae5', boxShadow: 'inset 0 0 0 1px #a7f3d0' },
   }),
 };
 
