@@ -5,7 +5,6 @@ import { useState, useEffect, useRef } from 'react';
 import Itenary from 'src/components/home/TripSection/Itenary';
 import ArrDep from 'src/components/home/TripSection/Arr-Dep';
 import PersonalDetails from 'src/components/home/TripSection/PersonalDetails';
-import UserAuthGate from 'src/components/home/TripSection/UserAuthGate';
 import { useAuth } from '@/context/AuthContext';
 
 const GuideDetails = ({ guide }) => {
@@ -96,18 +95,19 @@ const GuideDetails = ({ guide }) => {
   const total = basePrice - discount + platformFee + taxes;
   const nights = numDays + 1;
 
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, openAuthModal } = useAuth();
   const isUserAuthenticated = !authLoading && user?.role === 'user';
-  const [showAuthGate, setShowAuthGate] = useState(false);
 
-  // Show auth gate after 1.5s if not logged in as user
+  // Show auth modal after 4s if not logged in as user
   useEffect(() => {
     if (authLoading) return;
     if (!isUserAuthenticated) {
-      const t = setTimeout(() => setShowAuthGate(true), 1500);
+      const t = setTimeout(() => {
+        openAuthModal({ closable: false, tab: 'user', hideTabs: true });
+      }, 4000);
       return () => clearTimeout(t);
     }
-  }, [authLoading, isUserAuthenticated]);
+  }, [authLoading, isUserAuthenticated, openAuthModal]);
 
   const [activeTab, setActiveTab] = useState('dayByDay');
   const [currentDay, setCurrentDay] = useState(1);
@@ -415,10 +415,7 @@ const GuideDetails = ({ guide }) => {
 
   return (
     <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 -mt-8 sm:-mt-10 md:-mt-12 lg:-mt-14" ref={pageTopRef}>
-      {/* Auth Gate Overlay — shown to non-users after 1.5s */}
-      {showAuthGate && !isUserAuthenticated && (
-        <UserAuthGate onAuthenticated={() => setShowAuthGate(false)} />
-      )}
+      {/* Auth Gate Overlay — replaced by global AuthModal */}
       {/* Guide Card - Made Responsive */}
       <div className="w-full bg-white pb-6 sm:pb-8 md:pb-10">
         <div className="max-w-7xl mx-auto">

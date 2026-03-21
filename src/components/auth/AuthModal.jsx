@@ -30,7 +30,9 @@ function validatePasswordClient(password) {
 }
 
 function AuthModalContent() {
-    const { isAuthModalOpen, closeAuthModal, onLogin } = useAuth();
+    const { isAuthModalOpen, closeAuthModal, onLogin, authModalOptions } = useAuth();
+    const isClosable = authModalOptions?.closable !== false;
+    const hideTabs = authModalOptions?.hideTabs === true;
     
     // Global Tab: 'user' | 'provider'
     const [tab, setTab] = useState('user');
@@ -103,6 +105,10 @@ function AuthModalContent() {
         }
 
         // Default Reset
+        if (authModalOptions?.tab) setTab(authModalOptions.tab);
+        else if (authModalOptions?.hideTabs) setTab('user');
+        else if (tab !== 'user' && tab !== 'provider') setTab('user'); // sanity
+        
         setUserStep('EMAIL');
         setUserEmail('');
         setProviderMode('signin');
@@ -110,7 +116,7 @@ function AuthModalContent() {
         setProviderData({ name: '', email: '', password: '', confirmPassword: '' });
         setResendTimer(0);
 
-    }, [isAuthModalOpen]); // Purposely removed 'tab' to retain context on tab switch
+    }, [isAuthModalOpen, authModalOptions]); // Reset or focus tab based on options on open
 
     // Constantly persist steps
     useEffect(() => {
@@ -421,7 +427,7 @@ function AuthModalContent() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 className="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/60 backdrop-blur-md p-4 sm:p-6"
-                onClick={closeAuthModal}
+                onClick={() => isClosable && closeAuthModal()}
             >
                 <motion.div 
                     initial={{ scale: 0.95, y: 20 }}
@@ -433,36 +439,40 @@ function AuthModalContent() {
                 >
                     {/* Header with Close Button */}
                     <div className="flex items-center justify-end px-6 pt-6 pb-2 relative z-20">
-                        <button 
-                            onClick={closeAuthModal} 
-                            className="p-2 -mr-2 text-gray-400 hover:text-red-500 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0"
-                        >
-                            <X size={20} />
-                        </button>
+                        {isClosable && (
+                            <button 
+                                onClick={closeAuthModal} 
+                                className="p-2 -mr-2 text-gray-400 hover:text-red-500 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0"
+                            >
+                                <X size={20} />
+                            </button>
+                        )}
                     </div>
 
                     {/* Header Tabs */}
-                    <div className="flex w-full mt-1 relative z-10 px-6 pb-2">
-                        <div className="bg-gray-100 rounded-2xl w-full p-1 flex relative">
-                            <motion.div 
-                                className="absolute bg-white shadow border border-gray-200 rounded-xl h-[calc(100%-8px)] top-1 w-[calc(50%-4px)] z-0"
-                                animate={{ left: tab === 'user' ? '4px' : 'calc(50%)' }}
-                                transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                            />
-                            <button 
-                                onClick={() => { setTab('user'); setError(''); }}
-                                className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold z-10 transition-colors ${tab === 'user' ? 'text-emerald-700' : 'text-gray-500 hover:text-gray-700'}`}
-                            >
-                                <User size={16} /> Traveler
-                            </button>
-                            <button 
-                                onClick={() => { setTab('provider'); setError(''); }}
-                                className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold z-10 transition-colors ${tab === 'provider' ? 'text-emerald-700' : 'text-gray-500 hover:text-gray-700'}`}
-                            >
-                                <Shield size={16} /> Partner
-                            </button>
+                    {!hideTabs && (
+                        <div className="flex w-full mt-1 relative z-10 px-6 pb-2">
+                            <div className="bg-gray-100 rounded-2xl w-full p-1 flex relative">
+                                <motion.div 
+                                    className="absolute bg-white shadow border border-gray-200 rounded-xl h-[calc(100%-8px)] top-1 w-[calc(50%-4px)] z-0"
+                                    animate={{ left: tab === 'user' ? '4px' : 'calc(50%)' }}
+                                    transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                                />
+                                <button 
+                                    onClick={() => { setTab('user'); setError(''); }}
+                                    className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold z-10 transition-colors ${tab === 'user' ? 'text-emerald-700' : 'text-gray-500 hover:text-gray-700'}`}
+                                >
+                                    <User size={16} /> Traveler
+                                </button>
+                                <button 
+                                    onClick={() => { setTab('provider'); setError(''); }}
+                                    className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold z-10 transition-colors ${tab === 'provider' ? 'text-emerald-700' : 'text-gray-500 hover:text-gray-700'}`}
+                                >
+                                    <Shield size={16} /> Partner
+                                </button>
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* Content Area */}
                     <div className="px-6 sm:px-8 pt-4 pb-6 sm:pb-8 flex-1 overflow-y-auto w-full hide-scrollbar">

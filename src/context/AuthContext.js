@@ -8,9 +8,13 @@ export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true); // true while checking session
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+    const [authModalOptions, setAuthModalOptions] = useState({ closable: true });
     const router = useRouter();
 
-    const openAuthModal = useCallback(() => setIsAuthModalOpen(true), []);
+    const openAuthModal = useCallback((options = { closable: true }) => {
+        setAuthModalOptions(options);
+        setIsAuthModalOpen(true);
+    }, []);
     const closeAuthModal = useCallback(() => setIsAuthModalOpen(false), []);
 
     // Check if user is authenticated (called on app load)
@@ -67,6 +71,7 @@ export function AuthProvider({ children }) {
                 onLogin,      // Call this after successful login
                 checkAuth,    // Re-check auth (useful after token refresh or status change)
                 isAuthModalOpen,
+                authModalOptions,
                 openAuthModal,
                 closeAuthModal,
             }}
