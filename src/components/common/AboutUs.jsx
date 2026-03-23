@@ -40,22 +40,7 @@ const AboutUs = () => {
   });
 
   useEffect(() => {
-    fetch('/api/aboutus')
-      .then(res => res.json())
-      .then(json => {
-        if (json && json.features) {
-          setData(prev => ({
-            ...prev,
-            // Allow merging features text while keeping icons safe if API doesn't pass component refs
-            features: prev.features.map((f, i) => ({
-                ...f, 
-                title: json.features[i]?.title || f.title, 
-                description: json.features[i]?.description || f.description 
-            }))
-          }));
-        }
-      })
-      .catch(err => console.log('Using fallback about us data'));
+    // API intentionally disabled to prevent 404
   }, []);
 
   const { features } = data;

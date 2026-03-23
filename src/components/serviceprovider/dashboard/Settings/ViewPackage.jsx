@@ -284,7 +284,16 @@ export default function ViewPackage({ pkg }) {
                                         </div>
                                         
                                         {day.agenda && (
-                                            <p className="text-[13px] text-gray-600 leading-relaxed mb-4 whitespace-pre-line">{day.agenda.replace(/ \| /g, '\n')}</p>
+                                            <p className="text-[13px] text-gray-600 leading-relaxed mb-4 whitespace-pre-line">
+                                                {!isTrek && ['arrival', 'exploration', 'travel-day', 'checkout'].includes(day.agenda) 
+                                                    ? {
+                                                        'arrival': 'Arrival & Check-in',
+                                                        'exploration': 'Exploration',
+                                                        'travel-day': 'Travel Day',
+                                                        'checkout': 'Exploration & Checkout'
+                                                      }[day.agenda] 
+                                                    : day.agenda.replace(/ \| /g, '\n')}
+                                            </p>
                                         )}
 
                                         <div className="flex flex-col gap-2">

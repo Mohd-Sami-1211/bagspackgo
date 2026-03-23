@@ -1,10 +1,12 @@
 'use client';
-import { motion } from 'framer-motion';
-import { Star, MapPin, Clock, Award, User } from 'lucide-react';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Star, MapPin, Clock, Award, User, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 const TrekGuideCard = ({ pkg, peopleRange, date }) => {
   const router = useRouter();
+  const [navigating, setNavigating] = useState(false);
 
   // If the component receives a `pkg` instead of a guide
   if (!pkg) return null;
@@ -17,6 +19,8 @@ const TrekGuideCard = ({ pkg, peopleRange, date }) => {
   const duration = pkg.days ? `${pkg.days} Days` : 'N/A';
 
   const handleViewDetails = () => {
+    if (navigating) return;
+    setNavigating(true);
     const params = new URLSearchParams();
     if (peopleRange) params.set('peopleRange', peopleRange);
     if (date) params.set('date', date.toISOString());
@@ -43,8 +47,21 @@ const TrekGuideCard = ({ pkg, peopleRange, date }) => {
           damping: 18
         }
       }}
-      className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 hover:shadow-lg transition-all"
+      className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 hover:shadow-lg transition-all relative"
     >
+      <AnimatePresence>
+        {navigating && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white/90 backdrop-blur-sm"
+          >
+            <div className="w-10 h-10 border-[3px] border-emerald-100 border-t-emerald-600 rounded-full animate-spin" />
+            <p className="mt-4 text-[13px] font-medium text-emerald-700">Loading package details...</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <div className="flex flex-col md:flex-row">
         {/* Left Side */}
         <div className="w-full md:w-4/5 p-6">
@@ -119,9 +136,10 @@ const TrekGuideCard = ({ pkg, peopleRange, date }) => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleViewDetails}
-            className="w-full py-3 bg-white hover:bg-[#d4f7d4] text-green-600 hover:text-green-800 font-medium rounded-lg transition-colors"
+            disabled={navigating}
+            className="w-full py-3 bg-white hover:bg-[#d4f7d4] text-green-600 hover:text-green-800 font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
           >
-            View Details
+            {navigating ? <><Loader2 className="w-5 h-5 animate-spin" /> Loading</> : 'View Details'}
           </motion.button>
         </div>
       </div>

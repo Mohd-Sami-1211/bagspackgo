@@ -36,7 +36,14 @@ function TrekDetailsContent() {
     fetchPackage();
   }, [trekId]);
 
-  if (loading) return <div className="flex justify-center items-center min-h-[50vh]">Loading package details...</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#F2FFFC] w-full flex flex-col items-center justify-center gap-4 pb-20">
+        <div className="w-10 h-10 border-[3px] border-emerald-100 border-t-emerald-600 rounded-full animate-spin" />
+        <p className="text-[13px] font-medium text-gray-400">Loading package details...</p>
+      </div>
+    );
+  }
   if (!pkg) return notFound();
 
   return (
@@ -48,7 +55,12 @@ function TrekDetailsContent() {
 
 export default function TrekDetailsPage() {
   return (
-    <Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]">Loading guide details...</div>}>
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#F2FFFC] w-full flex flex-col items-center justify-center gap-4 pb-20">
+        <div className="w-10 h-10 border-[3px] border-emerald-100 border-t-emerald-600 rounded-full animate-spin" />
+        <p className="text-[13px] font-medium text-gray-400">Loading package details...</p>
+      </div>
+    }>
       <TrekDetailsContent /> {/* Fixed: Was rendering GuideDetails directly */}
     </Suspense>
   );

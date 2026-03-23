@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Star, MapPin, Users, Calendar, Crown, ArrowRight, Loader2, Briefcase, Clock } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -101,6 +101,20 @@ const GuideCard = ({ guide, category, daysRange, peopleRange, date, selectedPack
         isPremium ? 'border-amber-400/30' : 'border-gray-100'
       }`}
     >
+      <AnimatePresence>
+        {navigating && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white/90 backdrop-blur-sm"
+          >
+            <div className="w-10 h-10 border-[3px] border-emerald-100 border-t-emerald-600 rounded-full animate-spin" />
+            <p className="mt-4 text-[13px] font-medium text-emerald-700">Loading package details...</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Premium ribbon (Mobile only) */}
       {isPremium && (
         <div className="flex sm:hidden items-center gap-1.5 px-4 py-1.5 bg-gradient-to-r from-amber-500 to-yellow-400">

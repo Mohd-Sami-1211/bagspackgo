@@ -43,7 +43,8 @@ const destinations = dataJson.destinations.map((d, i) => ({
 const agendaOptions = [
   { value: 'arrival', label: 'Arrival & Check-in' },
   { value: 'travel-day', label: 'Travel Day' },
-  { value: 'checkout', label: 'Checkout' },
+  { value: 'exploration', label: 'Exploration' },
+  { value: 'checkout', label: 'Exploration & Checkout' },
 ];
 
 const CustomSelect = ({ value, onChange, options, placeholder, icon: Icon, iconClassName = 'text-gray-400', disabled = false, error }) => {
@@ -697,6 +698,26 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
       newHighlights[highlightIndex] = value.slice(0, 100); // Word limit
       updatedItinerary[dayIndex].highlights = newHighlights;
       setItinerary(updatedItinerary);
+    }
+  };
+
+  const handleAddHighlight = (dayIndex) => {
+    if (currentDayEditing === dayIndex) {
+      const updatedItinerary = [...itinerary];
+      if (updatedItinerary[dayIndex].highlights.length < 5) { // Max 5 highlights
+         updatedItinerary[dayIndex].highlights.push('');
+         setItinerary(updatedItinerary);
+      }
+    }
+  };
+
+  const handleRemoveHighlight = (dayIndex, highlightIndex) => {
+    if (currentDayEditing === dayIndex) {
+       const updatedItinerary = [...itinerary];
+       if (updatedItinerary[dayIndex].highlights.length > 1) { // Min 1 highlight
+          updatedItinerary[dayIndex].highlights.splice(highlightIndex, 1);
+          setItinerary(updatedItinerary);
+       }
     }
   };
 
@@ -1500,23 +1521,42 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-3">
-                  Day Highlights (max 100 characters each)
+                <label className="block text-sm font-semibold text-gray-800 mb-3 flex items-center justify-between">
+                  <span>Day Highlights <span className="text-gray-400 font-normal ml-1">(max 5 points, 100 chars each)</span></span>
+                  {dayData.highlights.length < 5 && (
+                    <button 
+                       onClick={() => handleAddHighlight(currentDayEditing)}
+                       className="text-xs font-medium text-emerald-600 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1.5 rounded-lg transition-colors flex items-center"
+                    >
+                       <Plus size={14} className="mr-1" /> Add Highlight
+                    </button>
+                  )}
                 </label>
                 <div className="space-y-3">
                   {dayData.highlights.map((highlight, index) => (
-                    <div key={index} className="relative">
-                      <textarea
-                        value={highlight}
-                        onChange={(e) => handleHighlightChange(currentDayEditing, index, e.target.value)}
-                        className="w-full border border-gray-200 rounded-xl px-4 py-3 pr-16 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none resize-none transition-all"
-                        rows="2"
-                        placeholder={`Highlight ${index + 1}`}
-                        maxLength={100}
-                      />
-                      <div className="absolute right-3 bottom-3 text-xs text-gray-500">
-                        {highlight.length}/100
+                    <div key={index} className="relative group flex items-start gap-2">
+                      <div className="relative flex-grow">
+                        <textarea
+                          value={highlight}
+                          onChange={(e) => handleHighlightChange(currentDayEditing, index, e.target.value)}
+                          className="w-full border border-gray-200 rounded-xl px-4 py-3 pr-16 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none resize-none transition-all"
+                          rows="2"
+                          placeholder={`Highlight ${index + 1}`}
+                          maxLength={100}
+                        />
+                        <div className="absolute right-3 bottom-3 text-xs text-gray-500 bg-white/80 px-1 rounded">
+                          {highlight.length}/100
+                        </div>
                       </div>
+                      {dayData.highlights.length > 1 && (
+                        <button
+                          onClick={() => handleRemoveHighlight(currentDayEditing, index)}
+                          className="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors shrink-0 mt-1 opacity-100 sm:opacity-0 group-hover:opacity-100"
+                          title="Remove highlight"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>

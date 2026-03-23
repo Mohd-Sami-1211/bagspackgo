@@ -223,3 +223,14 @@ select:focus {
   color: white !important;
   font-weight: bold !important;
 }
+/* ... existing styles ... */
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+

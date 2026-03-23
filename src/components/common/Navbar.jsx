@@ -1,7 +1,7 @@
 // components/common/Navbar.jsx
 'use client';
 import Image from 'next/image';
-import { CalendarCheck, Headphones, LogIn, UserPlus, LogOut, ChevronDown, LayoutDashboard } from 'lucide-react';
+import { CalendarCheck, Headphones, LogIn, UserPlus, LogOut, ChevronDown, LayoutDashboard, Bookmark, Bell } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 
@@ -56,34 +56,11 @@ export default function Navbar() {
           alt="Logo"
           fill
           className="object-contain"
-          priority
         />
       </a>
 
       {/* Right Side */}
       <div className="flex items-center space-x-3 sm:space-x-4 text-white/90 text-[14px] sm:text-[15px] font-semibold relative">
-
-        {/* Bookings */}
-        <div className="hidden sm:flex relative group items-center justify-center">
-          <a
-            href="/user/bookings"
-            className="peer flex items-center gap-1 px-2 py-1 rounded hover:bg-white/20 hover:text-black transition-colors"
-          >
-            <CalendarCheck size={18} />
-            <span>Bookings</span>
-          </a>
-        </div>
-
-        {/* Help */}
-        <div className="hidden sm:flex relative group items-center justify-center">
-          <a
-            href="/user/help"
-            className="peer flex items-center gap-1 px-2 py-1 rounded hover:bg-white/20 hover:text-black transition-colors"
-          >
-            <Headphones size={18} />
-            <span>Help</span>
-          </a>
-        </div>
 
         {/* ─── Auth Section ─── */}
         {loading ? (
@@ -153,10 +130,16 @@ export default function Navbar() {
                   <p className="text-sm font-semibold text-gray-800 truncate">{user.username}</p>
                   <p className="text-xs text-gray-500 truncate">{user.email || user.phone}</p>
                 </div>
-                {/* Mobile Extra Links */}
-                <div className="sm:hidden border-b border-gray-100">
+                {/* All Screens Extra Links */}
+                <div className="border-b border-gray-100 py-1">
                   <a href="/user/bookings" className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
                      <CalendarCheck size={16} /> Bookings
+                  </a>
+                  <a href="/user/saved" className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                     <Bookmark size={16} /> Saved
+                  </a>
+                  <a href="/user/notifications" className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                     <Bell size={16} /> Notifications
                   </a>
                   <a href="/user/help" className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
                      <Headphones size={16} /> Help
@@ -179,30 +162,10 @@ export default function Navbar() {
         ) : (
           // ❌ Not logged in — show Sign In / Sign Up toggle (Dropdown on Mobile)
           <div className="relative" ref={dropdownRef}>
-            {/* Desktop Button - Directly Opens Modal */}
-            <button
-              onClick={() => openAuthModal()}
-              className="hidden sm:block relative h-8 w-28 overflow-hidden bg-white text-green-600 rounded hover:bg-green-100 transition-all duration-700 ease-in-out text-sm font-semibold flex-shrink-0"
-            >
-              <div
-                className="absolute top-0 left-0 w-full transition-transform duration-700"
-                style={{ transform: `translateY(${showSignIn ? '0%' : '-50%'})` }}
-              >
-                <div className="flex items-center justify-center gap-1 h-8">
-                  <LogIn size={14} />
-                  <span>Sign In</span>
-                </div>
-                <div className="flex items-center justify-center gap-1 h-8">
-                  <UserPlus size={14} />
-                  <span>Sign Up</span>
-                </div>
-              </div>
-            </button>
-
-            {/* Mobile Button - Toggles Menu */}
+            {/* Unified Button - Toggles Menu */}
             <button
               onClick={() => setShowDropdown(!showDropdown)}
-              className="sm:hidden relative h-8 w-24 overflow-hidden bg-white text-green-600 rounded hover:bg-green-100 transition-all duration-700 ease-in-out text-sm font-semibold flex-shrink-0"
+              className="relative h-8 w-24 sm:w-28 overflow-hidden bg-white text-green-600 rounded hover:bg-green-100 transition-all duration-700 ease-in-out text-sm font-semibold flex-shrink-0"
             >
               <div
                 className="absolute top-0 left-0 w-full transition-transform duration-700"
@@ -219,9 +182,9 @@ export default function Navbar() {
               </div>
             </button>
 
-            {/* Mobile Dropdown Options */}
+            {/* Dropdown Options */}
             {showDropdown && (
-              <div className="absolute right-0 top-full mt-2 bg-white rounded-xl shadow-lg border border-gray-100 py-2 w-48 z-50 overflow-hidden sm:hidden">
+              <div className="absolute right-0 top-full mt-2 bg-white rounded-xl shadow-lg border border-gray-100 py-2 w-48 z-50 overflow-hidden">
                 <button
                   onClick={() => {
                     setShowDropdown(false);
@@ -233,6 +196,12 @@ export default function Navbar() {
                 </button>
                 <a href="/user/bookings" className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
                   <CalendarCheck size={16} /> Bookings
+                </a>
+                <a href="/user/saved" className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                  <Bookmark size={16} /> Saved
+                </a>
+                <a href="/user/notifications" className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                  <Bell size={16} /> Notifications
                 </a>
                 <a href="/user/help" className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
                   <Headphones size={16} /> Help

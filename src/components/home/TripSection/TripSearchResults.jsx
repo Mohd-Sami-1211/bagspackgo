@@ -165,17 +165,22 @@ const SearchResults = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#F2FFFC]">
-        <div className="flex justify-center items-center min-h-[60vh]">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
-        </div>
+        <motion.div 
+          key="loader"
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          className="flex flex-col items-center justify-center min-h-[60vh] gap-4"
+        >
+          <div className="w-10 h-10 border-[3px] border-emerald-100 border-t-emerald-600 rounded-full animate-spin" />
+          <p className="text-[13px] font-medium text-gray-400">Finding your perfect guides...</p>
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-green-50 to-blue-50 -mt-20 mb-10">
+    <div className="min-h-screen w-full bg-gradient-to-br from-green-50 to-blue-50 -mt-20">
       {/* Refined Header - Single Line Action Bar */}
-      <div className="w-full bg-white border-b sticky top-12 z-[60] shadow-sm">
+      <div className="w-full bg-white border-b sticky top-12 z-[30] shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex items-center gap-3">
             {/* Back Button */}
@@ -219,7 +224,7 @@ const SearchResults = () => {
                       initial={{ opacity: 0, scale: 0.95, y: 10 }}
                       animate={{ opacity: 1, scale: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                      className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-[70] overflow-hidden"
+                      className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-[40] overflow-hidden"
                     >
                       {activeFilter && (
                         <button
@@ -373,11 +378,11 @@ const selectStyles = {
   }),
   menu: (provided) => ({
     ...provided,
-    zIndex: 9999,
+    zIndex: 50,
     marginTop: '4px',
     boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
   }),
-  menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+  menuPortal: (base) => ({ ...base, zIndex: 50 }),
   menuList: (provided) => ({ ...provided, padding: '4px', fontSize: '0.85rem' }),
   option: (provided, state) => ({
     ...provided,

@@ -290,10 +290,7 @@ const Testimonials = () => {
   const [data, setData] = useState(dummyTestimonials);
 
   useEffect(() => {
-    fetch('/api/community')
-      .then(res => res.json())
-      .then(json => { if(json && json.length > 0) setData(json); })
-      .catch(err => console.log('Using fallback community data'));
+    // API intentionally disabled to prevent 404
   }, []);
 
   return (

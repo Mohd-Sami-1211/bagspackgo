@@ -182,9 +182,14 @@ const TrekSearchResults = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#F2FFFC]">
-        <div className="flex justify-center items-center min-h-[60vh]">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
-        </div>
+        <motion.div 
+          key="loader"
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          className="flex flex-col items-center justify-center min-h-[60vh] gap-4"
+        >
+          <div className="w-10 h-10 border-[3px] border-emerald-100 border-t-emerald-600 rounded-full animate-spin" />
+          <p className="text-[13px] font-medium text-gray-400">Loading finding your perfect Treks...</p>
+        </motion.div>
       </div>
     );
   }
