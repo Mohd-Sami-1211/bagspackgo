@@ -725,7 +725,7 @@ const GuideDetails = ({ guide }) => {
           <div className="flex bg-white rounded-t-xl shadow-sm overflow-hidden border border-gray-200 mb-1.5">
             {[
               { key: "dayByDay", label: "Day by Day" },
-              { key: "arrivalDeparture", label: "Arrival/Departure" },
+              { key: "arrivalDeparture", label: "Pickup/Drop Off" },
               { key: "personalDetails", label: "Personal Details" },
             ].map((tab) => (
               <button

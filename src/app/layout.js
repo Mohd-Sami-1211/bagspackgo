@@ -8,6 +8,7 @@ import Footer from 'src/components/common/Footer';
 import { AuthProvider } from '@/context/AuthContext';
 import { usePathname } from 'next/navigation';
 import AuthModal from '@/components/auth/AuthModal';
+import PendingBookingNotification from 'src/components/common/PendingBookingNotification';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -47,6 +48,7 @@ export default function RootLayout({ children }) {
       >
         <AuthProvider>
           <AuthModal />
+          <PendingBookingNotification />
           {/* Top Navbar (hidden for specific pages) */}
           {!hideNavbar && <Navbar />}
 

@@ -59,17 +59,60 @@ const ArrDep = ({ defaultLocation, onNext, onBack, startDate, duration, pickupDr
 
   const [errors, setErrors] = useState({});
   const [activeSection, setActiveSection] = useState('arrival');
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const dropoffDate = startDate
     ? new Date(new Date(startDate).setDate(startDate.getDate() + duration))
     : new Date();
 
   useEffect(() => {
-    setFormData(prev => ({
-      arrival: { ...prev.arrival, city: null, pickupAddress: null },
-      departure: { ...prev.departure, city: null, dropoffAddress: null },
-    }));
+    // Only reset if not already initialized or default location genuinely changes significantly 
+    if (!isInitialized) {
+       let loadedFromSession = false;
+       try {
+         const saved = sessionStorage.getItem("temp_arr_dep_details");
+         if (saved) {
+           const parsed = JSON.parse(saved);
+           if (parsed) {
+             setFormData(parsed);
+             loadedFromSession = true;
+           }
+         }
+       } catch(e) {}
+
+       if (!loadedFromSession) {
+         setFormData(prev => ({
+           arrival: { ...prev.arrival, city: null, pickupAddress: null },
+           departure: { ...prev.departure, city: null, dropoffAddress: null },
+         }));
+       }
+       setIsInitialized(true);
+    }
   }, [defaultLocation]);
+
+  useEffect(() => {
+    if (!isInitialized) return;
+    
+    const hasData = formData.arrival.city || formData.arrival.pickupAddress || formData.arrival.time ||
+                    formData.departure.city || formData.departure.dropoffAddress || formData.departure.time;
+    
+    if (hasData) {
+      sessionStorage.setItem("temp_arr_dep_details", JSON.stringify(formData));
+      
+      const pendingData = localStorage.getItem('pending_booking');
+      let parsedPending = pendingData ? JSON.parse(pendingData) : { ignored: false };
+      
+      if (!parsedPending.ignored) {
+         parsedPending = {
+            ...parsedPending,
+            ignored: false,
+            url: window.location.pathname + window.location.search,
+            timestamp: Date.now()
+         };
+         localStorage.setItem('pending_booking', JSON.stringify(parsedPending));
+      }
+    }
+  }, [formData, isInitialized]);
 
   const handleChange = (section, field, value) => {
     setFormData(prev => ({ ...prev, [section]: { ...prev[section], [field]: value } }));

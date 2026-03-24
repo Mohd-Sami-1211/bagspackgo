@@ -4,23 +4,91 @@ import {
   User,
   Mail,
   Phone,
-  ChevronDown,
   Plus,
-  Minus,
-  Image,
-  Upload,
   ArrowLeft,
   ArrowRight,
+  Upload,
+  Info,
+  AlertCircle,
+  X,
 } from "lucide-react";
+import Select from "react-select";
+import { useSearchParams } from "next/navigation";
+
+// ── Shared react-select styles matching the site theme ──────
+const selectStyles = {
+  control: (provided, state) => ({
+    ...provided,
+    minHeight: '45px',
+    fontSize: '0.875rem',
+    fontWeight: 500,
+    borderColor: state.isFocused ? '#10b981' : '#e5e7eb',
+    boxShadow: state.isFocused ? '0 0 0 1px #10b981' : null,
+    '&:hover': { borderColor: state.isFocused ? '#10b981' : '#e5e7eb' },
+    borderRadius: '10px',
+    backgroundColor: 'white',
+    cursor: 'pointer',
+  }),
+  menu: (provided) => ({
+    ...provided,
+    zIndex: 9999,
+    marginTop: '4px',
+    borderRadius: '12px',
+    boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1), 0 4px 10px -3px rgba(0,0,0,0.07)',
+    border: '1px solid #f0fdf4',
+    overflow: 'hidden',
+  }),
+  menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+  menuList: (provided) => ({ ...provided, padding: '4px', fontSize: '0.875rem' }),
+  option: (provided, state) => ({
+    ...provided,
+    borderRadius: '8px',
+    backgroundColor: state.isSelected ? '#d1fae5' : state.isFocused ? '#f0fdf4' : 'white',
+    color: state.isSelected ? '#065f46' : '#1e293b',
+    fontWeight: state.isSelected ? 600 : 400,
+    margin: '2px 0',
+    padding: '10px 14px',
+    cursor: 'pointer',
+    transition: 'all 0.15s ease-out',
+    '&:active': { backgroundColor: '#a7f3d0', color: '#064e3b' },
+  }),
+  singleValue: (provided) => ({ ...provided, color: '#1e293b', fontWeight: 500 }),
+  placeholder: (provided) => ({ ...provided, color: '#9ca3af', fontSize: '0.875rem' }),
+  indicatorSeparator: () => ({ display: 'none' }),
+  dropdownIndicator: (provided, state) => ({
+    ...provided,
+    color: state.isFocused ? '#10b981' : '#9ca3af',
+    '&:hover': { color: '#10b981' },
+    padding: '0 8px',
+  }),
+};
 
 const PersonalDetails = ({
   category = "individual",
-  count = 1,
   onNext,
   onSave,
   onBack,
   onSubmit,
 }) => {
+  const searchParams = useSearchParams();
+  const countRaw = searchParams.get("count") || "1";
+  
+  // Parse range from countRaw (e.g. "3-5" or "15+")
+  const parseRange = (val) => {
+    if (val.includes("-")) {
+      const [min, max] = val.split("-").map(v => parseInt(v) || 1);
+      return { min, max: max || min };
+    }
+    if (val.includes("+")) {
+      const min = parseInt(val) || 1;
+      return { min, max: 50 }; // Hard cap of 50 for "15+" to prevent infinite
+    }
+    const fixed = parseInt(val) || 1;
+    return { min: fixed, max: fixed };
+  };
+
+  const { min: minUnits, max: maxUnits } = parseRange(countRaw);
+
   // Contact details state
   const [contactDetails, setContactDetails] = useState({
     email: "",
@@ -29,8 +97,7 @@ const PersonalDetails = ({
 
   // Personal details state
   const [personalDetails, setPersonalDetails] = useState([]);
-  const [children, setChildren] = useState([]);
-  const [childCount, setChildCount] = useState(0);
+  const [limitError, setLimitError] = useState("");
   const [errors, setErrors] = useState({});
 
   // ID proof options
@@ -42,55 +109,102 @@ const PersonalDetails = ({
     { value: "dl", label: "Driving License", maxLength: 15 },
   ];
 
-  // Initialize personal details based on category and count
+  // Initialize personal details based on minUnits or sessionStorage
   useEffect(() => {
-    const initializeDetails = () => {
+    const createNewTraveler = (index) => {
       if (category === "couple") {
-        return Array.from({ length: count }, (_, i) => [
+        return [
           {
             type: "male",
-            coupleId: i,
+            coupleId: index,
             name: "",
             gender: "male",
             age: "",
             nationality: "",
-            idType: "",
+            idType: null,
             idNumber: "",
             idImage: null,
             idImagePreview: "",
           },
           {
             type: "female",
-            coupleId: i,
+            coupleId: index,
             name: "",
             gender: "female",
             age: "",
             nationality: "",
-            idType: "",
+            idType: null,
             idNumber: "",
             idImage: null,
             idImagePreview: "",
           },
-        ]).flat();
+        ];
       } else {
-        return Array.from({ length: count }, (_, i) => ({
+        return {
           type: "individual",
           name: "",
-          gender: "",
+          gender: null,
           age: "",
           nationality: "",
-          idType: "",
+          idType: null,
           idNumber: "",
           idImage: null,
           idImagePreview: "",
-        }));
+        };
       }
     };
 
-    setPersonalDetails(initializeDetails());
-    setChildren([]);
-    setChildCount(0);
-  }, [category, count]);
+    let loadedFromSession = false;
+    try {
+      const saved = sessionStorage.getItem("temp_personal_details");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.category === category && parsed.minUnits === minUnits) {
+          if (parsed.contactDetails) setContactDetails(parsed.contactDetails);
+          if (parsed.personalDetails && parsed.personalDetails.length > 0) {
+             setPersonalDetails(parsed.personalDetails);
+             loadedFromSession = true;
+          }
+        }
+      }
+    } catch(e) {
+      console.error("Failed to parse temporary booking data", e);
+    }
+
+    if (!loadedFromSession) {
+      const initialDetails = Array.from({ length: minUnits }, (_, i) => createNewTraveler(i)).flat();
+      setPersonalDetails(initialDetails);
+    }
+  }, [category, minUnits]);
+
+  // Persist form data temporarily on change
+  useEffect(() => {
+    const hasAnyData = contactDetails.email || contactDetails.mobile || personalDetails.some(p => p.name || p.age || p.nationality || p.idNumber);
+    
+    if (hasAnyData) {
+      // Exclude File objects and large Data URLs to stay within quota restrictions
+      const safePersonalDetails = personalDetails.map(p => {
+         const { idImage, idImagePreview, ...rest } = p;
+         return rest;
+      });
+      sessionStorage.setItem("temp_personal_details", JSON.stringify({
+         category, minUnits, contactDetails, personalDetails: safePersonalDetails
+      }));
+      
+      const pendingData = localStorage.getItem('pending_booking');
+      let parsedPending = pendingData ? JSON.parse(pendingData) : { ignored: false };
+      
+      if (!parsedPending.ignored) {
+         parsedPending = {
+            ...parsedPending,
+            ignored: false,
+            url: window.location.pathname + window.location.search,
+            timestamp: Date.now()
+         };
+         localStorage.setItem('pending_booking', JSON.stringify(parsedPending));
+      }
+    }
+  }, [contactDetails, personalDetails, category, minUnits]);
 
   const handleContactChange = (field, value) => {
     setContactDetails((prev) => ({
@@ -119,72 +233,74 @@ const PersonalDetails = ({
     }
   };
 
-  const handleChildChange = (index, field, value) => {
-    const newChildren = [...children];
-    newChildren[index] = {
-      ...newChildren[index],
-      [field]: value,
-    };
-
-    if (field === "idType") {
-      newChildren[index].idNumber = "";
-    }
-
-    setChildren(newChildren);
-    if (errors[`child_${index}_${field}`]) {
-      setErrors((prev) => ({ ...prev, [`child_${index}_${field}`]: "" }));
-    }
-  };
-
-  const handleIdImageUpload = (type, index, e) => {
+  const handleIdImageUpload = (index, e) => {
     const file = e.target.files[0];
     if (!file) return;
 
+    if (file.size > 2 * 1024 * 1024) {
+      alert("Image size should be less than 2MB");
+      return;
+    }
+
     const reader = new FileReader();
     reader.onloadend = () => {
-      if (type === "personal") {
-        const newDetails = [...personalDetails];
-        newDetails[index].idImage = file;
-        newDetails[index].idImagePreview = reader.result;
-        setPersonalDetails(newDetails);
-      } else {
-        const newChildren = [...children];
-        newChildren[index].idImage = file;
-        newChildren[index].idImagePreview = reader.result;
-        setChildren(newChildren);
-      }
+      const newDetails = [...personalDetails];
+      newDetails[index].idImage = file;
+      newDetails[index].idImagePreview = reader.result;
+      setPersonalDetails(newDetails);
     };
     reader.readAsDataURL(file);
   };
 
-  const addChild = () => {
-    setChildren([
-      ...children,
-      {
-        name: "",
-        gender: "",
-        age: "",
-        idType: "",
-        idNumber: "",
-        idImage: null,
-        idImagePreview: "",
-      },
-    ]);
-    setChildCount(childCount + 1);
+  const addTraveler = () => {
+    // Current units count
+    const currentUnits = category === "couple" ? personalDetails.length / 2 : personalDetails.length;
+    
+    if (currentUnits < maxUnits) {
+      setLimitError("");
+      const newIndex = currentUnits;
+      let newSection;
+      if (category === "couple") {
+        newSection = [
+          { type: "male", coupleId: newIndex, name: "", gender: "male", age: "", nationality: "", idType: null, idNumber: "", idImage: null, idImagePreview: "" },
+          { type: "female", coupleId: newIndex, name: "", gender: "female", age: "", nationality: "", idType: null, idNumber: "", idImage: null, idImagePreview: "" }
+        ];
+      } else {
+        newSection = { type: "individual", name: "", gender: null, age: "", nationality: "", idType: null, idNumber: "", idImage: null, idImagePreview: "" };
+      }
+      
+      setPersonalDetails(prev => Array.isArray(newSection) ? [...prev, ...newSection] : [...prev, newSection]);
+    } else {
+      setLimitError(`You can add up to ${maxUnits} ${category === "couple" ? "couples" : "travellers"}. To add more, please click 'Modify Search' or adjust your selection.`);
+    }
   };
 
-  const removeChild = (index) => {
-    const newChildren = [...children];
-    newChildren.splice(index, 1);
-    setChildren(newChildren);
-    setChildCount(childCount - 1);
+  const removeTravelerSection = (index) => {
+    // For couples, we remove the pair
+    if (category === "couple") {
+      const coupleIndex = personalDetails[index].coupleId;
+      const newDetails = personalDetails.filter(p => p.coupleId !== coupleIndex);
+      // Re-index remaining couples
+      const reindexed = [];
+      let nextCoupleId = 0;
+      for (let i = 0; i < newDetails.length; i += 2) {
+        reindexed.push({ ...newDetails[i], coupleId: nextCoupleId });
+        reindexed.push({ ...newDetails[i+1], coupleId: nextCoupleId });
+        nextCoupleId++;
+      }
+      setPersonalDetails(reindexed);
+    } else {
+      const newDetails = [...personalDetails];
+      newDetails.splice(index, 1);
+      setPersonalDetails(newDetails);
+    }
+    setLimitError("");
   };
 
   const validateForm = () => {
     const newErrors = {};
     let isValid = true;
 
-    // Validate contact details
     if (!contactDetails.email) {
       newErrors.email = "Email is required";
       isValid = false;
@@ -201,85 +317,43 @@ const PersonalDetails = ({
       isValid = false;
     }
 
-    // Validate personal details
     personalDetails.forEach((detail, index) => {
       if (!detail.name) {
         newErrors[`personal_${index}_name`] = "Name is required";
         isValid = false;
       }
-
+      if (!detail.gender && category !== "couple") {
+        newErrors[`personal_${index}_gender`] = "Gender is required";
+        isValid = false;
+      }
       if (!detail.age) {
         newErrors[`personal_${index}_age`] = "Age is required";
         isValid = false;
-      } else if (isNaN(detail.age) || detail.age < 1 || detail.age > 120) {
-        newErrors[`personal_${index}_age`] = "Invalid age";
-        isValid = false;
       }
-
       if (!detail.nationality) {
         newErrors[`personal_${index}_nationality`] = "Nationality is required";
         isValid = false;
       }
-
       if (detail.idType && !detail.idNumber) {
         newErrors[`personal_${index}_idNumber`] = "ID number is required";
         isValid = false;
       } else if (detail.idType && detail.idNumber) {
-        const selectedId = idProofOptions.find(
-          (opt) => opt.value === detail.idType,
-        );
+        const selectedId = idProofOptions.find(opt => opt.value === detail.idType.value);
         if (selectedId && detail.idNumber.length !== selectedId.maxLength) {
-          newErrors[`personal_${index}_idNumber`] =
-            `ID number must be ${selectedId.maxLength} characters`;
-          isValid = false;
-        }
-      }
-    });
-
-    // Validate children details
-    children.forEach((child, index) => {
-      if (!child.name) {
-        newErrors[`child_${index}_name`] = "Name is required";
-        isValid = false;
-      }
-
-      if (!child.age) {
-        newErrors[`child_${index}_age`] = "Age is required";
-        isValid = false;
-      } else if (isNaN(child.age) || child.age < 1 || child.age > 18) {
-        newErrors[`child_${index}_age`] = "Invalid age (1-18)";
-        isValid = false;
-      }
-
-      if (child.idType && !child.idNumber) {
-        newErrors[`child_${index}_idNumber`] = "ID number is required";
-        isValid = false;
-      } else if (child.idType && child.idNumber) {
-        const selectedId = idProofOptions.find(
-          (opt) => opt.value === child.idType,
-        );
-        if (selectedId && child.idNumber.length !== selectedId.maxLength) {
-          newErrors[`child_${index}_idNumber`] =
-            `ID number must be ${selectedId.maxLength} characters`;
+          newErrors[`personal_${index}_idNumber`] = `Must be ${selectedId.maxLength} digits`;
           isValid = false;
         }
       }
     });
 
     setErrors(newErrors);
+    if (!isValid) {
+      const firstError = Object.keys(newErrors)[0];
+      const element = document.getElementById(firstError);
+      if (element) element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
     return isValid;
   };
-
-  // Keep parent (GuideDetails) in sync with changes automatically
-  useEffect(() => {
-    if (onSave) {
-      onSave({
-        contactDetails,
-        personalDetails,
-        children,
-      });
-    }
-  }, [contactDetails, personalDetails, children]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -287,12 +361,12 @@ const PersonalDetails = ({
       const formData = {
         contactDetails,
         personalDetails,
-        children,
+        children: [], // Children section removed
       };
       if (onSubmit) {
         onSubmit(formData);
       } else if (onNext) {
-        onSave(formData);
+        onSave && onSave(formData);
         onNext();
       }
     }
@@ -306,411 +380,246 @@ const PersonalDetails = ({
       }
 
       return coupleGroups.map((couple, coupleIndex) => (
-        <div
-          key={`couple-${coupleIndex}`}
-          className="border border-gray-200 rounded-lg p-5 mb-6 bg-white "
-        >
-          <h5 className="text-md font-medium text-gray-700 mb-4">
-            Couple {coupleIndex + 1}
+        <div key={`couple-${coupleIndex}`} className="relative bg-white border border-gray-100 rounded-2xl p-4 sm:p-6 mb-8 shadow-sm hover:shadow-md transition-shadow">
+          {coupleIndex >= minUnits && (
+            <button
+               type="button"
+               onClick={() => removeTravelerSection(coupleIndex * 2)}
+               className="absolute -top-3 -right-3 w-8 h-8 flex items-center justify-center bg-white border border-red-100 text-red-500 rounded-full shadow-sm hover:bg-red-50 transition-colors z-10"
+            >
+               <X className="w-4 h-4" />
+            </button>
+          )}
+          <h5 className="text-sm font-bold text-emerald-600 uppercase tracking-widest mb-6 flex items-center gap-2">
+            <span className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center text-[10px]">{coupleIndex + 1}</span>
+            Couple Details
           </h5>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {couple.map((person, personIndex) => (
-              <div
-                key={`person-${coupleIndex}-${personIndex}`}
-                className="space-y-4"
-              >
-                <h6 className="text-sm font-medium text-gray-600 flex items-center">
-                  <User className="h-4 w-4 text-green-600 mr-2" />
-                  {person.type === "male" ? "Male" : "Female"} Traveler
-                </h6>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+            {couple.map((person, personIndex) => {
+              const globalIndex = coupleIndex * 2 + personIndex;
+              return (
+                <div key={`person-${globalIndex}`} className="space-y-5">
+                  <h6 className="text-[13px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                    <User className="h-4 w-4 text-emerald-500" />
+                    {person.type === "male" ? "Male" : "Female"} Traveler
+                  </h6>
 
-                {/* Name */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Full Name <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={person.name}
-                    onChange={(e) =>
-                      handlePersonalChange(
-                        coupleIndex * 2 + personIndex,
-                        "name",
-                        e.target.value,
-                      )
-                    }
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-700"
-                    placeholder="Enter full name"
-                  />
-                  {errors[`personal_${coupleIndex * 2 + personIndex}_name`] && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors[`personal_${coupleIndex * 2 + personIndex}_name`]}
-                    </p>
-                  )}
-                </div>
-
-                {/* Age */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Age <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    value={person.age}
-                    onChange={(e) =>
-                      handlePersonalChange(
-                        coupleIndex * 2 + personIndex,
-                        "age",
-                        e.target.value,
-                      )
-                    }
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-700"
-                    placeholder="Enter age"
-                    min="1"
-                    max="120"
-                  />
-                  {errors[`personal_${coupleIndex * 2 + personIndex}_age`] && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors[`personal_${coupleIndex * 2 + personIndex}_age`]}
-                    </p>
-                  )}
-                </div>
-
-                {/* Nationality */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Nationality <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={person.nationality}
-                    onChange={(e) =>
-                      handlePersonalChange(
-                        coupleIndex * 2 + personIndex,
-                        "nationality",
-                        e.target.value,
-                      )
-                    }
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-700"
-                    placeholder="Enter nationality"
-                  />
-                  {errors[
-                    `personal_${coupleIndex * 2 + personIndex}_nationality`
-                  ] && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {
-                        errors[
-                          `personal_${coupleIndex * 2 + personIndex}_nationality`
-                        ]
-                      }
-                    </p>
-                  )}
-                </div>
-
-                {/* ID Proof Type */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Proof of Identification
-                  </label>
-                  <div className="relative">
-                    <select
-                      value={person.idType}
-                      onChange={(e) =>
-                        handlePersonalChange(
-                          coupleIndex * 2 + personIndex,
-                          "idType",
-                          e.target.value,
-                        )
-                      }
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-700 appearance-none pr-10"
-                    >
-                      <option value="">Select ID proof</option>
-                      {idProofOptions.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown className="absolute right-3 top-3.5 h-5 w-5 text-gray-400" />
-                  </div>
-                </div>
-
-                {/* ID Number */}
-                {person.idType && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      ID Number{" "}
-                      {person.idType && <span className="text-red-500">*</span>}
-                    </label>
+                  {/* Name */}
+                  <div id={`personal_${globalIndex}_name`}>
+                    <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Full Name*</label>
                     <input
                       type="text"
-                      value={person.idNumber}
-                      onChange={(e) =>
-                        handlePersonalChange(
-                          coupleIndex * 2 + personIndex,
-                          "idNumber",
-                          e.target.value,
-                        )
-                      }
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-700"
-                      placeholder={`Enter ${person.idType} number`}
-                      maxLength={
-                        idProofOptions.find(
-                          (opt) => opt.value === person.idType,
-                        )?.maxLength
-                      }
+                      value={person.name}
+                      onChange={(e) => handlePersonalChange(globalIndex, "name", e.target.value)}
+                      className="w-full h-[45px] px-4 border border-gray-200 rounded-xl focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 text-sm font-medium text-gray-700 bg-gray-50/50 placeholder:text-gray-300"
+                      placeholder="e.g. John Doe"
                     />
-                    {errors[
-                      `personal_${coupleIndex * 2 + personIndex}_idNumber`
-                    ] && (
-                      <p className="text-red-500 text-sm mt-1">
-                        {
-                          errors[
-                            `personal_${coupleIndex * 2 + personIndex}_idNumber`
-                          ]
-                        }
-                      </p>
-                    )}
+                    {errors[`personal_${globalIndex}_name`] && <p className="text-red-500 text-[10px] mt-1 font-medium">{errors[`personal_${globalIndex}_name`]}</p>}
                   </div>
-                )}
 
-                {/* ID Image Upload */}
-                {person.idType && (
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Upload {person.idType} image
-                    </label>
-                    <div className="flex items-center">
-                      <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
-                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                          <Upload className="w-8 h-8 text-gray-400" />
-                          <p className="mb-2 text-sm text-gray-500">
-                            Click to upload
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            PNG, JPG (MAX. 2MB)
-                          </p>
-                        </div>
-                        <input
-                          type="file"
-                          className="hidden"
-                          accept="image/*"
-                          onChange={(e) =>
-                            handleIdImageUpload(
-                              "personal",
-                              coupleIndex * 2 + personIndex,
-                              e,
-                            )
-                          }
-                        />
-                      </label>
-                      {person.idImagePreview && (
-                        <div className="ml-4 w-24 h-24 border border-gray-200 rounded overflow-hidden">
-                          <img
-                            src={person.idImagePreview}
-                            alt="ID preview"
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      )}
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Age */}
+                    <div id={`personal_${globalIndex}_age`}>
+                      <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Age*</label>
+                      <input
+                        type="number"
+                        value={person.age}
+                        onChange={(e) => handlePersonalChange(globalIndex, "age", e.target.value)}
+                        className="w-full h-[45px] px-4 border border-gray-200 rounded-xl focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 text-sm font-medium text-gray-700 bg-gray-50/50 placeholder:text-gray-300"
+                        placeholder="e.g. 25"
+                      />
+                      {errors[`personal_${globalIndex}_age`] && <p className="text-red-500 text-[10px] mt-1 font-medium">{errors[`personal_${globalIndex}_age`]}</p>}
+                    </div>
+
+                    {/* Nationality */}
+                    <div id={`personal_${globalIndex}_nationality`}>
+                      <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Nationality*</label>
+                      <input
+                        type="text"
+                        value={person.nationality}
+                        onChange={(e) => handlePersonalChange(globalIndex, "nationality", e.target.value)}
+                        className="w-full h-[45px] px-4 border border-gray-200 rounded-xl focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 text-sm font-medium text-gray-700 bg-gray-50/50 placeholder:text-gray-300"
+                        placeholder="e.g. Indian"
+                      />
+                      {errors[`personal_${globalIndex}_nationality`] && <p className="text-red-500 text-[10px] mt-1 font-medium">{errors[`personal_${globalIndex}_nationality`]}</p>}
                     </div>
                   </div>
-                )}
-              </div>
-            ))}
+
+                  {/* ID Proof Type */}
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">ID Proof (Optional)</label>
+                    <Select
+                      options={idProofOptions}
+                      value={person.idType}
+                      onChange={(val) => handlePersonalChange(globalIndex, "idType", val)}
+                      placeholder="Select ID type..."
+                      styles={selectStyles}
+                      isSearchable={false}
+                      menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
+                      menuPosition="fixed"
+                    />
+                  </div>
+
+                  {/* ID Number */}
+                  {person.idType && (
+                    <div id={`personal_${globalIndex}_idNumber`}>
+                      <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">{person.idType.label} Number*</label>
+                      <input
+                        type="text"
+                        value={person.idNumber}
+                        onChange={(e) => handlePersonalChange(globalIndex, "idNumber", e.target.value)}
+                        className="w-full h-[45px] px-4 border border-gray-200 rounded-xl focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 text-sm font-medium text-gray-700 bg-gray-50/50 placeholder:text-gray-300"
+                        placeholder={`e.g. ${Array(person.idType.maxLength).fill('0').join('')}`}
+                        maxLength={person.idType.maxLength}
+                      />
+                      {errors[`personal_${globalIndex}_idNumber`] && <p className="text-red-500 text-[10px] mt-1 font-medium">{errors[`personal_${globalIndex}_idNumber`]}</p>}
+                    </div>
+                  )}
+
+                  {/* Upload */}
+                  {person.idType && (
+                    <div className="pt-2">
+                       <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-2">Upload {person.idType.label}*</label>
+                       <div className="flex items-center gap-4">
+                          <label className="flex-1 flex items-center justify-center gap-3 h-14 border-2 border-dashed border-gray-200 rounded-2xl cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/30 transition-all text-gray-400 hover:text-emerald-600 group">
+                             <Upload className="w-5 h-5 transition-transform group-hover:-translate-y-0.5" />
+                             <span className="text-[12px] font-semibold">Choose File</span>
+                             <input type="file" className="hidden" accept="image/*" onChange={(e) => handleIdImageUpload(globalIndex, e)} />
+                          </label>
+                          {person.idImagePreview && (
+                            <div className="w-14 h-14 rounded-xl overflow-hidden border-2 border-emerald-100 shadow-sm shrink-0">
+                               <img src={person.idImagePreview} className="w-full h-full object-cover" alt="ID preview" />
+                            </div>
+                          )}
+                       </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       ));
     } else {
       return personalDetails.map((detail, index) => (
-        <div
-          key={`individual-${index}`}
-          className="border border-gray-200 rounded-lg p-5 mb-6 bg-white"
-        >
-          <h5 className="text-md font-medium text-gray-700 mb-4 flex items-center">
-            <User className="h-5 w-5 text-green-600 mr-2" />
-            Traveler {index + 1}
+        <div key={`individual-${index}`} className="relative bg-white border border-gray-100 rounded-2xl p-4 sm:p-6 mb-8 shadow-sm hover:shadow-md transition-shadow">
+          {index >= minUnits && (
+            <button
+               type="button"
+               onClick={() => removeTravelerSection(index)}
+               className="absolute -top-3 -right-3 w-8 h-8 flex items-center justify-center bg-white border border-red-100 text-red-500 rounded-full shadow-sm hover:bg-red-50 transition-colors z-10"
+            >
+               <X className="w-4 h-4" />
+            </button>
+          )}
+          <h5 className="text-sm font-bold text-emerald-600 uppercase tracking-widest mb-6 flex items-center gap-2">
+            <span className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center text-[10px]">{index + 1}</span>
+            Traveler Details
           </h5>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Name */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Full Name <span className="text-red-500">*</span>
-              </label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div id={`personal_${index}_name`}>
+              <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Full Name*</label>
               <input
                 type="text"
                 value={detail.name}
-                onChange={(e) =>
-                  handlePersonalChange(index, "name", e.target.value)
-                }
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-700"
-                placeholder="Enter full name"
+                onChange={(e) => handlePersonalChange(index, "name", e.target.value)}
+                className="w-full h-[45px] px-4 border border-gray-200 rounded-xl focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 text-sm font-medium text-gray-700 bg-gray-50/50 placeholder:text-gray-300"
+                placeholder="e.g. John Doe"
               />
-              {errors[`personal_${index}_name`] && (
-                <p className="text-red-500 text-sm mt-1">
-                  {errors[`personal_${index}_name`]}
-                </p>
-              )}
+              {errors[`personal_${index}_name`] && <p className="text-red-500 text-[10px] mt-1 font-medium">{errors[`personal_${index}_name`]}</p>}
             </div>
 
-            {/* Gender */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Gender <span className="text-red-500">*</span>
-              </label>
-              <select
+            <div id={`personal_${index}_gender`}>
+              <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Gender*</label>
+              <Select
+                options={[
+                  { value: 'male', label: 'Male' },
+                  { value: 'female', label: 'Female' },
+                  { value: 'other', label: 'Other' }
+                ]}
                 value={detail.gender}
-                onChange={(e) =>
-                  handlePersonalChange(index, "gender", e.target.value)
-                }
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-700 appearance-none pr-10"
-              >
-                <option value="">Select gender</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="other">Other</option>
-              </select>
-              {errors[`personal_${index}_gender`] && (
-                <p className="text-red-500 text-sm mt-1">
-                  {errors[`personal_${index}_gender`]}
-                </p>
-              )}
-            </div>
-
-            {/* Age */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Age <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="number"
-                value={detail.age}
-                onChange={(e) =>
-                  handlePersonalChange(index, "age", e.target.value)
-                }
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-700"
-                placeholder="Enter age"
-                min="1"
-                max="120"
+                onChange={(val) => handlePersonalChange(index, "gender", val)}
+                placeholder="Select gender..."
+                styles={selectStyles}
+                isSearchable={false}
+                menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
+                menuPosition="fixed"
               />
-              {errors[`personal_${index}_age`] && (
-                <p className="text-red-500 text-sm mt-1">
-                  {errors[`personal_${index}_age`]}
-                </p>
-              )}
+              {errors[`personal_${index}_gender`] && <p className="text-red-500 text-[10px] mt-1 font-medium">{errors[`personal_${index}_gender`]}</p>}
             </div>
 
-            {/* Nationality */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Nationality <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={detail.nationality}
-                onChange={(e) =>
-                  handlePersonalChange(index, "nationality", e.target.value)
-                }
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-700"
-                placeholder="Enter nationality"
-              />
-              {errors[`personal_${index}_nationality`] && (
-                <p className="text-red-500 text-sm mt-1">
-                  {errors[`personal_${index}_nationality`]}
-                </p>
-              )}
-            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div id={`personal_${index}_age`}>
+                <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Age*</label>
+                <input
+                  type="number"
+                  value={detail.age}
+                  onChange={(e) => handlePersonalChange(index, "age", e.target.value)}
+                  className="w-full h-[45px] px-4 border border-gray-200 rounded-xl focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 text-sm font-medium text-gray-700 bg-gray-50/50 placeholder:text-gray-300"
+                  placeholder="e.g. 25"
+                />
+                {errors[`personal_${index}_age`] && <p className="text-red-500 text-[10px] mt-1 font-medium">{errors[`personal_${index}_age`]}</p>}
+              </div>
 
-            {/* ID Proof Type */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Proof of Identification
-              </label>
-              <div className="relative">
-                <select
-                  value={detail.idType}
-                  onChange={(e) =>
-                    handlePersonalChange(index, "idType", e.target.value)
-                  }
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-700 appearance-none pr-10"
-                >
-                  <option value="">Select ID proof</option>
-                  {idProofOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-3 top-3.5 h-5 w-5 text-gray-400" />
+              <div id={`personal_${index}_nationality`}>
+                <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Nationality*</label>
+                <input
+                  type="text"
+                  value={detail.nationality}
+                  onChange={(e) => handlePersonalChange(index, "nationality", e.target.value)}
+                  className="w-full h-[45px] px-4 border border-gray-200 rounded-xl focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 text-sm font-medium text-gray-700 bg-gray-50/50 placeholder:text-gray-300"
+                  placeholder="e.g. Indian"
+                />
+                {errors[`personal_${index}_nationality`] && <p className="text-red-500 text-[10px] mt-1 font-medium">{errors[`personal_${index}_nationality`]}</p>}
               </div>
             </div>
 
-            {/* ID Number */}
+            <div>
+              <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">ID Proof (Optional)</label>
+              <Select
+                options={idProofOptions}
+                value={detail.idType}
+                onChange={(val) => handlePersonalChange(index, "idType", val)}
+                placeholder="Select ID type..."
+                styles={selectStyles}
+                isSearchable={false}
+                menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
+                menuPosition="fixed"
+              />
+            </div>
+
             {detail.idType && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  ID Number{" "}
-                  {detail.idType && <span className="text-red-500">*</span>}
-                </label>
+              <div id={`personal_${index}_idNumber`}>
+                <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">{detail.idType.label} Number*</label>
                 <input
                   type="text"
                   value={detail.idNumber}
-                  onChange={(e) =>
-                    handlePersonalChange(index, "idNumber", e.target.value)
-                  }
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-700"
-                  placeholder={`Enter ${detail.idType} number`}
-                  maxLength={
-                    idProofOptions.find((opt) => opt.value === detail.idType)
-                      ?.maxLength
-                  }
+                  onChange={(e) => handlePersonalChange(index, "idNumber", e.target.value)}
+                  className="w-full h-[45px] px-4 border border-gray-200 rounded-xl focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 text-sm font-medium text-gray-700 bg-gray-50/50 placeholder:text-gray-300"
+                  placeholder={`e.g. ${Array(detail.idType.maxLength).fill('0').join('')}`}
+                  maxLength={detail.idType.maxLength}
                 />
-                {errors[`personal_${index}_idNumber`] && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors[`personal_${index}_idNumber`]}
-                  </p>
-                )}
+                {errors[`personal_${index}_idNumber`] && <p className="text-red-500 text-[10px] mt-1 font-medium">{errors[`personal_${index}_idNumber`]}</p>}
               </div>
             )}
 
-            {/* ID Image Upload */}
             {detail.idType && (
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Upload {detail.idType} image
-                </label>
-                <div className="flex items-center">
-                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
-                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                      <Upload className="w-8 h-8 text-gray-400" />
-                      <p className="mb-2 text-sm text-gray-500">
-                        Click to upload
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        PNG, JPG (MAX. 2MB)
-                      </p>
-                    </div>
-                    <input
-                      type="file"
-                      className="hidden"
-                      accept="image/*"
-                      onChange={(e) =>
-                        handleIdImageUpload("personal", index, e)
-                      }
-                    />
-                  </label>
-                  {detail.idImagePreview && (
-                    <div className="ml-4 w-24 h-24 border border-gray-200 rounded overflow-hidden">
-                      <img
-                        src={detail.idImagePreview}
-                        alt="ID preview"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  )}
-                </div>
+              <div className="pt-2">
+                 <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-2">Upload {detail.idType.label}*</label>
+                 <div className="flex items-center gap-4">
+                    <label className="flex-1 flex items-center justify-center gap-3 h-14 border-2 border-dashed border-gray-200 rounded-2xl cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/30 transition-all text-gray-400 hover:text-emerald-600 group">
+                       <Upload className="w-5 h-5 transition-transform group-hover:-translate-y-0.5" />
+                       <span className="text-[12px] font-semibold">Choose File</span>
+                       <input type="file" className="hidden" accept="image/*" onChange={(e) => handleIdImageUpload(index, e)} />
+                    </label>
+                    {detail.idImagePreview && (
+                      <div className="w-14 h-14 rounded-xl overflow-hidden border-2 border-emerald-100 shadow-sm shrink-0">
+                         <img src={detail.idImagePreview} className="w-full h-full object-cover" alt="ID preview" />
+                      </div>
+                    )}
+                 </div>
               </div>
             )}
           </div>
@@ -720,314 +629,141 @@ const PersonalDetails = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
-      <h3 className="text-2xl font-semibold text-gray-800 mb-6">
-        Personal Details
-      </h3>
-
-      {/* Contact Details Section */}
-      <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-xl shadow-sm border border-gray-200 p-6">
-        <h4 className="text-lg font-semibold text-gray-800 mb-5 flex items-center">
-          <span className="w-7 h-7 flex items-center justify-center bg-white text-green-800 rounded-full mr-3">
-            1
-          </span>
-          Contact Information
-        </h4>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Email */}
-          <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Email Address <span className="text-red-500">*</span>
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Mail className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                type="email"
-                id="email"
-                value={contactDetails.email}
-                onChange={(e) => handleContactChange("email", e.target.value)}
-                className="pl-10 w-full p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-700"
-                placeholder="your@email.com"
-              />
-            </div>
-            {errors.email && (
-              <p className="text-red-500 text-sm mt-1">{errors.email}</p>
-            )}
-          </div>
-
-          {/* Mobile */}
-          <div>
-            <label
-              htmlFor="mobile"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Mobile Number <span className="text-red-500">*</span>
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Phone className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                type="tel"
-                id="mobile"
-                value={contactDetails.mobile}
-                onChange={(e) => handleContactChange("mobile", e.target.value)}
-                className="pl-10 w-full p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-700"
-                placeholder="9876543210"
-                maxLength="10"
-              />
-            </div>
-            {errors.mobile && (
-              <p className="text-red-500 text-sm mt-1">{errors.mobile}</p>
-            )}
-          </div>
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {/* Policy Message */}
+      <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4 flex items-start gap-4 shadow-sm">
+        <div className="p-2 bg-amber-100 rounded-xl">
+          <Info className="h-5 w-5 text-amber-600" />
+        </div>
+        <div>
+          <h4 className="text-sm font-bold text-amber-800 uppercase tracking-wider">Booking Policy</h4>
+          <p className="text-[13px] text-amber-700 mt-0.5 leading-relaxed font-medium">
+             Compulsory to book package for children above 8 years of age.
+          </p>
         </div>
       </div>
 
-      {/* Personal Details Section */}
-      <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-xl shadow-sm border border-gray-200 p-6">
-        <h4 className="text-lg font-semibold text-gray-800 mb-5 flex items-center">
-          <span className="w-7 h-7 flex items-center justify-center bg-white text-green-800 rounded-full mr-3">
-            2
-          </span>
-          {category === "couple"
-            ? `${count} ${count === 1 ? "Couple" : "Couples"}`
-            : "Traveler Details"}
-        </h4>
+      <form onSubmit={handleSubmit} className="space-y-10 pb-12">
+        {/* Step 1: Contact Information */}
+        <section>
+          <div className="flex items-center gap-4 mb-6">
+            <div className="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center text-sm font-bold shadow-lg shadow-emerald-200">1</div>
+            <div>
+              <h3 className="text-lg font-bold text-gray-800">Contact Information</h3>
+              <p className="text-xs text-gray-400 font-medium">Where should we send your booking details?</p>
+            </div>
+          </div>
 
-        {renderPersonalDetails()}
-      </div>
+          <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div id="email">
+                <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-2">
+                   <Mail className="w-3.5 h-3.5 text-emerald-500" />
+                   Email Address*
+                </label>
+                <input
+                  type="email"
+                  value={contactDetails.email}
+                  onChange={(e) => handleContactChange("email", e.target.value)}
+                  className="w-full h-[48px] px-4 border border-gray-200 rounded-xl focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 text-sm font-semibold text-gray-800 bg-gray-50/30 placeholder:text-gray-300"
+                  placeholder="e.g. your@email.com"
+                />
+                {errors.email && <p className="text-red-500 text-[10px] mt-1.5 font-bold flex items-center gap-1"><AlertCircle className="w-3 h-3" /> {errors.email}</p>}
+              </div>
 
-      {/* Children Section */}
-      <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-xl shadow-sm border border-gray-200 p-6">
-        <div className="flex justify-between items-center mb-5">
-          <h4 className="text-lg font-semibold text-gray-800 flex items-center">
-            <span className="w-7 h-7 flex items-center justify-center bg-white text-green-800 rounded-full mr-3">
-              3
-            </span>
-            Children Details (If Any)
-          </h4>
+              <div id="mobile">
+                <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-2">
+                   <Phone className="w-3.5 h-3.5 text-emerald-500" />
+                   Mobile Number*
+                </label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-gray-400 border-r pr-3">+91</span>
+                  <input
+                    type="tel"
+                    value={contactDetails.mobile}
+                    onChange={(e) => handleContactChange("mobile", e.target.value)}
+                    className="w-full h-[48px] pl-16 pr-4 border border-gray-200 rounded-xl focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 text-sm font-semibold text-gray-800 bg-gray-50/30 placeholder:text-gray-300"
+                    placeholder="e.g. 9876543210"
+                    maxLength="10"
+                  />
+                </div>
+                {errors.mobile && <p className="text-red-500 text-[10px] mt-1.5 font-bold flex items-center gap-1"><AlertCircle className="w-3 h-3" /> {errors.mobile}</p>}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Step 2: Traveler Details */}
+        <section>
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
+            <div className="flex items-center gap-4">
+              <div className="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center text-sm font-bold shadow-lg shadow-emerald-200">2</div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-800">
+                  {category === "couple" ? "Couple Travelers" : "Traveler Details"}
+                </h3>
+                <p className="text-xs text-gray-400 font-medium tracking-tight">
+                   Fill in details for {category === "couple" ? "each couple" : "each traveler"}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col items-end gap-2">
+              <button
+                type="button"
+                onClick={addTraveler}
+                className="group w-full sm:w-auto px-5 py-2.5 bg-emerald-50 text-emerald-700 rounded-xl hover:bg-emerald-600 hover:text-white transition-all flex items-center justify-center gap-2 text-xs font-bold ring-1 ring-emerald-100 hover:ring-emerald-600 shadow-sm"
+              >
+                <Plus className="h-4 w-4 transition-transform group-hover:rotate-90" />
+                Add {category === "couple" ? "Couple" : "Traveler"}
+              </button>
+              {limitError && (
+                <div className="bg-red-50 p-3 sm:px-4 sm:py-3 rounded-xl border border-red-200 animate-in fade-in slide-in-from-right-2 shadow-sm flex flex-col gap-2.5 max-w-[280px] sm:max-w-sm mt-2 sm:mt-0 relative right-0">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 shrink-0" />
+                    <p className="text-xs font-semibold text-red-800 leading-relaxed text-left">{limitError}</p>
+                  </div>
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }} 
+                    className="text-[11px] font-bold bg-white text-red-600 py-1.5 px-4 rounded-lg border border-red-200 hover:bg-red-600 hover:text-white transition-all self-start shadow-sm flex items-center gap-1.5"
+                  >
+                    <ArrowLeft className="w-3 h-3" />
+                    Modify Search
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-0">
+            {renderPersonalDetails()}
+          </div>
+        </section>
+
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-8 border-t border-gray-100">
           <button
             type="button"
-            onClick={addChild}
-            className="px-3 py-1.5 bg-white/90 text-green-700 rounded-lg hover:bg-green-100 transition-colors flex items-center text-sm"
+            onClick={onBack}
+            className="w-full sm:w-auto px-8 py-3 rounded-2xl text-gray-500 font-bold text-sm hover:bg-gray-100 hover:text-gray-800 transition-all flex items-center justify-center gap-2 group"
           >
-            <Plus className="h-4 w-4 mr-1" />
-            Add Child
+            <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+            Back
+          </button>
+
+          <button
+            type="submit"
+            className="w-full sm:w-auto px-10 py-3.5 bg-green-600 text-white rounded-2xl font-bold text-base hover:bg-green-700 active:scale-95 transition-all flex items-center justify-center gap-3 shadow-xl shadow-green-200"
+          >
+            Review Journey
+            <ArrowRight className="w-5 h-5" />
           </button>
         </div>
-
-        {children.length > 0 && (
-          <div className="space-y-6">
-            {children.map((child, index) => (
-              <div
-                key={index}
-                className="border border-gray-200 rounded-lg p-5 relative bg-white"
-              >
-                <button
-                  type="button"
-                  onClick={() => removeChild(index)}
-                  className="absolute top-3 right-5 p-1 text-sm text-gray-500 hover:text-white hover:bg-red-500  rounded-xl"
-                >
-                  Remove
-                </button>
-
-                <h5 className="text-md font-medium text-gray-700 mb-4 flex items-center">
-                  <User className="h-5 w-5 text-green-600 mr-2" />
-                  Child {index + 1}
-                </h5>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Name */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Full Name <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={child.name}
-                      onChange={(e) =>
-                        handleChildChange(index, "name", e.target.value)
-                      }
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-700"
-                      placeholder="Enter child's name"
-                    />
-                    {errors[`child_${index}_name`] && (
-                      <p className="text-red-500 text-sm mt-1">
-                        {errors[`child_${index}_name`]}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Gender */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Gender <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      value={child.gender}
-                      onChange={(e) =>
-                        handleChildChange(index, "gender", e.target.value)
-                      }
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-700 appearance-none pr-10"
-                    >
-                      <option value="">Select gender</option>
-                      <option value="male">Male</option>
-                      <option value="female">Female</option>
-                      <option value="other">Other</option>
-                    </select>
-                    {errors[`child_${index}_gender`] && (
-                      <p className="text-red-500 text-sm mt-1">
-                        {errors[`child_${index}_gender`]}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Age */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Age <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="number"
-                      value={child.age}
-                      onChange={(e) =>
-                        handleChildChange(index, "age", e.target.value)
-                      }
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-700"
-                      placeholder="Enter age"
-                      min="1"
-                      max="18"
-                    />
-                    {errors[`child_${index}_age`] && (
-                      <p className="text-red-500 text-sm mt-1">
-                        {errors[`child_${index}_age`]}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* ID Proof Type (Optional for children) */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Proof of Identification (Optional)
-                    </label>
-                    <div className="relative">
-                      <select
-                        value={child.idType}
-                        onChange={(e) =>
-                          handleChildChange(index, "idType", e.target.value)
-                        }
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-700 appearance-none pr-10"
-                      >
-                        <option value="">Select ID proof</option>
-                        {idProofOptions.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-                      <ChevronDown className="absolute right-3 top-3.5 h-5 w-5 text-gray-400" />
-                    </div>
-                  </div>
-
-                  {/* ID Number (if ID type selected) */}
-                  {child.idType && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        ID Number
-                      </label>
-                      <input
-                        type="text"
-                        value={child.idNumber}
-                        onChange={(e) =>
-                          handleChildChange(index, "idNumber", e.target.value)
-                        }
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-700"
-                        placeholder={`Enter ${child.idType} number`}
-                        maxLength={
-                          idProofOptions.find(
-                            (opt) => opt.value === child.idType,
-                          )?.maxLength
-                        }
-                      />
-                      {errors[`child_${index}_idNumber`] && (
-                        <p className="text-red-500 text-sm mt-1">
-                          {errors[`child_${index}_idNumber`]}
-                        </p>
-                      )}
-                    </div>
-                  )}
-
-                  {/* ID Image Upload (if ID type selected) */}
-                  {child.idType && (
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Upload {child.idType} image
-                      </label>
-                      <div className="flex items-center">
-                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
-                          <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                            <Upload className="w-8 h-8 text-gray-400" />
-                            <p className="mb-2 text-sm text-gray-500">
-                              Click to upload
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              PNG, JPG (MAX. 2MB)
-                            </p>
-                          </div>
-                          <input
-                            type="file"
-                            className="hidden"
-                            accept="image/*"
-                            onChange={(e) =>
-                              handleIdImageUpload("child", index, e)
-                            }
-                          />
-                        </label>
-                        {child.idImagePreview && (
-                          <div className="ml-4 w-24 h-24 border border-gray-200 rounded overflow-hidden">
-                            <img
-                              src={child.idImagePreview}
-                              alt="ID preview"
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className="flex justify-between pt-4 mt-8">
-        <button
-          type="button"
-          onClick={onBack}
-          className="px-4 sm:px-5 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors flex items-center text-sm"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back
-        </button>
-
-        <button
-          type="submit"
-          className="px-4 sm:px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center text-sm shadow-sm hover:shadow-md"
-        >
-          Review Journey
-          <ArrowRight className="h-4 w-4 ml-2 transition-transform group-hover:translate-x-1" />
-        </button>
-      </div>
-    </form>
+      </form>
+    </div>
   );
 };
 
