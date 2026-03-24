@@ -58,21 +58,19 @@ export async function POST(request) {
             );
         }
 
-        // Check if already registered
-        const searchQuery =
-            identifierType === "email" ? { email: identifier } : { phone: identifier };
+        if (identifierType === "email") {
+            const existingUser = await User.findOne({ email: identifier });
+            const existingGuide = await Guide.findOne({ email: identifier });
 
-        const existingUser = await User.findOne(searchQuery);
-        const existingGuide = await Guide.findOne(searchQuery);
-
-        if (existingUser || existingGuide) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    message: `This ${identifierType === "email" ? "email" : "mobile number"} is already registered. Please sign in.`,
-                },
-                { status: 409 }
-            );
+            if (existingUser || existingGuide) {
+                return NextResponse.json(
+                    {
+                        success: false,
+                        message: `This email is already registered. Please sign in.`,
+                    },
+                    { status: 409 }
+                );
+            }
         }
 
         // Rate limiting: max 1 OTP per 60 seconds for same identifier

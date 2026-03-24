@@ -9,11 +9,16 @@ import { AuthProvider } from '@/context/AuthContext';
 import { usePathname } from 'next/navigation';
 import AuthModal from '@/components/auth/AuthModal';
 import PendingBookingNotification from 'src/components/common/PendingBookingNotification';
+import { useEffect } from 'react';
 
 const inter = Inter({ subsets: ['latin'] });
 
 export default function RootLayout({ children }) {
   const pathname = usePathname();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, [pathname]);
 
   const hideSecondaryNav =
     pathname === '/user/trip/guidelist' ||
@@ -54,7 +59,7 @@ export default function RootLayout({ children }) {
 
           {/* SecondaryNav — normal on large screens, bottom-fixed on small */}
           {!hideSecondaryNav && (
-            <div className="hidden md:block w-full">
+            <div className="secondary-nav-wrapper hidden md:block w-full">
               <SecondaryNav />
             </div>
           )}
@@ -67,7 +72,7 @@ export default function RootLayout({ children }) {
 
           {/* Mobile bottom navigation */}
           {!hideSecondaryNav && (
-            <div className="block md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 border-t border-gray-200 shadow-lg w-full">
+            <div className="secondary-nav-wrapper block md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 border-t border-gray-200 shadow-lg w-full">
               <SecondaryNav />
             </div>
           )}

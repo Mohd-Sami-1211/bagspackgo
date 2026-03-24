@@ -115,7 +115,6 @@ export async function POST(request) {
         // ──────────────── Check Duplicates ────────────────
 
         const searchQueries = [];
-        if (finalPhone) searchQueries.push({ phone: finalPhone });
         if (finalEmail) searchQueries.push({ email: finalEmail });
 
         if (searchQueries.length > 0) {

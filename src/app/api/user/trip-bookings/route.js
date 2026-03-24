@@ -19,22 +19,57 @@ export async function GET(req) {
             .sort({ createdAt: -1 })
             .lean();
 
-        const formatted = bookings.map(b => ({
-            id: b._id.toString(),
-            bookingRef: b.bookingRef,
-            type: 'trip',
-            packageName: b.package?.name || b.packageSnapshot?.name || 'Trip Package',
-            destination: b.package?.destination || b.packageSnapshot?.destination || '',
-            guideName: b.provider?.username || 'Guide',
-            startDate: b.startDate,
-            endDate: b.endDate,
-            numPeople: b.numPeople,
-            category: b.category,
-            totalAmount: b.totalAmount,
-            status: b.status,
-            days: b.package?.days || b.packageSnapshot?.days || 0,
-            createdAt: b.createdAt,
-        }));
+        // Let's also fetch GuideDetails to get company names if available
+        const providerIds = [...new Set(bookings.map(b => b.provider?._id).filter(id => id))];
+        const { GuideDetails } = await import('@/models/guidedetails.model');
+        const guideDetailsList = await GuideDetails.find({ guide: { $in: providerIds } })
+            .select('guide companyname companymobile companyemail instagram facebook website twitter')
+            .lean();
+        
+        const companyMap = {};
+        guideDetailsList.forEach(gd => {
+            companyMap[gd.guide.toString()] = {
+                companyName: gd.companyname,
+                phone: gd.companymobile,
+                email: gd.companyemail,
+                instagram: gd.instagram,
+                facebook: gd.facebook,
+                website: gd.website,
+                twitter: gd.twitter
+            };
+        });
+
+        const formatted = bookings.map(b => {
+            const gd = companyMap[b.provider?._id?.toString()] || {};
+            return {
+                id: b._id.toString(),
+                bookingRef: b.bookingRef,
+                type: 'trip',
+                packageName: b.package?.name || b.packageSnapshot?.name || 'Trip Package',
+                destination: b.package?.destination || b.packageSnapshot?.destination || '',
+                guideName: gd.companyName || b.provider?.username || 'Guide',
+                companyName: gd.companyName || '',
+                providerEmail: gd.email || b.provider?.email || '',
+                providerPhone: gd.phone || b.provider?.phone || '',
+                instagram: gd.instagram || '',
+                facebook: gd.facebook || '',
+                website: gd.website || '',
+                twitter: gd.twitter || '',
+                startDate: b.startDate,
+                endDate: b.endDate,
+                numPeople: b.numPeople,
+                category: b.category,
+                totalAmount: b.totalAmount,
+                status: b.status,
+                days: b.package?.days || b.packageSnapshot?.days || 0,
+                createdAt: b.createdAt,
+                // Include missing fields for success page/pass
+                personalDetails: b.personalDetails || {},
+                arrivalDeparture: b.arrivalDeparture || {},
+                packageSnapshot: b.packageSnapshot || {},
+                paymentId: b.paymentId || '',
+            };
+        });
 
         return NextResponse.json({ success: true, data: formatted });
     } catch (error) {

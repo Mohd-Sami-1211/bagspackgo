@@ -334,15 +334,22 @@ const PersonalDetails = ({
         newErrors[`personal_${index}_nationality`] = "Nationality is required";
         isValid = false;
       }
-      if (detail.idType && !detail.idNumber) {
+      if (!detail.idType) {
+        newErrors[`personal_${index}_idType`] = "ID type is required";
+        isValid = false;
+      } else if (!detail.idNumber) {
         newErrors[`personal_${index}_idNumber`] = "ID number is required";
         isValid = false;
-      } else if (detail.idType && detail.idNumber) {
+      } else {
         const selectedId = idProofOptions.find(opt => opt.value === detail.idType.value);
         if (selectedId && detail.idNumber.length !== selectedId.maxLength) {
-          newErrors[`personal_${index}_idNumber`] = `Must be ${selectedId.maxLength} digits`;
+          newErrors[`personal_${index}_idNumber`] = `Must be ${selectedId.maxLength} characters`;
           isValid = false;
         }
+      }
+      if (!detail.idImage) {
+        newErrors[`personal_${index}_idImage`] = "ID proof photo is required";
+        isValid = false;
       }
     });
 
@@ -576,8 +583,8 @@ const PersonalDetails = ({
               </div>
             </div>
 
-            <div>
-              <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">ID Proof (Optional)</label>
+            <div id={`personal_${index}_idType`}>
+              <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">ID Proof Type*</label>
               <Select
                 options={idProofOptions}
                 value={detail.idType}
@@ -588,40 +595,43 @@ const PersonalDetails = ({
                 menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
                 menuPosition="fixed"
               />
+              {errors[`personal_${index}_idType`] && <p className="text-red-500 text-[10px] mt-1 font-medium">{errors[`personal_${index}_idType`]}</p>}
             </div>
 
-            {detail.idType && (
-              <div id={`personal_${index}_idNumber`}>
-                <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">{detail.idType.label} Number*</label>
-                <input
-                  type="text"
-                  value={detail.idNumber}
-                  onChange={(e) => handlePersonalChange(index, "idNumber", e.target.value)}
-                  className="w-full h-[45px] px-4 border border-gray-200 rounded-xl focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 text-sm font-medium text-gray-700 bg-gray-50/50 placeholder:text-gray-300"
-                  placeholder={`e.g. ${Array(detail.idType.maxLength).fill('0').join('')}`}
-                  maxLength={detail.idType.maxLength}
-                />
-                {errors[`personal_${index}_idNumber`] && <p className="text-red-500 text-[10px] mt-1 font-medium">{errors[`personal_${index}_idNumber`]}</p>}
-              </div>
-            )}
+            <div id={`personal_${index}_idNumber`}>
+              <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+                {detail.idType ? `${detail.idType.label} Number*` : 'ID Number*'}
+              </label>
+              <input
+                type="text"
+                value={detail.idNumber}
+                onChange={(e) => handlePersonalChange(index, "idNumber", e.target.value)}
+                disabled={!detail.idType}
+                className="w-full h-[45px] px-4 border border-gray-200 rounded-xl focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 text-sm font-medium text-gray-700 bg-gray-50/50 placeholder:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                placeholder={detail.idType ? `e.g. ${Array(detail.idType.maxLength).fill('0').join('')}` : 'Select ID type first'}
+                maxLength={detail.idType?.maxLength || 20}
+              />
+              {errors[`personal_${index}_idNumber`] && <p className="text-red-500 text-[10px] mt-1 font-medium">{errors[`personal_${index}_idNumber`]}</p>}
+            </div>
 
-            {detail.idType && (
-              <div className="pt-2">
-                 <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-2">Upload {detail.idType.label}*</label>
-                 <div className="flex items-center gap-4">
-                    <label className="flex-1 flex items-center justify-center gap-3 h-14 border-2 border-dashed border-gray-200 rounded-2xl cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/30 transition-all text-gray-400 hover:text-emerald-600 group">
-                       <Upload className="w-5 h-5 transition-transform group-hover:-translate-y-0.5" />
-                       <span className="text-[12px] font-semibold">Choose File</span>
-                       <input type="file" className="hidden" accept="image/*" onChange={(e) => handleIdImageUpload(index, e)} />
-                    </label>
-                    {detail.idImagePreview && (
-                      <div className="w-14 h-14 rounded-xl overflow-hidden border-2 border-emerald-100 shadow-sm shrink-0">
-                         <img src={detail.idImagePreview} className="w-full h-full object-cover" alt="ID preview" />
-                      </div>
-                    )}
-                 </div>
-              </div>
-            )}
+            <div id={`personal_${index}_idImage`} className="pt-1">
+               <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+                 Upload {detail.idType ? detail.idType.label : 'ID Proof'} Photo*
+               </label>
+               <div className="flex items-center gap-4">
+                  <label className="flex-1 flex items-center justify-center gap-3 h-14 border-2 border-dashed border-gray-200 rounded-2xl cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/30 transition-all text-gray-400 hover:text-emerald-600 group">
+                     <Upload className="w-5 h-5 transition-transform group-hover:-translate-y-0.5" />
+                     <span className="text-[12px] font-semibold">{detail.idImagePreview ? 'Change Photo' : 'Choose Photo'}</span>
+                     <input type="file" className="hidden" accept="image/*" onChange={(e) => handleIdImageUpload(index, e)} />
+                  </label>
+                  {detail.idImagePreview && (
+                    <div className="w-14 h-14 rounded-xl overflow-hidden border-2 border-emerald-100 shadow-sm shrink-0">
+                       <img src={detail.idImagePreview} className="w-full h-full object-cover" alt="ID preview" />
+                    </div>
+                  )}
+               </div>
+               {errors[`personal_${index}_idImage`] && <p className="text-red-500 text-[10px] mt-1 font-medium">{errors[`personal_${index}_idImage`]}</p>}
+            </div>
           </div>
         </div>
       ));
@@ -726,7 +736,7 @@ const PersonalDetails = ({
                   <button 
                     type="button" 
                     onClick={() => {
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        window.location.href = '/user/trip/guidelist';
                     }} 
                     className="text-[11px] font-bold bg-white text-red-600 py-1.5 px-4 rounded-lg border border-red-200 hover:bg-red-600 hover:text-white transition-all self-start shadow-sm flex items-center gap-1.5"
                   >

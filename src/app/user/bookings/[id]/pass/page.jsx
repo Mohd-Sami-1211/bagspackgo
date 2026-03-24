@@ -224,28 +224,28 @@ export default function DownloadPassPage() {
                                             Participant #{index + 1}: {participant.name || 'Anonymous'}
                                         </h3>
 
-                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-2 text-sm">
-                                            <div>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-4 gap-x-4 text-sm mt-3">
+                                            <div className="flex flex-col">
                                                 <p className="text-gray-400 text-xs">Email</p>
-                                                <p className="font-semibold text-gray-800 truncate pr-2" title={participant.email || booking.contactDetails?.email}>{participant.email || booking.contactDetails?.email || 'N/A'}</p>
+                                                <p className="font-semibold text-gray-800 break-all pr-2" title={participant.email || booking.contactDetails?.email}>{participant.email || booking.contactDetails?.email || 'N/A'}</p>
                                             </div>
-                                            <div>
+                                            <div className="flex flex-col">
                                                 <p className="text-gray-400 text-xs">Phone</p>
                                                 <p className="font-semibold text-gray-800">{participant.phone || booking.contactDetails?.phone || 'N/A'}</p>
                                             </div>
-                                            <div>
+                                            <div className="flex flex-col">
                                                 <p className="text-gray-400 text-xs">ID Type / Num</p>
                                                 <p className="font-semibold text-gray-800 uppercase line-clamp-1 text-xs mt-0.5">{participant.idType || 'N/A'} {participant.idNumber ? `(${participant.idNumber.substring(0, 4)}...)` : ''}</p>
                                             </div>
-                                            <div>
+                                            <div className="flex flex-col">
                                                 <p className="text-gray-400 text-xs">Age</p>
                                                 <p className="font-semibold text-gray-800">{participant.age}</p>
                                             </div>
-                                            <div>
+                                            <div className="flex flex-col">
                                                 <p className="text-gray-400 text-xs">Gender</p>
                                                 <p className="font-semibold text-gray-800 uppercase">{participant.gender}</p>
                                             </div>
-                                            <div>
+                                            <div className="flex flex-col">
                                                 <p className="text-gray-400 text-xs">Blood Group</p>
                                                 <p className="font-semibold text-gray-800">{participant.bloodGroup || 'N/A'}</p>
                                             </div>
@@ -260,7 +260,7 @@ export default function DownloadPassPage() {
                                     <div className="block sm:hidden border-t-2 border-dashed border-gray-200 relative mx-4"></div>
 
                                     {/* QR Code Section */}
-                                    <div className="p-6 bg-gray-50 flex flex-col items-center justify-center min-w-[200px]">
+                                    <div className="p-6 bg-gray-50 flex flex-col items-center justify-center w-full sm:w-[220px]">
                                         {qrCodes[index] ? (
                                             <div className="bg-white p-2 rounded-xl shadow-sm border border-gray-100 mb-3">
                                                 <img src={qrCodes[index]} alt={`QR Code for ${participant.name}`} className="w-32 h-32 object-contain" />

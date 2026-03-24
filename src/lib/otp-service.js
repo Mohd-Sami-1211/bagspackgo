@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { jsPDF } from "jspdf";
 
 // Create Gmail transporter
 const transporter = nodemailer.createTransport({
@@ -251,34 +252,94 @@ export async function sendTripBookingConfirmation({ userEmail, userName, provide
             from: `"bagspackgo" <${process.env.GMAIL_USER}>`,
             to: userEmail,
             subject: `✅ Booking Confirmed — ${packageName} | Ref: ${bookingRef}`,
+            attachments: [
+                {
+                    filename: `BagsPackGo_BookingPass_${bookingRef}.pdf`,
+                    content: (() => {
+                        const doc = new jsPDF();
+                        // Header
+                        doc.setFillColor(5, 150, 105);
+                        doc.rect(0, 0, 210, 40, 'F');
+                        doc.setTextColor(255, 255, 255);
+                        doc.setFontSize(22);
+                        doc.text("BagsPackGo Travel Pass", 15, 25);
+                        
+                        // Body
+                        doc.setTextColor(0, 0, 0);
+                        doc.setFontSize(10);
+                        doc.text("Booking Reference:", 15, 55);
+                        doc.setFontSize(14);
+                        doc.text(bookingRef, 15, 62);
+                        
+                        doc.setFontSize(10);
+                        doc.text("Package Name:", 15, 75);
+                        doc.setFontSize(14);
+                        doc.text(packageName, 15, 82);
+                        
+                        doc.setFontSize(10);
+                        doc.text("Destination:", 15, 95);
+                        doc.setFontSize(12);
+                        doc.text(destination, 15, 102);
+                        
+                        doc.setFontSize(10);
+                        doc.text("Travel Date:", 110, 55);
+                        doc.setFontSize(12);
+                        doc.text(formattedStart, 110, 62);
+                        
+                        doc.setFontSize(10);
+                        doc.text("Passengers:", 110, 75);
+                        doc.setFontSize(12);
+                        doc.text(`${numPeople} Pax`, 110, 82);
+                        
+                        doc.setFontSize(10);
+                        doc.text("Total Paid:", 110, 95);
+                        doc.setFontSize(14);
+                        doc.setTextColor(5, 150, 105);
+                        doc.text(`Rs. ${Number(totalAmount).toLocaleString('en-IN')}`, 110, 102);
+                        
+                        // Footer
+                        doc.setTextColor(150, 150, 150);
+                        doc.setFontSize(9);
+                        doc.text("Please present this pass with a valid ID at the time of pickup.", 15, 280);
+                        doc.text("Thank you for choosing BagsPackGo!", 15, 285);
+                        
+                        return Buffer.from(doc.output('arraybuffer'));
+                    })()
+                }
+            ],
             html: `
                 <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 580px; margin: 0 auto; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.10);">
-                    <div style="background: linear-gradient(135deg, #22c55e, #16a34a); padding: 36px 32px; text-align: center;">
-                        <div style="background: white; width: 64px; height: 64px; border-radius: 50%; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; font-size: 32px;">✅</div>
-                        <h1 style="color: white; margin: 0; font-size: 26px;">Booking Confirmed!</h1>
-                        <p style="color: rgba(255,255,255,0.85); margin: 8px 0 0;">Your adventure is locked in 🎉</p>
+                    <div style="background: linear-gradient(135deg, #10b981, #059669); padding: 40px 32px; text-align: center;">
+                        <img src="${appUrl}/images/logo.png" alt="BagsPackGo" style="height: 48px; width: auto; margin-bottom: 20px;" />
+                        <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 800;">Booking Confirmed!</h1>
+                        <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0; font-size: 16px;">Your adventure with ${providerName} is ready 🎉</p>
                     </div>
-                    <div style="background: white; padding: 36px 32px;">
-                        <p style="color: #374151; font-size: 16px;">Hi <strong>${userName}</strong>,</p>
-                        <p style="color: #4b5563; line-height: 1.6;">Your trip package booking has been confirmed. Here are the details:</p>
-                        <div style="background: #f0fdf4; border-radius: 12px; padding: 24px; margin: 20px 0;">
+                    <div style="background: white; padding: 40px 32px;">
+                        <p style="color: #111827; font-size: 18px; margin: 0 0 16px;">Hi <strong>${userName}</strong>,</p>
+                        <p style="color: #4b5563; line-height: 1.6; font-size: 15px;">Pack your bags! Your trip booking for <strong>${packageName}</strong> has been successfully confirmed. A PDF copy of your travel pass is attached below for your journey.</p>
+                        
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px; margin: 24px 0;">
+                            <h3 style="color: #0f172a; font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 16px; border-bottom: 1px solid #e2e8f0; pb-8;">Trip Details</h3>
                             <table style="width: 100%; border-collapse: collapse;">
-                                <tr><td style="color: #6b7280; padding: 6px 0; font-size: 14px;">Booking Ref</td><td style="color: #111827; font-weight: 700; font-size: 14px; text-align: right;">${bookingRef}</td></tr>
-                                <tr><td style="color: #6b7280; padding: 6px 0; font-size: 14px;">Package</td><td style="color: #111827; font-weight: 600; font-size: 14px; text-align: right;">${packageName}</td></tr>
-                                <tr><td style="color: #6b7280; padding: 6px 0; font-size: 14px;">Destination</td><td style="color: #111827; font-size: 14px; text-align: right;">${destination}</td></tr>
-                                <tr><td style="color: #6b7280; padding: 6px 0; font-size: 14px;">Start Date</td><td style="color: #111827; font-size: 14px; text-align: right;">${formattedStart}</td></tr>
-                                <tr><td style="color: #6b7280; padding: 6px 0; font-size: 14px;">End Date</td><td style="color: #111827; font-size: 14px; text-align: right;">${formattedEnd}</td></tr>
-                                <tr><td style="color: #6b7280; padding: 6px 0; font-size: 14px;">Travellers</td><td style="color: #111827; font-size: 14px; text-align: right;">${numPeople}</td></tr>
-                                <tr style="border-top: 1px solid #d1fae5;"><td style="color: #16a34a; padding: 12px 0 0; font-size: 16px; font-weight: 700;">Total Paid</td><td style="color: #16a34a; font-size: 16px; font-weight: 700; text-align: right; padding-top: 12px;">₹${Number(totalAmount).toLocaleString('en-IN')}</td></tr>
+                                <tr><td style="color: #64748b; padding: 8px 0; font-size: 14px;">Booking Reference</td><td style="color: #0f172a; font-weight: 700; font-size: 14px; text-align: right; font-family: monospace;">${bookingRef}</td></tr>
+                                <tr><td style="color: #64748b; padding: 8px 0; font-size: 14px;">Destination</td><td style="color: #0f172a; font-weight: 600; font-size: 14px; text-align: right;">${destination}</td></tr>
+                                <tr><td style="color: #64748b; padding: 8px 0; font-size: 14px;">Travel Dates</td><td style="color: #0f172a; font-size: 14px; text-align: right;">${formattedStart} — ${formattedEnd}</td></tr>
+                                <tr><td style="color: #64748b; padding: 8px 0; font-size: 14px;">Passengers</td><td style="color: #0f172a; font-size: 14px; text-align: right;">${numPeople} Pax</td></tr>
+                                <tr style="border-top: 1px solid #e2e8f0;"><td style="color: #059669; padding: 16px 0 0; font-size: 18px; font-weight: 800;">Total Paid</td><td style="color: #059669; font-size: 18px; font-weight: 800; text-align: right; padding-top: 16px;">₹${Number(totalAmount).toLocaleString('en-IN')}</td></tr>
                             </table>
                         </div>
-                        <p style="color: #4b5563; font-size: 14px; line-height: 1.6;">Your guide <strong>${providerName}</strong> will be in touch with you soon regarding pickup details.</p>
-                        <div style="text-align: center; margin: 28px 0 8px;">
-                            <a href="${appUrl}/user/bookings" style="background: linear-gradient(135deg, #22c55e, #16a34a); color: white; text-decoration: none; padding: 14px 36px; border-radius: 8px; font-size: 15px; font-weight: 600; display: inline-block;">View My Bookings →</a>
+                        
+                        <div style="background: #fffbeb; border-radius: 12px; padding: 16px; margin-bottom: 32px;">
+                            <p style="color: #92400e; font-size: 13px; margin: 0; line-height: 1.5;"><strong>Note:</strong> Your guide <strong>${providerName}</strong> will contact you on your registered mobile number for final coordination and pickup details.</p>
+                        </div>
+
+                        <div style="text-align: center;">
+                            <a href="${appUrl}/user/bookings" style="background: #059669; color: white; text-decoration: none; padding: 16px 40px; border-radius: 12px; font-size: 16px; font-weight: 700; display: inline-block; box-shadow: 0 4px 12px rgba(5,150,105,0.25);">Manage My Booking →</a>
                         </div>
                     </div>
-                    <div style="background: #f9fafb; padding: 20px 32px; text-align: center; border-top: 1px solid #e5e7eb;">
-                        <p style="color: #9ca3af; font-size: 12px; margin: 0;">© ${new Date().getFullYear()} bagspackgo. All rights reserved.</p>
+                    <div style="background: #f1f5f9; padding: 24px 32px; text-align: center; border-top: 1px solid #e2e8f0;">
+                        <p style="color: #94a3b8; font-size: 13px; margin: 0 0 8px;">Just pack your bags, we've got the rest.</p>
+                        <p style="color: #64748b; font-size: 12px; margin: 0;">© ${new Date().getFullYear()} BagsPackGo. All rights reserved.</p>
                     </div>
                 </div>
             `,

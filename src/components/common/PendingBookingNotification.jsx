@@ -66,8 +66,8 @@ export default function PendingBookingNotification() {
   if (!show || !bookingData) return null;
 
   return (
-    <div className="fixed bottom-4 sm:bottom-6 left-4 sm:left-auto right-4 sm:right-6 z-[9999] animate-in slide-in-from-bottom-5 fade-in duration-500">
-      <div className="bg-white border border-emerald-500/30 rounded-2xl shadow-[0_20px_50px_-5px_max(rgba(16,185,129,0.3))] p-4 sm:p-5 max-w-sm w-full relative overflow-hidden flex flex-col ring-4 ring-emerald-50">
+    <div className="fixed bottom-4 sm:bottom-6 left-0 right-0 sm:left-auto sm:right-6 pointer-events-none z-[9999] flex justify-center sm:justify-end px-4 sm:px-0 animate-in slide-in-from-bottom-5 fade-in duration-500">
+      <div className="bg-white border border-emerald-500/30 rounded-2xl shadow-[0_20px_50px_-5px_max(rgba(16,185,129,0.3))] p-4 sm:p-5 w-full max-w-[340px] sm:max-w-sm relative overflow-hidden flex flex-col ring-4 ring-emerald-50 pointer-events-auto">
         <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-emerald-400 to-emerald-600"></div>
         <div className="flex items-start gap-3">
           <div className="bg-emerald-50 p-2 rounded-xl mt-0.5 border border-emerald-100">

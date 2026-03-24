@@ -107,7 +107,7 @@ const GuideCard = ({ guide, category, daysRange, peopleRange, date, selectedPack
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white/90 backdrop-blur-sm"
+            className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#F2FFFC]"
           >
             <div className="w-10 h-10 border-[3px] border-emerald-100 border-t-emerald-600 rounded-full animate-spin" />
             <p className="mt-4 text-[13px] font-medium text-emerald-700">Loading package details...</p>
