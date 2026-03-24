@@ -87,6 +87,15 @@ function BookingSuccessContent() {
     // Full URL to the pass which will trigger a PDF download/view when someone scans the QR
     const passUrl = typeof window !== 'undefined' ? `${window.location.origin}/api/user/trip-bookings/${bookingId}/pdf` : `https://bagspackgo.com/api/user/trip-bookings/${bookingId}/pdf`;
 
+    const ensureString = (val) => {
+        if (!val) return '';
+        if (typeof val === 'object') return val.label || val.value || 'N/A';
+        return String(val);
+    };
+
+    const dName = ensureString(destinationName);
+    const catLabel = ensureString(category);
+
     return (
         <div className="min-h-screen bg-[#F0FDF4]/30 flex flex-col items-center font-sans">
             
@@ -214,7 +223,7 @@ function BookingSuccessContent() {
                                             <Navigation className="w-3 h-3"/> Package Name
                                         </p>
                                         <p className="font-black text-gray-900 text-lg leading-tight">{packageName}</p>
-                                        <p className="text-sm font-medium text-gray-500 mt-1">{destinationName}</p>
+                                        <p className="text-sm font-medium text-gray-500 mt-1">{dName}</p>
                                     </div>
                                     <div className="sm:text-right border-l-2 sm:border-l-0 border-emerald-500 pl-4 sm:pl-0">
                                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Service Provider</p>
@@ -229,7 +238,7 @@ function BookingSuccessContent() {
                                     </div>
                                     <div className="flex flex-col gap-1">
                                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1.5"><Users className="w-3 h-3"/> Guests</p>
-                                        <p className="font-bold text-gray-900 text-sm leading-tight">{numPeople || 1} {category || 'Pax'}</p>
+                                        <p className="font-bold text-gray-900 text-sm leading-tight">{numPeople || 1} {catLabel || 'Pax'}</p>
                                     </div>
                                     <div className="flex flex-col gap-1">
                                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1.5"><Clock className="w-3 h-3"/> Pickup Time</p>

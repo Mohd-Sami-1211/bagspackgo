@@ -41,6 +41,16 @@ function Chip({ icon: Icon, color, label }) {
 function BookingCard({ booking, index }) {
   const s = S[booking.status] || S.confirmed;
 
+  const ensureString = (val) => {
+    if (!val) return '';
+    if (typeof val === 'object') return val.label || val.value || 'N/A';
+    return String(val);
+  };
+
+  const pName = ensureString(booking.packageName);
+  const dest = ensureString(booking.destination);
+  const user = ensureString(booking.bookedBy);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -75,13 +85,13 @@ function BookingCard({ booking, index }) {
 
             {/* Row B — package name + destination */}
             <h3 className="text-[15px] font-bold text-gray-900 leading-snug mb-0.5 truncate">
-              {booking.packageName}
+              {pName}
             </h3>
             <div className="flex items-center gap-1.5 text-[12px] text-gray-400 mb-4">
               <MapPin className="w-3 h-3 text-emerald-400 shrink-0" />
-              <span className="truncate">{booking.destination || 'Destination not set'}</span>
+              <span className="truncate">{dest || 'Destination not set'}</span>
               <span className="text-gray-200 px-0.5">·</span>
-              <span>By <span className="text-gray-600 font-semibold">{booking.bookedBy || 'User'}</span></span>
+              <span>By <span className="text-gray-600 font-semibold">{user || 'User'}</span></span>
             </div>
 
             {/* Row C — chips + amount */}

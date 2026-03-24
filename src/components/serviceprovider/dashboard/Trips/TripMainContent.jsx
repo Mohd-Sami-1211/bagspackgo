@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Calendar, Users, MapPin, Clock,
   Package, RefreshCw, ArrowUpRight,
-  CheckCircle2, XCircle, Luggage, Search, History,
+  CheckCircle2, XCircle, Luggage, Search, History, Mail, Phone
 } from 'lucide-react';
 
 /* ─── helpers ─────────────────────────────────────────── */
@@ -30,6 +30,18 @@ const TABS = [
 /* ─── card ────────────────────────────────────────────── */
 function BookingCard({ booking, index }) {
   const s = S[booking.status] || S.confirmed;
+
+  const ensureString = (val) => {
+    if (!val) return '';
+    if (typeof val === 'object') return val.label || val.value || 'N/A';
+    return String(val);
+  };
+
+  const pName = ensureString(booking.packageName);
+  const dest = ensureString(booking.destination);
+  const user = ensureString(booking.personalDetails?.firstName || booking.bookedBy);
+  const contactEmail = ensureString(booking.personalDetails?.contactDetails?.email) || ensureString(booking.bookedByEmail) || 'N/A';
+  const contactPhone = ensureString(booking.personalDetails?.contactDetails?.mobile) || ensureString(booking.bookedByPhone) || 'N/A';
 
   return (
     <motion.div
@@ -65,26 +77,26 @@ function BookingCard({ booking, index }) {
 
             {/* Row B — package name + destination */}
             <h3 className="text-[15px] font-bold text-gray-900 leading-snug mb-0.5 truncate">
-              {booking.packageName}
+              {pName}
             </h3>
-            <div className="flex items-center gap-1.5 text-[12px] text-gray-400 mb-4">
-              <MapPin className="w-3 h-3 text-emerald-400 shrink-0" />
-              <span className="truncate">{booking.destination || 'Destination not set'}</span>
-              <span className="text-gray-200 px-0.5">·</span>
-              <span>By <span className="text-gray-600 font-semibold">{booking.bookedBy || 'User'}</span></span>
+            <div className="flex flex-col gap-1.5 text-[12px] text-gray-400 mb-4">
+              <div className="flex items-center gap-1.5">
+                <MapPin className="w-3 h-3 text-emerald-400 shrink-0" />
+                <span className="truncate">{dest || 'Destination not set'}</span>
+                <span className="text-gray-200 px-0.5 hidden max-[400px]:hidden">·</span>
+                <span>By <span className="text-gray-600 font-semibold">{user || 'User'}</span></span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="flex items-center gap-1 text-gray-500"><Mail className="w-3 h-3 shrink-0" /> <span className="truncate max-w-[140px]">{contactEmail}</span></span>
+                <span className="flex items-center gap-1 text-gray-500"><Phone className="w-3 h-3 shrink-0" /> <span>{contactPhone}</span></span>
+              </div>
             </div>
 
             {/* Row C — chips + amount */}
-            <div className="flex items-end justify-between gap-4 flex-wrap">
-              <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex flex-wrap gap-2">
                 <Chip icon={Calendar} color="text-emerald-500" label={fmtDate(booking.startDate)} />
                 <Chip icon={Clock}    color="text-sky-500"     label={`${booking.days || '—'} days`} />
                 <Chip icon={Users}    color="text-violet-500"  label={`${booking.numPeople} guests`} />
-              </div>
-              <div className="text-right shrink-0">
-                <p className="text-[10px] text-gray-400 uppercase font-bold leading-none mb-0.5">Revenue</p>
-                <p className="text-[20px] font-black text-gray-900 leading-none">{fmtAmt(booking.totalAmount)}</p>
-              </div>
             </div>
           </div>
         </div>

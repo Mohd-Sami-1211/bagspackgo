@@ -26,11 +26,27 @@ const BookingMainContent = () => {
         const upcoming = [];
         const past = [];
 
+        // Helper to extract string from potential react-select object
+        const ensureString = (val) => {
+          if (!val) return '';
+          if (typeof val === 'object') {
+            return val.label || val.value || JSON.stringify(val);
+          }
+          return String(val);
+        };
+
         // Event bookings
         if (eventsData.success && eventsData.data) {
           eventsData.data.forEach(b => {
-            if (new Date(b.date) >= now || b.status === "confirmed") upcoming.push(b);
-            else past.push(b);
+            const normalized = {
+              ...b,
+              name: ensureString(b.name),
+              destination: ensureString(b.destination),
+              category: ensureString(b.category),
+              guide: ensureString(b.guide),
+            };
+            if (new Date(b.date) >= now || b.status === "confirmed") upcoming.push(normalized);
+            else past.push(normalized);
           });
         }
 
@@ -40,17 +56,19 @@ const BookingMainContent = () => {
             const normalized = {
               id: b.id,
               type: 'trip',
-              title: b.packageName,
+              name: ensureString(b.packageName),
               date: b.startDate,
               endDate: b.endDate,
-              destination: b.destination,
-              guide: b.guideName,
-              category: b.category,
+              destination: ensureString(b.destination),
+              guide: ensureString(b.guideName),
+              category: ensureString(b.category),
               status: b.status,
-              amount: b.totalAmount,
-              numPeople: b.numPeople,
+              price: b.totalAmount,
+              people: b.numPeople,
               bookingRef: b.bookingRef,
-              days: b.days,
+              duration: `${b.days} Days`,
+              image: b.packageSnapshot?.poster || '/images/hero.svg',
+              passUrl: `/user/trip/pass/${b.id}`,
             };
             if (b.status === 'confirmed' && new Date(b.startDate) >= now) upcoming.push(normalized);
             else if (b.status === 'confirmed') past.push(normalized);
@@ -64,17 +82,19 @@ const BookingMainContent = () => {
             const normalized = {
               id: b.id,
               type: 'Trek',
-              title: b.packageName,
+              name: ensureString(b.packageName),
               date: b.startDate,
               endDate: b.endDate,
-              destination: b.destination,
-              guide: b.guideName,
-              category: b.category || 'Trek',
+              destination: ensureString(b.destination),
+              guide: ensureString(b.guideName),
+              category: ensureString(b.category || 'Trek'),
               status: b.status,
-              amount: b.totalAmount,
-              numPeople: b.numPeople,
+              price: b.totalAmount,
+              people: b.numPeople,
               bookingRef: b.bookingRef,
-              days: b.days,
+              duration: `${b.days} Days`,
+              image: b.packageSnapshot?.poster || '/images/hero.svg',
+              passUrl: `/user/trek/pass/${b.id}`,
             };
             if (b.status === 'confirmed' && new Date(b.startDate) >= now) upcoming.push(normalized);
             else if (b.status === 'confirmed') past.push(normalized);

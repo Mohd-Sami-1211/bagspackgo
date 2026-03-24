@@ -215,6 +215,16 @@ function DeleteRequestModal({ event, onClose, onSubmit, submitting }) {
    Event Card
 ────────────────────────────────────────────── */
 function EventCard({ event, onAction }) {
+  const ensureString = (val) => {
+    if (!val) return '';
+    if (typeof val === 'object') return val.label || val.value || 'N/A';
+    return String(val);
+  };
+
+  const title = ensureString(event.title);
+  const type = ensureString(event.eventType);
+  const loc = ensureString(event.location);
+
   const formattedDate = new Date(event.date).toLocaleDateString('en-IN', {
     month: 'short',
     day: 'numeric',
@@ -241,7 +251,7 @@ function EventCard({ event, onAction }) {
       {/* Poster strip */}
       <div className="relative h-36 overflow-hidden bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-700">
         {event.poster ? (
-          <img src={event.poster} alt={event.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+          <img src={event.poster} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <Calendar className="w-14 h-14 text-white/30" />
@@ -262,8 +272,8 @@ function EventCard({ event, onAction }) {
 
       {/* Content */}
       <div className="p-5" onClick={(e) => { /* card body click handled by article */ }}>
-        <h3 className="font-bold text-neutral-900 text-base mb-0.5 line-clamp-1">{event.title}</h3>
-        <p className="text-xs text-neutral-500 mb-3">{event.eventType}</p>
+        <h3 className="font-bold text-neutral-900 text-base mb-0.5 line-clamp-1">{title}</h3>
+        <p className="text-xs text-neutral-500 mb-3">{type}</p>
 
         {event.about && (
           <p className="text-neutral-600 text-sm line-clamp-2 mb-4 leading-relaxed">{event.about}</p>
@@ -277,7 +287,7 @@ function EventCard({ event, onAction }) {
           </div>
           <div className="flex items-center gap-1.5 min-w-0">
             <MapPin className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
-            <span className="truncate">{event.location}</span>
+            <span className="truncate">{loc}</span>
           </div>
           <div className="flex items-center gap-1.5">
             <Clock className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />

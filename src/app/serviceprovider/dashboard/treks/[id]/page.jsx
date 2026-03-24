@@ -113,6 +113,16 @@ export default function SingleTrekBooking() {
     const fmtDate = d => d ? new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : '—';
     const fmtAmt = a => `₹${Number(a || 0).toLocaleString('en-IN')}`;
 
+    const ensureString = (val) => {
+        if (!val) return '';
+        if (typeof val === 'object') return val.label || val.value || 'N/A';
+        return String(val);
+    };
+
+    const pName = ensureString(booking.packageName);
+    const dest = ensureString(booking.destination);
+    const bookedByStr = ensureString(booking.bookedBy);
+
     // Support both old key (trekkerDetails) and new key (personalDetails) for backward compat
     const rawTravelers =
         booking.personalDetails?.personalDetails ||
@@ -120,7 +130,7 @@ export default function SingleTrekBooking() {
         [];
     // If still empty (old booking with no personal details saved), show a minimal row from bookedBy
     const travelers = rawTravelers.length > 0 ? rawTravelers : (
-        booking.bookedBy ? [{ name: booking.bookedBy, _syntheticOnly: true }] : []
+        booking.bookedBy ? [{ name: bookedByStr, _syntheticOnly: true }] : []
     );
     const contact = booking.personalDetails?.contactDetails || {};
     const emergency = booking.personalDetails?.emergencyContact || {};
@@ -163,11 +173,11 @@ export default function SingleTrekBooking() {
                                     </span>
                                 </div>
                                 <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight leading-tight">
-                                    {booking.packageName}
+                                    {pName}
                                 </h1>
                                 <p className="text-sm text-neutral-500 mt-1.5 flex items-center gap-1.5">
                                     <MapPin className="w-4 h-4 text-emerald-500" />
-                                    {booking.destination}
+                                    {dest}
                                 </p>
                             </div>
                         </div>
@@ -246,7 +256,7 @@ export default function SingleTrekBooking() {
                                                     </span>
                                                 </td>
                                                 <td className="px-5 py-3.5 font-semibold text-gray-800">
-                                                    {t.name || `Trekker ${i + 1}`}
+                                                    {ensureString(t.name) || `Trekker ${i + 1}`}
                                                     {t._syntheticOnly && (
                                                         <span className="ml-2 text-[10px] font-bold text-amber-500 bg-amber-50 border border-amber-100 px-1.5 py-0.5 rounded">
                                                             account
@@ -259,14 +269,14 @@ export default function SingleTrekBooking() {
                                                     </td>
                                                 ) : (
                                                     <>
-                                                        <td className="px-5 py-3.5 text-neutral-500">{t.gender || '—'} · {t.age ? `${t.age} yrs` : '—'}</td>
-                                                        <td className="px-5 py-3.5 text-neutral-500">{t.nationality || '—'}</td>
+                                                        <td className="px-5 py-3.5 text-neutral-500">{ensureString(t.gender) || '—'} · {t.age ? `${ensureString(t.age)} yrs` : '—'}</td>
+                                                        <td className="px-5 py-3.5 text-neutral-500">{ensureString(t.nationality) || '—'}</td>
                                                         <td className="px-5 py-3.5 text-right">
                                                             {t.idType ? (
                                                                 <div>
-                                                                    <span className="text-[9px] text-neutral-400 uppercase font-bold block tracking-widest">{t.idType}</span>
+                                                                    <span className="text-[9px] text-neutral-400 uppercase font-bold block tracking-widest">{ensureString(t.idType)}</span>
                                                                     <span className="font-mono text-xs font-bold text-gray-700 bg-neutral-50 border border-neutral-100 px-2 py-0.5 rounded-md inline-block mt-0.5">
-                                                                        {t.idNumber}
+                                                                        {ensureString(t.idNumber)}
                                                                     </span>
                                                                 </div>
                                                             ) : <span className="text-neutral-300 text-xs italic">N/A</span>}
@@ -297,17 +307,17 @@ export default function SingleTrekBooking() {
                 >
                     {/* Contact Details */}
                     <SectionCard title="Contact Details" icon={Mail} accent="indigo">
-                        <ContactRow icon={Users} label="Booked via account" value={booking.bookedBy} />
-                        {contact.email && <ContactRow icon={Mail} label="Email" value={contact.email} href={`mailto:${contact.email}`} />}
-                        {contact.mobile && <ContactRow icon={Phone} label="Mobile" value={contact.mobile} href={`tel:${contact.mobile}`} />}
+                        <ContactRow icon={Users} label="Booked via account" value={bookedByStr} />
+                        {contact.email && <ContactRow icon={Mail} label="Email" value={ensureString(contact.email)} href={`mailto:${ensureString(contact.email)}`} />}
+                        {contact.mobile && <ContactRow icon={Phone} label="Mobile" value={ensureString(contact.mobile)} href={`tel:${ensureString(contact.mobile)}`} />}
                     </SectionCard>
 
                     {/* Emergency contact */}
                     {(emergency.name || emergency.phone) && (
                         <SectionCard title="Emergency Contact" icon={AlertTriangle} accent="rose">
-                            {emergency.name && <ContactRow icon={Users} label="Name" value={emergency.name} />}
-                            {emergency.relation && <ContactRow icon={Users} label="Relation" value={emergency.relation} />}
-                            {emergency.phone && <ContactRow icon={Phone} label="Phone" value={emergency.phone} href={`tel:${emergency.phone}`} />}
+                            {emergency.name && <ContactRow icon={Users} label="Name" value={ensureString(emergency.name)} />}
+                            {emergency.relation && <ContactRow icon={Users} label="Relation" value={ensureString(emergency.relation)} />}
+                            {emergency.phone && <ContactRow icon={Phone} label="Phone" value={ensureString(emergency.phone)} href={`tel:${ensureString(emergency.phone)}`} />}
                         </SectionCard>
                     )}
 

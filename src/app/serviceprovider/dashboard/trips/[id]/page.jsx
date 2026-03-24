@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import {
     ChevronLeft, Calendar, Users, MapPin, Clock,
     CreditCard, Mail, Phone, AlertTriangle,
-    CheckCircle2, XCircle, Navigation, Hash, Luggage
+    CheckCircle2, XCircle, Navigation, Hash, Luggage, Download
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -113,13 +113,23 @@ export default function SingleTripBooking() {
     );
 
     const fmtDate = d => d ? new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : '—';
-    const fmtAmt = a => `₹${Number(a || 0).toLocaleString('en-IN')}`;
+    const fmtAmt = (amt) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amt || 0);
+
+    const ensureString = (val) => {
+        if (typeof val === 'string') return val;
+        if (typeof val === 'number') return val.toString();
+        if (val && typeof val === 'object' && val.label) return val.label;
+        if (val && typeof val === 'object' && val.value) return val.value;
+        return '';
+    };
 
     const travelers = booking.personalDetails?.personalDetails || [];
     const contact = booking.personalDetails?.contactDetails || {};
     const emergency = booking.personalDetails?.emergencyContact || {};
     const arrival = booking.arrivalDeparture?.arrival || {};
     const departure = booking.arrivalDeparture?.departure || {};
+    const pickup = booking.arrivalDeparture?.pickup || {};
+    const dropoff = booking.arrivalDeparture?.dropoff || {};
     const cfg = STATUS_CFG[booking.status] || STATUS_CFG.confirmed;
 
     return (
@@ -166,11 +176,7 @@ export default function SingleTripBooking() {
                             </div>
                         </div>
 
-                        {/* Amount card */}
-                        <div className="shrink-0 bg-emerald-50 border border-emerald-100 rounded-2xl px-6 py-4 text-center">
-                            <p className="text-[11px] font-bold uppercase tracking-widest text-emerald-600 mb-1">Total Amount</p>
-                            <p className="text-3xl font-black text-emerald-700">{fmtAmt(booking.totalAmount)}</p>
-                        </div>
+
                     </div>
 
                     {/* Divider */}
@@ -182,7 +188,7 @@ export default function SingleTripBooking() {
                             { icon: Calendar, label: 'Start Date', value: fmtDate(booking.startDate) },
                             { icon: Clock, label: 'Duration', value: `${booking.days} Days` },
                             { icon: Users, label: 'Group', value: `${booking.numPeople} ${booking.category === 'couple' ? 'Couple' : 'Person(s)'}` },
-                            { icon: CreditCard, label: 'Booked On', value: fmtDate(booking.createdAt) },
+                            { icon: CreditCard, label: 'Confirmed At', value: new Date(booking.createdAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) },
                         ].map(({ icon: Ic, label, value }, i) => (
                             <div key={i} className="flex items-center gap-3 bg-neutral-50 rounded-xl p-3.5 border border-neutral-100">
                                 <div className="w-8 h-8 rounded-lg bg-white border border-neutral-200 flex items-center justify-center shrink-0">
@@ -240,16 +246,28 @@ export default function SingleTripBooking() {
                                                         {i + 1}
                                                     </span>
                                                 </td>
-                                                <td className="px-5 py-3.5 font-semibold text-gray-800">{t.name || `Traveller ${i + 1}`}</td>
-                                                <td className="px-5 py-3.5 text-neutral-500">{t.gender} · {t.age} yrs</td>
-                                                <td className="px-5 py-3.5 text-neutral-500">{t.nationality || '—'}</td>
+                                                <td className="px-5 py-3.5 font-semibold text-gray-800">{ensureString(t.name) || `Traveller ${i + 1}`}</td>
+                                                <td className="px-5 py-3.5 text-neutral-500">{ensureString(t.gender)} · {ensureString(t.age)} yrs</td>
+                                                <td className="px-5 py-3.5 text-neutral-500">{ensureString(t.nationality) || '—'}</td>
                                                 <td className="px-5 py-3.5 text-right">
                                                     {t.idType ? (
-                                                        <div>
-                                                            <span className="text-[9px] text-neutral-400 uppercase font-bold block tracking-widest">{t.idType}</span>
-                                                            <span className="font-mono text-xs font-bold text-gray-700 bg-neutral-50 border border-neutral-100 px-2 py-0.5 rounded-md inline-block mt-0.5">
-                                                                {t.idNumber}
-                                                            </span>
+                                                        <div className="flex justify-end items-center gap-3">
+                                                            <div className="text-right">
+                                                                <span className="text-[9px] text-neutral-400 uppercase font-bold block tracking-widest">{ensureString(t.idType)}</span>
+                                                                <span className="font-mono text-xs font-bold text-gray-700 bg-neutral-50 border border-neutral-100 px-2 py-0.5 rounded-md inline-block mt-0.5">
+                                                                    {ensureString(t.idNumber)}
+                                                                </span>
+                                                            </div>
+                                                            {(t.idImagePreview || t.idImageUrl || t.idImage) && (
+                                                                <div className="flex items-center gap-2 justify-end">
+                                                                    <a href={t.idImagePreview || t.idImageUrl || t.idImage} target="_blank" rel="noreferrer" className="h-8 w-12 rounded overflow-hidden border border-neutral-200 block shrink-0 hover:opacity-80 transition bg-neutral-50" title="View ID Proof">
+                                                                        <img src={t.idImagePreview || t.idImageUrl || t.idImage} alt="ID" className="w-full h-full object-cover" />
+                                                                    </a>
+                                                                    <a href={t.idImagePreview || t.idImageUrl || t.idImage} download={`ID_Proof_${ensureString(t.name)}.jpg`} className="p-1.5 rounded-md border border-neutral-200 text-neutral-500 hover:text-emerald-600 hover:bg-emerald-50 transition flex items-center gap-1 bg-white shadow-sm" title="Download ID">
+                                                                        <Download className="w-3.5 h-3.5" />
+                                                                    </a>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     ) : <span className="text-neutral-300 text-xs italic">N/A</span>}
                                                 </td>
@@ -292,7 +310,7 @@ export default function SingleTripBooking() {
                     )}
 
                     {/* Logistics */}
-                    {(arrival.city || departure.city) && (
+                    {(arrival.city || departure.city || pickup.location || dropoff.location) && (
                         <SectionCard title="Logistics" icon={Navigation} accent="amber">
                             <div className="relative pl-6 space-y-6">
                                 <div className="absolute left-[7px] top-2 bottom-2 w-0.5 bg-gradient-to-b from-emerald-300 to-rose-300 rounded-full" />
@@ -322,11 +340,69 @@ export default function SingleTripBooking() {
                                         )}
                                     </div>
                                 )}
+
+                                {pickup.location && (
+                                    <div className="relative">
+                                        <span className="absolute -left-[22px] top-1 w-3 h-3 rounded-full bg-blue-400 border-2 border-white shadow" />
+                                        <p className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 mb-1">Pickup</p>
+                                        <p className="text-sm font-bold text-gray-800">{ensureString(pickup.location)}</p>
+                                        {pickup.address && <p className="text-xs text-neutral-600 mt-1">{ensureString(pickup.address)}</p>}
+                                        {pickup.time && (
+                                            <p className="text-xs text-neutral-500 mt-1 flex items-center gap-1">
+                                                <Clock className="w-3 h-3" /> {pickup.time}
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
+
+                                {dropoff.location && (
+                                    <div className="relative">
+                                        <span className="absolute -left-[22px] top-1 w-3 h-3 rounded-full bg-purple-400 border-2 border-white shadow" />
+                                        <p className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 mb-1">Drop-off</p>
+                                        <p className="text-sm font-bold text-gray-800">{ensureString(dropoff.location)}</p>
+                                        {dropoff.address && <p className="text-xs text-neutral-600 mt-1">{ensureString(dropoff.address)}</p>}
+                                        {dropoff.time && (
+                                            <p className="text-xs text-neutral-500 mt-1 flex items-center gap-1">
+                                                <Clock className="w-3 h-3" /> {dropoff.time}
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         </SectionCard>
                     )}
                 </motion.div>
             </div>
+
+            {/* ── Payment Breakdown ── */}
+            <motion.div
+                initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.35 }}
+                className="mt-6 bg-white rounded-2xl border border-neutral-100 shadow-sm overflow-hidden"
+            >
+                <div className="px-5 py-4 border-b border-neutral-50 flex items-center justify-between bg-neutral-50/50">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center border border-emerald-200 shadow-sm">
+                            <CreditCard className="w-4 h-4 text-emerald-700" />
+                        </div>
+                        <h3 className="text-base font-black text-gray-800 tracking-tight">Payment Breakdown</h3>
+                    </div>
+                </div>
+                <div className="px-6 py-6 space-y-4">
+                    <div className="flex justify-between items-center text-sm font-semibold text-gray-600 p-3 bg-neutral-50/50 rounded-xl border border-neutral-100">
+                        <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-emerald-400"></div>Package Total (Collected from User)</span>
+                        <span className="font-mono">{fmtAmt(booking.totalAmount)}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm font-semibold text-gray-600 p-3 bg-neutral-50/50 rounded-xl border border-neutral-100">
+                        <span className="flex items-center gap-2 text-rose-600"><div className="w-1.5 h-1.5 rounded-full bg-rose-500"></div>Platform Charges (10% deducted)</span>
+                        <span className="font-mono text-rose-600">- {fmtAmt(booking.totalAmount * 0.1)}</span>
+                    </div>
+                    <div className="my-2 h-px bg-neutral-100" />
+                    <div className="flex justify-between items-center text-lg p-4 bg-emerald-50 rounded-xl border border-emerald-100 shadow-sm">
+                        <span className="font-black text-emerald-800 tracking-tight">Final Revenue</span>
+                        <span className="font-black font-mono text-emerald-700 text-xl">{fmtAmt(booking.totalAmount * 0.9)}</span>
+                    </div>
+                </div>
+            </motion.div>
         </div>
     );
 }

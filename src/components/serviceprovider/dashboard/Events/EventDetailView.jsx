@@ -293,6 +293,16 @@ export default function EventDetailView({ eventId }) {
     const [cameraError, setCameraError] = useState('');
     const [showShare, setShowShare] = useState(false);
 
+    const ensureString = (val) => {
+        if (!val) return '';
+        if (typeof val === 'object') return val.label || val.value || 'N/A';
+        return String(val);
+    };
+
+    const title = ensureString(event?.title);
+    const loc = ensureString(event?.location);
+    const dest = ensureString(event?.destination);
+
     // Reset scanner completely when leaving the scanner tab
     useEffect(() => {
         if (activeTab !== 'scanner') {
@@ -531,11 +541,11 @@ export default function EventDetailView({ eventId }) {
                         {/* Title block */}
                         <div className="mt-auto pt-12 min-w-0 flex-1">
                             <p className="text-white/70 text-sm mb-1 truncate">{event.eventType}</p>
-                            <h1 className="text-2xl md:text-3xl font-bold text-white leading-tight drop-shadow-md break-words">{event.title}</h1>
+                            <h1 className="text-2xl md:text-3xl font-bold text-white leading-tight drop-shadow-md break-words">{title}</h1>
                             <p className="text-white/80 text-sm mt-2 flex items-center gap-2 flex-wrap">
                                 <span className="flex items-center gap-1 flex-shrink-0"><Calendar className="w-3.5 h-3.5" />{formattedDate}</span>
                                 <span className="opacity-50">•</span>
-                                <span className="flex items-center gap-1 min-w-0"><MapPin className="w-3.5 h-3.5 flex-shrink-0" /><span className="truncate">{event.location}</span></span>
+                                <span className="flex items-center gap-1 min-w-0"><MapPin className="w-3.5 h-3.5 flex-shrink-0" /><span className="truncate">{loc}</span></span>
                             </p>
                         </div>
 
@@ -603,8 +613,8 @@ export default function EventDetailView({ eventId }) {
                 {/* ── Quick Stats Row ── */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
                     <InfoTile icon={Calendar} label="Date" value={new Date(event.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })} accent="emerald" />
-                    <InfoTile icon={MapPin} label="Location" value={event.location} accent="teal" />
-                    <InfoTile icon={Globe} label="Destination" value={event.destination} accent="blue" />
+                    <InfoTile icon={MapPin} label="Location" value={loc} accent="teal" />
+                    <InfoTile icon={Globe} label="Destination" value={dest} accent="blue" />
                     <InfoTile icon={Clock} label="Duration" value={`${event.duration} day${event.duration > 1 ? 's' : ''}`} accent="violet" />
                     <InfoTile icon={IndianRupee} label="Price / Slot" value={`₹${event.pricePerSlot?.toLocaleString('en-IN')}`} accent="amber" />
                     <InfoTile icon={Users} label="Slots" value={`${event.bookedSlots || 0} / ${event.totalSlots}`} accent="rose" />
@@ -855,22 +865,22 @@ export default function EventDetailView({ eventId }) {
                                                                 {guest.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                                                             </div>
                                                             <div>
-                                                                <p className="font-semibold text-neutral-900">{guest.name}</p>
-                                                                <p className="text-neutral-500 text-xs">{guest.email}</p>
+                                                                <p className="font-semibold text-neutral-900">{ensureString(guest.name)}</p>
+                                                                <p className="text-neutral-500 text-xs">{ensureString(guest.email)}</p>
                                                             </div>
                                                         </div>
                                                     </td>
-                                                    <td className="px-4 py-4 text-neutral-700">{guest.age}</td>
-                                                    <td className="px-4 py-4 text-neutral-700">{guest.gender}</td>
+                                                    <td className="px-4 py-4 text-neutral-700">{ensureString(guest.age)}</td>
+                                                    <td className="px-4 py-4 text-neutral-700">{ensureString(guest.gender)}</td>
                                                     <td className="px-4 py-4">
                                                         <div className="flex items-center gap-1.5 text-neutral-700">
                                                             <Phone className="w-3.5 h-3.5 text-neutral-400" />
-                                                            {guest.mobile}
+                                                            {ensureString(guest.mobile)}
                                                         </div>
                                                     </td>
                                                     <td className="px-4 py-4">
-                                                        <p className="text-neutral-700">{guest.idProofType}</p>
-                                                        <p className="text-neutral-500 text-xs">{guest.idProofNumber}</p>
+                                                        <p className="text-neutral-700">{ensureString(guest.idProofType)}</p>
+                                                        <p className="text-neutral-500 text-xs">{ensureString(guest.idProofNumber)}</p>
                                                     </td>
                                                     <td className="px-4 py-4">
                                                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${guest.checkedIn ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-700'}`}>
@@ -1141,10 +1151,10 @@ export default function EventDetailView({ eventId }) {
                                                         </div>
                                                         {scanResult.success && (
                                                             <div className="grid grid-cols-2 gap-2 mt-2">
-                                                                {[
-                                                                    { label: 'Name', val: scanResult.guest?.name },
+                                                                        {[
+                                                                    { label: 'Name', val: ensureString(scanResult.guest?.name) },
                                                                     { label: 'Pass Code', val: scanResult.guest?.passCode },
-                                                                    { label: 'ID Type', val: scanResult.guest?.idProofType },
+                                                                    { label: 'ID Type', val: ensureString(scanResult.guest?.idProofType) },
                                                                     { label: 'Mobile', val: scanResult.guest?.mobile },
                                                                 ].map(f => (
                                                                     <div key={f.label} className="bg-white/70 rounded-xl p-2.5">
