@@ -17,7 +17,11 @@ const TripSearchInput = forwardRef(({ compactMode = false, onSearch }, ref) => {
   const [startDate, setStartDate] = useState(null);
   const [dateInput, setDateInput] = useState('');
   const [isSearching, setIsSearching] = useState(false);
-  const [error, setError] = useState(null);
+  const [errors, setErrors] = useState({});
+
+  const clearError = (field) => {
+    setErrors((prev) => ({ ...prev, [field]: null }));
+  };
 
   useImperativeHandle(ref, () => ({
     reset: handleReset,
@@ -32,7 +36,7 @@ const TripSearchInput = forwardRef(({ compactMode = false, onSearch }, ref) => {
 
   const handleReset = () => {
     setIsSearching(true);
-    setError(null);
+    setErrors({});
     setTimeout(() => {
       setDaysRange(null);
       setPeopleRange(null);
@@ -57,13 +61,17 @@ const TripSearchInput = forwardRef(({ compactMode = false, onSearch }, ref) => {
     if (formatted.length === 10) {
       const [day, month, year] = formatted.split('/').map(Number);
       const parsedDate = new Date(year, month - 1, day);
-      if (!isNaN(parsedDate.getTime())) setStartDate(parsedDate);
+      if (!isNaN(parsedDate.getTime())) {
+          setStartDate(parsedDate);
+          clearError('date');
+      }
       else setStartDate(null);
     } else setStartDate(null);
   };
 
   const handleDateChange = (date) => {
     setStartDate(date);
+    if (date) clearError('date');
     setDateInput(
       date
         ? date.toLocaleDateString('en-GB').split('/').map(v => v.padStart(2, '0')).join('/')
@@ -72,12 +80,18 @@ const TripSearchInput = forwardRef(({ compactMode = false, onSearch }, ref) => {
   };
 
   const handleSearch = () => {
-    if (!selectedDestination) {
-      setError('Please select a destination');
+    const newErrors = {};
+    if (!selectedDestination) newErrors.destination = 'Please select a destination';
+    if (!daysRange) newErrors.days = 'Select days';
+    if (!peopleRange) newErrors.people = 'Select people';
+    if (!startDate) newErrors.date = 'Select date';
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
 
-    setError(null);
+    setErrors({});
     setIsSearching(true);
 
     const params = {
@@ -135,14 +149,14 @@ const TripSearchInput = forwardRef(({ compactMode = false, onSearch }, ref) => {
           <DestinationSelect
             selectedDestination={selectedDestination}
             setSelectedDestination={setSelectedDestination}
-            error={error}
-            setError={setError}
+            error={errors.destination}
+            clearError={clearError}
           />
           <CategorySelect selectedCategory={selectedCategory} setSelectedCategory={setSelectedCategory} />
         </motion.div>
 
         <motion.div variants={itemVariants} className="flex-[2] bg-[#C3EFE6] rounded-xl p-2.5 sm:p-3 flex flex-col justify-between w-full md:w-auto">
-          <CountersSection daysRange={daysRange} setDaysRange={setDaysRange} peopleRange={peopleRange} setPeopleRange={setPeopleRange} selectedCategory={selectedCategory} />
+          <CountersSection daysRange={daysRange} setDaysRange={setDaysRange} peopleRange={peopleRange} setPeopleRange={setPeopleRange} selectedCategory={selectedCategory} errors={errors} clearError={clearError} />
 
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 sm:items-end mt-2 sm:mt-3">
             <motion.div variants={itemVariants} className="flex-1 relative z-[60] w-full">
@@ -160,7 +174,7 @@ const TripSearchInput = forwardRef(({ compactMode = false, onSearch }, ref) => {
                       value={dateInput}
                       onChange={handleInputChange}
                       placeholder="DD/MM/YYYY"
-                      className="bg-white border border-gray-300 text-gray-800 text-sm rounded-md focus:ring-green-500 focus:border-green-500 block w-full pl-9 pr-2 py-1.5 transition-all"
+                      className={`bg-white border text-gray-800 text-sm rounded-md focus:ring-green-500 focus:border-green-500 block w-full pl-9 pr-2 py-1.5 transition-all ${errors.date ? 'border-red-500 shadow-[0_0_0_1px_#ef4444]' : 'border-gray-300'}`}
                     />
                   </motion.div>
                 }
@@ -176,6 +190,7 @@ const TripSearchInput = forwardRef(({ compactMode = false, onSearch }, ref) => {
                 calendarClassName="border-green-200 rounded-md shadow-xl bg-white"
                 wrapperClassName="w-full"
               />
+              {errors.date && <p className="absolute -bottom-4 left-1 mt-1 text-[10px] text-red-500 font-semibold">{errors.date}</p>}
             </motion.div>
 
             <div className="flex gap-3 flex-wrap sm:flex-nowrap justify-center sm:justify-end w-full sm:w-auto">
@@ -220,7 +235,7 @@ const TripSearchInput = forwardRef(({ compactMode = false, onSearch }, ref) => {
 });
 
 // ------------------- Destination Select -------------------
-const DestinationSelect = ({ selectedDestination, setSelectedDestination, error, setError }) => (
+const DestinationSelect = ({ selectedDestination, setSelectedDestination, error, clearError }) => (
   <motion.div
     className="relative z-[1000] w-full"
     initial={{ opacity: 0, x: -10 }}
@@ -235,7 +250,7 @@ const DestinationSelect = ({ selectedDestination, setSelectedDestination, error,
       value={selectedDestination}
       onChange={(value) => {
         setSelectedDestination(value);
-        if (value) setError(null);
+        if (value) clearError('destination');
       }}
       placeholder="Enter Place to Search"
       classNamePrefix="react-select"
@@ -254,7 +269,7 @@ const DestinationSelect = ({ selectedDestination, setSelectedDestination, error,
       minMenuHeight={0}
       maxMenuHeight={250}
     />
-    {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
+    {error && <p className="absolute -bottom-4 left-1 mt-1 text-[10px] text-red-500 font-semibold">{error}</p>}
   </motion.div>
 );
 
@@ -287,7 +302,7 @@ const CategorySelect = ({ selectedCategory, setSelectedCategory }) => (
 );
 
 // ------------------- Counters Section -------------------
-const CountersSection = ({ daysRange, setDaysRange, peopleRange, setPeopleRange, selectedCategory }) => {
+const CountersSection = ({ daysRange, setDaysRange, peopleRange, setPeopleRange, selectedCategory, errors, clearError }) => {
   const daysOptions = [
     { value: '0-3', label: '0-3 days' },
     { value: '3-5', label: '3-5 days' },
@@ -319,7 +334,7 @@ const CountersSection = ({ daysRange, setDaysRange, peopleRange, setPeopleRange,
           instanceId="days-range-select"
           options={daysOptions}
           value={daysRange}
-          onChange={setDaysRange}
+          onChange={(val) => { setDaysRange(val); if(val) clearError('days'); }}
           placeholder="Select Range"
           classNamePrefix="react-select"
           isClearable
@@ -328,6 +343,8 @@ const CountersSection = ({ daysRange, setDaysRange, peopleRange, setPeopleRange,
             control: (provided, state) => ({
               ...selectStyles.control(provided, state),
               minHeight: '36px', // Match height
+              borderColor: errors?.days ? '#ef4444' : state.isFocused ? '#10b981' : '#d1d5db',
+              boxShadow: errors?.days ? '0 0 0 1px #ef4444' : state.isFocused ? '0 0 0 1px #10b981' : null,
             }),
           }}
           menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
@@ -353,7 +370,7 @@ const CountersSection = ({ daysRange, setDaysRange, peopleRange, setPeopleRange,
           instanceId="people-range-select"
           options={peopleOptions}
           value={peopleRange}
-          onChange={setPeopleRange}
+          onChange={(val) => { setPeopleRange(val); if(val) clearError('people'); }}
           placeholder="Select Range"
           classNamePrefix="react-select"
           isClearable
@@ -362,6 +379,8 @@ const CountersSection = ({ daysRange, setDaysRange, peopleRange, setPeopleRange,
             control: (provided, state) => ({
               ...selectStyles.control(provided, state),
               minHeight: '36px', // Match height
+              borderColor: errors?.people ? '#ef4444' : state.isFocused ? '#10b981' : '#d1d5db',
+              boxShadow: errors?.people ? '0 0 0 1px #ef4444' : state.isFocused ? '0 0 0 1px #10b981' : null,
             }),
           }}
           menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
@@ -370,6 +389,7 @@ const CountersSection = ({ daysRange, setDaysRange, peopleRange, setPeopleRange,
           minMenuHeight={0}
           maxMenuHeight={250}
         />
+        {errors?.people && <p className="absolute -bottom-4 left-1 mt-1 text-[10px] text-red-500 font-semibold">{errors.people}</p>}
       </motion.div>
     </motion.div>
   );

@@ -42,45 +42,10 @@ function BookingSuccessContent() {
         fetchBooking();
     }, [bookingId]);
 
-    const handleDownloadPDF = async (openInNewTab = false) => {
-        setDownloading(true);
-        try {
-            const element = passRef.current;
-            // Temporarily show the pass for capturing
-            const originalStyle = element.style.display;
-            element.style.display = 'block';
-            
-            const canvas = await html2canvas(element, { 
-                scale: 2, 
-                useCORS: true,
-                backgroundColor: '#ffffff',
-                logging: false
-            });
-            
-            element.style.display = originalStyle;
-
-            const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF('p', 'mm', 'a4');
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-
-            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-            
-            if (openInNewTab) {
-                const pdfBlob = pdf.output('blob');
-                const pdfUrl = URL.createObjectURL(pdfBlob);
-                window.open(pdfUrl, '_blank');
-            } else {
-                const fileName = `BagsPackGo_TripPass_${bookingRef}.pdf`;
-                pdf.save(fileName);
-            }
-        } catch (err) {
-            console.error("Failed to generate PDF", err);
-            // Fallback to print if PDF generation fails
-            if (!openInNewTab) window.print();
-        } finally {
-            setDownloading(false);
-        }
+    const handleDownloadPDF = () => {
+        if (!bookingId) return;
+        // Open the HTML pass page and trigger browser's native print-to-PDF
+        window.open(`/user/trip/pass/${bookingId}?print=true`, '_blank');
     };
 
     const formatDate = (d) => {
@@ -132,9 +97,11 @@ function BookingSuccessContent() {
                 .print-only { display: none; }
                 
                 @media print {
+                    @page { size: A4 portrait; margin: 0; }
+                    html, body { width: 100%; height: 100%; margin: 0 !important; padding: 0 !important; background-color: white !important; }
                     body > * { display: none !important; }
-                    .print-only { display: block !important; }
-                    .print-only, .print-only * { visibility: visible !important; }
+                    .print-only { display: block !important; position: absolute !important; top: 0 !important; left: 0 !important; width: 100% !important; height: 100vh !important; background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                    .print-only * { visibility: visible !important; }
                 }
             `}} />
             
@@ -185,20 +152,25 @@ function BookingSuccessContent() {
                                         PDF Booking Pass
                                     </button>
                                     <button 
-                                        onClick={() => handleDownloadPDF(true)}
-                                        className="flex items-center gap-2 bg-white border border-emerald-200 text-emerald-700 font-bold py-2.5 px-5 rounded-xl text-sm transition-all shadow-sm hover:bg-emerald-50 active:scale-95"
-                                    >
-                                        <Eye className="w-4 h-4" /> View Pass
-                                    </button>
+                                         onClick={() => {
+                                             if (bookingId) window.open(`/user/trip/pass/${bookingId}`, '_blank');
+                                         }}
+                                         className="flex items-center gap-2 bg-white border border-emerald-200 text-emerald-700 font-bold py-2.5 px-5 rounded-xl text-sm transition-all shadow-sm hover:bg-emerald-50 active:scale-95"
+                                     >
+                                         <Eye className="w-4 h-4" /> View Pass
+                                     </button>
                                 </div>
                             </div>
                             
                             <div className="p-6 relative flex flex-col items-center justify-center min-w-[200px] bg-gradient-to-br from-emerald-50 to-white">
                                 <h3 className="text-xs font-black text-emerald-800 uppercase tracking-widest mb-4">Official E-Ticket</h3>
                                 
-                                <div className="relative group cursor-pointer" onClick={() => setShowQR(!showQR)}>
+                                <div className="relative group cursor-pointer" onClick={() => {
+                                    if (!showQR) setShowQR(true);
+                                    else window.open(passUrl, '_blank');
+                                }}>
                                     <div className={`transition-all duration-500 ${showQR ? 'filter-none blur-0' : 'blur-[6px] opacity-40'}`}>
-                                        <div className="p-2 bg-white rounded-xl shadow-sm border border-emerald-100">
+                                        <div className="p-2 bg-white rounded-xl shadow-sm border border-emerald-100 hover:border-emerald-300 transition-colors" title="Click to view PDF">
                                             <QRCodeSVG value={passUrl} size={110} level="H" includeMargin={false} />
                                         </div>
                                     </div>
@@ -213,7 +185,10 @@ function BookingSuccessContent() {
                                     )}
                                     {showQR && (
                                         <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1">
+                                            <span 
+                                                className="text-[10px] font-bold text-gray-500 hover:text-gray-800 uppercase tracking-widest flex items-center gap-1 z-10"
+                                                onClick={(e) => { e.stopPropagation(); setShowQR(false); }}
+                                            >
                                                 <EyeOff className="w-3 h-3" /> Hide QR
                                             </span>
                                         </div>
@@ -295,7 +270,6 @@ function BookingSuccessContent() {
                             </div>
 
                         </div>
-
                         {/* Bottom Action Navigators */}
                         <div className="flex flex-col sm:flex-row gap-4 max-w-lg mx-auto pb-10">
                             <button
@@ -318,114 +292,6 @@ function BookingSuccessContent() {
                     </motion.div>
                 )}
             </AnimatePresence>
-
-            {/* Hidden Print Wrapper for the Downloadable Pass (Used by PDF generator too) */}
-            <div className="print-only" ref={passRef} style={{position:'fixed', top:0, left:0, width:'100%', background:'white', zIndex:99999, padding:'32px', fontFamily:'sans-serif'}}>
-                <div className="border-[3px] border-emerald-600 rounded-3xl p-8 max-w-4xl mx-auto h-[1000px] relative">
-                    {/* Visual Cutout / Ticket Style */}
-                    <div className="absolute top-[300px] left-[-20px] w-10 h-10 bg-white rounded-full border-r-[3px] border-emerald-600 border-t-[3px] rotate-45"></div>
-                    <div className="absolute top-[300px] right-[-20px] w-10 h-10 bg-white rounded-full border-l-[3px] border-emerald-600 border-b-[3px] rotate-45"></div>
-                    <div className="absolute top-[320px] left-10 right-10 border-t-2 border-dashed border-emerald-300"></div>
-
-                    {/* Branding Header */}
-                    <div className="flex justify-between items-center mb-8 border-b-2 border-gray-100 pb-8">
-                        <div>
-                           <div className="mb-4">
-                                <Image src="/images/logo.svg" alt="BagsPackGo" width={220} height={55} priority />
-                           </div>
-                           <p className="text-gray-500 font-bold text-sm">Official E-Ticket & Travel Pass</p>
-                        </div>
-                        <div className="text-right">
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-1">Booking Reference</p>
-                            <h2 className="text-3xl font-black text-gray-900 font-mono tracking-wider">{bookingRef}</h2>
-                            <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest mt-2 px-3 py-1 bg-emerald-50 inline-block rounded-full border border-emerald-100">Payment Confirmed</p>
-                        </div>
-                    </div>
-
-                    {/* Flight/Trip Specifics */}
-                    <div className="flex justify-between items-start mb-16 gap-8">
-                        <div className="flex-1">
-                            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Selected Package</p>
-                            <h1 className="text-3xl font-black text-emerald-900 leading-tight mb-2">{packageName}</h1>
-                            <p className="text-lg font-bold text-gray-500 flex items-center gap-2"><MapPin className="w-5 h-5 text-emerald-500" /> {destinationName}</p>
-                        </div>
-                        <div className="flex-1 text-right border-l-4 border-emerald-500 pl-8 bg-emerald-50/30 p-4 rounded-r-2xl">
-                            <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest mb-1.5">Trip Managed By</p>
-                            <h2 className="text-xl font-black text-gray-900">{providerName}</h2>
-                            <div className="flex flex-col items-end gap-1 mt-3">
-                                {booking?.providerPhone && (
-                                    <p className="text-[10px] font-bold text-gray-600 flex items-center gap-1.5">
-                                        <Phone className="w-3 h-3 text-emerald-500" /> +91 {booking.providerPhone}
-                                    </p>
-                                )}
-                                {booking?.providerEmail && (
-                                    <p className="text-[10px] font-bold text-gray-600 flex items-center gap-1.5">
-                                        <Mail className="w-3 h-3 text-emerald-500" /> {booking.providerEmail}
-                                    </p>
-                                )}
-                                <div className="flex gap-2 mt-1">
-                                    {booking?.instagram && <Instagram className="w-3.5 h-3.5 text-pink-500" />}
-                                    {booking?.facebook && <Facebook className="w-3.5 h-3.5 text-blue-600" />}
-                                    {booking?.website && <Globe className="w-3.5 h-3.5 text-emerald-600" />}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Ticket Data Row below dashed line */}
-                    <div className="mt-[60px] flex justify-between gap-8 mb-12">
-                        <div className="flex-1 bg-gray-50 rounded-2xl p-6 border border-gray-200">
-                            <div className="grid grid-cols-2 gap-y-6">
-                                <div>
-                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Travel Date</p>
-                                    <p className="font-bold text-gray-900 text-lg">{formatDate(startDate)}</p>
-                                </div>
-                                <div>
-                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Pickup Time</p>
-                                    <p className="font-bold text-gray-900 text-lg">{arrivalDeparture?.pickup?.time || 'TBD'}</p>
-                                </div>
-                                <div>
-                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Total Guests</p>
-                                    <p className="font-bold text-gray-900 text-lg">{numPeople} Pax</p>
-                                </div>
-                                <div>
-                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Total Paid</p>
-                                    <p className="font-black text-emerald-600 text-xl">₹{Number(totalAmount || 0).toLocaleString('en-IN')}</p>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div className="shrink-0 flex flex-col items-center justify-center p-6 bg-white border-2 border-emerald-100 rounded-2xl shadow-sm">
-                            <p className="text-[10px] font-bold text-emerald-800 uppercase tracking-widest mb-3">Scan to View Online</p>
-                            <QRCodeSVG value={passUrl} size={150} level="H" />
-                            <p className="text-[10px] font-mono text-gray-400 mt-2">{bookingId}</p>
-                        </div>
-                    </div>
-
-                    {/* Passengers */}
-                    <div>
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 border-b border-gray-100 pb-2">Passenger Manifest</p>
-                        <div className="grid grid-cols-2 gap-4">
-                            {travelers.map((t, idx) => (
-                                <div key={idx} className="flex justify-between items-center p-3 border border-gray-200 rounded-xl">
-                                    <p className="font-bold text-gray-900 text-sm flex items-center gap-2">
-                                        <User className="w-4 h-4 text-emerald-600" /> {t.name || "Unnamed"}
-                                    </p>
-                                    <p className="text-[10px] font-bold text-gray-500 uppercase">
-                                        {t.idType?.label || (typeof t.idType === 'string' ? t.idType : "ID")}: <span className="text-gray-900">{t.idNumber}</span>
-                                    </p>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                    
-                    <div className="absolute bottom-8 left-8 right-8 text-center border-t border-gray-100 pt-6">
-                        <p className="text-xs text-gray-400 font-medium">Please preset this pass alongside a valid, government-issued photo ID at the time of pickup.</p>
-                        <p className="text-xs font-bold text-emerald-600 mt-1">Thank you for choosing BagsPackGo!</p>
-                    </div>
-                </div>
-            </div>
-
         </div>
     );
 }
