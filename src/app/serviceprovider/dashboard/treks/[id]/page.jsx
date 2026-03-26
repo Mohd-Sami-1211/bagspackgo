@@ -6,7 +6,8 @@ import { motion } from 'framer-motion';
 import {
     ChevronLeft, Calendar, Users, MapPin, Clock,
     CreditCard, Mail, Phone, AlertTriangle,
-    CheckCircle2, XCircle, Navigation, Hash, Mountain
+    CheckCircle2, XCircle, Navigation, Hash, Mountain,
+    RotateCcw, RefreshCcw
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -24,10 +25,29 @@ const STATUS_CFG = {
         bar: 'from-rose-400 to-pink-400',
         icon: XCircle,
     },
+    cancellation_requested: {
+        label: 'Cancellation Requested',
+        badge: 'bg-orange-50 text-orange-700 ring-1 ring-orange-200',
+        bar: 'from-orange-400 to-amber-400',
+        icon: RotateCcw,
+    },
+    refund_initiated: {
+        label: 'Refund Initiated',
+        badge: 'bg-blue-50 text-blue-700 ring-1 ring-blue-200',
+        bar: 'from-blue-400 to-sky-400',
+        icon: RefreshCcw,
+    },
+    pending: {
+        label: 'Pending',
+        badge: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200',
+        bar: 'from-amber-400 to-yellow-400',
+        icon: AlertTriangle,
+    },
 };
 
 function StatusBadge({ status }) {
-    const cfg = STATUS_CFG[status] || STATUS_CFG.confirmed;
+    const isCancelledItem = ['cancelled', 'cancellation_requested', 'refund_initiated'].includes(status);
+    const cfg = isCancelledItem ? STATUS_CFG.cancelled : (STATUS_CFG[status] || STATUS_CFG.confirmed);
     const Icon = cfg.icon;
     return (
         <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide ${cfg.badge}`}>
@@ -81,6 +101,8 @@ export default function SingleTrekBooking() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    const [updating, setUpdating] = useState(false);
+
     useEffect(() => {
         if (!id) return;
         fetch(`/api/provider/trek-bookings/${id}`)
@@ -89,6 +111,32 @@ export default function SingleTrekBooking() {
             .catch(() => setError('Network error'))
             .finally(() => setLoading(false));
     }, [id]);
+
+    const handleStatusUpdate = async (newStatus) => {
+        if (!confirm(`Are you sure you want to update status to ${newStatus}?`)) return;
+        setUpdating(true);
+        try {
+            const res = await fetch(`/api/provider/trek-bookings/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: newStatus }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                // Refresh booking
+                const r = await fetch(`/api/provider/trek-bookings/${id}`);
+                const d = await r.json();
+                if (d.success) setBooking(d.data);
+            } else {
+                alert(data.message || 'Failed to update status');
+            }
+        } catch (e) {
+            alert('Error updating status');
+        } finally {
+            setUpdating(false);
+        }
+    };
+
 
     if (loading) return (
         <div className="min-h-[60vh] flex items-center justify-center">
@@ -161,7 +209,7 @@ export default function SingleTrekBooking() {
                     {/* Top row: icon + title + amount */}
                     <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
                         {/* left */}
-                        <div className="flex items-start gap-4">
+                        <div className="flex items-start gap-4 flex-1">
                             <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${cfg.bar} shadow-md flex items-center justify-center shrink-0`}>
                                 <Mountain className="w-7 h-7 text-white" />
                             </div>
@@ -181,6 +229,8 @@ export default function SingleTrekBooking() {
                                 </p>
                             </div>
                         </div>
+
+                        {/* Actions removed - cancellation managed by admin only */}
 
                         {/* Amount card */}
                         <div className="shrink-0 bg-emerald-50 border border-emerald-100 rounded-2xl px-6 py-4 text-center">
@@ -359,6 +409,36 @@ export default function SingleTrekBooking() {
                     )}
                 </motion.div>
             </div>
+
+            {/* ── Payment Breakdown ── */}
+            <motion.div
+                initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.35 }}
+                className="mt-6 bg-white rounded-2xl border border-neutral-100 shadow-sm overflow-hidden"
+            >
+                <div className="px-5 py-4 border-b border-neutral-50 flex items-center justify-between bg-neutral-50/50">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center border border-emerald-200 shadow-sm">
+                            <CreditCard className="w-4 h-4 text-emerald-700" />
+                        </div>
+                        <h3 className="text-base font-black text-gray-800 tracking-tight">Payment Breakdown</h3>
+                    </div>
+                </div>
+                <div className="px-6 py-6 space-y-4">
+                    <div className="flex justify-between items-center text-sm font-semibold text-gray-600 p-3 bg-neutral-50/50 rounded-xl border border-neutral-100">
+                        <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-emerald-400"></div>Package Total (Collected from User)</span>
+                        <span className="font-mono">{fmtAmt(booking.totalAmount)}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm font-semibold text-gray-600 p-3 bg-neutral-50/50 rounded-xl border border-neutral-100">
+                        <span className="flex items-center gap-2 text-rose-600"><div className="w-1.5 h-1.5 rounded-full bg-rose-500"></div>Platform Charges (10% deducted)</span>
+                        <span className="font-mono text-rose-600">- {fmtAmt(booking.totalAmount * 0.1)}</span>
+                    </div>
+                    <div className="my-2 h-px bg-neutral-100" />
+                    <div className="flex justify-between items-center text-lg p-4 bg-emerald-50 rounded-xl border border-emerald-100 shadow-sm">
+                        <span className="font-black text-emerald-800 tracking-tight">Final Revenue</span>
+                        <span className="font-black font-mono text-emerald-700 text-xl">{fmtAmt(booking.totalAmount * 0.9)}</span>
+                    </div>
+                </div>
+            </motion.div>
         </div>
     );
 }

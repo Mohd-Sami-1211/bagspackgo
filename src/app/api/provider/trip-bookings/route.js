@@ -52,6 +52,7 @@ export async function GET() {
             createdAt: b.createdAt,
             personalDetails: b.personalDetails || {},
             arrivalDeparture: b.arrivalDeparture || {},
+            cancellationDetails: b.cancellationDetails || {},
         }));
 
         return NextResponse.json({ success: true, data: formatted });

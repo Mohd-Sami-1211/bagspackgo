@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import { Booking } from '@/models/booking.model';
+import { Event } from '@/models/event.model';
 import { getCurrentUser } from '@/lib/auth';
 
 export async function GET(req) {

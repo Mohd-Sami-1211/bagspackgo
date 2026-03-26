@@ -12,11 +12,12 @@ import { User } from '@/models/user.model';
 export const dynamic = 'force-dynamic';
 
 // Build chart data for a specific time window
+// Build chart data for a specific time window
 function buildChartData(allBookings, windowKey) {
     const now = new Date();
+    const isCancelled = (status) => ['cancelled', 'cancellation_requested', 'refund_initiated'].includes(status);
 
     if (windowKey === '1D') {
-        // Hourly for last 24 hours
         const data = [];
         for (let h = 23; h >= 0; h--) {
             const start = new Date(now);
@@ -30,7 +31,7 @@ function buildChartData(allBookings, windowKey) {
             const amount = allBookings
                 .filter(b => {
                     const d = new Date(b.createdAt);
-                    return b.status !== 'cancelled' && d >= start && d < end;
+                    return !isCancelled(b.status) && d >= start && d < end;
                 })
                 .reduce((s, b) => s + (b.totalAmount || 0), 0);
             data.push({ name: label, value: Math.round(amount / 1000) });
@@ -39,7 +40,6 @@ function buildChartData(allBookings, windowKey) {
     }
 
     if (windowKey === '1W') {
-        // Daily for last 7 days
         const data = [];
         for (let d = 6; d >= 0; d--) {
             const start = new Date(now);
@@ -51,7 +51,7 @@ function buildChartData(allBookings, windowKey) {
             const amount = allBookings
                 .filter(b => {
                     const bd = new Date(b.createdAt);
-                    return b.status !== 'cancelled' && bd >= start && bd < end;
+                    return !isCancelled(b.status) && bd >= start && bd < end;
                 })
                 .reduce((s, b) => s + (b.totalAmount || 0), 0);
             data.push({ name: label, value: Math.round(amount / 1000) });
@@ -60,7 +60,6 @@ function buildChartData(allBookings, windowKey) {
     }
 
     if (windowKey === '1M') {
-        // Weekly buckets for last ~4 weeks
         const data = [];
         for (let w = 3; w >= 0; w--) {
             const start = new Date(now);
@@ -73,7 +72,7 @@ function buildChartData(allBookings, windowKey) {
             const amount = allBookings
                 .filter(b => {
                     const bd = new Date(b.createdAt);
-                    return b.status !== 'cancelled' && bd >= start && bd < end;
+                    return !isCancelled(b.status) && bd >= start && bd < end;
                 })
                 .reduce((s, b) => s + (b.totalAmount || 0), 0);
             data.push({ name: label, value: Math.round(amount / 1000) });
@@ -82,7 +81,6 @@ function buildChartData(allBookings, windowKey) {
     }
 
     if (windowKey === '3M') {
-        // Monthly for last 3 months
         const data = [];
         for (let i = 2; i >= 0; i--) {
             const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
@@ -91,7 +89,7 @@ function buildChartData(allBookings, windowKey) {
             const amount = allBookings
                 .filter(b => {
                     const bd = new Date(b.createdAt);
-                    return b.status !== 'cancelled' && bd >= d && bd < end;
+                    return !isCancelled(b.status) && bd >= d && bd < end;
                 })
                 .reduce((s, b) => s + (b.totalAmount || 0), 0);
             data.push({ name: label, value: Math.round(amount / 1000) });
@@ -99,7 +97,6 @@ function buildChartData(allBookings, windowKey) {
         return data;
     }
 
-    // Default 6M — monthly for last 6 months
     const data = [];
     for (let i = 5; i >= 0; i--) {
         const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
@@ -108,7 +105,7 @@ function buildChartData(allBookings, windowKey) {
         const amount = allBookings
             .filter(b => {
                 const bd = new Date(b.createdAt);
-                return b.status !== 'cancelled' && bd >= d && bd < end;
+                return !isCancelled(b.status) && bd >= d && bd < end;
             })
             .reduce((s, b) => s + (b.totalAmount || 0), 0);
         data.push({ name: label, value: Math.round(amount / 1000) });
@@ -178,8 +175,9 @@ export async function GET() {
             ? Math.round(((totalBookings30 - totalBookingsPrev) / totalBookingsPrev) * 100)
             : totalBookings30 > 0 ? 100 : 0;
 
-        const earningsLast30 = bookingsLast30.filter(b => b.status !== 'cancelled').reduce((s, b) => s + (b.totalAmount || 0), 0);
-        const earningsPrev30 = bookingsPrev30.filter(b => b.status !== 'cancelled').reduce((s, b) => s + (b.totalAmount || 0), 0);
+        const isNotCancelled = (b) => !['cancelled', 'cancellation_requested', 'refund_initiated'].includes(b.status);
+        const earningsLast30 = bookingsLast30.filter(isNotCancelled).reduce((s, b) => s + (b.totalAmount || 0), 0);
+        const earningsPrev30 = bookingsPrev30.filter(isNotCancelled).reduce((s, b) => s + (b.totalAmount || 0), 0);
         const earningsChangePct = earningsPrev30 > 0
             ? Math.round(((earningsLast30 - earningsPrev30) / earningsPrev30) * 100)
             : earningsLast30 > 0 ? 100 : 0;
@@ -276,8 +274,8 @@ export async function GET() {
                     totalTrekBookings: trekBookings.length,
                     confirmedBookings: allBookings.filter(b => b.status === 'confirmed').length,
                     pendingBookings: allBookings.filter(b => b.status === 'pending').length,
-                    cancelledBookings: allBookings.filter(b => b.status === 'cancelled').length,
-                    totalRevenue: allBookings.filter(b => b.status !== 'cancelled').reduce((s, b) => s + (b.totalAmount || 0), 0),
+                    cancelledBookings: allBookings.filter(b => ['cancelled', 'cancellation_requested', 'refund_initiated'].includes(b.status)).length,
+                    totalRevenue: allBookings.filter(isNotCancelled).reduce((s, b) => s + (b.totalAmount || 0), 0),
                 },
                 charts: {
                     timelines: chartTimelines,

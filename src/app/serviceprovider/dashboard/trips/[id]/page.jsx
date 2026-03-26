@@ -6,7 +6,8 @@ import { motion } from 'framer-motion';
 import {
     ChevronLeft, Calendar, Users, MapPin, Clock,
     CreditCard, Mail, Phone, AlertTriangle,
-    CheckCircle2, XCircle, Navigation, Hash, Luggage, Download
+    CheckCircle2, XCircle, Navigation, Hash, Luggage, Download,
+    RotateCcw, RefreshCcw
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -24,10 +25,29 @@ const STATUS_CFG = {
         bar: 'from-rose-400 to-pink-400',
         icon: XCircle,
     },
+    cancellation_requested: {
+        label: 'Cancellation Requested',
+        badge: 'bg-orange-50 text-orange-700 ring-1 ring-orange-200',
+        bar: 'from-orange-400 to-amber-400',
+        icon: RotateCcw,
+    },
+    refund_initiated: {
+        label: 'Refund Initiated',
+        badge: 'bg-blue-50 text-blue-700 ring-1 ring-blue-200',
+        bar: 'from-blue-400 to-sky-400',
+        icon: RefreshCcw,
+    },
+    pending: {
+        label: 'Pending',
+        badge: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200',
+        bar: 'from-amber-400 to-yellow-400',
+        icon: AlertTriangle,
+    },
 };
 
 function StatusBadge({ status }) {
-    const cfg = STATUS_CFG[status] || STATUS_CFG.confirmed;
+    const isCancelledItem = ['cancelled', 'cancellation_requested', 'refund_initiated'].includes(status);
+    const cfg = isCancelledItem ? STATUS_CFG.cancelled : (STATUS_CFG[status] || STATUS_CFG.confirmed);
     const Icon = cfg.icon;
     return (
         <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide ${cfg.badge}`}>
@@ -81,6 +101,8 @@ export default function SingleTripBooking() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    const [updating, setUpdating] = useState(false);
+
     useEffect(() => {
         if (!id) return;
         fetch(`/api/provider/trip-bookings/${id}`)
@@ -89,6 +111,32 @@ export default function SingleTripBooking() {
             .catch(() => setError('Network error'))
             .finally(() => setLoading(false));
     }, [id]);
+
+    const handleStatusUpdate = async (newStatus) => {
+        if (!confirm(`Are you sure you want to update status to ${newStatus}?`)) return;
+        setUpdating(true);
+        try {
+            const res = await fetch(`/api/provider/trip-bookings/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: newStatus }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                // Refresh booking
+                const r = await fetch(`/api/provider/trip-bookings/${id}`);
+                const d = await r.json();
+                if (d.success) setBooking(d.data);
+            } else {
+                alert(data.message || 'Failed to update status');
+            }
+        } catch (e) {
+            alert('Error updating status');
+        } finally {
+            setUpdating(false);
+        }
+    };
+
 
     /* ── loading ── */
     if (loading) return (
@@ -155,7 +203,7 @@ export default function SingleTripBooking() {
                     {/* Top row: icon + title + amount */}
                     <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
                         {/* left */}
-                        <div className="flex items-start gap-4">
+                        <div className="flex items-start gap-4 flex-1">
                             <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${cfg.bar} shadow-md flex items-center justify-center shrink-0`}>
                                 <Luggage className="w-7 h-7 text-white" />
                             </div>
@@ -175,6 +223,8 @@ export default function SingleTripBooking() {
                                 </p>
                             </div>
                         </div>
+
+                        {/* Actions removed - cancellation managed by admin only */}
 
 
                     </div>

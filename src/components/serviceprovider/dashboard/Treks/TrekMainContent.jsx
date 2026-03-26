@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Calendar, Users, MapPin, Clock,
   Mountain, Package, RefreshCw, ArrowUpRight,
-  XCircle, Search, History,
+  XCircle, Search, History, Mail, Phone
 } from 'lucide-react';
 
 /* ─── helpers ─────────────────────────────────────────── */
@@ -15,9 +15,12 @@ const fmtAmt = (a) => `₹${Number(a || 0).toLocaleString('en-IN')}`;
 
 /* ─── status map ──────────────────────────────────────── */
 const S = {
-  confirmed: { label: 'Upcoming',  pill: 'bg-emerald-100 text-emerald-700',  bar: 'bg-emerald-500' },
-  completed: { label: 'Completed', pill: 'bg-indigo-100  text-indigo-700',   bar: 'bg-indigo-500'  },
-  cancelled: { label: 'Cancelled', pill: 'bg-rose-100    text-rose-600',     bar: 'bg-rose-400'    },
+  confirmed: { label: 'Upcoming',  pill: 'bg-emerald-100 text-emerald-700',  bar: 'bg-emerald-500', ring: 'ring-emerald-200' },
+  completed: { label: 'Completed', pill: 'bg-indigo-100  text-indigo-700',   bar: 'bg-indigo-500',  ring: 'ring-indigo-200'  },
+  cancelled: { label: 'Cancelled', pill: 'bg-rose-100    text-rose-600',     bar: 'bg-rose-400',    ring: 'ring-rose-200'    },
+  pending:   { label: 'Pending',   pill: 'bg-amber-100   text-amber-700',    bar: 'bg-amber-400',   ring: 'ring-amber-200'   },
+  cancellation_requested: { label: 'Cancellation Req.', pill: 'bg-orange-100 text-orange-700', bar: 'bg-orange-500', ring: 'ring-orange-200' },
+  refund_initiated: { label: 'Refund Sent', pill: 'bg-blue-100 text-blue-700', bar: 'bg-blue-500', ring: 'ring-blue-200' },
 };
 
 /* ─── filter tabs ─────────────────────────────────────── */
@@ -39,7 +42,8 @@ function Chip({ icon: Icon, color, label }) {
 
 /* ─── card ────────────────────────────────────────────── */
 function BookingCard({ booking, index }) {
-  const s = S[booking.status] || S.confirmed;
+  const isCancelled = ['cancelled', 'cancellation_requested', 'refund_initiated'].includes(booking.status);
+  const s = isCancelled ? S.cancelled : (S[booking.status] || S.confirmed);
 
   const ensureString = (val) => {
     if (!val) return '';
@@ -49,7 +53,9 @@ function BookingCard({ booking, index }) {
 
   const pName = ensureString(booking.packageName);
   const dest = ensureString(booking.destination);
-  const user = ensureString(booking.bookedBy);
+  const user = ensureString(booking.personalDetails?.firstName || booking.bookedBy);
+  const contactEmail = ensureString(booking.personalDetails?.contactDetails?.email) || ensureString(booking.bookedByEmail) || 'N/A';
+  const contactPhone = ensureString(booking.personalDetails?.contactDetails?.mobile) || ensureString(booking.bookedByPhone) || 'N/A';
 
   return (
     <motion.div
@@ -87,24 +93,24 @@ function BookingCard({ booking, index }) {
             <h3 className="text-[15px] font-bold text-gray-900 leading-snug mb-0.5 truncate">
               {pName}
             </h3>
-            <div className="flex items-center gap-1.5 text-[12px] text-gray-400 mb-4">
-              <MapPin className="w-3 h-3 text-emerald-400 shrink-0" />
-              <span className="truncate">{dest || 'Destination not set'}</span>
-              <span className="text-gray-200 px-0.5">·</span>
-              <span>By <span className="text-gray-600 font-semibold">{user || 'User'}</span></span>
+            <div className="flex flex-col gap-1.5 text-[12px] text-gray-400 mb-4">
+              <div className="flex items-center gap-1.5">
+                <MapPin className="w-3 h-3 text-emerald-400 shrink-0" />
+                <span className="truncate">{dest || 'Destination not set'}</span>
+                <span className="text-gray-200 px-0.5">·</span>
+                <span>By <span className="text-gray-600 font-semibold">{user || 'User'}</span></span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="flex items-center gap-1 text-gray-500"><Mail className="w-3 h-3 shrink-0" /> <span className="truncate max-w-[140px]">{contactEmail}</span></span>
+                <span className="flex items-center gap-1 text-gray-500"><Phone className="w-3 h-3 shrink-0" /> <span>{contactPhone}</span></span>
+              </div>
             </div>
 
             {/* Row C — chips + amount */}
-            <div className="flex items-end justify-between gap-4 flex-wrap">
-              <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex flex-wrap gap-2">
                 <Chip icon={Calendar} color="text-emerald-500" label={fmtDate(booking.startDate)} />
                 <Chip icon={Clock}    color="text-sky-500"     label={`${booking.days || '—'} days`} />
-                <Chip icon={Users}    color="text-violet-500"  label={`${booking.numPeople} people`} />
-              </div>
-              <div className="text-right shrink-0">
-                <p className="text-[10px] text-gray-400 uppercase font-bold leading-none mb-0.5">Revenue</p>
-                <p className="text-[20px] font-black text-gray-900 leading-none">{fmtAmt(booking.totalAmount)}</p>
-              </div>
+                <Chip icon={Users}    color="text-violet-500"  label={`${booking.numPeople} guests`} />
             </div>
           </div>
         </div>
@@ -137,12 +143,23 @@ export default function TrekMainContent() {
   const counts = {
     confirmed: bookings.filter(b => b.status === 'confirmed').length,
     completed: bookings.filter(b => b.status === 'completed').length,
-    cancelled: bookings.filter(b => b.status === 'cancelled').length,
+    cancelled: bookings.filter(b => ['cancelled', 'cancellation_requested', 'refund_initiated'].includes(b.status)).length,
   };
 
   const q    = search.toLowerCase();
   const list = bookings
-    .filter(b => b.status === tab)
+    .filter(b => {
+      if (tab === 'cancelled') return ['cancelled', 'cancellation_requested', 'refund_initiated'].includes(b.status);
+      return b.status === tab;
+    })
+    .sort((a, b) => {
+      if (tab === 'cancelled') {
+        const dateA = new Date(a.cancellationDetails?.requestedAt || a.updatedAt || 0).getTime();
+        const dateB = new Date(b.cancellationDetails?.requestedAt || b.updatedAt || 0).getTime();
+        return dateB - dateA;
+      }
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    })
     .filter(b => !q || b.packageName?.toLowerCase().includes(q) || b.bookingRef?.toLowerCase().includes(q));
 
   return (

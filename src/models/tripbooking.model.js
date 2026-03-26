@@ -29,7 +29,17 @@ const tripBookingSchema = new mongoose.Schema({
     totalAmount: { type: Number, required: true },
 
     // Booking status
-    status: { type: String, enum: ['pending', 'confirmed', 'cancelled'], default: 'pending' },
+    status: { type: String, enum: ['pending', 'confirmed', 'cancelled', 'cancellation_requested', 'refund_initiated'], default: 'pending' },
+
+    // Cancellation details
+    cancellationDetails: {
+        ticketId: { type: String, default: '' },
+        reason: { type: String, default: '' },
+        requestedAt: { type: Date },
+        refundInitiatedAt: { type: Date },
+        completedAt: { type: Date },
+        refundAmount: { type: Number, default: 0 },
+    },
 
     // Provider Payment details
     providerPaymentStatus: { type: String, enum: ['pending', 'completed'], default: 'pending' },

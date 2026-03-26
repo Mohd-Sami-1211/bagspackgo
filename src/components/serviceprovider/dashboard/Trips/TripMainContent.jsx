@@ -18,6 +18,9 @@ const S = {
   confirmed: { label: 'Upcoming',  pill: 'bg-emerald-100 text-emerald-700',  bar: 'bg-emerald-500', ring: 'ring-emerald-200' },
   completed: { label: 'Completed', pill: 'bg-indigo-100  text-indigo-700',   bar: 'bg-indigo-500',  ring: 'ring-indigo-200'  },
   cancelled: { label: 'Cancelled', pill: 'bg-rose-100    text-rose-600',     bar: 'bg-rose-400',    ring: 'ring-rose-200'    },
+  pending:   { label: 'Pending',   pill: 'bg-amber-100   text-amber-700',    bar: 'bg-amber-400',   ring: 'ring-amber-200'   },
+  cancellation_requested: { label: 'Cancellation Req.', pill: 'bg-orange-100 text-orange-700', bar: 'bg-orange-500', ring: 'ring-orange-200' },
+  refund_initiated: { label: 'Refund Sent', pill: 'bg-blue-100 text-blue-700', bar: 'bg-blue-500', ring: 'ring-blue-200' },
 };
 
 /* ─── filter tabs ─────────────────────────────────────── */
@@ -29,7 +32,8 @@ const TABS = [
 
 /* ─── card ────────────────────────────────────────────── */
 function BookingCard({ booking, index }) {
-  const s = S[booking.status] || S.confirmed;
+  const isCancelled = ['cancelled', 'cancellation_requested', 'refund_initiated'].includes(booking.status);
+  const s = isCancelled ? S.cancelled : (S[booking.status] || S.confirmed);
 
   const ensureString = (val) => {
     if (!val) return '';
@@ -138,12 +142,23 @@ export default function TripMainContent() {
   const counts = {
     confirmed: bookings.filter(b => b.status === 'confirmed').length,
     completed: bookings.filter(b => b.status === 'completed').length,
-    cancelled: bookings.filter(b => b.status === 'cancelled').length,
+    cancelled: bookings.filter(b => ['cancelled', 'cancellation_requested', 'refund_initiated'].includes(b.status)).length,
   };
 
   const q  = search.toLowerCase();
   const list = bookings
-    .filter(b => b.status === tab)
+    .filter(b => {
+      if (tab === 'cancelled') return ['cancelled', 'cancellation_requested', 'refund_initiated'].includes(b.status);
+      return b.status === tab;
+    })
+    .sort((a, b) => {
+      if (tab === 'cancelled') {
+        const dateA = new Date(a.cancellationDetails?.requestedAt || a.updatedAt || 0).getTime();
+        const dateB = new Date(b.cancellationDetails?.requestedAt || b.updatedAt || 0).getTime();
+        return dateB - dateA;
+      }
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    })
     .filter(b => !q || b.packageName?.toLowerCase().includes(q) || b.bookingRef?.toLowerCase().includes(q));
 
   return (

@@ -3,7 +3,21 @@ import { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { QRCodeSVG } from 'qrcode.react';
 import Image from 'next/image';
-import { MapPin, User, Mail, Phone, Instagram, Facebook, Globe, CheckCircle2 } from 'lucide-react';
+import { MapPin, User, Mail, Phone, Instagram, Facebook, Globe, CheckCircle2, Navigation } from 'lucide-react';
+
+const formatTimeWithAMPM = (time) => {
+    if (!time) return "";
+    if (typeof time !== 'string') return String(time);
+    if (time.includes("AM") || time.includes("PM")) return time;
+    const parts = time.split(":");
+    if (parts.length < 2) return time;
+    const hours = parts[0];
+    const minutes = parts[1];
+    const hourNum = parseInt(hours, 10);
+    const ampm = hourNum >= 12 ? "PM" : "AM";
+    const displayHour = hourNum % 12 || 12;
+    return `${displayHour}:${minutes} ${ampm}`;
+};
 
 export default function TripPassPage() {
     const { id } = useParams();
@@ -15,11 +29,19 @@ export default function TripPassPage() {
         const fetchBooking = async () => {
             if (!id) return;
             try {
-                const res = await fetch('/api/user/trip-bookings');
-                const data = await res.json();
-                if (data.success) {
-                    const found = data.data?.find(b => b.id === id || b._id === id);
-                    if (found) setBooking(found);
+                // Check trips
+                const tRes = await fetch('/api/user/trip-bookings');
+                const tData = await tRes.json();
+                let found = tData.success ? tData.data?.find(b => b.id === id || b._id === id) : null;
+                
+                if (found) {
+                    setBooking({ ...found, bookingType: 'trip' });
+                } else {
+                    // Check treks
+                    const trekRes = await fetch('/api/user/trek-bookings');
+                    const trekData = await trekRes.json();
+                    found = trekData.success ? trekData.data?.find(b => b.id === id || b._id === id) : null;
+                    if (found) setBooking({ ...found, bookingType: 'trek' });
                 }
             } catch (e) {
                 console.error(e);
@@ -68,7 +90,9 @@ export default function TripPassPage() {
     const destinationName = pSnapshot.destination || booking?.destination || arrivalDeparture?.arrival?.city || "Kashmir Valleys";
     const travelers = personalDetails?.personalDetails || [];
 
-    const passUrl = typeof window !== 'undefined' ? `${window.location.origin}/api/user/trip-bookings/${id}/pdf` : `https://bagspackgo.com/api/user/trip-bookings/${id}/pdf`;
+    const passUrl = typeof window !== 'undefined' 
+        ? `${window.location.origin}/api/user/${booking?.bookingType === 'trek' ? 'trek' : 'trip'}-bookings/${id}/pdf` 
+        : `https://bagspackgo.com/api/user/${booking?.bookingType === 'trek' ? 'trek' : 'trip'}-bookings/${id}/pdf`;
 
     return (
         <div className="min-h-screen bg-[#F0FDF4] p-4 sm:p-8 flex items-center justify-center font-sans">
@@ -158,14 +182,18 @@ export default function TripPassPage() {
                 <div className="p-5 sm:p-8 sm:pt-6 bg-white flex flex-col shrink-0 min-h-[300px]">
                     <div className="flex flex-col sm:flex-row justify-between gap-6 sm:gap-8 mb-8 sm:mb-10">
                         <div className="flex-1 bg-gray-50 rounded-2xl p-4 sm:p-6 border border-gray-200">
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+                            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 sm:gap-6">
                                 <div className="text-center sm:text-left">
                                     <p className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Travel Date</p>
                                     <p className="font-bold text-gray-900 text-sm sm:text-base">{formatDate(startDate)}</p>
                                 </div>
                                 <div className="text-center sm:text-left">
-                                    <p className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Pickup Time</p>
-                                    <p className="font-bold text-gray-900 text-sm sm:text-base">{arrivalDeparture?.pickup?.time || 'TBD'}</p>
+                                    <p className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Pickup</p>
+                                    <p className="font-bold text-gray-900 text-[10px] sm:text-xs">{(arrivalDeparture?.pickup?.location && arrivalDeparture?.pickup?.time) ? `${arrivalDeparture.pickup.location} @ ${arrivalDeparture.pickup.time}` : 'TBD'}</p>
+                                </div>
+                                <div className="text-center sm:text-left">
+                                    <p className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Dropoff</p>
+                                    <p className="font-bold text-gray-900 text-[10px] sm:text-xs">{(arrivalDeparture?.dropoff?.location && arrivalDeparture?.dropoff?.time) ? `${arrivalDeparture.dropoff.location} @ ${arrivalDeparture.dropoff.time}` : 'TBD'}</p>
                                 </div>
                                 <div className="text-center sm:text-left">
                                     <p className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Guests</p>
@@ -232,14 +260,100 @@ export default function TripPassPage() {
                             <h4 className="font-bold text-gray-800 uppercase tracking-widest mb-3 text-[11px] flex items-center gap-2">
                                 <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Provider Conditions
                             </h4>
-                            <ul className="list-disc pl-4 space-y-2">
-                                <li>All passengers must carry a valid Photo ID during the trip.</li>
-                                <li>The provider reserves the right to alter the itinerary due to weather or unforeseen circumstances.</li>
-                                <li>Any damage to the vehicle, property, or equipment will be borne solely by the traveler.</li>
-                                <li>Alcohol consumption and smoking may be strictly prohibited during transit.</li>
-                            </ul>
+                            {booking?.termsAndConditions && booking.termsAndConditions.length > 0 ? (
+                                <ul className="list-disc pl-4 space-y-2">
+                                    {booking.termsAndConditions.map((term, i) => (
+                                        <li key={i}>{term}</li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p className="italic font-medium text-gray-400">Terms and conditions not available.</p>
+                            )}
                         </div>
                     </div>
+
+                    {/* Detailed Itinerary Row */}
+                    {booking?.itinerary && booking.itinerary.length > 0 && (
+                        <div className="mt-8 pt-6 border-t border-emerald-100">
+                            <h4 className="font-bold text-gray-800 uppercase tracking-widest mb-4 text-[11px] flex items-center gap-2">
+                                <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Complete Itinerary
+                            </h4>
+                            <div className="space-y-4">
+                                {booking.itinerary.map((day, idx) => (
+                                    <div key={idx} className="flex gap-4">
+                                        <div className="shrink-0 w-12 h-12 bg-emerald-100 text-emerald-700 rounded-xl flex flex-col items-center justify-center font-bold">
+                                            <span className="text-[9px] uppercase">Day</span>
+                                            <span className="text-sm leading-none">{day.day}</span>
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="font-bold text-gray-800 text-[11px] mb-1">{day.location || `Day ${day.day}`}</p>
+                                            
+                                            {/* Day 1 Pickup */}
+                                            {idx === 0 && booking.arrivalDeparture?.pickup?.address && (
+                                                <div className="mb-2 p-1.5 bg-emerald-50 rounded border border-emerald-100 flex items-start gap-1.5">
+                                                    <Navigation className="w-3 h-3 text-emerald-600 shrink-0 mt-0.5" />
+                                                    <div className="min-w-0">
+                                                        <p className="text-[9px] font-bold text-gray-800 leading-tight">
+                                                            Pickup from {booking.arrivalDeparture.pickup.address}{booking.arrivalDeparture.pickup.location ? `, ${booking.arrivalDeparture.pickup.location}` : ''} at {booking.arrivalDeparture.pickup.time || 'given time'}.
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            )}
+                                            
+                                            {/* Last Day Dropoff */}
+                                            {idx === booking.itinerary.length - 1 && booking.arrivalDeparture?.dropoff?.address && (
+                                                <div className="mb-2 p-1.5 bg-blue-50 rounded border border-blue-100 flex items-start gap-1.5">
+                                                    <Navigation className="w-3 h-3 text-blue-600 shrink-0 mt-0.5" />
+                                                    <div className="min-w-0">
+                                                        <p className="text-[9px] font-bold text-gray-800 leading-tight">
+                                                            Drop off at {booking.arrivalDeparture.dropoff.address}{booking.arrivalDeparture.dropoff.location ? `, ${booking.arrivalDeparture.dropoff.location}` : ''} at {booking.arrivalDeparture.dropoff.time || 'given time'}.
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {day.agenda && <p className="mb-1 text-[10px] text-gray-700 font-semibold capitalize">{day.agenda.replace(/-/g, ' ')}</p>}
+                                            {((day.activities && day.activities.length > 0) || (day.highlights && day.highlights.length > 0)) && (
+                                                <div className="mb-2">
+                                                    <span className="text-[9px] text-emerald-600 font-bold uppercase tracking-wider block mb-1">Highlights:</span>
+                                                    <ul className="list-disc pl-4 space-y-0.5 text-[10px] text-gray-600 font-medium">
+                                                        {[...(day.activities || []), ...(day.highlights || [])].map((item, i) => (
+                                                            <li key={i}>{item}</li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            )}
+                                            {day.hotelPhotos && day.hotelPhotos.length > 0 && (
+                                                <div className="mb-2">
+                                                    <p className="text-[10px] font-bold text-gray-800 mb-1 flex items-center gap-1">
+                                                        <span className="text-gray-500 font-medium">Hotel:</span> {day.hotelName || 'Selected Accommodation'} 
+                                                        {day.hotelStars && <span className="text-[#D4AF37] tracking-widest text-[8px] uppercase border px-1 py-0.5 rounded-full border-amber-200 bg-amber-50">⭐ {day.hotelStars} Star</span>}
+                                                    </p>
+                                                    <div className="flex gap-2 flex-wrap pb-1">
+                                                        {day.hotelPhotos.map((photo, pIdx) => (
+                                                            <Image key={pIdx} src={photo} alt={`${day.hotelName || 'Hotel'}`} width={60} height={40} className="object-cover rounded border border-gray-200 shadow-sm print:max-w-none w-[60px] h-[40px] shrink-0" />
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {day.destinationPhotos && day.destinationPhotos.length > 0 && (
+                                                <div className="mb-1">
+                                                    <p className="text-[10px] font-bold text-gray-800 mb-1">
+                                                        <span className="text-gray-500 font-medium">Destination:</span> {day.location || `Day ${day.day} Location`}
+                                                    </p>
+                                                    <div className="flex gap-2 flex-wrap pb-1">
+                                                        {day.destinationPhotos.map((photo, pIdx) => (
+                                                            <Image key={pIdx} src={photo} alt={`Destination`} width={60} height={40} className="object-cover rounded border border-gray-200 shadow-sm print:max-w-none w-[60px] h-[40px] shrink-0" />
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

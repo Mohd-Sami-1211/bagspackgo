@@ -1,116 +1,162 @@
+'use client';
 import { motion } from 'framer-motion';
+import { MapPin, Calendar, Users, Clock, ArrowRight, Tag, AlertCircle, CheckCircle, XCircle, RotateCcw, RefreshCcw } from 'lucide-react';
+
+const STATUS_CONFIG = {
+    confirmed: {
+        label: 'Confirmed',
+        color: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+        dot: 'bg-emerald-500',
+        Icon: CheckCircle,
+    },
+    pending: {
+        label: 'Pending',
+        color: 'bg-amber-100 text-amber-700 border-amber-200',
+        dot: 'bg-amber-500',
+        Icon: AlertCircle,
+    },
+    cancelled: {
+        label: 'Cancelled',
+        color: 'bg-red-100 text-red-700 border-red-200',
+        dot: 'bg-red-500',
+        Icon: XCircle,
+    },
+    cancellation_requested: {
+        label: 'Cancelled',
+        color: 'bg-red-100 text-red-700 border-red-200',
+        dot: 'bg-red-500',
+        Icon: XCircle,
+    },
+    refund_initiated: {
+        label: 'Refund Initiated',
+        color: 'bg-blue-100 text-blue-700 border-blue-200',
+        dot: 'bg-blue-500',
+        Icon: RefreshCcw,
+    },
+};
+
+const TYPE_COLORS = {
+    trip: 'from-emerald-600 to-teal-600',
+    Trek: 'from-emerald-600 to-teal-600',
+    Event: 'from-emerald-600 to-teal-600',
+};
 
 const BookingCard = ({ booking, onClick }) => {
-  const categoryColors = {
-    Trek: 'bg-emerald-500',
-    Trip: 'bg-blue-500',
-    Event: 'bg-purple-500'
-  };
+    const ensureString = (val) => {
+        if (!val) return '';
+        if (typeof val === 'object') return val.label || val.value || '';
+        return String(val);
+    };
 
-  const rupee = (value) =>
-    new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(value);
+    const name = ensureString(booking.name);
+    const destination = ensureString(booking.destination);
+    const guide = ensureString(booking.guide);
+    const status = booking.status || 'pending';
+    const statusCfg = STATUS_CONFIG[status] || STATUS_CONFIG.pending;
+    const type = booking.type || 'trip';
+    const gradientClass = TYPE_COLORS[type] || TYPE_COLORS.trip;
 
-  const ensureString = (val) => {
-    if (!val) return '';
-    if (typeof val === 'object') return val.label || val.value || 'N/A';
-    return String(val);
-  };
+    const formatDate = (d) => {
+        if (!d) return 'TBD';
+        return new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    };
 
-  const name = ensureString(booking.name);
-  const destination = ensureString(booking.destination);
-  const category = ensureString(booking.category);
-  const guide = ensureString(booking.guide);
+    const rupee = (v) =>
+        new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(v || 0);
 
-  return (
-    <motion.div
-      whileHover={{ y: -6, scale: 1.01 }}
-      whileTap={{ scale: 0.995 }}
-      onClick={onClick}
-      className="relative bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-100 cursor-pointer transition-all group"
-    >
-      {/* header image + overlay */}
-      <div className="relative h-44 sm:h-40 lg:h-44">
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url(${booking.image || '/images/hero.svg'})` }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/65 to-transparent" />
-        <div className="absolute left-4 right-4 bottom-4 flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-3">
-              <span className={`w-3 h-3 rounded-full ${categoryColors[category] || 'bg-gray-400'}`} />
-              <h3 className="text-white text-lg font-semibold leading-tight">{name}</h3>
+    return (
+        <motion.div
+            whileHover={{ y: -4, boxShadow: '0 20px 40px -10px rgba(0,0,0,0.12)' }}
+            whileTap={{ scale: 0.995 }}
+            onClick={onClick}
+            className="relative bg-white rounded-2xl overflow-hidden shadow-md border border-gray-100 cursor-pointer transition-all group"
+        >
+            {/* Coloured top bar */}
+            <div className={`h-1.5 w-full bg-gradient-to-r ${gradientClass}`} />
+
+            <div className="p-5">
+                {/* Header row */}
+                <div className="flex items-start justify-between gap-3 mb-4">
+                    <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                            <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-gradient-to-r ${gradientClass} text-white`}>
+                                {type}
+                            </span>
+                            {booking.bookingRef && (
+                                <span className="text-[10px] font-bold text-gray-400 font-mono">#{booking.bookingRef}</span>
+                            )}
+                        </div>
+                        <h3 className="text-base font-black text-gray-900 leading-snug truncate pr-2">
+                            {name || 'Trip Package'}
+                        </h3>
+                        {destination && (
+                            <p className="text-xs font-semibold text-gray-500 flex items-center gap-1 mt-0.5">
+                                <MapPin className="w-3 h-3 text-emerald-500 shrink-0" />
+                                {destination}
+                            </p>
+                        )}
+                    </div>
+
+                    {/* Status badge */}
+                    <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-black shrink-0 ${statusCfg.color}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${statusCfg.dot}`} />
+                        {statusCfg.label}
+                    </div>
+                </div>
+
+                {/* Info grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pb-4 border-b border-gray-100">
+                    <div>
+                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Date</p>
+                        <p className="text-xs font-bold text-gray-800 flex items-center gap-1">
+                            <Calendar className="w-3 h-3 text-emerald-500 shrink-0" />
+                            {formatDate(booking.date)}
+                        </p>
+                    </div>
+                    <div>
+                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Duration</p>
+                        <p className="text-xs font-bold text-gray-800 flex items-center gap-1">
+                            <Clock className="w-3 h-3 text-amber-500 shrink-0" />
+                            {booking.duration || 'N/A'}
+                        </p>
+                    </div>
+                    <div>
+                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Guide</p>
+                        <p className="text-xs font-bold text-gray-800 truncate">{guide || '—'}</p>
+                    </div>
+                    <div>
+                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Travellers</p>
+                        <p className="text-xs font-bold text-gray-800 flex items-center gap-1">
+                            <Users className="w-3 h-3 text-blue-500 shrink-0" />
+                            {booking.people || 1} Pax
+                        </p>
+                    </div>
+                </div>
+
+                {/* Footer row: price + CTA */}
+                <div className="flex items-center justify-between mt-4">
+                    <div>
+                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Amount Paid</p>
+                        <p className="text-lg font-black text-emerald-600">{rupee(booking.price)}</p>
+                    </div>
+                    <button
+                        className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-black text-white bg-gradient-to-r ${gradientClass} shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all`}
+                        onClick={onClick}
+                    >
+                        View Details <ArrowRight className="w-4 h-4" />
+                    </button>
+                </div>
+
+                {/* Cancellation warning banner */}
+                {(status === 'refund_initiated') && (
+                    <div className={`mt-3 flex items-center gap-2 text-xs font-semibold rounded-xl px-3 py-2 border ${statusCfg.color}`}>
+                        <statusCfg.Icon className="w-3.5 h-3.5 shrink-0" />
+                        Refund has been initiated. Please allow 5-7 business days.
+                    </div>
+                )}
             </div>
-            <p className="text-xs text-white/80 mt-1">{destination}</p>
-          </div>
-
-          <div className="text-right">
-            <span className="inline-block bg-white/10 text-white text-xs px-3 py-1 rounded-full">
-              {category}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* body */}
-      <div className="p-4 grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
-        <div>
-          <p className="text-gray-400 text-xs">Guide</p>
-          <p className="text-gray-800 font-medium">{guide}</p>
-        </div>
-
-        <div>
-          <p className="text-gray-400 text-xs">Date</p>
-          <p className="text-gray-800 font-medium">
-            {booking.date ? new Date(booking.date).toLocaleDateString('en-GB', {
-              day: '2-digit',
-              month: 'short',
-              year: 'numeric'
-            }) : 'TBD'}
-          </p>
-        </div>
-
-        <div>
-          <p className="text-gray-400 text-xs">People</p>
-          <p className="text-gray-800 font-medium">{booking.people || 1}</p>
-        </div>
-
-        <div>
-          <p className="text-gray-400 text-xs">Duration</p>
-          <p className="text-gray-800 font-medium">{booking.duration || 'N/A'}</p>
-        </div>
-
-        <div>
-          <p className="text-gray-400 text-xs">Destination</p>
-          <p className="text-gray-800 font-medium">{destination}</p>
-        </div>
-
-        <div className="flex flex-col items-start">
-          <p className="text-gray-400 text-xs">Amount Paid</p>
-          <div className="mt-1 flex gap-2 items-center">
-            <span className="inline-flex items-center px-3 py-1 rounded-full bg-green-500 text-white font-bold">
-              {rupee(booking.price || 0)}
-            </span>
-          </div>
-        </div>
-
-        {booking.passUrl && (
-          <div className="flex flex-col items-start sm:col-span-1">
-            <p className="text-gray-400 text-xs">Tickets</p>
-            <div className="mt-1">
-              <a
-                href={booking.passUrl}
-                onClick={e => e.stopPropagation()}
-                className="inline-flex items-center px-3 py-1 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold transition shadow"
-              >
-                View Pass
-              </a>
-            </div>
-          </div>
-        )}
-      </div>
-    </motion.div>
-  );
+        </motion.div>
+    );
 };
 
 export default BookingCard;

@@ -955,7 +955,7 @@ const GuideDetails = ({ guide }) => {
                                 {day.agenda && (
                                   <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${isPremiumPackage ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-green-100 text-green-700 border-green-200'
                                     }`}>
-                                    {AGENDA_LABELS[day.agenda] || day.agenda}
+                                    {AGENDA_LABELS[day.agenda?.toLowerCase()] || <span className="capitalize">{day.agenda?.replace(/-/g, ' ')}</span>}
                                   </span>
                                 )}
                                 {day.isDayTrip && (
@@ -1026,8 +1026,8 @@ const GuideDetails = ({ guide }) => {
                                               {day.hotel.name}
                                             </span>
                                             {day.hotelStars && (
-                                              <span className="text-[10px] text-amber-500 flex items-center mt-0.5 font-bold tracking-tight">
-                                                <Star className="w-3 h-3 fill-amber-500 mr-0.5" /> {day.hotelStars} Star
+                                              <span className="text-[10px] text-[#D4AF37] flex items-center mt-0.5 font-bold tracking-tight uppercase">
+                                                ⭐ {day.hotelStars} Star
                                               </span>
                                             )}
                                           </>

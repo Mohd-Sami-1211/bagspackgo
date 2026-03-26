@@ -15,20 +15,6 @@ export async function GET(request, context) {
 
         await dbConnect();
 
-        const booking = await TripBooking.findById(id)
-            .populate('user', 'username email phone')
-            .populate('package', 'name destination days pricingTiers')
-            .lean();
-
-        if (!booking) {
-            return NextResponse.json({ success: false, message: 'Booking not found' }, { status: 404 });
-        }
-
-        // Verify that this booking belongs to the provider (either via direct provider field or via package)
-        const isProviderMatch = booking.provider?.toString() === user.userId;
-        const isPackageMatch = booking.package?.provider?.toString() === user.userId; // NOTE: `package` is populated, so its `provider` might not be selected? Wait, the populate didn't select 'provider'.
-        // Let's just fetch the booking and verify
-        // Actually, it's safer to re-query with the condition
         const verifyBooking = await TripBooking.findOne({
             _id: id
         }).populate({
@@ -65,14 +51,55 @@ export async function GET(request, context) {
             personalDetails: b.personalDetails || {},
             arrivalDeparture: b.arrivalDeparture || {},
             emergencyContact: b.personalDetails?.emergencyContact || {},
-            // include payment details if relevant
             paymentId: b.paymentId,
-            orderId: b.orderId
+            orderId: b.orderId,
+            cancellationDetails: b.cancellationDetails || {},
         };
 
         return NextResponse.json({ success: true, data: formatted });
     } catch (error) {
         console.error('Provider single trip booking error:', String(error));
         return NextResponse.json({ success: false, message: 'Server error' }, { status: 500 });
+    }
+}
+
+export async function PATCH(request, context) {
+    const params = await context.params;
+    try {
+        const user = await getCurrentUser();
+        if (!user || user.role !== 'provider') {
+            return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
+        }
+
+        const { id } = await params;
+        const { status } = await request.json();
+
+        await dbConnect();
+        const booking = await TripBooking.findById(id).populate({ path: 'package', select: 'provider' });
+
+        if (!booking) return NextResponse.json({ success: false, message: 'Booking not found' }, { status: 404 });
+
+        // Verify ownership
+        const isOwner = (booking.provider?.toString() === user.userId || booking.package?.provider?.toString() === user.userId);
+        if (!isOwner) return NextResponse.json({ success: false, message: 'Forbidden' }, { status: 403 });
+
+        // Status update logic
+        if (status === 'refund_initiated' && booking.status === 'cancellation_requested') {
+            booking.status = 'refund_initiated';
+            if (!booking.cancellationDetails) booking.cancellationDetails = {};
+            booking.cancellationDetails.refundInitiatedAt = new Date();
+        } else if (status === 'cancelled') {
+            booking.status = 'cancelled';
+            if (!booking.cancellationDetails) booking.cancellationDetails = {};
+            booking.cancellationDetails.completedAt = new Date();
+        } else {
+            booking.status = status;
+        }
+
+        await booking.save();
+        return NextResponse.json({ success: true, message: 'Booking status updated' });
+    } catch (error) {
+        console.error('Update status error:', error);
+        return NextResponse.json({ success: false, message: error.message }, { status: 500 });
     }
 }

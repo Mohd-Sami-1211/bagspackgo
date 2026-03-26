@@ -59,19 +59,38 @@ const GuideCard = ({ guide, category, daysRange, peopleRange, date, selectedPack
 
   const isPremium = matchedPackage?.type === 'premium';
 
-  let pricePerPerson, totalPrice, numDays, daysLabel;
+  let pricePerPerson, totalPrice, numDays, daysLabel, peopleRangeLabel;
   if (matchedPackage) {
-    pricePerPerson = Number(matchedPackage.price[category] || matchedPackage.price.individual || 0);
+    // Find the matching pricing tier for the selected people count
+    const baseCount = peopleRange ? parseInt(peopleRange.split('-')[0]) || 1 : 1;
+    const tiers = matchedPackage.pricingTiers || [];
+    const matchedTier = tiers.find(t => baseCount >= t.minPeople && baseCount <= t.maxPeople) || tiers[0];
+    pricePerPerson = matchedTier ? Number(matchedTier.price) : Number(matchedPackage.price[category] || matchedPackage.price.individual || 0);
     numDays = matchedPackage.days;
-    const bc = peopleRange ? parseInt(peopleRange.split('-')[0]) || 1 : 1;
-    totalPrice = pricePerPerson * Math.max(1, bc);
+    const bc = Math.max(1, baseCount);
+    totalPrice = pricePerPerson * bc;
     daysLabel = `${numDays} day${numDays > 1 ? 's' : ''}`;
+    // Show people range from the matched pricing tier
+    if (matchedTier && matchedTier.minPeople != null && matchedTier.maxPeople != null) {
+      peopleRangeLabel = matchedTier.minPeople === matchedTier.maxPeople
+        ? `${matchedTier.minPeople} pax`
+        : `${matchedTier.minPeople}–${matchedTier.maxPeople} pax`;
+    } else {
+      peopleRangeLabel = `${bc} pax`;
+    }
   } else {
     pricePerPerson = Number(guide.price?.[category] || guide.price?.individual || 0);
     numDays = daysRange?.includes('-') ? parseInt(daysRange.split('-')[1]) || 1 : 1;
     const bc = peopleRange ? parseInt(peopleRange.split('-')[0]) || 1 : 1;
     totalPrice = pricePerPerson * Math.max(1, bc) * numDays;
     daysLabel = daysRange ? `${daysRange} days` : 'Custom';
+    // Show the selected people range from search params
+    if (peopleRange) {
+      const [minP, maxP] = peopleRange.split('-');
+      peopleRangeLabel = maxP ? `${minP}–${maxP} pax` : `${minP}+ pax`;
+    } else {
+      peopleRangeLabel = '1 pax';
+    }
   }
 
   const baseCount = peopleRange ? parseInt(peopleRange.split('-')[0]) || 1 : 1;
@@ -176,7 +195,7 @@ const GuideCard = ({ guide, category, daysRange, peopleRange, date, selectedPack
             <StatBadge icon={MapPin} label="Location" value={guide.location || '—'} color="text-blue-600" />
             <StatBadge icon={Briefcase} label="Experience" value={`${guide.touristsHandled}+ trips`} color="text-violet-600" />
             <StatBadge icon={Clock} label="Duration" value={daysLabel} color="text-amber-600" />
-            <StatBadge icon={Users} label={category === 'couple' ? 'Couples' : 'People'} value={`${numPeople} ${peopleText}${numPeople > 1 ? 's' : ''}`} color="text-emerald-600" />
+            <StatBadge icon={Users} label={category === 'couple' ? 'Couples' : 'People'} value={peopleRangeLabel || `${numPeople} ${peopleText}`} color="text-emerald-600" />
           </div>
 
           {/* === MOBILE: Price + CTA at bottom === */}

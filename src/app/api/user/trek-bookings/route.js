@@ -14,27 +14,63 @@ export async function GET(req) {
         await dbConnect();
 
         const bookings = await TrekBooking.find({ user: user.userId })
-            .populate('package', 'name destination days pricingTiers')
+            .populate('package', 'name destination days pricingTiers termsAndConditions itinerary')
             .populate('provider', 'username email phone')
             .sort({ createdAt: -1 })
             .lean();
 
-        const formatted = bookings.map(b => ({
-            id: b._id.toString(),
-            bookingRef: b.bookingRef,
-            type: 'trek',
-            packageName: b.package?.name || b.packageSnapshot?.name || 'Trek Package',
-            destination: b.package?.destination || b.packageSnapshot?.destination || '',
-            guideName: b.provider?.username || 'Guide',
-            startDate: b.startDate,
-            endDate: b.endDate,
-            numPeople: b.numPeople,
-            peopleRange: b.peopleRange,
-            totalAmount: b.totalAmount,
-            status: b.status,
-            days: b.package?.days || b.packageSnapshot?.days || 0,
-            createdAt: b.createdAt,
-        }));
+        const providerIds = [...new Set(bookings.map(b => b.provider?._id).filter(id => id))];
+        const { GuideDetails } = await import('@/models/guidedetails.model');
+        const guideDetailsList = await GuideDetails.find({ guide: { $in: providerIds } })
+            .select('guide companyname companymobile companyemail instagram facebook website twitter')
+            .lean();
+        
+        const companyMap = {};
+        guideDetailsList.forEach(gd => {
+            companyMap[gd.guide.toString()] = {
+                companyName: gd.companyname,
+                phone: gd.companymobile,
+                email: gd.companyemail,
+                instagram: gd.instagram,
+                facebook: gd.facebook,
+                website: gd.website,
+                twitter: gd.twitter
+            };
+        });
+
+        const formatted = bookings.map(b => {
+            const gd = companyMap[b.provider?._id?.toString()] || {};
+            return {
+                id: b._id.toString(),
+                bookingRef: b.bookingRef,
+                type: 'trek',
+                packageName: b.package?.name || b.packageSnapshot?.name || 'Trek Package',
+                destination: b.package?.destination || b.packageSnapshot?.destination || '',
+                guideName: gd.companyName || b.provider?.username || 'Guide',
+                companyName: gd.companyName || '',
+                providerEmail: gd.email || b.provider?.email || '',
+                providerPhone: gd.phone || b.provider?.phone || '',
+                instagram: gd.instagram || '',
+                facebook: gd.facebook || '',
+                website: gd.website || '',
+                twitter: gd.twitter || '',
+                startDate: b.startDate,
+                endDate: b.endDate,
+                numPeople: b.numPeople,
+                peopleRange: b.peopleRange,
+                totalAmount: b.totalAmount,
+                status: b.status,
+                days: b.package?.days || b.packageSnapshot?.days || 0,
+                createdAt: b.createdAt,
+                personalDetails: b.personalDetails || {},
+                pickupDropoff: b.pickupDropoff || {},
+                packageSnapshot: b.packageSnapshot || {},
+                paymentId: b.paymentId || '',
+                cancellationDetails: b.cancellationDetails || {},
+                itinerary: b.package?.itinerary || b.packageSnapshot?.itinerary || [],
+                termsAndConditions: b.package?.termsAndConditions || b.packageSnapshot?.termsAndConditions || [],
+            };
+        });
 
         return NextResponse.json({ success: true, count: formatted.length, data: formatted });
     } catch (error) {

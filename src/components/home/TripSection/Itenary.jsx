@@ -45,7 +45,7 @@ const Itenary = ({ day }) => {
             <h4 className="text-sm font-medium text-gray-700">Location</h4>
             {formData.agenda && (
                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-100">
-                 {AGENDA_LABELS[formData.agenda] || formData.agenda}
+                 {AGENDA_LABELS[formData.agenda.toLowerCase()] || formData.agenda.replace(/-/g, ' ')}
                </span>
             )}
           </div>
@@ -145,7 +145,7 @@ const Itenary = ({ day }) => {
           <h4 className="text-sm font-medium text-gray-700">Accommodation</h4>
           <p className="text-sm text-gray-600 mt-0.5 mb-2">
             {formData.hotel?.name
-              ? <>{formData.hotel.name} {formData.hotelStars && <span className="font-semibold text-amber-500 ml-1">({formData.hotelStars} Star)</span>}</>
+              ? <>{formData.hotel.name} {formData.hotelStars && <span className="font-semibold text-[#D4AF37] ml-1">({formData.hotelStars} Star <Hotel className="inline w-3 h-3 text-[#D4AF37]"/>)</span>}</>
               : "Accommodation not specified"}
           </p>
 
