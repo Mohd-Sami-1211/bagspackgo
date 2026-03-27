@@ -14,8 +14,8 @@ export async function GET() {
 
         if (!user) {
             return NextResponse.json(
-                { success: false, authenticated: false, message: "Not authenticated" },
-                { status: 401 }
+                { success: false, authenticated: false, message: "Guest session" },
+                { status: 200 }
             );
         }
 
@@ -52,8 +52,8 @@ export async function GET() {
     } catch (error) {
         console.error("Auth Check Error:", error);
         return NextResponse.json(
-            { success: false, authenticated: false, message: "Session invalid" },
-            { status: 401 }
+            { success: false, authenticated: false, message: "No session active" },
+            { status: 200 }
         );
     }
 }

@@ -55,6 +55,7 @@ export default function Navbar() {
           src="/images/logo.svg"
           alt="Logo"
           fill
+          priority
           className="object-contain"
         />
       </a>

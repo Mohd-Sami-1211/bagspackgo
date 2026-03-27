@@ -31,8 +31,8 @@ export default function SecondaryNav() {
   return (
     <div className="relative bg-white/50 shadow-sm w-full overflow-hidden">
       {/* Desktop / Tablet - Improved centering */}
-      <div className="hidden md:flex justify-center w-full text-gray-700 font-medium text-lg relative">
-        <div className="flex justify-between md:justify-center md:gap-16 lg:gap-32 w-full max-w-5xl mx-auto px-4 md:px-8">
+      <div className="hidden md:flex justify-center w-full text-gray-700 font-medium text-lg relative px-4">
+        <div className="flex justify-center md:gap-16 lg:gap-32 w-full max-w-5xl">
           {/* Underline indicator */}
           <motion.div
             className="absolute bottom-0 h-1 bg-green-500 rounded-full"

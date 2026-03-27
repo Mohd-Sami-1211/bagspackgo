@@ -1,10 +1,16 @@
 'use client';
-import TrekSearchInput from 'src/components/home/TrekSection/TrekSearchInput';
+import { motion } from 'framer-motion';
+import TrekMainContent from 'src/components/home/TrekSection/TrekMainContent';
 
 export default function TrekPage() {
   return (
-    <div id="trek-page" className="flex flex-col items-center justify-center min-h-[80vh] mt-14">
-      <TrekSearchInput />
-    </div>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className="w-full h-full"
+    >
+      <TrekMainContent />
+    </motion.div>
   );
 }

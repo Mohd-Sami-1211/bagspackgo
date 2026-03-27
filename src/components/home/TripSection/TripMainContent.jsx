@@ -14,10 +14,10 @@ import FAQ from '../../common/FAQ';
 import TripSearchInput from './TripSearchInput';
 
 const dummyTestimonials = [
-  { name: 'Priya Sharma',  location: 'Delhi',     rating: 5, text: 'Our houseboat stay on Dal Lake was straight out of a dream. Absolutely magical honeymoon!',           image: 'https://images.unsplash.com/photo-1494790108755-2616b612b402?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80' },
-  { name: 'Rajesh Kumar',  location: 'Mumbai',    rating: 5, text: 'Best family vacation ever! The skiing instructor in Gulmarg was so patient with the kids.',           image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80' },
-  { name: 'Sarah Johnson', location: 'USA',        rating: 5, text: 'As a solo traveler I felt completely safe. The Tarsar Marsar trek was the highlight of my year!',    image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80' },
-  { name: 'Amit Patel',    location: 'Bangalore', rating: 5, text: 'Our guide knew every hidden photo spot. The sunrise at Doodhpathri was worth waking up at 4 AM!',    image: 'https://images.unsplash.com/photo-1542103749-8ef59b94f47e?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80' },
+  { name: 'Priya Sharma', location: 'Delhi', rating: 5, text: 'Our houseboat stay on Dal Lake was straight out of a dream. Absolutely magical honeymoon!', image: 'https://images.unsplash.com/photo-1494790108755-2616b612b402?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80' },
+  { name: 'Rajesh Kumar', location: 'Mumbai', rating: 5, text: 'Best family vacation ever! The skiing instructor in Gulmarg was so patient with the kids.', image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80' },
+  { name: 'Sarah Johnson', location: 'USA', rating: 5, text: 'As a solo traveler I felt completely safe. The Tarsar Marsar trek was the highlight of my year!', image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80' },
+  { name: 'Amit Patel', location: 'Bangalore', rating: 5, text: 'Our guide knew every hidden photo spot. The sunrise at Doodhpathri was worth waking up at 4 AM!', image: 'https://images.unsplash.com/photo-1542103749-8ef59b94f47e?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80' },
 ];
 
 // ── Static data ────────────────────────────────────────────
@@ -27,9 +27,9 @@ const destCategories = [
     label: 'Mountain Valleys',
     icon: Mountain,
     places: [
-      { name: 'Gulmarg',  images: ['/images/Gulmarg1.jpeg','/images/Gulmarg2.jpeg','/images/Gulmarg3.jpeg','/images/Gulmarg4.jpeg'],   description: "Known as the 'Meadow of Flowers', Gulmarg is a premier ski destination with the world's highest gondola ride." },
-      { name: 'Sonmarg',  images: ['/images/Sonmarg1.jpeg','/images/Sonmarg2.jpeg','/images/Sonmarg3.jpeg','/images/Sonmarg4.jpeg'],   description: "The 'Meadow of Gold' is the gateway to Himalayan high-altitude lakes like Vishansar and Krishansar." },
-      { name: 'Pahalgam', images: ['/images/Pahalgam1.jpeg','/images/Pahalgam2.jpeg','/images/Pahalgam3.jpeg','/images/Pahalgam4.jpg'], description: "The 'Valley of Shepherds' — where the Lidder River flows through pine forests and alpine meadows." },
+      { name: 'Gulmarg', images: ['/images/Gulmarg1.jpeg', '/images/Gulmarg2.jpeg', '/images/Gulmarg3.jpeg', '/images/Gulmarg4.jpeg'], description: "Known as the 'Meadow of Flowers', Gulmarg is a premier ski destination with the world's highest gondola ride." },
+      { name: 'Sonmarg', images: ['/images/Sonmarg1.jpeg', '/images/Sonmarg2.jpeg', '/images/Sonmarg3.jpeg', '/images/Sonmarg4.jpeg'], description: "The 'Meadow of Gold' is the gateway to Himalayan high-altitude lakes like Vishansar and Krishansar." },
+      { name: 'Pahalgam', images: ['/images/Pahalgam1.jpeg', '/images/Pahalgam2.jpeg', '/images/Pahalgam3.jpeg', '/images/Pahalgam4.jpg'], description: "The 'Valley of Shepherds' — where the Lidder River flows through pine forests and alpine meadows." },
     ]
   },
   {
@@ -37,9 +37,9 @@ const destCategories = [
     label: 'Natural Wonders',
     icon: Waves,
     places: [
-      { name: 'Doodhpathri', images: ['/images/Doodhpathri1.jpeg','/images/Doodhpathri2.jpeg','/images/Doodhpathri3.jpeg','/images/Doodhpathri4.jpeg'], description: "This 'Valley of Milk' gets its name from the frothy white appearance of its gushing streams." },
-      { name: 'Betaab Valley', images: ['/images/Betaab1.jpeg','/images/Betaab2.jpeg','/images/Betaab3.jpeg','/images/Betaab4.jpeg'],  description: "Named after the Bollywood movie 'Betaab', known for lush meadows and crystal-clear streams." },
-      { name: 'Aru Valley',    images: ['/images/Aru1.jpeg','/images/Aru2.jpeg','/images/Aru3.jpeg','/images/Aru4.jpeg'],              description: "A picturesque valley and the starting point for the famous Kolahoi Glacier trek." },
+      { name: 'Doodhpathri', images: ['/images/Doodhpathri1.jpeg', '/images/Doodhpathri2.jpeg', '/images/Doodhpathri3.jpeg', '/images/Doodhpathri4.jpeg'], description: "This 'Valley of Milk' gets its name from the frothy white appearance of its gushing streams." },
+      { name: 'Betaab Valley', images: ['/images/Betaab1.jpeg', '/images/Betaab2.jpeg', '/images/Betaab3.jpeg', '/images/Betaab4.jpeg'], description: "Named after the Bollywood movie 'Betaab', known for lush meadows and crystal-clear streams." },
+      { name: 'Aru Valley', images: ['/images/Aru1.jpeg', '/images/Aru2.jpeg', '/images/Aru3.jpeg', '/images/Aru4.jpeg'], description: "A picturesque valley and the starting point for the famous Kolahoi Glacier trek." },
     ]
   },
   {
@@ -47,27 +47,27 @@ const destCategories = [
     label: 'Cultural Gems',
     icon: Landmark,
     places: [
-      { name: 'Mughal Gardens',        images: ['/images/MG-1.jpeg','/images/MG-2.jpeg','/images/MG-3.jpeg','/images/MG-4.jpeg'],                              description: "Nishat Bagh, Shalimar Bagh, and Chashme Shahi — Persian-style terraced gardens with cascading fountains." },
-      { name: 'Dal Lake',              images: ['/images/Dal1.jpeg','/images/Dal2.jpeg','/images/Dal3.jpeg','/images/Dal4.jpeg'],                               description: "The 'Jewel of Kashmir' — famous for colourful shikaras, floating houseboats, and morning markets." },
-      { name: 'Shankaracharya Temple', images: ['/images/Shankaracharya1.jpeg','/images/Shankaracharya2.jpeg','/images/Shankaracharya3.jpeg','/images/Shankaracharya4.jpeg'], description: "An ancient Shiva temple on a hilltop offering panoramic views of Srinagar and Dal Lake." },
+      { name: 'Mughal Gardens', images: ['/images/MG-1.jpeg', '/images/MG-2.jpeg', '/images/MG-3.jpeg', '/images/MG-4.jpeg'], description: "Nishat Bagh, Shalimar Bagh, and Chashme Shahi — Persian-style terraced gardens with cascading fountains." },
+      { name: 'Dal Lake', images: ['/images/Dal1.jpeg', '/images/Dal2.jpeg', '/images/Dal3.jpeg', '/images/Dal4.jpeg'], description: "The 'Jewel of Kashmir' — famous for colourful shikaras, floating houseboats, and morning markets." },
+      { name: 'Shankaracharya Temple', images: ['/images/Shankaracharya1.jpeg', '/images/Shankaracharya2.jpeg', '/images/Shankaracharya3.jpeg', '/images/Shankaracharya4.jpeg'], description: "An ancient Shiva temple on a hilltop offering panoramic views of Srinagar and Dal Lake." },
     ]
   },
 ];
 
 const adventures = [
-  { id: 1, name: 'Skiing',       media: { src: '/images/skiing.mp4',      poster: '/images/Gulmarg1.jpeg',      alt: 'Skiing in Gulmarg'      }, description: 'World-class skiing on the powdery slopes of Gulmarg, home to one of the highest ski resorts globally.', locations: ['Gulmarg','Apharwat Peak','Kongdoori'] },
-  { id: 2, name: 'Shikara Ride', media: { src: '/images/shikara.mp4',     poster: '/images/Dal1.jpeg',     alt: 'Shikara on Dal Lake'    }, description: 'Glide through Dal Lake in traditional Kashmiri shikaras. Visit floating markets and watch the Himalayan sunset.', locations: ['Dal Lake','Nigeen Lake','Jhelum River'] },
-  { id: 3, name: 'Trekking',     media: { src: '/images/trekking.mp4',    poster: '/images/Pahalgam1.jpeg',    alt: 'Trekking in Kashmir'    }, description: 'The Great Lakes Trek — 7 days through alpine meadows, high-altitude lakes, and snow-capped peaks.', locations: ['Great Lakes Trek','Tarsar Marsar','Kolahoi Glacier'] },
-  { id: 4, name: 'Paragliding',  media: { src: '/images/paragliding.mp4', poster: '/images/Sonmarg1.jpeg', alt: 'Paragliding in Kashmir' }, description: 'Soar above the Kashmir Valley with breathtaking mountain views. Tandem flights available for beginners.', locations: ['Sonmarg','Pahalgam','Betaab Valley'] },
+  { id: 1, name: 'Skiing', media: { src: '/images/skiing.mp4', poster: '/images/Gulmarg1.jpeg', alt: 'Skiing in Gulmarg' }, description: 'World-class skiing on the powdery slopes of Gulmarg, home to one of the highest ski resorts globally.', locations: ['Gulmarg', 'Apharwat Peak', 'Kongdoori'] },
+  { id: 2, name: 'Shikara Ride', media: { src: '/images/shikara.mp4', poster: '/images/Dal1.jpeg', alt: 'Shikara on Dal Lake' }, description: 'Glide through Dal Lake in traditional Kashmiri shikaras. Visit floating markets and watch the Himalayan sunset.', locations: ['Dal Lake', 'Nigeen Lake', 'Jhelum River'] },
+  { id: 3, name: 'Trekking', media: { src: '/images/trekking.mp4', poster: '/images/Pahalgam1.jpeg', alt: 'Trekking in Kashmir' }, description: 'The Great Lakes Trek — 7 days through alpine meadows, high-altitude lakes, and snow-capped peaks.', locations: ['Great Lakes Trek', 'Tarsar Marsar', 'Kolahoi Glacier'] },
+  { id: 4, name: 'Paragliding', media: { src: '/images/paragliding.mp4', poster: '/images/Sonmarg1.jpeg', alt: 'Paragliding in Kashmir' }, description: 'Soar above the Kashmir Valley with breathtaking mountain views. Tandem flights available for beginners.', locations: ['Sonmarg', 'Pahalgam', 'Betaab Valley'] },
 ];
 
 const faqs = [
-  { question: 'What is bagspackgo?',                              answer: 'A travel platform that connects tourists directly with verified local guides and small travel firms.' },
-  { question: 'How is bagspackgo different?',                     answer: 'Direct access to local guides, full itinerary customization, and transparent pricing — no middlemen.' },
-  { question: 'How do I book a tour?',                            answer: 'Search by destination, dates, and group size, then book a guide directly through the platform.' },
-  { question: 'Can I customize my itinerary?',                    answer: 'Yes! Collaborate with your guide to add or remove services and activities any time.' },
-  { question: 'Are guides verified?',                             answer: 'All guides undergo identity checks, quality screening, and have community reviews.' },
-  { question: 'What payment methods are accepted?',               answer: 'Credit/debit cards, UPI, net banking, and digital wallets via our secure payment gateway.' },
+  { question: 'What is bagspackgo?', answer: 'A travel platform that connects tourists directly with verified local guides and small travel firms.' },
+  { question: 'How is bagspackgo different?', answer: 'Direct access to local guides, full itinerary customization, and transparent pricing — no middlemen.' },
+  { question: 'How do I book a tour?', answer: 'Search by destination, dates, and group size, then book a guide directly through the platform.' },
+  { question: 'Can I customize my itinerary?', answer: 'Yes! Collaborate with your guide to add or remove services and activities any time.' },
+  { question: 'Are guides verified?', answer: 'All guides undergo identity checks, quality screening, and have community reviews.' },
+  { question: 'What payment methods are accepted?', answer: 'Credit/debit cards, UPI, net banking, and digital wallets via our secure payment gateway.' },
 ];
 
 
@@ -128,11 +128,10 @@ const PopularDestinations = () => {
             <button
               key={c.id}
               onClick={() => switchTab(i)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs sm:text-sm font-semibold transition-all border ${
-                i === activeTab
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs sm:text-sm font-semibold transition-all border ${i === activeTab
                   ? 'bg-green-600 text-white border-green-600 shadow-md shadow-green-200'
                   : 'bg-white text-gray-600 border-gray-200 hover:border-green-400 hover:text-green-700'
-              }`}
+                }`}
             >
               <Icon size={13} /> {c.label}
             </button>
@@ -175,7 +174,7 @@ const PopularDestinations = () => {
               </div>
               {/* Mobile nav */}
               <button onClick={() => goSlide(-1)} className="absolute left-1 top-1/2 -translate-y-1/2 bg-white/80 p-1.5 rounded-full shadow z-10"><ChevronLeft size={18} /></button>
-              <button onClick={() => goSlide(1)}  className="absolute right-1 top-1/2 -translate-y-1/2 bg-white/80 p-1.5 rounded-full shadow z-10"><ChevronRight size={18} /></button>
+              <button onClick={() => goSlide(1)} className="absolute right-1 top-1/2 -translate-y-1/2 bg-white/80 p-1.5 rounded-full shadow z-10"><ChevronRight size={18} /></button>
               {/* Dots */}
               <div className="flex justify-center gap-1.5 mt-3">
                 {places.map((_, i) => (
@@ -208,11 +207,11 @@ const PopularDestinations = () => {
 // ── ADVENTURES (video slider — single video at a time) ─────
 const AdventureSlider = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [direction, setDirection]       = useState(1);
-  const [isFlipped, setIsFlipped]       = useState(false);
+  const [direction, setDirection] = useState(1);
+  const [isFlipped, setIsFlipped] = useState(false);
   const intervalRef = useRef(null);
-  const sectionRef  = useRef(null);
-  const isVisible   = useInView(sectionRef, { once: false, margin: '-80px' });
+  const sectionRef = useRef(null);
+  const isVisible = useInView(sectionRef, { once: false, margin: '-80px' });
 
   const startAutoSlide = useCallback(() => {
     clearInterval(intervalRef.current);
@@ -270,7 +269,7 @@ const AdventureSlider = () => {
           {!isFlipped && (
             <>
               <button onClick={() => go(-1)} aria-label="Prev" className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/85 backdrop-blur p-2 rounded-full z-20 shadow-lg hover:bg-white transition-all active:scale-95"><ChevronLeft size={20} /></button>
-              <button onClick={() => go(1)}  aria-label="Next" className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/85 backdrop-blur p-2 rounded-full z-20 shadow-lg hover:bg-white transition-all active:scale-95"><ChevronRight size={20} /></button>
+              <button onClick={() => go(1)} aria-label="Next" className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/85 backdrop-blur p-2 rounded-full z-20 shadow-lg hover:bg-white transition-all active:scale-95"><ChevronRight size={20} /></button>
               <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 z-20">
                 {adventures.map((_, i) => (
                   <button key={i} onClick={() => { setCurrentIndex(i); clearInterval(intervalRef.current); if (isVisible) startAutoSlide(); }} className={`h-2 rounded-full transition-all duration-300 ${i === currentIndex ? 'bg-green-500 w-6' : 'bg-white/70 w-2'}`} />
@@ -358,18 +357,18 @@ export default function TripMainContent() {
   const [activeIndex, setActiveIndex] = useState(null);
 
   return (
-    <div className="w-full">
+    <div className="w-full h-full flex flex-col items-center overflow-x-hidden">
       {/* ── Hero + Search ───────────────────────────────── */}
       <div className="relative w-full">
         <div
           className="w-full h-[260px] sm:h-[320px] md:h-[380px] lg:h-[400px] bg-center bg-cover bg-no-repeat relative overflow-hidden flex items-center justify-center text-center px-4"
           style={{ backgroundImage: "url('/images/hero.svg')", backgroundPosition: 'center top' }}
         >
-          {/* Animated Hero Text - Creative, Clear, and Responsive */}
-          <div className="z-10 w-full flex justify-center mt-[-60px] sm:mt-[-60px] md:mt-[-88px] lg:mt-[-120px] pointer-events-none px-4 sm:px-12 md:px-24 lg:px-32 xl:px-48">
+          {/* Main Hero Content - Explicitly Centered */}
+          <div className="z-20 w-full flex justify-center mt-[-60px] sm:mt-[-60px] md:mt-[-88px] lg:mt-[-120px] pointer-events-none px-4">
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 30 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }} 
               transition={{ duration: 0.8, ease: "easeOut" }}
               className="text-center w-full"
             >
@@ -378,14 +377,14 @@ export default function TripMainContent() {
               </h1>
             </motion.div>
           </div>
-          
+
           {/* Overlay to ensure text pops up while keeping image bright */}
           <div className="absolute inset-0 bg-black/20 z-0" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 z-0" />
         </div>
 
-        <div className="w-full px-3 sm:px-6 lg:px-8 -mt-24 sm:-mt-32 md:-mt-44 lg:-mt-40 relative z-20 pb-4">
-          <div className="max-w-5xl mx-auto">
+        <div className="w-full px-4 -mt-24 sm:-mt-32 md:-mt-44 lg:-mt-40 relative z-20 pb-4 flex justify-center">
+          <div className="w-full max-w-5xl">
             <motion.div initial={{ opacity: 0, y: 25 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: 'easeOut', delay: 0.45 }}>
               <TripSearchInput />
             </motion.div>

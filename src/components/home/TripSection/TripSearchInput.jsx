@@ -1,5 +1,5 @@
 'use client';
-import { useState, forwardRef, useImperativeHandle, useRef, useEffect } from 'react';
+import { useState, forwardRef, useImperativeHandle, useRef, useEffect, memo } from 'react';
 import Select from 'react-select';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -8,8 +8,13 @@ import data from 'src/data/data.json';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 
-const TripSearchInput = forwardRef(({ compactMode = false, onSearch }, ref) => {
+const TripSearchInput = memo(forwardRef(({ compactMode = false, onSearch }, ref) => {
   const router = useRouter();
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   const [daysRange, setDaysRange] = useState(null);
   const [peopleRange, setPeopleRange] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('individual');
@@ -55,7 +60,6 @@ const TripSearchInput = forwardRef(({ compactMode = false, onSearch }, ref) => {
     if (digits.length <= 2) formatted = digits;
     else if (digits.length <= 4) formatted = `${digits.slice(0, 2)}/${digits.slice(2)}`;
     else formatted = `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
-
     setDateInput(formatted);
 
     if (formatted.length === 10) {
@@ -72,11 +76,7 @@ const TripSearchInput = forwardRef(({ compactMode = false, onSearch }, ref) => {
   const handleDateChange = (date) => {
     setStartDate(date);
     if (date) clearError('date');
-    setDateInput(
-      date
-        ? date.toLocaleDateString('en-GB').split('/').map(v => v.padStart(2, '0')).join('/')
-        : ''
-    );
+    setDateInput(date ? date.toLocaleDateString('en-GB').split('/').map(v => v.padStart(2, '0')).join('/') : '');
   };
 
   const handleSearch = () => {
@@ -90,10 +90,8 @@ const TripSearchInput = forwardRef(({ compactMode = false, onSearch }, ref) => {
       setErrors(newErrors);
       return;
     }
-
     setErrors({});
     setIsSearching(true);
-
     const params = {
       destination: selectedDestination?.value || '',
       category: selectedCategory,
@@ -101,13 +99,8 @@ const TripSearchInput = forwardRef(({ compactMode = false, onSearch }, ref) => {
       daysRange: daysRange?.value || '',
       peopleRange: peopleRange?.value || '',
     };
-
-    const filteredParams = Object.fromEntries(
-      Object.entries(params).filter(([_, value]) => value !== '')
-    );
-
+    const filteredParams = Object.fromEntries(Object.entries(params).filter(([_, value]) => value !== ''));
     const queryString = new URLSearchParams(filteredParams).toString();
-
     setTimeout(() => {
       router.push(`/user/trip/guidelist?${queryString}`);
     }, 500);
@@ -115,11 +108,7 @@ const TripSearchInput = forwardRef(({ compactMode = false, onSearch }, ref) => {
 
   const containerVariants = {
     hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.5, ease: 'easeOut', when: 'beforeChildren', staggerChildren: 0.1 },
-    },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut', when: 'beforeChildren', staggerChildren: 0.1 } },
   };
 
   const scrollVariants = {
@@ -127,7 +116,11 @@ const TripSearchInput = forwardRef(({ compactMode = false, onSearch }, ref) => {
     onscreen: { y: 0, opacity: 1, transition: { type: 'spring', bounce: 0.4, duration: 0.8 } },
   };
 
-  const itemVariants = { hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3 } } };
+  const itemVariants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.3 } }
+  };
+
   const buttonVariants = { rest: { scale: 1 }, hover: { scale: 1.02 }, tap: { scale: 0.98 } };
 
   return (
@@ -136,64 +129,166 @@ const TripSearchInput = forwardRef(({ compactMode = false, onSearch }, ref) => {
       whileInView="onscreen"
       viewport={{ once: true, amount: 0.2 }}
       variants={scrollVariants}
-      className={`bg-white/90 rounded-2xl shadow-lg p-2 w-full max-w-full ${compactMode ? 'md:max-w-4xl' : 'md:max-w-5xl min-h-[180px]'
-        } hover:shadow-xl transition-shadow duration-300`}
+      className={`bg-white/90 rounded-2xl shadow-lg p-2 w-full max-w-full ${compactMode ? 'md:max-w-4xl' : 'md:max-w-5xl min-h-[180px]'} hover:shadow-xl transition-shadow duration-300`}
     >
-      <motion.div
-        initial="hidden"
-        animate="visible"
-        variants={containerVariants}
-        className="flex flex-col md:flex-row gap-2 md:gap-3"
-      >
-        <motion.div variants={itemVariants} className="flex-[1.2] bg-[#C3EFE6] rounded-xl p-2.5 sm:p-3 space-y-2 sm:space-y-3 w-full md:w-auto">
-          <DestinationSelect
-            selectedDestination={selectedDestination}
-            setSelectedDestination={setSelectedDestination}
-            error={errors.destination}
-            clearError={clearError}
-          />
-          <CategorySelect selectedCategory={selectedCategory} setSelectedCategory={setSelectedCategory} />
-        </motion.div>
-
-        <motion.div variants={itemVariants} className="flex-[2] bg-[#C3EFE6] rounded-xl p-2.5 sm:p-3 flex flex-col justify-between w-full md:w-auto">
-          <CountersSection daysRange={daysRange} setDaysRange={setDaysRange} peopleRange={peopleRange} setPeopleRange={setPeopleRange} selectedCategory={selectedCategory} errors={errors} clearError={clearError} />
-
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 sm:items-end mt-2 sm:mt-3">
-            <motion.div variants={itemVariants} className="flex-1 relative z-[60] w-full">
-              <label className="block text-sm font-semibold text-gray-800 mb-1">Enter Date</label>
-              <DatePicker
-                selected={startDate}
-                onChange={handleDateChange}
-                customInput={
-                  <motion.div className="relative w-full" whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
-                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                      <CalendarCheck className="h-5 w-5 text-gray-400" />
-                    </div>
-                    <input
-                      type="text"
-                      value={dateInput}
-                      onChange={handleInputChange}
-                      placeholder="DD/MM/YYYY"
-                      className={`bg-white border text-gray-800 text-sm rounded-md focus:ring-green-500 focus:border-green-500 block w-full pl-9 pr-2 py-1.5 transition-all ${errors.date ? 'border-red-500 shadow-[0_0_0_1px_#ef4444]' : 'border-gray-300'}`}
-                    />
-                  </motion.div>
-                }
-                dateFormat="dd/MM/yyyy"
-                showMonthDropdown
-                showYearDropdown
-                dropdownMode="scroll"
-                scrollableYearDropdown
-                yearDropdownItemNumber={100}
-                placeholderText="DD/MM/YYYY"
-                popperClassName="z-[1000]"
-                popperPlacement="bottom-start"
-                calendarClassName="border-green-200 rounded-md shadow-xl bg-white"
-                wrapperClassName="w-full"
+      {!isMounted ? (
+        <div className="w-full h-[180px] bg-white/50 animate-pulse rounded-2xl" />
+      ) : (
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={containerVariants}
+          className="flex flex-col md:flex-row gap-2 md:gap-3"
+        >
+          {/* Card 1 - Left Section */}
+          <motion.div variants={itemVariants} className="flex-1 bg-[#C3EFE6] rounded-xl p-3 space-y-4 w-full md:w-auto">
+            <div className="relative">
+              <label className="block text-sm font-semibold text-gray-800 mb-1">Select Destination</label>
+              <Select
+                instanceId="trip-destination-select"
+                options={data.destinations}
+                value={selectedDestination}
+                onChange={(value) => { setSelectedDestination(value); if (value) clearError('destination'); }}
+                placeholder="Enter Place to Search"
+                classNamePrefix="react-select"
+                isClearable
+                styles={{
+                  ...selectStyles,
+                  control: (provided, state) => ({
+                    ...selectStyles.control(provided, state),
+                    borderColor: errors.destination ? '#ef4444' : state.isFocused ? '#10b981' : '#d1d5db',
+                    boxShadow: errors.destination ? '0 0 0 1px #ef4444' : state.isFocused ? '0 0 0 1px #10b981' : null,
+                  })
+                }}
+                menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
+                menuPosition="fixed"
               />
-              {errors.date && <p className="absolute -bottom-4 left-1 mt-1 text-[10px] text-red-500 font-semibold">{errors.date}</p>}
-            </motion.div>
+              {errors.destination && <p className="text-[10px] text-red-500 font-semibold mt-1 absolute left-1">{errors.destination}</p>}
+            </div>
 
-            <div className="flex gap-3 flex-wrap sm:flex-nowrap justify-center sm:justify-end w-full sm:w-auto">
+            <div className="relative">
+              <label className="block text-sm font-semibold text-gray-800 mb-1">Choose Category</label>
+              <Select
+                instanceId="trip-category-select"
+                options={data.categories}
+                value={data.categories.find((cat) => cat.value === selectedCategory)}
+                onChange={(option) => setSelectedCategory(option.value)}
+                placeholder="Select Type"
+                classNamePrefix="react-select"
+                isClearable={false}
+                styles={selectStyles}
+                menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
+                menuPosition="fixed"
+              />
+            </div>
+          </motion.div>
+
+          {/* Card 2 - Right Section */}
+          <motion.div variants={itemVariants} className="flex-1 bg-[#C3EFE6] rounded-xl p-3 flex flex-col justify-between w-full md:w-auto">
+            <div className="flex flex-col gap-4">
+              {/* Date Field - Full Width */}
+              <motion.div variants={itemVariants} className="relative z-[60] w-full">
+                <label className="block text-sm font-semibold text-gray-800 mb-1">Enter Date</label>
+                <DatePicker
+                  selected={startDate}
+                  onChange={handleDateChange}
+                  customInput={
+                    <motion.div className="relative w-full" whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
+                      <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                        <CalendarCheck className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        type="text"
+                        value={dateInput}
+                        onChange={handleInputChange}
+                        placeholder="DD/MM/YYYY"
+                        className={`bg-white border text-gray-800 text-sm rounded-md focus:ring-green-500 focus:border-green-500 block w-full pl-9 pr-2 py-1.5 transition-all ${errors.date ? 'border-red-500 shadow-[0_0_0_1px_#ef4444]' : 'border-gray-300'}`}
+                      />
+                    </motion.div>
+                  }
+                  dateFormat="dd/MM/yyyy"
+                  showMonthDropdown
+                  showYearDropdown
+                  dropdownMode="scroll"
+                  scrollableYearDropdown
+                  yearDropdownItemNumber={100}
+                  placeholderText="DD/MM/YYYY"
+                  popperClassName="z-[1000]"
+                  popperPlacement="bottom-start"
+                  calendarClassName="border-green-200 rounded-md shadow-xl bg-white"
+                  wrapperClassName="w-full"
+                />
+                {errors.date && <p className="text-[10px] text-red-500 font-semibold mt-1 absolute left-1">{errors.date}</p>}
+              </motion.div>
+
+              {/* Range Selectors - 50/50 Grid */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="relative">
+                  <label className="block text-sm font-semibold text-gray-800 mb-1">No. of Days</label>
+                  <Select
+                    instanceId="trip-days-select"
+                    options={[
+                      { value: '0-3', label: '0-3 days' },
+                      { value: '3-5', label: '3-5 days' },
+                      { value: '5-7', label: '5-7 days' },
+                      { value: '7-9', label: '7-9 days' },
+                      { value: 'other', label: 'Others' }
+                    ]}
+                    value={daysRange}
+                    onChange={(val) => { setDaysRange(val); if(val) clearError('days'); }}
+                    placeholder="Range"
+                    classNamePrefix="react-select"
+                    isClearable
+                    styles={{
+                      ...selectStyles,
+                      control: (provided, state) => ({
+                        ...selectStyles.control(provided, state),
+                        borderColor: errors.days ? '#ef4444' : state.isFocused ? '#10b981' : '#d1d5db',
+                        boxShadow: errors.days ? '0 0 0 1px #ef4444' : state.isFocused ? '0 0 0 1px #10b981' : null,
+                      })
+                    }}
+                    menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
+                    menuPosition="fixed"
+                  />
+                  {errors.days && <p className="text-[10px] text-red-500 font-semibold mt-1 absolute left-1">{errors.days}</p>}
+                </div>
+
+                <div className="relative">
+                  <label className="block text-sm font-semibold text-gray-800 mb-1">
+                    {selectedCategory === 'couple' ? 'Couples' : 'People'}
+                  </label>
+                  <Select
+                    instanceId="trip-people-select"
+                    options={[
+                      { value: '1-2', label: selectedCategory === 'couple' ? '1-2 Couples' : '1-2 People' },
+                      { value: '3-5', label: selectedCategory === 'couple' ? '3-5 Couples' : '3-5 People' },
+                      { value: '6-9', label: selectedCategory === 'couple' ? '6-9 Couples' : '6-9 People' },
+                      { value: '10-15', label: selectedCategory === 'couple' ? '10-15 Couples' : '10-15 People' },
+                      { value: '15+', label: selectedCategory === 'couple' ? '15+ Couples' : '15+ People' }
+                    ]}
+                    value={peopleRange}
+                    onChange={(val) => { setPeopleRange(val); if(val) clearError('people'); }}
+                    placeholder="Range"
+                    classNamePrefix="react-select"
+                    isClearable
+                    styles={{
+                      ...selectStyles,
+                      control: (provided, state) => ({
+                        ...selectStyles.control(provided, state),
+                        borderColor: errors.people ? '#ef4444' : state.isFocused ? '#10b981' : '#d1d5db',
+                        boxShadow: errors.people ? '0 0 0 1px #ef4444' : state.isFocused ? '0 0 0 1px #10b981' : null,
+                      })
+                    }}
+                    menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
+                    menuPosition="fixed"
+                  />
+                  {errors.people && <p className="text-[10px] text-red-500 font-semibold mt-1 absolute left-1">{errors.people}</p>}
+                </div>
+              </div>
+            </div>
+
+            {/* Buttons Area */}
+            <div className="flex gap-3 flex-wrap sm:flex-nowrap justify-center sm:justify-end w-full sm:w-auto mt-4">
               <AnimatePresence mode="wait">
                 {isSearching ? (
                   <motion.div key="searching" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="w-full sm:w-32 flex justify-center py-1">
@@ -227,181 +322,17 @@ const TripSearchInput = forwardRef(({ compactMode = false, onSearch }, ref) => {
                 Reset
               </motion.button>
             </div>
-          </div>
+          </motion.div>
         </motion.div>
-      </motion.div>
+      )}
     </motion.div>
   );
-});
+}));
 
-// ------------------- Destination Select -------------------
-const DestinationSelect = ({ selectedDestination, setSelectedDestination, error, clearError }) => (
-  <motion.div
-    className="relative z-[1000] w-full"
-    initial={{ opacity: 0, x: -10 }}
-    whileInView={{ opacity: 1, x: 0 }}
-    viewport={{ once: true, margin: '-50px' }}
-    transition={{ duration: 0.2, delay: 0.05 }}
-  >
-    <label className="block text-sm font-semibold text-gray-800 mb-1">Select Destination</label>
-    <Select
-      instanceId="destination-select"
-      options={data.destinations}
-      value={selectedDestination}
-      onChange={(value) => {
-        setSelectedDestination(value);
-        if (value) clearError('destination');
-      }}
-      placeholder="Enter Place to Search"
-      classNamePrefix="react-select"
-      isClearable
-      styles={{
-        ...selectStyles,
-        control: (provided, state) => ({
-          ...selectStyles.control(provided, state),
-          borderColor: error ? '#ef4444' : state.isFocused ? '#10b981' : '#d1d5db',
-          boxShadow: error ? '0 0 0 1px #ef4444' : state.isFocused ? '0 0 0 1px #10b981' : null,
-        }),
-      }}
-      menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
-      menuPosition="fixed"
-      menuPlacement="bottom"
-      minMenuHeight={0}
-      maxMenuHeight={250}
-    />
-    {error && <p className="absolute -bottom-4 left-1 mt-1 text-[10px] text-red-500 font-semibold">{error}</p>}
-  </motion.div>
-);
-
-// ------------------- Category Select -------------------
-const CategorySelect = ({ selectedCategory, setSelectedCategory }) => (
-  <motion.div
-    className="relative z-[1000] w-full"
-    initial={{ opacity: 0, x: -10 }}
-    whileInView={{ opacity: 1, x: 0 }}
-    viewport={{ once: true, margin: '-50px' }}
-    transition={{ duration: 0.2, delay: 0.1 }}
-  >
-    <label className="block text-sm font-semibold text-gray-800 mb-1">Choose Category</label>
-    <Select
-      instanceId="category-select"
-      options={data.categories}
-      value={data.categories.find((cat) => cat.value === selectedCategory)}
-      onChange={(option) => setSelectedCategory(option.value)}
-      placeholder="Select Type"
-      classNamePrefix="react-select"
-      isClearable={false}
-      styles={selectStyles}
-      menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
-      menuPosition="fixed"
-      menuPlacement="bottom"
-      minMenuHeight={0}
-      maxMenuHeight={250}
-    />
-  </motion.div>
-);
-
-// ------------------- Counters Section -------------------
-const CountersSection = ({ daysRange, setDaysRange, peopleRange, setPeopleRange, selectedCategory, errors, clearError }) => {
-  const daysOptions = [
-    { value: '0-3', label: '0-3 days' },
-    { value: '3-5', label: '3-5 days' },
-    { value: '5-7', label: '5-7 days' },
-    { value: '7-9', label: '7-9 days' },
-    { value: 'other', label: 'Others' }
-  ];
-
-  const peopleOptions = [
-    { value: '1-2', label: selectedCategory === 'couple' ? '1-2 Couples' : '1-2 People' },
-    { value: '3-5', label: selectedCategory === 'couple' ? '3-5 Couples' : '3-5 People' },
-    { value: '6-9', label: selectedCategory === 'couple' ? '6-9 Couples' : '6-9 People' },
-    { value: '10-15', label: selectedCategory === 'couple' ? '10-15 Couples' : '10-15 People' },
-    { value: '15+', label: selectedCategory === 'couple' ? '15+ Couples' : '15+ People' }
-  ];
-
-  return (
-    <motion.div className="flex gap-2 sm:gap-4 w-full" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true, margin: '-50px' }}>
-      {/* Days Range Select Dropdown */}
-      <motion.div
-        className="flex-1 w-full sm:w-auto"
-        initial={{ opacity: 0, y: 10 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: '-30px' }}
-        transition={{ duration: 0.3 }}
-      >
-        <label className="block text-sm font-semibold text-gray-800 mb-1">No. of Days</label>
-        <Select
-          instanceId="days-range-select"
-          options={daysOptions}
-          value={daysRange}
-          onChange={(val) => { setDaysRange(val); if(val) clearError('days'); }}
-          placeholder="Select Range"
-          classNamePrefix="react-select"
-          isClearable
-          styles={{
-            ...selectStyles,
-            control: (provided, state) => ({
-              ...selectStyles.control(provided, state),
-              minHeight: '36px', // Match height
-              borderColor: errors?.days ? '#ef4444' : state.isFocused ? '#10b981' : '#d1d5db',
-              boxShadow: errors?.days ? '0 0 0 1px #ef4444' : state.isFocused ? '0 0 0 1px #10b981' : null,
-            }),
-          }}
-          menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
-          menuPosition="fixed"
-          menuPlacement="bottom"
-          minMenuHeight={0}
-          maxMenuHeight={250}
-        />
-      </motion.div>
-
-      {/* People Range Select Dropdown */}
-      <motion.div
-        className="flex-1 w-full sm:w-auto"
-        initial={{ opacity: 0, y: 10 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: '-30px' }}
-        transition={{ duration: 0.3, delay: 0.1 }}
-      >
-        <label className="block text-sm font-semibold text-gray-800 mb-1">
-          {selectedCategory === 'couple' ? 'No. of Couples' : 'No. of People'}
-        </label>
-        <Select
-          instanceId="people-range-select"
-          options={peopleOptions}
-          value={peopleRange}
-          onChange={(val) => { setPeopleRange(val); if(val) clearError('people'); }}
-          placeholder="Select Range"
-          classNamePrefix="react-select"
-          isClearable
-          styles={{
-            ...selectStyles,
-            control: (provided, state) => ({
-              ...selectStyles.control(provided, state),
-              minHeight: '36px', // Match height
-              borderColor: errors?.people ? '#ef4444' : state.isFocused ? '#10b981' : '#d1d5db',
-              boxShadow: errors?.people ? '0 0 0 1px #ef4444' : state.isFocused ? '0 0 0 1px #10b981' : null,
-            }),
-          }}
-          menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
-          menuPosition="fixed"
-          menuPlacement="bottom"
-          minMenuHeight={0}
-          maxMenuHeight={250}
-        />
-        {errors?.people && <p className="absolute -bottom-4 left-1 mt-1 text-[10px] text-red-500 font-semibold">{errors.people}</p>}
-      </motion.div>
-    </motion.div>
-  );
-};
-
-
-
-// ------------------- Select Styles -------------------
 const selectStyles = {
   control: (provided, state) => ({
     ...provided,
-    minHeight: '36px', // Slightly increased to match counter height
+    minHeight: '36px',
     fontSize: '0.85rem',
     borderColor: state.isFocused ? '#10b981' : '#d1d5db',
     boxShadow: state.isFocused ? '0 0 0 1px #10b981' : null,
