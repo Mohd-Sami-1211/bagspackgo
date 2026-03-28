@@ -38,8 +38,8 @@ const destCategories = [
     icon: Waves,
     places: [
       { name: 'Doodhpathri', images: ['/images/Doodhpathri1.jpeg', '/images/Doodhpathri2.jpeg', '/images/Doodhpathri3.jpeg', '/images/Doodhpathri4.jpeg'], description: "This 'Valley of Milk' gets its name from the frothy white appearance of its gushing streams." },
-      { name: 'Betaab Valley', images: ['/images/Betaab1.jpeg', '/images/Betaab2.jpeg', '/images/Betaab3.jpeg', '/images/Betaab4.jpeg'], description: "Named after the Bollywood movie 'Betaab', known for lush meadows and crystal-clear streams." },
-      { name: 'Aru Valley', images: ['/images/Aru1.jpeg', '/images/Aru2.jpeg', '/images/Aru3.jpeg', '/images/Aru4.jpeg'], description: "A picturesque valley and the starting point for the famous Kolahoi Glacier trek." },
+      { name: 'Betaab Valley', images: ['/images/Pahalgam1.jpeg', '/images/Pahalgam2.jpeg', '/images/Pahalgam3.jpeg', '/images/Pahalgam4.jpg'], description: "Named after the Bollywood movie 'Betaab', known for lush meadows and crystal-clear streams." },
+      { name: 'Aru Valley', images: ['/images/Sonmarg1.jpeg', '/images/Sonmarg2.jpeg', '/images/Sonmarg3.jpeg', '/images/Sonmarg4.jpeg'], description: "A picturesque valley and the starting point for the famous Kolahoi Glacier trek." },
     ]
   },
   {
@@ -49,7 +49,7 @@ const destCategories = [
     places: [
       { name: 'Mughal Gardens', images: ['/images/MG-1.jpeg', '/images/MG-2.jpeg', '/images/MG-3.jpeg', '/images/MG-4.jpeg'], description: "Nishat Bagh, Shalimar Bagh, and Chashme Shahi — Persian-style terraced gardens with cascading fountains." },
       { name: 'Dal Lake', images: ['/images/Dal1.jpeg', '/images/Dal2.jpeg', '/images/Dal3.jpeg', '/images/Dal4.jpeg'], description: "The 'Jewel of Kashmir' — famous for colourful shikaras, floating houseboats, and morning markets." },
-      { name: 'Shankaracharya Temple', images: ['/images/Shankaracharya1.jpeg', '/images/Shankaracharya2.jpeg', '/images/Shankaracharya3.jpeg', '/images/Shankaracharya4.jpeg'], description: "An ancient Shiva temple on a hilltop offering panoramic views of Srinagar and Dal Lake." },
+      { name: 'Shankaracharya Temple', images: ['/images/Dal1.jpeg', '/images/Dal2.jpeg', '/images/Dal3.jpeg', '/images/Dal4.jpeg'], description: "An ancient Shiva temple on a hilltop offering panoramic views of Srinagar and Dal Lake." },
     ]
   },
 ];

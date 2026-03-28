@@ -47,11 +47,12 @@ const TrekSearchInput = memo(forwardRef((props, ref) => {
       setSelectedDestination(null);
       setSelectedTrek(null);
       setTrekOptions([]);
-      setErrors({
-        destination: '',
-        trek: '',
-        date: ''
-      });
+        setErrors({
+          destination: '',
+          trek: '',
+          date: '',
+          peopleRange: ''
+        });
       setIsSearching(false);
     }, 300);
   };
@@ -60,7 +61,8 @@ const TrekSearchInput = memo(forwardRef((props, ref) => {
     const newErrors = {
       destination: '',
       trek: '',
-      date: ''
+      date: '',
+      peopleRange: ''
     };
 
     let isValid = true;
@@ -73,7 +75,11 @@ const TrekSearchInput = memo(forwardRef((props, ref) => {
       isValid = false;
     }
     if (!startDate) {
-      newErrors.date = 'Please select a date';
+      newErrors.date = 'Select date';
+      isValid = false;
+    }
+    if (!peopleRange) {
+      newErrors.peopleRange = 'Select people';
       isValid = false;
     }
 
@@ -212,72 +218,41 @@ const TrekSearchInput = memo(forwardRef((props, ref) => {
           {/* Left Section - Destination and Trek */}
           <motion.div
             variants={itemVariants}
-            className="flex-1 bg-[#C3EFE6] rounded-xl p-3 space-y-4 w-full md:w-auto"
+            className="flex-[1.2] bg-[#C3EFE6] rounded-xl p-2.5 sm:p-3 space-y-2 sm:space-y-3 w-full md:w-auto"
           >
-            <div className="relative">
-              <label className="block text-sm font-semibold text-gray-800 mb-1">Select Destination</label>
-              <Select
-                instanceId="trek-destination-select"
-                options={data.destinations.map(dest => ({ value: dest.value, label: dest.label }))}
-                value={selectedDestination}
-                onChange={handleDestinationChange}
-                placeholder="Choose a destination"
-                classNamePrefix="react-select"
-                isClearable
-                styles={{
-                  ...selectStyles,
-                  control: (provided, state) => ({
-                    ...selectStyles.control(provided, state),
-                    borderColor: errors.destination ? '#ef4444' : state.isFocused ? '#10b981' : '#d1d5db',
-                    boxShadow: errors.destination ? '0 0 0 1px #ef4444' : state.isFocused ? '0 0 0 1px #10b981' : null,
-                  })
-                }}
-                menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
-                menuPosition="fixed"
-              />
-              {errors.destination && <p className="text-[10px] text-red-500 font-semibold mt-1 absolute left-1">{errors.destination}</p>}
-            </div>
-
-            <div className="relative">
-              <label className="block text-sm font-semibold text-gray-800 mb-1">Choose Trek</label>
-              <Select
-                instanceId="trek-select"
-                options={trekOptions}
-                value={selectedTrek}
-                onChange={handleTrekChange}
-                placeholder={selectedDestination ? "Select a trek" : "Select destination first"}
-                classNamePrefix="react-select"
-                isClearable
-                styles={{
-                  ...selectStyles,
-                  control: (provided, state) => ({
-                    ...selectStyles.control(provided, state),
-                    borderColor: errors.trek ? '#ef4444' : state.isFocused ? '#10b981' : '#d1d5db',
-                    boxShadow: errors.trek ? '0 0 0 1px #ef4444' : state.isFocused ? '0 0 0 1px #10b981' : null,
-                  })
-                }}
-                menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
-                menuPosition="fixed"
-                isDisabled={!selectedDestination}
-              />
-              {errors.trek && <p className="text-[10px] text-red-500 font-semibold mt-1 absolute left-1">{errors.trek}</p>}
-            </div>
+            <TrekDestinationSelect
+              selectedDestination={selectedDestination}
+              handleDestinationChange={handleDestinationChange}
+              error={errors.destination}
+            />
+            <TrekNameSelect
+              trekOptions={trekOptions}
+              selectedTrek={selectedTrek}
+              handleTrekChange={handleTrekChange}
+              selectedDestination={selectedDestination}
+              error={errors.trek}
+            />
           </motion.div>
 
-          {/* Right Section - Date and People (Now following same layout as Trip Section) */}
+          {/* Right Section - People, Date and Search */}
           <motion.div
             variants={itemVariants}
-            className="flex-1 bg-[#C3EFE6] rounded-xl p-3 flex flex-col justify-between w-full md:w-auto"
+            className="flex-[2] bg-[#C3EFE6] rounded-xl p-2.5 sm:p-3 flex flex-col justify-between w-full md:w-auto"
           >
-            <div className="flex flex-col gap-4">
-              {/* Date Picker - Full width on all screens for consistency */}
-              <motion.div variants={itemVariants} className="relative z-[60]">
+            <TrekCountersSection
+              peopleRange={peopleRange}
+              setPeopleRange={setPeopleRange}
+              error={errors.peopleRange}
+            />
+
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 sm:items-end mt-2 sm:mt-3">
+              <motion.div variants={itemVariants} className="flex-1 relative z-[60] w-full">
                 <label className="block text-sm font-semibold text-gray-800 mb-1">Enter Date</label>
                 <DatePicker
                   selected={startDate}
                   onChange={handleDateChange}
                   customInput={
-                    <motion.div className="relative" whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
+                    <motion.div className="relative w-full" whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
                       <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                         <CalendarCheck className="h-5 w-5 text-gray-400" />
                       </div>
@@ -286,78 +261,70 @@ const TrekSearchInput = memo(forwardRef((props, ref) => {
                         value={dateInput}
                         onChange={handleInputChange}
                         placeholder="DD/MM/YYYY"
-                        className="bg-white border border-gray-300 text-gray-800 text-sm rounded-md focus:ring-green-500 focus:border-green-500 block w-full pl-9 pr-2 py-1.5 transition-all"
+                        className={`bg-white border text-gray-800 text-sm rounded-md focus:ring-green-500 focus:border-green-500 block w-full pl-9 pr-2 py-1.5 transition-all ${errors.date ? 'border-red-500 shadow-[0_0_0_1px_#ef4444]' : 'border-gray-300'}`}
                       />
                     </motion.div>
                   }
                   dateFormat="dd/MM/yyyy"
                   showMonthDropdown
                   showYearDropdown
-                  dropdownMode="select"
+                  dropdownMode="scroll"
+                  scrollableYearDropdown
+                  yearDropdownItemNumber={100}
                   placeholderText="DD/MM/YYYY"
                   popperClassName="z-[1000]"
                   popperPlacement="bottom-start"
                   calendarClassName="border-green-200 rounded-md shadow-xl bg-white"
                   wrapperClassName="w-full"
                 />
-                {errors.date && <p className="text-[10px] text-red-500 font-semibold mt-1 absolute left-1">{errors.date}</p>}
+                <AnimatePresence>
+                  {errors.date && (
+                    <motion.p 
+                      initial={{ opacity: 0, height: 0 }} 
+                      animate={{ opacity: 1, height: 'auto' }} 
+                      exit={{ opacity: 0, height: 0 }}
+                      className="text-[11px] sm:text-xs text-red-500 font-medium mt-1 ml-1"
+                    >
+                      {errors.date}
+                    </motion.p>
+                  )}
+                </AnimatePresence>
               </motion.div>
 
-              {/* People Range Select - Center Bottom Grid Row Area */}
-              <motion.div variants={itemVariants} className="relative">
-                <label className="block text-sm font-semibold text-gray-800 mb-1">No. of People</label>
-                <Select
-                  instanceId="trek-people-select"
-                  options={peopleOptions}
-                  value={peopleRange}
-                  onChange={setPeopleRange}
-                  placeholder="Select Range"
-                  classNamePrefix="react-select"
-                  isClearable
-                  styles={{
-                    ...selectStyles,
-                    control: (provided, state) => ({ ...selectStyles.control(provided, state), minHeight: '34px' })
-                  }}
-                  menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
-                  menuPosition="fixed"
-                />
-              </motion.div>
-            </div>
+              <div className="flex gap-3 flex-wrap sm:flex-nowrap justify-center sm:justify-end w-full sm:w-auto">
+                <AnimatePresence mode="wait">
+                  {isSearching ? (
+                    <motion.div key="searching" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="w-full sm:w-32 flex justify-center py-1">
+                      <motion.div className="h-8 w-8 rounded-full border-2 border-green-500 border-t-transparent" animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} />
+                    </motion.div>
+                  ) : (
+                    <motion.button
+                      key="search"
+                      variants={buttonVariants}
+                      initial="rest"
+                      whileHover="hover"
+                      whileTap="tap"
+                      onClick={handleSearch}
+                      className="flex items-center justify-center gap-2 px-6 py-1.5 bg-[#28A745] hover:bg-green-600 text-white text-base rounded-md transition w-full sm:w-32"
+                    >
+                      <Search size={16} />
+                      Search
+                    </motion.button>
+                  )}
+                </AnimatePresence>
 
-            {/* Buttons Area */}
-            <div className="flex gap-3 flex-wrap sm:flex-nowrap justify-center sm:justify-end w-full sm:w-auto mt-4">
-              <AnimatePresence mode="wait">
-                {isSearching ? (
-                  <motion.div key="searching" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="w-full sm:w-32 flex justify-center py-1">
-                    <motion.div className="h-8 w-8 rounded-full border-2 border-green-500 border-t-transparent" animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} />
-                  </motion.div>
-                ) : (
-                  <motion.button
-                    key="search"
-                    variants={buttonVariants}
-                    initial="rest"
-                    whileHover="hover"
-                    whileTap="tap"
-                    onClick={handleSearch}
-                    className="flex items-center justify-center gap-2 px-6 py-1.5 bg-[#28A745] hover:bg-green-600 text-white text-base rounded-md transition w-full sm:w-32"
-                  >
-                    <Search size={16} />
-                    Search
-                  </motion.button>
-                )}
-              </AnimatePresence>
-
-              <motion.button
-                variants={buttonVariants}
-                initial="rest"
-                whileHover="hover"
-                whileTap="tap"
-                onClick={handleReset}
-                className="flex items-center justify-center gap-1 px-4 py-1.5 bg-[#A6D8BA] hover:bg-red-500 hover:text-white text-sm rounded-md transition w-full sm:w-24"
-              >
-                <RefreshCcw size={14} />
-                Reset
-              </motion.button>
+                <motion.button
+                  variants={buttonVariants}
+                  initial="rest"
+                  whileHover="hover"
+                  whileTap="tap"
+                  onClick={handleReset}
+                  className="flex items-center justify-center gap-1 px-4 py-1.5 bg-[#A6D8BA] hover:bg-red-500 hover:text-white text-sm rounded-md transition w-full sm:w-24"
+                >
+                  <RefreshCcw size={14} />
+                  Reset
+                </motion.button>
+              </div>
             </div>
           </motion.div>
         </motion.div>
@@ -365,6 +332,158 @@ const TrekSearchInput = memo(forwardRef((props, ref) => {
     </motion.div>
   );
 }));
+
+// ------------------- Helper Components -------------------
+
+const TrekDestinationSelect = ({ selectedDestination, handleDestinationChange, error }) => (
+  <motion.div
+    className="relative z-[1000] w-full"
+    initial={{ opacity: 0, x: -10 }}
+    whileInView={{ opacity: 1, x: 0 }}
+    viewport={{ once: true, margin: '-50px' }}
+    transition={{ duration: 0.2, delay: 0.05 }}
+  >
+    <label className="block text-sm font-semibold text-gray-800 mb-1">Select Destination</label>
+    <Select
+      instanceId="trek-destination-select"
+      options={data.destinations.map(dest => ({ value: dest.value, label: dest.label }))}
+      value={selectedDestination}
+      onChange={handleDestinationChange}
+      placeholder="Choose a destination"
+      classNamePrefix="react-select"
+      isClearable
+      styles={{
+        ...selectStyles,
+        control: (provided, state) => ({
+          ...selectStyles.control(provided, state),
+          minHeight: '36px',
+          borderColor: error ? '#ef4444' : state.isFocused ? '#10b981' : '#d1d5db',
+          boxShadow: error ? '0 0 0 1px #ef4444' : state.isFocused ? '0 0 0 1px #10b981' : null,
+        })
+      }}
+      menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
+      menuPosition="fixed"
+    />
+    <AnimatePresence>
+      {error && (
+        <motion.p 
+          initial={{ opacity: 0, height: 0 }} 
+          animate={{ opacity: 1, height: 'auto' }} 
+          exit={{ opacity: 0, height: 0 }}
+          className="text-[11px] sm:text-xs text-red-500 font-medium mt-1 ml-1"
+        >
+          {error}
+        </motion.p>
+      )}
+    </AnimatePresence>
+  </motion.div>
+);
+
+const TrekNameSelect = ({ trekOptions, selectedTrek, handleTrekChange, selectedDestination, error }) => (
+  <motion.div
+    className="relative z-[1000] w-full"
+    initial={{ opacity: 0, x: -10 }}
+    whileInView={{ opacity: 1, x: 0 }}
+    viewport={{ once: true, margin: '-50px' }}
+    transition={{ duration: 0.2, delay: 0.1 }}
+  >
+    <label className="block text-sm font-semibold text-gray-800 mb-1">Choose Trek</label>
+    <Select
+      instanceId="trek-select"
+      options={trekOptions}
+      value={selectedTrek}
+      onChange={handleTrekChange}
+      placeholder={selectedDestination ? "Select a trek" : "Select destination first"}
+      classNamePrefix="react-select"
+      isClearable
+      styles={{
+        ...selectStyles,
+        control: (provided, state) => ({
+          ...selectStyles.control(provided, state),
+          minHeight: '36px',
+          borderColor: error ? '#ef4444' : state.isFocused ? '#10b981' : '#d1d5db',
+          boxShadow: error ? '0 0 0 1px #ef4444' : state.isFocused ? '0 0 0 1px #10b981' : null,
+        })
+      }}
+      menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
+      menuPosition="fixed"
+      isDisabled={!selectedDestination}
+    />
+    <AnimatePresence>
+      {error && (
+        <motion.p 
+          initial={{ opacity: 0, height: 0 }} 
+          animate={{ opacity: 1, height: 'auto' }} 
+          exit={{ opacity: 0, height: 0 }}
+          className="text-[11px] sm:text-xs text-red-500 font-medium mt-1 ml-1"
+        >
+          {error}
+        </motion.p>
+      )}
+    </AnimatePresence>
+  </motion.div>
+);
+
+const TrekCountersSection = ({ peopleRange, setPeopleRange, error }) => {
+  const peopleOptions = [
+    { value: '1-2', label: '1-2 People' },
+    { value: '3-5', label: '3-5 People' },
+    { value: '6-9', label: '6-9 People' },
+    { value: '10-15', label: '10-15 People' },
+    { value: '15+', label: '15+ People' }
+  ];
+
+  return (
+    <motion.div
+      className="flex gap-2 sm:gap-4 w-full"
+      initial={{ opacity: 0 }}
+      whileInView={{ opacity: 1 }}
+      viewport={{ once: true, margin: '-50px' }}
+    >
+      <motion.div
+        className="flex-1 w-full relative"
+        initial={{ opacity: 0, y: 10 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: '-30px' }}
+        transition={{ duration: 0.3 }}
+      >
+        <label className="block text-sm font-semibold text-gray-800 mb-1">No. of People</label>
+        <Select
+          instanceId="trek-people-select"
+          options={peopleOptions}
+          value={peopleRange}
+          onChange={setPeopleRange}
+          placeholder="Select Range"
+          classNamePrefix="react-select"
+          isClearable
+          styles={{
+            ...selectStyles,
+            control: (provided, state) => ({
+              ...selectStyles.control(provided, state),
+              minHeight: '36px', // Standard height
+              borderColor: error ? '#ef4444' : state.isFocused ? '#10b981' : '#d1d5db',
+              boxShadow: error ? '0 0 0 1px #ef4444' : state.isFocused ? '0 0 0 1px #10b981' : null,
+            })
+          }}
+          menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
+          menuPosition="fixed"
+        />
+        <AnimatePresence>
+          {error && (
+            <motion.p 
+              initial={{ opacity: 0, height: 0 }} 
+              animate={{ opacity: 1, height: 'auto' }} 
+              exit={{ opacity: 0, height: 0 }}
+              className="text-[11px] sm:text-xs text-red-500 font-medium mt-1 ml-1"
+            >
+              {error}
+            </motion.p>
+          )}
+        </AnimatePresence>
+      </motion.div>
+    </motion.div>
+  );
+};
 
 const selectStyles = {
   control: (provided, state) => ({

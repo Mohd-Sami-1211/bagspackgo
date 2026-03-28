@@ -47,7 +47,7 @@ const destCategories = [
     label: 'Meadow Walks',
     icon: Flag,
     places: [
-      { name: 'Betaab Valley Walk',      images: ['/images/Betaab1.jpeg', '/images/Betaab2.jpeg', '/images/Betaab3.jpeg', '/images/Betaab4.jpeg'],     description: "Lush green meadows with crystal-clear streams — a short, scenic walk perfect for families and beginners." },
+      { name: 'Betaab Valley Walk',      images: ['/images/Pahalgam1.jpeg', '/images/Pahalgam2.jpeg', '/images/Pahalgam3.jpeg', '/images/Pahalgam4.jpg'],     description: "Lush green meadows with crystal-clear streams — a short, scenic walk perfect for families and beginners." },
       { name: 'Doodhpathri Meadows',     images: ['/images/Doodhpathri1.jpeg', '/images/Doodhpathri2.jpeg', '/images/Doodhpathri3.jpeg', '/images/Doodhpathri4.jpeg'], description: "The Valley of Milk, famous for its frothy white streams and carpets of wildflowers in summer." },
       { name: 'Pahalgam Riverside',      images: ['/images/Pahalgam1.jpeg', '/images/Pahalgam2.jpeg', '/images/Pahalgam3.jpeg', '/images/Pahalgam4.jpg'], description: "A gentle walk along the Lidder River through pine forests and shepherd meadows in the Valley of Shepherds." },
     ],
@@ -57,7 +57,7 @@ const destCategories = [
 const adventures = [
   { id: 1, name: 'Alpine Trekking',  media: { src: '/images/trekking.mp4',    poster: '/images/GL1.jpeg',      alt: 'Alpine trekking Kashmir Great Lakes' }, description: 'Multi-day high-altitude treks through alpine meadows, glaciers, and pristine mountain lakes.', locations: ['Great Lakes', 'Tarsar Marsar', 'Kolahoi Glacier'] },
   { id: 2, name: 'Glacier Crossing', media: { src: '/images/paragliding.mp4', poster: '/images/KG1.jpeg',      alt: 'Kolahoi Glacier Kashmir'             }, description: 'Cross living glaciers and snowfields under expert guide supervision — an experience for the bold.', locations: ['Kolahoi Glacier', 'Nichnai Pass', 'Gadsar Pass'] },
-  { id: 3, name: 'River Camping',    media: { src: '/images/shikara.mp4',     poster: '/images/Aru1.jpeg',     alt: 'Riverside camping Kashmir'           }, description: 'Spend nights beside gushing mountain rivers with campfire, starlit skies, and fresh mountain air.', locations: ['Aru Valley', 'Lidderwat', 'Betaab Valley'] },
+  { id: 3, name: 'River Camping',    media: { src: '/images/shikara.mp4',     poster: '/images/AL1.jpeg',      alt: 'Riverside camping Kashmir'           }, description: 'Spend nights beside gushing mountain rivers with campfire, starlit skies, and fresh mountain air.', locations: ['Aru Valley', 'Lidderwat', 'Betaab Valley'] },
   { id: 4, name: 'Snow Trekking',    media: { src: '/images/skiing.mp4',      poster: '/images/Sonmarg1.jpeg', alt: 'Snow trekking in Kashmir'            }, description: 'Trek through snow-blanketed passes and frozen lakes on our early-season and late-season expeditions.', locations: ['Sonamarg', 'Thajiwas Glacier', 'Zero Point'] },
 ];
 

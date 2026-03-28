@@ -120,19 +120,6 @@ const GuideCard = ({ guide, category, daysRange, peopleRange, date, selectedPack
         isPremium ? 'border-amber-400/30' : 'border-gray-100'
       }`}
     >
-      <AnimatePresence>
-        {navigating && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#F2FFFC]"
-          >
-            <div className="w-10 h-10 border-[3px] border-emerald-100 border-t-emerald-600 rounded-full animate-spin" />
-            <p className="mt-4 text-[13px] font-medium text-emerald-700">Loading package details...</p>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Premium ribbon (Mobile only) */}
       {isPremium && (
@@ -174,15 +161,21 @@ const GuideCard = ({ guide, category, daysRange, peopleRange, date, selectedPack
 
               {/* Star rating */}
               <div className="mt-1 flex items-center gap-1">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className={`h-3 w-3 ${
-                    i < Math.round(guide.rating)
-                      ? isPremium ? 'fill-amber-400 text-amber-400' : 'fill-emerald-500 text-emerald-500'
-                      : 'text-gray-200 fill-gray-200'
-                  }`} />
-                ))}
-                <span className="text-xs font-bold text-gray-700 ml-0.5">{guide.rating}</span>
-                <span className="text-xs text-gray-400">({guide.reviews})</span>
+                {guide.rating ? (
+                  <>
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className={`h-3 w-3 ${
+                        i < Math.round(guide.rating)
+                          ? isPremium ? 'fill-amber-400 text-amber-400' : 'fill-emerald-500 text-emerald-500'
+                          : 'text-gray-200 fill-gray-200'
+                      }`} />
+                    ))}
+                    <span className="text-xs font-bold text-gray-700 ml-0.5">{guide.rating}</span>
+                    <span className="text-xs text-gray-400">({guide.reviews || 0} reviews)</span>
+                  </>
+                ) : (
+                  <span className="text-[11px] font-semibold text-gray-400 italic">No ratings found</span>
+                )}
               </div>
             </div>
           </div>
@@ -218,7 +211,7 @@ const GuideCard = ({ guide, category, daysRange, peopleRange, date, selectedPack
                   : 'bg-emerald-500 hover:bg-emerald-600 text-white'
               }`}
             >
-              {navigating ? <Loader2 className="h-4 w-4 animate-spin" /> : <>View <ArrowRight className="h-3.5 w-3.5" /></>}
+              <>View <ArrowRight className="h-3.5 w-3.5" /></>
             </motion.button>
           </div>
         </div>
@@ -277,11 +270,7 @@ const GuideCard = ({ guide, category, daysRange, peopleRange, date, selectedPack
                 : 'bg-white text-emerald-700 border-transparent hover:bg-emerald-50 shadow-md'
             }`}
           >
-            {navigating ? (
-              <><Loader2 className="h-4 w-4 animate-spin" /> Loading...</>
-            ) : (
-              <>{isPremium ? 'View Premium' : 'View Details'} <ArrowRight className="h-4 w-4" /></>
-            )}
+            <>{isPremium ? 'View Premium' : 'View Details'} <ArrowRight className="h-4 w-4" /></>
           </motion.button>
         </div>
       </div>

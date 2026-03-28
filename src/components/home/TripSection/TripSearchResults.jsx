@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import GuideCard from './TripGuideCard';
@@ -24,7 +24,7 @@ const SearchResults = () => {
   // Filter/sort state
   const [sortOption, setSortOption] = useState('rating-desc');
   const [searchQuery, setSearchQuery] = useState('');
-  const [guides, setGuides] = useState([]);
+  const [allGuides, setAllGuides] = useState([]);
   const [activeFilter, setActiveFilter] = useState(null);
 
   // Parse and validate search parameters
@@ -77,11 +77,9 @@ const SearchResults = () => {
   const [editablePeopleRange, setEditablePeopleRange] = useState(peopleOptions.find(opt => opt.value === peopleRange) || null);
   const [editableDate, setEditableDate] = useState(date);
 
-  const handleSearchChange = useCallback((value) => {
+  const handleSearchChange = (value) => {
     setSearchQuery(value);
-    if (searchTimeout) clearTimeout(searchTimeout);
-    setSearchTimeout(setTimeout(() => {}, 300));
-  }, [searchTimeout]);
+  };
 
   useEffect(() => {
     const fetchGuides = async () => {
@@ -95,15 +93,7 @@ const SearchResults = () => {
 
         const res = await fetch(`/api/public/trips?${params.toString()}`);
         const json = await res.json();
-        let results = json.success ? json.data : [];
-
-        if (searchQuery) {
-          const query = searchQuery.toLowerCase();
-          results = results.filter(guide => guide.name.toLowerCase().includes(query));
-        }
-
-        results = sortGuides(results, sortOption);
-        setGuides(results);
+        setAllGuides(json.success ? json.data : []);
       } catch (error) {
         console.error('Error loading guides:', error);
       } finally {
@@ -111,12 +101,11 @@ const SearchResults = () => {
       }
     };
     fetchGuides();
-    return () => { if (searchTimeout) clearTimeout(searchTimeout); };
-  }, [destination, daysRange, peopleRange, category, sortOption, searchQuery]);
+  }, [destination, daysRange, peopleRange, category]);
 
-  const sortGuides = (guides, option) => {
+  const sortGuides = useCallback((guidesList, option) => {
     const [field, order] = option.split('-');
-    return [...guides].sort((a, b) => {
+    return [...guidesList].sort((a, b) => {
       if (field === 'price') {
         const aPrice = a.price[category] || a.price.individual;
         const bPrice = b.price[category] || b.price.individual;
@@ -124,7 +113,16 @@ const SearchResults = () => {
       }
       return order === 'desc' ? b[field] - a[field] : a[field] - b[field];
     });
-  };
+  }, [category]);
+
+  const guides = useMemo(() => {
+    let results = allGuides;
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      results = results.filter(guide => guide.name.toLowerCase().includes(query));
+    }
+    return sortGuides(results, sortOption);
+  }, [allGuides, searchQuery, sortOption, sortGuides]);
 
   const handleApplyChanges = () => {
     setIsApplying(true);
@@ -315,7 +313,7 @@ const SearchResults = () => {
                     <DatePicker
                       selected={editableDate}
                       onChange={setEditableDate}
-                      className="w-full bg-gray-50 border border-gray-100 py-1.5 px-3 rounded-xl text-sm font-medium focus:ring-2 focus:ring-emerald-500/20"
+                      className="w-full bg-[#F9FAFB] border border-gray-300 min-h-[36px] px-3 rounded-lg text-[0.85rem] focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors"
                     />
                   </div>
                 </div>
