@@ -33,7 +33,7 @@ export async function POST(req) {
             delete clonedPackageData.createdAt;
             delete clonedPackageData.updatedAt;
             clonedPackageData.name = `Copy of ${clonedPackageData.name}`;
-            clonedPackageData.status = 'inactive';
+            clonedPackageData.status = 'active';
 
             const newPackage = new Package(clonedPackageData);
             await newPackage.save();
@@ -52,6 +52,7 @@ export async function POST(req) {
             inclusives,
             inclusivesList,
             exclusivesList,
+            additionalPoints,
             activities,
             itinerary,
             termsAndConditions
@@ -88,6 +89,7 @@ export async function POST(req) {
             inclusives: inclusives || null,
             inclusivesList: (inclusivesList || []).map(i => typeof i === 'string' ? i : i.text),
             exclusivesList: (exclusivesList || []).map(e => typeof e === 'string' ? e : e.text),
+            additionalPoints: (additionalPoints || []).map(a => typeof a === 'string' ? a : a.text),
             activities: (activities || []).map(a => ({
                 name: a.name,
                 details: a.details
@@ -184,6 +186,7 @@ export async function PUT(req) {
             inclusives,
             inclusivesList,
             exclusivesList,
+            additionalPoints,
             activities,
             itinerary,
             termsAndConditions
@@ -211,6 +214,7 @@ export async function PUT(req) {
             inclusives: inclusives || null,
             inclusivesList: (inclusivesList || []).map(i => typeof i === 'string' ? i : i.text),
             exclusivesList: (exclusivesList || []).map(e => typeof e === 'string' ? e : e.text),
+            additionalPoints: (additionalPoints || []).map(a => typeof a === 'string' ? a : a.text),
             activities: (activities || []).map(a => ({
                 name: a.name,
                 details: a.details

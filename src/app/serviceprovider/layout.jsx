@@ -15,7 +15,7 @@ export default function ServiceProviderLayout({ children }) {
 
     // If not authenticated, redirect to sign-in
     if (!isAuthenticated) {
-      router.replace('/signin');
+      router.replace('/');
       return;
     }
 

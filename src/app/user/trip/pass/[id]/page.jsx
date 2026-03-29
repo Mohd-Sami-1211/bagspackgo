@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { QRCodeSVG } from 'qrcode.react';
 import Image from 'next/image';
-import { MapPin, User, Mail, Phone, Instagram, Facebook, Globe, CheckCircle2, Navigation } from 'lucide-react';
+import { MapPin, User, Mail, Phone, Instagram, Facebook, Globe, CheckCircle2, Navigation, X } from 'lucide-react';
 
 const formatTimeWithAMPM = (time) => {
     if (!time) return "";
@@ -54,12 +54,17 @@ export default function TripPassPage() {
 
     // Auto-trigger print dialog when ?print=true is in URL
     useEffect(() => {
-        if (!loading && booking && searchParams.get('print') === 'true') {
-            // Small delay to ensure the page renders fully before printing
-            const timer = setTimeout(() => window.print(), 800);
-            return () => clearTimeout(timer);
+        if (!loading && booking) {
+            const ref = booking.bookingRef || id.substring(0, 8).toUpperCase();
+            document.title = `BPG_Trip_Pass_${ref}`;
+            
+            if (searchParams.get('print') === 'true') {
+                // Small delay to ensure the page renders fully before printing
+                const timer = setTimeout(() => window.print(), 800);
+                return () => clearTimeout(timer);
+            }
         }
-    }, [loading, booking, searchParams]);
+    }, [loading, booking, searchParams, id]);
 
     const formatDate = (d) => {
         if (!d) return 'TBD';
@@ -82,8 +87,15 @@ export default function TripPassPage() {
         personalDetails = {},
     } = booking || {};
 
-    const pSnapshot = booking?.packageSnapshot || booking?.packageId || {};
+    const pSnapshot = booking?.packageSnapshot || booking?.packageId || booking?.package || {};
     const gSnapshot = booking?.guideId || booking?.guideSnapshot || {};
+    
+    const getList = (key) => booking?.[key] || pSnapshot?.[key] || [];
+    const inclusivesList = getList('inclusivesList');
+    const exclusivesList = getList('exclusivesList');
+    const additionalPoints = getList('additionalPoints').filter(p => (p?.text || p)?.trim?.());
+    const termsAndConditionsList = getList('termsAndConditions');
+    const itineraryList = getList('itinerary');
     
     const packageName = pSnapshot.name || booking?.packageName || "Premium Trip Package";
     const providerName = booking?.companyName || gSnapshot.companyName || gSnapshot.name || booking?.providerName || "BagsPackGo Verified Partner";
@@ -260,10 +272,10 @@ export default function TripPassPage() {
                             <h4 className="font-bold text-gray-800 uppercase tracking-widest mb-3 text-[11px] flex items-center gap-2">
                                 <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Provider Conditions
                             </h4>
-                            {booking?.termsAndConditions && booking.termsAndConditions.length > 0 ? (
+                            {termsAndConditionsList.length > 0 ? (
                                 <ul className="list-disc pl-4 space-y-2">
-                                    {booking.termsAndConditions.map((term, i) => (
-                                        <li key={i}>{term}</li>
+                                    {termsAndConditionsList.map((term, i) => (
+                                        <li key={i}>{term?.text || term}</li>
                                     ))}
                                 </ul>
                             ) : (
@@ -272,14 +284,58 @@ export default function TripPassPage() {
                         </div>
                     </div>
 
+                    <div className="mt-8 pt-6 border-t border-emerald-100 grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
+                        <div>
+                            <h4 className="font-bold text-gray-800 uppercase tracking-widest mb-3 text-[11px] flex items-center gap-2">
+                                <CheckCircle2 className="w-3 h-3 text-emerald-600" /> What's Included
+                            </h4>
+                            {inclusivesList.length > 0 ? (
+                                <ul className="list-disc pl-4 space-y-2">
+                                    {inclusivesList.map((item, i) => (
+                                        <li key={i}>{item?.text || item}</li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p className="italic font-medium text-gray-400">Not specified.</p>
+                            )}
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-gray-800 uppercase tracking-widest mb-3 text-[11px] flex items-center gap-2">
+                                <X className="w-3 h-3 text-rose-500" /> What's Excluded
+                            </h4>
+                            {exclusivesList.length > 0 ? (
+                                <ul className="list-disc pl-4 space-y-2">
+                                    {exclusivesList.map((item, i) => (
+                                        <li key={i}>{item?.text || item}</li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p className="italic font-medium text-gray-400">Not specified.</p>
+                            )}
+                        </div>
+                    </div>
+
+                    {additionalPoints.length > 0 && (
+                        <div className="mt-6 pt-6 border-t border-emerald-100">
+                            <h4 className="font-bold text-gray-800 uppercase tracking-widest mb-3 text-[11px] flex items-center gap-2">
+                                <Navigation className="w-3 h-3 text-amber-500" /> Additional Points
+                            </h4>
+                            <ul className="list-disc pl-4 space-y-2">
+                                {additionalPoints.map((item, i) => (
+                                    <li key={i}>{item?.text || item}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+
                     {/* Detailed Itinerary Row */}
-                    {booking?.itinerary && booking.itinerary.length > 0 && (
+                    {itineraryList.length > 0 && (
                         <div className="mt-8 pt-6 border-t border-emerald-100">
                             <h4 className="font-bold text-gray-800 uppercase tracking-widest mb-4 text-[11px] flex items-center gap-2">
                                 <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Complete Itinerary
                             </h4>
                             <div className="space-y-4">
-                                {booking.itinerary.map((day, idx) => (
+                                {itineraryList.map((day, idx) => (
                                     <div key={idx} className="flex gap-4">
                                         <div className="shrink-0 w-12 h-12 bg-emerald-100 text-emerald-700 rounded-xl flex flex-col items-center justify-center font-bold">
                                             <span className="text-[9px] uppercase">Day</span>
@@ -301,7 +357,7 @@ export default function TripPassPage() {
                                             )}
                                             
                                             {/* Last Day Dropoff */}
-                                            {idx === booking.itinerary.length - 1 && booking.arrivalDeparture?.dropoff?.address && (
+                                            {idx === itineraryList.length - 1 && booking.arrivalDeparture?.dropoff?.address && (
                                                 <div className="mb-2 p-1.5 bg-blue-50 rounded border border-blue-100 flex items-start gap-1.5">
                                                     <Navigation className="w-3 h-3 text-blue-600 shrink-0 mt-0.5" />
                                                     <div className="min-w-0">

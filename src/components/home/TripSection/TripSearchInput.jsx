@@ -3,7 +3,7 @@ import { useState, forwardRef, useImperativeHandle, useRef, useEffect, memo } fr
 import Select from 'react-select';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { CalendarCheck, Search, RefreshCcw } from 'lucide-react';
+import { CalendarCheck, Search, RefreshCcw, Plus, Minus } from 'lucide-react';
 import data from 'src/data/data.json';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
@@ -16,7 +16,7 @@ const TripSearchInput = memo(forwardRef(({ compactMode = false, onSearch }, ref)
   }, []);
 
   const [daysRange, setDaysRange] = useState(null);
-  const [peopleRange, setPeopleRange] = useState(null);
+  const [peopleCount, setPeopleCount] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState('individual');
   const [selectedDestination, setSelectedDestination] = useState(null);
   const [startDate, setStartDate] = useState(null);
@@ -35,7 +35,7 @@ const TripSearchInput = memo(forwardRef(({ compactMode = false, onSearch }, ref)
       category: selectedCategory,
       date: startDate?.toISOString() || '',
       daysRange: daysRange?.value || '',
-      peopleRange: peopleRange?.value || '',
+      peopleCount: peopleCount.toString(),
     }),
   }));
 
@@ -44,7 +44,7 @@ const TripSearchInput = memo(forwardRef(({ compactMode = false, onSearch }, ref)
     setErrors({});
     setTimeout(() => {
       setDaysRange(null);
-      setPeopleRange(null);
+      setPeopleCount(1);
       setStartDate(null);
       setDateInput('');
       setSelectedCategory('individual');
@@ -83,7 +83,7 @@ const TripSearchInput = memo(forwardRef(({ compactMode = false, onSearch }, ref)
     const newErrors = {};
     if (!selectedDestination) newErrors.destination = 'Please select a destination';
     if (!daysRange) newErrors.days = 'Select days';
-    if (!peopleRange) newErrors.people = 'Select people';
+    if (peopleCount < 1) newErrors.people = 'At least 1 person required';
     if (!startDate) newErrors.date = 'Select date';
 
     if (Object.keys(newErrors).length > 0) {
@@ -97,7 +97,7 @@ const TripSearchInput = memo(forwardRef(({ compactMode = false, onSearch }, ref)
       category: selectedCategory,
       date: startDate?.toISOString() || '',
       daysRange: daysRange?.value || '',
-      peopleRange: peopleRange?.value || '',
+      peopleCount: peopleCount.toString(),
     };
     const filteredParams = Object.fromEntries(Object.entries(params).filter(([_, value]) => value !== ''));
     const queryString = new URLSearchParams(filteredParams).toString();
@@ -165,8 +165,8 @@ const TripSearchInput = memo(forwardRef(({ compactMode = false, onSearch }, ref)
             <CountersSection 
               daysRange={daysRange} 
               setDaysRange={setDaysRange} 
-              peopleRange={peopleRange} 
-              setPeopleRange={setPeopleRange} 
+              peopleCount={peopleCount} 
+              setPeopleCount={setPeopleCount} 
               selectedCategory={selectedCategory} 
               errors={errors}
               clearError={clearError}
@@ -334,7 +334,7 @@ const CategorySelect = ({ selectedCategory, setSelectedCategory }) => (
 );
 
 // ------------------- Counters Section -------------------
-const CountersSection = ({ daysRange, setDaysRange, peopleRange, setPeopleRange, selectedCategory, errors, clearError }) => {
+const CountersSection = ({ daysRange, setDaysRange, peopleCount, setPeopleCount, selectedCategory, errors, clearError }) => {
   const daysOptions = [
     { value: '0-3', label: '0-3 days' },
     { value: '3-5', label: '3-5 days' },
@@ -343,13 +343,14 @@ const CountersSection = ({ daysRange, setDaysRange, peopleRange, setPeopleRange,
     { value: 'other', label: 'Others' }
   ];
 
-  const peopleOptions = [
-    { value: '1-2', label: selectedCategory === 'couple' ? '1-2 Couples' : '1-2 People' },
-    { value: '3-5', label: selectedCategory === 'couple' ? '3-5 Couples' : '3-5 People' },
-    { value: '6-9', label: selectedCategory === 'couple' ? '6-9 Couples' : '6-9 People' },
-    { value: '10-15', label: selectedCategory === 'couple' ? '10-15 Couples' : '10-15 People' },
-    { value: '15+', label: selectedCategory === 'couple' ? '15+ Couples' : '15+ People' }
-  ];
+  const handleIncrement = () => {
+    setPeopleCount(prev => Math.min(prev + 1, 50));
+    clearError('people');
+  };
+
+  const handleDecrement = () => {
+    setPeopleCount(prev => Math.max(prev - 1, 1));
+  };
 
   return (
     <motion.div 
@@ -401,7 +402,7 @@ const CountersSection = ({ daysRange, setDaysRange, peopleRange, setPeopleRange,
         </AnimatePresence>
       </motion.div>
 
-      {/* People Range Select Dropdown */}
+      {/* People Counter */}
       <motion.div
         className="flex-1 w-full sm:w-auto relative"
         initial={{ opacity: 0, y: 10 }}
@@ -412,26 +413,26 @@ const CountersSection = ({ daysRange, setDaysRange, peopleRange, setPeopleRange,
         <label className="block text-sm font-semibold text-gray-800 mb-1">
           {selectedCategory === 'couple' ? 'No. of Couples' : 'No. of People'}
         </label>
-        <Select
-          instanceId="trip-people-select"
-          options={peopleOptions}
-          value={peopleRange}
-          onChange={(val) => { setPeopleRange(val); if(val) clearError('people'); }}
-          placeholder="Select Range"
-          classNamePrefix="react-select"
-          isClearable
-          styles={{
-            ...selectStyles,
-            control: (provided, state) => ({
-              ...selectStyles.control(provided, state),
-              minHeight: '36px',
-              borderColor: errors?.people ? '#ef4444' : state.isFocused ? '#10b981' : '#d1d5db',
-              boxShadow: errors?.people ? '0 0 0 1px #ef4444' : state.isFocused ? '0 0 0 1px #10b981' : null,
-            }),
-          }}
-          menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
-          menuPosition="fixed"
-        />
+        <div className={`flex items-center bg-white border rounded-lg h-[36px] transition-all ${errors?.people ? 'border-red-500 shadow-[0_0_0_1px_#ef4444]' : 'border-gray-300 hover:border-emerald-400'}`}>
+          <button
+            type="button"
+            onClick={handleDecrement}
+            disabled={peopleCount <= 1}
+            className="flex items-center justify-center w-9 h-full text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-l-lg transition-colors disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-gray-500"
+          >
+            <Minus size={14} />
+          </button>
+          <div className="flex-1 text-center text-sm font-bold text-gray-800 select-none tabular-nums">
+            {peopleCount}
+          </div>
+          <button
+            type="button"
+            onClick={handleIncrement}
+            className="flex items-center justify-center w-9 h-full text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-r-lg transition-colors"
+          >
+            <Plus size={14} />
+          </button>
+        </div>
         <AnimatePresence>
           {errors?.people && (
             <motion.p 

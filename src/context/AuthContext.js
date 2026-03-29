@@ -51,7 +51,7 @@ export function AuthProvider({ children }) {
             // Clear any localStorage data
             localStorage.removeItem('role');
             localStorage.removeItem('user');
-            router.push('/');
+            window.location.href = '/';
         }
     };
 

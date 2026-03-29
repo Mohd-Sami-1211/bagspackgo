@@ -287,14 +287,14 @@ export default function DashboardMainContent() {
       value: s.totalTripBookings ?? 0,
       icon:  Plane,
       href:  '/serviceprovider/dashboard/trips',
-      pkgHref: '/serviceprovider/dashboard/settings/packages',
+      pkgHref: '/serviceprovider/dashboard/settings/packages?tab=trip',
     },
     {
       label: 'Trek Bookings',
       value: s.totalTrekBookings ?? 0,
       icon:  Mountain,
       href:  '/serviceprovider/dashboard/treks',
-      pkgHref: '/serviceprovider/dashboard/settings/packages',
+      pkgHref: '/serviceprovider/dashboard/settings/packages?tab=trek',
     },
     {
       label: 'Events Hosted',

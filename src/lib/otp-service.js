@@ -241,72 +241,27 @@ export async function sendApprovalEmail(providerEmail, companyName, providerName
 /**
  * Send trip booking confirmation to user and provider
  */
-export async function sendTripBookingConfirmation({ userEmail, userName, providerEmail, providerName, bookingRef, packageName, destination, startDate, endDate, numPeople, totalAmount }) {
+export async function sendTripBookingConfirmation({ userEmail, userName, providerEmail, providerName, bookingRef, packageName, destination, startDate, endDate, numPeople, totalAmount, pdfBuffer, isTrek }) {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     const formattedStart = startDate ? new Date(startDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : 'TBD';
     const formattedEnd = endDate ? new Date(endDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : 'TBD';
 
     // Email to user
     if (userEmail) {
+        let attachments = [];
+        if (pdfBuffer) {
+            attachments.push({
+                filename: `BagsPackGo_${isTrek ? 'Trek_' : ''}BookingPass_${bookingRef}.pdf`,
+                content: pdfBuffer,
+                contentType: 'application/pdf'
+            });
+        }
+
         const userMail = {
             from: `"bagspackgo" <${process.env.GMAIL_USER}>`,
             to: userEmail,
             subject: `✅ Booking Confirmed — ${packageName} | Ref: ${bookingRef}`,
-            attachments: [
-                {
-                    filename: `BagsPackGo_BookingPass_${bookingRef}.pdf`,
-                    content: (() => {
-                        const doc = new jsPDF();
-                        // Header
-                        doc.setFillColor(5, 150, 105);
-                        doc.rect(0, 0, 210, 40, 'F');
-                        doc.setTextColor(255, 255, 255);
-                        doc.setFontSize(22);
-                        doc.text("BagsPackGo Travel Pass", 15, 25);
-                        
-                        // Body
-                        doc.setTextColor(0, 0, 0);
-                        doc.setFontSize(10);
-                        doc.text("Booking Reference:", 15, 55);
-                        doc.setFontSize(14);
-                        doc.text(bookingRef, 15, 62);
-                        
-                        doc.setFontSize(10);
-                        doc.text("Package Name:", 15, 75);
-                        doc.setFontSize(14);
-                        doc.text(packageName, 15, 82);
-                        
-                        doc.setFontSize(10);
-                        doc.text("Destination:", 15, 95);
-                        doc.setFontSize(12);
-                        doc.text(destination, 15, 102);
-                        
-                        doc.setFontSize(10);
-                        doc.text("Travel Date:", 110, 55);
-                        doc.setFontSize(12);
-                        doc.text(formattedStart, 110, 62);
-                        
-                        doc.setFontSize(10);
-                        doc.text("Passengers:", 110, 75);
-                        doc.setFontSize(12);
-                        doc.text(`${numPeople} Pax`, 110, 82);
-                        
-                        doc.setFontSize(10);
-                        doc.text("Total Paid:", 110, 95);
-                        doc.setFontSize(14);
-                        doc.setTextColor(5, 150, 105);
-                        doc.text(`Rs. ${Number(totalAmount).toLocaleString('en-IN')}`, 110, 102);
-                        
-                        // Footer
-                        doc.setTextColor(150, 150, 150);
-                        doc.setFontSize(9);
-                        doc.text("Please present this pass with a valid ID at the time of pickup.", 15, 280);
-                        doc.text("Thank you for choosing BagsPackGo!", 15, 285);
-                        
-                        return Buffer.from(doc.output('arraybuffer'));
-                    })()
-                }
-            ],
+            attachments: attachments,
             html: `
                 <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 580px; margin: 0 auto; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.10);">
                     <div style="background: linear-gradient(135deg, #10b981, #059669); padding: 40px 32px; text-align: center;">

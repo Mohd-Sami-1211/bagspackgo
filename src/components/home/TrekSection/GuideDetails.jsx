@@ -2,10 +2,11 @@
 import {
   Star, MapPin, Users, Clock, Calendar, Share2, ArrowRight, ArrowLeft,
   Mountain, Compass, Flag, Backpack, Tent, Sun, ShieldCheck, Bookmark,
-  CheckCircle2, AlertCircle, Navigation,
+  CheckCircle2, AlertCircle, Navigation, Crown, Camera, Minus, ExternalLink
 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import TrekItenary from 'src/components/home/TrekSection/Itenary';
 import PickupDropoff from 'src/components/home/TrekSection/Pick-Drop';
 import PersonalDetails from 'src/components/home/TrekSection/PersonalDetails';
 import { useAuth } from '@/context/AuthContext';
@@ -35,18 +36,13 @@ const TrekGuideDetails = ({ guide }) => {
   const isUserAuthenticated = !authLoading && user?.role === 'user';
 
   /* URL params */
-  const peopleRangeParam = searchParams.get('peopleRange') || '';
+  const peopleCountParam = searchParams.get('peopleCount') || searchParams.get('peopleRange') || '';
   const dateParam        = searchParams.get('date');
 
-  let minPeople = 1, maxPeople = 1;
-  if (peopleRangeParam) {
-    if (peopleRangeParam.includes('+')) {
-      minPeople = maxPeople = parseInt(peopleRangeParam);
-    } else {
-      const [a, b] = peopleRangeParam.split('-').map(Number);
-      if (!isNaN(a) && !isNaN(b)) { minPeople = a; maxPeople = b; }
-    }
-  }
+  // Now uses exact count from the counter instead of a range
+  const peopleCount = Math.max(1, parseInt(peopleCountParam) || 1);
+  const minPeople = peopleCount;
+  const maxPeople = peopleCount;
 
   const initialDate = dateParam && !isNaN(new Date(dateParam).getTime())
     ? new Date(dateParam) : new Date();
@@ -61,6 +57,41 @@ const TrekGuideDetails = ({ guide }) => {
     pickup:  { location: '', address: '', city: '', date: '', time: '' },
     dropoff: { location: '', address: '', city: '', date: '', time: '' },
   });
+  const [currentDay,             setCurrentDay]             = useState(1);
+  const [viewingDay,             setViewingDay]             = useState(null);
+
+  const scrollContainerRef   = useRef(null);
+  const nodeRefs             = useRef([]);
+  const dayCardRefs          = useRef([]);
+  const dayCardsContainerRef = useRef(null);
+
+  const handleDayNodeClick = (dayNum) => {
+    setCurrentDay(dayNum);
+  };
+  
+  const handleBackToList = () => {
+    setViewingDay(null);
+  };
+
+  useEffect(() => {
+    if (!viewingDay && currentDay && dayCardRefs.current[currentDay - 1]) {
+      const dayCard = dayCardRefs.current[currentDay - 1];
+      const container = dayCardsContainerRef.current;
+      if (dayCard && container) {
+        const scrollPosition = dayCard.offsetTop - container.offsetTop - 20;
+        container.scrollTo({ top: scrollPosition, behavior: "smooth" });
+      }
+    }
+  }, [currentDay, viewingDay]);
+
+  useEffect(() => {
+    const activeNode = nodeRefs.current[currentDay - 1];
+    const container = scrollContainerRef.current;
+    if (activeNode && container) {
+      const scrollPos = (activeNode.offsetLeft + activeNode.offsetWidth / 2) - (container.offsetWidth / 2);
+      container.scrollTo({ left: scrollPos, behavior: "smooth" });
+    }
+  }, [currentDay]);
 
   /* Auth gate after 4 s */
   useEffect(() => {
@@ -104,6 +135,7 @@ const TrekGuideDetails = ({ guide }) => {
 
   /* Package data */
   const trekPackage = guide;
+  const isPremiumPackage = trekPackage?.type === 'premium';
   const priceObj = trekPackage?.pricingTiers?.length > 0
     ? [...trekPackage.pricingTiers].sort((a, b) => a.minPeople - b.minPeople)[0]
     : { price: 0 };
@@ -157,6 +189,27 @@ const TrekGuideDetails = ({ guide }) => {
             { icon: <Flag        className="h-5 w-5 text-emerald-600" />, title: 'Permits',        items: ['Forest permits', 'Entry fees'] },
           ];
 
+  /* Itenary array mapped from duration */
+  const itenaries = Array.from({ length: duration }, (_, i) => {
+    const dayDate = new Date(selectedStartDate);
+    dayDate.setDate(dayDate.getDate() + i);
+    const realDay = (Array.isArray(trekPackage?.itinerary) && trekPackage.itinerary[i]) || {};
+    
+    return {
+      dayNumber: i + 1,
+      day: i + 1,
+      date: dayDate.toLocaleDateString("en-US", { weekday: "short", day: "numeric", month: "short" }),
+      title: realDay.title || `Day ${i + 1} Trek`,
+      description: typeof realDay === 'string' ? null : (realDay.description || ""),
+      highlights: realDay.highlights || (typeof realDay === 'string' ? [realDay] : []),
+      altitude: realDay.altitude || trekPackage?.altitude || 'Standard',
+      duration: realDay.duration || '5-6 hours',
+      accommodation: realDay.accommodation || 'Campsite',
+      meals: realDay.meals || ['Breakfast', 'Lunch', 'Dinner'],
+      location: realDay.location || realDay.title || (typeof realDay === 'string' ? "Trail" : `Camp ${i + 1}`)
+    };
+  });
+
   /* Tab helpers */
   const isTabDisabled = key => key === 'personalDetails' ? !pickupDropoffCompleted : false;
 
@@ -189,7 +242,7 @@ const TrekGuideDetails = ({ guide }) => {
       guide,
       trekConfig: {
         trekId:           trekPackage._id,
-        peopleRangeParam,
+        peopleCount,
         date:             selectedStartDate.toISOString(),
         days:             duration,
       },
@@ -202,22 +255,22 @@ const TrekGuideDetails = ({ guide }) => {
       },
     };
     localStorage.setItem('trekData', JSON.stringify(trekData));
-    const actualCount = data.personalDetails?.length || minPeople;
+    const actualCount = data.personalDetails?.length || peopleCount;
     router.push(
       `/user/trek/guidelist/trekdetails/${guide.provider?._id || guide.provider}/reviewjourney` +
-      `?trekId=${trekPackage._id}&peopleRange=${peopleRangeParam}&count=${actualCount}&date=${selectedStartDate.toISOString()}`
+      `?trekId=${trekPackage._id}&peopleCount=${peopleCount}&count=${actualCount}&date=${selectedStartDate.toISOString()}`
     );
   };
 
   const trekName    = trekPackage?.name        || 'Standard Trek';
   const destination = trekPackage?.destination || 'Base Camp';
   const difficulty  = trekPackage?.trekLevel   || 'moderate';
-  const companyName = guide?.companyName || guide?.name || 'Provider';
+  const companyName = guide?.provider?.companyname || guide?.provider?.companyName || guide?.provider?.username || 'Expert Guide';
   const providerId  = guide?.provider?._id || guide?.provider || guide?._id;
   const initials    = companyName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 
   return (
-    <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 -mt-16 sm:-mt-10 md:-mt-12 lg:-mt-14 mb-10">
+    <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 pt-4 sm:pt-6 mb-10 -mt-12">
 
       {/* ── Toast ── */}
       {showSaveToast && (
@@ -238,8 +291,12 @@ const TrekGuideDetails = ({ guide }) => {
       {/* ── Hero Card ── */}
       <div className="w-full bg-white pb-6 sm:pb-8 md:pb-10">
         <div className="max-w-7xl mx-auto relative flex flex-col items-center">
-          <div className="relative shadow-2xl rounded-2xl sm:rounded-3xl lg:rounded-full px-4 sm:px-8 pt-10 pb-4 sm:pt-6 sm:pb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between w-full max-w-5xl mx-auto gap-3 sm:gap-8 lg:gap-2 transition-all hover:shadow-emerald-500/10 bg-gradient-to-r from-emerald-500 to-teal-400">
-
+          <div
+            className={`relative shadow-2xl rounded-2xl sm:rounded-3xl lg:rounded-full px-4 sm:px-8 pt-10 pb-4 sm:pt-6 sm:pb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between w-full max-w-5xl mx-auto gap-3 sm:gap-8 lg:gap-2 transition-all hover:shadow-emerald-500/10 ${isPremiumPackage
+                ? "bg-gradient-to-r from-amber-400/90 via-yellow-400 to-amber-300"
+                : "bg-gradient-to-r from-emerald-400 to-green-300"
+              }`}
+          >
             {/* Mobile back */}
             <button onClick={() => router.back()} className="absolute top-4 left-4 flex sm:hidden items-center justify-center p-2 bg-white/20 hover:bg-white/30 rounded-full transition-all text-white backdrop-blur-md border border-white/20">
               <ArrowLeft className="w-4 h-4" />
@@ -253,21 +310,33 @@ const TrekGuideDetails = ({ guide }) => {
               <span className="text-sm sm:text-base pr-1">Back</span>
             </button>
 
+            {/* Premium Badge */}
+            {isPremiumPackage && (
+              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10 flex flex-col items-center">
+                <div className="flex items-center bg-gray-900 text-amber-400 rounded-full px-4 py-1.5 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] border border-amber-400/30 shadow-2xl ring-2 ring-white/10">
+                  <Crown className="w-3.5 h-3.5 mr-2 animate-pulse" />
+                  Premium Luxury
+                </div>
+              </div>
+            )}
+
             {/* Rating */}
-            <div className="absolute top-2 right-2 sm:top-2 sm:right-6 lg:right-10 flex items-center bg-white/95 backdrop-blur-md rounded-full px-3 py-1.5 text-xs font-black text-gray-950 shadow-xl ring-1 ring-gray-200">
+            <div className={`absolute top-2 right-2 sm:top-2 sm:right-6 lg:right-10 flex items-center bg-white/95 backdrop-blur-md rounded-full px-3 py-1.5 text-xs font-black text-gray-950 shadow-xl ring-1 ring-gray-200 ${!trekPackage?.rating && "opacity-90"}`}>
               <Star className={`w-4 h-4 mr-2 ${trekPackage?.rating > 0 ? 'text-amber-500 fill-amber-500' : 'text-gray-300 fill-gray-300'}`} />
               {trekPackage?.rating > 0 ? (
-                <>{trekPackage.rating}<span className="ml-1.5 text-gray-400 text-[10px] font-bold">({trekPackage.reviews || 0})</span></>
+                <>{trekPackage.rating}<span className="ml-1.5 text-gray-400 text-[10px] font-bold">({trekPackage.reviews || trekPackage.totalRatings || 0})</span></>
               ) : (
                 <span className="text-gray-500 text-[10px] uppercase tracking-wider">No ratings yet</span>
               )}
             </div>
 
             {/* Main info */}
-            <div className="flex items-center w-full sm:w-auto mt-1 sm:mt-0 justify-start gap-3 sm:gap-6">
+            <div className="flex items-center w-full sm:w-auto mt-1 sm:mt-0 justify-start sm:justify-start gap-3 sm:gap-6">
               <a href={`/user/provider/${providerId}`}
-                className="w-12 h-12 sm:w-20 sm:h-20 lg:w-24 lg:h-24 rounded-full flex items-center justify-center shadow-2xl border-4 flex-shrink-0 relative overflow-hidden group/avatar cursor-pointer hover:scale-105 transition-all duration-300 bg-white border-emerald-100 hover:border-emerald-300">
-                <div className="text-xl sm:text-2xl lg:text-3xl font-black italic tracking-tighter transition-transform group-hover/avatar:scale-110 text-emerald-600">
+                className={`w-12 h-12 sm:w-20 sm:h-20 lg:w-24 lg:h-24 rounded-full flex items-center justify-center shadow-2xl border-4 flex-shrink-0 relative overflow-hidden group/avatar cursor-pointer hover:scale-105 transition-all duration-300 ${isPremiumPackage ? "bg-white border-amber-200/50 hover:border-amber-400" : "bg-white border-emerald-100 hover:border-emerald-300"
+                  }`}>
+                <div className={`text-xl sm:text-2xl lg:text-3xl font-black italic tracking-tighter transition-transform group-hover/avatar:scale-110 ${isPremiumPackage ? "text-amber-600" : "text-emerald-600"
+                  }`}>
                   {initials}
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-tr from-white/0 to-white/20 pointer-events-none" />
@@ -279,7 +348,7 @@ const TrekGuideDetails = ({ guide }) => {
                     {trekName}
                   </h2>
                 </a>
-                <div className="flex flex-col gap-1.5 sm:gap-2.5 items-start">
+                <div className="flex flex-col gap-1.5 sm:gap-2.5 items-start sm:items-start">
                   <div className="flex items-center text-[10px] sm:text-[11px] text-white/90 font-black tracking-widest uppercase">
                     <MapPin className="h-3.5 w-3.5 mr-1.5 text-white/80" />
                     {destination}
@@ -289,6 +358,14 @@ const TrekGuideDetails = ({ guide }) => {
                     <span className="text-xs sm:text-base font-black text-white ml-0.5 mr-1 sm:mr-2 truncate max-w-[120px] sm:max-w-none">{companyName}</span>
                   </a>
                 </div>
+
+                {isPremiumPackage && (
+                  <div className="flex items-center mt-3 justify-center sm:justify-start flex-wrap gap-2">
+                    <span className="flex items-center text-[10px] sm:text-xs font-black px-3 py-1.5 rounded-xl bg-amber-400/90 text-gray-950 shadow-[0_10px_20px_rgba(251,191,36,0.3)] tracking-tighter uppercase italic">
+                      VVIP Access Granted
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -296,16 +373,16 @@ const TrekGuideDetails = ({ guide }) => {
             <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto justify-center sm:justify-end mt-4 sm:mt-0">
               <div className="flex gap-2.5 justify-center w-full sm:w-auto">
                 <div className="bg-white/10 backdrop-blur-3xl px-4 sm:px-6 py-2.5 rounded-[22px] text-center shadow-[0_15px_40px_-10px_rgba(0,0,0,0.2)] border border-white/20 min-w-[75px] sm:min-w-[100px] hover:bg-white/20 transition-all group/badge">
-                  <p className="text-white/70 text-[8px] font-black uppercase tracking-[0.1em] mb-0.5">Difficulty</p>
+                  <p className="text-white/70 text-[8px] font-black uppercase tracking-[0.1em] mb-0.5 group-hover/badge:text-white">Difficulty</p>
                   <p className="font-black capitalize text-white text-xs sm:text-base leading-none tracking-tight">{difficulty}</p>
                 </div>
                 <div className="bg-white/10 backdrop-blur-3xl px-4 sm:px-6 py-2.5 rounded-[22px] text-center shadow-[0_15px_40px_-10px_rgba(0,0,0,0.2)] border border-white/20 min-w-[75px] sm:min-w-[100px] hover:bg-white/20 transition-all group/badge">
-                  <p className="text-white/70 text-[8px] font-black uppercase tracking-[0.1em] mb-0.5">Duration</p>
+                  <p className="text-white/70 text-[8px] font-black uppercase tracking-[0.1em] mb-0.5 group-hover/badge:text-white">Duration</p>
                   <p className="font-black text-white text-xs sm:text-base leading-none tracking-tight">{duration} Days</p>
                 </div>
                 <div className="bg-white/10 backdrop-blur-3xl px-4 sm:px-6 py-2.5 rounded-[22px] text-center shadow-[0_15px_40px_-10px_rgba(0,0,0,0.2)] border border-white/20 min-w-[75px] sm:min-w-[100px] hover:bg-white/20 transition-all group/badge">
-                  <p className="text-white/70 text-[8px] font-black uppercase tracking-[0.1em] mb-0.5">Trekkers</p>
-                  <p className="font-black text-white text-xs sm:text-base leading-none tracking-tight">{peopleRangeParam || minPeople}</p>
+                  <p className="text-white/70 text-[8px] font-black uppercase tracking-[0.1em] mb-0.5 group-hover/badge:text-white">Trekkers</p>
+                  <p className="font-black text-white text-xs sm:text-base leading-none tracking-tight">{peopleCount} Slot</p>
                 </div>
               </div>
               <div className="flex gap-2.5">
@@ -330,7 +407,7 @@ const TrekGuideDetails = ({ guide }) => {
       </div>
 
       {/* ── Body ── */}
-      <div className="w-full max-w-7xl mx-auto flex flex-col lg:flex-row gap-4 sm:gap-6 md:gap-8 pt-4 sm:pt-6 pb-8 sm:pb-10 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-4 sm:p-6">
+      <div className="w-full max-w-7xl mx-auto flex flex-col lg:flex-row gap-4 sm:gap-6 md:gap-8 pt-4 sm:pt-6 pb-8 sm:pb-10 bg-gradient-to-br from-green-50 to-blue-50 rounded-xl p-4 sm:p-6">
 
         {/* ── Left: Tabs ── */}
         <div className="w-full lg:w-8/12">
@@ -346,7 +423,7 @@ const TrekGuideDetails = ({ guide }) => {
                 onClick={() => !isTabDisabled(tab.key) && setActiveTab(tab.key)}
                 className={`flex-1 text-center text-xs sm:text-sm font-medium py-3 transition-all ${
                   activeTab === tab.key
-                    ? 'text-emerald-600 border-b-2 border-emerald-600 bg-white'
+                    ? 'text-green-600 border-b-2 border-green-600 bg-white'
                     : isTabDisabled(tab.key)
                       ? 'text-gray-400 bg-gray-50 cursor-not-allowed'
                       : 'text-gray-500 hover:text-gray-700 bg-gray-50'
@@ -383,63 +460,50 @@ const TrekGuideDetails = ({ guide }) => {
                     <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-teal-50 border border-teal-100 text-teal-700 text-xs font-bold rounded-full">
                       <Calendar className="w-3.5 h-3.5" /> {duration} Days
                     </span>
-                    {peopleRangeParam && (
+                    {peopleCount > 0 && (
                       <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 border border-blue-100 text-blue-700 text-xs font-bold rounded-full">
-                        <Users className="w-3.5 h-3.5" /> {peopleRangeParam} Trekkers
+                        <Users className="w-3.5 h-3.5" /> {peopleCount} Trekkers
                       </span>
                     )}
                   </div>
                 )}
 
-                {/* Bullet-point itinerary */}
-                <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl border border-emerald-100 p-5 sm:p-6">
-                  <h4 className="text-sm font-black text-emerald-700 uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <Flag className="w-4 h-4" /> What You'll Do
-                  </h4>
-                  <ul className="space-y-3">
-                    {itineraryPoints.map((point, i) => (
-                      <li key={i} className="flex items-start gap-3 group">
-                        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-500 text-white text-[10px] font-black flex items-center justify-center mt-0.5 shadow-sm group-hover:scale-110 transition-transform">
-                          {i + 1}
-                        </span>
-                        <span className="text-sm text-gray-700 leading-relaxed">{point}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* Package highlights if available */}
-                {Array.isArray(trekPackage?.highlights) && trekPackage.highlights.length > 0 && (
-                  <div className="mt-5">
-                    <h4 className="text-xs font-black text-gray-500 uppercase tracking-widest mb-3">Trek Highlights</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {trekPackage.highlights.map((h, i) => (
-                        <span key={i} className="px-3 py-1.5 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full border border-emerald-100">
-                          {h}
-                        </span>
-                      ))}
+                <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                  
+                  {/* Photos Gallery */}
+                  {Array.isArray(trekPackage?.photos) && trekPackage.photos.length > 0 && (
+                    <div className="mb-6">
+                      <h4 className="text-sm font-black text-emerald-700 uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <Camera className="w-4 h-4" /> Trek Gallery
+                      </h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {trekPackage.photos.map((photo, i) => (
+                          <div key={i} className="aspect-[4/3] rounded-xl overflow-hidden shadow-sm border border-emerald-100">
+                            <img src={photo.url || photo} alt={`Trek view ${i + 1}`} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {/* What to bring tips */}
-                <div className="mt-5 p-4 bg-amber-50 border border-amber-100 rounded-xl flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-bold text-amber-800 mb-1">Important Notes</p>
-                    <p className="text-xs text-amber-700 leading-relaxed">
-                      Please carry valid ID proof, warm clothing, and personal medications. All participants should be physically fit. The provider will brief you on safety protocols before departure.
-                    </p>
+                  {/* All days stacked beautifully */}
+                  <div className="space-y-6">
+                    {itenaries.map(day => (
+                      <TrekItenary key={day.dayNumber} day={day} difficulty={difficulty} maxAltitude={trekPackage?.altitude} />
+                    ))}
                   </div>
-                </div>
 
-                <div className="flex justify-end mt-6">
-                  <button
-                    onClick={handleNextTab}
-                    className="px-5 py-2.5 bg-gradient-to-br from-emerald-500 to-teal-500 text-white rounded-xl hover:from-emerald-600 hover:to-teal-600 flex items-center gap-2 text-sm font-bold shadow-sm transition-all shadow-emerald-400/30 hover:shadow-emerald-400/50 border-b-4 border-emerald-700 active:border-b-0 active:translate-y-1"
-                  >
-                    Next <ArrowRight className="h-4 w-4" />
-                  </button>
+                  <div className="flex justify-end mt-6">
+                    <button
+                      onClick={handleNextTab}
+                      className={`px-4 py-2 text-white rounded-lg flex items-center text-sm shadow-sm transition-colors ${isPremiumPackage
+                          ? "bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600"
+                          : "bg-gradient-to-br from-emerald-400 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700"
+                        }`}
+                    >
+                      Next <ArrowRight className="ml-2 h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
               </>
             )}
@@ -473,65 +537,73 @@ const TrekGuideDetails = ({ guide }) => {
         {/* ── Right: Sidebar ── */}
         <div className="w-full lg:w-4/12 space-y-4">
 
-          {/* Price card */}
-          <div className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
-            <div className="bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-4">
-              <p className="text-emerald-100 text-[10px] font-black uppercase tracking-widest">Starting From</p>
-              <p className="text-3xl font-black text-white mt-1">
-                ₹{pricePerPerson.toLocaleString('en-IN')}
-                <span className="text-sm font-semibold text-emerald-100 ml-1">/ person</span>
-              </p>
-              {peopleRangeParam && (
-                <p className="text-emerald-100 text-xs mt-1 font-medium">For {peopleRangeParam} trekkers</p>
-              )}
-            </div>
-            <div className="px-5 py-4 space-y-2.5">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500 font-medium">Per person</span>
-                <span className="font-bold text-gray-800">₹{pricePerPerson.toLocaleString('en-IN')}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500 font-medium">GST (5%)</span>
-                <span className="font-bold text-gray-800">₹{Math.round(pricePerPerson * 0.05).toLocaleString('en-IN')}</span>
-              </div>
-              <div className="h-px bg-gray-100 my-2" />
-              <div className="flex justify-between">
-                <span className="font-black text-gray-800 text-sm">Total / person</span>
-                <span className="font-black text-emerald-600">₹{Math.round(pricePerPerson * 1.05).toLocaleString('en-IN')}</span>
-              </div>
-            </div>
-          </div>
-
           {/* Inclusions */}
-          <div className="bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100">
-            <div className="px-5 py-3.5 border-b border-gray-100">
-              <h2 className="text-emerald-600 font-black text-sm uppercase tracking-wider flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4" /> What's Included
+          <div className={`rounded-xl shadow-md overflow-hidden border mb-6 sm:mb-8 ${isPremiumPackage
+              ? "border-amber-200 bg-gradient-to-b from-white to-amber-50"
+              : "border-gray-100 bg-white"
+            }`}>
+            <div className={`px-4 sm:px-5 py-3 ${isPremiumPackage ? "bg-gradient-to-r from-amber-500 to-yellow-500" : "bg-gradient-to-r from-emerald-500 to-teal-500"}`}>
+              <h2 className="text-white font-semibold text-base flex items-center gap-2">
+                <CheckCircle2 className="w-5 h-5 opacity-90" /> What's Included
               </h2>
             </div>
-            <div className="p-5 space-y-4">
-              {packageInclusions.map((item, i) => (
-                <div key={i} className="flex items-start gap-3">
-                  <div className="flex-shrink-0 p-2 bg-emerald-50 rounded-lg border border-emerald-100">
-                    {item.icon}
+            <div className="p-4 sm:p-5">
+              <div className="space-y-4 sm:space-y-5">
+                {packageInclusions.map((item, i) => (
+                  <div key={i} className="flex items-start">
+                    <div className={`flex-shrink-0 p-1.5 sm:p-2 rounded-lg mr-3 sm:mr-4 ${isPremiumPackage ? "bg-gradient-to-br from-amber-100 to-yellow-100" : "bg-emerald-50"}`}>
+                      {item.icon}
+                    </div>
+                    <div className="min-w-0">
+                      <h4 className="font-medium text-gray-800 text-sm sm:text-base">{item.title}</h4>
+                      {item.items?.length > 0 && (
+                        <ul className="mt-2 space-y-1">
+                          {item.items.map((d, j) => (
+                            <li key={j} className="flex items-start text-xs text-gray-500">
+                              <svg className="h-3 w-3 text-emerald-500 mr-1.5 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                              {d}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-bold text-gray-800 text-sm">{item.title}</h4>
-                    {item.items?.length > 0 && (
-                      <ul className="mt-1.5 space-y-1">
-                        {item.items.map((d, j) => (
-                          <li key={j} className="flex items-start gap-1.5 text-xs text-gray-500">
-                            <svg className="h-3 w-3 text-emerald-500 mr-0.5 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                            {d}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
+                ))}
+              </div>
+
+              {trekPackage?.exclusivesList && trekPackage.exclusivesList.length > 0 && (
+                <div className="mt-4 sm:mt-6 pt-4 border-t border-gray-200">
+                  <h4 className="font-medium text-gray-800 mb-3 text-sm sm:text-base">
+                    What's NOT Included
+                  </h4>
+                  <ul className="space-y-2">
+                    {trekPackage.exclusivesList.map((item, index) => (
+                      <li key={item.id || index} className="flex items-start text-xs text-gray-600">
+                        <Minus className="h-3 w-3 text-red-500 mr-2 mt-0.5 flex-shrink-0" />
+                        <span>{item.text || item}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-              ))}
+              )}
+              
+              {trekPackage?.additionalPoints && trekPackage.additionalPoints.length > 0 && trekPackage.additionalPoints.some(p => p.text?.trim()) && (
+                <div className="mt-4 sm:mt-6 pt-4 border-t border-gray-200">
+                  <h4 className="font-medium text-gray-800 mb-3 text-sm sm:text-base">
+                    Important Notes
+                  </h4>
+                  <ul className="space-y-2.5">
+                    {trekPackage.additionalPoints.filter(item => item.text?.trim()).map((item, index) => (
+                      <li key={item.id || index} className="flex items-start text-xs text-gray-600 bg-gray-50/80 p-2.5 rounded-lg border border-gray-100">
+                        <AlertCircle className="h-3.5 w-3.5 text-amber-500 mr-2 mt-0.5 flex-shrink-0" />
+                        <span className="leading-relaxed font-medium">{item.text || item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           </div>
 
@@ -542,7 +614,7 @@ const TrekGuideDetails = ({ guide }) => {
               {[
                 { icon: Clock,    label: 'Duration',   value: `${duration} Days` },
                 { icon: Mountain, label: 'Difficulty', value: difficulty },
-                { icon: Users,    label: 'Group Size', value: peopleRangeParam ? `${peopleRangeParam} people` : 'Flexible' },
+                { icon: Users,    label: 'Group Size', value: `${peopleCount} people` },
                 ...(trekPackage?.altitude ? [{ icon: Flag, label: 'Max Altitude', value: trekPackage.altitude }] : []),
               ].map(({ icon: Icon, label, value }, i) => (
                 <div key={i} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
@@ -557,6 +629,73 @@ const TrekGuideDetails = ({ guide }) => {
               ))}
             </div>
           </div>
+
+          {/* Pickup and Dropoff Section - Mirroring Trip's layout */}
+          {trekPackage?.pickupDropCities?.length > 0 && (
+            <div
+              className={`rounded-xl shadow-md overflow-hidden border mb-6 sm:mb-8 ${isPremiumPackage
+                  ? "border-amber-200 bg-gradient-to-b from-white to-amber-50"
+                  : "border-gray-100 bg-white"
+                }`}
+            >
+              <div
+                className={`px-4 sm:px-5 py-3 ${isPremiumPackage
+                    ? "bg-gradient-to-r from-amber-500 to-yellow-500"
+                    : "bg-emerald-500"
+                  }`}
+              >
+                <h2 className="text-white font-semibold text-base flex items-center gap-2">
+                  <MapPin className="w-4 h-4 ml-0" /> Available Pickups
+                </h2>
+              </div>
+
+              <div className="p-4 sm:p-5">
+                <div className="space-y-6">
+                  {trekPackage.pickupDropCities.map((city, idx) => (
+                    <div key={idx} className="flex flex-col gap-3">
+                      <div className="flex items-center gap-2 pb-1 border-b border-gray-100">
+                        <div className={`p-1.5 rounded-lg ${isPremiumPackage ? 'bg-amber-100 text-amber-600' : 'bg-emerald-100 text-emerald-600'}`}>
+                          <Navigation className="w-3.5 h-3.5" />
+                        </div>
+                        <span className="font-bold text-gray-900 text-xs tracking-tight uppercase">
+                          {city.cityName}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-2.5">
+                        {city.locations.map((loc, lIdx) => (
+                          <div key={lIdx} className="flex items-center justify-between group bg-gray-50/70 hover:bg-gray-100/80 p-2.5 rounded-xl border border-gray-100/50 hover:border-gray-200 transition-all">
+                            <div className="flex items-center text-xs text-gray-600 min-w-0 pr-2">
+                              <div className={`w-1.5 h-1.5 rounded-full mr-2.5 shrink-0 ${isPremiumPackage ? 'bg-amber-400/80' : 'bg-emerald-400/80'}`} />
+                              <span className="truncate font-medium">{loc.name}</span>
+                            </div>
+                            {loc.mapLink ? (
+                              <a
+                                href={loc.mapLink}
+                                target="_blank"
+                                rel="noreferrer"
+                                className={`p-1.5 rounded-lg transition-all flex-shrink-0 bg-white shadow-sm border border-gray-100 ${isPremiumPackage ? 'text-amber-500 hover:bg-amber-500 hover:text-white' : 'text-emerald-500 hover:bg-emerald-500 hover:text-white'}`}
+                                title="Expand Map"
+                              >
+                                <ExternalLink className="w-3.5 h-3.5" />
+                              </a>
+                            ) : (
+                              <button
+                                onClick={() => alert("Coordinate details for this location were not provided.")}
+                                className="p-1.5 rounded-lg text-gray-300 bg-white/50 border border-gray-50 flex-shrink-0 cursor-help"
+                              >
+                                <ExternalLink className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

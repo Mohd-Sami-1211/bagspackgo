@@ -46,7 +46,7 @@ const StatBadge = ({ icon: Icon, label, value, color }) => (
   </div>
 );
 
-const GuideCard = ({ guide, category, daysRange, peopleRange, date, selectedPackage }) => {
+const GuideCard = ({ guide, category, daysRange, peopleCount = 1, date, selectedPackage }) => {
   const [navigating, setNavigating] = useState(false);
   const router = useRouter();
 
@@ -59,42 +59,31 @@ const GuideCard = ({ guide, category, daysRange, peopleRange, date, selectedPack
 
   const isPremium = matchedPackage?.type === 'premium';
 
-  let pricePerPerson, totalPrice, numDays, daysLabel, peopleRangeLabel;
+  // Use peopleCount (number) to match against provider pricing tiers
+  const numPeople = Math.max(1, peopleCount);
+  
+  let pricePerPerson, totalPrice, numDays, daysLabel, peopleLabel;
   if (matchedPackage) {
-    // Find the matching pricing tier for the selected people count
-    const baseCount = peopleRange ? parseInt(peopleRange.split('-')[0]) || 1 : 1;
     const tiers = matchedPackage.pricingTiers || [];
-    const matchedTier = tiers.find(t => baseCount >= t.minPeople && baseCount <= t.maxPeople) || tiers[0];
+    const matchedTier = tiers.find(t => numPeople >= t.minPeople && numPeople <= t.maxPeople) || tiers[0];
     pricePerPerson = matchedTier ? Number(matchedTier.price) : Number(matchedPackage.price[category] || matchedPackage.price.individual || 0);
     numDays = matchedPackage.days;
-    const bc = Math.max(1, baseCount);
-    totalPrice = pricePerPerson * bc;
+    totalPrice = pricePerPerson * numPeople;
     daysLabel = `${numDays} day${numDays > 1 ? 's' : ''}`;
-    // Show people range from the matched pricing tier
+    // Show people range from the matched pricing tier for context
     if (matchedTier && matchedTier.minPeople != null && matchedTier.maxPeople != null) {
-      peopleRangeLabel = matchedTier.minPeople === matchedTier.maxPeople
-        ? `${matchedTier.minPeople} pax`
-        : `${matchedTier.minPeople}–${matchedTier.maxPeople} pax`;
+      peopleLabel = `${numPeople} pax (₹${matchedTier.price}/pp for ${matchedTier.minPeople}–${matchedTier.maxPeople})`;
     } else {
-      peopleRangeLabel = `${bc} pax`;
+      peopleLabel = `${numPeople} pax`;
     }
   } else {
     pricePerPerson = Number(guide.price?.[category] || guide.price?.individual || 0);
     numDays = daysRange?.includes('-') ? parseInt(daysRange.split('-')[1]) || 1 : 1;
-    const bc = peopleRange ? parseInt(peopleRange.split('-')[0]) || 1 : 1;
-    totalPrice = pricePerPerson * Math.max(1, bc) * numDays;
+    totalPrice = pricePerPerson * numPeople * numDays;
     daysLabel = daysRange ? `${daysRange} days` : 'Custom';
-    // Show the selected people range from search params
-    if (peopleRange) {
-      const [minP, maxP] = peopleRange.split('-');
-      peopleRangeLabel = maxP ? `${minP}–${maxP} pax` : `${minP}+ pax`;
-    } else {
-      peopleRangeLabel = '1 pax';
-    }
+    peopleLabel = `${numPeople} pax`;
   }
 
-  const baseCount = peopleRange ? parseInt(peopleRange.split('-')[0]) || 1 : 1;
-  const numPeople = Math.max(1, baseCount);
   const peopleText = category === 'couple' ? 'couple' : 'person';
   const getCatLabel = () => ({ individual: 'Individual', couple: 'Couple', group: 'Group' }[category] || 'Individual');
 
@@ -104,7 +93,7 @@ const GuideCard = ({ guide, category, daysRange, peopleRange, date, selectedPack
     const params = new URLSearchParams();
     params.set('category', category);
     params.set('daysRange', daysRange || '');
-    params.set('count', baseCount);
+    params.set('count', numPeople);
     if (matchedPackage) params.set('packageId', matchedPackage.id);
     if (date) params.set('date', date.toISOString());
     router.push(`/user/trip/guidelist/tripdetails/${guide.id}?${params.toString()}`);
@@ -188,7 +177,7 @@ const GuideCard = ({ guide, category, daysRange, peopleRange, date, selectedPack
             <StatBadge icon={MapPin} label="Location" value={guide.location || '—'} color="text-blue-600" />
             <StatBadge icon={Briefcase} label="Experience" value={`${guide.touristsHandled}+ trips`} color="text-violet-600" />
             <StatBadge icon={Clock} label="Duration" value={daysLabel} color="text-amber-600" />
-            <StatBadge icon={Users} label={category === 'couple' ? 'Couples' : 'People'} value={peopleRangeLabel || `${numPeople} ${peopleText}`} color="text-emerald-600" />
+            <StatBadge icon={Users} label={category === 'couple' ? 'Couples' : 'People'} value={`${numPeople} ${peopleText}${numPeople > 1 ? 's' : ''}`} color="text-emerald-600" />
           </div>
 
           {/* === MOBILE: Price + CTA at bottom === */}

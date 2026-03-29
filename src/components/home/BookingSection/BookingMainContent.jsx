@@ -41,6 +41,7 @@ const BookingMainContent = () => {
               destination: ensureString(b.destination),
               category: ensureString(b.category),
               guide: ensureString(b.guide),
+              createdAt: b.createdAt,
             });
           });
         }
@@ -71,6 +72,7 @@ const BookingMainContent = () => {
               companyName: b.companyName || '',
               providerPhone: b.providerPhone || '',
               providerEmail: b.providerEmail || '',
+              createdAt: b.createdAt,
             });
           });
         }
@@ -93,11 +95,12 @@ const BookingMainContent = () => {
               duration: `${b.days} Days`,
               image: b.packageSnapshot?.poster || '/images/hero.svg',
               passUrl: `/user/trek/pass/${b.id}`,
+              createdAt: b.createdAt,
             });
           });
         }
 
-        allFetched.sort((a, b) => new Date(b.date) - new Date(a.date));
+        allFetched.sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date));
         setAllBookings(allFetched);
       } catch (err) {
         console.error('Failed to fetch bookings:', err);

@@ -167,7 +167,7 @@ const EventDetails = ({ event, guides }) => {
         if (!orderData.success) {
           if (orderData.message === 'Unauthorized') {
             alert('Please sign in to complete your booking.');
-            router.push('/signin');
+            router.push('/');
           } else {
             alert(`Failed to initiate payment: ${orderData.message || 'Unknown error'}`);
           }

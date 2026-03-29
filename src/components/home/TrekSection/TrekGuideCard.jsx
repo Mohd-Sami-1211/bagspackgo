@@ -9,7 +9,7 @@ const ProviderAvatar = ({ provider, premium }) => {
   const [imgErr, setImgErr] = useState(false);
 
   const name = typeof provider === 'object' 
-    ? (provider?.companyname || provider?.username || 'Expert Guide') 
+    ? (provider?.companyname || provider?.companyName || provider?.username || 'Expert Guide') 
     : 'Expert Guide';
   
   const logo = typeof provider === 'object' ? provider?.logo : null;
@@ -53,35 +53,24 @@ const StatBadge = ({ icon: Icon, label, value, color }) => (
   </div>
 );
 
-const TrekGuideCard = ({ pkg, peopleRange, date }) => {
+const TrekGuideCard = ({ pkg, peopleCount = 1, peopleRange, date }) => {
   const router = useRouter();
   const [navigating, setNavigating] = useState(false);
 
   if (!pkg) return null;
 
-  // Determine pricing logic (mirroring the updated TripCard but adapted for Trek packages)
-  const baseCount = peopleRange ? parseInt(peopleRange.split('-')[0]) || 1 : 1;
-  const numPeople = Math.max(1, baseCount);
+  // Support both new peopleCount and old peopleRange
+  const numPeople = Math.max(1, peopleCount || (peopleRange ? parseInt(peopleRange.split('-')[0]) || 1 : 1));
   
   const tiers = pkg.pricingTiers || [];
-  const matchedTier = tiers.find(t => baseCount >= t.minPeople && baseCount <= t.maxPeople) || (tiers.length > 0 ? [...tiers].sort((a,b)=>a.minPeople-b.minPeople)[0] : null);
+  const matchedTier = tiers.find(t => numPeople >= t.minPeople && numPeople <= t.maxPeople) || (tiers.length > 0 ? [...tiers].sort((a,b)=>a.minPeople-b.minPeople)[0] : null);
   
   const pricePerPerson = matchedTier ? Number(matchedTier.price) : Number(pkg.price || 0);
   const numDays = pkg.days || 1;
   const daysLabel = pkg.days ? `${pkg.days} Day${pkg.days > 1 ? 's' : ''}` : 'N/A';
 
-  // Show people range matched
-  let peopleRangeLabel;
-  if (matchedTier && matchedTier.minPeople != null && matchedTier.maxPeople != null) {
-      peopleRangeLabel = matchedTier.minPeople === matchedTier.maxPeople
-        ? `${matchedTier.minPeople} pax`
-        : `${matchedTier.minPeople}–${matchedTier.maxPeople} pax`;
-  } else if (peopleRange) {
-      const [minP, maxP] = peopleRange.split('-');
-      peopleRangeLabel = maxP ? `${minP}–${maxP} pax` : `${minP}+ pax`;
-  } else {
-      peopleRangeLabel = '1 pax';
-  }
+  // Show people count
+  const peopleLabel = `${numPeople} pax`;
 
   // Handle premium flag
   const isPremium = pkg.type === 'premium';
@@ -90,13 +79,14 @@ const TrekGuideCard = ({ pkg, peopleRange, date }) => {
     if (navigating) return;
     setNavigating(true);
     const params = new URLSearchParams();
-    if (peopleRange) params.set('peopleRange', peopleRange);
+    params.set('peopleCount', numPeople.toString());
     if (date) params.set('date', date.toISOString());
 
     router.push(`/user/trek/guidelist/trekdetails/${pkg.provider?._id || pkg.provider}?trekId=${pkg._id}&${params.toString()}`);
   };
 
-  const providerName = pkg.provider?.companyname || pkg.provider?.username || 'Expert Guide';
+  const companyName = pkg.provider?.companyname || pkg.provider?.companyName || pkg.provider?.username || 'Expert Guide';
+  const guideName = pkg.provider?.username || pkg.provider?.name || '';
 
   return (
     <motion.div
@@ -141,7 +131,10 @@ const TrekGuideCard = ({ pkg, peopleRange, date }) => {
 
               {/* Provider / company name — secondary */}
               <p className="text-xs sm:text-sm font-semibold text-gray-700 mt-0.5 truncate">
-                Organized by {providerName}
+                {companyName}
+                {guideName && guideName !== companyName && (
+                  <span className="text-gray-400 font-normal"> · by {guideName}</span>
+                )}
               </p>
 
               {/* Star rating */}
@@ -175,7 +168,7 @@ const TrekGuideCard = ({ pkg, peopleRange, date }) => {
             <StatBadge icon={MapPin} label="Location" value={pkg.destination || '—'} color="text-blue-600" />
             <StatBadge icon={Mountain} label="Difficulty" value={pkg.trekLevel ? pkg.trekLevel.charAt(0).toUpperCase() + pkg.trekLevel.slice(1) : 'Moderate'} color="text-violet-600" />
             <StatBadge icon={Clock} label="Duration" value={daysLabel} color="text-amber-600" />
-            <StatBadge icon={Users} label="People" value={peopleRangeLabel} color="text-emerald-600" />
+            <StatBadge icon={Users} label="People" value={peopleLabel} color="text-emerald-600" />
           </div>
 
           {/* === MOBILE: Price + CTA at bottom === */}

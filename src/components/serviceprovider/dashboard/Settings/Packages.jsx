@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
@@ -30,8 +30,10 @@ const fmtAmt = (a) => `₹${Number(a || 0).toLocaleString('en-IN')}`;
 
 const Packages = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const tabFromUrl = searchParams.get('tab');
   const [activeTab, setActiveTab] = useState('active');
-  const [viewCategory, setViewCategory] = useState('trip');
+  const [viewCategory, setViewCategory] = useState(tabFromUrl === 'trek' ? 'trek' : 'trip');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
   const [showAddMenu, setShowAddMenu] = useState(false);
 
@@ -440,6 +442,9 @@ const Packages = () => {
             }`}
           >
             Active
+            <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${activeTab === 'active' ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-200'}`}>
+              {packages.filter(p => p.status === 'active').length}
+            </span>
           </button>
           <button
             onClick={() => setActiveTab('inactive')}
@@ -448,6 +453,9 @@ const Packages = () => {
             }`}
           >
             Inactive
+            <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${activeTab === 'inactive' ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-200'}`}>
+              {packages.filter(p => p.status === 'inactive').length}
+            </span>
           </button>
         </div>
       </div>

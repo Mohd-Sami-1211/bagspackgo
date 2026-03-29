@@ -48,7 +48,9 @@ const packageSchema = new mongoose.Schema({
         cityName: { type: String, required: true },
         locations: [{
             name: { type: String, required: true },
-            mapLink: { type: String, default: '' }
+            mapLink: { type: String, default: '' },
+            pickupTime: { type: String, default: '' },
+            dropoffTime: { type: String, default: '' }
         }]
     }],
 
@@ -57,6 +59,7 @@ const packageSchema = new mongoose.Schema({
     inclusives: { type: mongoose.Schema.Types.Mixed },
     inclusivesList: [{ type: String }],
     exclusivesList: [{ type: String }],
+    additionalPoints: [{ type: String }],
 
     activities: [{
         name: { type: String, required: true },

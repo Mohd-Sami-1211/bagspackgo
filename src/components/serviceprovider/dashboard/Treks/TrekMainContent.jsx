@@ -191,7 +191,7 @@ export default function TrekMainContent() {
             />
           </div>
           <Link
-            href="/serviceprovider/dashboard/settings/packages"
+            href="/serviceprovider/dashboard/settings/packages?tab=trek"
             className="flex items-center gap-1.5 text-[12px] font-semibold text-gray-500 bg-white border border-gray-200 px-3 py-2 rounded-xl hover:border-emerald-300 hover:text-emerald-600 transition-all whitespace-nowrap"
           >
             <Package size={13} />

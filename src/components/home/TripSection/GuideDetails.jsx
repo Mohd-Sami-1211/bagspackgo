@@ -1196,6 +1196,22 @@ const GuideDetails = ({ guide }) => {
                   </div>
                 )}
 
+              {selectedPackage?.additionalPoints && selectedPackage.additionalPoints.length > 0 && selectedPackage.additionalPoints.some(p => (p?.text || p)?.trim()) && (
+                <div className="mt-4 sm:mt-6 pt-4 border-t border-gray-200">
+                  <h4 className="font-medium text-gray-800 mb-3 text-sm sm:text-base">
+                    Important Notes
+                  </h4>
+                  <ul className="space-y-2.5">
+                    {selectedPackage.additionalPoints.filter(item => (item?.text || item)?.trim()).map((item, index) => (
+                      <li key={item.id || index} className="flex items-start text-xs text-gray-600 bg-gray-50/80 p-2.5 rounded-lg border border-gray-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-alert-circle h-3.5 w-3.5 text-amber-500 mr-2 mt-0.5 flex-shrink-0"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+                        <span className="leading-relaxed font-medium">{item.text || item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
               <div className="mt-4 sm:mt-6 pt-4 border-t border-gray-200">
                 <h4 className="font-medium text-gray-800 mb-2 text-sm sm:text-base">
                   Activities Included

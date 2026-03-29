@@ -3,7 +3,7 @@ import { useState, forwardRef, useImperativeHandle, useEffect, useRef, memo } fr
 import Select from 'react-select';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { CalendarCheck, Search, RefreshCcw } from 'lucide-react';
+import { CalendarCheck, Search, RefreshCcw, Plus, Minus } from 'lucide-react';
 import data from 'src/data/data.json';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
@@ -19,7 +19,7 @@ const TrekSearchInput = memo(forwardRef((props, ref) => {
   const [selectedTrek, setSelectedTrek] = useState(null);
   const [startDate, setStartDate] = useState(null);
   const [dateInput, setDateInput] = useState('');
-  const [peopleRange, setPeopleRange] = useState(null);
+  const [peopleCount, setPeopleCount] = useState(1);
   const [isSearching, setIsSearching] = useState(false);
   const [trekOptions, setTrekOptions] = useState([]);
   const [errors, setErrors] = useState({
@@ -34,14 +34,14 @@ const TrekSearchInput = memo(forwardRef((props, ref) => {
       destination: selectedDestination,
       trek: selectedTrek,
       date: startDate,
-      peopleRange: peopleRange?.value || ''
+      peopleCount: peopleCount.toString()
     }),
   }));
 
   const handleReset = () => {
     setIsSearching(true);
     setTimeout(() => {
-      setPeopleRange(null);
+      setPeopleCount(1);
       setStartDate(null);
       setDateInput('');
       setSelectedDestination(null);
@@ -51,7 +51,7 @@ const TrekSearchInput = memo(forwardRef((props, ref) => {
           destination: '',
           trek: '',
           date: '',
-          peopleRange: ''
+          peopleCount: ''
         });
       setIsSearching(false);
     }, 300);
@@ -62,7 +62,7 @@ const TrekSearchInput = memo(forwardRef((props, ref) => {
       destination: '',
       trek: '',
       date: '',
-      peopleRange: ''
+      peopleCount: ''
     };
 
     let isValid = true;
@@ -78,8 +78,8 @@ const TrekSearchInput = memo(forwardRef((props, ref) => {
       newErrors.date = 'Select date';
       isValid = false;
     }
-    if (!peopleRange) {
-      newErrors.peopleRange = 'Select people';
+    if (peopleCount < 1) {
+      newErrors.peopleCount = 'At least 1 person required';
       isValid = false;
     }
 
@@ -164,18 +164,19 @@ const TrekSearchInput = memo(forwardRef((props, ref) => {
       destination: selectedDestination.value,
       trek: selectedTrek.value,
       date: startDate.toISOString(),
-      peopleRange: peopleRange?.value || ''
+      peopleCount: peopleCount.toString()
     }).toString();
     router.push(`/user/trek/guidelist?${queryParams}`);
   };
 
-  const peopleOptions = [
-    { value: '1-2', label: '1-2 People' },
-    { value: '3-5', label: '3-5 People' },
-    { value: '6-9', label: '6-9 People' },
-    { value: '10-15', label: '10-15 People' },
-    { value: '15+', label: '15+ People' }
-  ];
+  const handleIncrement = () => {
+    setPeopleCount(prev => Math.min(prev + 1, 50));
+    setErrors(prev => ({ ...prev, peopleCount: '' }));
+  };
+
+  const handleDecrement = () => {
+    setPeopleCount(prev => Math.max(prev - 1, 1));
+  };
 
   const containerVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -239,11 +240,55 @@ const TrekSearchInput = memo(forwardRef((props, ref) => {
             variants={itemVariants}
             className="flex-[2] bg-[#C3EFE6] rounded-xl p-2.5 sm:p-3 flex flex-col justify-between w-full md:w-auto"
           >
-            <TrekCountersSection
-              peopleRange={peopleRange}
-              setPeopleRange={setPeopleRange}
-              error={errors.peopleRange}
-            />
+            {/* People Counter */}
+            <motion.div
+              className="flex gap-2 sm:gap-4 w-full"
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true, margin: '-50px' }}
+            >
+              <motion.div
+                className="flex-1 w-full relative"
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-30px' }}
+                transition={{ duration: 0.3 }}
+              >
+                <label className="block text-sm font-semibold text-gray-800 mb-1">No. of People</label>
+                <div className={`flex items-center bg-white border rounded-lg h-[36px] transition-all ${errors.peopleCount ? 'border-red-500 shadow-[0_0_0_1px_#ef4444]' : 'border-gray-300 hover:border-emerald-400'}`}>
+                  <button
+                    type="button"
+                    onClick={handleDecrement}
+                    disabled={peopleCount <= 1}
+                    className="flex items-center justify-center w-9 h-full text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-l-lg transition-colors disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-gray-500"
+                  >
+                    <Minus size={14} />
+                  </button>
+                  <div className="flex-1 text-center text-sm font-bold text-gray-800 select-none tabular-nums">
+                    {peopleCount}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleIncrement}
+                    className="flex items-center justify-center w-9 h-full text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-r-lg transition-colors"
+                  >
+                    <Plus size={14} />
+                  </button>
+                </div>
+                <AnimatePresence>
+                  {errors.peopleCount && (
+                    <motion.p 
+                      initial={{ opacity: 0, height: 0 }} 
+                      animate={{ opacity: 1, height: 'auto' }} 
+                      exit={{ opacity: 0, height: 0 }}
+                      className="text-[11px] sm:text-xs text-red-500 font-medium mt-1 ml-1"
+                    >
+                      {errors.peopleCount}
+                    </motion.p>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            </motion.div>
 
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 sm:items-end mt-2 sm:mt-3">
               <motion.div variants={itemVariants} className="flex-1 relative z-[60] w-full">
@@ -423,67 +468,6 @@ const TrekNameSelect = ({ trekOptions, selectedTrek, handleTrekChange, selectedD
     </AnimatePresence>
   </motion.div>
 );
-
-const TrekCountersSection = ({ peopleRange, setPeopleRange, error }) => {
-  const peopleOptions = [
-    { value: '1-2', label: '1-2 People' },
-    { value: '3-5', label: '3-5 People' },
-    { value: '6-9', label: '6-9 People' },
-    { value: '10-15', label: '10-15 People' },
-    { value: '15+', label: '15+ People' }
-  ];
-
-  return (
-    <motion.div
-      className="flex gap-2 sm:gap-4 w-full"
-      initial={{ opacity: 0 }}
-      whileInView={{ opacity: 1 }}
-      viewport={{ once: true, margin: '-50px' }}
-    >
-      <motion.div
-        className="flex-1 w-full relative"
-        initial={{ opacity: 0, y: 10 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: '-30px' }}
-        transition={{ duration: 0.3 }}
-      >
-        <label className="block text-sm font-semibold text-gray-800 mb-1">No. of People</label>
-        <Select
-          instanceId="trek-people-select"
-          options={peopleOptions}
-          value={peopleRange}
-          onChange={setPeopleRange}
-          placeholder="Select Range"
-          classNamePrefix="react-select"
-          isClearable
-          styles={{
-            ...selectStyles,
-            control: (provided, state) => ({
-              ...selectStyles.control(provided, state),
-              minHeight: '36px', // Standard height
-              borderColor: error ? '#ef4444' : state.isFocused ? '#10b981' : '#d1d5db',
-              boxShadow: error ? '0 0 0 1px #ef4444' : state.isFocused ? '0 0 0 1px #10b981' : null,
-            })
-          }}
-          menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
-          menuPosition="fixed"
-        />
-        <AnimatePresence>
-          {error && (
-            <motion.p 
-              initial={{ opacity: 0, height: 0 }} 
-              animate={{ opacity: 1, height: 'auto' }} 
-              exit={{ opacity: 0, height: 0 }}
-              className="text-[11px] sm:text-xs text-red-500 font-medium mt-1 ml-1"
-            >
-              {error}
-            </motion.p>
-          )}
-        </AnimatePresence>
-      </motion.div>
-    </motion.div>
-  );
-};
 
 const selectStyles = {
   control: (provided, state) => ({

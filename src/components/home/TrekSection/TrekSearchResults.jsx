@@ -6,7 +6,7 @@ import TrekCard from './TrekGuideCard';
 import Select from 'react-select';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { X, Calendar as CalendarIcon, Filter, Search as SearchIcon, ChevronDown, ArrowLeft } from 'lucide-react';
+import { X, Calendar as CalendarIcon, Filter, Search as SearchIcon, ChevronDown, ArrowLeft, Plus, Minus } from 'lucide-react';
 import data from 'src/data/data.json';
 
 const TrekSearchResults = () => {
@@ -36,23 +36,20 @@ const TrekSearchResults = () => {
 
   const destination = getValidParam('destination', '');
   const trekId = getValidParam('trek', '');
+  
+  // Support both old peopleRange and new peopleCount params
+  const peopleCountParam = getValidParam('peopleCount', '');
   const peopleRangeParam = getValidParam('peopleRange', '');
+  const peopleCount = peopleCountParam ? parseInt(peopleCountParam) || 1 : (peopleRangeParam ? parseInt(peopleRangeParam.split('-')[0]) || 1 : 1);
+  
   const dateParam = searchParams.get('date');
   const date = dateParam && !isNaN(new Date(dateParam).getTime())
     ? new Date(dateParam)
     : null;
 
-  const peopleOptions = [
-    { value: '1-2', label: '1-2 People' },
-    { value: '3-5', label: '3-5 People' },
-    { value: '6-9', label: '6-9 People' },
-    { value: '10-15', label: '10-15 People' },
-    { value: '15+', label: '15+ People' }
-  ];
-
   const [editableDestination, setEditableDestination] = useState(destination);
   const [editableTrek, setEditableTrek] = useState(trekId);
-  const [editablePeopleRange, setEditablePeopleRange] = useState(peopleRangeParam);
+  const [editablePeopleCount, setEditablePeopleCount] = useState(peopleCount);
   const [editableDate, setEditableDate] = useState(date);
 
   // Generate trekOptions based on destination
@@ -81,17 +78,23 @@ const TrekSearchResults = () => {
     const [field, order] = option.split('-');
     return [...treks].sort((a, b) => {
       if (field === 'price') {
-        const aPkg = a.trekPackages?.find(pkg => pkg.trekId?.toString() === trekId?.toString());
-        const bPkg = b.trekPackages?.find(pkg => pkg.trekId?.toString() === trekId?.toString());
-        const aPrice = aPkg?.price ?? a.price ?? 0;
-        const bPrice = bPkg?.price ?? b.price ?? 0;
+        // Extract price from pricingTiers or fallback to pkg.price
+        const getPrice = (pkg) => {
+          if (pkg.pricingTiers?.length > 0) {
+            const tier = pkg.pricingTiers.find(t => peopleCount >= t.minPeople && peopleCount <= t.maxPeople) || pkg.pricingTiers[0];
+            return Number(tier?.price || 0);
+          }
+          return Number(pkg.price || 0);
+        };
+        const aPrice = getPrice(a);
+        const bPrice = getPrice(b);
         return order === 'desc' ? bPrice - aPrice : aPrice - bPrice;
       }
-      const aVal = a[field] || 0;
-      const bVal = b[field] || 0;
+      const aVal = Number(a[field] || 0);
+      const bVal = Number(b[field] || 0);
       return order === 'desc' ? bVal - aVal : aVal - bVal;
     });
-  }, [trekId]);
+  }, [peopleCount]);
 
   useEffect(() => {
     const fetchResults = async () => {
@@ -101,7 +104,7 @@ const TrekSearchResults = () => {
         const params = new URLSearchParams({
           destination: destination || '',
           trek: trekId || '',
-          peopleRange: peopleRangeParam || ''
+          peopleCount: peopleCount.toString()
         });
 
         const res = await fetch(`${baseUrl}?${params.toString()}`);
@@ -116,7 +119,7 @@ const TrekSearchResults = () => {
       }
     };
     fetchResults();
-  }, [destination, trekId, peopleRangeParam]);
+  }, [destination, trekId, peopleCount]);
 
   const packages = useMemo(() => {
     let fetchedPackages = allPackages;
@@ -135,7 +138,7 @@ const TrekSearchResults = () => {
     const params = {
       destination: editableDestination || '',
       trek: editableTrek || '',
-      peopleRange: editablePeopleRange || '',
+      peopleCount: editablePeopleCount.toString(),
       ...(editableDate && { date: editableDate.toISOString() })
     };
     const queryString = new URLSearchParams(params).toString();
@@ -147,7 +150,7 @@ const TrekSearchResults = () => {
   const handleCancel = () => {
     setEditableDestination(destination);
     setEditableTrek(trekId);
-    setEditablePeopleRange(peopleRangeParam);
+    setEditablePeopleCount(peopleCount);
     setEditableDate(date);
     setIsEditing(false);
   };
@@ -328,12 +331,26 @@ const TrekSearchResults = () => {
                 </div>
                 <div className="space-y-1">
                   <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider ml-1">People</label>
-                  <Select 
-                    options={peopleOptions} 
-                    value={editablePeopleRange ? peopleOptions.find(p => p.value === editablePeopleRange) : null} 
-                    onChange={(opt) => setEditablePeopleRange(opt?.value || '')} 
-                    styles={selectStyles} 
-                  />
+                  <div className="flex items-center bg-[#F9FAFB] border border-gray-300 rounded-lg h-[38px] hover:border-emerald-400 transition-all">
+                    <button
+                      type="button"
+                      onClick={() => setEditablePeopleCount(prev => Math.max(prev - 1, 1))}
+                      disabled={editablePeopleCount <= 1}
+                      className="flex items-center justify-center w-10 h-full text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-l-lg transition-colors disabled:opacity-30"
+                    >
+                      <Minus size={14} />
+                    </button>
+                    <div className="flex-1 text-center text-sm font-bold text-gray-800 select-none tabular-nums">
+                      {editablePeopleCount}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setEditablePeopleCount(prev => Math.min(prev + 1, 50))}
+                      className="flex items-center justify-center w-10 h-full text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-r-lg transition-colors"
+                    >
+                      <Plus size={14} />
+                    </button>
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -357,7 +374,7 @@ const TrekSearchResults = () => {
                 >
                   <TrekCard
                     pkg={pkg}
-                    peopleRange={peopleRangeParam}
+                    peopleCount={peopleCount}
                     date={date}
                   />
                 </motion.div>

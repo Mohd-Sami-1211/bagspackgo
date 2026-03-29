@@ -6,7 +6,7 @@ import GuideCard from './TripGuideCard';
 import Select from 'react-select';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { X, Calendar as CalendarIcon, Filter, Search as SearchIcon, ChevronDown, ArrowLeft } from 'lucide-react';
+import { X, Calendar as CalendarIcon, Filter, Search as SearchIcon, ChevronDown, ArrowLeft, Plus, Minus } from 'lucide-react';
 import data from 'src/data/data.json';
 
 const SearchResults = () => {
@@ -38,7 +38,12 @@ const SearchResults = () => {
     ? searchParams.get('category')
     : 'individual';
   const daysRange = getValidParam('daysRange', '');
-  const peopleRange = getValidParam('peopleRange', '');
+  
+  // Support both old peopleRange and new peopleCount params
+  const peopleCountParam = getValidParam('peopleCount', '');
+  const peopleRangeParam = getValidParam('peopleRange', '');
+  const peopleCount = peopleCountParam ? parseInt(peopleCountParam) || 1 : (peopleRangeParam ? parseInt(peopleRangeParam.split('-')[0]) || 1 : 1);
+  
   const dateParam = searchParams.get('date');
   const date = dateParam && !isNaN(new Date(dateParam).getTime())
     ? new Date(dateParam)
@@ -50,14 +55,6 @@ const SearchResults = () => {
     { value: '5-7', label: '5-7 days' },
     { value: '7-9', label: '7-9 days' },
     { value: 'other', label: 'Others' }
-  ];
-
-  const peopleOptions = [
-    { value: '1-2', label: category === 'couple' ? '1-2 Couples' : '1-2 People' },
-    { value: '3-5', label: category === 'couple' ? '3-5 Couples' : '3-5 People' },
-    { value: '6-9', label: category === 'couple' ? '6-9 Couples' : '6-9 People' },
-    { value: '10-15', label: category === 'couple' ? '10-15 Couples' : '10-15 People' },
-    { value: '15+', label: category === 'couple' ? '15+ Couples' : '15+ People' }
   ];
 
   const getDaysRangeLabel = (value) => {
@@ -74,7 +71,7 @@ const SearchResults = () => {
   const [editableDestination, setEditableDestination] = useState(destination);
   const [editableCategory, setEditableCategory] = useState(category);
   const [editableDaysRange, setEditableDaysRange] = useState(daysOptions.find(opt => opt.value === daysRange) || null);
-  const [editablePeopleRange, setEditablePeopleRange] = useState(peopleOptions.find(opt => opt.value === peopleRange) || null);
+  const [editablePeopleCount, setEditablePeopleCount] = useState(peopleCount);
   const [editableDate, setEditableDate] = useState(date);
 
   const handleSearchChange = (value) => {
@@ -88,7 +85,7 @@ const SearchResults = () => {
         const params = new URLSearchParams();
         if (destination) params.set('destination', destination);
         if (daysRange) params.set('daysRange', daysRange);
-        if (peopleRange) params.set('peopleRange', peopleRange);
+        if (peopleCount) params.set('peopleCount', peopleCount.toString());
         if (category) params.set('category', category);
 
         const res = await fetch(`/api/public/trips?${params.toString()}`);
@@ -101,7 +98,7 @@ const SearchResults = () => {
       }
     };
     fetchGuides();
-  }, [destination, daysRange, peopleRange, category]);
+  }, [destination, daysRange, peopleCount, category]);
 
   const sortGuides = useCallback((guidesList, option) => {
     const [field, order] = option.split('-');
@@ -130,7 +127,7 @@ const SearchResults = () => {
       destination: editableDestination || destination,
       category: editableCategory || category,
       daysRange: editableDaysRange?.value || '',
-      peopleRange: editablePeopleRange?.value || '',
+      peopleCount: editablePeopleCount.toString(),
       ...(editableDate && { date: editableDate.toISOString() })
     };
     const queryString = new URLSearchParams(params).toString();
@@ -143,7 +140,7 @@ const SearchResults = () => {
     setEditableDestination(destination);
     setEditableCategory(category);
     setEditableDaysRange(daysOptions.find(opt => opt.value === daysRange) || null);
-    setEditablePeopleRange(peopleOptions.find(opt => opt.value === peopleRange) || null);
+    setEditablePeopleCount(peopleCount);
     setEditableDate(date);
     setIsEditing(false);
   };
@@ -322,8 +319,29 @@ const SearchResults = () => {
                   <Select options={daysOptions} value={editableDaysRange} onChange={setEditableDaysRange} styles={selectStyles} />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider ml-1">Couples/People</label>
-                  <Select options={peopleOptions} value={editablePeopleRange} onChange={setEditablePeopleRange} styles={selectStyles} />
+                  <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider ml-1">
+                    {editableCategory === 'couple' ? 'Couples' : 'People'}
+                  </label>
+                  <div className="flex items-center bg-[#F9FAFB] border border-gray-300 rounded-lg h-[38px] hover:border-emerald-400 transition-all">
+                    <button
+                      type="button"
+                      onClick={() => setEditablePeopleCount(prev => Math.max(prev - 1, 1))}
+                      disabled={editablePeopleCount <= 1}
+                      className="flex items-center justify-center w-10 h-full text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-l-lg transition-colors disabled:opacity-30"
+                    >
+                      <Minus size={14} />
+                    </button>
+                    <div className="flex-1 text-center text-sm font-bold text-gray-800 select-none tabular-nums">
+                      {editablePeopleCount}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setEditablePeopleCount(prev => Math.min(prev + 1, 50))}
+                      className="flex items-center justify-center w-10 h-full text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-r-lg transition-colors"
+                    >
+                      <Plus size={14} />
+                    </button>
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -345,13 +363,13 @@ const SearchResults = () => {
                 if (!daysRange || packagesInRange.length === 0) {
                   return (
                     <motion.div key={guide.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.05 }}>
-                      <GuideCard guide={guide} category={category} daysRange={daysRange} peopleRange={peopleRange} date={date} />
+                      <GuideCard guide={guide} category={category} daysRange={daysRange} peopleCount={peopleCount} date={date} />
                     </motion.div>
                   );
                 }
                 return packagesInRange.map((pkg, pIdx) => (
                   <motion.div key={`${guide.id}-${pkg.id}`} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: (index * 0.05) + (pIdx * 0.02) }}>
-                    <GuideCard guide={guide} category={category} daysRange={daysRange} peopleRange={peopleRange} date={date} selectedPackage={pkg} />
+                    <GuideCard guide={guide} category={category} daysRange={daysRange} peopleCount={peopleCount} date={date} selectedPackage={pkg} />
                   </motion.div>
                 ));
               })

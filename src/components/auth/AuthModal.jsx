@@ -37,6 +37,7 @@ function AuthModalContent() {
     // Global Tab: 'user' | 'provider'
     const [tab, setTab] = useState('user');
     const [loading, setLoading] = useState(false);
+    const [isRedirecting, setIsRedirecting] = useState(false);
     const [error, setError] = useState('');
 
     // === USER STATE ===
@@ -268,7 +269,7 @@ function AuthModalContent() {
             if (res.ok) {
                 localStorage.removeItem('bgp_auth_state');
                 onLogin(data.user);
-                closeAuthModal();
+                setIsRedirecting(true);
                 if (data.user.applicationStatus === 'approved') {
                     window.location.href = '/serviceprovider/dashboard'; // Force layout refresh for provider side
                 } else {
@@ -276,11 +277,11 @@ function AuthModalContent() {
                 }
             } else {
                 setError(data.message);
+                setLoading(false);
             }
         } catch (err) {
              setError('Failed to connect');
-        } finally {
-            setLoading(false);
+             setLoading(false);
         }
     };
 
@@ -419,6 +420,25 @@ function AuthModalContent() {
     };
 
     if (!isAuthModalOpen) return null;
+
+    if (isRedirecting) {
+        return (
+            <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="fixed inset-0 z-[10000] flex flex-col items-center justify-center bg-[#F2FFFC]"
+            >
+                <div className="flex flex-col items-center gap-4">
+                    <svg className="animate-spin h-10 w-10 text-emerald-500" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    <h2 className="text-xl font-bold text-emerald-800">Signing in...</h2>
+                    <p className="text-sm text-emerald-600 font-medium animate-pulse">Please wait while we prepare your dashboard</p>
+                </div>
+            </motion.div>
+        );
+    }
 
     return (
         <AnimatePresence>

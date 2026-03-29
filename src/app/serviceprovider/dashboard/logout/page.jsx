@@ -13,7 +13,7 @@ export default function LogoutPage() {
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
-    await logout(); // Calls /api/auth/logout, clears cookie, redirects to /signin
+    await logout(); // Calls /api/auth/logout, clears cookie, redirects to home page
   };
 
   return (

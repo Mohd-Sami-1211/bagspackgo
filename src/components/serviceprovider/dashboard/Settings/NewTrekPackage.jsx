@@ -107,7 +107,7 @@ export default function NewTrekPackage({ initialData = null, isEdit = false }) {
   ]);
 
   const [pickupDropCities, setPickupDropCities] = useState([
-    { id: 1, cityName: '', locations: [{ id: 1, name: '', mapLink: '' }] }
+    { id: 1, cityName: '', locations: [{ id: 1, name: '', mapLink: '', pickupTime: '', dropoffTime: '' }] }
   ]);
 
   // Free-form inclusives & exclusives
@@ -164,7 +164,7 @@ export default function NewTrekPackage({ initialData = null, isEdit = false }) {
         setPickupDropCities(initialData.pickupDropCities.map((c, i) => ({ 
           id: i + 1, 
           cityName: c.cityName,
-          locations: (c.locations || []).map((l, j) => ({ id: parseInt(`${i}${j}${Date.now()}`), ...l }))
+          locations: (c.locations || []).map((l, j) => ({ id: parseInt(`${i}${j}${Date.now()}`), name: l.name || '', mapLink: l.mapLink || '', pickupTime: l.pickupTime || '', dropoffTime: l.dropoffTime || '' }))
         })));
       }
       if (initialData.inclusivesList?.length > 0) {
@@ -276,7 +276,7 @@ export default function NewTrekPackage({ initialData = null, isEdit = false }) {
           })),
         pickupDropCities: pickupDropCities.filter(c => c.cityName.trim()).map(c => ({
           cityName: c.cityName,
-          locations: c.locations.filter(l => l.name.trim()).map(l => ({ name: l.name, mapLink: l.mapLink }))
+          locations: c.locations.filter(l => l.name.trim()).map(l => ({ name: l.name, mapLink: l.mapLink, pickupTime: l.pickupTime || '', dropoffTime: l.dropoffTime || '' }))
         })),
         inclusivesList: inclusivesList.filter(i => i.text.trim()),
         exclusivesList: exclusivesList.filter(i => i.text.trim()),
@@ -493,7 +493,7 @@ export default function NewTrekPackage({ initialData = null, isEdit = false }) {
                     </div>
                     <button
                       type="button"
-                      onClick={() => setPickupDropCities([...pickupDropCities, { id: Date.now(), cityName: '', locations: [{ id: Date.now(), name: '', mapLink: '' }] }])}
+                      onClick={() => setPickupDropCities([...pickupDropCities, { id: Date.now(), cityName: '', locations: [{ id: Date.now(), name: '', mapLink: '', pickupTime: '', dropoffTime: '' }] }])}
                       className="text-[12px] bg-white text-emerald-600 border border-emerald-200 px-3 py-1.5 rounded-lg flex items-center gap-1.5 hover:bg-emerald-50 transition-all"
                     >
                       <Plus size={14} /> Add City
@@ -520,24 +520,41 @@ export default function NewTrekPackage({ initialData = null, isEdit = false }) {
                         </div>
                         <div className="space-y-2.5 pl-3 border-l-2 border-emerald-50 ml-1">
                           {city.locations.map((loc, lIdx) => (
-                            <div key={loc.id} className="flex flex-col sm:flex-row gap-2 items-end sm:items-center">
-                              <input type="text" placeholder="Location Name (e.g., Airport)" value={loc.name}
-                                onChange={e => { const c = [...pickupDropCities]; c[cIdx].locations[lIdx].name = e.target.value; setPickupDropCities(c); }}
-                                className="w-full sm:flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-emerald-500 transition-all" />
-                              <input type="text" placeholder="Maps Link (Optional)" value={loc.mapLink}
-                                onChange={e => { const c = [...pickupDropCities]; c[cIdx].locations[lIdx].mapLink = e.target.value; setPickupDropCities(c); }}
-                                className="w-full sm:flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-emerald-500 transition-all" />
-                              {city.locations.length > 1 && (
-                                <button type="button" onClick={() => {
-                                  const c = [...pickupDropCities]; c[cIdx].locations = c[cIdx].locations.filter(l => l.id !== loc.id); setPickupDropCities(c);
-                                }} className="text-rose-400 hover:text-rose-600 p-1.5 hover:bg-rose-50 rounded-lg shrink-0">
-                                  <X size={15} />
-                                </button>
-                              )}
+                            <div key={loc.id} className="flex flex-col gap-2">
+                              <div className="flex flex-col sm:flex-row gap-2 items-end sm:items-center">
+                                <input type="text" placeholder="Location Name (e.g., Airport)" value={loc.name}
+                                  onChange={e => { const c = [...pickupDropCities]; c[cIdx].locations[lIdx].name = e.target.value; setPickupDropCities(c); }}
+                                  className="w-full sm:flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-emerald-500 transition-all" />
+                                <input type="text" placeholder="Maps Link (Optional)" value={loc.mapLink}
+                                  onChange={e => { const c = [...pickupDropCities]; c[cIdx].locations[lIdx].mapLink = e.target.value; setPickupDropCities(c); }}
+                                  className="w-full sm:flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-emerald-500 transition-all" />
+                                {city.locations.length > 1 && (
+                                  <button type="button" onClick={() => {
+                                    const c = [...pickupDropCities]; c[cIdx].locations = c[cIdx].locations.filter(l => l.id !== loc.id); setPickupDropCities(c);
+                                  }} className="text-rose-400 hover:text-rose-600 p-1.5 hover:bg-rose-50 rounded-lg shrink-0">
+                                    <X size={15} />
+                                  </button>
+                                )}
+                              </div>
+                              {/* Timing Fields */}
+                              <div className="flex flex-col sm:flex-row gap-2 ml-0 sm:ml-0">
+                                <div className="flex items-center gap-2 flex-1">
+                                  <label className="text-[11px] text-gray-500 font-medium whitespace-nowrap">Pickup ⏰</label>
+                                  <input type="time" value={loc.pickupTime}
+                                    onChange={e => { const c = [...pickupDropCities]; c[cIdx].locations[lIdx].pickupTime = e.target.value; setPickupDropCities(c); }}
+                                    className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-emerald-500 transition-all" />
+                                </div>
+                                <div className="flex items-center gap-2 flex-1">
+                                  <label className="text-[11px] text-gray-500 font-medium whitespace-nowrap">Drop-off ⏰</label>
+                                  <input type="time" value={loc.dropoffTime}
+                                    onChange={e => { const c = [...pickupDropCities]; c[cIdx].locations[lIdx].dropoffTime = e.target.value; setPickupDropCities(c); }}
+                                    className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-emerald-500 transition-all" />
+                                </div>
+                              </div>
                             </div>
                           ))}
                           <button type="button" onClick={() => {
-                            const c = [...pickupDropCities]; c[cIdx].locations.push({ id: Date.now(), name: '', mapLink: '' }); setPickupDropCities(c);
+                            const c = [...pickupDropCities]; c[cIdx].locations.push({ id: Date.now(), name: '', mapLink: '', pickupTime: '', dropoffTime: '' }); setPickupDropCities(c);
                           }} className="text-emerald-600 text-[11px] font-semibold flex items-center gap-1 mt-1 hover:bg-emerald-50 px-2 py-1 rounded-lg">
                             <Plus size={12} /> Add Location
                           </button>

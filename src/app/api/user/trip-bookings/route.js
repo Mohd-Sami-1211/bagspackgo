@@ -14,7 +14,7 @@ export async function GET(req) {
         await dbConnect();
 
         const bookings = await TripBooking.find({ user: user.userId })
-            .populate('package', 'name destination days pricingTiers activities termsAndConditions itinerary')
+            .populate('package', 'name destination days pricingTiers activities termsAndConditions itinerary inclusivesList exclusivesList additionalPoints')
             .populate('provider', 'username email phone')
             .sort({ createdAt: -1 })
             .lean();
@@ -71,6 +71,9 @@ export async function GET(req) {
                 cancellationDetails: b.cancellationDetails || {},
                 itinerary: b.package?.itinerary || b.packageSnapshot?.itinerary || [],
                 termsAndConditions: b.package?.termsAndConditions || b.packageSnapshot?.termsAndConditions || [],
+                inclusivesList: b.package?.inclusivesList || b.packageSnapshot?.inclusivesList || [],
+                exclusivesList: b.package?.exclusivesList || b.packageSnapshot?.exclusivesList || [],
+                additionalPoints: b.package?.additionalPoints || b.packageSnapshot?.additionalPoints || [],
             };
         });
 

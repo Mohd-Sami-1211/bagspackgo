@@ -49,19 +49,38 @@ export async function POST(request) {
         ]);
 
         // Send confirmation emails (non-blocking)
-        sendTripBookingConfirmation({
-            userEmail: userDoc?.email,
-            userName: userDoc?.username || 'Traveller',
-            providerEmail: providerDoc?.email,
-            providerName: providerDoc?.username || 'Guide',
-            bookingRef: booking.bookingRef,
-            packageName: packageDoc?.name || booking.packageSnapshot?.name || 'Trip Package',
-            destination: packageDoc?.destination || booking.packageSnapshot?.destination || '',
-            startDate: booking.startDate,
-            endDate: booking.endDate,
-            numPeople: booking.numPeople,
-            totalAmount: booking.totalAmount,
-        }).catch(err => console.error('Booking email error:', err));
+        (async () => {
+             try {
+                 let pdfBuffer = null;
+                 try {
+                     const { GET: getTripPdf } = await import('@/app/api/user/trip-bookings/[id]/pdf/route.js');
+                     const res = await getTripPdf(null, { params: Promise.resolve({ id: booking.bookingRef }) });
+                     if (res.ok) {
+                         pdfBuffer = Buffer.from(await res.arrayBuffer());
+                     }
+                 } catch (pdfErr) {
+                     console.error('Failed to generate trip PDF for email attachment:', pdfErr);
+                 }
+
+                 await sendTripBookingConfirmation({
+                     userEmail: userDoc?.email,
+                     userName: userDoc?.username || 'Traveller',
+                     providerEmail: providerDoc?.email,
+                     providerName: providerDoc?.username || 'Guide',
+                     bookingRef: booking.bookingRef,
+                     packageName: packageDoc?.name || booking.packageSnapshot?.name || 'Trip Package',
+                     destination: packageDoc?.destination || booking.packageSnapshot?.destination || '',
+                     startDate: booking.startDate,
+                     endDate: booking.endDate,
+                     numPeople: booking.numPeople,
+                     totalAmount: booking.totalAmount,
+                     pdfBuffer: pdfBuffer,
+                     isTrek: false
+                 });
+             } catch (err) {
+                 console.error('Booking email error:', err);
+             }
+        })();
 
         return NextResponse.json({
             success: true,

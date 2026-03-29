@@ -1,5 +1,5 @@
 import dbConnect from '@/lib/db';
-import { TripBooking } from '@/models/tripbooking.model';
+import { TrekBooking } from '@/models/trekbooking.model';
 import { GuideDetails } from '@/models/guidedetails.model';
 import { PDFDocument, StandardFonts, rgb, PageSizes } from 'pdf-lib';
 import mongoose from 'mongoose';
@@ -17,7 +17,7 @@ export async function GET(request, { params }) {
         await dbConnect();
 
         const isObjectId = mongoose.Types.ObjectId.isValid(id);
-        const booking = await TripBooking.findOne(
+        const booking = await TrekBooking.findOne(
             isObjectId ? { $or: [{ _id: id }, { bookingRef: id }] } : { bookingRef: id }
         )
             .populate('package', 'name destination days')
@@ -36,14 +36,14 @@ export async function GET(request, { params }) {
         const providerPhone = guideDetails?.companymobile || booking.provider?.phone || '';
         const providerEmail = guideDetails?.companyemail || booking.provider?.email || '';
 
-        const { startDate, numPeople, totalAmount, personalDetails = {}, arrivalDeparture = {}, packageSnapshot = {} } = booking;
+        const { startDate, numPeople, totalAmount, personalDetails = {}, pickupDropoff = {}, packageSnapshot = {} } = booking;
         const travelers = personalDetails?.personalDetails || [];
         const formattedDate = startDate
             ? new Date(startDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })
             : 'TBD';
-        const pickupTime = arrivalDeparture?.pickup?.time || 'TBD';
-        const pName = booking.package?.name || packageSnapshot?.name || 'Trip Package';
-        const dest = booking.package?.destination || packageSnapshot?.destination || 'Various Locations';
+        const pickupTime = pickupDropoff?.pickup?.time || 'TBD';
+        const pName = booking.package?.name || packageSnapshot?.name || 'Trek Package';
+        const dest = booking.package?.destination || packageSnapshot?.destination || 'Himalayan Trails';
         const ref = booking.bookingRef || id?.toString()?.substring(0, 8)?.toUpperCase() || 'BPG-REF';
 
         // ── PDF Setup ─────────────────────────────────────────────────
@@ -144,7 +144,7 @@ export async function GET(request, { params }) {
         rect(PROV_X, PROV_BOX_Y, 4, PROV_BOX_H, { color: C_EMERALD });
         // Light green background
         rect(PROV_X + 4, PROV_BOX_Y, PROV_W, PROV_BOX_H, { color: C_EMERALD_50 });
-        txt('TRIP MANAGED BY', { x: PROV_X + 14, y: PROV_BOX_Y + 12, size: 7, font: bold, color: C_EMERALD, maxWidth: PROV_W - 20 });
+        txt('TREK MANAGED BY', { x: PROV_X + 14, y: PROV_BOX_Y + 12, size: 7, font: bold, color: C_EMERALD, maxWidth: PROV_W - 20 });
         const pNameClamped = providerName.length > 26 ? providerName.substring(0, 26) + '.' : providerName;
         txt(pNameClamped, { x: PROV_X + 14, y: PROV_BOX_Y + 26, size: 12, font: bold, color: C_GRAY_900, maxWidth: PROV_W - 20 });
         if (providerPhone) txt(`Ph: ${providerPhone}`, { x: PROV_X + 14, y: PROV_BOX_Y + 44, size: 8, font: regular, color: C_GRAY_500, maxWidth: PROV_W - 20 });
@@ -281,7 +281,7 @@ export async function GET(request, { params }) {
         return new Response(Buffer.from(pdfBytes), {
             headers: {
                 'Content-Type': 'application/pdf',
-                'Content-Disposition': `attachment; filename="BPG_Trip_Pass_${ref}.pdf"`,
+                'Content-Disposition': `attachment; filename="BPG_Trek_Pass_${ref}.pdf"`,
                 'Cache-Control': 'no-cache',
             },
         });

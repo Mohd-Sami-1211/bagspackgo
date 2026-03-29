@@ -70,7 +70,18 @@ export async function GET(req) {
                 .map(gd => gd.guide.toString())
         );
 
-        packages = packages.filter(pkg => !pausedProviderIds.has(pkg.provider._id.toString()));
+        // Remove paused and stitch companyname and logo
+        packages = packages
+            .filter(pkg => !pausedProviderIds.has(pkg.provider._id.toString()))
+            .map(pkg => {
+                const details = guideDetailsList.find(gd => gd.guide.toString() === pkg.provider._id.toString());
+                if (details) {
+                    pkg.provider.companyname = details.companyname;
+                    pkg.provider.companyName = details.companyname;
+                    pkg.provider.logo = details.logo;
+                }
+                return pkg;
+            });
 
         return NextResponse.json({ success: true, data: packages });
     } catch (error) {

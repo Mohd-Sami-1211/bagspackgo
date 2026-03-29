@@ -7,7 +7,7 @@ import {
     ChevronLeft, Calendar, Users, MapPin, Clock,
     CreditCard, Mail, Phone, AlertTriangle,
     CheckCircle2, XCircle, Navigation, Hash, Mountain,
-    RotateCcw, RefreshCcw
+    RotateCcw, RefreshCcw, Download
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -47,7 +47,7 @@ const STATUS_CFG = {
 
 function StatusBadge({ status }) {
     const isCancelledItem = ['cancelled', 'cancellation_requested', 'refund_initiated'].includes(status);
-    const cfg = isCancelledItem ? STATUS_CFG.cancelled : (STATUS_CFG[status] || STATUS_CFG.confirmed);
+    const cfg = STATUS_CFG[status] || (isCancelledItem ? STATUS_CFG.cancelled : STATUS_CFG.confirmed);
     const Icon = cfg.icon;
     return (
         <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide ${cfg.badge}`}>
@@ -299,7 +299,8 @@ export default function SingleTrekBooking() {
                                     </thead>
                                     <tbody className="divide-y divide-neutral-50">
                                         {travelers.map((t, i) => (
-                                            <tr key={i} className="hover:bg-emerald-50/20 transition-colors">
+                                            <React.Fragment key={i}>
+                                            <tr className="hover:bg-emerald-50/20 transition-colors">
                                                 <td className="px-5 py-3.5">
                                                     <span className="w-7 h-7 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold flex items-center justify-center border border-emerald-100">
                                                         {i + 1}
@@ -323,17 +324,58 @@ export default function SingleTrekBooking() {
                                                         <td className="px-5 py-3.5 text-neutral-500">{ensureString(t.nationality) || '—'}</td>
                                                         <td className="px-5 py-3.5 text-right">
                                                             {t.idType ? (
-                                                                <div>
-                                                                    <span className="text-[9px] text-neutral-400 uppercase font-bold block tracking-widest">{ensureString(t.idType)}</span>
-                                                                    <span className="font-mono text-xs font-bold text-gray-700 bg-neutral-50 border border-neutral-100 px-2 py-0.5 rounded-md inline-block mt-0.5">
-                                                                        {ensureString(t.idNumber)}
-                                                                    </span>
+                                                                <div className="flex justify-end items-start gap-3 flex-col sm:flex-row">
+                                                                    <div className="text-right">
+                                                                        <span className="text-[9px] text-neutral-400 uppercase font-bold block tracking-widest">{ensureString(t.idType)}</span>
+                                                                        <span className="font-mono text-xs font-bold text-gray-700 bg-neutral-50 border border-neutral-100 px-2 py-0.5 rounded-md inline-block mt-0.5 whitespace-nowrap">
+                                                                            {ensureString(t.idNumber)}
+                                                                        </span>
+                                                                    </div>
+                                                                    {(t.idImagePreview || t.idImageUrl || t.idImage) && (
+                                                                        <div className="flex items-center gap-2 justify-end shrink-0">
+                                                                            <a href={t.idImagePreview || t.idImageUrl || t.idImage} target="_blank" rel="noreferrer" className="h-8 w-12 rounded overflow-hidden border border-neutral-200 block shrink-0 hover:opacity-80 transition bg-neutral-50" title="View ID Proof">
+                                                                                <img src={t.idImagePreview || t.idImageUrl || t.idImage} alt="ID" className="w-full h-full object-cover" />
+                                                                            </a>
+                                                                            <a href={t.idImagePreview || t.idImageUrl || t.idImage} download={`ID_Proof_${ensureString(t.name)}.jpg`} className="p-1.5 rounded-md border border-neutral-200 text-neutral-500 hover:text-emerald-600 hover:bg-emerald-50 transition flex items-center gap-1 bg-white shadow-sm" title="Download ID">
+                                                                                <Download className="w-3.5 h-3.5" />
+                                                                            </a>
+                                                                        </div>
+                                                                    )}
                                                                 </div>
                                                             ) : <span className="text-neutral-300 text-xs italic">N/A</span>}
                                                         </td>
                                                     </>
                                                 )}
                                             </tr>
+                                            {/* Extra details row for Medical & Experience */}
+                                            {!t._syntheticOnly && (t.medicalConditions || t.trekkingExperience || t.bloodGroup) && (
+                                                <tr className="bg-neutral-50/30 border-b border-neutral-100/50">
+                                                    <td></td>
+                                                    <td colSpan={4} className="px-5 py-3 pt-1 pb-4">
+                                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white p-3 rounded-xl border border-neutral-100 shadow-sm mt-1">
+                                                            {t.bloodGroup && (
+                                                                <div>
+                                                                    <p className="text-[9px] font-bold uppercase tracking-widest text-rose-400 mb-0.5 flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-rose-400"/> Blood Group</p>
+                                                                    <p className="text-xs font-bold text-gray-700">{ensureString(t.bloodGroup)}</p>
+                                                                </div>
+                                                            )}
+                                                            {t.trekkingExperience && (
+                                                                <div>
+                                                                    <p className="text-[9px] font-bold uppercase tracking-widest text-blue-400 mb-0.5 flex items-center gap-1"><Mountain className="w-3 h-3 text-blue-400"/> Experience</p>
+                                                                    <p className="text-xs font-bold text-gray-700">{ensureString(t.trekkingExperience)}</p>
+                                                                </div>
+                                                            )}
+                                                            {t.medicalConditions && (
+                                                                <div className="md:col-span-full">
+                                                                    <p className="text-[9px] font-bold uppercase tracking-widest text-amber-500 mb-0.5 flex items-center gap-1"><AlertTriangle className="w-3 h-3 text-amber-500"/> Medical Conditions</p>
+                                                                    <p className="text-xs text-gray-600 bg-amber-50/50 p-2 rounded-lg border border-amber-100/50">{ensureString(t.medicalConditions)}</p>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            )}
+                                            </React.Fragment>
                                         ))}
                                     </tbody>
                                 </table>
@@ -362,27 +404,34 @@ export default function SingleTrekBooking() {
                         {contact.mobile && <ContactRow icon={Phone} label="Mobile" value={ensureString(contact.mobile)} href={`tel:${ensureString(contact.mobile)}`} />}
                     </SectionCard>
 
-                    {/* Emergency contact */}
-                    {(emergency.name || emergency.phone) && (
+                    {/* Emergency contact — trek stores it as contactDetails.emergencyContact (phone string) */}
+                    {(contact.emergencyContact || emergency.name || emergency.phone) && (
                         <SectionCard title="Emergency Contact" icon={AlertTriangle} accent="rose">
                             {emergency.name && <ContactRow icon={Users} label="Name" value={ensureString(emergency.name)} />}
                             {emergency.relation && <ContactRow icon={Users} label="Relation" value={ensureString(emergency.relation)} />}
                             {emergency.phone && <ContactRow icon={Phone} label="Phone" value={ensureString(emergency.phone)} href={`tel:${ensureString(emergency.phone)}`} />}
+                            {contact.emergencyContact && <ContactRow icon={Phone} label="Emergency Number" value={ensureString(contact.emergencyContact)} href={`tel:${ensureString(contact.emergencyContact)}`} />}
                         </SectionCard>
                     )}
 
                     {/* Pickup & Dropoff */}
-                    {(pickup.city || dropoff.city) && (
+                    {(pickup.city || pickup.address || pickup.location || dropoff.city || dropoff.address || dropoff.location) && (
                         <SectionCard title="Pickup & Dropoff" icon={Navigation} accent="amber">
                             <div className="relative pl-6 space-y-6">
                                 <div className="absolute left-[7px] top-2 bottom-2 w-0.5 bg-gradient-to-b from-emerald-300 to-rose-300 rounded-full" />
 
-                                {pickup.city && (
+                                {(pickup.city || pickup.address || pickup.location) && (
                                     <div className="relative">
                                         <span className="absolute -left-[22px] top-1 w-3 h-3 rounded-full bg-emerald-400 border-2 border-white shadow" />
                                         <p className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 mb-1">Pickup</p>
-                                        <p className="text-sm font-bold text-gray-800">{pickup.city}</p>
-                                        {pickup.location && <p className="text-xs text-neutral-500 mt-0.5">{pickup.location}</p>}
+                                        <p className="text-sm font-bold text-gray-800">
+                                            {ensureString(pickup.address?.label || pickup.address || pickup.city || pickup.location?.label || pickup.location)}
+                                        </p>
+                                        {pickup.location && pickup.address && (
+                                            <p className="text-xs text-neutral-500 mt-0.5">
+                                                City: {ensureString(pickup.location?.label || pickup.location)}
+                                            </p>
+                                        )}
                                         {pickup.time && (
                                             <p className="text-xs text-neutral-500 mt-0.5 flex items-center gap-1">
                                                 <Clock className="w-3 h-3" /> {pickup.time}
@@ -391,12 +440,18 @@ export default function SingleTrekBooking() {
                                     </div>
                                 )}
 
-                                {dropoff.city && (
+                                {(dropoff.city || dropoff.address || dropoff.location) && (
                                     <div className="relative">
                                         <span className="absolute -left-[22px] top-1 w-3 h-3 rounded-full bg-rose-400 border-2 border-white shadow" />
                                         <p className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 mb-1">Dropoff</p>
-                                        <p className="text-sm font-bold text-gray-800">{dropoff.city}</p>
-                                        {dropoff.location && <p className="text-xs text-neutral-500 mt-0.5">{dropoff.location}</p>}
+                                        <p className="text-sm font-bold text-gray-800">
+                                            {ensureString(dropoff.address?.label || dropoff.address || dropoff.city || dropoff.location?.label || dropoff.location)}
+                                        </p>
+                                        {dropoff.location && dropoff.address && (
+                                            <p className="text-xs text-neutral-500 mt-0.5">
+                                                City: {ensureString(dropoff.location?.label || dropoff.location)}
+                                            </p>
+                                        )}
                                         {dropoff.time && (
                                             <p className="text-xs text-neutral-500 mt-0.5 flex items-center gap-1">
                                                 <Clock className="w-3 h-3" /> {dropoff.time}
@@ -411,34 +466,49 @@ export default function SingleTrekBooking() {
             </div>
 
             {/* ── Payment Breakdown ── */}
-            <motion.div
-                initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.35 }}
-                className="mt-6 bg-white rounded-2xl border border-neutral-100 shadow-sm overflow-hidden"
-            >
-                <div className="px-5 py-4 border-b border-neutral-50 flex items-center justify-between bg-neutral-50/50">
-                    <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center border border-emerald-200 shadow-sm">
-                            <CreditCard className="w-4 h-4 text-emerald-700" />
+            {!['cancelled', 'cancellation_requested', 'refund_initiated'].includes(booking.status) ? (
+                <motion.div
+                    initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.35 }}
+                    className="mt-6 bg-white rounded-2xl border border-neutral-100 shadow-sm overflow-hidden"
+                >
+                    <div className="px-5 py-4 border-b border-neutral-50 flex items-center justify-between bg-neutral-50/50">
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center border border-emerald-200 shadow-sm">
+                                <CreditCard className="w-4 h-4 text-emerald-700" />
+                            </div>
+                            <h3 className="text-base font-black text-gray-800 tracking-tight">Payment Breakdown</h3>
                         </div>
-                        <h3 className="text-base font-black text-gray-800 tracking-tight">Payment Breakdown</h3>
                     </div>
-                </div>
-                <div className="px-6 py-6 space-y-4">
-                    <div className="flex justify-between items-center text-sm font-semibold text-gray-600 p-3 bg-neutral-50/50 rounded-xl border border-neutral-100">
-                        <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-emerald-400"></div>Package Total (Collected from User)</span>
-                        <span className="font-mono">{fmtAmt(booking.totalAmount)}</span>
+                    <div className="px-6 py-6 space-y-4">
+                        <div className="flex justify-between items-center text-sm font-semibold text-gray-600 p-3 bg-neutral-50/50 rounded-xl border border-neutral-100">
+                            <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-emerald-400"></div>Package Total (Collected from User)</span>
+                            <span className="font-mono">{fmtAmt(booking.totalAmount)}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-sm font-semibold text-gray-600 p-3 bg-neutral-50/50 rounded-xl border border-neutral-100">
+                            <span className="flex items-center gap-2 text-rose-600"><div className="w-1.5 h-1.5 rounded-full bg-rose-500"></div>Platform Charges (10% deducted)</span>
+                            <span className="font-mono text-rose-600">- {fmtAmt(booking.totalAmount * 0.1)}</span>
+                        </div>
+                        <div className="my-2 h-px bg-neutral-100" />
+                        <div className="flex justify-between items-center text-lg p-4 bg-emerald-50 rounded-xl border border-emerald-100 shadow-sm">
+                            <span className="font-black text-emerald-800 tracking-tight">Expected Revenue</span>
+                            <span className="font-black font-mono text-emerald-700 text-xl">{fmtAmt(booking.totalAmount * 0.9)}</span>
+                        </div>
                     </div>
-                    <div className="flex justify-between items-center text-sm font-semibold text-gray-600 p-3 bg-neutral-50/50 rounded-xl border border-neutral-100">
-                        <span className="flex items-center gap-2 text-rose-600"><div className="w-1.5 h-1.5 rounded-full bg-rose-500"></div>Platform Charges (10% deducted)</span>
-                        <span className="font-mono text-rose-600">- {fmtAmt(booking.totalAmount * 0.1)}</span>
+                </motion.div>
+            ) : (
+                <motion.div
+                    initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.35 }}
+                    className="mt-6 bg-rose-50 rounded-2xl border border-rose-100 shadow-sm overflow-hidden p-6 text-center"
+                >
+                    <div className="inline-flex w-12 h-12 rounded-full bg-rose-100 items-center justify-center mb-3">
+                        <svg className="w-6 h-6 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
                     </div>
-                    <div className="my-2 h-px bg-neutral-100" />
-                    <div className="flex justify-between items-center text-lg p-4 bg-emerald-50 rounded-xl border border-emerald-100 shadow-sm">
-                        <span className="font-black text-emerald-800 tracking-tight">Final Revenue</span>
-                        <span className="font-black font-mono text-emerald-700 text-xl">{fmtAmt(booking.totalAmount * 0.9)}</span>
-                    </div>
-                </div>
-            </motion.div>
+                    <h3 className="text-lg font-black text-rose-900 tracking-tight mb-1">Booking Cancelled</h3>
+                    <p className="text-sm font-medium text-rose-700/80 max-w-sm mx-auto">Payment breakdown is unavailable because this booking has been cancelled, or a refund is being processed.</p>
+                </motion.div>
+            )}
         </div>
     );
 }

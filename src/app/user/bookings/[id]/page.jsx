@@ -424,6 +424,7 @@ export default function BookingDetailPage() {
                         price: raw.totalAmount,
                         duration: `${raw.days} Days`,
                         passUrl: `/user/trek/pass/${raw.id}`,
+                        arrivalDeparture: raw.pickupDropoff || raw.arrivalDeparture || {},
                     };
                 }
             }
@@ -474,6 +475,15 @@ export default function BookingDetailPage() {
     const canCancel = booking && ['confirmed', 'pending'].includes(booking.status);
     const cancelStatus = booking && ['cancellation_requested', 'refund_initiated', 'cancelled'].includes(booking.status);
     const cfg = STATUS_CFG[booking?.status] || STATUS_CFG.pending;
+
+    const pSnapshot = booking?.packageSnapshot || booking?.packageId || booking?.package || {};
+    const getList = (key) => booking?.[key] || pSnapshot?.[key] || [];
+    
+    const inclusivesList = getList('inclusivesList');
+    const exclusivesList = getList('exclusivesList');
+    const additionalPoints = getList('additionalPoints').filter(p => (p?.text || p)?.trim?.());
+    const termsAndConditionsList = getList('termsAndConditions');
+    const itineraryList = getList('itinerary');
 
     /* ─── Loading ─── */
     if (loading) {
@@ -619,7 +629,7 @@ export default function BookingDetailPage() {
                             { label: 'End Date', value: formatDate(booking.endDate) },
                             { label: 'Duration', value: booking.duration },
                             { label: 'Travellers', value: `${booking.people || 1} Pax` },
-                            { label: 'Category', value: booking.category },
+                            ...(booking?.type?.toLowerCase() !== 'trek' ? [{ label: 'Category', value: booking.category }] : []),
                             { label: 'Pickup', value: booking.arrivalDeparture?.pickup?.address ? `${booking.arrivalDeparture.pickup.address}${booking.arrivalDeparture.pickup.location ? `, ${booking.arrivalDeparture.pickup.location}` : ''} @ ${formatTimeWithAMPM(booking.arrivalDeparture.pickup.time) || 'TBD'}` : 'TBD' },
                             { label: 'Dropoff', value: booking.arrivalDeparture?.dropoff?.address ? `${booking.arrivalDeparture.dropoff.address}${booking.arrivalDeparture.dropoff.location ? `, ${booking.arrivalDeparture.dropoff.location}` : ''} @ ${formatTimeWithAMPM(booking.arrivalDeparture.dropoff.time) || 'TBD'}` : 'TBD' },
                             { label: 'Amount Paid', value: rupee(booking.price), highlight: true },
@@ -633,7 +643,7 @@ export default function BookingDetailPage() {
                 </motion.div>
 
                 {/* Itinerary Section */}
-                {booking?.itinerary && booking.itinerary.length > 0 && (
+                {itineraryList.length > 0 && (
                     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
                         className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden p-6">
                         <div className="flex items-center gap-2 mb-4">
@@ -641,7 +651,7 @@ export default function BookingDetailPage() {
                             <h3 className="text-base font-black text-gray-700">Detailed Itinerary</h3>
                         </div>
                         <div className="space-y-4">
-                            {booking.itinerary.map((day, idx) => (
+                            {itineraryList.map((day, idx) => (
                                 <div key={idx} className="flex gap-4">
                                     <div className="shrink-0 w-12 h-12 bg-emerald-50 text-emerald-700 rounded-xl flex flex-col items-center justify-center font-bold">
                                         <span className="text-[9px] uppercase">Day</span>
@@ -675,7 +685,7 @@ export default function BookingDetailPage() {
                                         )}
                                         
                                         {/* Last Day Dropoff */}
-                                        {idx === booking.itinerary.length - 1 && booking.arrivalDeparture?.dropoff?.address && (
+                                        {idx === itineraryList.length - 1 && booking.arrivalDeparture?.dropoff?.address && (
                                             <div className="mb-3 bg-blue-50 p-2.5 rounded-lg border border-blue-100 flex items-start gap-2.5">
                                                 <div className="p-1.5 bg-blue-100 rounded-md text-blue-600 shrink-0">
                                                     <Navigation className="w-3.5 h-3.5" />
@@ -741,6 +751,57 @@ export default function BookingDetailPage() {
                     </motion.div>
                 )}
 
+                {/* Inclusions and Exclusions Section */}
+                <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.11 }}
+                    className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden p-6">
+                    <div className="flex items-center gap-2 mb-4">
+                        <Tag className="w-5 h-5 text-emerald-600" />
+                        <h3 className="text-base font-black text-gray-700">What's Included & Excluded</h3>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h4 className="font-bold text-gray-800 uppercase tracking-widest mb-3 text-[11px] flex items-center gap-2">
+                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> What's Included
+                            </h4>
+                            {inclusivesList.length > 0 ? (
+                                <ul className="list-disc pl-5 space-y-1.5 text-sm text-gray-600">
+                                    {inclusivesList.map((item, i) => (
+                                        <li key={i}>{item?.text || item}</li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p className="italic text-sm text-gray-400">Not specified.</p>
+                            )}
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-gray-800 uppercase tracking-widest mb-3 text-[11px] flex items-center gap-2">
+                                <XCircle className="w-3.5 h-3.5 text-red-500" /> What's Excluded
+                            </h4>
+                            {exclusivesList.length > 0 ? (
+                                <ul className="list-disc pl-5 space-y-1.5 text-sm text-gray-600">
+                                    {exclusivesList.map((item, i) => (
+                                        <li key={i}>{item?.text || item}</li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p className="italic text-sm text-gray-400">Not specified.</p>
+                            )}
+                        </div>
+                    </div>
+                    {additionalPoints.length > 0 && booking?.type?.toLowerCase() === 'trek' && (
+                        <div className="mt-6 pt-6 border-t border-gray-100">
+                            <h4 className="font-bold text-gray-800 uppercase tracking-widest mb-3 text-[11px] flex items-center gap-2">
+                                <Navigation className="w-3.5 h-3.5 text-amber-500" /> Additional Points
+                            </h4>
+                            <ul className="list-disc pl-5 space-y-1.5 text-sm text-gray-600">
+                                {additionalPoints.map((item, i) => (
+                                    <li key={i}>{item?.text || item}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+                </motion.div>
+
                 {/* Terms and Policies */}
                 <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}
                     className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden p-6">
@@ -748,16 +809,32 @@ export default function BookingDetailPage() {
                         <AlertCircle className="w-5 h-5 text-emerald-600" />
                         <h3 className="text-base font-black text-gray-700">Policies & Conditions</h3>
                     </div>
-                    <div className="text-sm text-gray-600">
-                        {booking?.termsAndConditions && booking.termsAndConditions.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-gray-600">
+                        <div>
+                            <h4 className="font-bold text-gray-800 uppercase tracking-widest mb-3 text-[11px] flex items-center gap-2">
+                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> BagsPackGo Policies
+                            </h4>
                             <ul className="list-disc pl-5 space-y-2">
-                                {booking.termsAndConditions.map((term, i) => (
-                                    <li key={i}>{term}</li>
-                                ))}
+                                <li>Booking is confirmed subject to payment realization.</li>
+                                <li>Cancellations made 7 days prior to departure are eligible for a 75% refund.</li>
+                                <li>Cancellations within 48 hours of departure are strictly non-refundable.</li>
+                                <li>BagsPackGo acts only as an aggregator and is not directly responsible for delays caused by the service provider.</li>
                             </ul>
-                        ) : (
-                            <p className="italic">Terms and conditions not available.</p>
-                        )}
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-gray-800 uppercase tracking-widest mb-3 text-[11px] flex items-center gap-2">
+                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Provider Conditions
+                            </h4>
+                            {termsAndConditionsList.length > 0 ? (
+                                <ul className="list-disc pl-5 space-y-2">
+                                    {termsAndConditionsList.map((term, i) => (
+                                        <li key={i}>{term?.text || term}</li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p className="italic text-gray-400">Terms and conditions not available.</p>
+                            )}
+                        </div>
                     </div>
                 </motion.div>
 
