@@ -42,6 +42,7 @@ export async function GET(request, context) {
                 description: event.about, // Map about to description
                 highlights: event.highlights,
                 whatsIncluded: event.whatsIncluded,
+                whatsExcluded: event.whatsExcluded,
                 faqs: event.faqs,
                 whatToBring: event.whatToBring,
                 restrictions: event.restrictions,

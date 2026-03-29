@@ -77,6 +77,7 @@ export async function GET(request, context) {
                 about: event.about,
                 highlights: event.highlights,
                 whatsIncluded: event.whatsIncluded,
+                whatsExcluded: event.whatsExcluded,
                 faqs: event.faqs,
                 whatToBring: event.whatToBring,
                 restrictions: event.restrictions,
@@ -173,7 +174,7 @@ export async function PATCH(request, context) {
         }
 
         // Update array fields
-        const arrayFields = ["highlights", "whatsIncluded", "whatToBring", "restrictions", "itinerary"];
+        const arrayFields = ["highlights", "whatsIncluded", "whatsExcluded", "whatToBring", "restrictions", "itinerary"];
         for (const field of arrayFields) {
             if (Array.isArray(body[field])) {
                 event[field] = body[field]

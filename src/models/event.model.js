@@ -95,6 +95,10 @@ const eventSchema = new mongoose.Schema(
             type: [String],
             default: [],
         },
+        whatsExcluded: {
+            type: [String],
+            default: [],
+        },
 
         // FAQs (Step 4)
         faqs: {

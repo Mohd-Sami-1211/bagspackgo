@@ -20,7 +20,9 @@ import {
   Route,
   DollarSign,
   Check,
-  PlayCircle
+  PlayCircle,
+  XCircle,
+  Sparkles
 } from 'lucide-react';
 
 // ── Sub-components defined at module level to prevent re-creation on every render ──
@@ -28,26 +30,26 @@ import {
 function SectionHeader({ title, description, icon: Icon, number }) {
   return (
     <div className="flex items-center gap-4 mb-8">
-      <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg">
-        <Icon className="w-6 h-6" />
+      <div className="flex items-center justify-center w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg flex-shrink-0">
+        <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
       </div>
-      <div>
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-medium text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">
+      <div className="min-w-0">
+        <div className="flex items-center gap-3 flex-wrap">
+          <span className="text-xs sm:text-sm font-medium text-emerald-600 bg-emerald-50 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full">
             Step {number + 1}
           </span>
-          <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
+          <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-neutral-900">{title}</h2>
         </div>
-        <p className="text-gray-600 mt-1">{description}</p>
+        <p className="text-neutral-500 mt-1 text-sm">{description}</p>
       </div>
     </div>
   );
 }
 
-function InputField({ label, name, type = 'text', value, onChange, required = false, ...props }) {
+function InputField({ label, name, type = 'text', value, onChange, required = false, error, ...props }) {
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-semibold text-gray-700">
+      <label className="block text-sm font-semibold text-neutral-700">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
       <input
@@ -56,31 +58,70 @@ function InputField({ label, name, type = 'text', value, onChange, required = fa
         value={value}
         onChange={onChange}
         required={required}
-        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 bg-white shadow-sm"
+        className={`w-full px-4 py-3 rounded-xl border ${error ? 'border-red-500 focus:ring-red-200' : 'border-neutral-200 focus:ring-emerald-500'} focus:ring-2 focus:border-transparent transition-all duration-200 bg-white shadow-sm text-sm`}
         {...props}
       />
+      {error && <p className="text-xs text-red-500 font-medium ml-1">{error}</p>}
     </div>
   );
 }
 
-function SelectField({ label, name, value, onChange, options, required = false }) {
+function SelectField({ label, name, value, onChange, options, required = false, error }) {
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
-    <div className="space-y-2">
-      <label className="block text-sm font-semibold text-gray-700">
+    <div className="space-y-2 relative" onBlur={(e) => {
+      // Small timeout to allow CLICK on option to register before closing
+      if (!e.currentTarget.contains(e.relatedTarget)) {
+        setTimeout(() => setIsOpen(false), 200);
+      }
+    }}>
+      <label className="block text-sm font-semibold text-neutral-700">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
-      <select
-        name={name}
-        value={value}
-        onChange={onChange}
-        required={required}
-        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 bg-white shadow-sm appearance-none"
-      >
-        <option value="">Select {label}</option>
-        {options.map(option => (
-          <option key={option} value={option}>{option}</option>
-        ))}
-      </select>
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className={`w-full px-4 py-3 rounded-xl border ${error ? 'border-red-500 focus:ring-red-200' : 'border-neutral-200 focus:ring-emerald-500'} focus:ring-2 focus:border-transparent transition-all duration-200 bg-white shadow-sm text-sm text-left flex items-center justify-between`}
+        >
+          <span className={value ? 'text-neutral-900' : 'text-neutral-400'}>
+            {value || `Select ${label}`}
+          </span>
+          <PlayCircle className={`w-4 h-4 text-neutral-400 transition-transform duration-200 ${isOpen ? 'rotate-90' : 'rotate-0'}`} />
+        </button>
+
+        <AnimatePresence>
+          {isOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="absolute z-[60] w-full mt-2 bg-white rounded-xl shadow-xl border border-neutral-100 py-2 max-h-48 sm:max-h-60 overflow-y-auto"
+            >
+              {options.map(option => (
+                <button
+                  key={option}
+                  type="button"
+                  onMouseDown={() => {
+                    // onMouseDown fires before onBlur
+                    onChange({ target: { name, value: option } });
+                    setIsOpen(false);
+                  }}
+                  className={`w-full px-4 py-2.5 text-left text-sm transition-colors flex items-center justify-between ${value === option
+                    ? 'bg-emerald-50 text-emerald-700 font-medium'
+                    : 'text-neutral-600 hover:bg-neutral-50'
+                    }`}
+                >
+                  {option}
+                  {value === option && <Check className="w-4 h-4" />}
+                </button>
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+      {error && <p className="text-xs text-red-500 font-medium ml-1">{error}</p>}
     </div>
   );
 }
@@ -100,15 +141,15 @@ function CounterInput({ label, value, onChange, min = 1, max = 100 }) {
 
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-semibold text-gray-700">{label}</label>
+      <label className="block text-sm font-semibold text-neutral-700">{label}</label>
       <div className="flex items-center gap-3">
         <button
           type="button"
           onClick={() => onChange(Math.max(min, value - 1))}
           disabled={value <= min}
-          className={`w-10 h-10 rounded-xl border border-gray-200 flex items-center justify-center transition-colors ${value <= min
-            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-            : 'hover:bg-gray-50'
+          className={`w-10 h-10 rounded-xl border border-neutral-200 flex items-center justify-center transition-colors ${value <= min
+            ? 'bg-neutral-100 text-neutral-400 cursor-not-allowed'
+            : 'hover:bg-neutral-50'
             }`}
         >
           <span className="text-lg font-semibold">-</span>
@@ -119,20 +160,20 @@ function CounterInput({ label, value, onChange, min = 1, max = 100 }) {
           onChange={handleInputChange}
           min={min}
           max={max}
-          className="w-20 px-3 py-2 text-center rounded-xl border border-gray-200 focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+          className="w-20 px-3 py-2 text-center rounded-xl border border-neutral-200 focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
         />
         <button
           type="button"
           onClick={() => onChange(Math.min(max, value + 1))}
           disabled={value >= max}
-          className={`w-10 h-10 rounded-xl border border-gray-200 flex items-center justify-center transition-colors ${value >= max
-            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-            : 'hover:bg-gray-50'
+          className={`w-10 h-10 rounded-xl border border-neutral-200 flex items-center justify-center transition-colors ${value >= max
+            ? 'bg-neutral-100 text-neutral-400 cursor-not-allowed'
+            : 'hover:bg-neutral-50'
             }`}
         >
           <span className="text-lg font-semibold">+</span>
         </button>
-        <span className="text-sm text-gray-500 ml-2">days</span>
+        <span className="text-sm text-neutral-500 ml-2">days</span>
       </div>
     </div>
   );
@@ -141,7 +182,7 @@ function CounterInput({ label, value, onChange, min = 1, max = 100 }) {
 function NumberInput({ label, name, value, onChange, min = 1, max = 1000, required = false }) {
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-semibold text-gray-700">
+      <label className="block text-sm font-semibold text-neutral-700">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
       <input
@@ -152,44 +193,46 @@ function NumberInput({ label, name, value, onChange, min = 1, max = 1000, requir
         min={min}
         max={max}
         required={required}
-        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 bg-white shadow-sm"
+        className="w-full px-4 py-3 rounded-xl border border-neutral-200 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 bg-white shadow-sm text-sm"
       />
     </div>
   );
 }
 
-function SlotInput({ label, slots, onAdd, onRemove, onChange, placeholder, required = false }) {
+function SlotInput({ label, slots, onAdd, onRemove, onChange, placeholder, required = false, icon: Icon }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <label className="block text-sm font-semibold text-gray-700">
+        <label className="block text-sm font-semibold text-neutral-700 flex items-center gap-2">
+          {Icon && <Icon className="w-4 h-4 text-emerald-600" />}
           {label} {required && <span className="text-red-500">*</span>}
         </label>
         <button
           type="button"
           onClick={onAdd}
-          className="flex items-center gap-2 px-4 py-2 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-colors"
+          className="flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-colors text-sm"
         >
           <Plus className="w-4 h-4" />
-          Add More
+          <span className="hidden sm:inline">Add More</span>
+          <span className="sm:hidden">Add</span>
         </button>
       </div>
       <div className="space-y-3">
         {slots.map((slot, index) => (
-          <div key={index} className="flex items-center gap-3">
+          <div key={index} className="flex items-center gap-2 sm:gap-3">
             <input
               type="text"
               value={slot}
               onChange={(e) => onChange(index, e.target.value)}
               placeholder={placeholder}
-              className="flex-1 px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
+              className="flex-1 px-4 py-3 rounded-xl border border-neutral-200 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 text-sm"
               required={required && index === 0}
             />
             {slots.length > 1 && (
               <button
                 type="button"
                 onClick={() => onRemove(index)}
-                className="p-3 text-red-500 hover:bg-red-50 rounded-xl transition-colors"
+                className="p-2.5 sm:p-3 text-red-500 hover:bg-red-50 rounded-xl transition-colors flex-shrink-0"
               >
                 <Trash2 className="w-4 h-4" />
               </button>
@@ -205,22 +248,23 @@ function NumberedSlotInput({ label, slots, onAdd, onRemove, onChange, placeholde
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <label className="block text-sm font-semibold text-gray-700">
+        <label className="block text-sm font-semibold text-neutral-700">
           {label} {required && <span className="text-red-500">*</span>}
         </label>
         <button
           type="button"
           onClick={onAdd}
-          className="flex items-center gap-2 px-4 py-2 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-colors"
+          className="flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-colors text-sm"
         >
           <Plus className="w-4 h-4" />
-          Add More
+          <span className="hidden sm:inline">Add More</span>
+          <span className="sm:hidden">Add</span>
         </button>
       </div>
       <div className="space-y-3">
         {slots.map((slot, index) => (
-          <div key={index} className="flex items-center gap-3">
-            <span className="w-6 h-6 bg-emerald-100 text-emerald-700 rounded-full text-xs flex items-center justify-center font-semibold">
+          <div key={index} className="flex items-center gap-2 sm:gap-3">
+            <span className="w-6 h-6 bg-emerald-100 text-emerald-700 rounded-full text-xs flex items-center justify-center font-semibold flex-shrink-0">
               {index + 1}
             </span>
             <input
@@ -228,14 +272,14 @@ function NumberedSlotInput({ label, slots, onAdd, onRemove, onChange, placeholde
               value={slot}
               onChange={(e) => onChange(index, e.target.value)}
               placeholder={placeholder}
-              className="flex-1 px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
+              className="flex-1 px-4 py-3 rounded-xl border border-neutral-200 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 text-sm"
               required={required}
             />
             {slots.length > 3 && (
               <button
                 type="button"
                 onClick={() => onRemove(index)}
-                className="p-3 text-red-500 hover:bg-red-50 rounded-xl transition-colors"
+                className="p-2.5 sm:p-3 text-red-500 hover:bg-red-50 rounded-xl transition-colors flex-shrink-0"
               >
                 <Trash2 className="w-4 h-4" />
               </button>
@@ -261,6 +305,7 @@ export default function HostEventPage() {
   const [formData, setFormData] = useState({
     title: '',
     eventType: '',
+    customEventType: '',
     location: '',
     date: '',
     duration: 1,
@@ -271,6 +316,7 @@ export default function HostEventPage() {
     about: '',
     highlights: [''],
     whatsIncluded: [''],
+    whatsExcluded: [''],
     faqs: [
       { question: '', answer: '' },
       { question: '', answer: '' },
@@ -293,20 +339,26 @@ export default function HostEventPage() {
     'Art Exhibition',
     'Sports Event',
     'Educational Workshop',
-    'Networking Event'
+    'Networking Event',
+    'Others'
   ];
 
-  const locations = [
-    'Srinagar, Jammu & Kashmir',
-    'Leh, Ladakh',
-    'Manali, Himachal Pradesh',
-    'Rishikesh, Uttarakhand',
+  const destinations = [
+    'Kashmir',
+    'Uttarakhand',
+    'Himachal Pradesh',
+    'Ladakh',
+    'Sikkim',
+    'Arunachal Pradesh',
+    'Meghalaya',
+    'Assam',
     'Goa',
-    'Kerala Backwaters',
-    'Rajasthan Desert',
-    'Mumbai, Maharashtra',
-    'Delhi',
-    'Bangalore, Karnataka'
+    'Rajasthan',
+    'Kerala',
+    'Andaman & Nicobar',
+    'Madhya Pradesh',
+    'Tamil Nadu',
+    'Maharashtra'
   ];
 
   const sectionTitles = [
@@ -325,10 +377,13 @@ export default function HostEventPage() {
     if (step === 0) {
       if (!formData.title.trim()) errors.title = 'Event title is required';
       if (!formData.eventType) errors.eventType = 'Select an event type';
-      if (!formData.location) errors.location = 'Select a location';
+      if (formData.eventType === 'Others' && !formData.customEventType.trim()) {
+        errors.customEventType = 'Please name your event type';
+      }
+      if (!formData.location) errors.location = 'Select a destination';
       if (!formData.date) errors.date = 'Pick a date';
       if (!formData.pricePerSlot && formData.pricePerSlot !== 0) errors.pricePerSlot = 'Enter a price';
-      if (!formData.destination.trim()) errors.destination = 'Enter a destination';
+      if (!formData.destination.trim()) errors.destination = 'Enter a location';
     }
     if (step === 1) {
       if (!formData.about.trim()) errors.about = 'Event description is required';
@@ -476,7 +531,7 @@ export default function HostEventPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: formData.title,
-          eventType: formData.eventType,
+          eventType: formData.eventType === 'Others' ? formData.customEventType : formData.eventType,
           location: formData.location,
           date: formData.date,
           duration: formData.duration,
@@ -488,6 +543,7 @@ export default function HostEventPage() {
           status: publishMode === 'draft' ? 'draft' : 'published',
           highlights: formData.highlights.filter(h => h.trim()),
           whatsIncluded: formData.whatsIncluded.filter(w => w.trim()),
+          whatsExcluded: formData.whatsExcluded.filter(w => w.trim()),
           faqs: formData.faqs.filter(f => f.question.trim() && f.answer.trim()),
           whatToBring: formData.whatToBring.filter(w => w.trim()),
           restrictions: formData.restrictions.filter(r => r.trim()),
@@ -514,12 +570,12 @@ export default function HostEventPage() {
   if (isPublished) {
     const isDraft = publishMode === 'draft';
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-emerald-50/30 py-8">
+      <div className="min-h-screen bg-gradient-to-br from-neutral-50 to-emerald-50/30 py-6 sm:py-8">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-2xl shadow-lg border border-gray-200 p-12 text-center"
+            className="bg-white rounded-2xl shadow-lg border border-neutral-200 p-8 sm:p-12 text-center"
           >
             <motion.div
               initial={{ scale: 0 }}
@@ -534,7 +590,7 @@ export default function HostEventPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="text-3xl font-bold text-gray-900 mb-4"
+              className="text-2xl sm:text-3xl font-bold text-neutral-900 mb-4"
             >
               {isDraft ? 'Event Saved Successfully!' : 'Event Published Successfully!'}
             </motion.h2>
@@ -543,7 +599,7 @@ export default function HostEventPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
-              className="text-gray-600 mb-4 text-lg"
+              className="text-neutral-600 mb-4 text-base sm:text-lg"
             >
               {isDraft
                 ? `Your event "${formData.title}" has been saved as a draft.`
@@ -571,7 +627,7 @@ export default function HostEventPage() {
             >
               <button
                 onClick={() => router.push('/serviceprovider/dashboard/events')}
-                className="px-8 py-3 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+                className="px-8 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold rounded-xl hover:opacity-90 transition-all duration-200 shadow-lg hover:shadow-xl"
               >
                 {isDraft ? 'View in Upcoming Events' : 'Manage Events'}
               </button>
@@ -582,7 +638,7 @@ export default function HostEventPage() {
                   setFormData({
                     title: '', eventType: '', location: '', date: '', duration: 1,
                     totalSlots: 20, pricePerSlot: '', destination: '', destinationLink: '',
-                    about: '', highlights: [''], whatsIncluded: [''],
+                    about: '', highlights: [''], whatsIncluded: [''], whatsExcluded: [''],
                     faqs: [{ question: '', answer: '' }, { question: '', answer: '' }, { question: '', answer: '' }],
                     whatToBring: [''], restrictions: [''],
                     pickupPoints: [{ location: '', link: '', time: '' }],
@@ -591,7 +647,7 @@ export default function HostEventPage() {
                   setActiveSection(0);
                   setAcceptedTerms(false);
                 }}
-                className="px-8 py-3 border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-all duration-200"
+                className="px-8 py-3 border border-neutral-300 text-neutral-700 font-semibold rounded-xl hover:bg-neutral-50 transition-all duration-200"
               >
                 Create Another Event
               </button>
@@ -603,25 +659,28 @@ export default function HostEventPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-emerald-50/30 py-8">
-      <div className="max-w-7xl mx-auto px-2 sm:px-2 lg:px-2 -mt-8">
+    <div className="min-h-screen bg-gradient-to-br from-neutral-50 to-emerald-50/30 py-6 sm:py-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 -mt-6 sm:-mt-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center gap-4 mb-8"
+          className="flex items-center gap-3 sm:gap-4 mb-6 sm:mb-8"
         >
           <button
             onClick={() => router.back()}
-            className="p-3 rounded-2xl border border-gray-200 hover:bg-white hover:shadow-lg transition-all duration-200 bg-white/80 backdrop-blur-sm"
+            className="p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-neutral-200 hover:bg-white hover:shadow-lg transition-all duration-200 bg-white/80 backdrop-blur-sm flex-shrink-0"
           >
-            <ArrowLeft className="w-5 h-5 text-gray-700" />
+            <ArrowLeft className="w-5 h-5 text-neutral-700" />
           </button>
-          <div className="flex-1">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-emerald-700 bg-clip-text text-transparent">
-              Host New Event
-            </h1>
-            <p className="text-gray-600 mt-2 text-lg">Create an unforgettable experience for your guests</p>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <Sparkles className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-neutral-900 truncate">
+                Host New Event
+              </h1>
+            </div>
+            <p className="text-neutral-500 mt-1 text-sm sm:text-base">Create an unforgettable experience for your guests</p>
           </div>
         </motion.div>
 
@@ -629,7 +688,7 @@ export default function HostEventPage() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="mb-12"
+          className="mb-8 sm:mb-12"
         >
           {/* Desktop Progress Steps */}
           <div className="hidden lg:flex items-center justify-between mb-4">
@@ -641,9 +700,9 @@ export default function HostEventPage() {
               >
                 <div className={`w-3 h-3 rounded-full mb-2 transition-all duration-300 ${index <= activeSection
                   ? 'bg-emerald-500 scale-125'
-                  : 'bg-gray-300'
+                  : 'bg-neutral-300'
                   }`} />
-                <span className={`text-xs font-medium transition-colors ${index <= activeSection ? 'text-emerald-600' : 'text-gray-400'
+                <span className={`text-xs font-medium transition-colors ${index <= activeSection ? 'text-emerald-600' : 'text-neutral-400'
                   }`}>
                   {title}
                 </span>
@@ -656,13 +715,13 @@ export default function HostEventPage() {
             <span className="text-sm font-medium text-emerald-600">
               Step {activeSection + 1} of {sectionTitles.length}
             </span>
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-neutral-500">
               {sectionTitles[activeSection]}
             </span>
           </div>
 
           {/* Progress Bar */}
-          <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+          <div className="h-2 bg-neutral-200 rounded-full overflow-hidden">
             <motion.div
               className="h-full bg-gradient-to-r from-emerald-500 to-teal-600"
               initial={{ width: '0%' }}
@@ -673,23 +732,23 @@ export default function HostEventPage() {
         </motion.div>
 
         {/* Main Form */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8">
           {/* Navigation Sidebar - Desktop Only */}
           <div className="hidden lg:block lg:col-span-1">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sticky top-8">
-              <h3 className="font-semibold text-gray-900 mb-4">Event Creation</h3>
-              <nav className="space-y-2">
+            <div className="bg-white rounded-2xl shadow-sm border border-neutral-200 p-5 sticky top-8">
+              <h3 className="font-semibold text-neutral-900 mb-4 text-sm">Event Creation</h3>
+              <nav className="space-y-1.5">
                 {sectionTitles.map((title, index) => (
                   <button
                     key={index}
                     onClick={() => setActiveSection(index)}
-                    className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-200 ${index === activeSection
+                    className={`w-full text-left px-4 py-2.5 rounded-xl transition-all duration-200 ${index === activeSection
                       ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                      : 'text-gray-600 hover:bg-gray-50'
+                      : 'text-neutral-600 hover:bg-neutral-50'
                       }`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`w-2 h-2 rounded-full ${index === activeSection ? 'bg-emerald-500' : 'bg-gray-300'
+                      <div className={`w-2 h-2 rounded-full ${index === activeSection ? 'bg-emerald-500' : index < activeSection ? 'bg-emerald-300' : 'bg-neutral-300'
                         }`} />
                       <span className="text-sm font-medium">{title}</span>
                     </div>
@@ -705,12 +764,12 @@ export default function HostEventPage() {
               key={activeSection}
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden"
+              className="bg-white rounded-2xl shadow-lg border border-neutral-200"
             >
-              <form onSubmit={handleSubmit} className="p-8">
+              <form onSubmit={handleSubmit} className="p-5 sm:p-6 lg:p-8">
                 {/* Section 1: Basic Information */}
                 {activeSection === 0 && (
-                  <div className="space-y-8">
+                  <div className="space-y-6 sm:space-y-8">
                     <SectionHeader
                       title="Basic Information"
                       description="Tell us about your event"
@@ -718,13 +777,14 @@ export default function HostEventPage() {
                       number={0}
                     />
 
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                       <InputField
                         label="Event Title"
                         name="title"
                         value={formData.title}
                         onChange={handleChange}
                         required
+                        error={stepErrors.title}
                         placeholder="e.g., Himalayan Trekking Adventure"
                       />
 
@@ -735,17 +795,37 @@ export default function HostEventPage() {
                         onChange={handleChange}
                         options={eventTypes}
                         required
+                        error={stepErrors.eventType}
                       />
+
+                      {formData.eventType === 'Others' && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="sm:col-span-2"
+                        >
+                          <InputField
+                            label="Custom Event Type Name"
+                            name="customEventType"
+                            value={formData.customEventType}
+                            onChange={handleChange}
+                            required
+                            error={stepErrors.customEventType}
+                            placeholder="e.g., Spiritual Retreat"
+                          />
+                        </motion.div>
+                      )}
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                       <SelectField
-                        label="Location"
+                        label="Destination"
                         name="location"
                         value={formData.location}
                         onChange={handleChange}
-                        options={locations}
+                        options={destinations}
                         required
+                        error={stepErrors.location}
                       />
 
                       <InputField
@@ -755,17 +835,18 @@ export default function HostEventPage() {
                         value={formData.date}
                         onChange={handleChange}
                         required
+                        error={stepErrors.date}
                       />
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                       <CounterInput
                         label="Duration"
                         value={formData.duration}
                         onChange={(value) => setFormData(prev => ({ ...prev, duration: value }))}
                       />
 
-                      <div className="space-y-6">
+                      <div className="space-y-4 sm:space-y-6">
                         <NumberInput
                           label="Total Slots"
                           name="totalSlots"
@@ -787,9 +868,9 @@ export default function HostEventPage() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                       <InputField
-                        label="Destination"
+                        label="Location"
                         name="destination"
                         value={formData.destination}
                         onChange={handleChange}
@@ -810,7 +891,7 @@ export default function HostEventPage() {
 
                 {/* Section 2: Event Details */}
                 {activeSection === 1 && (
-                  <div className="space-y-8">
+                  <div className="space-y-6 sm:space-y-8">
                     <SectionHeader
                       title="Event Details"
                       description="Describe your event to attract guests"
@@ -819,7 +900,7 @@ export default function HostEventPage() {
                     />
 
                     <div className="space-y-4">
-                      <label className="block text-sm font-semibold text-gray-700">
+                      <label className="block text-sm font-semibold text-neutral-700">
                         About the Event <span className="text-red-500">*</span>
                       </label>
                       <textarea
@@ -828,25 +909,26 @@ export default function HostEventPage() {
                         onChange={handleChange}
                         required
                         rows={6}
-                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 resize-none"
+                        className="w-full px-4 py-3 rounded-xl border border-neutral-200 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 resize-none text-sm"
                         placeholder="Describe your event in detail. What makes it special? What can guests expect?"
                       />
                     </div>
                   </div>
                 )}
 
-                {/* Section 3: Highlights & Inclusions */}
+                {/* Section 3: Highlights, Inclusions & Exclusions */}
                 {activeSection === 2 && (
-                  <div className="space-y-8">
+                  <div className="space-y-6 sm:space-y-8">
                     <SectionHeader
                       title="Highlights & Inclusions"
-                      description="What makes your event stand out"
+                      description="What makes your event stand out and what's covered"
                       icon={Star}
                       number={2}
                     />
 
                     <SlotInput
                       label="Highlights"
+                      icon={Sparkles}
                       slots={formData.highlights}
                       onAdd={() => addArrayField('highlights')}
                       onRemove={(index) => removeArrayField('highlights', index)}
@@ -855,8 +937,12 @@ export default function HostEventPage() {
                       required
                     />
 
+                    {/* Divider */}
+                    <div className="border-t border-neutral-100" />
+
                     <SlotInput
                       label="What's Included"
+                      icon={CheckCircle}
                       slots={formData.whatsIncluded}
                       onAdd={() => addArrayField('whatsIncluded')}
                       onRemove={(index) => removeArrayField('whatsIncluded', index)}
@@ -864,12 +950,25 @@ export default function HostEventPage() {
                       placeholder="Enter one item per line (e.g., All meals included)"
                       required
                     />
+
+                    {/* Divider */}
+                    <div className="border-t border-neutral-100" />
+
+                    <SlotInput
+                      label="What's Excluded"
+                      icon={XCircle}
+                      slots={formData.whatsExcluded}
+                      onAdd={() => addArrayField('whatsExcluded')}
+                      onRemove={(index) => removeArrayField('whatsExcluded', index)}
+                      onChange={(index, value) => handleArrayField('whatsExcluded', index, value)}
+                      placeholder="Enter one item per line (e.g., Personal expenses, Travel insurance)"
+                    />
                   </div>
                 )}
 
                 {/* Section 4: FAQs */}
                 {activeSection === 3 && (
-                  <div className="space-y-8">
+                  <div className="space-y-6 sm:space-y-8">
                     <SectionHeader
                       title="Frequently Asked Questions"
                       description="Help guests with common questions"
@@ -877,9 +976,9 @@ export default function HostEventPage() {
                       number={3}
                     />
 
-                    <div className="space-y-6">
+                    <div className="space-y-4 sm:space-y-6">
                       {formData.faqs.map((faq, index) => (
-                        <div key={index} className="p-6 border border-gray-200 rounded-2xl bg-gray-50/50">
+                        <div key={index} className="p-4 sm:p-6 border border-neutral-200 rounded-2xl bg-neutral-50/50">
                           <div className="grid grid-cols-1 gap-4">
                             <InputField
                               label={`Question ${index + 1}`}
@@ -902,10 +1001,10 @@ export default function HostEventPage() {
                       <button
                         type="button"
                         onClick={addFAQ}
-                        className="w-full py-4 border-2 border-dashed border-gray-300 rounded-2xl hover:border-emerald-500 hover:bg-emerald-50 transition-all duration-200 flex items-center justify-center gap-3"
+                        className="w-full py-4 border-2 border-dashed border-neutral-300 rounded-2xl hover:border-emerald-500 hover:bg-emerald-50 transition-all duration-200 flex items-center justify-center gap-3"
                       >
                         <Plus className="w-5 h-5 text-emerald-600" />
-                        <span className="text-emerald-600 font-semibold">Add Another FAQ</span>
+                        <span className="text-emerald-600 font-semibold text-sm">Add Another FAQ</span>
                       </button>
                     </div>
                   </div>
@@ -913,7 +1012,7 @@ export default function HostEventPage() {
 
                 {/* Section 5: Requirements */}
                 {activeSection === 4 && (
-                  <div className="space-y-8">
+                  <div className="space-y-6 sm:space-y-8">
                     <SectionHeader
                       title="Requirements & Restrictions"
                       description="What guests should know and bring"
@@ -931,6 +1030,8 @@ export default function HostEventPage() {
                       required
                     />
 
+                    <div className="border-t border-neutral-100" />
+
                     <SlotInput
                       label="Restrictions (if any)"
                       slots={formData.restrictions}
@@ -944,7 +1045,7 @@ export default function HostEventPage() {
 
                 {/* Section 6: Itinerary */}
                 {activeSection === 5 && (
-                  <div className="space-y-8">
+                  <div className="space-y-6 sm:space-y-8">
                     <SectionHeader
                       title="Event Itinerary"
                       description="Plan the event schedule step by step"
@@ -953,12 +1054,12 @@ export default function HostEventPage() {
                     />
 
                     <div className="space-y-6">
-                      <div className="flex items-center justify-between">
-                        <h4 className="font-semibold text-gray-900">Pickup & Drop-off Points</h4>
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <h4 className="font-semibold text-neutral-900 text-sm">Pickup & Drop-off Points</h4>
                         <button
                           type="button"
                           onClick={addPickupPoint}
-                          className="flex items-center gap-2 px-4 py-2 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-colors"
+                          className="flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-colors text-sm"
                         >
                           <Plus className="w-4 h-4" />
                           Add Point
@@ -966,8 +1067,8 @@ export default function HostEventPage() {
                       </div>
 
                       {formData.pickupPoints.map((point, index) => (
-                        <div key={index} className="p-6 border border-gray-200 rounded-2xl bg-gray-50/50">
-                          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+                        <div key={index} className="p-4 sm:p-6 border border-neutral-200 rounded-2xl bg-neutral-50/50">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
                             <InputField
                               label="Location"
                               value={point.location}
@@ -1018,7 +1119,7 @@ export default function HostEventPage() {
 
                 {/* Section 7: Poster & Finalize */}
                 {activeSection === 6 && (
-                  <div className="space-y-8">
+                  <div className="space-y-6 sm:space-y-8">
                     <SectionHeader
                       title="Poster & Finalize"
                       description="Upload event poster and publish"
@@ -1027,10 +1128,10 @@ export default function HostEventPage() {
                     />
 
                     <div className="space-y-4">
-                      <label className="block text-sm font-semibold text-gray-700">
+                      <label className="block text-sm font-semibold text-neutral-700">
                         Event Poster <span className="text-red-500">*</span>
                       </label>
-                      <div className="border-2 border-dashed border-gray-300 rounded-2xl p-8 text-center hover:border-emerald-500 transition-all duration-200">
+                      <div className={`border-2 border-dashed ${formData.poster ? 'border-emerald-500 bg-emerald-50/20' : 'border-neutral-300 hover:border-emerald-500'} rounded-2xl p-6 sm:p-8 text-center transition-all duration-200 relative`}>
                         <input
                           type="file"
                           name="poster"
@@ -1038,73 +1139,101 @@ export default function HostEventPage() {
                           accept="image/*"
                           className="hidden"
                           id="poster-upload"
-                          required
                         />
-                        <label htmlFor="poster-upload" className="cursor-pointer">
-                          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-emerald-50 flex items-center justify-center">
-                            <Image className="w-8 h-8 text-emerald-600" />
+                        
+                        {formData.poster ? (
+                          <div className="space-y-4 w-full">
+                            <div className="relative inline-block w-full max-w-md mx-auto group">
+                              <img 
+                                src={URL.createObjectURL(formData.poster)} 
+                                alt="Poster Preview" 
+                                className="w-full max-h-[300px] object-contain rounded-xl shadow-lg border border-emerald-200 mx-auto"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setFormData(prev => ({ ...prev, poster: null }))}
+                                className="absolute -top-2 -right-2 p-1.5 bg-red-500 text-white rounded-full shadow-lg hover:bg-red-600 transition-colors"
+                              >
+                                <XCircle className="w-5 h-5" />
+                              </button>
+                            </div>
+                            <div className="flex flex-col items-center">
+                              <p className="text-sm font-semibold text-emerald-800 flex items-center gap-2">
+                                <CheckCircle className="w-4 h-4" />
+                                {formData.poster.name}
+                              </p>
+                              <p className="text-xs text-neutral-500 mt-1">
+                                {(formData.poster.size / 1024 / 1024).toFixed(2)} MB
+                              </p>
+                              <label htmlFor="poster-upload" className="mt-4 text-emerald-600 hover:text-emerald-700 text-sm font-bold cursor-pointer underline">
+                                Change Image
+                              </label>
+                            </div>
                           </div>
-                          <p className="text-gray-600 mb-2">
-                            Click to upload your event poster
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            Recommended: 1200x630px, JPG or PNG
-                          </p>
-                        </label>
+                        ) : (
+                          <label htmlFor="poster-upload" className="cursor-pointer">
+                            <div className="w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-4 rounded-2xl bg-emerald-50 flex items-center justify-center">
+                              <Image className="w-7 h-7 sm:w-8 sm:h-8 text-emerald-600" />
+                            </div>
+                            <p className="text-neutral-600 mb-2 text-sm sm:text-base font-medium">
+                              Click to upload your event poster
+                            </p>
+                            <p className="text-xs sm:text-sm text-neutral-500">
+                              Recommended: 1200x630px, JPG or PNG
+                            </p>
+                          </label>
+                        )}
                       </div>
-                      {formData.poster && (
-                        <p className="text-emerald-600 text-sm font-medium">
-                          ✓ {formData.poster.name} selected
-                        </p>
-                      )}
+                      {stepErrors.terms && <p className="text-sm text-red-500 font-medium">{stepErrors.terms}</p>}
+
                     </div>
 
                     {/* Publish Mode Selection */}
                     <div className="space-y-3">
-                      <label className="block text-sm font-semibold text-gray-700">How would you like to proceed?</label>
+                      <label className="block text-sm font-semibold text-neutral-700">How would you like to proceed?</label>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <button
                           type="button"
                           onClick={() => setPublishMode('publish')}
-                          className={`p-5 rounded-2xl border-2 text-left transition-all duration-200 ${publishMode === 'publish'
+                          className={`p-4 sm:p-5 rounded-2xl border-2 text-left transition-all duration-200 ${publishMode === 'publish'
                             ? 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-200'
-                            : 'border-gray-200 hover:border-emerald-300 bg-white'
+                            : 'border-neutral-200 hover:border-emerald-300 bg-white'
                             }`}
                         >
                           <div className="flex items-center gap-3 mb-2">
-                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${publishMode === 'publish' ? 'border-emerald-500' : 'border-gray-300'
+                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${publishMode === 'publish' ? 'border-emerald-500' : 'border-neutral-300'
                               }`}>
                               {publishMode === 'publish' && <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full" />}
                             </div>
-                            <PlayCircle className={`w-5 h-5 ${publishMode === 'publish' ? 'text-emerald-600' : 'text-gray-400'}`} />
-                            <span className={`font-semibold ${publishMode === 'publish' ? 'text-emerald-800' : 'text-gray-700'}`}>Publish Now</span>
+                            <PlayCircle className={`w-5 h-5 ${publishMode === 'publish' ? 'text-emerald-600' : 'text-neutral-400'}`} />
+                            <span className={`font-semibold text-sm ${publishMode === 'publish' ? 'text-emerald-800' : 'text-neutral-700'}`}>Publish Now</span>
                           </div>
-                          <p className="text-sm text-gray-500 ml-8">Your event will go live immediately and be visible to all users.</p>
+                          <p className="text-xs sm:text-sm text-neutral-500 ml-8">Your event will go live immediately and be visible to all users.</p>
                         </button>
 
                         <button
                           type="button"
                           onClick={() => setPublishMode('draft')}
-                          className={`p-5 rounded-2xl border-2 text-left transition-all duration-200 ${publishMode === 'draft'
+                          className={`p-4 sm:p-5 rounded-2xl border-2 text-left transition-all duration-200 ${publishMode === 'draft'
                             ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
-                            : 'border-gray-200 hover:border-blue-300 bg-white'
+                            : 'border-neutral-200 hover:border-blue-300 bg-white'
                             }`}
                         >
                           <div className="flex items-center gap-3 mb-2">
-                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${publishMode === 'draft' ? 'border-blue-500' : 'border-gray-300'
+                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${publishMode === 'draft' ? 'border-blue-500' : 'border-neutral-300'
                               }`}>
                               {publishMode === 'draft' && <div className="w-2.5 h-2.5 bg-blue-500 rounded-full" />}
                             </div>
-                            <Clock className={`w-5 h-5 ${publishMode === 'draft' ? 'text-blue-600' : 'text-gray-400'}`} />
-                            <span className={`font-semibold ${publishMode === 'draft' ? 'text-blue-800' : 'text-gray-700'}`}>Save for Later</span>
+                            <Clock className={`w-5 h-5 ${publishMode === 'draft' ? 'text-blue-600' : 'text-neutral-400'}`} />
+                            <span className={`font-semibold text-sm ${publishMode === 'draft' ? 'text-blue-800' : 'text-neutral-700'}`}>Save for Later</span>
                           </div>
-                          <p className="text-sm text-gray-500 ml-8">Save as a draft. You can publish it later from Upcoming Events.</p>
+                          <p className="text-xs sm:text-sm text-neutral-500 ml-8">Save as a draft. You can publish it later from Upcoming Events.</p>
                         </button>
                       </div>
                     </div>
 
-                    <div className="p-6 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl border border-emerald-200">
-                      <h4 className="font-semibold text-emerald-800 mb-2">
+                    <div className="p-5 sm:p-6 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl border border-emerald-200">
+                      <h4 className="font-semibold text-emerald-800 mb-2 text-sm">
                         {publishMode === 'draft' ? 'Save as Draft?' : 'Ready to Publish?'}
                       </h4>
                       <p className="text-emerald-700 text-sm mb-4">
@@ -1112,16 +1241,16 @@ export default function HostEventPage() {
                           ? 'Your event will be saved and you can publish it anytime from your Upcoming Events section.'
                           : 'Review all information before publishing. Once published, your event will be visible to guests.'}
                       </p>
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-start gap-3">
                         <input
                           type="checkbox"
                           id="terms"
                           checked={acceptedTerms}
                           onChange={(e) => setAcceptedTerms(e.target.checked)}
-                          className="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
+                          className="w-4 h-4 text-emerald-600 border-neutral-300 rounded focus:ring-emerald-500 mt-0.5"
                           required
                         />
-                        <label htmlFor="terms" className="text-sm text-gray-700">
+                        <label htmlFor="terms" className="text-sm text-neutral-700">
                           I accept the terms and conditions and confirm that all information provided is accurate.
                         </label>
                       </div>
@@ -1149,14 +1278,14 @@ export default function HostEventPage() {
                 )}
 
                 {/* Navigation Buttons */}
-                <div className="flex items-center justify-between pt-8 mt-8 border-t border-gray-200">
+                <div className="flex items-center justify-between pt-6 sm:pt-8 mt-6 sm:mt-8 border-t border-neutral-200">
                   <button
                     type="button"
                     onClick={prevSection}
                     disabled={activeSection === 0}
-                    className={`px-8 py-3 rounded-xl font-semibold transition-all duration-200 ${activeSection === 0
-                      ? 'text-gray-400 cursor-not-allowed'
-                      : 'text-gray-700 hover:bg-gray-50 border border-gray-200'
+                    className={`px-5 sm:px-8 py-2.5 sm:py-3 rounded-xl font-semibold transition-all duration-200 text-sm ${activeSection === 0
+                      ? 'text-neutral-400 cursor-not-allowed'
+                      : 'text-neutral-700 hover:bg-neutral-50 border border-neutral-200'
                       }`}
                   >
                     Previous
@@ -1166,7 +1295,7 @@ export default function HostEventPage() {
                     <button
                       type="button"
                       onClick={nextSection}
-                      className="px-8 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold rounded-xl hover:shadow-lg transition-all duration-200 transform hover:scale-105"
+                      className="px-5 sm:px-8 py-2.5 sm:py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold rounded-xl hover:shadow-lg transition-all duration-200 transform hover:scale-105 text-sm"
                     >
                       Continue
                     </button>
@@ -1174,7 +1303,7 @@ export default function HostEventPage() {
                     <button
                       type="submit"
                       disabled={submitting}
-                      className={`px-8 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold rounded-xl hover:shadow-lg transition-all duration-200 transform hover:scale-105 ${submitting ? 'opacity-60 cursor-not-allowed' : ''}`}
+                      className={`px-5 sm:px-8 py-2.5 sm:py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold rounded-xl hover:shadow-lg transition-all duration-200 transform hover:scale-105 text-sm ${submitting ? 'opacity-60 cursor-not-allowed' : ''}`}
                     >
                       {submitting ? (
                         <span className="flex items-center gap-2">

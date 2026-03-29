@@ -733,6 +733,21 @@ export default function EventDetailView({ eventId }) {
                                     </CollapsibleSection>
                                 )}
 
+                                {event.whatsExcluded?.length > 0 && (
+                                    <CollapsibleSection title="What's Excluded" icon={X} badge={event.whatsExcluded.length}>
+                                        <ul className="space-y-2 pt-2">
+                                            {event.whatsExcluded.map((w, i) => (
+                                                <li key={i} className="flex items-start gap-3">
+                                                    <div className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                                        <X className="w-3 h-3 text-red-600" />
+                                                    </div>
+                                                    <span className="text-neutral-700 text-sm">{w}</span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </CollapsibleSection>
+                                )}
+
                                 {event.itinerary?.length > 0 && (
                                     <CollapsibleSection title="Itinerary" icon={Route} badge={event.itinerary.filter(Boolean).length + ' steps'}>
                                         <ol className="space-y-4 pt-2">

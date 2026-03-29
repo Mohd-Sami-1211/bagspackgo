@@ -19,7 +19,7 @@ import {
   ShieldCheck,
   Smile,
   ArrowLeft,
-  Mail, Phone, Upload
+  Mail, Phone, Upload, XCircle
 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -385,14 +385,14 @@ const EventDetails = ({ event, guides }) => {
 
                 <h3 className="text-lg font-semibold text-gray-800 mb-3">Highlights</h3>
                 <ul className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
-                  {[
+                  {(event.highlights && event.highlights.length > 0 ? event.highlights : [
                     "Expert local guide",
                     "Small group experience",
                     "All necessary equipment provided",
                     "Local snacks included",
                     "Photo opportunities",
                     "Eco-friendly practices"
-                  ].map((highlight, index) => (
+                  ]).map((highlight, index) => (
                     <li key={index} className="flex items-start">
                       <CheckCircle className="text-green-500 w-5 h-5 mt-0.5 mr-2 flex-shrink-0" />
                       <span className="text-gray-700">{highlight}</span>
@@ -401,26 +401,37 @@ const EventDetails = ({ event, guides }) => {
                 </ul>
 
                 <h3 className="text-lg font-semibold text-gray-800 mb-3">What's Included</h3>
-                <div className="bg-blue-50 p-4 rounded-lg">
+                <div className="bg-blue-50 p-4 rounded-lg mb-6">
                   <ul className="space-y-2">
-                    <li className="flex items-center">
-                      <CheckCircle className="text-blue-500 w-4 h-4 mr-2" />
-                      <span>Professional guide services</span>
-                    </li>
-                    <li className="flex items-center">
-                      <CheckCircle className="text-blue-500 w-4 h-4 mr-2" />
-                      <span>All necessary equipment</span>
-                    </li>
-                    <li className="flex items-center">
-                      <CheckCircle className="text-blue-500 w-4 h-4 mr-2" />
-                      <span>Bottled water and snacks</span>
-                    </li>
-                    <li className="flex items-center">
-                      <CheckCircle className="text-blue-500 w-4 h-4 mr-2" />
-                      <span>Local taxes and fees</span>
-                    </li>
+                    {(event.whatsIncluded && event.whatsIncluded.length > 0 ? event.whatsIncluded : [
+                      "Professional guide services",
+                      "All necessary equipment",
+                      "Bottled water and snacks",
+                      "Local taxes and fees"
+                    ]).map((item, index) => (
+                      <li key={index} className="flex items-center">
+                        <CheckCircle className="text-blue-500 w-4 h-4 mr-2 flex-shrink-0" />
+                        <span>{item}</span>
+                      </li>
+                    ))}
                   </ul>
                 </div>
+
+                {event.whatsExcluded && event.whatsExcluded.length > 0 && (
+                  <>
+                    <h3 className="text-lg font-semibold text-gray-800 mb-3">What's Excluded</h3>
+                    <div className="bg-red-50 p-4 rounded-lg">
+                      <ul className="space-y-2">
+                        {event.whatsExcluded.map((item, index) => (
+                          <li key={index} className="flex items-center">
+                            <XCircle className="text-red-500 w-4 h-4 mr-2 flex-shrink-0" />
+                            <span className="text-gray-700">{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </>
+                )}
               </div>
 
               <div className="lg:col-span-1">

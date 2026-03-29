@@ -126,6 +126,7 @@ export async function GET(request) {
                     about: e.about,
                     highlights: e.highlights,
                     whatsIncluded: e.whatsIncluded,
+                    whatsExcluded: e.whatsExcluded,
                     faqs: e.faqs,
                     whatToBring: e.whatToBring,
                     restrictions: e.restrictions,
