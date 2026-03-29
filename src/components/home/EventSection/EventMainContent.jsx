@@ -6,8 +6,7 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import EventCard from 'src/components/home/EventSection/EventCard';
 import initialData from 'src/data/data.json';
-import { Search, Calendar, User, Tag, MapPin } from 'lucide-react';
-import GuideCard from 'src/components/home/EventSection/GuideCard';
+import { Search, Calendar, Tag, MapPin } from 'lucide-react';
 
 const EventMainContent = () => {
   // State for events and filters
@@ -31,7 +30,6 @@ const EventMainContent = () => {
 
   const [filteredEvents, setFilteredEvents] = useState([]);
   const [displayedEvents, setDisplayedEvents] = useState([]);
-  const [displayCount, setDisplayCount] = useState(6);
   const [typeSearch, setTypeSearch] = useState('');
   const [destinationSearch, setDestinationSearch] = useState('');
   const [organizerSearch, setOrganizerSearch] = useState('');
@@ -81,15 +79,10 @@ const EventMainContent = () => {
     setActiveSearch(true);
     setShowSuggestions(false);
 
-    // Search both events and guides
+    // Search events only
     const foundEvents = getFilteredEvents(trimmedQuery);
-    const foundGuides = getFilteredGuides(trimmedQuery);
 
-    // Combine results with type indicators
-    const combinedResults = [
-      ...foundEvents.map(event => ({ ...event, type: 'event' })),
-      ...foundGuides.map(guide => ({ ...guide, type: 'guide' }))
-    ].sort((a, b) => b.priority - a.priority);
+    const combinedResults = foundEvents.map(event => ({ ...event, type: 'event' })).sort((a, b) => b.priority - a.priority);
 
     setDisplayedEvents(combinedResults);
   };
@@ -99,7 +92,7 @@ const EventMainContent = () => {
     setSearchQuery('');
     setActiveSearch(false);
     setShowSuggestions(false);
-    setDisplayedEvents(filteredEvents.slice(0, displayCount));
+    setDisplayedEvents(filteredEvents);
   };
 
   // Enhanced suggestions generator
@@ -118,14 +111,6 @@ const EventMainContent = () => {
             { name: 'type', weight: 1 }
           ],
           icon: <Calendar className="mr-2 text-green-500" size={16} />
-        },
-        {
-          name: 'Guides',
-          data: data.guides || [],
-          fields: [
-            { name: 'name', weight: 3 }
-          ],
-          icon: <User className="mr-2 text-green-500" size={16} />
         },
         {
           name: 'Destinations',
@@ -204,11 +189,9 @@ const EventMainContent = () => {
             }
           }
 
-          // Guide matches
-          if (event.guideId) {
-            const guide = (data.guides || [])
-              .find(g => g.id === event.guideId);
-            priority += getPriorityScore(guide?.name, q) * 2;
+          // Organizer matches
+          if (event.guideName) {
+            priority += getPriorityScore(event.guideName, q) * 2;
           }
 
           return { ...event, priority };
@@ -220,23 +203,7 @@ const EventMainContent = () => {
     return filterEvents;
   }, [data]);
 
-  // Filter guides with priority
-  const getFilteredGuides = useMemo(() => {
-    const filterGuides = (query) => {
-      if (!query || !query.trim()) return [];
 
-      const q = query.toLowerCase();
-      return (data.guides || [])
-        .map(guide => ({
-          ...guide,
-          priority: getPriorityScore(guide?.name, q) * 3
-        }))
-        .filter(guide => guide.priority > 0)
-        .sort((a, b) => b.priority - a.priority);
-    };
-
-    return filterGuides;
-  }, [data]);
 
   // Apply filters when component mounts or filters change
   useEffect(() => {
@@ -355,12 +322,10 @@ const EventMainContent = () => {
         !(typeof filter === 'object' && filter.start === null && filter.end === null)
     );
 
-    if (hasFilters) {
+    if (hasFilters || !activeSearch) {
       setDisplayedEvents(filteredEvents);
-    } else if (!activeSearch) {
-      setDisplayedEvents(filteredEvents.slice(0, displayCount));
     }
-  }, [filteredEvents, filters, displayCount, activeSearch]);
+  }, [filteredEvents, filters, activeSearch]);
 
   // Toggle dropdown
   const toggleDropdown = (dropdown) => {
@@ -402,7 +367,6 @@ const EventMainContent = () => {
   const applyFilters = () => {
     setFilters({ ...tempFilters });
     setOpenDropdown(null);
-    setDisplayCount(6);
     setMobileFiltersOpen(false);
   };
 
@@ -442,27 +406,29 @@ const EventMainContent = () => {
       category: [],
       sort: null
     });
-    setDisplayCount(6);
     resetSearch();
   };
 
-  // Get filtered organizers based on selected destinations
   const getFilteredOrganizers = () => {
-    if (filters.destination.length === 0) return data.guides;
-    return data.guides.filter(guide =>
-      filters.destination.includes(guide.location)
-    );
+    let eventsToConsider = data.events;
+    if (filters.destination && filters.destination.length > 0) {
+      eventsToConsider = eventsToConsider.filter(e => filters.destination.includes(e.destinationId));
+    }
+    const orgsMap = {};
+    eventsToConsider.forEach(e => {
+        if(e.guideName) { orgsMap[e.guideName] = { id: e.guideName, name: e.guideName }; }
+    });
+    return Object.values(orgsMap).sort((a, b) => a.name.localeCompare(b.name));
   };
 
   // Helper functions
   const getDestinationLabel = (id) => {
-    const destination = data.destinations.find(d => d.value === id);
+    const destination = data.destinations?.find(d => d.value === id);
     return destination ? destination.label : id;
   };
 
   const getOrganizerName = (id) => {
-    const organizer = data.guides.find(g => g.id === id);
-    return organizer ? organizer.name : id;
+    return id;
   };
 
   const formatDate = (date) => {
@@ -474,9 +440,7 @@ const EventMainContent = () => {
     });
   };
 
-  const loadMoreEvents = () => {
-    setDisplayCount(prev => prev + 6);
-  };
+
 
   // Event handlers
   const handleSuggestionClick = (value) => {
@@ -728,7 +692,20 @@ const EventMainContent = () => {
                   onChange={(e) => setTypeSearch(e.target.value)}
                 />
                 <div className="max-h-48 overflow-y-auto">
-                  {Array.from(new Set(data.events?.map(event => event.type) || []))
+                  {Array.from(new Set([
+                    'Adventure Tour',
+                    'Cultural Experience',
+                    'Food & Dining',
+                    'Wellness Retreat',
+                    'Photography Workshop',
+                    'Music Festival',
+                    'Art Exhibition',
+                    'Sports Event',
+                    'Educational Workshop',
+                    'Networking Event',
+                    ...(data.events?.map(event => event.type) || [])
+                  ]))
+                    .filter(type => type !== 'Others') // Hide 'Others' as it's just a provider form utility
                     .filter(type =>
                       type && typeof type === 'string' && type.toLowerCase().includes((typeSearch || '').toLowerCase())
                     )
@@ -1260,10 +1237,9 @@ const EventMainContent = () => {
 
             {/* Organizer Filters */}
             {(filters.organizer || []).map(orgId => {
-              const organizer = data.guides.find(g => g.id === orgId);
               return (
                 <div key={`org-${orgId}`} className="flex items-center bg-green-400 text-white px-3 py-1 rounded-full text-xs sm:text-sm">
-                  {organizer?.name || orgId}
+                  {orgId}
                   <X
                     size={14}
                     className="ml-1 cursor-pointer hover:text-red-500"
@@ -1334,11 +1310,7 @@ const EventMainContent = () => {
                   </h3>
                   <div className="space-y-4 sm:space-y-6">
                     {displayedEvents.map((item, index) => (
-                      item.type === 'event' ? (
-                        <EventCard key={`event-${item.id || item._id || index}`} event={item} guides={data.guides} />
-                      ) : (
-                        <GuideCard key={`guide-${item.id || item._id || index}`} guide={item} />
-                      )
+                      <EventCard key={`event-${item.id || item._id || index}`} event={item} />
                     ))}
                   </div>
                 </div>
@@ -1375,18 +1347,8 @@ const EventMainContent = () => {
             displayedEvents.length > 0 ? (
               <div className="space-y-4 sm:space-y-6">
                 {displayedEvents.map((event, index) => (
-                  <EventCard key={`event-${event.id || event._id || index}`} event={event} guides={data.guides} />
+                  <EventCard key={`event-${event.id || event._id || index}`} event={event} />
                 ))}
-                {!hasFilters && filteredEvents.length > displayCount && (
-                  <div className="mt-6 sm:mt-8 flex justify-center">
-                    <button
-                      onClick={loadMoreEvents}
-                      className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors flex items-center text-sm font-medium"
-                    >
-                      Show More <ArrowDown className="ml-2" size={18} />
-                    </button>
-                  </div>
-                )}
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-12">

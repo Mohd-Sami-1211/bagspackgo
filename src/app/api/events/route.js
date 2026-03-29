@@ -133,6 +133,7 @@ export async function GET(request) {
                     pickupPoints: e.pickupPoints,
                     itinerary: e.itinerary,
                     destinationLink: e.destinationLink,
+                    createdAt: e.createdAt,
                     // Source flag so the frontend knows this is from DB
                     _source: "db",
                 };
