@@ -228,6 +228,7 @@ export async function POST(request) {
                 time: p.time,
             })),
             itinerary: itinerary.map(sanitizeString),
+            photographs: body.photographs || [],
             poster: body.poster || "",
             status: body.status === "draft" ? "draft" : "published",
         });

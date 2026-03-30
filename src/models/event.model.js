@@ -126,7 +126,13 @@ const eventSchema = new mongoose.Schema(
             default: [],
         },
 
-        // Poster (Step 7) — stored as base64 data URL or cloud URL
+        // Photographs (Step 7) — location/experience photos as base64 or URLs
+        photographs: {
+            type: [String],
+            default: [],
+        },
+
+        // Poster (Step 8) — stored as base64 data URL or cloud URL
         poster: {
             type: String,
             default: "",

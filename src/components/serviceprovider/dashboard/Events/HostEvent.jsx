@@ -22,7 +22,8 @@ import {
   Check,
   PlayCircle,
   XCircle,
-  Sparkles
+  Sparkles,
+  Camera
 } from 'lucide-react';
 
 // ── Sub-components defined at module level to prevent re-creation on every render ──
@@ -326,6 +327,7 @@ export default function HostEventPage() {
     restrictions: [''],
     pickupPoints: [{ location: '', link: '', time: '' }],
     itinerary: ['', '', ''],
+    photographs: [],
     poster: null
   });
 
@@ -368,6 +370,7 @@ export default function HostEventPage() {
     'FAQs',
     'Requirements',
     'Itinerary',
+    'Photographs',
     'Poster & Finalize'
   ];
 
@@ -408,7 +411,8 @@ export default function HostEventPage() {
       const validItinerary = formData.itinerary.filter(s => s.trim());
       if (validItinerary.length === 0) errors.itinerary = 'At least one itinerary step is required';
     }
-    if (step === 6) {
+    // Step 6 (Photographs) — optional, no validation
+    if (step === 7) {
       if (!acceptedTerms) errors.terms = 'You must accept the terms';
     }
     setStepErrors(errors);
@@ -509,9 +513,32 @@ export default function HostEventPage() {
     setActiveSection(prev => Math.max(prev - 1, 0));
   };
 
+  const handlePhotographUpload = (e) => {
+    const files = Array.from(e.target.files);
+    if (formData.photographs.length + files.length > 10) {
+      alert('You can upload a maximum of 10 photographs.');
+      return;
+    }
+    files.forEach(file => {
+      if (file.size > 5 * 1024 * 1024) {
+        alert(`${file.name} is too large. Max 5MB per image.`);
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData(prev => ({ ...prev, photographs: [...prev.photographs, reader.result] }));
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removePhotograph = (index) => {
+    setFormData(prev => ({ ...prev, photographs: prev.photographs.filter((_, i) => i !== index) }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateStep(6)) return;
+    if (!validateStep(7)) return;
     setSubmitting(true);
     setApiError('');
 
@@ -549,6 +576,7 @@ export default function HostEventPage() {
           restrictions: formData.restrictions.filter(r => r.trim()),
           pickupPoints: formData.pickupPoints.filter(p => p.location.trim()),
           itinerary: formData.itinerary.filter(s => s.trim()),
+          photographs: formData.photographs,
           poster: posterData,
         }),
       });
@@ -642,7 +670,7 @@ export default function HostEventPage() {
                     faqs: [{ question: '', answer: '' }, { question: '', answer: '' }, { question: '', answer: '' }],
                     whatToBring: [''], restrictions: [''],
                     pickupPoints: [{ location: '', link: '', time: '' }],
-                    itinerary: ['', '', ''], poster: null
+                    itinerary: ['', '', ''], photographs: [], poster: null
                   });
                   setActiveSection(0);
                   setAcceptedTerms(false);
@@ -1117,14 +1145,85 @@ export default function HostEventPage() {
                   </div>
                 )}
 
-                {/* Section 7: Poster & Finalize */}
+                {/* Section 7: Photographs */}
                 {activeSection === 6 && (
+                  <div className="space-y-6 sm:space-y-8">
+                    <SectionHeader
+                      title="Photographs"
+                      description="Upload photos of the location or past experiences to attract guests"
+                      icon={Camera}
+                      number={6}
+                    />
+
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <label className="block text-sm font-semibold text-neutral-700">
+                          Location / Experience Photos <span className="text-neutral-400 font-normal">(Optional, max 10)</span>
+                        </label>
+                        <span className="text-xs text-neutral-500 font-medium">{formData.photographs.length}/10 uploaded</span>
+                      </div>
+
+                      {/* Upload Area */}
+                      <div className={`border-2 border-dashed ${formData.photographs.length > 0 ? 'border-emerald-300' : 'border-neutral-300 hover:border-emerald-500'} rounded-2xl p-6 sm:p-8 text-center transition-all duration-200`}>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          onChange={handlePhotographUpload}
+                          className="hidden"
+                          id="photographs-upload"
+                          disabled={formData.photographs.length >= 10}
+                        />
+                        <label htmlFor="photographs-upload" className={`cursor-pointer ${formData.photographs.length >= 10 ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                          <div className="w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-4 rounded-2xl bg-emerald-50 flex items-center justify-center">
+                            <Camera className="w-7 h-7 sm:w-8 sm:h-8 text-emerald-600" />
+                          </div>
+                          <p className="text-neutral-600 mb-2 text-sm sm:text-base font-medium">
+                            {formData.photographs.length >= 10 ? 'Maximum photos uploaded' : 'Click to upload location photos'}
+                          </p>
+                          <p className="text-xs sm:text-sm text-neutral-500">
+                            JPG or PNG, max 5MB each. These will be displayed with your event description.
+                          </p>
+                        </label>
+                      </div>
+
+                      {/* Preview Grid */}
+                      {formData.photographs.length > 0 && (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
+                          {formData.photographs.map((photo, index) => (
+                            <div key={index} className="relative group rounded-xl overflow-hidden border border-neutral-200 shadow-sm aspect-square">
+                              <img
+                                src={photo}
+                                alt={`Photo ${index + 1}`}
+                                className="w-full h-full object-cover"
+                              />
+                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-200" />
+                              <button
+                                type="button"
+                                onClick={() => removePhotograph(index)}
+                                className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-all hover:bg-red-600"
+                              >
+                                <XCircle className="w-4 h-4" />
+                              </button>
+                              <div className="absolute bottom-2 left-2 bg-black/50 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                {index + 1}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Section 8: Poster & Finalize */}
+                {activeSection === 7 && (
                   <div className="space-y-6 sm:space-y-8">
                     <SectionHeader
                       title="Poster & Finalize"
                       description="Upload event poster and publish"
                       icon={Upload}
-                      number={6}
+                      number={7}
                     />
 
                     <div className="space-y-4">

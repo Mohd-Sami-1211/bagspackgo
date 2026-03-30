@@ -726,7 +726,19 @@ export default function EventDetailView({ eventId }) {
                                                     <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                                                         <Check className="w-3 h-3 text-blue-600" />
                                                     </div>
-                                                    <span className="text-neutral-700 text-sm">{w}</span>
+                                                    {editMode ? (
+                                                        <input
+                                                            value={editData.whatsIncluded?.[i] || ''}
+                                                            onChange={(e) => {
+                                                                const updated = [...(editData.whatsIncluded || [])];
+                                                                updated[i] = e.target.value;
+                                                                setEditData(prev => ({ ...prev, whatsIncluded: updated }));
+                                                            }}
+                                                            className="flex-1 px-3 py-1 rounded-lg border border-neutral-200 text-sm focus:ring-1 focus:ring-emerald-400"
+                                                        />
+                                                    ) : (
+                                                        <span className="text-neutral-700 text-sm">{w}</span>
+                                                    )}
                                                 </li>
                                             ))}
                                         </ul>
@@ -741,7 +753,19 @@ export default function EventDetailView({ eventId }) {
                                                     <div className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                                                         <X className="w-3 h-3 text-red-600" />
                                                     </div>
-                                                    <span className="text-neutral-700 text-sm">{w}</span>
+                                                    {editMode ? (
+                                                        <input
+                                                            value={editData.whatsExcluded?.[i] || ''}
+                                                            onChange={(e) => {
+                                                                const updated = [...(editData.whatsExcluded || [])];
+                                                                updated[i] = e.target.value;
+                                                                setEditData(prev => ({ ...prev, whatsExcluded: updated }));
+                                                            }}
+                                                            className="flex-1 px-3 py-1 rounded-lg border border-neutral-200 text-sm focus:ring-1 focus:ring-emerald-400"
+                                                        />
+                                                    ) : (
+                                                        <span className="text-neutral-700 text-sm">{w}</span>
+                                                    )}
                                                 </li>
                                             ))}
                                         </ul>
