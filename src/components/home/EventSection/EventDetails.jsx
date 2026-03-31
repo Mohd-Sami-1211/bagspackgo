@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 
 /* ─────────────────── Custom Dropdown ─────────────────── */
 const CustomSelect = ({ value, onChange, options, placeholder }) => {
@@ -62,9 +63,11 @@ const CustomSelect = ({ value, onChange, options, placeholder }) => {
   );
 };
 
-/* ─────────────────── Main Component ─────────────────── */
 const EventDetails = ({ event }) => {
   const router = useRouter();
+  const { user, loading: authLoading, openAuthModal } = useAuth();
+  const isUserAuthenticated = !authLoading && user?.role === "user";
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // ── View state: 'details' or 'booking' ──
   const [currentView, setCurrentView] = useState('details');
@@ -111,6 +114,67 @@ const EventDetails = ({ event }) => {
     contactDetails: { email: '', phone: '' },
     participants: [createEmptyParticipant()],
   });
+
+  useEffect(() => {
+    if (!isInitialized) {
+       try {
+         const saved = sessionStorage.getItem("temp_event_booking");
+         if (saved) {
+             const parsed = JSON.parse(saved);
+             if (parsed && typeof parsed === 'object') {
+                setFormData(parsed);
+             }
+         }
+       } catch (e) {}
+       setIsInitialized(true);
+    }
+
+    // Load Razorpay script
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    document.body.appendChild(script);
+    return () => {
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
+    };
+  }, [isInitialized]);
+
+
+  useEffect(() => {
+    if (!isInitialized) return;
+    sessionStorage.setItem('temp_event_booking', JSON.stringify(formData));
+    
+    // Resume unfinished booking logic
+    const hasData = formData.contactDetails.email || formData.contactDetails.phone || formData.participants[0]?.name;
+    if (hasData && currentView === 'booking') {
+      const pendingData = localStorage.getItem('pending_booking');
+      let parsedPending = pendingData ? JSON.parse(pendingData) : { ignored: false };
+      
+      if (!parsedPending.ignored) {
+         parsedPending = {
+            ...parsedPending,
+            ignored: false,
+            url: window.location.pathname + window.location.search,
+            timestamp: Date.now()
+         };
+         localStorage.setItem('pending_booking', JSON.stringify(parsedPending));
+      }
+    }
+  }, [formData, isInitialized, currentView]);
+
+  useEffect(() => {
+    if (currentView === 'booking') {
+      if (authLoading) return;
+      if (!isUserAuthenticated) {
+        const timer = setTimeout(() => {
+          openAuthModal({ closable: false, hideTabs: true, tab: 'user' });
+        }, 3500); // 3.5 seconds delay
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [currentView, authLoading, isUserAuthenticated, openAuthModal]);
 
   function createEmptyParticipant() {
     return { name: '', age: '', gender: '', phone: '', nationality: '', idType: '', idNumber: '', idProofImage: '' };
@@ -189,14 +253,105 @@ const EventDetails = ({ event }) => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // Payment Calculations
+  const subtotal = (event.price || 0) * bookingSlots;
+  const platformFee = Math.round(subtotal * 0.03);
+  const gatewayFee = Math.round(subtotal * 0.02);
+  const gstOnGateway = Math.round(gatewayFee * 0.18);
+  const totalFees = platformFee + gatewayFee + gstOnGateway;
+  const totalPayable = subtotal + totalFees;
+
   const handleBooking = async (e) => {
     e.preventDefault();
     setIsProcessingPayment(true);
-    setTimeout(() => {
-      alert('Booking successful!');
+    setFormErrors({});
+
+    try {
+      // Find the selected pickup point object
+      const pickupObj = event.pickupPoints?.find(p => p.location === selectedPickup) || null;
+
+      const bookRes = await fetch('/api/user/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event: event._id || event.id,
+          slots: bookingSlots,
+          amountPaid: totalPayable,
+          contactDetails: formData.contactDetails,
+          participants: formData.participants.slice(0, bookingSlots),
+          selectedPickup: pickupObj ? { location: pickupObj.location, link: pickupObj.link || '', time: pickupObj.time || '' } : null
+        })
+      });
+      const bookData = await bookRes.json();
+      if (!bookData.success) throw new Error(bookData.message || 'Booking failed');
+      const bookingId = bookData.bookingId;
+
+      const orderRes = await fetch('/api/payments/event-create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: totalPayable, bookingId })
+      });
+      const orderData = await orderRes.json();
+      if (!orderData.success) throw new Error(orderData.message || 'Order creation failed');
+
+      const { orderId, key } = orderData;
+      const isMock = !process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || orderId?.startsWith('mock_order_');
+
+      if (isMock) {
+          const verifyRes = await fetch('/api/payments/event-verify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                  razorpay_order_id: orderId,
+                  razorpay_payment_id: `mock_pay_${Date.now()}`,
+                  bookingId
+              })
+          });
+          const verifyData = await verifyRes.json();
+          if (!verifyData.success) throw new Error('Payment verification failed');
+          
+          localStorage.removeItem('pending_booking');
+          sessionStorage.removeItem('temp_event_booking');
+          router.push(`/user/event/booking-success?bookingId=${bookingId}`);
+          return;
+      }
+
+      const rzp = new window.Razorpay({
+        key,
+        amount: totalPayable * 100,
+        currency: 'INR',
+        order_id: orderId,
+        name: 'BagsPackGo',
+        description: `Booking: ${event.title || event.name || 'Event'}`,
+        handler: async (response) => {
+          const verifyRes = await fetch('/api/payments/event-verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              bookingId
+            })
+          });
+          const verifyData = await verifyRes.json();
+          if (verifyData.success) {
+            localStorage.removeItem('pending_booking');
+            sessionStorage.removeItem('temp_event_booking');
+            router.push(`/user/event/booking-success?bookingId=${bookingId}`);
+          } else {
+            alert(verifyData.message || 'Payment verification failed');
+            setIsProcessingPayment(false);
+          }
+        },
+        modal: { ondismiss: () => setIsProcessingPayment(false) }
+      });
+      rzp.open();
+    } catch (err) {
+      console.error(err);
+      alert(err.message || 'Payment failed');
       setIsProcessingPayment(false);
-      router.push('/user/bookings');
-    }, 2000);
+    }
   };
 
   // ── Custom select style override for emerald theme ──
@@ -645,13 +800,6 @@ const EventDetails = ({ event }) => {
 
                           {/* Calculation variables */}
                           {(() => {
-                            const subtotal = event.price * bookingSlots;
-                            const platformFee = Math.round(subtotal * 0.03);
-                            const gatewayFee = Math.round(subtotal * 0.02);
-                            const gstOnGateway = Math.round(gatewayFee * 0.18);
-                            const totalFees = platformFee + gatewayFee + gstOnGateway;
-                            const totalPayable = subtotal + totalFees;
-
                             return (
                               <div className="space-y-5">
                                 <div className="flex justify-between items-center text-gray-700 font-bold">

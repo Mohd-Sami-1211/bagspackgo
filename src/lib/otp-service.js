@@ -342,3 +342,87 @@ export async function sendTripBookingConfirmation({ userEmail, userName, provide
     }
 }
 
+/**
+ * Send event booking confirmation to user and provider
+ */
+export async function sendEventBookingConfirmation({ userEmail, userName, providerEmail, providerName, bookingId, eventName, destination, eventDate, numPeople, totalAmount, pdfBuffer }) {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const formattedDate = eventDate ? new Date(eventDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : 'TBD';
+
+    // Email to user
+    if (userEmail) {
+        let attachments = [];
+        if (pdfBuffer) {
+            attachments.push({
+                filename: `BagsPackGo_EventPass_${bookingId.substring(0,8)}.pdf`,
+                content: pdfBuffer,
+                contentType: 'application/pdf'
+            });
+        }
+
+        const userMail = {
+            from: `"bagspackgo" <${process.env.GMAIL_USER}>`,
+            to: userEmail,
+            subject: `✅ Booking Confirmed — ${eventName} | Ref: ${bookingId.substring(0,8).toUpperCase()}`,
+            attachments: attachments,
+            html: `
+                <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 580px; margin: 0 auto; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.10);">
+                    <div style="background: linear-gradient(135deg, #10b981, #059669); padding: 40px 32px; text-align: center;">
+                        <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 800;">Event Booking Confirmed!</h1>
+                        <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0; font-size: 16px;">Get ready for ${eventName} 🎉</p>
+                    </div>
+                    <div style="background: white; padding: 40px 32px;">
+                        <p style="color: #111827; font-size: 18px; margin: 0 0 16px;">Hi <strong>${userName}</strong>,</p>
+                        <p style="color: #4b5563; line-height: 1.6; font-size: 15px;">Your booking for <strong>${eventName}</strong> has been successfully confirmed. A PDF copy of your entry pass is attached below.</p>
+                        
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px; margin: 24px 0;">
+                            <h3 style="color: #0f172a; font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 16px; border-bottom: 1px solid #e2e8f0; pb-8;">Event Details</h3>
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <tr><td style="color: #64748b; padding: 8px 0; font-size: 14px;">Booking Ref</td><td style="color: #0f172a; font-weight: 700; font-size: 14px; text-align: right; font-family: monospace;">${bookingId.substring(0,8).toUpperCase()}</td></tr>
+                                <tr><td style="color: #64748b; padding: 8px 0; font-size: 14px;">Location</td><td style="color: #0f172a; font-weight: 600; font-size: 14px; text-align: right;">${destination}</td></tr>
+                                <tr><td style="color: #64748b; padding: 8px 0; font-size: 14px;">Event Date</td><td style="color: #0f172a; font-size: 14px; text-align: right;">${formattedDate}</td></tr>
+                                <tr><td style="color: #64748b; padding: 8px 0; font-size: 14px;">Guests</td><td style="color: #0f172a; font-size: 14px; text-align: right;">${numPeople} Pax</td></tr>
+                                <tr style="border-top: 1px solid #e2e8f0;"><td style="color: #059669; padding: 16px 0 0; font-size: 18px; font-weight: 800;">Total Paid</td><td style="color: #059669; font-size: 18px; font-weight: 800; text-align: right; padding-top: 16px;">₹${Number(totalAmount).toLocaleString('en-IN')}</td></tr>
+                            </table>
+                        </div>
+
+                        <div style="text-align: center;">
+                            <a href="${appUrl}/user/bookings" style="background: #059669; color: white; text-decoration: none; padding: 16px 40px; border-radius: 12px; font-size: 16px; font-weight: 700; display: inline-block; box-shadow: 0 4px 12px rgba(5,150,105,0.25);">Manage My Booking →</a>
+                        </div>
+                    </div>
+                </div>
+            `,
+        };
+        try { await transporter.sendMail(userMail); } catch (e) { console.error('User event email failed:', e.message); }
+    }
+
+    // Email to provider
+    if (providerEmail) {
+        const providerMail = {
+            from: `"bagspackgo" <${process.env.GMAIL_USER}>`,
+            to: providerEmail,
+            subject: `🎫 New Event Booking — ${eventName} | Ref: ${bookingId.substring(0,8).toUpperCase()}`,
+            html: `
+                <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 580px; margin: 0 auto; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.10);">
+                    <div style="background: linear-gradient(135deg, #f59e0b, #d97706); padding: 36px 32px; text-align: center;">
+                        <h1 style="color: white; margin: 0; font-size: 26px;">New Event Booking!</h1>
+                    </div>
+                    <div style="background: white; padding: 36px 32px;">
+                        <p style="color: #374151; font-size: 16px;">Hi <strong>${providerName}</strong>,</p>
+                        <p style="color: #4b5563; line-height: 1.6;">You have a new booking for <strong>${eventName}</strong>.</p>
+                        <div style="background: #fffbeb; border-radius: 12px; padding: 24px; margin: 20px 0;">
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <tr><td style="color: #6b7280; padding: 6px 0; font-size: 14px;">Booking Ref</td><td style="color: #111827; font-weight: 700; font-size: 14px; text-align: right;">${bookingId.substring(0,8).toUpperCase()}</td></tr>
+                                <tr><td style="color: #6b7280; padding: 6px 0; font-size: 14px;">Traveller</td><td style="color: #111827; font-weight: 600; font-size: 14px; text-align: right;">${userName}</td></tr>
+                                <tr><td style="color: #6b7280; padding: 6px 0; font-size: 14px;">Date</td><td style="color: #111827; font-size: 14px; text-align: right;">${formattedDate}</td></tr>
+                                <tr><td style="color: #6b7280; padding: 6px 0; font-size: 14px;">Guests</td><td style="color: #111827; font-size: 14px; text-align: right;">${numPeople}</td></tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `,
+        };
+        try { await transporter.sendMail(providerMail); } catch (e) { console.error('Provider event email failed:', e.message); }
+    }
+}
+

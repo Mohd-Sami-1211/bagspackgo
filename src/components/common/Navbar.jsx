@@ -44,7 +44,7 @@ export default function Navbar() {
   }, []);
 
   return (
-    <nav className="w-full bg-green-300 shadow-md px-3 sm:px-6 py-3 flex items-center justify-between relative">
+    <nav className="w-full bg-green-300 shadow-md px-3 sm:px-6 py-3 flex items-center justify-between relative z-[100]">
 
       {/* Logo Section */}
       <a

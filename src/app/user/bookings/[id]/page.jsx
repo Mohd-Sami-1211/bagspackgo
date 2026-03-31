@@ -243,14 +243,17 @@ function BookingPassEmbed({ booking }) {
 
     const pSnapshot = booking?.packageSnapshot || {};
     const gSnapshot = booking?.guideId || {};
-    const packageName = pSnapshot.name || booking?.packageName || 'Trip Package';
+    const isEvent = booking?.type?.toLowerCase() === 'event';
+    const selectedPickup = isEvent ? (booking?.selectedPickup || null) : null;
+    const pickupPoints = isEvent ? (booking?.pickupPoints || []) : [];
+    const packageName = isEvent ? (booking?.name || 'Event') : (pSnapshot.name || booking?.packageName || 'Trip Package');
     const providerName = booking?.companyName || booking?.guideName || 'BagsPackGo Verified Partner';
     const destinationName = ensureString(pSnapshot.destination || booking?.destination || '');
     const travelers = booking?.personalDetails?.personalDetails || [];
     const arrivalDeparture = booking?.arrivalDeparture || {};
 
     const passUrl = typeof window !== 'undefined'
-        ? `${window.location.origin}/user/trip/pass/${booking.id}`
+        ? `${window.location.origin}${booking.passUrl || `/user/trip/pass/${booking.id}`}`
         : '';
 
     const formatDate = (d) => d ? new Date(d).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : 'TBD';
@@ -289,49 +292,91 @@ function BookingPassEmbed({ booking }) {
 
             {/* Details grid */}
             <div className="p-5 sm:p-7">
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 bg-gray-50 rounded-xl p-4 mb-6 border border-gray-100">
-                    <div>
-                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Travel Date</p>
-                        <p className="text-sm font-black text-gray-900">{formatDate(booking.date)}</p>
+                <div className="flex flex-col lg:flex-row gap-4 mb-6">
+                    <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-4 bg-gray-50 rounded-xl p-4 border border-gray-100">
+                        <div>
+                            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Travel Date</p>
+                            <p className="text-sm font-black text-gray-900">{formatDate(booking.date)}</p>
+                        </div>
+                        <div>
+                            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Pickup / Drop-off</p>
+                            
+                            {isEvent ? (
+                                // Event pickup: use selectedPickup first, then fall back to pickupPoints
+                                (() => {
+                                    const pp = (selectedPickup && selectedPickup.location) ? selectedPickup : pickupPoints[0];
+                                    if (!pp?.location) return <p className="text-xs font-black text-gray-900 leading-tight">TBD</p>;
+                                    return (
+                                        <div className="space-y-1.5 mt-1">
+                                            <p className="text-xs font-black text-gray-900 leading-tight flex items-start gap-1.5">
+                                                <MapPin className="w-3 h-3 text-emerald-500 shrink-0 mt-0.5" />
+                                                <span>{pp.location}</span>
+                                            </p>
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                {pp.time && (
+                                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-100">
+                                                        <Clock className="w-2.5 h-2.5" /> {formatTimeWithAMPM(pp.time)}
+                                                    </span>
+                                                )}
+                                                {pp.link && (
+                                                    <a href={pp.link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10px] text-emerald-600 hover:text-emerald-700 bg-white px-1.5 py-0.5 rounded-md border border-emerald-100 shadow-sm transition-all hover:shadow-md">
+                                                        <Navigation className="w-2.5 h-2.5" /> View Map
+                                                    </a>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })()
+                            ) : (
+                                // Trip/Trek pickup
+                                arrivalDeparture?.pickup?.location ? (
+                                    <div className="space-y-1.5 mt-1">
+                                        <p className="text-xs font-black text-gray-900 leading-tight flex items-start gap-1.5">
+                                            <MapPin className="w-3 h-3 text-emerald-500 shrink-0 mt-0.5" />
+                                            <span>{arrivalDeparture.pickup.location}</span>
+                                        </p>
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            {arrivalDeparture.pickup.time && (
+                                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-100">
+                                                    <Clock className="w-2.5 h-2.5" /> {formatTimeWithAMPM(arrivalDeparture.pickup.time)}
+                                                </span>
+                                            )}
+                                            {arrivalDeparture.pickup.link && (
+                                                <a href={arrivalDeparture.pickup.link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10px] text-emerald-600 hover:text-emerald-700 bg-white px-1.5 py-0.5 rounded-md border border-emerald-100 shadow-sm transition-all hover:shadow-md">
+                                                    <Navigation className="w-2.5 h-2.5" /> View Map
+                                                </a>
+                                            )}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <p className="text-xs font-black text-gray-900 leading-tight">TBD</p>
+                                )
+                            )}
+                        </div>
+                        <div>
+                            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Guests</p>
+                            <p className="text-sm font-black text-gray-900">{booking.people || 1} Pax</p>
+                        </div>
+                        <div>
+                            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Paid</p>
+                            <p className="text-sm font-black text-emerald-600">{rupee(booking.price)}</p>
+                        </div>
                     </div>
-                    <div>
-                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Pickup</p>
-                        <p className="text-sm font-black text-gray-900">{arrivalDeparture?.pickup?.time || 'TBD'}</p>
-                    </div>
-                    <div>
-                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Guests</p>
-                        <p className="text-sm font-black text-gray-900">{booking.people || 1} Pax</p>
-                    </div>
-                    <div>
-                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Paid</p>
-                        <p className="text-sm font-black text-emerald-600">{rupee(booking.price)}</p>
-                    </div>
-                </div>
 
-                {/* Provider info + QR */}
-                <div className="flex flex-col sm:flex-row gap-4 mb-6">
-                    <div className="flex-1 bg-emerald-50/50 border border-emerald-100 rounded-xl p-4">
+                    <div className="shrink-0 w-full lg:w-48 bg-emerald-50/50 border border-emerald-100 rounded-xl p-4 flex flex-col justify-center">
                         <p className="text-[9px] font-bold text-emerald-600 uppercase tracking-widest mb-1">Managed By</p>
-                        <p className="font-black text-gray-900">{providerName}</p>
+                        <p className="font-black text-gray-900 text-sm">{providerName}</p>
                         {booking.providerPhone && (
-                            <p className="text-xs text-gray-600 flex items-center gap-1 mt-1">
+                            <p className="text-[10px] text-gray-600 flex items-center gap-1 mt-1">
                                 <Phone className="w-3 h-3 text-emerald-500" /> {booking.providerPhone}
                             </p>
                         )}
                         {booking.providerEmail && (
-                            <p className="text-xs text-gray-600 flex items-center gap-1 mt-0.5">
+                            <p className="text-[10px] text-gray-600 flex items-center gap-1 mt-0.5 truncate">
                                 <Mail className="w-3 h-3 text-emerald-500" /> {booking.providerEmail}
                             </p>
                         )}
                     </div>
-                    {passUrl && (
-                        <div className="shrink-0 flex flex-col items-center justify-center p-4 border border-emerald-100 rounded-xl bg-white">
-                            <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mb-2">Scan Pass</p>
-                            <a href={passUrl} target="_blank" rel="noopener noreferrer">
-                                <QRCodeSVG value={passUrl} size={90} level="H" />
-                            </a>
-                        </div>
-                    )}
                 </div>
 
                 {/* Travelers */}
@@ -340,22 +385,30 @@ function BookingPassEmbed({ booking }) {
                         <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-3 border-b border-gray-100 pb-2">
                             Passenger Manifest
                         </p>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            {travelers.map((t, i) => (
-                                <div key={i} className="flex justify-between items-center p-3 border border-gray-100 rounded-xl bg-gray-50">
+                        <div className="flex flex-col gap-3">
+                            {travelers.map((t, i) => {
+                                const verifyUrl = typeof window !== 'undefined' 
+                                    ? `${window.location.origin}/serviceprovider/scan?bookingId=${booking.id}&passCode=${t.passCode}` 
+                                    : `https://bagspackgo.com/serviceprovider/scan?bookingId=${booking.id}&passCode=${t.passCode}`;
+
+                                return (
+                                <div key={i} className="flex justify-between items-center p-4 border border-emerald-100 rounded-2xl bg-emerald-50/30">
                                     <div>
-                                        <p className="text-sm font-bold text-gray-900">{t.name || 'Unnamed'}</p>
-                                        <p className="text-[10px] text-gray-500 font-bold">
+                                        <p className="text-base font-bold text-gray-900 mb-0.5">{t.name || 'Unnamed Passenger'}</p>
+                                        <p className="text-xs text-gray-500 font-bold mb-1.5">
                                             {t.gender?.label || t.gender || '—'} · {t.age || '—'} yrs
                                         </p>
-                                    </div>
-                                    <div className="text-right">
                                         <p className="text-[10px] font-bold text-gray-500 uppercase">
                                             {t.idType?.label || t.idType || 'ID'}: <span className="text-gray-900">{t.idNumber}</span>
                                         </p>
+                                        {t.phone && <p className="text-[10px] font-medium text-gray-500 mt-0.5">Contact: <span className="text-gray-900 font-semibold">{t.phone}</span></p>}
+                                    </div>
+                                    <div className="shrink-0 bg-white p-1.5 rounded-lg border border-emerald-200 shadow-sm ml-4 flex flex-col items-center justify-center">
+                                        <QRCodeSVG value={verifyUrl} size={70} level="H" />
+                                        <p className="text-[8px] font-bold text-emerald-800 uppercase tracking-widest mt-1">Scan to Enter</p>
                                     </div>
                                 </div>
-                            ))}
+                            )})}
                         </div>
                     </div>
                 )}
@@ -379,11 +432,12 @@ export default function BookingDetailPage() {
         try {
             setLoading(true);
             // Fetch from all booking sources and find the right one
-            const [tripsRes, treksRes] = await Promise.all([
+            const [tripsRes, treksRes, eventsRes] = await Promise.all([
                 fetch('/api/user/trip-bookings'),
                 fetch('/api/user/trek-bookings'),
+                fetch('/api/user/bookings'),
             ]);
-            const [tripsData, treksData] = await Promise.all([tripsRes.json(), treksRes.json()]);
+            const [tripsData, treksData, eventsData] = await Promise.all([tripsRes.json(), treksRes.json(), eventsRes.json()]);
 
             let found = null;
             const ensureString = (val) => {
@@ -403,6 +457,7 @@ export default function BookingDetailPage() {
                         guide: ensureString(raw.guideName),
                         people: raw.numPeople,
                         date: raw.startDate,
+                        endDate: raw.endDate,
                         price: raw.totalAmount,
                         duration: `${raw.days} Days`,
                         passUrl: `/user/trip/pass/${raw.id}`,
@@ -421,10 +476,42 @@ export default function BookingDetailPage() {
                         guide: ensureString(raw.guideName),
                         people: raw.numPeople,
                         date: raw.startDate,
+                        endDate: raw.endDate,
                         price: raw.totalAmount,
                         duration: `${raw.days} Days`,
                         passUrl: `/user/trek/pass/${raw.id}`,
                         arrivalDeparture: raw.pickupDropoff || raw.arrivalDeparture || {},
+                    };
+                }
+            }
+
+            if (!found && eventsData.success) {
+                const raw = eventsData.data?.find(b => b.id === id || b._id === id);
+                if (raw) {
+                    found = {
+                        ...raw,
+                        type: 'Event',
+                        name: ensureString(raw.name),
+                        destination: ensureString(raw.destination),
+                        guide: ensureString(raw.guide),
+                        people: raw.people,
+                        date: raw.date,
+                        price: raw.price,
+                        duration: raw.duration || '1 Day',
+                        passUrl: `/user/event/pass/${raw.id}`,
+                        // Normalize for UI components
+                        personalDetails: { personalDetails: raw.participants || [] },
+                        selectedPickup: raw.selectedPickup || null,
+                        pickupPoints: raw.pickupPoints || [],
+                        arrivalDeparture: {},
+                        inclusivesList: raw.whatsIncluded || [],
+                        exclusivesList: raw.whatsExcluded || [],
+                        termsAndConditions: raw.termsAndConditions || [],
+                        itinerary: raw.itinerary || [],
+                        highlights: raw.highlights || [],
+                        whatToBring: raw.whatToBring || [],
+                        restrictions: raw.restrictions || [],
+                        poster: raw.poster || raw.image || '',
                     };
                 }
             }
@@ -472,7 +559,7 @@ export default function BookingDetailPage() {
     const formatDate = (d) => d ? new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'TBD';
     const rupee = (v) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(v || 0);
 
-    const canCancel = booking && ['confirmed', 'pending'].includes(booking.status);
+    const canCancel = booking && ['confirmed', 'pending'].includes(booking.status) && booking.type?.toLowerCase() !== 'event';
     const cancelStatus = booking && ['cancellation_requested', 'refund_initiated', 'cancelled'].includes(booking.status);
     const cfg = STATUS_CFG[booking?.status] || STATUS_CFG.pending;
 
@@ -484,6 +571,9 @@ export default function BookingDetailPage() {
     const additionalPoints = getList('additionalPoints').filter(p => (p?.text || p)?.trim?.());
     const termsAndConditionsList = getList('termsAndConditions');
     const itineraryList = getList('itinerary');
+    const highlights = getList('highlights');
+    const whatToBring = getList('whatToBring');
+    const restrictions = getList('restrictions');
 
     /* ─── Loading ─── */
     if (loading) {
@@ -620,30 +710,126 @@ export default function BookingDetailPage() {
                         <Tag className="w-4 h-4 text-emerald-600" />
                         <h3 className="text-sm font-black text-gray-700 tracking-tight uppercase">Booking Summary</h3>
                     </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 p-6">
-                        {[
-                            { label: 'Package', value: booking.name },
-                            { label: 'Destination', value: booking.destination },
-                            { label: 'Guide / Provider', value: booking.guide },
-                            { label: 'Start Date', value: formatDate(booking.date) },
-                            { label: 'End Date', value: formatDate(booking.endDate) },
-                            { label: 'Duration', value: booking.duration },
-                            { label: 'Travellers', value: `${booking.people || 1} Pax` },
-                            ...(booking?.type?.toLowerCase() !== 'trek' ? [{ label: 'Category', value: booking.category }] : []),
-                            { label: 'Pickup', value: booking.arrivalDeparture?.pickup?.address ? `${booking.arrivalDeparture.pickup.address}${booking.arrivalDeparture.pickup.location ? `, ${booking.arrivalDeparture.pickup.location}` : ''} @ ${formatTimeWithAMPM(booking.arrivalDeparture.pickup.time) || 'TBD'}` : 'TBD' },
-                            { label: 'Dropoff', value: booking.arrivalDeparture?.dropoff?.address ? `${booking.arrivalDeparture.dropoff.address}${booking.arrivalDeparture.dropoff.location ? `, ${booking.arrivalDeparture.dropoff.location}` : ''} @ ${formatTimeWithAMPM(booking.arrivalDeparture.dropoff.time) || 'TBD'}` : 'TBD' },
-                            { label: 'Amount Paid', value: rupee(booking.price), highlight: true },
-                        ].map(({ label, value, highlight }) => (
-                            <div key={label}>
-                                <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-0.5">{label}</p>
-                                <p className={`text-sm font-bold ${highlight ? 'text-emerald-600' : 'text-gray-900'}`}>{value || '—'}</p>
-                            </div>
-                        ))}
-                    </div>
+                    {booking?.type?.toLowerCase() === 'event' ? (
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-6">
+                            {[
+                                { label: 'Event Name', value: booking.name },
+                                { label: 'Location', value: booking.destination },
+                                { label: 'Organizer', value: booking.guide },
+                                { label: 'Date', value: formatDate(booking.date) },
+                                { label: 'Duration', value: booking.duration },
+                                { label: 'Slots Booked', value: `${booking.people || 1} Pax` },
+                                { label: 'Category', value: booking.category || 'Event' },
+                                { label: 'Amount Paid', value: rupee(booking.price), highlight: true },
+                            ].map(({ label, value, highlight }) => (
+                                <div key={label}>
+                                    <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-0.5">{label}</p>
+                                    <p className={`text-sm font-bold ${highlight ? 'text-emerald-600' : 'text-gray-900'}`}>{value || '—'}</p>
+                                </div>
+                            ))}
+                            {(booking.selectedPickup?.location || booking.pickupPoints?.length > 0) && (() => {
+                                const pp = booking.selectedPickup?.location ? booking.selectedPickup : booking.pickupPoints?.[0];
+                                if (!pp?.location) return null;
+                                return (
+                                <div className="col-span-2 sm:col-span-4 mt-2">
+                                    <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1.5">Selected Pickup / Drop-off</p>
+                                    <div className="flex flex-col gap-2">
+                                        <div className="flex items-start gap-2">
+                                            <MapPin className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                                            <p className="text-sm font-bold text-gray-900 leading-snug">
+                                                {pp.location}
+                                            </p>
+                                        </div>
+                                        <div className="flex items-center gap-3 flex-wrap ml-6">
+                                            {pp.time && (
+                                                <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-100">
+                                                    <Clock className="w-3.5 h-3.5" /> {formatTimeWithAMPM(pp.time)}
+                                                </div>
+                                            )}
+                                            {pp.link && (
+                                                <a href={pp.link} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-white shadow-sm border border-emerald-100 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50/50 transition-all text-xs font-bold">
+                                                    <Navigation className="w-3.5 h-3.5" /> Open in Maps
+                                                </a>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                                );
+                            })()}
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 p-6">
+                            {[
+                                { label: 'Package', value: booking.name },
+                                { label: 'Destination', value: booking.destination },
+                                { label: 'Guide / Provider', value: booking.guide },
+                                { label: 'Start Date', value: formatDate(booking.date) },
+                                { label: 'End Date', value: formatDate(booking.endDate) },
+                                { label: 'Duration', value: booking.duration },
+                                { label: 'Travellers', value: `${booking.people || 1} Pax` },
+                                ...(booking?.type?.toLowerCase() !== 'trek' ? [{ label: 'Category', value: booking.category }] : []),
+                                { label: 'Pickup', value: booking.arrivalDeparture?.pickup?.address ? `${booking.arrivalDeparture.pickup.address}${booking.arrivalDeparture.pickup.location ? `, ${booking.arrivalDeparture.pickup.location}` : ''} @ ${formatTimeWithAMPM(booking.arrivalDeparture.pickup.time) || 'TBD'}` : 'TBD' },
+                                { label: 'Dropoff', value: booking.arrivalDeparture?.dropoff?.address ? `${booking.arrivalDeparture.dropoff.address}${booking.arrivalDeparture.dropoff.location ? `, ${booking.arrivalDeparture.dropoff.location}` : ''} @ ${formatTimeWithAMPM(booking.arrivalDeparture.dropoff.time) || 'TBD'}` : 'TBD' },
+                                { label: 'Amount Paid', value: rupee(booking.price), highlight: true },
+                            ].map(({ label, value, highlight }) => (
+                                <div key={label}>
+                                    <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-0.5">{label}</p>
+                                    <p className={`text-sm font-bold ${highlight ? 'text-emerald-600' : 'text-gray-900'}`}>{value || '—'}</p>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </motion.div>
 
+                {/* Embedded booking pass */}
+                {!cancelStatus && (
+                    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.14 }}>
+                        <h3 className="text-base font-black text-gray-700 mb-3 flex items-center gap-2">
+                            <QrCode className="w-4 h-4 text-emerald-600" />
+                            Your Travel Pass
+                        </h3>
+                        <BookingPassEmbed booking={booking} />
+                    </motion.div>
+                )}
+
+                {/* Event Poster and Highlights Row */}
+                {(booking.poster || highlights.length > 0) && (
+                    <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+                        className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        
+                        {booking.poster && (
+                            <div className={`rounded-3xl overflow-hidden border border-gray-100 shadow-xl relative group ${highlights.length > 0 ? 'md:col-span-1 aspect-[4/5] sm:aspect-[16/7] md:aspect-auto' : 'md:col-span-3 aspect-[16/7]'}`}>
+                                <img src={booking.poster} alt={booking.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                                <div className="absolute bottom-4 left-4 right-4 text-white">
+                                    <h2 className="text-xl font-black leading-tight">{booking.name}</h2>
+                                    <p className="text-xs font-semibold text-white/80 line-clamp-2">{booking.destination}</p>
+                                </div>
+                            </div>
+                        )}
+
+                        {highlights.length > 0 && (
+                            <div className={`bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden p-6 ${booking.poster ? 'md:col-span-2' : 'md:col-span-3'}`}>
+                                <div className="flex items-center gap-2 mb-4">
+                                    <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                                    <h3 className="text-base font-black text-gray-700">Event Highlights</h3>
+                                </div>
+                                <ul className="space-y-3">
+                                    {highlights.map((h, i) => (
+                                        <li key={i} className="flex items-start gap-2 text-sm text-gray-600 font-medium">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0 mt-1.5 block" />
+                                            <span className="leading-relaxed">{h}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+
+                    </motion.div>
+                )}
+
                 {/* Itinerary Section */}
-                {itineraryList.length > 0 && (
+                {itineraryList.length > 0 && booking?.type?.toLowerCase() !== 'event' && (
                     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
                         className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden p-6">
                         <div className="flex items-center gap-2 mb-4">
@@ -802,6 +988,43 @@ export default function BookingDetailPage() {
                     )}
                 </motion.div>
 
+                {/* What to Bring and Restrictions (for events usually) */}
+                {(whatToBring.length > 0 || restrictions.length > 0) && (
+                    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.17 }}
+                        className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden p-6">
+                        <div className="flex items-center gap-2 mb-4">
+                            <AlertCircle className="w-5 h-5 text-amber-600" />
+                            <h3 className="text-base font-black text-gray-700">Important Instructions</h3>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {whatToBring.length > 0 && (
+                                <div>
+                                    <h4 className="font-bold text-gray-800 uppercase tracking-widest mb-3 text-[11px] flex items-center gap-2">
+                                        <Tag className="w-3.5 h-3.5 text-emerald-600" /> What to Bring
+                                    </h4>
+                                    <ul className="list-disc pl-5 space-y-1.5 text-sm text-gray-600">
+                                        {whatToBring.map((item, i) => (
+                                            <li key={i}>{item?.text || item}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+                            {restrictions.length > 0 && (
+                                <div>
+                                    <h4 className="font-bold text-gray-800 uppercase tracking-widest mb-3 text-[11px] flex items-center gap-2">
+                                        <AlertTriangle className="w-3.5 h-3.5 text-rose-500" /> Restrictions
+                                    </h4>
+                                    <ul className="list-disc pl-5 space-y-1.5 text-sm text-gray-600">
+                                        {restrictions.map((item, i) => (
+                                            <li key={i}>{item?.text || item}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+                        </div>
+                    </motion.div>
+                )}
+
                 {/* Terms and Policies */}
                 <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}
                     className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden p-6">
@@ -816,8 +1039,14 @@ export default function BookingDetailPage() {
                             </h4>
                             <ul className="list-disc pl-5 space-y-2">
                                 <li>Booking is confirmed subject to payment realization.</li>
-                                <li>Cancellations made 7 days prior to departure are eligible for a 75% refund.</li>
-                                <li>Cancellations within 48 hours of departure are strictly non-refundable.</li>
+                                {booking?.type?.toLowerCase() === 'event' ? (
+                                    <li className="font-black text-rose-600">Cancellations are strictly non-refundable for event bookings.</li>
+                                ) : (
+                                    <>
+                                        <li>Cancellations made 7 days prior to departure are eligible for a 75% refund.</li>
+                                        <li>Cancellations within 48 hours of departure are strictly non-refundable.</li>
+                                    </>
+                                )}
                                 <li>BagsPackGo acts only as an aggregator and is not directly responsible for delays caused by the service provider.</li>
                             </ul>
                         </div>
@@ -837,17 +1066,6 @@ export default function BookingDetailPage() {
                         </div>
                     </div>
                 </motion.div>
-
-                {/* Embedded booking pass */}
-                {!cancelStatus && (
-                    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.14 }}>
-                        <h3 className="text-base font-black text-gray-700 mb-3 flex items-center gap-2">
-                            <QrCode className="w-4 h-4 text-emerald-600" />
-                            Your Travel Pass
-                        </h3>
-                        <BookingPassEmbed booking={booking} />
-                    </motion.div>
-                )}
 
             </div>
 

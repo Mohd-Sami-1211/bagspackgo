@@ -26,7 +26,12 @@ const bookingSchema = new mongoose.Schema({
         passCode: String,
         checkedIn: { type: Boolean, default: false }
     }],
-    status: { type: String, enum: ['confirmed', 'cancelled', 'completed'], default: 'confirmed' },
+    selectedPickup: {
+        location: { type: String, default: '' },
+        link: { type: String, default: '' },
+        time: { type: String, default: '' },
+    },
+    status: { type: String, enum: ['pending', 'confirmed', 'cancelled', 'completed', 'cancellation_requested', 'refund_initiated'], default: 'pending' },
     // Provider Payment details
     providerPaymentStatus: { type: String, enum: ['pending', 'completed'], default: 'pending' },
     providerTransactionId: { type: String, default: '' },

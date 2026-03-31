@@ -107,8 +107,9 @@ export default function TripPassPage() {
         : `https://bagspackgo.com/api/user/${booking?.bookingType === 'trek' ? 'trek' : 'trip'}-bookings/${id}/pdf`;
 
     return (
-        <div className="min-h-screen bg-[#F0FDF4] p-4 sm:p-8 flex items-center justify-center font-sans">
+        <div className="min-h-screen bg-[#F0FDF4] p-4 sm:p-8 flex items-center justify-center font-sans" style={{ fontFamily: "'Outfit', sans-serif" }}>
             <style dangerouslySetInnerHTML={{ __html: `
+                @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
                 header, nav, footer, .secondary-nav-wrapper { display: none !important; }
 
                 @media print {
@@ -142,11 +143,11 @@ export default function TripPassPage() {
                 {/* Top Section */}
                 <div className="p-5 sm:p-8 sm:pb-6 bg-white shrink-0">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8 border-b-2 border-gray-100 pb-6 sm:pb-8">
-                        <div className="mb-4 sm:mb-0">
-                           <div className="mb-2 sm:mb-4">
-                                <Image src="/images/logo.svg" alt="BagsPackGo" width={180} height={45} priority className="sm:w-[220px]" />
+                        <div className="mb-4 sm:mb-0 flex flex-col items-start">
+                           <div className="mb-1 sm:mb-2">
+                                <Image src="/images/logo.svg" alt="BagsPackGo" width={180} height={48} priority className="sm:w-[148px] h-auto block" />
                            </div>
-                           <p className="text-gray-500 font-bold text-xs sm:text-sm">Official E-Ticket & Travel Pass</p>
+                           <p className="text-gray-500 font-semibold text-xs sm:text-sm tracking-wide" style={{ fontFamily: "'Outfit', sans-serif" }}>Official E-Ticket & Travel Pass</p>
                         </div>
                         <div className="sm:text-right">
                             <p className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-1">Booking Reference</p>
@@ -192,7 +193,7 @@ export default function TripPassPage() {
                 </div>
 
                 <div className="p-5 sm:p-8 sm:pt-6 bg-white flex flex-col shrink-0 min-h-[300px]">
-                    <div className="flex flex-col sm:flex-row justify-between gap-6 sm:gap-8 mb-8 sm:mb-10">
+                    <div className="flex flex-col sm:flex-row justify-between gap-6 sm:gap-8 mb-8 sm:mb-10 print-section">
                         <div className="flex-1 bg-gray-50 rounded-2xl p-4 sm:p-6 border border-gray-200">
                             <div className="grid grid-cols-2 md:grid-cols-5 gap-4 sm:gap-6">
                                 <div className="text-center sm:text-left">
@@ -227,7 +228,7 @@ export default function TripPassPage() {
                         </div>
                     </div>
 
-                    <div className="flex-1">
+                    <div className="flex-1 print-section">
                         <p className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 border-b border-gray-100 pb-2">Passenger Manifest</p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {travelers.map((t, idx) => (
@@ -248,7 +249,7 @@ export default function TripPassPage() {
                         </div>
                     </div>
                     
-                    <div className="text-center border-t border-gray-100 mt-6 pt-4 shrink-0 w-full relative px-2">
+                    <div className="text-center border-t border-gray-100 mt-6 pt-4 shrink-0 w-full relative px-2 print-section">
                         <p className="text-[10px] sm:text-xs text-gray-400 font-medium leading-tight">Please preset this pass alongside a valid, government-issued photo ID at the time of pickup.</p>
                         <p className="text-[10px] sm:text-xs font-bold text-emerald-600 mt-1">Thank you for choosing BagsPackGo!</p>
                     </div>
@@ -256,7 +257,7 @@ export default function TripPassPage() {
 
                 {/* Terms & Conditions Section */}
                 <div className="mt-auto p-5 sm:p-8 sm:pt-6 bg-gray-50 border-t border-emerald-100 text-[9px] sm:text-[10px] text-gray-600 leading-relaxed pb-8 shrink-0 rounded-b-[1.7rem]">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 print-section">
                         <div>
                             <h4 className="font-bold text-gray-800 uppercase tracking-widest mb-3 text-[11px] flex items-center gap-2">
                                 <CheckCircle2 className="w-3 h-3 text-emerald-600" /> BagsPackGo Policies
@@ -284,7 +285,7 @@ export default function TripPassPage() {
                         </div>
                     </div>
 
-                    <div className="mt-8 pt-6 border-t border-emerald-100 grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
+                    <div className="mt-8 pt-6 border-t border-emerald-100 grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 print-section">
                         <div>
                             <h4 className="font-bold text-gray-800 uppercase tracking-widest mb-3 text-[11px] flex items-center gap-2">
                                 <CheckCircle2 className="w-3 h-3 text-emerald-600" /> What's Included
@@ -316,7 +317,7 @@ export default function TripPassPage() {
                     </div>
 
                     {additionalPoints.length > 0 && (
-                        <div className="mt-6 pt-6 border-t border-emerald-100">
+                        <div className="mt-6 pt-6 border-t border-emerald-100 print-section">
                             <h4 className="font-bold text-gray-800 uppercase tracking-widest mb-3 text-[11px] flex items-center gap-2">
                                 <Navigation className="w-3 h-3 text-amber-500" /> Additional Points
                             </h4>
@@ -330,7 +331,7 @@ export default function TripPassPage() {
 
                     {/* Detailed Itinerary Row */}
                     {itineraryList.length > 0 && (
-                        <div className="mt-8 pt-6 border-t border-emerald-100">
+                        <div className="mt-8 pt-6 border-t border-emerald-100 print-section">
                             <h4 className="font-bold text-gray-800 uppercase tracking-widest mb-4 text-[11px] flex items-center gap-2">
                                 <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Complete Itinerary
                             </h4>
