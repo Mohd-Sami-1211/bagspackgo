@@ -51,10 +51,18 @@ export async function GET(request, context) {
                         gender: p.gender,
                         idProofType: p.idType,
                         idProofNumber: p.idNumber,
+                        idProofUrl: p.idProofUrl || '',
+                        medicalCondition: p.medicalCondition || '',
+                        emergencyContactName: p.emergencyContactName,
+                        emergencyContactPhone: p.emergencyContactPhone,
+                        emergencyContactRelation: p.emergencyContactRelation,
                         address: p.address,
+                        country: p.country,
                         bookingDate: booking.createdAt,
+                        bookingRef: booking._id.toString().substring(0, 8).toUpperCase(),
                         passCode: p.passCode,
                         checkedIn: p.checkedIn || false,
+                        selectedPickup: booking.selectedPickup || null,
                     });
                 });
             }
@@ -77,11 +85,13 @@ export async function GET(request, context) {
                 about: event.about,
                 highlights: event.highlights,
                 whatsIncluded: event.whatsIncluded,
+                whatsExcluded: event.whatsExcluded,
                 faqs: event.faqs,
                 whatToBring: event.whatToBring,
                 restrictions: event.restrictions,
                 pickupPoints: event.pickupPoints,
                 itinerary: event.itinerary,
+                photographs: event.photographs,
                 poster: event.poster,
                 status: event.status,
                 rating: event.rating,
@@ -131,18 +141,23 @@ export async function PATCH(request, context) {
             );
         }
 
-        // Only drafts can be edited
-        if (event.status !== "draft") {
-            return NextResponse.json(
-                {
-                    success: false,
-                    message: "Only draft events can be edited. Published and past events are locked.",
-                },
-                { status: 403 }
-            );
-        }
-
         const body = await request.json();
+
+        // Only drafts can be fully edited, but we allow updating totalSlots for published events
+        if (event.status !== "draft") {
+            const keys = Object.keys(body).filter(k => k !== 'action');
+            const onlyUpdatingSlots = keys.length === 1 && keys[0] === 'totalSlots';
+            
+            if (!onlyUpdatingSlots) {
+                return NextResponse.json(
+                    {
+                        success: false,
+                        message: "Only draft events can be fully edited. You can only update slots for published events.",
+                    },
+                    { status: 403 }
+                );
+            }
+        }
 
         // If publishing a draft
         if (body.action === "publish") {
@@ -173,7 +188,7 @@ export async function PATCH(request, context) {
         }
 
         // Update array fields
-        const arrayFields = ["highlights", "whatsIncluded", "whatToBring", "restrictions", "itinerary"];
+        const arrayFields = ["highlights", "whatsIncluded", "whatsExcluded", "whatToBring", "restrictions", "itinerary", "photographs"];
         for (const field of arrayFields) {
             if (Array.isArray(body[field])) {
                 event[field] = body[field]

@@ -1,12 +1,35 @@
 'use client';
 import { useMemo, useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bookmark, MapPin, Calendar, Clock, Crown, Trash2, ArrowRight } from 'lucide-react';
+import { Bookmark, MapPin, Calendar, Clock, Crown, Trash2, ArrowRight, ArrowLeft, User, Users } from 'lucide-react';
 
 const SavedMainContent = () => {
+  const router = useRouter();
   const [savedItems, setSavedItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [categoryFilter, setCategoryFilter] = useState('all');
+
+  const handleOpenConfig = (e, record) => {
+    e.preventDefault();
+    const pkg = record.item;
+    
+    // For packages without deep details, fallback to UI elements seamlessly
+    const cat = record.config?.category || pkg.packageCategory || 'individual';
+    const count = record.config?.peopleCount || 1;
+    const dateQuery = record.config?.date ? `&date=${new Date(record.config.date).toISOString()}` : '';
+    const days = record.config?.days || pkg.days || 1;
+
+    let path = '';
+    if (record.itemType === 'event') {
+      path = `/user/events/eventdetails/${record.itemId}`;
+    } else if (record.itemType === 'trek') {
+      path = `/user/trek/guidelist/trekdetails/${pkg.providerId || pkg.provider || pkg._id || record.providerId}?trekId=${record.itemId}${dateQuery}&count=${count}&category=${cat}&days=${days}`;
+    } else {
+      path = `/user/trip/guidelist/tripdetails/${pkg.providerId || pkg.provider || pkg._id || record.providerId}?packageId=${record.itemId}${dateQuery}&count=${count}&category=${cat}&days=${days}`;
+    }
+    router.push(path);
+  };
 
   useEffect(() => {
     async function fetchSaved() {
@@ -52,19 +75,24 @@ const SavedMainContent = () => {
 
   return (
     <div className="mx-auto max-w-7xl pt-4 sm:pt-6 pb-16 px-4">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-        <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent mb-2">Saved Items</h1>
-          <p className="text-gray-500">Your curated collection of trips, treks, and events.</p>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <div className="flex items-center gap-3">
+          <button onClick={() => router.back()} className="p-2 sm:p-2.5 rounded-full bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-emerald-600 transition-colors shadow-sm hidden md:block">
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent mb-2">Saved Items</h1>
+            <p className="text-gray-500 text-sm sm:text-base">Your curated collection of trips, treks, and events.</p>
+          </div>
         </div>
         
         {/* Category Filters */}
-        <div className="flex bg-white rounded-lg shadow-sm border border-gray-100 p-1">
+        <div className="flex flex-wrap w-full md:w-auto bg-white rounded-lg shadow-sm border border-gray-100 p-1">
           {['all', 'trip', 'trek', 'event'].map((cat) => (
             <button
               key={cat}
               onClick={() => setCategoryFilter(cat)}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors capitalize ${
+              className={`flex-1 md:flex-none px-3 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors capitalize text-center ${
                 categoryFilter === cat
                   ? 'bg-emerald-500 text-white shadow-sm'
                   : 'text-gray-600 hover:bg-gray-50'
@@ -147,14 +175,46 @@ const SavedMainContent = () => {
                       
                       {/* Secondary Info */}
                       <div className="flex flex-col gap-2 mt-2">
-                        <div className="flex items-center text-xs text-gray-500">
-                          <MapPin className="h-3.5 w-3.5 mr-1.5 text-blue-500 shrink-0" />
-                          <span className="truncate">{pkg.destination || pkg.location || 'Location varies'}</span>
-                        </div>
-                        <div className="flex items-center text-xs text-gray-500">
-                          <Calendar className="h-3.5 w-3.5 mr-1.5 text-emerald-500 shrink-0" />
-                          <span>{pkg.days ? `${pkg.days} Days / ${pkg.nights || pkg.days - 1} Nights` : 'Duration varies'}</span>
-                        </div>
+                        {record.itemType === 'event' ? (
+                          <>
+                            <div className="flex items-center text-xs text-gray-500">
+                              <Calendar className="h-3.5 w-3.5 mr-1.5 text-blue-500 shrink-0" />
+                              <span className="truncate">{pkg.date ? new Date(pkg.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Flexible Date'} • {pkg.duration || 'Flexible'} hrs</span>
+                            </div>
+                            <div className="flex items-center text-xs text-gray-500">
+                              <User className="h-3.5 w-3.5 mr-1.5 text-emerald-500 shrink-0" />
+                              <span className="truncate">By {pkg.organizer || 'Premium Host'}</span>
+                            </div>
+                            <div className="flex items-center text-xs font-bold text-amber-600 bg-amber-50 rounded px-1.5 py-0.5 w-fit">
+                              <Users className="h-3.5 w-3.5 mr-1.5 shrink-0" />
+                              <span>{pkg.slotsRemaining || 0} Slots Remaining</span>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="flex items-center text-xs text-gray-500">
+                              <MapPin className="h-3.5 w-3.5 mr-1.5 text-blue-500 shrink-0" />
+                              <span className="truncate">{pkg.destination || pkg.location || 'Location varies'}</span>
+                            </div>
+                            <div className="flex items-center justify-between text-xs text-gray-500">
+                              <div className="flex items-center">
+                                <Clock className="h-3.5 w-3.5 mr-1.5 text-emerald-500 shrink-0" />
+                                <span>{pkg.days ? `${pkg.days} Days / ${pkg.nights || pkg.days - 1} Nights` : 'Duration varies'}</span>
+                              </div>
+                              {pkg.packageCategory && (
+                                <span className="px-2 py-0.5 bg-gray-50 border border-gray-100 rounded text-[10px] uppercase font-bold text-gray-400">
+                                    {pkg.packageCategory}
+                                </span>
+                              )}
+                            </div>
+                            {record.config?.date && (
+                               <div className="flex items-center text-xs text-gray-500 font-semibold bg-gray-50 w-fit px-2 py-1 rounded-md border border-gray-100">
+                                 <Calendar className="h-3.5 w-3.5 mr-1.5 text-gray-400 shrink-0" />
+                                 Planning for: {new Date(record.config.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                               </div>
+                            )}
+                          </>
+                        )}
                       </div>
 
                       {/* Footer */}
@@ -163,15 +223,13 @@ const SavedMainContent = () => {
                            <p className="text-[9px] text-gray-400 uppercase tracking-widest font-black mb-0.5">Starting from</p>
                            <p className="flex items-baseline gap-1">
                              <span className={`text-xl font-black ${isPremium ? 'text-amber-600' : 'text-gray-900'}`}>
-                               ₹{Number(pkg.price?.individual || pkg.price?.starting || pkg.price || 0).toLocaleString('en-IN')}
+                               ₹{Number(pkg.price?.individual || pkg.price?.starting || pkg.pricePerSlot || pkg.price || 0).toLocaleString('en-IN')}
                              </span>
                              <span className="text-[10px] text-gray-400 font-bold uppercase">/person</span>
                            </p>
                         </div>
-                        <a 
-                          href={record.itemType === 'trek' 
-                            ? `/user/trek/guidelist/trekdetails/${pkg.providerId || pkg.provider || pkg._id}?trekId=${record.itemId}` 
-                            : `/user/trip/guidelist/tripdetails/${pkg.providerId || pkg.provider || pkg._id}?packageId=${record.itemId}`} 
+                        <button 
+                          onClick={(e) => handleOpenConfig(e, record)}
                           className={`flex items-center justify-center w-10 h-10 rounded-xl transition-all shadow-sm group-hover:shadow-md ${
                             isPremium 
                               ? 'bg-amber-100 text-amber-700 hover:bg-amber-500 hover:text-white' 
@@ -179,7 +237,7 @@ const SavedMainContent = () => {
                           }`}
                         >
                            <ArrowRight className="w-4 h-4" />
-                        </a>
+                        </button>
                       </div>
                     </div>
                   </motion.div>
@@ -203,6 +261,7 @@ const SavedMainContent = () => {
           )}
         </div>
       </AnimatePresence>
+
     </div>
   );
 };

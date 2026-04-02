@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db";
 import { Event } from "@/models/event.model";
+import { GuideDetails } from "@/models/guidedetails.model";
+import mongoose from "mongoose";
 
 /**
  * GET /api/events/[id]
@@ -12,15 +14,28 @@ export async function GET(request, context) {
         await dbConnect();
         const { id } = await params;
 
-        // In a real app we might only allow published events, but for testing we can fetch any
-        // or just add { status: 'published' }
-        const event = await Event.findById(id).populate('guide', 'name email profileImage').lean();
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return NextResponse.json(
+                { success: false, message: "Invalid Event ID format" },
+                { status: 404 }
+            );
+        }
+
+        const event = await Event.findById(id).populate('guide', 'name username email profileImage').lean();
 
         if (!event) {
             return NextResponse.json(
                 { success: false, message: "Event not found" },
                 { status: 404 }
             );
+        }
+
+        let guideName = event.guide?.companyName || event.guide?.username || event.guide?.name || "Local Guide";
+        if (event.guide && event.guide._id) {
+            const gd = await GuideDetails.findOne({ guide: event.guide._id }).select('companyname').lean();
+            if (gd && gd.companyname) {
+                guideName = gd.companyname;
+            }
         }
 
         // Map DB fields to the format EventDetails expects, if needed, or just return as is.
@@ -40,8 +55,10 @@ export async function GET(request, context) {
                 price: event.pricePerSlot, // Map pricePerSlot to price
                 destinationId: event.destination,
                 description: event.about, // Map about to description
+                about: event.about,
                 highlights: event.highlights,
                 whatsIncluded: event.whatsIncluded,
+                whatsExcluded: event.whatsExcluded,
                 faqs: event.faqs,
                 whatToBring: event.whatToBring,
                 restrictions: event.restrictions,
@@ -49,9 +66,13 @@ export async function GET(request, context) {
                 itinerary: event.itinerary,
                 image: event.poster, // Map poster to image
                 status: event.status,
-                rating: event.rating || 4.5,
+                rating: event.rating,
                 reviewCount: event.reviewCount || 0,
-                guide: event.guide
+                guide: event.guide,
+                guideName: guideName,
+                photographs: event.photographs || [],
+                destinationLink: event.destinationLink,
+                createdAt: event.createdAt
             },
         });
     } catch (error) {

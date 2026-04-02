@@ -232,5 +232,27 @@ select:focus {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }
 
+/* 🟢 Override browser default blue focus ring with emerald */
+select:focus,
+input:focus,
+textarea:focus {
+  outline: none !important;
+  border-color: #10b981 !important;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2) !important;
+}
+
+/* Override blue option highlight in select dropdowns (Webkit) */
+select option:checked,
+select option:hover {
+  background-color: #d1fae5 !important;
+  color: #065f46 !important;
+}

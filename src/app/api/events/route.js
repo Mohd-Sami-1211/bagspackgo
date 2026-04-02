@@ -126,12 +126,14 @@ export async function GET(request) {
                     about: e.about,
                     highlights: e.highlights,
                     whatsIncluded: e.whatsIncluded,
+                    whatsExcluded: e.whatsExcluded,
                     faqs: e.faqs,
                     whatToBring: e.whatToBring,
                     restrictions: e.restrictions,
                     pickupPoints: e.pickupPoints,
                     itinerary: e.itinerary,
                     destinationLink: e.destinationLink,
+                    createdAt: e.createdAt,
                     // Source flag so the frontend knows this is from DB
                     _source: "db",
                 };

@@ -1,17 +1,17 @@
 'use client';
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Check, ChevronDown, ChevronUp, RefreshCcw, ArrowDown } from 'lucide-react';
+import { X, Check, ChevronDown, ChevronUp, RefreshCcw, ArrowDown, SlidersHorizontal } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import EventCard from 'src/components/home/EventSection/EventCard';
 import initialData from 'src/data/data.json';
-import { Search, Calendar, User, Tag, MapPin } from 'lucide-react';
-import GuideCard from 'src/components/home/EventSection/GuideCard';
+import { Search, Calendar, Tag, MapPin } from 'lucide-react';
 
 const EventMainContent = () => {
   // State for events and filters
   const [data, setData] = useState({ ...initialData, events: [] });
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   useEffect(() => {
     async function fetchEvents() {
@@ -30,7 +30,6 @@ const EventMainContent = () => {
 
   const [filteredEvents, setFilteredEvents] = useState([]);
   const [displayedEvents, setDisplayedEvents] = useState([]);
-  const [displayCount, setDisplayCount] = useState(6);
   const [typeSearch, setTypeSearch] = useState('');
   const [destinationSearch, setDestinationSearch] = useState('');
   const [organizerSearch, setOrganizerSearch] = useState('');
@@ -80,15 +79,10 @@ const EventMainContent = () => {
     setActiveSearch(true);
     setShowSuggestions(false);
 
-    // Search both events and guides
+    // Search events only
     const foundEvents = getFilteredEvents(trimmedQuery);
-    const foundGuides = getFilteredGuides(trimmedQuery);
 
-    // Combine results with type indicators
-    const combinedResults = [
-      ...foundEvents.map(event => ({ ...event, type: 'event' })),
-      ...foundGuides.map(guide => ({ ...guide, type: 'guide' }))
-    ].sort((a, b) => b.priority - a.priority);
+    const combinedResults = foundEvents.map(event => ({ ...event, type: 'event' })).sort((a, b) => b.priority - a.priority);
 
     setDisplayedEvents(combinedResults);
   };
@@ -98,7 +92,7 @@ const EventMainContent = () => {
     setSearchQuery('');
     setActiveSearch(false);
     setShowSuggestions(false);
-    setDisplayedEvents(filteredEvents.slice(0, displayCount));
+    setDisplayedEvents(filteredEvents);
   };
 
   // Enhanced suggestions generator
@@ -117,14 +111,6 @@ const EventMainContent = () => {
             { name: 'type', weight: 1 }
           ],
           icon: <Calendar className="mr-2 text-green-500" size={16} />
-        },
-        {
-          name: 'Guides',
-          data: data.guides || [],
-          fields: [
-            { name: 'name', weight: 3 }
-          ],
-          icon: <User className="mr-2 text-green-500" size={16} />
         },
         {
           name: 'Destinations',
@@ -191,26 +177,21 @@ const EventMainContent = () => {
             const destination = (data.destinations || [])
               .find(d => d.value === event.destination);
             if (destination) {
-              // Exact match gets highest priority
               if (destination.label.toLowerCase() === q) {
                 priority += 20;
               }
-              // Partial match
               else if (destination.label.toLowerCase().includes(q)) {
                 priority += 10;
               }
-              // Check destination keywords if they exist
               else if (destination.keywords?.some(kw => kw.toLowerCase().includes(q))) {
                 priority += 8;
               }
             }
           }
 
-          // Guide matches
-          if (event.guideId) {
-            const guide = (data.guides || [])
-              .find(g => g.id === event.guideId);
-            priority += getPriorityScore(guide?.name, q) * 2;
+          // Organizer matches
+          if (event.guideName) {
+            priority += getPriorityScore(event.guideName, q) * 2;
           }
 
           return { ...event, priority };
@@ -222,23 +203,7 @@ const EventMainContent = () => {
     return filterEvents;
   }, [data]);
 
-  // Filter guides with priority
-  const getFilteredGuides = useMemo(() => {
-    const filterGuides = (query) => {
-      if (!query || !query.trim()) return [];
 
-      const q = query.toLowerCase();
-      return (data.guides || [])
-        .map(guide => ({
-          ...guide,
-          priority: getPriorityScore(guide?.name, q) * 3
-        }))
-        .filter(guide => guide.priority > 0)
-        .sort((a, b) => b.priority - a.priority);
-    };
-
-    return filterGuides;
-  }, [data]);
 
   // Apply filters when component mounts or filters change
   useEffect(() => {
@@ -357,12 +322,10 @@ const EventMainContent = () => {
         !(typeof filter === 'object' && filter.start === null && filter.end === null)
     );
 
-    if (hasFilters) {
+    if (hasFilters || !activeSearch) {
       setDisplayedEvents(filteredEvents);
-    } else if (!activeSearch) {
-      setDisplayedEvents(filteredEvents.slice(0, displayCount));
     }
-  }, [filteredEvents, filters, displayCount, activeSearch]);
+  }, [filteredEvents, filters, activeSearch]);
 
   // Toggle dropdown
   const toggleDropdown = (dropdown) => {
@@ -404,7 +367,7 @@ const EventMainContent = () => {
   const applyFilters = () => {
     setFilters({ ...tempFilters });
     setOpenDropdown(null);
-    setDisplayCount(6);
+    setMobileFiltersOpen(false);
   };
 
   // Clear specific filter
@@ -443,27 +406,29 @@ const EventMainContent = () => {
       category: [],
       sort: null
     });
-    setDisplayCount(6);
     resetSearch();
   };
 
-  // Get filtered organizers based on selected destinations
   const getFilteredOrganizers = () => {
-    if (filters.destination.length === 0) return data.guides;
-    return data.guides.filter(guide =>
-      filters.destination.includes(guide.location)
-    );
+    let eventsToConsider = data.events;
+    if (filters.destination && filters.destination.length > 0) {
+      eventsToConsider = eventsToConsider.filter(e => filters.destination.includes(e.destinationId));
+    }
+    const orgsMap = {};
+    eventsToConsider.forEach(e => {
+        if(e.guideName) { orgsMap[e.guideName] = { id: e.guideName, name: e.guideName }; }
+    });
+    return Object.values(orgsMap).sort((a, b) => a.name.localeCompare(b.name));
   };
 
   // Helper functions
   const getDestinationLabel = (id) => {
-    const destination = data.destinations.find(d => d.value === id);
+    const destination = data.destinations?.find(d => d.value === id);
     return destination ? destination.label : id;
   };
 
   const getOrganizerName = (id) => {
-    const organizer = data.guides.find(g => g.id === id);
-    return organizer ? organizer.name : id;
+    return id;
   };
 
   const formatDate = (date) => {
@@ -475,9 +440,7 @@ const EventMainContent = () => {
     });
   };
 
-  const loadMoreEvents = () => {
-    setDisplayCount(prev => prev + 6);
-  };
+
 
   // Event handlers
   const handleSuggestionClick = (value) => {
@@ -500,552 +463,683 @@ const EventMainContent = () => {
       !(typeof filter === 'object' && filter.start === null && filter.end === null)
   );
 
+  const activeFilterCount = [
+    ...(filters.destination || []),
+    ...(filters.organizer || []),
+    ...(filters.type || []),
+    filters.date,
+    filters.sort,
+    (filters.dateRange?.start || filters.dateRange?.end) ? 'range' : null,
+  ].filter(Boolean).length;
+
+  // ── Shared filter panel content (used on both desktop sidebar and mobile drawer) ──
+  const FilterPanel = () => (
+    <div className="w-full bg-white/90 p-3 sm:p-4 mb-3 rounded-lg">
+      {/* Destination Filter */}
+      <div className={`mb-4 sm:mb-6 shadow-sm p-3 rounded-lg ${filters.destination.length > 0 ? 'bg-green-50' : ''}`}>
+        <div
+          className="flex justify-between items-center cursor-pointer"
+          onClick={() => toggleDropdown('destination')}
+        >
+          <h3 className="text-neutral-700 text-sm font-medium">Destination</h3>
+          <div className="flex items-center">
+            {filters.destination.length > 0 && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  clearAppliedFilter('destination');
+                  setDestinationSearch('');
+                }}
+                className="text-xs text-red-500 mr-2 hover:underline"
+              >
+                Clear
+              </button>
+            )}
+            {openDropdown === 'destination' ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+          </div>
+        </div>
+
+        <AnimatePresence>
+          {openDropdown === 'destination' && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="mt-2 bg-white overflow-hidden"
+            >
+              <div className='p-2'>
+                <input
+                  type="text"
+                  placeholder="Search destinations..."
+                  className="w-full p-2 text-sm border border-neutral-300 rounded-md mb-2 focus:ring-1 focus:ring-green-400 focus:border-green-400 focus:outline-none"
+                  value={destinationSearch}
+                  onChange={(e) => setDestinationSearch(e.target.value)}
+                />
+                <div className="max-h-48 overflow-y-auto">
+                  {data.destinations
+                    .filter(dest =>
+                      dest.label.toLowerCase().includes(destinationSearch.toLowerCase())
+                    )
+                    .map(dest => (
+                      <div
+                        key={dest.value}
+                        className={`flex items-center p-2 hover:bg-[#d1fae5] rounded-md cursor-pointer text-sm ${tempFilters.destination.includes(dest.value) ? 'bg-[#a7f3d0]' : ''}`}
+                        onClick={() => handleTempFilterChange('destination', dest.value)}
+                      >
+                        <div className="flex items-center">
+                          {tempFilters.destination.includes(dest.value) ? (
+                            <Check className="mr-2 text-green-600" size={16} />
+                          ) : (
+                            <div className="w-4 h-4 mr-2 border border-neutral-300 rounded-sm" />
+                          )}
+                          {dest.label}
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 p-2 border-t border-neutral-200">
+                <button
+                  className="px-3 py-1 text-sm bg-neutral-100 hover:bg-neutral-200 rounded-md"
+                  onClick={() => {
+                    setOpenDropdown(null);
+                    setDestinationSearch('');
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="px-3 py-1 text-sm bg-green-500 hover:bg-green-600 text-white rounded-md"
+                  onClick={applyFilters}
+                >
+                  Apply
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Organizer Filter */}
+      <div className={`mb-4 sm:mb-6 shadow-sm p-3 rounded-lg ${(filters.organizer || []).length > 0 ? 'bg-green-50' : ''}`}>
+        <div
+          className="flex justify-between items-center cursor-pointer"
+          onClick={() => toggleDropdown('organizer')}
+        >
+          <h3 className="text-neutral-700 text-sm font-medium">Organizer</h3>
+          <div className="flex items-center">
+            {(filters.organizer || []).length > 0 && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  clearAppliedFilter('organizer');
+                  setOrganizerSearch('');
+                }}
+                className="text-xs text-red-500 mr-2 hover:underline"
+              >
+                Clear
+              </button>
+            )}
+            {openDropdown === 'organizer' ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+          </div>
+        </div>
+
+        <AnimatePresence>
+          {openDropdown === 'organizer' && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="mt-2 bg-white overflow-hidden"
+            >
+              <div className="p-2">
+                <input
+                  type="text"
+                  placeholder="Search organizers..."
+                  className="w-full p-2 text-sm border border-neutral-300 rounded-md mb-2 focus:ring-1 focus:ring-green-400 focus:border-green-400 focus:outline-none"
+                  value={organizerSearch || ''}
+                  onChange={(e) => setOrganizerSearch(e.target.value)}
+                />
+                <div className="max-h-48 overflow-y-auto">
+                  {(getFilteredOrganizers() || [])
+                    .filter(org => {
+                      const orgName = org?.name?.toLowerCase() || '';
+                      const searchTerm = (organizerSearch || '').toLowerCase();
+                      return orgName.includes(searchTerm);
+                    })
+                    .map(org => (
+                      <div
+                        key={org.id}
+                        className={`flex items-center p-2 hover:bg-[#d1fae5] rounded-md cursor-pointer text-sm ${(tempFilters.organizer || []).includes(org.id) ? 'bg-[#a7f3d0]' : ''
+                          }`}
+                        onClick={() => handleTempFilterChange('organizer', org.id)}
+                      >
+                        <div className="flex items-center">
+                          {(tempFilters.organizer || []).includes(org.id) ? (
+                            <Check className="mr-2 text-green-600" size={16} />
+                          ) : (
+                            <div className="w-4 h-4 mr-2 border border-neutral-300 rounded-sm" />
+                          )}
+                          {org?.name || 'Unknown Organizer'}
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 p-2 border-t border-neutral-200">
+                <button
+                  className="px-3 py-1 text-sm bg-neutral-100 hover:bg-neutral-200 rounded-md"
+                  onClick={() => {
+                    setOpenDropdown(null);
+                    setOrganizerSearch('');
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="px-3 py-1 text-sm bg-green-500 hover:bg-green-600 text-white rounded-md"
+                  onClick={applyFilters}
+                >
+                  Apply
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Event Type Filter */}
+      <div className={`mb-4 sm:mb-6 shadow-sm p-3 rounded-lg ${(filters.type || []).length > 0 ? 'bg-green-50' : ''}`}>
+        <div
+          className="flex justify-between items-center cursor-pointer"
+          onClick={() => toggleDropdown('type')}
+        >
+          <h3 className="text-neutral-700 text-sm font-medium">Event Type</h3>
+          <div className="flex items-center">
+            {(filters.type || []).length > 0 && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  clearAppliedFilter('type');
+                  setTypeSearch('');
+                }}
+                className="text-xs text-red-500 mr-2 hover:underline"
+              >
+                Clear
+              </button>
+            )}
+            {openDropdown === 'type' ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+          </div>
+        </div>
+
+        <AnimatePresence>
+          {openDropdown === 'type' && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="mt-2 bg-white overflow-hidden"
+            >
+              <div className="p-2">
+                <input
+                  type="text"
+                  placeholder="Search event types..."
+                  className="w-full p-2 text-sm border border-neutral-300 rounded-md mb-2 focus:ring-1 focus:ring-green-400 focus:border-green-400 focus:outline-none"
+                  value={typeSearch}
+                  onChange={(e) => setTypeSearch(e.target.value)}
+                />
+                <div className="max-h-48 overflow-y-auto">
+                  {Array.from(new Set([
+                    'Adventure Tour',
+                    'Cultural Experience',
+                    'Food & Dining',
+                    'Wellness Retreat',
+                    'Photography Workshop',
+                    'Music Festival',
+                    'Art Exhibition',
+                    'Sports Event',
+                    'Educational Workshop',
+                    'Networking Event',
+                    ...(data.events?.map(event => event.type) || [])
+                  ]))
+                    .filter(type => type !== 'Others') // Hide 'Others' as it's just a provider form utility
+                    .filter(type =>
+                      type && typeof type === 'string' && type.toLowerCase().includes((typeSearch || '').toLowerCase())
+                    )
+                    .sort((a, b) => a.localeCompare(b))
+                    .map(type => (
+                      <div
+                        key={type}
+                        className={`flex items-center p-2 hover:bg-[#d1fae5] rounded-md cursor-pointer text-sm ${(tempFilters.type || []).includes(type) ? 'bg-[#a7f3d0]' : ''}`}
+                        onClick={() => {
+                          setTempFilters(prev => {
+                            const currentTypes = prev.type || [];
+                            const newTypes = currentTypes.includes(type)
+                              ? currentTypes.filter(t => t !== type)
+                              : [...currentTypes, type];
+                            return { ...prev, type: newTypes };
+                          });
+                        }}
+                      >
+                        <div className="flex items-center">
+                          {(tempFilters.type || []).includes(type) ? (
+                            <Check className="mr-2 text-green-600" size={16} />
+                          ) : (
+                            <div className="w-4 h-4 mr-2 border border-neutral-300 rounded-sm" />
+                          )}
+                          {type}
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 p-2 border-t border-neutral-200">
+                <button
+                  className="px-3 py-1 text-sm bg-neutral-100 hover:bg-neutral-200 rounded-md"
+                  onClick={() => {
+                    setOpenDropdown(null);
+                    setTypeSearch('');
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="px-3 py-1 text-sm bg-green-500 hover:bg-green-600 text-white rounded-md"
+                  onClick={applyFilters}
+                >
+                  Apply
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Date Filter */}
+      <div className={`mb-4 sm:mb-6 shadow-sm p-3 rounded-lg ${filters.date || filters.dateRange.start || filters.dateRange.end ? 'bg-green-50' : ''}`}>
+        <div
+          className="flex justify-between items-center cursor-pointer"
+          onClick={() => toggleDropdown('date')}
+        >
+          <h3 className="text-neutral-700 text-sm font-medium">Date</h3>
+          <div className="flex items-center">
+            {(filters.date || filters.dateRange.start || filters.dateRange.end) && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  clearAppliedFilter('date');
+                  clearAppliedFilter('dateRange');
+                }}
+                className="text-xs text-red-500 mr-2 hover:underline"
+              >
+                Clear
+              </button>
+            )}
+            {openDropdown === 'date' ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+          </div>
+        </div>
+
+        <AnimatePresence>
+          {openDropdown === 'date' && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="mt-2 bg-white overflow-hidden"
+            >
+              <div className="p-2">
+                <div className="grid grid-cols-2 gap-2 mb-4">
+                  {['Today', 'Tomorrow', 'This Week', 'This Month'].map(option => (
+                    <button
+                      key={option}
+                      className={`p-2 rounded-md text-sm ${tempFilters.date === option ? 'bg-green-600 text-white' : 'bg-green-100 hover:bg-green-200'}`}
+                      onClick={() => {
+                        setTempFilters(prev => ({
+                          ...prev,
+                          date: option,
+                          dateRange: { start: null, end: null }
+                        }));
+                      }}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="flex items-center mb-4">
+                  <input
+                    type="checkbox"
+                    id="dateRange"
+                    checked={tempFilters.dateRange.start !== null}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setTempFilters(prev => ({
+                          ...prev,
+                          date: null,
+                          dateRange: { start: new Date(), end: null }
+                        }));
+                        setActiveDateField('start');
+                      } else {
+                        setTempFilters(prev => ({
+                          ...prev,
+                          dateRange: { start: null, end: null }
+                        }));
+                      }
+                    }}
+                    className="mr-2"
+                  />
+                  <label htmlFor="dateRange" className="text-sm">Date Range</label>
+                </div>
+
+                {tempFilters.dateRange.start !== null && (
+                  <div className="mb-4">
+                    <div className="relative">
+                      <div className="flex border border-neutral-300 rounded-md mb-2 h-10">
+                        <div
+                          className={`w-1/2 p-0.7 text-center cursor-pointer flex items-center justify-center ${activeDateField === 'start' ? 'bg-green-100' : ''}`}
+                          onClick={() => setActiveDateField('start')}
+                        >
+                          {tempFilters.dateRange.start ? (
+                            <div className="flex items-center">
+                              <span className="text-sm">{formatDate(tempFilters.dateRange.start)}</span>
+                              <X
+                                className="ml-2 text-black hover:text-red-600"
+                                size={14}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setTempFilters(prev => ({
+                                    ...prev,
+                                    dateRange: { ...prev.dateRange, start: null }
+                                  }));
+                                }}
+                              />
+                            </div>
+                          ) : (
+                            <span className="text-sm text-black">Start date</span>
+                          )}
+                        </div>
+                        <div
+                          className={`w-1/2 p-0.7 text-center cursor-pointer flex items-center justify-center ${activeDateField === 'end' ? 'bg-green-100' : ''}`}
+                          onClick={() => setActiveDateField('end')}
+                        >
+                          {tempFilters.dateRange.end ? (
+                            <div className="flex items-center">
+                              <span className="text-sm">{formatDate(tempFilters.dateRange.end)}</span>
+                              <X
+                                className="ml-2 text-black hover:text-red-600"
+                                size={14}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setTempFilters(prev => ({
+                                    ...prev,
+                                    dateRange: { ...prev.dateRange, end: null }
+                                  }));
+                                }}
+                              />
+                            </div>
+                          ) : (
+                            <span className="text-sm text-black">End date</span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="mt-2">
+                        <DatePicker
+                          selected={activeDateField === 'start' ? tempFilters.dateRange.start : tempFilters.dateRange.end}
+                          onChange={(date) => handleDateRangeChange(date, activeDateField)}
+                          selectsStart={activeDateField === 'start'}
+                          selectsEnd={activeDateField === 'end'}
+                          startDate={tempFilters.dateRange.start}
+                          endDate={tempFilters.dateRange.end}
+                          minDate={activeDateField === 'end' ? tempFilters.dateRange.start : new Date()}
+                          inline
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="flex justify-end gap-2 p-2 border-t border-neutral-200">
+                <button
+                  className="px-3 py-1 text-sm bg-neutral-100 hover:bg-neutral-200 rounded-md"
+                  onClick={() => {
+                    setOpenDropdown(null);
+                    setTempFilters({ ...filters });
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="px-3 py-1 text-sm bg-green-500 hover:bg-green-600 text-white rounded-md"
+                  onClick={applyFilters}
+                >
+                  Apply
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Sort Filter */}
+      <div className={`mb-4 sm:mb-6 shadow-sm p-3 rounded-lg ${filters.sort ? 'bg-green-50' : ''}`}>
+        <div
+          className="flex justify-between items-center cursor-pointer"
+          onClick={() => toggleDropdown('sort')}
+        >
+          <h3 className="text-neutral-700 text-sm font-medium">Sort</h3>
+          <div className="flex items-center">
+            {filters.sort && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  clearAppliedFilter('sort');
+                }}
+                className="text-xs text-red-500 mr-2 hover:underline"
+              >
+                Clear
+              </button>
+            )}
+            {openDropdown === 'sort' ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+          </div>
+        </div>
+
+        <AnimatePresence>
+          {openDropdown === 'sort' && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="mt-2 bg-white overflow-hidden"
+            >
+              <div className="p-2">
+                <div className="max-h-48 overflow-y-auto">
+                  {[
+                    'Price: Low to High',
+                    'Price: High to Low',
+                    'Most Bookings',
+                    'Highest Rated',
+                    'Date: Nearest First',
+                    'Date: Farthest First'
+                  ].map(option => (
+                    <div
+                      key={option}
+                      className={`flex items-center p-2 hover:bg-[#d1fae5] rounded-md cursor-pointer text-sm ${tempFilters.sort === option ? 'bg-[#a7f3d0]' : ''}`}
+                      onClick={() => setTempFilters(prev => ({ ...prev, sort: option }))}
+                    >
+                      <div className="flex items-center">
+                        {tempFilters.sort === option ? (
+                          <Check className="mr-2 text-green-600" size={16} />
+                        ) : (
+                          <div className="w-4 h-4 mr-2 border border-neutral-300 rounded-sm" />
+                        )}
+                        {option}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 p-2 border-t border-neutral-200">
+                <button
+                  className="px-3 py-1 text-sm bg-neutral-100 hover:bg-neutral-200 rounded-md"
+                  onClick={() => setOpenDropdown(null)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="px-3 py-1 text-sm bg-green-500 hover:bg-green-600 text-white rounded-md"
+                  onClick={applyFilters}
+                >
+                  Apply
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Reset All Button */}
+      <button
+        className="w-full py-2 bg-green-100 hover:text-white text-neutral-700 rounded-md shadow hover:bg-red-500 transition-colors flex items-center justify-center text-sm"
+        onClick={resetAllFilters}
+      >
+        <RefreshCcw className="mr-2" size={16} />
+        Reset All Filters
+      </button>
+    </div>
+  );
+
   if (data.events.length === 0) {
     return (
       <div className="max-w-7xl mx-auto mt-8 py-2 px-4 bg-gradient-to-br from-green-50 to-blue-50 rounded-xl shadow-lg overflow-hidden mb-40">
         <div className="flex justify-center items-center h-64">
-          <p>No events available</p>
+          <p className="text-neutral-500">No events available</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto mt-5 py-2 px-4  bg-gradient-to-br from-green-50 to-blue-50 rounded-xl shadow-lg overflow-hidden mb-40">
-      <div className="flex h-full">
-        {/* Left Filters Section (25%) */}
-        <div className="w-1/4">
-          <h2 className='text-2xl p-6 font-bold text-gray-800'>Filters</h2>
-          <div className="w-full bg-white/90 p-4 mb-3 rounded-lg">
-            {/* Destination Filter */}
-            <div className={`mb-6 shadow-sm p-3 rounded-lg ${filters.destination.length > 0 ? 'bg-green-50' : ''}`}>
-              <div
-                className="flex justify-between items-center cursor-pointer"
-                onClick={() => toggleDropdown('destination')}
-              >
-                <h3 className="text-gray-700">Destination</h3>
-                <div className="flex items-center">
-                  {filters.destination.length > 0 && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        clearAppliedFilter('destination');
-                        setDestinationSearch('');
-                      }}
-                      className="text-xs text-red-500 mr-2 hover:underline"
-                    >
-                      Clear
-                    </button>
-                  )}
-                  {openDropdown === 'destination' ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-                </div>
-              </div>
-
-              <AnimatePresence>
-                {openDropdown === 'destination' && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="mt-2 bg-white overflow-hidden"
-                  >
-                    <div className='p-2'>
-                      <input
-                        type="text"
-                        placeholder="Search destinations..."
-                        className="w-full p-2 text-sm border border-gray-300 rounded-md mb-2 focus:ring-1 focus:ring-green-400 focus:border-green-400 focus:outline-none"
-                        value={destinationSearch}
-                        onChange={(e) => setDestinationSearch(e.target.value)}
-                      />
-                      <div className="max-h-48 overflow-y-auto">
-                        {data.destinations
-                          .filter(dest =>
-                            dest.label.toLowerCase().includes(destinationSearch.toLowerCase())
-                          )
-                          .map(dest => (
-                            <div
-                              key={dest.value}
-                              className={`flex items-center p-2 hover:bg-[#d1fae5] rounded-md cursor-pointer ${tempFilters.destination.includes(dest.value) ? 'bg-[#a7f3d0]' : ''}`}
-                              onClick={() => handleTempFilterChange('destination', dest.value)}
-                            >
-                              <div className="flex items-center">
-                                {tempFilters.destination.includes(dest.value) ? (
-                                  <Check className="mr-2 text-green-600" size={16} />
-                                ) : (
-                                  <div className="w-4 h-4 mr-2 border border-gray-300 rounded-sm" />
-                                )}
-                                {dest.label}
-                              </div>
-                            </div>
-                          ))}
-                      </div>
-                    </div>
-                    <div className="flex justify-end gap-2 p-2 border-t border-gray-200">
-                      <button
-                        className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded-md"
-                        onClick={() => {
-                          setOpenDropdown(null);
-                          setDestinationSearch('');
-                        }}
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        className="px-3 py-1 text-sm bg-green-500 hover:bg-green-600 text-white rounded-md"
-                        onClick={applyFilters}
-                      >
-                        Apply
-                      </button>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            {/* Organizer Filter */}
-            <div className={`mb-6 shadow-sm p-3 rounded-lg ${(filters.organizer || []).length > 0 ? 'bg-green-50' : ''}`}>
-              <div
-                className="flex justify-between items-center cursor-pointer"
-                onClick={() => toggleDropdown('organizer')}
-              >
-                <h3 className="text-gray-700">Organizer</h3>
-                <div className="flex items-center">
-                  {(filters.organizer || []).length > 0 && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        clearAppliedFilter('organizer');
-                        setOrganizerSearch('');
-                      }}
-                      className="text-xs text-red-500 mr-2 hover:underline"
-                    >
-                      Clear
-                    </button>
-                  )}
-                  {openDropdown === 'organizer' ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-                </div>
-              </div>
-
-              <AnimatePresence>
-                {openDropdown === 'organizer' && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="mt-2 bg-white overflow-hidden"
-                  >
-                    <div className="p-2">
-                      <input
-                        type="text"
-                        placeholder="Search organizers..."
-                        className="w-full p-2 text-sm border border-gray-300 rounded-md mb-2 focus:ring-1 focus:ring-green-400 focus:border-green-400 focus:outline-none"
-                        value={organizerSearch || ''}
-                        onChange={(e) => setOrganizerSearch(e.target.value)}
-                      />
-                      <div className="max-h-48 overflow-y-auto">
-                        {(getFilteredOrganizers() || [])
-                          .filter(org => {
-                            const orgName = org?.name?.toLowerCase() || '';
-                            const searchTerm = (organizerSearch || '').toLowerCase();
-                            return orgName.includes(searchTerm);
-                          })
-                          .map(org => (
-                            <div
-                              key={org.id}
-                              className={`flex items-center p-2 hover:bg-[#d1fae5] rounded-md cursor-pointer ${(tempFilters.organizer || []).includes(org.id) ? 'bg-[#a7f3d0]' : ''
-                                }`}
-                              onClick={() => handleTempFilterChange('organizer', org.id)}
-                            >
-                              <div className="flex items-center">
-                                {(tempFilters.organizer || []).includes(org.id) ? (
-                                  <Check className="mr-2 text-green-600" size={16} />
-                                ) : (
-                                  <div className="w-4 h-4 mr-2 border border-gray-300 rounded-sm" />
-                                )}
-                                {org?.name || 'Unknown Organizer'}
-                              </div>
-                            </div>
-                          ))}
-                      </div>
-                    </div>
-                    <div className="flex justify-end gap-2 p-2 border-t border-gray-200">
-                      <button
-                        className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded-md"
-                        onClick={() => {
-                          setOpenDropdown(null);
-                          setOrganizerSearch('');
-                        }}
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        className="px-3 py-1 text-sm bg-green-500 hover:bg-green-600 text-white rounded-md"
-                        onClick={applyFilters}
-                      >
-                        Apply
-                      </button>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            {/* Event Type Filter */}
-            <div className={`mb-6 shadow-sm p-3 rounded-lg ${(filters.type || []).length > 0 ? 'bg-green-50' : ''}`}>
-              <div
-                className="flex justify-between items-center cursor-pointer"
-                onClick={() => toggleDropdown('type')}
-              >
-                <h3 className="text-gray-700">Event Type</h3>
-                <div className="flex items-center">
-                  {(filters.type || []).length > 0 && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        clearAppliedFilter('type');
-                        setTypeSearch('');
-                      }}
-                      className="text-xs text-red-500 mr-2 hover:underline"
-                    >
-                      Clear
-                    </button>
-                  )}
-                  {openDropdown === 'type' ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-                </div>
-              </div>
-
-              <AnimatePresence>
-                {openDropdown === 'type' && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="mt-2 bg-white overflow-hidden"
-                  >
-                    <div className="p-2">
-                      <input
-                        type="text"
-                        placeholder="Search event types..."
-                        className="w-full p-2 text-sm border border-gray-300 rounded-md mb-2 focus:ring-1 focus:ring-green-400 focus:border-green-400 focus:outline-none"
-                        value={typeSearch}
-                        onChange={(e) => setTypeSearch(e.target.value)}
-                      />
-                      <div className="max-h-48 overflow-y-auto">
-                        {Array.from(new Set(data.events?.map(event => event.type) || []))
-                          .filter(type =>
-                            type && typeof type === 'string' && type.toLowerCase().includes((typeSearch || '').toLowerCase())
-                          )
-                          .sort((a, b) => a.localeCompare(b))
-                          .map(type => (
-                            <div
-                              key={type}
-                              className={`flex items-center p-2 hover:bg-[#d1fae5] rounded-md cursor-pointer ${(tempFilters.type || []).includes(type) ? 'bg-[#a7f3d0]' : ''}`}
-                              onClick={() => {
-                                setTempFilters(prev => {
-                                  const currentTypes = prev.type || [];
-                                  const newTypes = currentTypes.includes(type)
-                                    ? currentTypes.filter(t => t !== type)
-                                    : [...currentTypes, type];
-                                  return { ...prev, type: newTypes };
-                                });
-                              }}
-                            >
-                              <div className="flex items-center">
-                                {(tempFilters.type || []).includes(type) ? (
-                                  <Check className="mr-2 text-green-600" size={16} />
-                                ) : (
-                                  <div className="w-4 h-4 mr-2 border border-gray-300 rounded-sm" />
-                                )}
-                                {type}
-                              </div>
-                            </div>
-                          ))}
-                      </div>
-                    </div>
-                    <div className="flex justify-end gap-2 p-2 border-t border-gray-200">
-                      <button
-                        className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded-md"
-                        onClick={() => {
-                          setOpenDropdown(null);
-                          setTypeSearch('');
-                        }}
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        className="px-3 py-1 text-sm bg-green-500 hover:bg-green-600 text-white rounded-md"
-                        onClick={applyFilters}
-                      >
-                        Apply
-                      </button>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            {/* Date Filter */}
-            <div className={`mb-6 shadow-sm p-3 rounded-lg ${filters.date || filters.dateRange.start || filters.dateRange.end ? 'bg-green-50' : ''}`}>
-              <div
-                className="flex justify-between items-center cursor-pointer"
-                onClick={() => toggleDropdown('date')}
-              >
-                <h3 className="text-gray-700">Date</h3>
-                <div className="flex items-center">
-                  {(filters.date || filters.dateRange.start || filters.dateRange.end) && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        clearAppliedFilter('date');
-                        clearAppliedFilter('dateRange');
-                      }}
-                      className="text-xs text-red-500 mr-2 hover:underline"
-                    >
-                      Clear
-                    </button>
-                  )}
-                  {openDropdown === 'date' ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-                </div>
-              </div>
-
-              <AnimatePresence>
-                {openDropdown === 'date' && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="mt-2 bg-white overflow-hidden"
-                  >
-                    <div className="p-2">
-                      <div className="grid grid-cols-2 gap-2 mb-4">
-                        {['Today', 'Tomorrow', 'This Week', 'This Month'].map(option => (
-                          <button
-                            key={option}
-                            className={`p-2 rounded-md text-sm ${tempFilters.date === option ? 'bg-green-600 text-white' : 'bg-green-100 hover:bg-green-200'}`}
-                            onClick={() => {
-                              setTempFilters(prev => ({
-                                ...prev,
-                                date: option,
-                                dateRange: { start: null, end: null }
-                              }));
-                            }}
-                          >
-                            {option}
-                          </button>
-                        ))}
-                      </div>
-
-                      <div className="flex items-center mb-4">
-                        <input
-                          type="checkbox"
-                          id="dateRange"
-                          checked={tempFilters.dateRange.start !== null}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setTempFilters(prev => ({
-                                ...prev,
-                                date: null,
-                                dateRange: { start: new Date(), end: null }
-                              }));
-                              setActiveDateField('start');
-                            } else {
-                              setTempFilters(prev => ({
-                                ...prev,
-                                dateRange: { start: null, end: null }
-                              }));
-                            }
-                          }}
-                          className="mr-2"
-                        />
-                        <label htmlFor="dateRange">Date Range</label>
-                      </div>
-
-                      {tempFilters.dateRange.start !== null && (
-                        <div className="mb-4">
-                          <div className="relative">
-                            <div className="flex border border-gray-300 rounded-md mb-2 h-10">
-                              <div
-                                className={`w-1/2 p-0.7 text-center cursor-pointer flex items-center justify-center ${activeDateField === 'start' ? 'bg-green-100' : ''}`}
-                                onClick={() => setActiveDateField('start')}
-                              >
-                                {tempFilters.dateRange.start ? (
-                                  <div className="flex items-center">
-                                    <span className="text-sm">{formatDate(tempFilters.dateRange.start)}</span>
-                                    <X
-                                      className="ml-2 text-black hover:text-red-600"
-                                      size={14}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setTempFilters(prev => ({
-                                          ...prev,
-                                          dateRange: { ...prev.dateRange, start: null }
-                                        }));
-                                      }}
-                                    />
-                                  </div>
-                                ) : (
-                                  <span className="text-sm text-black">Start date</span>
-                                )}
-                              </div>
-                              <div
-                                className={`w-1/2 p-0.7 text-center cursor-pointer flex items-center justify-center ${activeDateField === 'end' ? 'bg-green-100' : ''}`}
-                                onClick={() => setActiveDateField('end')}
-                              >
-                                {tempFilters.dateRange.end ? (
-                                  <div className="flex items-center">
-                                    <span className="text-sm">{formatDate(tempFilters.dateRange.end)}</span>
-                                    <X
-                                      className="ml-2 text-black hover:text-red-600"
-                                      size={14}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setTempFilters(prev => ({
-                                          ...prev,
-                                          dateRange: { ...prev.dateRange, end: null }
-                                        }));
-                                      }}
-                                    />
-                                  </div>
-                                ) : (
-                                  <span className="text-sm text-black">End date</span>
-                                )}
-                              </div>
-                            </div>
-                            <div className="mt-2">
-                              <DatePicker
-                                selected={activeDateField === 'start' ? tempFilters.dateRange.start : tempFilters.dateRange.end}
-                                onChange={(date) => handleDateRangeChange(date, activeDateField)}
-                                selectsStart={activeDateField === 'start'}
-                                selectsEnd={activeDateField === 'end'}
-                                startDate={tempFilters.dateRange.start}
-                                endDate={tempFilters.dateRange.end}
-                                minDate={activeDateField === 'end' ? tempFilters.dateRange.start : new Date()}
-                                inline
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex justify-end gap-2 p-2 border-t border-gray-200">
-                      <button
-                        className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded-md"
-                        onClick={() => {
-                          setOpenDropdown(null);
-                          setTempFilters({ ...filters });
-                        }}
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        className="px-3 py-1 text-sm bg-green-500 hover:bg-green-600 text-white rounded-md"
-                        onClick={applyFilters}
-                      >
-                        Apply
-                      </button>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            {/* Sort Filter */}
-            <div className={`mb-6 shadow-sm p-3 rounded-lg ${filters.sort ? 'bg-green-50' : ''}`}>
-              <div
-                className="flex justify-between items-center cursor-pointer"
-                onClick={() => toggleDropdown('sort')}
-              >
-                <h3 className="text-gray-700">Sort</h3>
-                <div className="flex items-center">
-                  {filters.sort && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        clearAppliedFilter('sort');
-                      }}
-                      className="text-xs text-red-500 mr-2 hover:underline"
-                    >
-                      Clear
-                    </button>
-                  )}
-                  {openDropdown === 'sort' ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-                </div>
-              </div>
-
-              <AnimatePresence>
-                {openDropdown === 'sort' && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="mt-2 bg-white overflow-hidden"
-                  >
-                    <div className="p-2">
-                      <div className="max-h-48 overflow-y-auto">
-                        {[
-                          'Price: Low to High',
-                          'Price: High to Low',
-                          'Most Bookings',
-                          'Highest Rated',
-                          'Date: Nearest First',
-                          'Date: Farthest First'
-                        ].map(option => (
-                          <div
-                            key={option}
-                            className={`flex items-center p-2 hover:bg-[#d1fae5] rounded-md cursor-pointer ${tempFilters.sort === option ? 'bg-[#a7f3d0]' : ''}`}
-                            onClick={() => setTempFilters(prev => ({ ...prev, sort: option }))}
-                          >
-                            <div className="flex items-center">
-                              {tempFilters.sort === option ? (
-                                <Check className="mr-2 text-green-600" size={16} />
-                              ) : (
-                                <div className="w-4 h-4 mr-2 border border-gray-300 rounded-sm" />
-                              )}
-                              {option}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="flex justify-end gap-2 p-2 border-t border-gray-200">
-                      <button
-                        className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded-md"
-                        onClick={() => setOpenDropdown(null)}
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        className="px-3 py-1 text-sm bg-green-500 hover:bg-green-600 text-white rounded-md"
-                        onClick={applyFilters}
-                      >
-                        Apply
-                      </button>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            {/* Reset All Button */}
-            <button
-              className="w-full py-2 bg-green-100 hover:text-white text-gray-700 rounded-md shadow hover:bg-red-500 transition-colors flex items-center justify-center"
-              onClick={resetAllFilters}
-            >
-              <RefreshCcw className="mr-2" size={16} />
-              Reset All Filters
-            </button>
-          </div>
+    <div className="max-w-7xl mx-auto mt-5 py-2 px-3 sm:px-4 bg-gradient-to-br from-green-50 to-blue-50 rounded-xl shadow-lg overflow-hidden mb-20 sm:mb-40">
+      {/* ── Mobile: Search Bar + Filter Toggle ── */}
+      <div className="lg:hidden px-2 pt-4 pb-2 space-y-3">
+        <div className="flex items-center gap-2">
+          <h2 className="text-xl font-bold text-neutral-800 flex-1">
+            {activeSearch ? 'Search Results' : hasFilters ? 'Your Events' : 'Top Events'}
+          </h2>
+          <button
+            onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
+            className={`relative flex items-center gap-1.5 px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${mobileFiltersOpen ? 'bg-green-50 border-green-300 text-green-700' : 'bg-white border-neutral-200 text-neutral-700 hover:bg-neutral-50'}`}
+          >
+            <SlidersHorizontal size={16} />
+            Filters
+            {activeFilterCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-green-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
+                {activeFilterCount}
+              </span>
+            )}
+          </button>
         </div>
 
-        {/* Right Content Section (75%) */}
-        <div className="w-3/4 p-6 -mt-1.5">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-bold text-gray-800">
+        {/* Mobile Search */}
+        <div className="relative">
+          <div className="relative flex">
+            <input
+              type="text"
+              placeholder="Search events, guides, destinations..."
+              className="w-full p-2.5 pl-4 pr-10 border border-neutral-300 rounded-full focus:ring-1 focus:ring-green-400 focus:border-green-400 focus:outline-none text-sm"
+              value={searchQuery || ''}
+              onChange={(e) => {
+                const value = e.target.value || '';
+                setSearchQuery(value);
+                setActiveSearch(false);
+                setShowSuggestions(value.length > 0);
+              }}
+              onFocus={() => setShowSuggestions(searchQuery.length > 0)}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+              onKeyDown={handleKeyDown}
+            />
+            {searchQuery && (
+              <X
+                className="absolute right-8 top-2.5 text-neutral-400 cursor-pointer hover:text-neutral-600"
+                size={18}
+                onClick={resetSearch}
+              />
+            )}
+            <Search
+              className="absolute right-3 top-2.5 text-neutral-400 cursor-pointer hover:text-neutral-600"
+              size={18}
+              onClick={handleSearchClick}
+            />
+          </div>
+
+          {/* Mobile Suggestions Dropdown */}
+          {showSuggestions && searchQuery && !activeSearch && (
+            <div className="absolute z-30 w-full mt-1 bg-white border border-neutral-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+              {getPrioritySuggestions(searchQuery).map((group, groupIndex) => (
+                <div key={`group-${groupIndex}`} className="p-2 border-b border-neutral-100 last:border-0">
+                  <div className="flex items-center text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-1">
+                    {group.icon}
+                    <span>{group.category}</span>
+                  </div>
+                  {group.items.map((item, itemIndex) => {
+                    const keyParts = [group.category, item.id, item.type, item.label, item.name, item.title, itemIndex].filter(Boolean);
+                    const uniqueKey = keyParts.join('-');
+                    return (
+                      <div
+                        key={uniqueKey}
+                        className="flex items-center p-2 hover:bg-green-50 rounded-md cursor-pointer text-sm"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => {
+                          setSearchQuery(item.name || item.title || item.label || item.type);
+                          performSearch(item.name || item.title || item.label || item.type);
+                        }}
+                      >
+                        <span className="truncate">{item.name || item.title || item.label || item.type}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Mobile Filter Drawer ── */}
+      <AnimatePresence>
+        {mobileFiltersOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="lg:hidden overflow-hidden"
+          >
+            <div className="px-2 pb-4">
+              <FilterPanel />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Desktop Layout: Sidebar + Content ── */}
+      <div className="flex flex-col lg:flex-row h-full">
+        {/* Left Filters Section — hidden on mobile */}
+        <div className="hidden lg:block lg:w-1/4">
+          <h2 className='text-2xl p-6 font-bold text-neutral-800'>Filters</h2>
+          <FilterPanel />
+        </div>
+
+        {/* Right Content Section */}
+        <div className="w-full lg:w-3/4 p-3 sm:p-6 -mt-1.5">
+          {/* Desktop header + search (hidden on mobile) */}
+          <div className="hidden lg:flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-bold text-neutral-800">
               {activeSearch ? 'Search Results' : hasFilters ? 'Your Events' : 'Top Events'}
             </h2>
 
@@ -1055,7 +1149,7 @@ const EventMainContent = () => {
                 <input
                   type="text"
                   placeholder="Search events, guides, destinations, types..."
-                  className="w-full p-2 pl-4 pr-10 border border-gray-300 rounded-full focus:ring-1 focus:ring-green-400 focus:border-green-400 focus:outline-none"
+                  className="w-full p-2 pl-4 pr-10 border border-neutral-300 rounded-full focus:ring-1 focus:ring-green-400 focus:border-green-400 focus:outline-none text-sm"
                   value={searchQuery || ''}
                   onChange={(e) => {
                     const value = e.target.value || '';
@@ -1069,24 +1163,24 @@ const EventMainContent = () => {
                 />
                 {searchQuery && (
                   <X
-                    className="absolute right-8 top-2.5 text-gray-400 cursor-pointer hover:text-gray-600"
+                    className="absolute right-8 top-2.5 text-neutral-400 cursor-pointer hover:text-neutral-600"
                     size={18}
                     onClick={resetSearch}
                   />
                 )}
                 <Search
-                  className="absolute right-3 top-2.5 text-gray-400 cursor-pointer hover:text-gray-600"
+                  className="absolute right-3 top-2.5 text-neutral-400 cursor-pointer hover:text-neutral-600"
                   size={18}
                   onClick={handleSearchClick}
                 />
               </div>
 
-              {/* Suggestions Dropdown */}
+              {/* Desktop Suggestions Dropdown */}
               {showSuggestions && searchQuery && !activeSearch && (
-                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-80 overflow-y-auto">
+                <div className="absolute z-10 w-full mt-1 bg-white border border-neutral-200 rounded-lg shadow-lg max-h-80 overflow-y-auto">
                   {getPrioritySuggestions(searchQuery).map((group, groupIndex) => (
-                    <div key={`group-${groupIndex}`} className="p-2 border-b border-gray-100 last:border-0">
-                      <div className="flex items-center text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                    <div key={`group-${groupIndex}`} className="p-2 border-b border-neutral-100 last:border-0">
+                      <div className="flex items-center text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-1">
                         {group.icon}
                         <span>{group.category}</span>
                       </div>
@@ -1106,7 +1200,7 @@ const EventMainContent = () => {
                         return (
                           <div
                             key={uniqueKey}
-                            className="flex items-center p-2 hover:bg-green-50 rounded-md cursor-pointer"
+                            className="flex items-center p-2 hover:bg-green-50 rounded-md cursor-pointer text-sm"
                             onMouseDown={(e) => e.preventDefault()}
                             onClick={() => {
                               setSearchQuery(item.name || item.title || item.label || item.type);
@@ -1123,12 +1217,14 @@ const EventMainContent = () => {
               )}
             </div>
           </div>
-          <div className="flex flex-wrap gap-2 mb-6">
+
+          {/* Active Filter Tags */}
+          <div className="flex flex-wrap gap-2 mb-4 sm:mb-6">
             {/* Destination Filters */}
             {(filters.destination || []).map(destId => {
               const destination = data.destinations.find(d => d.value === destId);
               return (
-                <div key={`dest-${destId}`} className="flex items-center bg-green-400 text-white px-3 py-1 rounded-full text-sm">
+                <div key={`dest-${destId}`} className="flex items-center bg-green-400 text-white px-3 py-1 rounded-full text-xs sm:text-sm">
                   {destination?.label || destId}
                   <X
                     size={14}
@@ -1141,10 +1237,9 @@ const EventMainContent = () => {
 
             {/* Organizer Filters */}
             {(filters.organizer || []).map(orgId => {
-              const organizer = data.guides.find(g => g.id === orgId);
               return (
-                <div key={`org-${orgId}`} className="flex items-center bg-green-400 text-white px-3 py-1 rounded-full text-sm">
-                  {organizer?.name || orgId}
+                <div key={`org-${orgId}`} className="flex items-center bg-green-400 text-white px-3 py-1 rounded-full text-xs sm:text-sm">
+                  {orgId}
                   <X
                     size={14}
                     className="ml-1 cursor-pointer hover:text-red-500"
@@ -1156,7 +1251,7 @@ const EventMainContent = () => {
 
             {/* Type Filters */}
             {(filters.type || []).map(type => (
-              <div key={`type-${type}`} className="flex items-center bg-green-400 text-white px-3 py-1 rounded-full text-sm">
+              <div key={`type-${type}`} className="flex items-center bg-green-400 text-white px-3 py-1 rounded-full text-xs sm:text-sm">
                 {type}
                 <X
                   size={14}
@@ -1168,7 +1263,7 @@ const EventMainContent = () => {
 
             {/* Date Filter */}
             {filters.date && (
-              <div className="flex items-center bg-green-400 text-white px-3 py-1 rounded-full text-sm">
+              <div className="flex items-center bg-green-400 text-white px-3 py-1 rounded-full text-xs sm:text-sm">
                 {filters.date}
                 <X
                   size={14}
@@ -1180,7 +1275,7 @@ const EventMainContent = () => {
 
             {/* Date Range Filter */}
             {(filters.dateRange?.start || filters.dateRange?.end) && (
-              <div className="flex items-center bg-green-400 text-white px-3 py-1 rounded-full text-sm">
+              <div className="flex items-center bg-green-400 text-white px-3 py-1 rounded-full text-xs sm:text-sm">
                 {filters.dateRange.start ? formatDate(filters.dateRange.start) : 'Any'} -
                 {filters.dateRange.end ? formatDate(filters.dateRange.end) : 'Any'}
                 <X
@@ -1193,7 +1288,7 @@ const EventMainContent = () => {
 
             {/* Sort Filter */}
             {filters.sort && (
-              <div className="flex items-center bg-green-400 text-white px-3 py-1 rounded-full text-sm">
+              <div className="flex items-center bg-green-400 text-white px-3 py-1 rounded-full text-xs sm:text-sm">
                 {filters.sort}
                 <X
                   size={14}
@@ -1203,29 +1298,26 @@ const EventMainContent = () => {
               </div>
             )}
           </div>
+
           {/* Search Results Section */}
           {activeSearch ? (
-            <div className="space-y-8">
+            <div className="space-y-6 sm:space-y-8">
               {/* Combined Results */}
               {displayedEvents.length > 0 ? (
                 <div>
-                  <h3 className="text-xl font-semibold mb-4">
-                    {displayedEvents.length} results matching "{searchQuery}"
+                  <h3 className="text-lg sm:text-xl font-semibold mb-4">
+                    {displayedEvents.length} results matching &quot;{searchQuery}&quot;
                   </h3>
-                  <div className="space-y-6">
+                  <div className="space-y-4 sm:space-y-6">
                     {displayedEvents.map((item, index) => (
-                      item.type === 'event' ? (
-                        <EventCard key={`event-${item.id || item._id || index}`} event={item} guides={data.guides} />
-                      ) : (
-                        <GuideCard key={`guide-${item.id || item._id || index}`} guide={item} />
-                      )
+                      <EventCard key={`event-${item.id || item._id || index}`} event={item} />
                     ))}
                   </div>
                 </div>
               ) : (
                 /* No Results Found */
                 <div className="flex flex-col items-center justify-center py-12">
-                  <div className="text-gray-400 mb-4">
+                  <div className="text-neutral-400 mb-4">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       className="h-16 w-16"
@@ -1241,10 +1333,10 @@ const EventMainContent = () => {
                       />
                     </svg>
                   </div>
-                  <h3 className="text-lg font-medium text-gray-700 mb-2">
+                  <h3 className="text-lg font-medium text-neutral-700 mb-2">
                     No results found
                   </h3>
-                  <p className="text-gray-500 text-sm mb-4">
+                  <p className="text-neutral-500 text-sm mb-4">
                     Try different search terms
                   </p>
                 </div>
@@ -1253,32 +1345,22 @@ const EventMainContent = () => {
           ) : (
             /* Original Events Display */
             displayedEvents.length > 0 ? (
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 {displayedEvents.map((event, index) => (
-                  <EventCard key={`event-${event.id || event._id || index}`} event={event} guides={data.guides} />
+                  <EventCard key={`event-${event.id || event._id || index}`} event={event} />
                 ))}
-                {!hasFilters && filteredEvents.length > displayCount && (
-                  <div className="mt-8 flex justify-center">
-                    <button
-                      onClick={loadMoreEvents}
-                      className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors flex items-center"
-                    >
-                      Show More <ArrowDown className="ml-2" size={18} />
-                    </button>
-                  </div>
-                )}
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-12">
-                <div className="text-gray-400 mb-4">
+                <div className="text-neutral-400 mb-4">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-medium text-gray-700 mb-2">No events found</h3>
-                <p className="text-gray-500 text-sm">Try adjusting your filters to see more results</p>
+                <h3 className="text-lg font-medium text-neutral-700 mb-2">No events found</h3>
+                <p className="text-neutral-500 text-sm">Try adjusting your filters to see more results</p>
                 <button
-                  className="mt-4 px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors"
+                  className="mt-4 px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors text-sm"
                   onClick={resetAllFilters}
                 >
                   Reset All Filters

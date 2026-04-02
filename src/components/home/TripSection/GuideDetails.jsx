@@ -187,6 +187,12 @@ const GuideDetails = ({ guide }) => {
           body: JSON.stringify({
             itemId: pkgId,
             itemType: guide.category || 'trip',
+            config: {
+              date: selectedStartDate || null,
+              peopleCount: count,
+              category: category,
+              days: days
+            }
           }),
         });
 

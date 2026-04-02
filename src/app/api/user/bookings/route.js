@@ -19,32 +19,65 @@ export async function GET(req) {
 
         // Fetch all bookings for this user, populate the event details
         const bookings = await Booking.find({ user: user.userId })
-            .populate('event', 'title eventType date duration slots location destination poster pricePerSlot guide')
+            .populate({
+                path: 'event',
+                select: 'title eventType date duration slots location destination destinationLink poster pricePerSlot guide highlights whatsIncluded whatsExcluded whatToBring restrictions pickupPoints itinerary',
+                populate: { path: 'guide', select: 'companyName username name' }
+            })
             .sort({ createdAt: -1 })
             .exec();
+
+        // Let's also fetch GuideDetails to get company names if available
+        const { GuideDetails } = await import('@/models/guidedetails.model');
+        const guideIds = [...new Set(bookings.map(b => b.event?.guide?._id).filter(id => id))];
+        const guideDetailsList = await GuideDetails.find({ guide: { $in: guideIds } }).select('guide companyname').lean();
+        const guideDetailsMap = {};
+        guideDetailsList.forEach(gd => {
+            guideDetailsMap[gd.guide.toString()] = gd.companyname;
+        });
 
         // Format the bookings to match the frontend expectations
         const formattedBookings = bookings.map(b => {
             const event = b.event;
             if (!event) return null; // Defensive check
 
-            const isUpcoming = b.status === 'confirmed' && new Date(event.date || b.bookingDate) >= new Date();
-
-            const passUrl = `/user/bookings/${b._id}/pass`;
+            const passUrl = `/user/event/pass/${b._id}`;
+            const gName = guideDetailsMap[event.guide?._id?.toString()] || event.guide?.companyName || event.guide?.username || event.guide?.name || 'Local Organizer';
 
             return {
                 id: b._id.toString(),
                 category: event.eventType || 'Event',
                 name: event.title,
-                guide: event.guide?.username || 'Assigned Guide',
+                guideName: gName,
+                companyName: gName,
+                guide: gName,
                 date: event.date || b.bookingDate,
                 duration: event.duration ? `${event.duration} days` : '1 day',
                 people: b.slots || 1,
-                destination: event.location || event.destination || 'TBD',
+                destination: event.destination || event.location || 'TBD',
+                destinationLink: event.destinationLink || '',
+                location: event.location || '',
                 price: b.amountPaid || event.pricePerSlot,
-                image: event.poster || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c',
+                image: event.poster || '',
+                poster: event.poster || '',
                 status: b.status,
-                passUrl: b.status === 'confirmed' ? passUrl : null
+                passUrl: b.status === 'confirmed' ? passUrl : null,
+                // Rich event content
+                highlights: event.highlights || [],
+                whatsIncluded: event.whatsIncluded || [],
+                whatsExcluded: event.whatsExcluded || [],
+                whatToBring: event.whatToBring || [],
+                restrictions: event.restrictions || [],
+                pickupPoints: event.pickupPoints || [],
+                itinerary: event.itinerary || [],
+                // Booking-specific
+                participants: b.participants || [],
+                contactDetails: b.contactDetails || {},
+                paymentId: b.paymentId || '',
+                orderId: b.orderId || '',
+                bookingDate: b.bookingDate || b.createdAt,
+                // Selected pickup/dropoff from booking
+                selectedPickup: b.selectedPickup || null,
             };
         }).filter(b => b !== null);
 
@@ -52,5 +85,67 @@ export async function GET(req) {
     } catch (error) {
         console.error('Failed to fetch bookings:', error);
         return NextResponse.json({ success: false, message: 'Server error' }, { status: 500 });
+    }
+}
+
+export async function POST(req) {
+    try {
+        const user = await getCurrentUser(req);
+        if (!user) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
+        if (user.role !== 'user') return NextResponse.json({ success: false, message: 'Users only' }, { status: 403 });
+
+        await dbConnect();
+
+        const data = await req.json();
+        const { event, slots, amountPaid, contactDetails, participants, selectedPickup } = data;
+
+        if (!event || !slots || amountPaid === undefined) {
+            return NextResponse.json({ success: false, message: 'Missing required fields' }, { status: 400 });
+        }
+
+        // Validate slot availability before creating booking
+        const eventDoc = await Event.findById(event);
+        if (!eventDoc) {
+            return NextResponse.json({ success: false, message: 'Event not found' }, { status: 404 });
+        }
+        const availableSlots = eventDoc.totalSlots - (eventDoc.bookedSlots || 0);
+        if (slots > availableSlots) {
+            return NextResponse.json({ 
+                success: false, 
+                message: availableSlots <= 0 ? 'This event is sold out.' : `Only ${availableSlots} slot(s) available.`
+            }, { status: 400 });
+        }
+
+        const newBooking = await Booking.create({
+            user: user.userId,
+            event,
+            slots,
+            amountPaid,
+            contactDetails,
+            participants: participants.map(p => ({
+                name: p.name,
+                email: p.email || '',
+                phone: p.phone || '',
+                age: p.age,
+                gender: p.gender,
+                bloodGroup: p.bloodGroup || '',
+                country: p.nationality || p.country || '',
+                address: p.address || '',
+                idType: p.idType,
+                idNumber: p.idNumber,
+                idProofUrl: p.idProofImage || p.idProofUrl || '',
+                medicalCondition: p.medicalCondition || '',
+                passCode: Math.random().toString(36).substring(2, 10).toUpperCase()
+            })),
+            selectedPickup: selectedPickup || undefined,
+            status: 'pending',
+            paymentId: 'pending',
+            orderId: 'pending'
+        });
+
+        return NextResponse.json({ success: true, bookingId: newBooking._id.toString() }, { status: 201 });
+    } catch (error) {
+        console.error('Create event booking error:', error);
+        return NextResponse.json({ success: false, message: error.message || 'Server error' }, { status: 500 });
     }
 }
