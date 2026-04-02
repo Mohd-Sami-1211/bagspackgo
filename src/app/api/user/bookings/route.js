@@ -103,6 +103,19 @@ export async function POST(req) {
             return NextResponse.json({ success: false, message: 'Missing required fields' }, { status: 400 });
         }
 
+        // Validate slot availability before creating booking
+        const eventDoc = await Event.findById(event);
+        if (!eventDoc) {
+            return NextResponse.json({ success: false, message: 'Event not found' }, { status: 404 });
+        }
+        const availableSlots = eventDoc.totalSlots - (eventDoc.bookedSlots || 0);
+        if (slots > availableSlots) {
+            return NextResponse.json({ 
+                success: false, 
+                message: availableSlots <= 0 ? 'This event is sold out.' : `Only ${availableSlots} slot(s) available.`
+            }, { status: 400 });
+        }
+
         const newBooking = await Booking.create({
             user: user.userId,
             event,
@@ -110,7 +123,18 @@ export async function POST(req) {
             amountPaid,
             contactDetails,
             participants: participants.map(p => ({
-                ...p,
+                name: p.name,
+                email: p.email || '',
+                phone: p.phone || '',
+                age: p.age,
+                gender: p.gender,
+                bloodGroup: p.bloodGroup || '',
+                country: p.nationality || p.country || '',
+                address: p.address || '',
+                idType: p.idType,
+                idNumber: p.idNumber,
+                idProofUrl: p.idProofImage || p.idProofUrl || '',
+                medicalCondition: p.medicalCondition || '',
                 passCode: Math.random().toString(36).substring(2, 10).toUpperCase()
             })),
             selectedPickup: selectedPickup || undefined,

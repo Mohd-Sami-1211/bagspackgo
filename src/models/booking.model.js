@@ -23,6 +23,8 @@ const bookingSchema = new mongoose.Schema({
         address: String,
         idType: String,
         idNumber: String,
+        idProofUrl: String,
+        medicalCondition: String,
         passCode: String,
         checkedIn: { type: Boolean, default: false }
     }],

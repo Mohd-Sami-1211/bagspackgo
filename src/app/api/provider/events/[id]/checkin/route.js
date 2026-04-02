@@ -33,41 +33,58 @@ export async function POST(request, context) {
             return NextResponse.json({ success: false, message: "Event not found" }, { status: 404 });
         }
 
-        // Find the booking that contains this passCode
-        const booking = await Booking.findOne({
+        let booking = await Booking.findOne({
             event: id,
             status: { $in: ["confirmed", "completed"] },
-            "participants.passCode": trimmedCode,
+            "participants.passCode": { $regex: new RegExp(`^${trimmedCode}$`, 'i') }
         });
 
-        if (!booking) {
-            return NextResponse.json({
-                success: false,
-                message: "Invalid pass code. No booking found for this event.",
+        let participant = null;
+
+        if (booking) {
+            // Found by passCode
+            participant = booking.participants.find(p => p.passCode?.toLowerCase() === trimmedCode.toLowerCase());
+        } else {
+            // Fallback: try to find by the 8-character Booking Reference (first 8 chars of _id)
+            const allBookings = await Booking.find({ 
+                event: id, 
+                status: { $in: ["confirmed", "completed"] } 
             });
+            booking = allBookings.find(b => b._id.toString().substring(0, 8).toUpperCase() === trimmedCode.toUpperCase());
+            
+            if (booking && booking.participants.length > 0) {
+                // Try to find the first participant not checked in yet
+                participant = booking.participants.find(p => !p.checkedIn);
+                // If all are checked in, pick the first one so the system properly reports "already checked in"
+                if (!participant) {
+                    participant = booking.participants[0];
+                }
+            }
         }
 
-        // Find the specific participant
-        const participant = booking.participants.find(p => p.passCode === trimmedCode);
-
-        if (!participant) {
+        if (!booking || !participant) {
             return NextResponse.json({
                 success: false,
-                message: "Pass code not found in booking.",
+                message: "Error: Invalid Code. This pass code or booking reference was not found for this event.",
             });
         }
 
         const alreadyCheckedIn = participant.checkedIn;
 
-        if (!alreadyCheckedIn) {
-            // Mark as checked-in
-            participant.checkedIn = true;
-            await booking.save();
+        if (alreadyCheckedIn) {
+            return NextResponse.json({
+                success: false,
+                message: "Error: This QR code has already been used for check-in!"
+            });
         }
+
+        // Mark as checked-in
+        participant.checkedIn = true;
+        await booking.save();
 
         return NextResponse.json({
             success: true,
-            alreadyCheckedIn,
+            alreadyCheckedIn: false,
             guest: {
                 name: participant.name,
                 age: participant.age,
@@ -78,9 +95,7 @@ export async function POST(request, context) {
                 passCode: participant.passCode,
                 checkedIn: participant.checkedIn,
             },
-            message: alreadyCheckedIn
-                ? "This guest was already checked in."
-                : "Guest successfully checked in!",
+            message: "Guest successfully checked in!",
         });
     } catch (error) {
         console.error("Check-In Error:", error);

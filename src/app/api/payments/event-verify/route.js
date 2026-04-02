@@ -42,6 +42,22 @@ export async function POST(request) {
         
         await booking.save();
 
+        // Update event booked slots atomically — only if enough slots remain
+        const slotUpdate = await Event.findOneAndUpdate(
+            { 
+                _id: booking.event, 
+                $expr: { $lte: [{ $add: ['$bookedSlots', booking.slots] }, '$totalSlots'] }
+            },
+            { $inc: { bookedSlots: booking.slots } },
+            { new: true }
+        );
+        if (!slotUpdate) {
+            // Revert booking status if slots ran out (race condition)
+            booking.status = 'pending';
+            await booking.save();
+            return NextResponse.json({ success: false, message: 'Slots are no longer available. Booking could not be confirmed.' }, { status: 400 });
+        }
+
         // Fetch related data for emails
         const [userDoc, eventDoc] = await Promise.all([
             User.findById(booking.user).select('username email phone').lean(),

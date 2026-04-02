@@ -4,7 +4,7 @@ import {
   MapPin, Clock, Calendar, Star, User, Ticket, ChevronRight, Info,
   AlertCircle, Map, CheckCircle, CreditCard, ShieldCheck, ArrowLeft,
   Mail, Phone, Upload, XCircle, ChevronDown, ExternalLink, HelpCircle,
-  Minus, Plus, Navigation, Users, Sparkles
+  Minus, Plus, Navigation, Users, Sparkles, Bookmark, Share2
 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -110,6 +110,10 @@ const EventDetails = ({ event }) => {
 
   const [showFeeDetails, setShowFeeDetails] = useState(false);
 
+  // ── Save & Share state ──
+  const [isSaved, setIsSaved] = useState(false);
+  const [showSaveToast, setShowSaveToast] = useState(false);
+
   const [formData, setFormData] = useState({
     contactDetails: { email: '', phone: '' },
     participants: [createEmptyParticipant()],
@@ -176,6 +180,66 @@ const EventDetails = ({ event }) => {
     }
   }, [currentView, authLoading, isUserAuthenticated, openAuthModal]);
 
+  // ── Check if event is saved ──
+  useEffect(() => {
+    if (!isUserAuthenticated) return;
+    (async () => {
+      try {
+        const res = await fetch('/api/user/saved');
+        const data = await res.json();
+        if (data.success && data.saved) {
+          const eventId = event._id || event.id;
+          setIsSaved(data.saved.some(item => item.itemId === eventId));
+        }
+      } catch {}
+    })();
+  }, [isUserAuthenticated, event._id, event.id]);
+
+  const handleSaveEvent = async () => {
+    if (!isUserAuthenticated) {
+      openAuthModal({ closable: true, tab: 'user' });
+      return;
+    }
+    const eventId = event._id || event.id;
+    try {
+      if (isSaved) {
+        const res = await fetch(`/api/user/saved?itemId=${eventId}`, { method: 'DELETE' });
+        if (res.ok) setIsSaved(false);
+      } else {
+        const res = await fetch('/api/user/saved', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ itemId: eventId, itemType: 'event' }),
+        });
+        if (res.ok) {
+          setIsSaved(true);
+          setShowSaveToast(true);
+          setTimeout(() => setShowSaveToast(false), 5000);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to update saved status', err);
+    }
+  };
+
+  const handleShareEvent = async () => {
+    const shareData = {
+      title: event.name || event.title || 'Check out this event!',
+      text: `Check out this amazing event on BagsPackGo!`,
+      url: window.location.href,
+    };
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        alert('Link copied to clipboard!');
+      }
+    } catch (err) {
+      console.error('Error sharing', err);
+    }
+  };
+
   function createEmptyParticipant() {
     return { name: '', age: '', gender: '', phone: '', nationality: '', idType: '', idNumber: '', idProofImage: '' };
   }
@@ -230,6 +294,7 @@ const EventDetails = ({ event }) => {
       const p = formData.participants[i];
       if (!p.name) errors[`p.${i}.name`] = 'Full name is required';
       if (!p.age) errors[`p.${i}.age`] = 'Age is required';
+      if (!p.phone) errors[`p.${i}.phone`] = 'Mobile number is required';
       if (!p.gender) errors[`p.${i}.gender`] = 'Gender is required';
       if (!p.nationality) errors[`p.${i}.nationality`] = 'Nationality is required';
       if (!p.idType) errors[`p.${i}.idType`] = 'ID proof type is required';
@@ -359,10 +424,27 @@ const EventDetails = ({ event }) => {
 
   /* ═══════════════════ RENDER ═══════════════════ */
 
+  // ── Save Toast ──
+  const saveToast = showSaveToast && (
+    <div className="fixed bottom-10 inset-x-0 flex justify-center z-[100] px-4">
+      <div className="bg-gray-950 border border-white/20 text-white px-6 py-4 rounded-3xl flex items-center shadow-[0_20px_50px_rgba(0,0,0,0.3)] backdrop-blur-xl animate-in fade-in slide-in-from-bottom-5 duration-300 ring-1 ring-white/10">
+        <div className="bg-emerald-500 p-1.5 rounded-full mr-3 shadow-lg shadow-emerald-500/20">
+          <Bookmark className="h-4 w-4 text-white fill-white" />
+        </div>
+        <div className="flex flex-col">
+          <span className="text-sm font-black tracking-tight uppercase">Event Saved!</span>
+          <p className="text-[10px] text-gray-400 font-bold tracking-wide">Added to your favorites</p>
+        </div>
+        <a href="/user/saved" className="ml-6 text-xs font-black text-emerald-400 hover:text-emerald-300 transition-all bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl whitespace-nowrap border border-white/5 uppercase tracking-widest">Explore</a>
+      </div>
+    </div>
+  );
+
   // ── BOOKING VIEW ──
   if (currentView === 'booking') {
     return (
       <div className="w-full bg-[#F7F9FC] min-h-screen pb-24 relative z-[60] pt-6 sm:pt-8 -mt-20 border border-gray-200 shadow-2xl">
+        {saveToast}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
           {bookingStep === 1 ? (
             <div className="flex flex-col lg:flex-row gap-8 items-start">
@@ -565,6 +647,15 @@ const EventDetails = ({ event }) => {
                                       className={selectClassName + (formErrors[`p.${i}.age`] ? ' border-red-500 bg-red-50/30' : '')} />
                                     {formErrors[`p.${i}.age`] && <p className="text-[10px] text-red-500 font-bold mt-1 uppercase">⚠ {formErrors[`p.${i}.age`]}</p>}
                                   </div>
+                                  <div>
+                                    <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Mobile Number <span className="text-emerald-500">*</span></label>
+                                    <div className="relative">
+                                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Phone className="h-4 w-4 text-gray-400" /></div>
+                                      <input placeholder="9876543210" type="tel" maxLength="10" value={p.phone || ''} onChange={e => handleParticipantChange(i, 'phone', e.target.value)}
+                                        className={`w-full p-2.5 pl-10 border rounded-lg outline-none text-sm border-gray-300 bg-white appearance-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500` + (formErrors[`p.${i}.phone`] ? ' border-red-500 bg-red-50/30' : '')} />
+                                    </div>
+                                    {formErrors[`p.${i}.phone`] && <p className="text-[10px] text-red-500 font-bold mt-1 uppercase">⚠ {formErrors[`p.${i}.phone`]}</p>}
+                                  </div>
                                   <div className="relative z-[60]">
                                     <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Gender <span className="text-emerald-500">*</span></label>
                                     <CustomSelect
@@ -610,6 +701,7 @@ const EventDetails = ({ event }) => {
                                     </div>
                                   )}
 
+
                                   {/* ID Proof Upload Section */}
                                   <div className="md:col-span-2 pt-4 border-t border-gray-100 mt-2">
                                     <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Upload ID Proof (Front Side) <span className="text-red-500">*</span></label>
@@ -643,9 +735,26 @@ const EventDetails = ({ event }) => {
                                             onChange={(e) => {
                                               const file = e.target.files[0];
                                               if (file) {
-                                                const reader = new FileReader();
-                                                reader.onloadend = () => handleParticipantChange(i, 'idProofImage', reader.result);
-                                                reader.readAsDataURL(file);
+                                                // Compress image before converting to base64 to avoid huge payloads
+                                                const img = new Image();
+                                                const objectUrl = URL.createObjectURL(file);
+                                                img.onload = () => {
+                                                  const MAX_DIM = 800;
+                                                  let w = img.width, h = img.height;
+                                                  if (w > MAX_DIM || h > MAX_DIM) {
+                                                    if (w > h) { h = Math.round(h * MAX_DIM / w); w = MAX_DIM; }
+                                                    else { w = Math.round(w * MAX_DIM / h); h = MAX_DIM; }
+                                                  }
+                                                  const canvas = document.createElement('canvas');
+                                                  canvas.width = w;
+                                                  canvas.height = h;
+                                                  const ctx = canvas.getContext('2d');
+                                                  ctx.drawImage(img, 0, 0, w, h);
+                                                  const compressed = canvas.toDataURL('image/jpeg', 0.6);
+                                                  handleParticipantChange(i, 'idProofImage', compressed);
+                                                  URL.revokeObjectURL(objectUrl);
+                                                };
+                                                img.src = objectUrl;
                                               }
                                             }}
                                           />
@@ -884,6 +993,7 @@ const EventDetails = ({ event }) => {
   /* ═══════════════════ DETAILS VIEW ═══════════════════ */
   return (
     <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 py-8 -mt-20 mb-16">
+      {saveToast}
 
       {/* ── Top Section: Poster (left) + Info (right) ── */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
@@ -907,19 +1017,50 @@ const EventDetails = ({ event }) => {
             </div>
 
             {/* Book Now Button */}
-            <button
-              onClick={handleBookNowClick}
-              className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white shadow-xl py-4 rounded-xl font-bold flex items-center justify-center gap-3 transform hover:-translate-y-0.5 transition-all text-lg group"
-            >
-              <Ticket className="w-6 h-6 group-hover:scale-110 transition-transform" />
-              <span>Book Now · ₹{event.price?.toLocaleString()}</span>
-              <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </button>
+            {event.slotsLeft > 0 ? (
+              <button
+                onClick={handleBookNowClick}
+                className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white shadow-xl py-4 rounded-xl font-bold flex items-center justify-center gap-3 transform hover:-translate-y-0.5 transition-all text-lg group"
+              >
+                <Ticket className="w-6 h-6 group-hover:scale-110 transition-transform" />
+                <span>Book Now · ₹{event.price?.toLocaleString()}</span>
+                <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </button>
+            ) : (
+              <div className="w-full bg-neutral-100 text-neutral-500 shadow-sm py-4 rounded-xl font-bold flex items-center justify-center gap-3 text-lg border border-neutral-200">
+                <AlertCircle className="w-6 h-6" />
+                <span>Sold Out</span>
+              </div>
+            )}
           </div>
 
           {/* Right: Company Name, Event Info, Map */}
           <div className="w-full md:w-1/2 lg:w-1/3 bg-white rounded-xl shadow-lg p-6 flex flex-col justify-between">
             <div>
+              {/* Save & Share buttons */}
+              <div className="flex items-center justify-end gap-2 mb-4">
+                <button
+                  onClick={handleShareEvent}
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 font-semibold rounded-xl transition-all border border-gray-200 shadow-sm group"
+                  title="Share Event"
+                >
+                  <Share2 size={16} className="text-gray-500 group-hover:text-emerald-600 transition-colors" />
+                  <span className="text-sm">Share</span>
+                </button>
+                <button
+                  onClick={handleSaveEvent}
+                  className={`flex items-center gap-2 px-4 py-2 font-semibold rounded-xl transition-all border shadow-sm group ${
+                    isSaved
+                      ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200'
+                      : 'bg-gray-50 hover:bg-gray-100 text-gray-700 border-gray-200'
+                  }`}
+                  title={isSaved ? 'Remove from Saved' : 'Save Event'}
+                >
+                  <Bookmark size={16} className={`transition-colors ${isSaved ? 'text-emerald-500 fill-emerald-500' : 'text-gray-500 group-hover:text-emerald-600'}`} />
+                  <span className="text-sm">{isSaved ? 'Saved' : 'Save'}</span>
+                </button>
+              </div>
+
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
                   <span className="text-emerald-700 font-black text-sm">
@@ -1213,14 +1354,16 @@ const EventDetails = ({ event }) => {
               {/* Continue to Booking Button */}
               <div className="flex flex-col items-center gap-4 py-6 border-t border-gray-100 mt-6">
                 <p className="text-gray-500 text-center max-w-md text-sm">
-                  Ready for the adventure? Click below to finalize your booking and secure your slots.
+                  {event.slotsLeft > 0 ? "Ready for the adventure? Click below to finalize your booking and secure your slots." : "Unfortunately, all slots for this event have been booked."}
                 </p>
-                <button onClick={handleBookNowClick}
-                  className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white shadow-xl py-4 px-12 rounded-xl font-bold flex items-center justify-center gap-3 transform hover:-translate-y-1 transition-all group">
-                  <Ticket className="w-6 h-6 group-hover:scale-110 transition-transform" />
-                  <span className="text-lg sm:text-xl">Continue to Booking</span>
-                  <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </button>
+                {event.slotsLeft > 0 && (
+                  <button onClick={handleBookNowClick}
+                    className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white shadow-xl py-4 px-12 rounded-xl font-bold flex items-center justify-center gap-3 transform hover:-translate-y-1 transition-all group">
+                    <Ticket className="w-6 h-6 group-hover:scale-110 transition-transform" />
+                    <span className="text-lg sm:text-xl">Continue to Booking</span>
+                    <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  </button>
+                )}
               </div>
             </div>
           )}

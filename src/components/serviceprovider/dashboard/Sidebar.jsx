@@ -29,6 +29,16 @@ export default function Sidebar({ isCollapsed, onClose, isMobile }) {
   const { user } = useAuth();
 
   const [profileData, setProfileData] = useState(null);
+  const [showLogoutOverlay, setShowLogoutOverlay] = useState(false);
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      window.location.href = '/auth/provider/login';
+    } catch {
+      window.location.href = '/';
+    }
+  };
 
   useEffect(() => {
     async function fetchProfile() {
@@ -320,8 +330,8 @@ export default function Sidebar({ isCollapsed, onClose, isMobile }) {
 
       {/* Logout */}
       <div className="p-4 border-t bg-white">
-        <Link
-          href="/serviceprovider/dashboard/logout"
+        <button
+          onClick={() => setShowLogoutOverlay(true)}
           className={`flex items-center gap-4 w-full text-gray-700 hover:text-red-500 transition px-4 py-3 rounded-xl hover:bg-red-50 ${isCollapsed ? 'justify-center' : ''
             }`}
         >
@@ -340,8 +350,32 @@ export default function Sidebar({ isCollapsed, onClose, isMobile }) {
               </motion.span>
             )}
           </AnimatePresence>
-        </Link>
+        </button>
       </div>
+
+      {showLogoutOverlay && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/40 backdrop-blur-sm px-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl relative"
+          >
+            <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <LogOut size={32} />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 text-center mb-2">Sign Out</h3>
+            <p className="text-gray-500 text-sm text-center mb-6">Are you sure you want to log out of your provider dashboard?</p>
+            <div className="flex flex-col gap-3">
+              <button onClick={handleLogout} className="w-full py-3 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 transition">
+                Yes, Log Out
+              </button>
+              <button onClick={() => setShowLogoutOverlay(false)} className="w-full py-3 bg-gray-50 text-gray-700 font-bold rounded-xl border border-gray-200 hover:bg-gray-100 transition">
+                Cancel
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </motion.aside>
   );
 }

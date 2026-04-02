@@ -149,7 +149,10 @@ export default function DownloadPassPage() {
                         </div>
                         <CheckCircle className="w-12 h-12 text-emerald-400 mb-3 opacity-90" />
                         <h1 className="text-2xl sm:text-3xl font-extrabold mb-1 tracking-tight">Booking Confirmed</h1>
-                        <p className="text-gray-300 font-medium tracking-wide text-sm">Order ID: {booking.orderId}</p>
+                        <p className="text-gray-300 font-medium tracking-wide text-sm mb-1">Order ID: {booking.orderId}</p>
+                        <p className="text-gray-400 font-medium text-xs flex items-center gap-1.5 mx-auto">
+                            <Calendar className="w-3.5 h-3.5 text-emerald-400" /> Booked: {booking.createdAt || booking.bookingDate ? `${new Date(booking.createdAt || booking.bookingDate).toLocaleDateString('en-GB')} at ${new Date(booking.createdAt || booking.bookingDate).toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'})}` : 'Unknown'}
+                        </p>
 
                         {/* Decorative ripped paper effect bottom */}
                         <div className="absolute bottom-0 left-0 w-full h-4 bg-white" style={{ maskImage: 'radial-gradient(circle at 10px 0, transparent 0, transparent 10px, black 11px)', maskSize: '20px 20px', maskRepeat: 'repeat-x' }}></div>
@@ -213,63 +216,54 @@ export default function DownloadPassPage() {
                         {/* Participant Tickets */}
                         <div className="space-y-8">
                             {booking.participants?.map((participant, index) => (
-                                <div key={index} className="flex flex-col sm:flex-row bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                                <div key={index} className="flex flex-row items-stretch bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
                                     {/* Ticket Left Edge Style */}
-                                    <div className="w-2 bg-emerald-500"></div>
+                                    <div className="w-2 bg-emerald-500 shrink-0"></div>
 
-                                    {/* Info section */}
-                                    <div className="flex-1 p-6 relative">
-                                        <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                                            <User className="w-5 h-5 text-gray-400" />
-                                            Participant #{index + 1}: {participant.name || 'Anonymous'}
-                                        </h3>
-
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-4 gap-x-4 text-sm mt-3">
-                                            <div className="flex flex-col">
-                                                <p className="text-gray-400 text-xs">Email</p>
-                                                <p className="font-semibold text-gray-800 break-all pr-2" title={participant.email || booking.contactDetails?.email}>{participant.email || booking.contactDetails?.email || 'N/A'}</p>
+                                    {/* QR Code Section (Moved to front) */}
+                                    <div className="p-4 sm:p-6 bg-emerald-50/30 flex flex-col items-center justify-center shrink-0 w-[130px] sm:w-[200px]">
+                                        {qrCodes[index] ? (
+                                            <div className="bg-white p-2 rounded-xl shadow-sm border border-emerald-100 mb-2">
+                                                <img src={qrCodes[index]} alt={`QR Code for ${participant.name}`} className="w-20 h-20 sm:w-32 sm:h-32 object-contain" />
                                             </div>
-                                            <div className="flex flex-col">
-                                                <p className="text-gray-400 text-xs">Phone</p>
-                                                <p className="font-semibold text-gray-800">{participant.phone || booking.contactDetails?.phone || 'N/A'}</p>
-                                            </div>
-                                            <div className="flex flex-col">
-                                                <p className="text-gray-400 text-xs">ID Type / Num</p>
-                                                <p className="font-semibold text-gray-800 uppercase line-clamp-1 text-xs mt-0.5">{participant.idType || 'N/A'} {participant.idNumber ? `(${participant.idNumber.substring(0, 4)}...)` : ''}</p>
-                                            </div>
-                                            <div className="flex flex-col">
-                                                <p className="text-gray-400 text-xs">Age</p>
-                                                <p className="font-semibold text-gray-800">{participant.age}</p>
-                                            </div>
-                                            <div className="flex flex-col">
-                                                <p className="text-gray-400 text-xs">Gender</p>
-                                                <p className="font-semibold text-gray-800 uppercase">{participant.gender}</p>
-                                            </div>
-                                            <div className="flex flex-col">
-                                                <p className="text-gray-400 text-xs">Blood Group</p>
-                                                <p className="font-semibold text-gray-800">{participant.bloodGroup || 'N/A'}</p>
-                                            </div>
-                                        </div>
+                                        ) : (
+                                            <div className="w-20 h-20 sm:w-32 sm:h-32 bg-gray-200 animate-pulse rounded-xl mb-2"></div>
+                                        )}
+                                        <p className="text-[10px] sm:text-xs font-mono text-gray-500 uppercase tracking-widest text-center">{participant.passCode}</p>
+                                        <p className="text-[9px] sm:text-[10px] text-gray-400 mt-1 font-semibold text-center leading-tight">SCAN FOR<br />ENTRY</p>
                                     </div>
 
                                     {/* Dash Divider for Ticket Feel */}
-                                    <div className="hidden sm:block border-l-2 border-dashed border-gray-200 relative">
+                                    <div className="border-l-2 border-dashed border-gray-200 relative shrink-0">
                                         <div className="absolute top-0 -translate-x-1/2 -mt-2 w-4 h-4 rounded-full bg-gray-50"></div>
                                         <div className="absolute bottom-0 -translate-x-1/2 -mb-2 w-4 h-4 rounded-full bg-gray-50"></div>
                                     </div>
-                                    <div className="block sm:hidden border-t-2 border-dashed border-gray-200 relative mx-4"></div>
 
-                                    {/* QR Code Section */}
-                                    <div className="p-6 bg-gray-50 flex flex-col items-center justify-center w-full sm:w-[220px]">
-                                        {qrCodes[index] ? (
-                                            <div className="bg-white p-2 rounded-xl shadow-sm border border-gray-100 mb-3">
-                                                <img src={qrCodes[index]} alt={`QR Code for ${participant.name}`} className="w-32 h-32 object-contain" />
+                                    {/* Info section */}
+                                    <div className="flex-1 p-4 sm:p-6 relative min-w-0">
+                                        <h3 className="text-sm sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4 flex items-center gap-2">
+                                            <User className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 shrink-0" />
+                                            <span className="truncate">#{index + 1} {participant.name || 'Anonymous'}</span>
+                                        </h3>
+
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-3 sm:gap-y-4 gap-x-4 text-[10px] sm:text-sm mt-2 sm:mt-3">
+                                            <div className="flex flex-col min-w-0">
+                                                <p className="text-gray-400 text-[10px] sm:text-xs uppercase">Email</p>
+                                                <p className="font-semibold text-gray-800 truncate" title={participant.email || booking.contactDetails?.email}>{participant.email || booking.contactDetails?.email || 'N/A'}</p>
                                             </div>
-                                        ) : (
-                                            <div className="w-32 h-32 bg-gray-200 animate-pulse rounded-xl mb-3"></div>
-                                        )}
-                                        <p className="text-xs font-mono text-gray-500 uppercase tracking-widest">{participant.passCode}</p>
-                                        <p className="text-[10px] text-gray-400 mt-1 font-semibold text-center leading-tight">SCAN FOR<br />ENTRY</p>
+                                            <div className="flex flex-col min-w-0">
+                                                <p className="text-gray-400 text-[10px] sm:text-xs uppercase">Phone</p>
+                                                <p className="font-semibold text-gray-800 truncate">{participant.phone || booking.contactDetails?.phone || 'N/A'}</p>
+                                            </div>
+                                            <div className="flex flex-col min-w-0">
+                                                <p className="text-gray-400 text-[10px] sm:text-xs uppercase">ID</p>
+                                                <p className="font-semibold text-gray-800 uppercase line-clamp-1">{participant.idType || 'N/A'} {participant.idNumber ? `(${participant.idNumber.substring(0, 4)}...)` : ''}</p>
+                                            </div>
+                                            <div className="flex flex-col min-w-0">
+                                                <p className="text-gray-400 text-[10px] sm:text-xs uppercase">Age / Gender</p>
+                                                <p className="font-semibold text-gray-800 uppercase truncate">{participant.age} | {participant.gender}</p>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             ))}

@@ -2,15 +2,55 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import Select from 'react-select';
 import {
     ArrowLeft, Calendar, MapPin, Clock, Users, IndianRupee, Star,
     Globe, Tag, CheckCircle, Edit3, Save, Loader2, AlertCircle,
     Download, Eye, ChevronDown, ChevronUp,
-    FileText, UserCheck, ScanLine, MessageSquare, Plus,
-    PlayCircle, Route, Phone, Share2,
+    FileText, UserCheck, ScanLine, MessageSquare, Plus, Minus,
+    PlayCircle, Route, Phone, Share2, Mail, ExternalLink,
     CheckCircle2, Image as ImageIcon, Copy, Send, Check, X,
-    Sparkles, TrendingUp, Camera, FlipHorizontal, Keyboard
+    Sparkles, TrendingUp, Camera, FlipHorizontal, Keyboard, Search
 } from 'lucide-react';
+
+const selectStyles = {
+    control: (provided, state) => ({
+        ...provided,
+        minHeight: '40px',
+        fontSize: '0.875rem',
+        borderColor: state.isFocused ? '#10b981' : '#e5e7eb',
+        boxShadow: state.isFocused ? '0 0 0 1px #10b981' : null,
+        '&:hover': { borderColor: state.isFocused ? '#10b981' : '#d1d5db' },
+        borderRadius: '12px',
+        backgroundColor: '#f9fafb',
+        cursor: 'pointer'
+    }),
+    placeholder: (base) => ({ ...base, color: '#9ca3af', fontWeight: '500' }),
+    singleValue: (base) => ({ ...base, color: '#064e3b', fontWeight: '600' }),
+    menu: (provided) => ({
+        ...provided,
+        zIndex: 9999,
+        marginTop: '6px',
+        borderRadius: '16px',
+        padding: '6px',
+        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+        border: '1px solid #f3f4f6',
+    }),
+    menuList: (provided) => ({ ...provided, padding: '0px' }),
+    option: (provided, state) => ({
+        ...provided,
+        borderRadius: '10px',
+        backgroundColor: state.isSelected ? '#10b981' : state.isFocused ? '#ecfdf5' : 'transparent',
+        color: state.isSelected ? 'white' : '#374151',
+        margin: '2px 0',
+        padding: '8px 12px',
+        fontSize: '0.875rem',
+        fontWeight: state.isSelected ? '600' : '500',
+        transition: 'all 0.15s ease-out',
+        '&:active': { backgroundColor: '#10b981', color: 'white' },
+        cursor: 'pointer'
+    }),
+};
 
 // ── QR Camera Scanner Component ──
 // Only mounted when the user explicitly opens the camera.
@@ -292,6 +332,11 @@ export default function EventDetailView({ eventId }) {
     const [scanVerifying, setScanVerifying] = useState(false);
     const [cameraError, setCameraError] = useState('');
     const [showShare, setShowShare] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [locationFilter, setLocationFilter] = useState('All Locations');
+    const [expandedGuestId, setExpandedGuestId] = useState(null);
+    const [showSlotEditor, setShowSlotEditor] = useState(false);
+    const [draftTotalSlots, setDraftTotalSlots] = useState(event?.totalSlots || 0);
 
     const ensureString = (val) => {
         if (!val) return '';
@@ -302,6 +347,30 @@ export default function EventDetailView({ eventId }) {
     const title = ensureString(event?.title);
     const loc = ensureString(event?.location);
     const dest = ensureString(event?.destination);
+
+    // Filter guests logic
+    const uniqueLocations = ['All Locations', ...(event?.pickupPoints?.map(p => p.location) || [])];
+    
+    const filteredGuests = guests.filter(g => {
+        const matchesSearch = ensureString(g.name).toLowerCase().includes(searchQuery.toLowerCase()) || 
+                              ensureString(g.bookingRef).toLowerCase().includes(searchQuery.toLowerCase());
+        
+        let guestLocation = '';
+        if (g.selectedPickup?.location) {
+            guestLocation = g.selectedPickup.location;
+        } else if (event?.pickupPoints?.length > 0) {
+            guestLocation = event.pickupPoints[0].location;
+        }
+
+        const matchesLocation = locationFilter === 'All Locations' || guestLocation === locationFilter;
+        return matchesSearch && matchesLocation;
+    }).sort((a, b) => {
+        if (a.checkedIn && !b.checkedIn) return -1;
+        if (!a.checkedIn && b.checkedIn) return 1;
+        const dateA = new Date(a.bookingDate || 0);
+        const dateB = new Date(b.bookingDate || 0);
+        return dateB - dateA;
+    });
 
     // Reset scanner completely when leaving the scanner tab
     useEffect(() => {
@@ -387,9 +456,51 @@ export default function EventDetailView({ eventId }) {
         }
     };
 
+    const handleSaveSlots = async (newTotalSlots) => {
+        setSaving(true);
+        setSaveMsg('');
+        try {
+            const res = await fetch(`/api/provider/events/${eventId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ totalSlots: Number(newTotalSlots) }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                setSaveMsg('Slots updated successfully!');
+                fetchEvent();
+            } else {
+                setSaveMsg(data.message || 'Failed to update slots');
+            }
+        } catch {
+            setSaveMsg('Network error');
+        } finally {
+            setSaving(false);
+        }
+    };
+
     const handleVerifyCode = useCallback(async (code) => {
-        const trimmed = (code || '').trim();
+        let trimmed = (code || '').trim();
         if (!trimmed || scanVerifying) return;
+        
+        // Extract passCode if the scanned text is a URL or JSON object
+        try {
+            if (trimmed.startsWith('http')) {
+                const urlObj = new URL(trimmed);
+                const param = urlObj.searchParams.get('passCode');
+                if (param) trimmed = param;
+            } else if (trimmed.startsWith('{')) {
+                const jsonObj = JSON.parse(trimmed);
+                if (jsonObj.passCode) trimmed = jsonObj.passCode;
+            } else if (trimmed.includes('passCode=')) {
+                // Fallback for relative or malformed URLs
+                const parts = trimmed.split('passCode=');
+                if (parts[1]) trimmed = parts[1].split('&')[0];
+            }
+        } catch (e) {
+            // Ignore parsing errors, pass original raw string
+        }
+
         setScanVerifying(true);
         setScanResult(null);
         try {
@@ -620,28 +731,113 @@ export default function EventDetailView({ eventId }) {
                     <InfoTile icon={Users} label="Slots" value={`${event.bookedSlots || 0} / ${event.totalSlots}`} accent="rose" />
                 </div>
 
-                {/* ── Occupancy ── */}
-                <div className="bg-white rounded-2xl border border-neutral-200 p-5">
-                    <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                            <TrendingUp className="w-4 h-4 text-emerald-600" />
-                            <span className="font-semibold text-neutral-800 text-sm">Occupancy</span>
+                {/* ── Occupancy & Slot Management ── */}
+                <div className="bg-white rounded-2xl border border-neutral-200 p-5 space-y-5">
+                    {/* Occupancy Bar */}
+                    <div>
+                        <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                                <TrendingUp className="w-4 h-4 text-emerald-600" />
+                                <span className="font-semibold text-neutral-800 text-sm">Occupancy</span>
+                            </div>
+                            <span className={`font-bold text-sm ${occupancyPercent >= 80 ? 'text-red-600' : occupancyPercent >= 50 ? 'text-amber-600' : 'text-emerald-600'}`}>
+                                {occupancyPercent}%
+                            </span>
                         </div>
-                        <span className={`font-bold text-sm ${occupancyPercent >= 80 ? 'text-red-600' : occupancyPercent >= 50 ? 'text-amber-600' : 'text-emerald-600'}`}>
-                            {occupancyPercent}%
-                        </span>
+                        <div className="h-2.5 bg-neutral-100 rounded-full overflow-hidden">
+                            <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${occupancyPercent}%` }}
+                                transition={{ duration: 1, ease: 'easeOut', delay: 0.3 }}
+                                className={`h-full rounded-full ${occupancyPercent >= 80 ? 'bg-gradient-to-r from-red-400 to-red-600' : occupancyPercent >= 50 ? 'bg-gradient-to-r from-amber-400 to-amber-600' : 'bg-gradient-to-r from-emerald-400 to-teal-500'}`}
+                            />
+                        </div>
                     </div>
-                    <div className="h-2.5 bg-neutral-100 rounded-full overflow-hidden">
-                        <motion.div
-                            initial={{ width: 0 }}
-                            animate={{ width: `${occupancyPercent}%` }}
-                            transition={{ duration: 1, ease: 'easeOut', delay: 0.3 }}
-                            className={`h-full rounded-full ${occupancyPercent >= 80 ? 'bg-gradient-to-r from-red-400 to-red-600' : occupancyPercent >= 50 ? 'bg-gradient-to-r from-amber-400 to-amber-600' : 'bg-gradient-to-r from-emerald-400 to-teal-500'}`}
-                        />
+
+                    {/* Slot Stats Row */}
+                    <div className="grid grid-cols-3 gap-3">
+                        <div className="bg-emerald-50 rounded-xl p-3 border border-emerald-100 text-center">
+                            <p className="text-2xl font-black text-emerald-700">{event.totalSlots}</p>
+                            <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mt-0.5">Total</p>
+                        </div>
+                        <div className="bg-blue-50 rounded-xl p-3 border border-blue-100 text-center">
+                            <p className="text-2xl font-black text-blue-700">{event.bookedSlots || 0}</p>
+                            <p className="text-[10px] font-bold text-blue-600 uppercase tracking-wider mt-0.5">Booked</p>
+                        </div>
+                        <div className={`rounded-xl p-3 border text-center ${(event.totalSlots - (event.bookedSlots || 0)) <= 0 ? 'bg-red-50 border-red-100' : 'bg-amber-50 border-amber-100'}`}>
+                            <p className={`text-2xl font-black ${(event.totalSlots - (event.bookedSlots || 0)) <= 0 ? 'text-red-700' : 'text-amber-700'}`}>{event.totalSlots - (event.bookedSlots || 0)}</p>
+                            <p className={`text-[10px] font-bold uppercase tracking-wider mt-0.5 ${(event.totalSlots - (event.bookedSlots || 0)) <= 0 ? 'text-red-600' : 'text-amber-600'}`}>
+                                {(event.totalSlots - (event.bookedSlots || 0)) <= 0 ? 'Sold Out' : 'Available'}
+                            </p>
+                        </div>
                     </div>
-                    <p className="text-xs text-neutral-500 mt-2">
-                        {event.bookedSlots || 0} booked, {event.totalSlots - (event.bookedSlots || 0)} slots remaining
-                    </p>
+
+                    {/* Slot Update Counter — Collapsible */}
+                    {!showSlotEditor ? (
+                        <div className="flex justify-center">
+                            <button
+                                onClick={() => {
+                                    setDraftTotalSlots(event.totalSlots);
+                                    setShowSlotEditor(true);
+                                }}
+                                className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 rounded-xl border border-emerald-100 hover:bg-emerald-100 transition font-bold text-xs"
+                            >
+                                <Edit3 className="w-3.5 h-3.5" /> Manage Total Slots
+                            </button>
+                        </div>
+                    ) : (
+                        <motion.div 
+                            initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            className="bg-gradient-to-r from-neutral-50 to-emerald-50/30 rounded-xl p-4 border border-emerald-200 relative"
+                        >
+                            <p className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-3">Manage Total Slots</p>
+                            <div className="flex flex-col gap-4">
+                                <div className="flex items-center gap-4">
+                                    <div className="flex items-center bg-white rounded-xl border border-neutral-200 shadow-sm overflow-hidden flex-shrink-0">
+                                        <button
+                                            onClick={() => setDraftTotalSlots(prev => Math.max(event.totalSlots, prev - 1))}
+                                            disabled={draftTotalSlots <= event.totalSlots}
+                                            className="w-10 h-10 flex items-center justify-center text-neutral-500 hover:text-red-500 hover:bg-red-50 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                                        >
+                                            <Minus className="w-4 h-4" />
+                                        </button>
+                                        <div className="w-16 h-10 flex items-center justify-center border-x border-neutral-200 bg-white">
+                                            <span className="text-lg font-black text-neutral-900">{draftTotalSlots}</span>
+                                        </div>
+                                        <button
+                                            onClick={() => setDraftTotalSlots(prev => prev + 1)}
+                                            className="w-10 h-10 flex items-center justify-center text-neutral-500 hover:text-emerald-600 hover:bg-emerald-50 transition-all"
+                                        >
+                                            <Plus className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-semibold text-neutral-800">Total Capacity</p>
+                                        <p className="text-[10px] sm:text-xs text-neutral-500">Cannot go below current capacity ({event.totalSlots})</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2 justify-end mt-1">
+                                    <button
+                                        onClick={() => setShowSlotEditor(false)}
+                                        className="px-4 py-2 bg-white border border-neutral-200 text-neutral-600 rounded-xl text-xs font-bold hover:bg-neutral-50 transition shadow-sm"
+                                    >
+                                        Discard
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            handleSaveSlots(draftTotalSlots);
+                                            setShowSlotEditor(false);
+                                        }}
+                                        disabled={draftTotalSlots === event.totalSlots}
+                                        className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        Save Changes
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
                 </div>
 
                 {/* ── Tabs ── */}
@@ -853,6 +1049,18 @@ export default function EventDetailView({ eventId }) {
                                         </ul>
                                     </CollapsibleSection>
                                 )}
+
+                                {event.photographs?.length > 0 && (
+                                    <CollapsibleSection title="Gallery" icon={ImageIcon} badge={event.photographs.length}>
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 pt-2">
+                                            {event.photographs.map((photo, i) => (
+                                                <div key={i} className="aspect-square rounded-xl overflow-hidden bg-neutral-100 border border-neutral-200 shadow-sm relative group">
+                                                    <img src={photo} alt={`Event photo ${i+1}`} className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </CollapsibleSection>
+                                )}
                             </div>
                         </motion.div>
                     )}
@@ -865,88 +1073,258 @@ export default function EventDetailView({ eventId }) {
                                     <h2 className="text-lg font-bold text-neutral-900">Guest List</h2>
                                     <p className="text-neutral-500 text-sm">{guests.length} guests registered · {guests.filter(g => g.checkedIn).length} checked in</p>
                                 </div>
-                                <button className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-neutral-200 text-sm font-semibold text-neutral-700 hover:bg-neutral-50 transition self-start">
-                                    <Download className="w-4 h-4" /> Export CSV
-                                </button>
                             </div>
 
-                            {/* Stats pills */}
-                            <div className="flex flex-wrap gap-3">
-                                {[
-                                    { label: 'Total', value: guests.length, color: 'bg-neutral-100 text-neutral-700' },
-                                    { label: 'Checked In', value: guests.filter(g => g.checkedIn).length, color: 'bg-emerald-100 text-emerald-700' },
-                                    { label: 'Pending', value: guests.filter(g => !g.checkedIn).length, color: 'bg-amber-100 text-amber-700' },
-                                ].map(s => (
-                                    <div key={s.label} className={`${s.color} px-4 py-2 rounded-xl text-sm font-semibold`}>
-                                        <span className="text-lg font-bold mr-1.5">{s.value}</span>{s.label}
-                                    </div>
-                                ))}
-                            </div>
-
-                            {/* Desktop table */}
-                            <div className="bg-white rounded-2xl border border-neutral-200 overflow-hidden">
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-sm min-w-[720px]">
-                                        <thead>
-                                            <tr className="bg-neutral-50 border-b border-neutral-200">
-                                                {['#', 'Name', 'Age', 'Gender', 'Mobile', 'ID Proof', 'Status', 'Actions'].map(h => (
-                                                    <th key={h} className="text-left px-4 py-3 text-xs font-bold text-neutral-500 uppercase tracking-wider">{h}</th>
-                                                ))}
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {guests.map((guest, i) => (
-                                                <tr key={guest.id} className="border-b border-neutral-50 last:border-0 hover:bg-neutral-50/80 transition">
-                                                    <td className="px-4 py-4 text-neutral-400 text-xs font-mono">{i + 1}</td>
-                                                    <td className="px-4 py-4">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
-                                                                {guest.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
-                                                            </div>
-                                                            <div>
-                                                                <p className="font-semibold text-neutral-900">{ensureString(guest.name)}</p>
-                                                                <p className="text-neutral-500 text-xs">{ensureString(guest.email)}</p>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-4 py-4 text-neutral-700">{ensureString(guest.age)}</td>
-                                                    <td className="px-4 py-4 text-neutral-700">{ensureString(guest.gender)}</td>
-                                                    <td className="px-4 py-4">
-                                                        <div className="flex items-center gap-1.5 text-neutral-700">
-                                                            <Phone className="w-3.5 h-3.5 text-neutral-400" />
-                                                            {ensureString(guest.mobile)}
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-4 py-4">
-                                                        <p className="text-neutral-700">{ensureString(guest.idProofType)}</p>
-                                                        <p className="text-neutral-500 text-xs">{ensureString(guest.idProofNumber)}</p>
-                                                    </td>
-                                                    <td className="px-4 py-4">
-                                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${guest.checkedIn ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-700'}`}>
-                                                            {guest.checkedIn ? <UserCheck className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
-                                                            {guest.checkedIn ? 'Checked In' : 'Pending'}
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-4 py-4">
-                                                        <div className="flex items-center gap-1.5">
-                                                            <button title="Download ID" className="p-1.5 rounded-lg border border-neutral-200 text-neutral-500 hover:text-emerald-600 hover:border-emerald-200 transition">
-                                                                <Download className="w-3.5 h-3.5" />
-                                                            </button>
-                                                            <button title="View" className="p-1.5 rounded-lg border border-neutral-200 text-neutral-500 hover:text-blue-600 hover:border-blue-200 transition">
-                                                                <Eye className="w-3.5 h-3.5" />
-                                                            </button>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
+                            {/* Filters & Stats */}
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-neutral-50 p-4 rounded-2xl border border-neutral-200">
+                                <div className="flex flex-wrap gap-2">
+                                    {[
+                                        { label: 'Total', value: guests.length, color: 'bg-white text-neutral-700 border-neutral-200' },
+                                        { label: 'Checked In', value: guests.filter(g => g.checkedIn).length, color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+                                        { label: 'Pending', value: guests.filter(g => !g.checkedIn).length, color: 'bg-amber-50 text-amber-700 border-amber-200' },
+                                    ].map(s => (
+                                        <div key={s.label} className={`${s.color} px-3 py-1.5 rounded-xl text-xs font-semibold border`}>
+                                            <span className="text-sm font-bold mr-1">{s.value}</span>{s.label}
+                                        </div>
+                                    ))}
                                 </div>
-                                {guests.length === 0 && (
-                                    <div className="text-center py-14">
-                                        <Users className="w-10 h-10 text-neutral-300 mx-auto mb-3" />
-                                        <p className="text-neutral-500 font-medium">No guests yet</p>
-                                        <p className="text-neutral-400 text-sm mt-1">Guests will appear here when they book this event</p>
+                                <div className="flex flex-col sm:flex-row gap-3 flex-1 md:max-w-md">
+                                    <div className="flex-1 relative">
+                                        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
+                                        <input 
+                                            type="text" 
+                                            placeholder="Search by name or Ref ID..."
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            className="w-full pl-9 pr-4 py-2 rounded-xl border border-neutral-200 text-sm focus:ring-2 focus:ring-emerald-500 outline-none" 
+                                        />
+                                    </div>
+                                    <div className="w-full md:w-[220px]">
+                                        <Select
+                                            instanceId="guest-location-select"
+                                            value={{ value: locationFilter, label: locationFilter }}
+                                            onChange={(option) => setLocationFilter(option.value)}
+                                            options={uniqueLocations.map(loc => ({ value: loc, label: loc }))}
+                                            styles={selectStyles}
+                                            isSearchable={false}
+                                            placeholder="All Locations"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Guest Cards */}
+                            <div className="space-y-3">
+                                {filteredGuests.length > 0 ? (
+                                    filteredGuests.map((guest) => {
+                                        const isExpanded = expandedGuestId === guest.id;
+                                        
+                                        // Pick best location string
+                                        let guestLocation = guest.selectedPickup?.location || (event?.pickupPoints?.length > 0 ? event.pickupPoints[0].location : 'TBD');
+                                        let guestTime = guest.selectedPickup?.time || (event?.pickupPoints?.length > 0 ? event.pickupPoints[0].time : '');
+
+                                        return (
+                                            <div key={guest.id} className={`bg-white rounded-2xl border transition-all duration-200 overflow-hidden ${isExpanded ? 'border-emerald-300 shadow-md' : 'border-neutral-200 hover:border-emerald-200'}`}>
+                                                {/* Header row (always visible) */}
+                                                <div 
+                                                    className="p-4 flex flex-col sm:flex-row sm:items-center gap-4 cursor-pointer hover:bg-neutral-50/50 transition"
+                                                    onClick={() => setExpandedGuestId(isExpanded ? null : guest.id)}
+                                                >
+                                                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0 ${guest.checkedIn ? 'bg-gradient-to-br from-emerald-400 to-teal-500' : 'bg-gradient-to-br from-neutral-400 to-neutral-500'}`}>
+                                                            {guest.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                                                        </div>
+                                                        <div className="min-w-0">
+                                                            <div className="flex items-center gap-2">
+                                                                <h3 className="font-bold text-neutral-900 truncate">{ensureString(guest.name)}</h3>
+                                                                <span className="text-[10px] font-mono font-medium bg-neutral-100 text-neutral-500 px-1.5 py-0.5 rounded border border-neutral-200">{guest.bookingRef || guest.passCode}</span>
+                                                            </div>
+                                                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-neutral-500 text-xs mt-1">
+                                                                <span>{guest.age} yrs</span>
+                                                                <span className="w-1 h-1 rounded-full bg-neutral-300" />
+                                                                <span>{guest.gender}</span>
+                                                                <span className="w-1 h-1 rounded-full bg-neutral-300" />
+                                                                <span>{guest.country || 'N/A'}</span>
+                                                                <span className="w-1 h-1 rounded-full bg-neutral-300" />
+                                                                <span className="font-bold text-neutral-700">{guest.mobile || 'No Mobile'}</span>
+                                                                <div className="w-full sm:w-auto sm:ml-auto inline-flex items-center gap-1 font-medium text-[10px] sm:text-xs text-neutral-400 bg-neutral-50 px-1.5 py-0.5 rounded border border-neutral-100">
+                                                                    <Clock className="w-3 h-3" />
+                                                                    {guest.bookingDate ? (
+                                                                        `${new Date(guest.bookingDate).toLocaleDateString()} ${new Date(guest.bookingDate).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`
+                                                                    ) : 'Date Unknown'}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto mt-2 sm:mt-0">
+                                                        <div className="flex items-center gap-2">
+                                                            {guest.checkedIn ? (
+                                                                <span className="inline-flex items-center gap-1 text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg text-xs font-bold border border-emerald-100">
+                                                                    <CheckCircle className="w-3.5 h-3.5" /> Checked In
+                                                                </span>
+                                                            ) : (
+                                                                <span className="inline-flex items-center gap-1 text-amber-600 bg-amber-50 px-2.5 py-1 rounded-lg text-xs font-bold border border-amber-100">
+                                                                    <Clock className="w-3.5 h-3.5" /> Pending
+                                                                </span>
+                                                            )}
+                                                            <div className={`p-1.5 rounded-lg transition-colors ${isExpanded ? 'bg-emerald-50 text-emerald-600' : 'bg-neutral-50 text-neutral-400'}`}>
+                                                                {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Expanded Details */}
+                                                <AnimatePresence>
+                                                    {isExpanded && (
+                                                        <motion.div 
+                                                            initial={{ height: 0, opacity: 0 }} 
+                                                            animate={{ height: 'auto', opacity: 1 }} 
+                                                            exit={{ height: 0, opacity: 0 }}
+                                                            className="overflow-hidden border-t border-neutral-100"
+                                                        >
+                                                            <div className="p-5 bg-gradient-to-br from-neutral-50 to-white">
+                                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                                                    {/* ── Left Column: Contact & Identity ── */}
+                                                                    <div className="space-y-4">
+                                                                        <h4 className="flex items-center gap-1.5 text-xs font-bold text-neutral-400 uppercase tracking-wider">
+                                                                            <UserCheck className="w-3.5 h-3.5" /> Contact & Identity
+                                                                        </h4>
+
+                                                                        {/* Contact Details Card */}
+                                                                        <div className="bg-white rounded-xl border border-neutral-200 shadow-sm overflow-hidden">
+                                                                            <div className="p-4 space-y-3">
+                                                                                {/* Name & Nationality */}
+                                                                                <div className="grid grid-cols-2 gap-3">
+                                                                                    <div>
+                                                                                        <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Full Name</span>
+                                                                                        <p className="text-sm font-bold text-neutral-900 mt-0.5">{guest.name}</p>
+                                                                                    </div>
+                                                                                    <div>
+                                                                                        <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Nationality</span>
+                                                                                        <p className="text-sm font-semibold text-neutral-900 mt-0.5">{guest.country || 'N/A'}</p>
+                                                                                    </div>
+                                                                                </div>
+
+                                                                                {/* Age & Gender */}
+                                                                                <div className="grid grid-cols-2 gap-3 pt-2 border-t border-neutral-100">
+                                                                                    <div>
+                                                                                        <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Age</span>
+                                                                                        <p className="text-sm font-semibold text-neutral-800 mt-0.5">{guest.age} years</p>
+                                                                                    </div>
+                                                                                    <div>
+                                                                                        <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Gender</span>
+                                                                                        <p className="text-sm font-semibold text-neutral-800 mt-0.5 capitalize">{guest.gender}</p>
+                                                                                    </div>
+                                                                                </div>
+
+                                                                                {/* Mobile — clickable */}
+                                                                                <div className="pt-2 border-t border-neutral-100">
+                                                                                    <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Mobile</span>
+                                                                                    <a href={`tel:${guest.mobile}`} className="flex items-center gap-2 mt-1 text-sm font-semibold text-emerald-700 hover:text-emerald-800 transition group">
+                                                                                        <div className="w-7 h-7 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center group-hover:bg-emerald-100 transition">
+                                                                                            <Phone className="w-3.5 h-3.5 text-emerald-600" />
+                                                                                        </div>
+                                                                                        {guest.mobile || 'N/A'}
+                                                                                    </a>
+                                                                                </div>
+
+                                                                                {/* Email — clickable */}
+                                                                                <div className="pt-2 border-t border-neutral-100">
+                                                                                    <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Email</span>
+                                                                                    <a href={`mailto:${guest.email}`} className="flex items-center gap-2 mt-1 text-sm font-semibold text-blue-700 hover:text-blue-800 transition group break-all">
+                                                                                        <div className="w-7 h-7 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-100 transition">
+                                                                                            <Mail className="w-3.5 h-3.5 text-blue-600" />
+                                                                                        </div>
+                                                                                        {guest.email || 'N/A'}
+                                                                                    </a>
+                                                                                </div>
+
+                                                                                {/* ID Verification */}
+                                                                                <div className="pt-2 border-t border-neutral-100">
+                                                                                    <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">ID Verification</span>
+                                                                                    <p className="text-sm font-semibold text-neutral-800 mt-0.5 capitalize">
+                                                                                        {guest.idProofType} <span className="text-neutral-400 font-normal">·</span> <span className="font-mono text-xs text-neutral-600">{guest.idProofNumber}</span>
+                                                                                    </p>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    {/* ── Right Column: ID Proof Photo & Pickup ── */}
+                                                                    <div className="space-y-4">
+                                                                        {/* ID Proof Photo */}
+                                                                        <h4 className="flex items-center gap-1.5 text-xs font-bold text-neutral-400 uppercase tracking-wider">
+                                                                            <ImageIcon className="w-3.5 h-3.5" /> ID Proof Document
+                                                                        </h4>
+                                                                        {guest.idProofUrl ? (
+                                                                            <div className="bg-white rounded-xl border border-neutral-200 shadow-sm overflow-hidden">
+                                                                                <div className="relative w-full aspect-[16/10] bg-neutral-100">
+                                                                                    <img src={guest.idProofUrl} alt={`ID Proof - ${guest.name}`} className="w-full h-full object-contain" />
+                                                                                </div>
+                                                                                <div className="p-3 border-t border-neutral-100 flex items-center gap-2">
+                                                                                    <a 
+                                                                                        href={guest.idProofUrl} 
+                                                                                        target="_blank" 
+                                                                                        rel="noopener noreferrer" 
+                                                                                        className="flex-1 flex items-center justify-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-3 py-2 rounded-lg transition"
+                                                                                    >
+                                                                                        <Eye className="w-3.5 h-3.5" /> View Full Size
+                                                                                    </a>
+                                                                                    <a 
+                                                                                        href={guest.idProofUrl} 
+                                                                                        download={`IDProof_${guest.name || 'Guest'}.png`} 
+                                                                                        className="flex-1 flex items-center justify-center gap-1.5 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-3 py-2 rounded-lg transition"
+                                                                                    >
+                                                                                        <Download className="w-3.5 h-3.5" /> Download
+                                                                                    </a>
+                                                                                </div>
+                                                                            </div>
+                                                                        ) : (
+                                                                            <div className="bg-white rounded-xl border border-dashed border-neutral-300 p-8 flex flex-col items-center justify-center text-center">
+                                                                                <ImageIcon className="w-8 h-8 text-neutral-300 mb-2" />
+                                                                                <p className="text-sm text-neutral-400 font-medium">No ID proof uploaded</p>
+                                                                            </div>
+                                                                        )}
+
+                                                                        {/* Pickup Point */}
+                                                                        <h4 className="flex items-center gap-1.5 text-xs font-bold text-neutral-400 uppercase tracking-wider">
+                                                                            <Route className="w-3.5 h-3.5" /> Pickup Details
+                                                                        </h4>
+                                                                        <div className="bg-white rounded-xl border border-neutral-200 shadow-sm p-4">
+                                                                            <div className="flex items-start gap-3">
+                                                                                <div className="w-8 h-8 rounded-lg bg-violet-50 border border-violet-100 flex items-center justify-center flex-shrink-0">
+                                                                                    <MapPin className="w-4 h-4 text-violet-600" />
+                                                                                </div>
+                                                                                <div>
+                                                                                    <p className="text-sm font-bold text-neutral-800">{guestLocation}</p>
+                                                                                    {guestTime && (
+                                                                                        <p className="text-xs text-neutral-500 mt-0.5 flex items-center gap-1">
+                                                                                            <Clock className="w-3 h-3" /> {guestTime}
+                                                                                        </p>
+                                                                                    )}
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </motion.div>
+                                                    )}
+                                                </AnimatePresence>
+                                            </div>
+                                        );
+                                    })
+                                ) : (
+                                    <div className="text-center py-16 bg-white rounded-2xl border border-neutral-200 border-dashed">
+                                        <div className="w-16 h-16 bg-neutral-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                            <Users className="w-8 h-8 text-neutral-300" />
+                                        </div>
+                                        <p className="text-neutral-900 font-bold mb-1">No guests found</p>
+                                        <p className="text-neutral-500 text-sm">
+                                            {guests.length === 0 ? 'Guests will appear here when they book.' : 'Try adjusting your search or filters.'}
+                                        </p>
                                     </div>
                                 )}
                             </div>
@@ -1141,7 +1519,7 @@ export default function EventDetailView({ eventId }) {
                                                         value={scanInput}
                                                         onChange={(e) => setScanInput(e.target.value)}
                                                         onKeyDown={(e) => e.key === 'Enter' && handleManualScan()}
-                                                        placeholder="e.g., BPG-EVT-001-G001"
+                                                        placeholder="e.g., 8-Char Ref ID or Pass Code"
                                                         autoFocus
                                                         className="flex-1 px-4 py-3 rounded-xl border border-neutral-200 focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-mono tracking-wider text-sm transition"
                                                     />

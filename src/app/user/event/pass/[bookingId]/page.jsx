@@ -141,7 +141,12 @@ export default function EventPassPage() {
                         <div className="sm:text-right">
                             <p className="text-[9px] sm:text-[10px] font-semibold text-gray-400 uppercase tracking-[0.2em] mb-1" style={fontStyle}>Booking Reference</p>
                             <h2 className="text-2xl sm:text-3xl font-black text-gray-900 font-mono tracking-wider break-all">{(booking.id || bookingId).substring(0,8).toUpperCase()}</h2>
-                            <p className="text-[10px] sm:text-xs font-semibold text-emerald-600 uppercase tracking-widest mt-2 px-3 py-1 bg-emerald-50 inline-block rounded-full border border-emerald-100" style={fontStyle}>Payment Confirmed</p>
+                            <div className="flex flex-col sm:items-end mt-2 gap-1.5">
+                                <span className="text-[10px] sm:text-xs font-semibold text-emerald-600 uppercase tracking-widest px-3 py-1 bg-emerald-50 inline-block rounded-full border border-emerald-100" style={fontStyle}>Payment Confirmed</span>
+                                <span className="text-[9px] sm:text-[10px] font-medium text-gray-500 flex items-center gap-1" style={fontStyle}>
+                                    <Calendar className="w-3 h-3 text-emerald-500" /> Booked: {booking.bookingDate || booking.createdAt ? `${new Date(booking.bookingDate || booking.createdAt).toLocaleDateString('en-GB')} at ${new Date(booking.bookingDate || booking.createdAt).toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'})}` : 'Unknown'}
+                                </span>
+                            </div>
                         </div>
                     </div>
 
@@ -254,29 +259,29 @@ export default function EventPassPage() {
                                     : `https://bagspackgo.com/serviceprovider/scan?bookingId=${bookingId}&passCode=${t.passCode}`;
                                 
                                 return (
-                                <div key={idx} className="flex flex-col md:flex-row justify-between items-start md:items-center p-4 border border-emerald-200 rounded-xl bg-emerald-50/20 shadow-sm gap-4">
-                                    <div className="flex-1">
-                                        <p className="font-bold text-gray-900 text-lg flex items-center gap-2 mb-1" style={fontStyle}>
-                                            <Ticket className="w-5 h-5 text-emerald-600 shrink-0" /> {t.name || "Unnamed"}
-                                        </p>
-                                        <div className="text-left mt-2 space-y-0.5" style={fontStyle}>
-                                            {t.email && <p className="text-[10px] font-medium text-gray-500">{t.email}</p>}
-                                            {t.phone && <p className="text-[10px] font-medium text-gray-500">{t.phone}</p>}
-                                            <p className="text-[10px] font-medium text-gray-500 uppercase">
-                                                {t.idType || 'ID'}: <span className="text-gray-900 font-semibold">{t.idNumber || 'N/A'}</span>
-                                            </p>
-                                            <p className="text-[10px] font-medium text-gray-500 uppercase">
-                                                {t.gender || "-"} | {t.age || "-"} yrs {t.bloodGroup ? `| ${t.bloodGroup}` : ''}
-                                            </p>
-                                            {t.country && <p className="text-[10px] font-medium text-gray-500 uppercase">Country: {t.country}</p>}
-                                        </div>
-                                    </div>
-                                    <div className="shrink-0 flex flex-col items-center justify-center p-3 bg-white border border-emerald-100 rounded-2xl shadow-[0_4px_10px_rgba(0,0,0,0.05)]">
+                                <div key={idx} className="flex flex-row items-center p-4 border border-emerald-200 rounded-xl bg-emerald-50/20 shadow-sm gap-4">
+                                    <div className="shrink-0 flex flex-col items-center justify-center p-3 bg-white border border-emerald-100 rounded-2xl shadow-[0_4px_10px_rgba(0,0,0,0.05)] w-[110px] sm:w-[120px]">
                                         <p className="text-[9px] font-semibold text-emerald-800 uppercase tracking-widest mb-2 text-center leading-tight" style={fontStyle}>Entry QR</p>
                                         <div className="p-1 max-w-[100px] w-full bg-white">
                                             <QRCodeSVG value={verifyUrl} size={90} level="M" style={{ width: '100%', height: 'auto' }} />
                                         </div>
-                                        <p className="text-[9px] font-mono font-semibold text-gray-600 mt-2 tracking-widest">{t.passCode || 'CODE'}</p>
+                                        <p className="text-[9px] font-mono font-semibold text-gray-600 mt-2 tracking-widest text-center">{t.passCode || 'CODE'}</p>
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="font-bold text-gray-900 text-lg flex items-center gap-2 mb-1" style={fontStyle}>
+                                            <Ticket className="w-5 h-5 text-emerald-600 shrink-0" /> <span className="truncate">{t.name || "Unnamed"}</span>
+                                        </p>
+                                        <div className="text-left mt-2 space-y-0.5" style={fontStyle}>
+                                            {t.email && <p className="text-[10px] font-medium text-gray-500 truncate">{t.email}</p>}
+                                            {t.phone && <p className="text-[10px] font-medium text-gray-500 truncate">{t.phone}</p>}
+                                            <p className="text-[10px] font-medium text-gray-500 uppercase truncate">
+                                                {t.idType || 'ID'}: <span className="text-gray-900 font-semibold">{t.idNumber || 'N/A'}</span>
+                                            </p>
+                                            <p className="text-[10px] font-medium text-gray-500 uppercase truncate">
+                                                {t.gender || "-"} | {t.age || "-"} yrs {t.bloodGroup ? `| ${t.bloodGroup}` : ''}
+                                            </p>
+                                            {t.country && <p className="text-[10px] font-medium text-gray-500 uppercase truncate">Country: {t.country}</p>}
+                                        </div>
                                     </div>
                                 </div>
                             )})}
