@@ -1,0 +1,236 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ✈ Plane animation */
+@keyframes planeMove {
+  0% {
+    left: -60px;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+.animate-planeMove {
+  animation: planeMove 6s linear infinite;
+}
+
+/* ⬇ Fade-in animation for date picker */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.react-datepicker-popper {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* 🌫 Noise background */
+.bg-noise {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23noiseFilter)' /%3E%3C/svg%3E");
+}
+
+/* 🛑 Remove blue autofill & focus background from inputs */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0px 1000px white inset !important;
+  box-shadow: 0 0 0px 1000px white inset !important;
+  -webkit-text-fill-color: #000 !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* 🚫 Remove blue border highlight on focus */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* 📅 Custom Styled React Datepicker for Theme Compatibility */
+.react-datepicker {
+  background-color: #fff !important;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+  border-radius: 12px !important;
+  font-family: inherit !important;
+}
+
+.react-datepicker__header {
+  background-color: #f0fdf4 !important; /* Extremely light green matching the theme */
+  border-bottom: 1px solid #dcfce7 !important;
+  padding-top: 12px !important;
+}
+
+.react-datepicker__current-month, .react-datepicker-time__header, .react-datepicker-year-header {
+  color: #166534 !important; /* text-green-800 */
+  font-weight: 700 !important;
+  font-size: 1rem !important;
+}
+
+.react-datepicker__day-names {
+  margin-top: 8px !important;
+}
+
+.react-datepicker__day-name {
+  color: #10b981 !important; /* text-emerald-500 */
+  font-weight: 600 !important;
+  width: 2rem !important;
+  line-height: 2rem !important;
+  margin: 0.2rem !important;
+}
+
+.react-datepicker__month {
+  padding: 8px !important;
+}
+
+.react-datepicker__day {
+  width: 2rem !important;
+  line-height: 2rem !important;
+  border-radius: 50% !important;
+  margin: 0.2rem !important;
+  color: #374151 !important; /* text-gray-700 */
+  transition: all 0.2s ease;
+}
+
+.react-datepicker__day:hover {
+  background-color: #d1fae5 !important; /* bg-emerald-100 */
+  color: #065f46 !important;
+}
+
+.react-datepicker__day--selected,
+.react-datepicker__day--keyboard-selected {
+  background-color: #10b981 !important; /* bg-emerald-500 */
+  color: white !important;
+  font-weight: 600 !important;
+}
+
+.react-datepicker__day--selected:hover {
+  background-color: #059669 !important; /* hover:bg-emerald-600 */
+}
+
+.react-datepicker__day--today {
+  font-weight: bolder !important;
+  color: #10b981 !important; /* text-emerald-500 */
+}
+
+.react-datepicker__navigation {
+  top: 10px !important;
+}
+
+.react-datepicker__navigation-icon::before {
+  border-color: #059669 !important; /* arrow color */
+}
+
+.react-datepicker__navigation:hover *::before {
+  border-color: #10b981 !important;
+}
+
+.react-datepicker-popper[data-placement^="bottom"] .react-datepicker__triangle::before {
+  border-bottom-color: #e5e7eb !important;
+}
+
+.react-datepicker-popper[data-placement^="bottom"] .react-datepicker__triangle::after {
+  border-bottom-color: #f0fdf4 !important; /* matching header */
+}
+
+/* 🌙 Dropdown UI for Month and Year (Scroll Mode) */
+.react-datepicker__header__dropdown {
+  display: flex !important;
+  justify-content: center !important;
+  gap: 12px !important;
+  margin-top: 8px !important;
+}
+
+.react-datepicker__month-read-view,
+.react-datepicker__year-read-view {
+  background-color: white !important;
+  border: 1px solid #d1d5db !important; /* border-gray-300 */
+  color: #374151 !important; /* text-gray-700 */
+  font-size: 0.875rem !important; /* text-sm */
+  border-radius: 6px !important; /* rounded-md */
+  padding: 4px 28px 4px 12px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  position: relative !important;
+  display: block !important;
+}
+
+.react-datepicker__month-read-view:hover,
+.react-datepicker__year-read-view:hover {
+  border-color: #10b981 !important; /* hover emerald */
+}
+
+.react-datepicker__month-read-view--down-arrow,
+.react-datepicker__year-read-view--down-arrow {
+  position: absolute !important;
+  right: 12px !important;
+  top: 50% !important;
+  transform: translateY(-50%) rotate(135deg) !important;
+  border-color: #10b981 !important;
+  border-width: 2px 2px 0 0 !important;
+  height: 7px !important;
+  width: 7px !important;
+  margin: 0 !important;
+}
+
+/* The actual dropdown menu */
+.react-datepicker__month-dropdown,
+.react-datepicker__year-dropdown {
+  background-color: white !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 8px !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+  padding: 4px 0 !important;
+  margin-top: 4px !important;
+  color: #374151 !important;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+/* Hovering the options scroll items */
+.react-datepicker__month-option,
+.react-datepicker__year-option {
+  padding: 6px 12px !important;
+  cursor: pointer !important;
+  transition: background-color 0.2s !important;
+}
+
+.react-datepicker__month-option:hover,
+.react-datepicker__year-option:hover {
+  background-color: #d1fae5 !important; /* light emerald hover */
+  color: #065f46 !important;
+}
+
+/* Selected option */
+.react-datepicker__month-option--selected_month,
+.react-datepicker__year-option--selected_year {
+  background-color: #10b981 !important;
+  color: white !important;
+  font-weight: bold !important;
+}
+/* ... existing styles ... */
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
