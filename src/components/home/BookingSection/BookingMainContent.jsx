@@ -2,7 +2,7 @@
 import { useMemo, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import { FaClipboardList, FaUsers, FaHeart, FaFilter, FaCalendarAlt, FaHistory } from 'react-icons/fa';
+import { FaClipboardList, FaUsers, FaHeart, FaFilter, FaCalendarAlt, FaHistory, FaChevronLeft } from 'react-icons/fa';
 import BookingCard from 'src/components/home/BookingSection/BookingCard';
 const BookingMainContent = () => {
   const router = useRouter();
@@ -187,9 +187,14 @@ const BookingMainContent = () => {
       {/* MAIN CONTENT */}
       <main className="flex-1 w-full max-w-full overflow-hidden min-h-[500px]">
         <SectionHeader>
-          <div>
-             <h2 className="text-2xl sm:text-3xl font-black text-gray-900">My Bookings</h2>
-             <p className="text-sm font-semibold text-gray-500 mt-1">Manage and track your travel experiences.</p>
+          <div className="flex items-center gap-3">
+             <button onClick={() => router.back()} className="p-2 sm:p-2.5 rounded-full bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-emerald-600 transition-colors shadow-sm hidden md:block">
+                <FaChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+             </button>
+             <div>
+                <h2 className="text-2xl sm:text-3xl font-black text-gray-900 leading-none">My Bookings</h2>
+                <p className="text-sm font-semibold text-gray-500 mt-1">Manage and track your travel experiences.</p>
+             </div>
           </div>
           <button
             onClick={() => setShowFilters(!showFilters)}

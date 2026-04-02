@@ -126,7 +126,16 @@ const TrekGuideDetails = ({ guide }) => {
         const res = await fetch('/api/user/saved', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ itemId: guide._id, itemType: 'trek' }),
+          body: JSON.stringify({ 
+            itemId: guide._id, 
+            itemType: 'trek',
+            config: {
+               date: selectedStartDate || null,
+               peopleCount: count,
+               category: category,
+               days: days
+            }
+          }),
         });
         if (res.ok) { setIsSaved(true); setShowSaveToast(true); setTimeout(() => setShowSaveToast(false), 5000); }
       }

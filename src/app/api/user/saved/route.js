@@ -3,6 +3,8 @@ import { getCurrentUser } from '@/lib/auth';
 import dbConnect from '@/lib/db';
 import { Saved } from '@/models/saved.model';
 import { Package } from '@/models/package.model';
+import { Event } from '@/models/event.model';
+import { Guide } from '@/models/guide.model';
 
 export async function GET(request) {
     try {
@@ -19,9 +21,20 @@ export async function GET(request) {
         const populatedItems = await Promise.all(savedRecords.map(async (record) => {
             let itemData = null;
             if (record.itemType === 'trip' || record.itemType === 'trek') {
-                itemData = await Package.findById(record.itemId).select('title name destination label days packageCategory pricingTiers photos coverImage images').lean();
+                itemData = await Package.findById(record.itemId).select('title name destination label days packageCategory pricingTiers photos coverImage images provider providerId').lean();
+            } else if (record.itemType === 'event') {
+                itemData = await Event.findById(record.itemId)
+                    .select('title eventType destination date duration pricePerSlot poster photographs location totalSlots bookedSlots guide')
+                    .populate({ path: 'guide', select: 'companyName firstName lastName' })
+                    .lean();
+                if (itemData) {
+                    itemData.name = itemData.title;
+                    itemData.coverImage = itemData.poster || (itemData.photographs && itemData.photographs[0]) || '';
+                    itemData.price = itemData.pricePerSlot;
+                    itemData.organizer = itemData.guide?.companyName || (itemData.guide ? `${itemData.guide.firstName} ${itemData.guide.lastName}` : 'System Guide');
+                    itemData.slotsRemaining = Math.max(0, (itemData.totalSlots || 0) - (itemData.bookedSlots || 0));
+                }
             }
-            // Add 'event' handling if event model exists
             
             return {
                 ...record,
@@ -47,7 +60,7 @@ export async function POST(request) {
         }
 
         const body = await request.json();
-        const { itemId, itemType } = body;
+        const { itemId, itemType, config } = body;
 
         if (!itemId || !itemType) {
             return NextResponse.json({ success: false, message: "Missing required fields" }, { status: 400 });
@@ -57,13 +70,18 @@ export async function POST(request) {
         
         const existing = await Saved.findOne({ userId: user.userId, itemId });
         if (existing) {
-             return NextResponse.json({ success: true, message: "Already saved" });
+             if (config) {
+                 existing.config = config;
+                 await existing.save();
+             }
+             return NextResponse.json({ success: true, message: "Already saved", saved: existing });
         }
 
         const savedItem = await Saved.create({
             userId: user.userId,
             itemId,
-            itemType
+            itemType,
+            config: config || {}
         });
 
         return NextResponse.json({ success: true, saved: savedItem });

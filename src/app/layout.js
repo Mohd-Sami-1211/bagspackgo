@@ -27,6 +27,7 @@ export default function RootLayout({ children }) {
     pathname?.includes('/trekdetails') ||
     pathname?.includes('/eventdetails') ||
     pathname?.includes('/bookings') ||
+    pathname?.includes('/saved') ||
     pathname?.includes('/help') ||
     pathname?.includes('/signin') ||
     pathname?.includes('/signup') ||

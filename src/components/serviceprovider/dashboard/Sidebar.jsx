@@ -34,7 +34,7 @@ export default function Sidebar({ isCollapsed, onClose, isMobile }) {
   const handleLogout = async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
-      window.location.href = '/auth/provider/login';
+      window.location.href = '/';
     } catch {
       window.location.href = '/';
     }
