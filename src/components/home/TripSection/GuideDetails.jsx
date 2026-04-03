@@ -920,7 +920,10 @@ const GuideDetails = ({ guide }) => {
                                   : "border-green-300 bg-green-50 ring-1 ring-green-100 shadow-lg"
                                 : "border-gray-200 hover:border-gray-300 hover:shadow-md"
                               } cursor-pointer`}
-                            onClick={() => handleDayNodeClick(dayNum)}
+                            onClick={() => {
+                              handleDayNodeClick(dayNum);
+                              handleViewDay(dayNum);
+                            }}
                           >
                             <div className="flex justify-between items-start">
                               <div className="w-full">

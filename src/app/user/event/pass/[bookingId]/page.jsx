@@ -131,20 +131,20 @@ export default function EventPassPage() {
 
                 {/* ═══════ HEADER ═══════ */}
                 <div className="p-5 sm:p-8 sm:pb-6 bg-white shrink-0 print-section">
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8 border-b-2 border-gray-100 pb-6 sm:pb-8">
-                        <div className="mb-4 sm:mb-0 flex flex-col items-start">
+                    <div className="flex flex-row justify-between items-center mb-6 sm:mb-8 border-b-2 border-gray-100 pb-6 sm:pb-8 gap-4">
+                        <div className="flex flex-col items-center sm:items-start min-w-0">
                            <div className="mb-1 sm:mb-2">
-                                <Image src="/images/logo.svg" alt="bagspackgo" width={180} height={48} priority className="sm:w-[148px] h-auto block" />
+                                <Image src="/images/logo.svg" alt="bagspackgo" width={140} height={38} priority className="w-[100px] sm:w-[148px] h-auto block" />
                            </div>
-                           <p className="text-gray-500 font-semibold text-xs sm:text-sm tracking-wide" style={fontStyle}>Official Event E-Ticket</p>
+                           <p className="text-gray-500 font-semibold text-[8px] sm:text-sm tracking-wide text-center sm:text-left" style={fontStyle}>Official Event E-Ticket</p>
                         </div>
-                        <div className="sm:text-right">
-                            <p className="text-[9px] sm:text-[10px] font-semibold text-gray-400 uppercase tracking-[0.2em] mb-1" style={fontStyle}>Booking Reference</p>
-                            <h2 className="text-2xl sm:text-3xl font-black text-gray-900 font-mono tracking-wider break-all">{(booking.id || bookingId).substring(0,8).toUpperCase()}</h2>
-                            <div className="flex flex-col sm:items-end mt-2 gap-1.5">
-                                <span className="text-[10px] sm:text-xs font-semibold text-emerald-600 uppercase tracking-widest px-3 py-1 bg-emerald-50 inline-block rounded-full border border-emerald-100" style={fontStyle}>Payment Confirmed</span>
-                                <span className="text-[9px] sm:text-[10px] font-medium text-gray-500 flex items-center gap-1" style={fontStyle}>
-                                    <Calendar className="w-3 h-3 text-emerald-500" /> Booked: {booking.bookingDate || booking.createdAt ? `${new Date(booking.bookingDate || booking.createdAt).toLocaleDateString('en-GB')} at ${new Date(booking.bookingDate || booking.createdAt).toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'})}` : 'Unknown'}
+                        <div className="flex flex-col items-end shrink-0 text-right">
+                            <p className="text-[8px] sm:text-[10px] font-semibold text-gray-400 uppercase tracking-[0.1em] sm:tracking-[0.2em] mb-0.5 sm:mb-1" style={fontStyle}>Booking Ref</p>
+                            <h2 className="text-sm sm:text-3xl font-black text-gray-900 font-mono tracking-tight sm:tracking-wider break-all">{(booking.id || bookingId).substring(0,8).toUpperCase()}</h2>
+                            <div className="flex flex-col items-end mt-1 sm:mt-2 gap-1.5">
+                                <span className="text-[7px] sm:text-xs font-semibold text-emerald-600 uppercase mt-1 sm:mt-2 px-1.5 sm:px-3 py-0.5 sm:py-1 bg-emerald-50 inline-block rounded-full border border-emerald-100" style={fontStyle}>Confirmed</span>
+                                <span className="text-[8px] sm:text-[10px] font-medium text-gray-500 flex items-center gap-1 justify-end" style={fontStyle}>
+                                    <Calendar className="w-2 h-2 sm:w-3 sm:h-3 text-emerald-500" /> {booking.bookingDate || booking.createdAt ? new Date(booking.bookingDate || booking.createdAt).toLocaleDateString('en-GB') : 'Unknown'}
                                 </span>
                             </div>
                         </div>

@@ -91,7 +91,7 @@ const PersonalDetails = ({
 
     let loadedFromSession = false;
     try {
-      const saved = sessionStorage.getItem("temp_personal_details");
+      const saved = localStorage.getItem("temp_personal_details");
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed.category === category && parsed.totalTravellers === totalTravellers) {
@@ -128,7 +128,7 @@ const PersonalDetails = ({
         const { idImage, idImagePreview, ...rest } = p;
         return rest;
       });
-      sessionStorage.setItem("temp_personal_details", JSON.stringify({
+      localStorage.setItem("temp_personal_details", JSON.stringify({
         category, totalTravellers, contactDetails, personalDetails: safePersonalDetails
       }));
     }

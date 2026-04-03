@@ -143,7 +143,7 @@ const TripSearchInput = memo(forwardRef(({ compactMode = false, onSearch }, ref)
           {/* Left Section - Destination and Category */}
           <motion.div 
             variants={itemVariants} 
-            className="flex-[1.2] bg-[#C3EFE6] rounded-xl p-2.5 sm:p-3 space-y-2 sm:space-y-3 w-full md:w-auto"
+            className="flex-[1.2] bg-[#C3EFE6] rounded-xl p-2.5 sm:p-3 space-y-2 sm:space-y-3 w-full md:w-auto relative z-10"
           >
             <DestinationSelect
               selectedDestination={selectedDestination}
@@ -160,7 +160,7 @@ const TripSearchInput = memo(forwardRef(({ compactMode = false, onSearch }, ref)
           {/* Right Section - Counters, Date and Search */}
           <motion.div 
             variants={itemVariants} 
-            className="flex-[2] bg-[#C3EFE6] rounded-xl p-2.5 sm:p-3 flex flex-col justify-between w-full md:w-auto"
+            className="flex-[2] bg-[#C3EFE6] rounded-xl p-2.5 sm:p-3 flex flex-col justify-between w-full md:w-auto relative z-20"
           >
             <CountersSection 
               daysRange={daysRange} 
@@ -193,6 +193,7 @@ const TripSearchInput = memo(forwardRef(({ compactMode = false, onSearch }, ref)
                     </motion.div>
                   }
                   dateFormat="dd/MM/yyyy"
+                  minDate={new Date()}
                   showMonthDropdown
                   showYearDropdown
                   dropdownMode="scroll"

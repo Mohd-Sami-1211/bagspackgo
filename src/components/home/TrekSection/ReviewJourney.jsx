@@ -227,6 +227,10 @@ const ReviewTrek = ({ guide, searchParams }) => {
         const verifyData = await verifyRes.json();
         if (!verifyData.success)
           throw new Error(verifyData.message || "Verification failed");
+
+        // Clear pending booking data on success
+        localStorage.removeItem("pending_booking");
+
         router.push(
           `/user/trek/booking-success?bookingId=${bookingId}&ref=${verifyData.bookingRef}`,
         );

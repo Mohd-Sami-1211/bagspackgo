@@ -256,3 +256,9 @@ select option:hover {
   background-color: #d1fae5 !important;
   color: #065f46 !important;
 }
+/* Ensure the DatePicker popper always sits above local form elements */
+.react-datepicker-popper {
+  z-index: 9999 !important;
+}
+
+

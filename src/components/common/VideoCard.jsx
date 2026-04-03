@@ -74,12 +74,11 @@ const VideoCard = ({
               <video
                 ref={videoRef}
                 src={media.src}
-                poster={media.poster}
                 className="h-full w-full object-cover"
                 loop
                 muted
                 playsInline
-                preload="metadata"
+                preload="auto"
               />
             </div>
           </motion.div>

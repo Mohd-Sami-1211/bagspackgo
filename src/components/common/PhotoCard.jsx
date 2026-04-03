@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Image from 'next/image';
@@ -15,21 +15,44 @@ const PhotoCard = ({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [direction, setDirection] = useState(1);
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
   
-  const nextSlide = (e) => {
+  const nextSlide = useCallback((e) => {
     e?.stopPropagation();
     setDirection(1);
     setCurrentIndex((prev) => (prev + 1) % images.length);
-  };
+  }, [images.length]);
 
-  const prevSlide = (e) => {
+  const prevSlide = useCallback((e) => {
     e?.stopPropagation();
     setDirection(-1);
     setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
-  };
+  }, [images.length]);
 
   const toggleFlip = () => {
     setIsFlipped(!isFlipped);
+  };
+
+  // Touch swipe handlers
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchMove = (e) => {
+    touchEndX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    if (isFlipped) return;
+    const diff = touchStartX.current - touchEndX.current;
+    if (Math.abs(diff) > 40) {
+      if (diff > 0) {
+        nextSlide();
+      } else {
+        prevSlide();
+      }
+    }
   };
 
   useEffect(() => {
@@ -44,62 +67,80 @@ const PhotoCard = ({
   }, [autoSlide, isFlipped, images.length]);
 
   return (
-    <div className="relative h-full w-full cursor-pointer" onClick={toggleFlip}>
-      <AnimatePresence mode="popLayout" custom={direction}>
-        {!isFlipped ? (
-          <motion.div
-            key={`front-${currentIndex}`}
-            custom={direction}
-            initial={{ opacity: 0, x: direction > 0 ? 50 : -50 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: direction > 0 ? -50 : 50 }}
-            transition={{ 
-              type: "spring",
-              stiffness: 300,
-              damping: 30,
-              duration: 0.8
-            }}
-            className="absolute inset-0 group"
-          >
-            <div className="relative h-full w-full overflow-hidden rounded-xl shadow-lg">
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent z-10" />
-              <div className="absolute bottom-4 left-4 z-20">
-                <h3 className="text-2xl font-bold text-white">{name}</h3>
-              </div>
-              
+    <div
+      className="relative h-full w-full cursor-pointer"
+      onClick={toggleFlip}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
+      {!isFlipped ? (
+        <div className="relative h-full w-full overflow-hidden rounded-xl shadow-lg border border-gray-100 bg-gray-50">
+          {/* Static Overlays - Now outside AnimatePresence so they don't slide */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent z-10 pointer-events-none" />
+          
+          <div className="absolute bottom-4 left-4 z-20 pr-16 bg-gradient-to-t from-black/20 to-transparent p-1 rounded-lg">
+            <h3 className="text-2xl font-bold text-white leading-tight drop-shadow-md">{name}</h3>
+          </div>
+          
+          <div className="absolute bottom-3 right-3 z-20 bg-black/40 backdrop-blur-sm rounded-full px-2.5 py-1 text-white text-[10px] font-medium sm:hidden">
+            tap
+          </div>
+
+          <AnimatePresence mode="wait" custom={direction}>
+            <motion.div
+              key={currentIndex}
+              custom={direction}
+              initial={{ opacity: 0, x: direction > 0 ? 50 : -50 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: direction > 0 ? -50 : 50 }}
+              transition={{ 
+                type: "spring",
+                stiffness: 300,
+                damping: 30,
+                duration: 0.8
+              }}
+              className="absolute inset-0"
+            >
               <Image
                 src={images[currentIndex]}
                 alt={name}
                 fill
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                className="object-cover transition-transform duration-500 group-hover:scale-110"
-                loading="lazy"
+                className="object-cover transition-transform duration-500 hover:scale-105"
+                priority
               />
+            </motion.div>
+          </AnimatePresence>
 
-              <button
-                onClick={(e) => prevSlide(e)}
-                className="hidden md:flex absolute left-2 top-1/2 -translate-y-1/2 bg-black/30 p-2 rounded-full z-30 opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                <ChevronLeft className="text-white" size={20} />
-              </button>
-              <button
-                onClick={(e) => nextSlide(e)}
-                className="hidden md:flex absolute right-2 top-1/2 -translate-y-1/2 bg-black/30 p-2 rounded-full z-30 opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                <ChevronRight className="text-white" size={20} />
-              </button>
-              
-              <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-2 z-30">
-                {images.map((_, imgIndex) => (
-                  <div
-                    key={imgIndex}
-                    className={`w-2 h-2 rounded-full transition-all ${currentIndex === imgIndex ? 'bg-white' : 'bg-white/50'}`}
-                  />
-                ))}
-              </div>
-            </div>
-          </motion.div>
-        ) : (
+          {/* Navigation Buttons - Also outside AnimatePresence */}
+          <button
+            onClick={(e) => prevSlide(e)}
+            className="hidden md:flex absolute left-2 top-1/2 -translate-y-1/2 bg-black/30 p-2 rounded-full z-30 opacity-0 hover:bg-black/50 transition-all pointer-events-auto"
+            style={{ opacity: 1 }} // Force visible on hover of the parent
+          >
+            <ChevronLeft className="text-white" size={20} />
+          </button>
+          
+          <button
+            onClick={(e) => nextSlide(e)}
+            className="hidden md:flex absolute right-2 top-1/2 -translate-y-1/2 bg-black/30 p-2 rounded-full z-30 opacity-0 hover:bg-black/50 transition-all pointer-events-auto"
+            style={{ opacity: 1 }}
+          >
+            <ChevronRight className="text-white" size={20} />
+          </button>
+          
+          <div className="hidden md:flex absolute bottom-2 left-1/2 transform -translate-x-1/2 space-x-2 z-30">
+            {images.map((_, imgIndex) => (
+              <div
+                key={imgIndex}
+                className={`w-2 h-2 rounded-full transition-all ${currentIndex === imgIndex ? 'bg-white' : 'bg-white/50'}`}
+              />
+            ))}
+          </div>
+        </div>
+      ) : (
+        <AnimatePresence mode="wait">
           <motion.div
             key="back"
             initial={{ rotateY: 90, opacity: 0 }}
@@ -116,8 +157,8 @@ const PhotoCard = ({
             <h3 className="text-2xl font-bold mb-4">{name}</h3>
             <p className="leading-relaxed">{description}</p>
           </motion.div>
-        )}
-      </AnimatePresence>
+        </AnimatePresence>
+      )}
     </div>
   );
 };

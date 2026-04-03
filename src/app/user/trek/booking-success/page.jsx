@@ -53,7 +53,7 @@ function BookingSuccessContent() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
+            <div className="fixed inset-0 z-50 bg-gray-50 flex flex-col items-center justify-center p-4">
                 <div className="w-12 h-12 border-4 border-emerald-100 border-t-emerald-600 rounded-full animate-spin mb-4" />
                 <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">Retrieving Booking Details...</p>
             </div>

@@ -39,7 +39,7 @@ function TripDetailsContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#F2FFFC] w-full flex flex-col items-center justify-center gap-4 -mt-20">
+      <div className="fixed inset-0 z-50 bg-[#F2FFFC] w-full flex flex-col items-center justify-center gap-4">
         <div className="w-10 h-10 border-[3px] border-emerald-100 border-t-emerald-600 rounded-full animate-spin" />
         <p className="text-[13px] font-medium text-gray-400">Loading package details...</p>
       </div>
@@ -63,7 +63,7 @@ function TripDetailsContent() {
 export default function TripDetailsPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-[#F2FFFC] w-full flex flex-col items-center justify-center gap-4 -mt-20">
+      <div className="fixed inset-0 z-50 bg-[#F2FFFC] w-full flex flex-col items-center justify-center gap-4">
         <div className="w-10 h-10 border-[3px] border-emerald-100 border-t-emerald-600 rounded-full animate-spin" />
         <p className="text-[13px] font-medium text-gray-400">Loading package details...</p>
       </div>

@@ -1,5 +1,5 @@
 'use client';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Image from 'next/image';
@@ -52,25 +52,46 @@ const curvePath = "M0,0 C80,120 120,80 200,0 H0";
 export default function AdContent() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [direction, setDirection] = useState(1);
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
 
   const nextSlide = useCallback(() => {
     setDirection(1);
     setCurrentSlide(prev => (prev === promotions.length - 1 ? 0 : prev + 1));
   }, []);
 
-  const prevSlide = () => {
+  const prevSlide = useCallback(() => {
     setDirection(-1);
     setCurrentSlide(prev => (prev === 0 ? promotions.length - 1 : prev - 1));
-  };
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(nextSlide, 6000);
     return () => clearInterval(interval);
   }, [nextSlide]);
 
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+  const handleTouchMove = (e) => {
+    touchEndX.current = e.touches[0].clientX;
+  };
+  const handleTouchEnd = () => {
+    const diff = touchStartX.current - touchEndX.current;
+    if (Math.abs(diff) > 40) {
+      if (diff > 0) nextSlide();
+      else prevSlide();
+    }
+  };
+
   return (
     <section className="relative -mt-4 mx-4 ">
-      <div className="w-full md:w-[96%] mx-auto relative overflow-hidden rounded-2xl shadow-2xl">
+      <div
+        className="w-full md:w-[96%] mx-auto relative overflow-hidden rounded-2xl shadow-2xl"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
 
         <AnimatePresence custom={direction} mode="wait">
           {promotions.map((promo, index) =>

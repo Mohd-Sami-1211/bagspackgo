@@ -122,11 +122,13 @@ const EventDetails = ({ event }) => {
   useEffect(() => {
     if (!isInitialized) {
        try {
-         const saved = sessionStorage.getItem("temp_event_booking");
+         const saved = localStorage.getItem("temp_event_booking");
          if (saved) {
              const parsed = JSON.parse(saved);
              if (parsed && typeof parsed === 'object') {
-                setFormData(parsed);
+                if (parsed.formData) setFormData(parsed.formData);
+                if (parsed.bookingSlots) setBookingSlots(parsed.bookingSlots);
+                if (parsed.selectedPickup) setSelectedPickup(parsed.selectedPickup);
              }
          }
        } catch (e) {}
@@ -148,7 +150,12 @@ const EventDetails = ({ event }) => {
 
   useEffect(() => {
     if (!isInitialized) return;
-    sessionStorage.setItem('temp_event_booking', JSON.stringify(formData));
+    const saveObj = {
+        formData,
+        bookingSlots,
+        selectedPickup
+    };
+    localStorage.setItem('temp_event_booking', JSON.stringify(saveObj));
     
     // Resume unfinished booking logic
     const hasData = formData.contactDetails.email || formData.contactDetails.phone || formData.participants[0]?.name;
@@ -166,7 +173,7 @@ const EventDetails = ({ event }) => {
          localStorage.setItem('pending_booking', JSON.stringify(parsedPending));
       }
     }
-  }, [formData, isInitialized, currentView]);
+  }, [formData, bookingSlots, selectedPickup, isInitialized, currentView]);
 
   useEffect(() => {
     if (currentView === 'booking') {
@@ -376,7 +383,7 @@ const EventDetails = ({ event }) => {
           if (!verifyData.success) throw new Error('Payment verification failed');
           
           localStorage.removeItem('pending_booking');
-          sessionStorage.removeItem('temp_event_booking');
+          localStorage.removeItem('temp_event_booking');
           router.push(`/user/event/booking-success?bookingId=${bookingId}`);
           return;
       }
@@ -402,7 +409,7 @@ const EventDetails = ({ event }) => {
           const verifyData = await verifyRes.json();
           if (verifyData.success) {
             localStorage.removeItem('pending_booking');
-            sessionStorage.removeItem('temp_event_booking');
+            localStorage.removeItem('temp_event_booking');
             router.push(`/user/event/booking-success?bookingId=${bookingId}`);
           } else {
             alert(verifyData.message || 'Payment verification failed');
@@ -778,7 +785,7 @@ const EventDetails = ({ event }) => {
               {/* ── Event Summary Sticky Block (Right) ── */}
               <div className="w-full lg:w-[35%] lg:sticky lg:top-28">
                 <div className="bg-white rounded-2xl border border-gray-200 shadow-xl shadow-gray-200/40 overflow-hidden">
-                  <div className="p-6 border-b border-gray-100 bg-white">
+                  <div className="hidden lg:block p-6 border-b border-gray-100 bg-white">
                     <h3 className="font-bold text-gray-900 text-lg mb-6">Event Summary</h3>
                     <div className="w-full h-44 rounded-xl overflow-hidden mb-5 border border-gray-100 shadow-sm relative">
                       <img src={event.image || '/images/EventCover.webp'} alt={event.name} className="w-full h-full object-cover" />
@@ -911,9 +918,9 @@ const EventDetails = ({ event }) => {
                           {(() => {
                             return (
                               <div className="space-y-5">
-                                <div className="flex justify-between items-center text-gray-700 font-bold">
-                                  <span>Booking Amount ({bookingSlots} {bookingSlots === 1 ? 'slot' : 'slots'})</span>
-                                  <span className="text-gray-900">₹{subtotal.toLocaleString()}</span>
+                                <div className="flex justify-between items-start gap-4 text-gray-700 font-bold text-sm sm:text-base">
+                                  <span className="flex-1">Booking Amount ({bookingSlots} {bookingSlots === 1 ? 'slot' : 'slots'})</span>
+                                  <span className="text-gray-900 whitespace-nowrap">₹{subtotal.toLocaleString()}</span>
                                 </div>
 
                                 <div className="pt-2 border-t border-emerald-100/50">
@@ -921,12 +928,12 @@ const EventDetails = ({ event }) => {
                                     onClick={() => setShowFeeDetails(!showFeeDetails)}
                                     className="flex items-center justify-between w-full text-gray-500 hover:text-emerald-700 transition-colors group"
                                   >
-                                    <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide">
-                                      <Info size={14} className="text-emerald-500" />
-                                      Convenience Fees
-                                      <ChevronDown size={14} className={`transition-transform duration-300 ${showFeeDetails ? 'rotate-180' : ''}`} />
+                                    <div className="flex items-center gap-2 text-xs sm:text-sm font-bold uppercase tracking-wide flex-1 min-w-0">
+                                      <Info size={14} className="text-emerald-500 flex-shrink-0" />
+                                      <span className="truncate">Convenience Fees</span>
+                                      <ChevronDown size={14} className={`flex-shrink-0 transition-transform duration-300 ${showFeeDetails ? 'rotate-180' : ''}`} />
                                     </div>
-                                    <span className="font-bold">₹{totalFees.toLocaleString()}</span>
+                                    <span className="font-bold whitespace-nowrap ml-2">₹{totalFees.toLocaleString()}</span>
                                   </button>
 
                                   <AnimatePresence>
@@ -939,17 +946,17 @@ const EventDetails = ({ event }) => {
                                         className="overflow-hidden"
                                       >
                                         <div className="mt-3 space-y-2.5 pl-6 pr-2 py-3 bg-white/50 rounded-xl border border-emerald-100/30">
-                                          <div className="flex justify-between text-xs font-medium text-gray-500">
-                                            <span>Platform Charges (3%)</span>
-                                            <span>₹{platformFee.toLocaleString()}</span>
+                                          <div className="flex justify-between items-center gap-4 text-[11px] sm:text-xs font-medium text-gray-500">
+                                            <span className="flex-1">Platform Charges (3%)</span>
+                                            <span className="whitespace-nowrap">₹{platformFee.toLocaleString()}</span>
                                           </div>
-                                          <div className="flex justify-between text-xs font-medium text-gray-500">
-                                            <span>Gateway Charges (2%)</span>
-                                            <span>₹{gatewayFee.toLocaleString()}</span>
+                                          <div className="flex justify-between items-center gap-4 text-[11px] sm:text-xs font-medium text-gray-500">
+                                            <span className="flex-1">Gateway Charges (2%)</span>
+                                            <span className="whitespace-nowrap">₹{gatewayFee.toLocaleString()}</span>
                                           </div>
-                                          <div className="flex justify-between text-xs font-medium text-gray-500">
-                                            <span>GST on Gateway (18%)</span>
-                                            <span>₹{gstOnGateway.toLocaleString()}</span>
+                                          <div className="flex justify-between items-center gap-4 text-[11px] sm:text-xs font-medium text-gray-500">
+                                            <span className="flex-1">GST on Gateway (18%)</span>
+                                            <span className="whitespace-nowrap">₹{gstOnGateway.toLocaleString()}</span>
                                           </div>
                                         </div>
                                       </motion.div>
@@ -958,9 +965,9 @@ const EventDetails = ({ event }) => {
                                 </div>
 
                                 <div className="mt-8 pt-6 border-t border-emerald-200">
-                                  <div className="flex justify-between items-end mb-6">
-                                    <span className="text-lg font-bold text-gray-900">Total Payable</span>
-                                    <span className="text-4xl font-black text-emerald-600 leading-none">₹{totalPayable.toLocaleString()}</span>
+                                  <div className="flex justify-between items-baseline mb-6 gap-4">
+                                    <span className="text-base sm:text-lg font-bold text-gray-900">Total Payable</span>
+                                    <span className="text-3xl sm:text-4xl font-black text-emerald-600 leading-none whitespace-nowrap">₹{totalPayable.toLocaleString()}</span>
                                   </div>
                                   <button onClick={handleBooking} disabled={isProcessingPayment} className="w-full bg-gray-900 hover:bg-black text-white font-bold py-4 sm:py-5 rounded-2xl transition-all shadow-xl shadow-gray-900/20 text-lg flex items-center justify-center gap-3 relative overflow-hidden focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2 disabled:opacity-80 active:scale-[0.98]">
                                     {isProcessingPayment ? (
