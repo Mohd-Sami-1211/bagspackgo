@@ -15,7 +15,7 @@ className="text-center mb-10"
 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4"
 initial={{ scale: 0.9 }}
 whileInView={{ scale: 1 }}
-transition={{ duration: 0.5, delay: 0.2, type: "spring", stiffness: 100 }}
+transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
 >
 Frequently Asked <span className="text-green-600">Questions</span>
 </motion.h2>
@@ -23,7 +23,7 @@ Frequently Asked <span className="text-green-600">Questions</span>
 className="h-1 bg-gradient-to-r from-amber-400 to-amber-600 mx-auto w-24 rounded-full mb-8"
 initial={{ width: 0 }}
 whileInView={{ width: 96 }}
-transition={{ duration: 0.8, delay: 0.3, type: "spring", stiffness: 50 }}
+transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
 />
 
     <motion.div

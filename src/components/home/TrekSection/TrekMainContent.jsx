@@ -218,6 +218,9 @@ const AdventureSlider = () => {
   const sectionRef  = useRef(null);
   const isVisible   = useInView(sectionRef, { once: false, margin: '-80px' });
 
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
+
   const startAutoSlide = useCallback(() => {
     clearInterval(intervalRef.current);
     intervalRef.current = setInterval(() => {
@@ -232,13 +235,28 @@ const AdventureSlider = () => {
     return () => clearInterval(intervalRef.current);
   }, [isVisible, isFlipped, startAutoSlide]);
 
-  const go = (delta) => {
+  const go = useCallback((delta) => {
     if (isFlipped) return;
     setIsFlipped(false);
     setDirection(delta);
     setCurrentIndex(prev => (prev + delta + adventures.length) % adventures.length);
     clearInterval(intervalRef.current);
     if (isVisible) startAutoSlide();
+  }, [adventures.length, isFlipped, isVisible, startAutoSlide]);
+
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+  const handleTouchMove = (e) => {
+    touchEndX.current = e.touches[0].clientX;
+  };
+  const handleTouchEnd = () => {
+    if (isFlipped) return;
+    const diff = touchStartX.current - touchEndX.current;
+    if (Math.abs(diff) > 40) {
+      if (diff > 0) go(1);
+      else go(-1);
+    }
   };
 
   return (
@@ -247,7 +265,12 @@ const AdventureSlider = () => {
         <SectionHeading pre="Trekker's" accent="Paradise" />
 
         <div className="relative">
-          <div className="relative h-[240px] sm:h-[380px] md:h-[460px] rounded-2xl sm:rounded-3xl overflow-hidden shadow-xl">
+          <div 
+            className="relative h-[240px] sm:h-[380px] md:h-[460px] rounded-2xl sm:rounded-3xl overflow-hidden shadow-xl"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
             <AnimatePresence mode="wait" custom={direction}>
               <motion.div
                 key={currentIndex}
@@ -256,7 +279,7 @@ const AdventureSlider = () => {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: direction > 0 ? -60 : 60 }}
                 transition={{ type: 'spring', stiffness: 260, damping: 26 }}
-                className="absolute inset-0"
+                className="absolute inset-0 group"
               >
                 <VideoCard
                   media={adventures[currentIndex].media}
@@ -270,16 +293,22 @@ const AdventureSlider = () => {
               </motion.div>
             </AnimatePresence>
           </div>
-
+          {!isFlipped && (
+            <div className="flex justify-center gap-2 mt-4 sm:mt-6">
+              {adventures.map((_, i) => (
+                <button 
+                  key={i} 
+                  onClick={() => { setCurrentIndex(i); clearInterval(intervalRef.current); if (isVisible) startAutoSlide(); }} 
+                  className={`h-1.5 sm:h-2 rounded-full transition-all duration-300 ${i === currentIndex ? 'bg-green-500 w-6 sm:w-8' : 'bg-gray-300 w-1.5 sm:w-2'}`} 
+                  aria-label={`Go to slide ${i + 1}`}
+                />
+              ))}
+            </div>
+          )}
           {!isFlipped && (
             <>
-              <button onClick={() => go(-1)} aria-label="Prev" className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/85 backdrop-blur p-2 rounded-full z-20 shadow-lg hover:bg-white transition-all active:scale-95"><ChevronLeft size={20} /></button>
-              <button onClick={() => go(1)}  aria-label="Next" className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/85 backdrop-blur p-2 rounded-full z-20 shadow-lg hover:bg-white transition-all active:scale-95"><ChevronRight size={20} /></button>
-              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 z-20">
-                {adventures.map((_, i) => (
-                  <button key={i} onClick={() => { setCurrentIndex(i); clearInterval(intervalRef.current); if (isVisible) startAutoSlide(); }} className={`h-2 rounded-full transition-all duration-300 ${i === currentIndex ? 'bg-green-500 w-6' : 'bg-white/70 w-2'}`} />
-                ))}
-              </div>
+              <button onClick={() => go(-1)} aria-label="Prev" className="absolute left-2 top-[calc(50%-20px)] -translate-y-1/2 bg-white/85 backdrop-blur p-2 rounded-full z-20 shadow-lg hover:bg-white transition-all active:scale-95"><ChevronLeft size={20} /></button>
+              <button onClick={() => go(1)} aria-label="Next" className="absolute right-2 top-[calc(50%-20px)] -translate-y-1/2 bg-white/85 backdrop-blur p-2 rounded-full z-20 shadow-lg hover:bg-white transition-all active:scale-95"><ChevronRight size={20} /></button>
             </>
           )}
         </div>

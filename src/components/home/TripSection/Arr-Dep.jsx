@@ -70,7 +70,7 @@ const ArrDep = ({ defaultLocation, onNext, onBack, startDate, duration, pickupDr
     if (!isInitialized) {
        let loadedFromSession = false;
        try {
-         const saved = sessionStorage.getItem("temp_arr_dep_details");
+         const saved = localStorage.getItem("temp_arr_dep_details");
          if (saved) {
            const parsed = JSON.parse(saved);
            if (parsed) {
@@ -97,7 +97,7 @@ const ArrDep = ({ defaultLocation, onNext, onBack, startDate, duration, pickupDr
                     formData.departure.city || formData.departure.dropoffAddress || formData.departure.time;
     
     if (hasData) {
-      sessionStorage.setItem("temp_arr_dep_details", JSON.stringify(formData));
+      localStorage.setItem("temp_arr_dep_details", JSON.stringify(formData));
       
       const pendingData = localStorage.getItem('pending_booking');
       let parsedPending = pendingData ? JSON.parse(pendingData) : { ignored: false };

@@ -219,7 +219,7 @@ const TrekSearchInput = memo(forwardRef((props, ref) => {
           {/* Left Section - Destination and Trek */}
           <motion.div
             variants={itemVariants}
-            className="flex-[1.2] bg-[#C3EFE6] rounded-xl p-2.5 sm:p-3 space-y-2 sm:space-y-3 w-full md:w-auto"
+            className="flex-[1.2] bg-[#C3EFE6] rounded-xl p-2.5 sm:p-3 space-y-2 sm:space-y-3 w-full md:w-auto relative z-10"
           >
             <TrekDestinationSelect
               selectedDestination={selectedDestination}
@@ -238,7 +238,7 @@ const TrekSearchInput = memo(forwardRef((props, ref) => {
           {/* Right Section - People, Date and Search */}
           <motion.div
             variants={itemVariants}
-            className="flex-[2] bg-[#C3EFE6] rounded-xl p-2.5 sm:p-3 flex flex-col justify-between w-full md:w-auto"
+            className="flex-[2] bg-[#C3EFE6] rounded-xl p-2.5 sm:p-3 flex flex-col justify-between w-full md:w-auto relative z-20"
           >
             {/* People Counter */}
             <motion.div
@@ -311,6 +311,7 @@ const TrekSearchInput = memo(forwardRef((props, ref) => {
                     </motion.div>
                   }
                   dateFormat="dd/MM/yyyy"
+                  minDate={new Date()}
                   showMonthDropdown
                   showYearDropdown
                   dropdownMode="scroll"

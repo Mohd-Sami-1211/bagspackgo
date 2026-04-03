@@ -69,7 +69,7 @@ const PickupDropoff = ({ defaultLocation, onNext, onBack, startDate, duration, p
     if (!isInitialized) {
        let loadedFromSession = false;
        try {
-         const saved = sessionStorage.getItem("temp_trek_pick_drop");
+         const saved = localStorage.getItem("temp_trek_pick_drop");
          if (saved) {
            const parsed = JSON.parse(saved);
            if (parsed) {
@@ -96,7 +96,7 @@ const PickupDropoff = ({ defaultLocation, onNext, onBack, startDate, duration, p
                     formData.departure.city || formData.departure.dropoffAddress || formData.departure.time;
     
     if (hasData) {
-      sessionStorage.setItem("temp_trek_pick_drop", JSON.stringify(formData));
+      localStorage.setItem("temp_trek_pick_drop", JSON.stringify(formData));
     }
   }, [formData, isInitialized]);
 

@@ -90,7 +90,7 @@ const PersonalDetails = ({
       let initialData = [];
 
       try {
-        const saved = sessionStorage.getItem("temp_trek_personal_details");
+        const saved = localStorage.getItem("temp_trek_personal_details");
         if (saved) {
           const parsed = JSON.parse(saved);
           if (parsed.numPeople === numPeople) {
@@ -137,7 +137,7 @@ const PersonalDetails = ({
         idImage: null,
         idImagePreview: ''
       }));
-      sessionStorage.setItem("temp_trek_personal_details", JSON.stringify({
+      localStorage.setItem("temp_trek_personal_details", JSON.stringify({
         numPeople, contactDetails, trekkerDetails: safeTrekkerDetails
       }));
     }

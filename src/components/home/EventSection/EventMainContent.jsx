@@ -12,24 +12,25 @@ const EventMainContent = () => {
   // State for events and filters
   const [data, setData] = useState({ ...initialData, events: [] });
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchEvents() {
       try {
         const res = await fetch('/api/events');
         const json = await res.json();
-        if (json.success) {
-          setData(prev => ({ ...prev, events: json.events }));
+          if (json.success) {
+            setData(prev => ({ ...prev, events: json.events }));
+          }
+        } catch (err) {
+          console.error('Failed to fetch events:', err);
+        } finally {
+          setLoading(false);
         }
-      } catch (err) {
-        console.error('Failed to fetch events:', err);
       }
-    }
     fetchEvents();
   }, []);
 
-  const [filteredEvents, setFilteredEvents] = useState([]);
-  const [displayedEvents, setDisplayedEvents] = useState([]);
   const [typeSearch, setTypeSearch] = useState('');
   const [destinationSearch, setDestinationSearch] = useState('');
   const [organizerSearch, setOrganizerSearch] = useState('');
@@ -78,13 +79,6 @@ const EventMainContent = () => {
     setSearchQuery(trimmedQuery);
     setActiveSearch(true);
     setShowSuggestions(false);
-
-    // Search events only
-    const foundEvents = getFilteredEvents(trimmedQuery);
-
-    const combinedResults = foundEvents.map(event => ({ ...event, type: 'event' })).sort((a, b) => b.priority - a.priority);
-
-    setDisplayedEvents(combinedResults);
   };
 
   // Reset search to original state
@@ -92,7 +86,6 @@ const EventMainContent = () => {
     setSearchQuery('');
     setActiveSearch(false);
     setShowSuggestions(false);
-    setDisplayedEvents(filteredEvents);
   };
 
   // Enhanced suggestions generator
@@ -203,10 +196,8 @@ const EventMainContent = () => {
     return filterEvents;
   }, [data]);
 
-
-
-  // Apply filters when component mounts or filters change
-  useEffect(() => {
+  // Derived filtered events
+  const filteredEvents = useMemo(() => {
     let results = [...data.events];
 
     // Destination filter
@@ -219,7 +210,7 @@ const EventMainContent = () => {
     // Organizer filter
     if (filters.organizer.length > 0) {
       results = results.filter(event =>
-        filters.organizer.some(orgId => event.eventId.startsWith(orgId))
+        filters.organizer.some(orgId => (event.eventId || '').startsWith(orgId))
       );
     }
 
@@ -311,21 +302,19 @@ const EventMainContent = () => {
         return b.rating - a.rating;
       });
     }
-
-    setFilteredEvents(results);
+    return results;
   }, [filters, data.events]);
 
-  // Update displayed events
-  useEffect(() => {
-    const hasFilters = Object.values(filters).some(filter =>
-      Array.isArray(filter) ? filter.length > 0 : filter !== null &&
-        !(typeof filter === 'object' && filter.start === null && filter.end === null)
-    );
-
-    if (hasFilters || !activeSearch) {
-      setDisplayedEvents(filteredEvents);
+  // Derived displayed events (handles search + combined results)
+  const displayedEvents = useMemo(() => {
+    if (activeSearch && searchQuery) {
+      const foundEvents = getFilteredEvents(searchQuery);
+      return foundEvents
+        .map(event => ({ ...event, type: 'event' }))
+        .sort((a, b) => b.priority - a.priority);
     }
-  }, [filteredEvents, filters, activeSearch]);
+    return filteredEvents;
+  }, [activeSearch, searchQuery, filteredEvents, getFilteredEvents]);
 
   // Toggle dropdown
   const toggleDropdown = (dropdown) => {
@@ -1013,18 +1002,57 @@ const EventMainContent = () => {
     </div>
   );
 
-  if (data.events.length === 0) {
+  if (loading) {
     return (
-      <div className="max-w-7xl mx-auto mt-8 py-2 px-4 bg-gradient-to-br from-green-50 to-blue-50 rounded-xl shadow-lg overflow-hidden mb-40">
-        <div className="flex justify-center items-center h-64">
-          <p className="text-neutral-500">No events available</p>
+      <div className="max-w-7xl mx-auto mt-1 sm:mt-5 py-8 px-4 bg-white/50 rounded-2xl shadow-sm min-h-[60vh]">
+        <div className="flex flex-col lg:flex-row gap-8 h-full">
+          {/* Sidebar Skeleton */}
+          <div className="hidden lg:block lg:w-1/4 space-y-6">
+            <div className="h-8 bg-gray-200 rounded-lg w-1/2 animate-pulse" />
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="h-16 bg-gray-100 rounded-xl animate-pulse" />
+            ))}
+          </div>
+          {/* Content Skeleton */}
+          <div className="w-full lg:w-3/4 space-y-6">
+            <div className="flex justify-between items-center mb-10">
+              <div className="h-8 bg-gray-200 rounded-lg w-1/3 animate-pulse" />
+              <div className="h-10 bg-gray-200 rounded-full w-1/3 animate-pulse" />
+            </div>
+            {[1, 2, 3].map(i => (
+              <div key={i} className="h-64 bg-gray-50 rounded-2xl animate-pulse border border-gray-100" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!loading && data.events.length === 0) {
+    return (
+      <div className="max-w-7xl mx-auto mt-4 sm:mt-10 py-20 px-4 bg-white rounded-[2rem] shadow-xl border border-gray-100 min-h-[70vh] flex flex-col items-center justify-center text-center">
+        <div className="relative mb-8">
+          <div className="absolute inset-0 bg-green-100 rounded-full blur-3xl opacity-50 scale-150" />
+          <div className="relative bg-green-50 p-8 rounded-full border border-green-100 shadow-inner">
+            <Calendar size={64} className="text-green-500" />
+          </div>
+        </div>
+        <h2 className="text-3xl font-black text-gray-900 mb-3 tracking-tight">No Upcoming Events</h2>
+        <p className="text-gray-500 max-w-md mx-auto mb-10 text-lg font-medium leading-relaxed">
+          We&apos;re currently preparing new adventures and curated experiences. Please check back later or explore our trips and treks.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-4">
+          <a href="/user/trip" className="px-8 py-3 bg-gray-950 text-white rounded-xl font-bold hover:bg-black transition-all shadow-lg hover:shadow-black/20 hover:-translate-y-0.5">Explore Trips</a>
+          <button onClick={() => window.location.reload()} className="px-8 py-3 bg-white text-gray-700 border border-gray-200 rounded-xl font-bold hover:bg-gray-50 transition-all flex items-center justify-center gap-2">
+            <RefreshCcw size={18} /> Refresh Page
+          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto mt-5 py-2 px-3 sm:px-4 bg-gradient-to-br from-green-50 to-blue-50 rounded-xl shadow-lg overflow-hidden mb-20 sm:mb-40">
+    <div className="max-w-7xl mx-auto mt-1 sm:mt-5 py-2 px-3 sm:px-4 bg-gradient-to-br from-green-50 to-blue-50 rounded-xl shadow-lg overflow-hidden mb-6 sm:mb-40">
       {/* ── Mobile: Search Bar + Filter Toggle ── */}
       <div className="lg:hidden px-2 pt-4 pb-2 space-y-3">
         <div className="flex items-center gap-2">
