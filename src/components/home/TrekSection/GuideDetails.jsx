@@ -131,9 +131,9 @@ const TrekGuideDetails = ({ guide }) => {
             itemType: 'trek',
             config: {
                date: selectedStartDate || null,
-               peopleCount: count,
-               category: category,
-               days: days
+               peopleCount: peopleCount,
+               days: duration,
+               computedPrice: pricePerPerson
             }
           }),
         });

@@ -25,6 +25,7 @@ export default function ClientLayout({ children }) {
         pathname?.includes('/bookings') ||
         pathname?.includes('/saved') ||
         pathname?.includes('/help') ||
+        pathname?.includes('/notifications') ||
         pathname?.includes('/signin') ||
         pathname?.includes('/signup') ||
         pathname?.includes('/admin') ||

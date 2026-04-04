@@ -25,13 +25,22 @@ export async function GET(request) {
             } else if (record.itemType === 'event') {
                 itemData = await Event.findById(record.itemId)
                     .select('title eventType destination date duration pricePerSlot poster photographs location totalSlots bookedSlots guide')
-                    .populate({ path: 'guide', select: 'companyName firstName lastName' })
+                    .populate({ path: 'guide', select: 'username' })
                     .lean();
                 if (itemData) {
                     itemData.name = itemData.title;
                     itemData.coverImage = itemData.poster || (itemData.photographs && itemData.photographs[0]) || '';
                     itemData.price = itemData.pricePerSlot;
-                    itemData.organizer = itemData.guide?.companyName || (itemData.guide ? `${itemData.guide.firstName} ${itemData.guide.lastName}` : 'System Guide');
+                    
+                    let companyName = null;
+                    if (itemData.guide) {
+                         const mongoose = require('mongoose');
+                         const GuideDetails = mongoose.models.GuideDetails || mongoose.model('GuideDetails', require('@/models/guidedetails.model').guidedetailsSchema);
+                         const detail = await GuideDetails.findOne({ guide: itemData.guide._id }).select('companyname').lean();
+                         if (detail) companyName = detail.companyname;
+                    }
+                    
+                    itemData.organizer = companyName || itemData.guide?.username || 'Premium Host';
                     itemData.slotsRemaining = Math.max(0, (itemData.totalSlots || 0) - (itemData.bookedSlots || 0));
                 }
             }
