@@ -104,7 +104,7 @@ export async function POST(request) {
             if (dob) accountData.dob = new Date(dob);
 
             user = await User.create(accountData);
-            message = 'Account created! Welcome to BagsPackGo.';
+            message = 'Account created! Welcome to bagspackgo.';
 
             // Welcome email (non-blocking)
             if (accountData.email && finalName) {

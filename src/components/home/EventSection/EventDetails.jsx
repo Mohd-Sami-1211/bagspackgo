@@ -232,7 +232,7 @@ const EventDetails = ({ event }) => {
   const handleShareEvent = async () => {
     const shareData = {
       title: event.name || event.title || 'Check out this event!',
-      text: `Check out this amazing event on BagsPackGo!`,
+      text: `Check out this amazing event on bagspackgo!`,
       url: window.location.href,
     };
     try {
@@ -393,7 +393,7 @@ const EventDetails = ({ event }) => {
         amount: totalPayable * 100,
         currency: 'INR',
         order_id: orderId,
-        name: 'BagsPackGo',
+        name: 'bagspackgo',
         description: `Booking: ${event.title || event.name || 'Event'}`,
         handler: async (response) => {
           const verifyRes = await fetch('/api/payments/event-verify', {

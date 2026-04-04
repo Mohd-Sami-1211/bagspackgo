@@ -76,7 +76,7 @@ function BookingSuccessContent() {
     
     // Fallbacks
     const packageName = pSnapshot.name || booking?.packageName || "Premium Trek Package";
-    const providerName = booking?.companyName || gSnapshot.companyName || gSnapshot.name || booking?.providerName || "BagsPackGo Verified Partner";
+    const providerName = booking?.companyName || gSnapshot.companyName || gSnapshot.name || booking?.providerName || "bagspackgo Verified Partner";
     const destinationName = pSnapshot.destination || booking?.destination || pickupDropoff?.pickup?.city || "Himalayan Trails";
     const travelers = personalDetails?.personalDetails || [];
 

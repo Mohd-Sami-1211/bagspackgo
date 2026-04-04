@@ -117,7 +117,7 @@ export default function AdminDashboardPage() {
                 <motion.h1 initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="text-2xl font-bold text-white">
                     Welcome back, {admin?.name || 'Admin'} 👋
                 </motion.h1>
-                <p className="text-gray-500 text-sm mt-1">Here&apos;s what&apos;s happening on BagsPackGo today.</p>
+                <p className="text-gray-500 text-sm mt-1">Here&apos;s what&apos;s happening on bagspackgo today.</p>
             </div>
 
             {/* Stat Cards */}

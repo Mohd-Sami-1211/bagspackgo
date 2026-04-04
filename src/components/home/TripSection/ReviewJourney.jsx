@@ -248,7 +248,7 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
         amount: amountToPay * 100,
         currency: "INR",
         order_id: orderId,
-        name: "BagsPackGo",
+        name: "bagspackgo",
         description: `Booking: ${selectedPkg?.label || "Trip"}`,
         handler: async (response) => {
           const verifyRes = await fetch("/api/payments/trip-verify", {

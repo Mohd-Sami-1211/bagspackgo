@@ -373,12 +373,12 @@ function BookingSuccessContent() {
                             <div className="p-6 sm:p-8">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
-                                        <SectionTitle icon={ShieldCheck} title="BagsPackGo Policies" />
+                                        <SectionTitle icon={ShieldCheck} title="bagspackgo Policies" />
                                         <ul className="list-disc pl-4 space-y-1.5 text-sm text-gray-600" style={fontStyle}>
                                             <li className="leading-relaxed">Booking is confirmed subject to payment realization.</li>
                                             <li className="leading-relaxed">Cancellations made 7 days prior to the event are eligible for a 75% refund.</li>
                                             <li className="leading-relaxed">Cancellations within 48 hours of the event are strictly non-refundable.</li>
-                                            <li className="leading-relaxed">BagsPackGo acts only as an aggregator and is not directly responsible for delays caused by the service provider.</li>
+                                            <li className="leading-relaxed">bagspackgo acts only as an aggregator and is not directly responsible for delays caused by the service provider.</li>
                                             <li className="leading-relaxed">Each QR code on the pass is valid for single-use entry only.</li>
                                         </ul>
                                     </div>

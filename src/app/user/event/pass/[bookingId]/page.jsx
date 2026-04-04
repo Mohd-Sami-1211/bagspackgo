@@ -290,7 +290,7 @@ export default function EventPassPage() {
                     
                     <div className="text-center border-t border-gray-100 pt-4 shrink-0 w-full relative px-2 mb-2 print-section">
                         <p className="text-[10px] sm:text-xs text-gray-400 font-medium leading-relaxed" style={fontStyle}>Please present these QR entry passes alongside a valid photo ID.</p>
-                        <p className="text-[10px] sm:text-xs font-semibold text-emerald-600 mt-1" style={fontStyle}>Thank you for choosing BagsPackGo!</p>
+                        <p className="text-[10px] sm:text-xs font-semibold text-emerald-600 mt-1" style={fontStyle}>Thank you for choosing bagspackgo!</p>
                     </div>
                 </div>
 
@@ -362,12 +362,12 @@ export default function EventPassPage() {
                 <div className="p-5 sm:p-8 sm:pt-6 bg-gray-50 border-t border-emerald-100 text-[9px] sm:text-[10px] text-gray-600 leading-relaxed pb-8 shrink-0 rounded-b-[1.7rem] print-section">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
                         <div>
-                            <SectionHeader icon={ShieldCheck} title="BagsPackGo Policies" />
+                            <SectionHeader icon={ShieldCheck} title="bagspackgo Policies" />
                             <ul className="list-disc pl-4 space-y-2" style={fontStyle}>
                                 <li className="leading-relaxed">Booking is confirmed subject to payment realization.</li>
                                 <li className="leading-relaxed">Cancellations made 7 days prior to the event are eligible for a 75% refund.</li>
                                 <li className="leading-relaxed">Cancellations within 48 hours of the event are strictly non-refundable.</li>
-                                <li className="leading-relaxed">BagsPackGo acts only as an aggregator and is not directly responsible for delays caused by the service provider.</li>
+                                <li className="leading-relaxed">bagspackgo acts only as an aggregator and is not directly responsible for delays caused by the service provider.</li>
                                 <li className="leading-relaxed">Each QR code on the pass is valid for single-use entry only.</li>
                             </ul>
                         </div>

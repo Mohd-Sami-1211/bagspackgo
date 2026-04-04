@@ -80,7 +80,7 @@ function BookingSuccessContent() {
     const gSnapshot = booking?.guideId || booking?.guideSnapshot || {};
     
     const packageName = pSnapshot.name || booking?.packageName || "Premium Trip Package";
-    const providerName = booking?.companyName || gSnapshot.companyName || gSnapshot.name || booking?.providerName || "BagsPackGo Verified Partner";
+    const providerName = booking?.companyName || gSnapshot.companyName || gSnapshot.name || booking?.providerName || "bagspackgo Verified Partner";
     const destinationName = pSnapshot.destination || booking?.destination || arrivalDeparture?.arrival?.city || "Kashmir Valleys";
     const travelers = personalDetails?.personalDetails || [];
 

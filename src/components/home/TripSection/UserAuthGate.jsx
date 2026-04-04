@@ -213,7 +213,7 @@ export default function UserAuthGate({ onAuthenticated }) {
                         <span className="text-3xl">🎒</span>
                     </div>
                     <h2 className="text-2xl font-bold text-white mb-1">
-                        {mode === 'login' ? 'Welcome Back!' : 'Join BagsPackGo'}
+                        {mode === 'login' ? 'Welcome Back!' : 'Join bagspackgo'}
                     </h2>
                     <p className="text-green-100 text-sm">
                         {mode === 'login' ? 'Sign in to continue booking' : 'Create your free account'}

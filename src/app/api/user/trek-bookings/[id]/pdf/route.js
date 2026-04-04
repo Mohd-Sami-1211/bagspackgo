@@ -32,7 +32,7 @@ export async function GET(request, { params }) {
             .select('companyname companymobile companyemail instagram facebook website')
             .lean();
 
-        const providerName = guideDetails?.companyname || booking.provider?.username || 'BagsPackGo Verified Partner';
+        const providerName = guideDetails?.companyname || booking.provider?.username || 'bagspackgo Verified Partner';
         const providerPhone = guideDetails?.companymobile || booking.provider?.phone || '';
         const providerEmail = guideDetails?.companyemail || booking.provider?.email || '';
 
@@ -106,8 +106,8 @@ export async function GET(request, { params }) {
         // ───────────── SECTION 1: TOP / HEADER ─────────────────────────
         let topY = MARGIN + 28; // current Y in top-down coords
 
-        // BagsPackGo title left
-        txt('BagsPackGo', { x: CARD_X + 20, y: topY, size: 18, font: bold, color: C_EMERALD });
+        // bagspackgo title left
+        txt('bagspackgo', { x: CARD_X + 20, y: topY, size: 18, font: bold, color: C_EMERALD });
         topY += 20;
         txt('Official E-Ticket & Travel Pass', { x: CARD_X + 20, y: topY, size: 9, font: regular, color: C_GRAY_500 });
 
@@ -240,7 +240,7 @@ export async function GET(request, { params }) {
             x: CARD_X + 20, y: topY, size: 7.5, font: regular, color: C_GRAY_500, maxWidth: CARD_W - 40
         });
         topY += 12;
-        txt('Thank you for choosing BagsPackGo!', { x: CARD_X + 20, y: topY, size: 8, font: bold, color: C_EMERALD });
+        txt('Thank you for choosing bagspackgo!', { x: CARD_X + 20, y: topY, size: 8, font: bold, color: C_EMERALD });
         topY += 16;
 
         // ───────────── TERMS & CONDITIONS ──────────────────────────────
@@ -251,7 +251,7 @@ export async function GET(request, { params }) {
         topY = TERMS_Y + 14;
         const halfW = (CARD_W - 48) / 2;
 
-        txt('BAGSPACKGO POLICIES', { x: CARD_X + 20, y: topY, size: 8, font: bold, color: C_GRAY_900, maxWidth: halfW });
+        txt('bagspackgo POLICIES', { x: CARD_X + 20, y: topY, size: 8, font: bold, color: C_GRAY_900, maxWidth: halfW });
         txt('PROVIDER CONDITIONS', { x: CARD_X + 28 + halfW, y: topY, size: 8, font: bold, color: C_GRAY_900, maxWidth: halfW });
         topY += 14;
 
@@ -259,7 +259,7 @@ export async function GET(request, { params }) {
             'Booking confirmed subject to payment realization.',
             'Cancellations 7+ days before: 75% refund.',
             'Cancellations within 48 hrs: non-refundable.',
-            'BagsPackGo is an aggregator; not liable for provider delays.',
+            'bagspackgo is an aggregator; not liable for provider delays.',
         ];
         const rightTerms = [
             'All passengers must carry valid Photo ID.',

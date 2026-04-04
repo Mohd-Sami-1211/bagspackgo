@@ -51,7 +51,7 @@ export async function POST(request) {
                 isPhoneVerified: false,
                 role: 'user'
             });
-            message = 'Google account connected! Welcome to BagsPackGo.';
+            message = 'Google account connected! Welcome to bagspackgo.';
         }
 
         const userResponse = {
