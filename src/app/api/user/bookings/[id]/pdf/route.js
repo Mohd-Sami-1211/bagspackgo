@@ -102,7 +102,7 @@ export async function GET(request, { params }) {
 
         // Header
         let topY = MARGIN + 28;
-        txt('BagsPackGo', { x: CARD_X + 20, y: topY, size: 18, font: bold, color: C_EMERALD });
+        txt('bagspackgo', { x: CARD_X + 20, y: topY, size: 18, font: bold, color: C_EMERALD });
         topY += 20;
         txt('Official Event Entry Pass', { x: CARD_X + 20, y: topY, size: 9, font: regular, color: C_GRAY_500 });
 

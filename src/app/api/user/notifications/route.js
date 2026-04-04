@@ -13,7 +13,7 @@ export async function GET(request) {
         
         // Simulating actual database notifications for user
         const dummyNotifications = [
-           { id: 1, title: 'Welcome to Bagspackgo!', message: 'Explore the best travel packages and start planning your next adventure today.', type: 'info', date: new Date().toISOString(), read: false },
+           { id: 1, title: 'Welcome to bagspackgo!', message: 'Explore the best travel packages and start planning your next adventure today.', type: 'info', date: new Date().toISOString(), read: false },
            { id: 2, title: 'Profile Updated', message: 'Your profile details have been successfully updated.', type: 'success', date: new Date(Date.now() - 86400000).toISOString(), read: true }
         ];
 

@@ -89,7 +89,7 @@ export default function ProviderProfilePage() {
                 <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-white/5 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/4 pointer-events-none" />
                 <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-black/10 rounded-full blur-2xl transform -translate-x-1/4 translate-y-1/2 pointer-events-none" />
 
-                {/* BagspackGo branding — text watermark, always visible */}
+                {/* bagspackgo branding — text watermark, always visible */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none select-none gap-2 px-4">
                     {/* Decorative line */}
                     <div className="w-10 h-0.5 bg-white/30 rounded-full mb-1" />

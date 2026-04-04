@@ -62,7 +62,7 @@ const AboutUs = () => {
               stiffness: 100
             }}
           >
-            About <span className="text-green-600">Bagspackgo</span>
+            About <span className="text-green-600">bagspackgo</span>
           </motion.h2>
           <motion.div 
             className="h-1 bg-gradient-to-r from-amber-400 to-amber-600 mx-auto w-24 rounded-full mb-12"

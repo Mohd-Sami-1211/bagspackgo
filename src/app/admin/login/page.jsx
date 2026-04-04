@@ -79,7 +79,7 @@ export default function AdminLoginPage() {
                     >
                         <Shield className="w-8 h-8 text-emerald-400" />
                     </motion.div>
-                    <h1 className="text-2xl font-bold text-white tracking-tight">BagsPackGo</h1>
+                    <h1 className="text-2xl font-bold text-white tracking-tight">bagspackgo</h1>
                     <p className="text-gray-400 text-sm mt-1 font-medium">Admin Panel</p>
                 </div>
 

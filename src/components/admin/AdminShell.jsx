@@ -65,7 +65,7 @@ function Sidebar({ collapsed, onClose }) {
                 </div>
                 {!collapsed && (
                     <div className="min-w-0">
-                        <p className="text-sm font-bold text-white truncate">BagsPackGo</p>
+                        <p className="text-sm font-bold text-white truncate">bagspackgo</p>
                         <p className="text-[10px] text-emerald-500 font-semibold uppercase tracking-wider">Admin Panel</p>
                     </div>
                 )}

@@ -699,7 +699,7 @@ const GuideDetails = ({ guide }) => {
                       if (navigator.share) {
                         await navigator.share({
                           title: selectedPackage ? selectedPackage.label : guide.name,
-                          text: `Check out this amazing trip package on Bagspackgo!`,
+                          text: `Check out this amazing trip package on bagspackgo!`,
                           url: window.location.href,
                         });
                       } else {

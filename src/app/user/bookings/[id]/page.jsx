@@ -247,7 +247,7 @@ function BookingPassEmbed({ booking }) {
     const selectedPickup = isEvent ? (booking?.selectedPickup || null) : null;
     const pickupPoints = isEvent ? (booking?.pickupPoints || []) : [];
     const packageName = isEvent ? (booking?.name || 'Event') : (pSnapshot.name || booking?.packageName || 'Trip Package');
-    const providerName = booking?.companyName || booking?.guideName || 'BagsPackGo Verified Partner';
+    const providerName = booking?.companyName || booking?.guideName || 'bagspackgo Verified Partner';
     const destinationName = ensureString(pSnapshot.destination || booking?.destination || '');
     const travelers = booking?.personalDetails?.personalDetails || [];
     const arrivalDeparture = booking?.arrivalDeparture || {};
@@ -1035,7 +1035,7 @@ export default function BookingDetailPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-gray-600">
                         <div>
                             <h4 className="font-bold text-gray-800 uppercase tracking-widest mb-3 text-[11px] flex items-center gap-2">
-                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> BagsPackGo Policies
+                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> bagspackgo Policies
                             </h4>
                             <ul className="list-disc pl-5 space-y-2">
                                 <li>Booking is confirmed subject to payment realization.</li>
@@ -1047,7 +1047,7 @@ export default function BookingDetailPage() {
                                         <li>Cancellations within 48 hours of departure are strictly non-refundable.</li>
                                     </>
                                 )}
-                                <li>BagsPackGo acts only as an aggregator and is not directly responsible for delays caused by the service provider.</li>
+                                <li>bagspackgo acts only as an aggregator and is not directly responsible for delays caused by the service provider.</li>
                             </ul>
                         </div>
                         <div>

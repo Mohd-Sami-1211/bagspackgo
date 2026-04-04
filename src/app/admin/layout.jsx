@@ -2,8 +2,8 @@ import { AdminProvider } from '@/context/AdminContext';
 import '../globals.css';
 
 export const metadata = {
-    title: 'Admin Panel — BagsPackGo',
-    description: 'BagsPackGo internal administration panel',
+    title: 'Admin Panel — bagspackgo',
+    description: 'bagspackgo internal administration panel',
     robots: 'noindex, nofollow',
 };
 

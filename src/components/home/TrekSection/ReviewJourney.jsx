@@ -242,7 +242,7 @@ const ReviewTrek = ({ guide, searchParams }) => {
         amount: amountToPay * 100,
         currency: "INR",
         order_id: orderId,
-        name: "BagsPackGo",
+        name: "bagspackgo",
         description: `Trek: ${guideData?.name || "Package"}`,
         handler: async (response) => {
           const verifyRes = await fetch("/api/payments/trek-verify", {

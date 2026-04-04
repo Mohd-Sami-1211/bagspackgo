@@ -134,7 +134,7 @@ export default function ApplicationPendingPage({ onResubmit }) {
                         <div className="mb-6">
                             <Link href="/" className="inline-block mb-5">
                                 <div className="w-[130px] h-[40px] relative">
-                                    <Image src="/images/logo.svg" alt="BagspackGo" fill className="object-contain" />
+                                    <Image src="/images/logo.svg" alt="bagspackgo" fill className="object-contain" />
                                 </div>
                             </Link>
                             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">Application Status</h2>

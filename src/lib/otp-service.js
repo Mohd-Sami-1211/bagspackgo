@@ -251,7 +251,7 @@ export async function sendTripBookingConfirmation({ userEmail, userName, provide
         let attachments = [];
         if (pdfBuffer) {
             attachments.push({
-                filename: `BagsPackGo_${isTrek ? 'Trek_' : ''}BookingPass_${bookingRef}.pdf`,
+                filename: `bagspackgo_${isTrek ? 'Trek_' : ''}BookingPass_${bookingRef}.pdf`,
                 content: pdfBuffer,
                 contentType: 'application/pdf'
             });
@@ -266,7 +266,7 @@ export async function sendTripBookingConfirmation({ userEmail, userName, provide
                 <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 30px rgba(0,0,0,0.12); border: 1px solid #f0fdf4;">
                     <div style="background: linear-gradient(135deg, #059669, #047857); padding: 48px 32px; text-align: center;">
                         <div style="background: rgba(255,255,255,1); display: inline-block; padding: 12px 24px; border-radius: 12px; margin-bottom: 24px;">
-                            <img src="${appUrl}/images/logo.png" alt="BagsPackGo" style="height: 38px; width: auto; display: block;" />
+                            <img src="${appUrl}/images/logo.png" alt="bagspackgo" style="height: 38px; width: auto; display: block;" />
                         </div>
                         <h1 style="color: white; margin: 0; font-size: 30px; font-weight: 800; letter-spacing: -0.02em;">Booking Confirmed!</h1>
                         <p style="color: rgba(255,255,255,0.9); margin: 12px 0 0; font-size: 16px; font-weight: 500;">Your adventure with <strong>${providerName}</strong> is ready 🎉</p>
@@ -308,7 +308,7 @@ export async function sendTripBookingConfirmation({ userEmail, userName, provide
                     </div>
                     <div style="background: #f1f5f9; padding: 24px 32px; text-align: center; border-top: 1px solid #e2e8f0;">
                         <p style="color: #94a3b8; font-size: 13px; margin: 0 0 8px;">Just pack your bags, we've got the rest.</p>
-                        <p style="color: #64748b; font-size: 12px; margin: 0;">© ${new Date().getFullYear()} BagsPackGo. All rights reserved.</p>
+                        <p style="color: #64748b; font-size: 12px; margin: 0;">© ${new Date().getFullYear()} bagspackgo. All rights reserved.</p>
                     </div>
                 </div>
             `,
@@ -365,7 +365,7 @@ export async function sendEventBookingConfirmation({ userEmail, userName, provid
         let attachments = [];
         if (pdfBuffer) {
             attachments.push({
-                filename: `BagsPackGo_EventPass_${bookingId.substring(0,8)}.pdf`,
+                filename: `bagspackgo_EventPass_${bookingId.substring(0,8)}.pdf`,
                 content: pdfBuffer,
                 contentType: 'application/pdf'
             });
@@ -380,7 +380,7 @@ export async function sendEventBookingConfirmation({ userEmail, userName, provid
                 <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 30px rgba(0,0,0,0.12); border: 1px solid #f0fdf4;">
                     <div style="background: linear-gradient(135deg, #059669, #047857); padding: 48px 32px; text-align: center;">
                         <div style="background: rgba(255,255,255,1); display: inline-block; padding: 12px 24px; border-radius: 12px; margin-bottom: 24px;">
-                            <img src="${appUrl}/images/logo.png" alt="BagsPackGo" style="height: 38px; width: auto; display: block;" />
+                            <img src="${appUrl}/images/logo.png" alt="bagspackgo" style="height: 38px; width: auto; display: block;" />
                         </div>
                         <h1 style="color: white; margin: 0; font-size: 30px; font-weight: 800; letter-spacing: -0.02em;">Event Booking Confirmed!</h1>
                         <p style="color: rgba(255,255,255,0.9); margin: 12px 0 0; font-size: 16px; font-weight: 500;">Get ready for <strong>${eventName}</strong> 🎉</p>
@@ -418,7 +418,7 @@ export async function sendEventBookingConfirmation({ userEmail, userName, provid
                     </div>
                     <div style="background: #f1f5f9; padding: 24px 32px; text-align: center; border-top: 1px solid #e2e8f0;">
                         <p style="color: #94a3b8; font-size: 13px; margin: 0 0 8px;">Just pack your bags, we've got the rest.</p>
-                        <p style="color: #64748b; font-size: 12px; margin: 0;">© ${new Date().getFullYear()} BagsPackGo. All rights reserved.</p>
+                        <p style="color: #64748b; font-size: 12px; margin: 0;">© ${new Date().getFullYear()} bagspackgo. All rights reserved.</p>
                     </div>
                 </div>
             `,

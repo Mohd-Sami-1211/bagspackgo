@@ -478,7 +478,7 @@ function ProfileContent({ initialEditMode = false }) {
         <div className="flex-1 text-center md:text-left flex flex-col justify-center min-h-[8rem] md:min-h-[10rem] z-10 w-full">
           <h3 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight mb-2">{formData.name || 'Mohd Sami'}</h3>
           <p className="text-gray-500 font-medium flex items-center justify-center md:justify-start gap-2 text-lg mb-5">
-            <Building2 size={20} className="text-emerald-600" /> {formData.companyname || 'Bagspackgo Travels'}
+            <Building2 size={20} className="text-emerald-600" /> {formData.companyname || 'bagspackgo Travels'}
           </p>
 
           {!isEditing ? (
@@ -559,7 +559,7 @@ function ProfileContent({ initialEditMode = false }) {
                 <label className={labelClasses}>Company Name</label>
                 <div className="relative">
                   <div className={iconWrapperClasses}><Building2 size={18} /></div>
-                  <input type="text" className={inputClasses} placeholder="e.g. Bagspackgo Travels" name="companyname" value={formData.companyname} onChange={handleChange} readOnly={!isEditing} />
+                  <input type="text" className={inputClasses} placeholder="e.g. bagspackgo Travels" name="companyname" value={formData.companyname} onChange={handleChange} readOnly={!isEditing} />
                 </div>
               </div>
 
@@ -1203,7 +1203,7 @@ function NotificationsContent() {
           </div>
           <div>
             <h4 className="text-lg font-bold text-gray-900">Communication Preferences</h4>
-            <p className="text-xs text-gray-500 font-medium mt-0.5">Control how Bagspackgo alerts you about new bookings.</p>
+            <p className="text-xs text-gray-500 font-medium mt-0.5">Control how bagspackgo alerts you about new bookings.</p>
           </div>
         </div>
 

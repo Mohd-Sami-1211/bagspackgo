@@ -98,7 +98,7 @@ export default function TrekPassPage() {
     const itineraryList = getList('itinerary');
     
     const packageName = pSnapshot.name || booking?.packageName || (booking.bookingType === 'trip' ? "Premium Trip Package" : "Premium Trek Package");
-    const providerName = booking?.guideName || booking?.companyName || gSnapshot.companyName || gSnapshot.name || booking?.providerName || "BagsPackGo Verified Partner";
+    const providerName = booking?.guideName || booking?.companyName || gSnapshot.companyName || gSnapshot.name || booking?.providerName || "bagspackgo Verified Partner";
     const destinationName = pSnapshot.destination || booking?.destination || arrivalDepartureOrPickupDropoff?.pickup?.city || (booking.bookingType === 'trip' ? "Kashmir Valleys" : "Himalayan Trails");
     const travelers = personalDetails?.personalDetails || [];
 
@@ -151,7 +151,7 @@ export default function TrekPassPage() {
                     <div className="flex flex-row justify-between items-center mb-6 sm:mb-8 border-b-2 border-gray-100 pb-6 sm:pb-8 gap-4">
                         <div className="flex flex-col items-center sm:items-start min-w-0">
                            <div className="mb-1 sm:mb-2">
-                                <Image src="/images/logo.svg" alt="BagsPackGo" width={140} height={38} priority className="w-[100px] sm:w-[148px] h-auto block" />
+                                <Image src="/images/logo.svg" alt="bagspackgo" width={140} height={38} priority className="w-[100px] sm:w-[148px] h-auto block" />
                            </div>
                            <p className="text-gray-500 font-semibold text-[8px] sm:text-sm tracking-wide text-center sm:text-left">Official E-Ticket & Trek Pass</p>
                         </div>
@@ -260,7 +260,7 @@ export default function TrekPassPage() {
                     
                     <div className="text-center border-t border-gray-100 mt-6 pt-4 shrink-0 w-full relative px-2 print-section">
                         <p className="text-[10px] sm:text-xs text-gray-400 font-medium leading-tight">Please preset this pass alongside a valid, government-issued photo ID at the time of pickup.</p>
-                        <p className="text-[10px] sm:text-xs font-bold text-emerald-600 mt-1">Thank you for choosing BagsPackGo!</p>
+                        <p className="text-[10px] sm:text-xs font-bold text-emerald-600 mt-1">Thank you for choosing bagspackgo!</p>
                     </div>
                 </div>
 
@@ -269,13 +269,13 @@ export default function TrekPassPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 print-section">
                         <div>
                             <h4 className="font-bold text-gray-800 uppercase tracking-widest mb-3 text-[11px] flex items-center gap-2">
-                                <CheckCircle2 className="w-3 h-3 text-emerald-600" /> BagsPackGo Policies
+                                <CheckCircle2 className="w-3 h-3 text-emerald-600" /> bagspackgo Policies
                             </h4>
                             <ul className="list-disc pl-4 space-y-2">
                                 <li>Booking is confirmed subject to payment realization.</li>
                                 <li>Cancellations made 7 days prior to departure are eligible for a 75% refund.</li>
                                 <li>Cancellations within 48 hours of departure are strictly non-refundable.</li>
-                                <li>BagsPackGo acts only as an aggregator and is not directly responsible for delays caused by the service provider.</li>
+                                <li>bagspackgo acts only as an aggregator and is not directly responsible for delays caused by the service provider.</li>
                             </ul>
                         </div>
                         <div>

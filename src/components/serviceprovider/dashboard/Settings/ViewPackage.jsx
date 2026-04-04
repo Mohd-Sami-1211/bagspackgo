@@ -80,7 +80,7 @@ export default function ViewPackage({ pkg }) {
                  <div className="absolute inset-0 bg-gradient-to-br from-emerald-800 to-teal-900" />
              )}
              <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none opacity-20 select-none">
-                 <h1 className="text-white text-6xl md:text-8xl lg:text-9xl font-black tracking-tighter uppercase whitespace-nowrap">BAGSPACKGO</h1>
+                 <h1 className="text-white text-6xl md:text-8xl lg:text-9xl font-black tracking-tighter uppercase whitespace-nowrap">bagspackgo</h1>
              </div>
          </div>
 
