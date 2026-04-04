@@ -1052,9 +1052,9 @@ const EventMainContent = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto mt-1 sm:mt-5 py-2 px-3 sm:px-4 bg-gradient-to-br from-green-50 to-blue-50 rounded-xl shadow-lg overflow-hidden mb-6 sm:mb-40">
+    <div className="max-w-7xl mx-auto  sm:mt-5 py-2 px-3 sm:px-4 bg-gradient-to-br from-green-50 to-blue-50 rounded-xl shadow-lg overflow-hidden -mb-16 sm:mb-40">
       {/* ── Mobile: Search Bar + Filter Toggle ── */}
-      <div className="lg:hidden px-2 pt-4 pb-2 space-y-3">
+      <div className="lg:hidden px-2 pt-4 pb-2 space-y-3 -mt-4">
         <div className="flex items-center gap-2">
           <h2 className="text-xl font-bold text-neutral-800 flex-1">
             {activeSearch ? 'Search Results' : hasFilters ? 'Your Events' : 'Top Events'}
