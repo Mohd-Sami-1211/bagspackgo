@@ -90,16 +90,13 @@ export default function ProviderProfilePage() {
                 <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-black/10 rounded-full blur-2xl transform -translate-x-1/4 translate-y-1/2 pointer-events-none" />
 
                 {/* bagspackgo branding — text watermark, always visible */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none select-none gap-2 px-4">
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none select-none gap-2 px-4 -mt-32">
                     {/* Decorative line */}
                     <div className="w-10 h-0.5 bg-white/30 rounded-full mb-1" />
                     {/* Brand name */}
-                    <span className="text-white/60 text-2xl md:text-4xl font-black tracking-[0.15em] uppercase">
+                    <span className="text-white/60 text-2xl md:text-4xl font-black tracking-[0.15em] ">
                         bagspack<span className="text-emerald-300/80">go</span>
                     </span>
-                    <p className="text-white/30 text-[10px] md:text-xs font-bold tracking-[0.4em] uppercase mt-1">
-                        Service Provider
-                    </p>
                     <div className="w-10 h-0.5 bg-white/30 rounded-full mt-1" />
                 </div>
 

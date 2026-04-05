@@ -1355,7 +1355,7 @@ export default function HostEventPage() {
                           <Link href="/provider-terms" target="_blank" className="text-emerald-600 font-semibold hover:underline">Provider Terms & Conditions</Link>
                           {' '}and{' '}
                           <Link href="/provider-privacy" target="_blank" className="text-emerald-600 font-semibold hover:underline">Provider Privacy Policy</Link>{' '}
-                          and confirm that all information provided is accurate. I understand the applicable commission structure (10% trips/treks, 7% events) and payment terms.
+                          and confirm that all information provided is accurate. I understand the applicable commission structure and payment terms.
                         </label>
                       </div>
                     </div>
