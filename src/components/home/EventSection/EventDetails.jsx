@@ -412,17 +412,20 @@ const EventDetails = ({ event }) => {
             localStorage.removeItem('temp_event_booking');
             router.push(`/user/event/booking-success?bookingId=${bookingId}`);
           } else {
-            alert(verifyData.message || 'Payment verification failed');
-            setIsProcessingPayment(false);
+            router.push(`/user/event/booking-failed?return=/user/event/eventdetails/${event._id || event.id}`);
           }
         },
         modal: { ondismiss: () => setIsProcessingPayment(false) }
       });
+
+      rzp.on('payment.failed', function (response) {
+         router.push(`/user/event/booking-failed?return=/user/event/eventdetails/${event._id || event.id}`);
+      });
+
       rzp.open();
     } catch (err) {
       console.error(err);
-      alert(err.message || 'Payment failed');
-      setIsProcessingPayment(false);
+      router.push(`/user/event/booking-failed?return=/user/event/eventdetails/${event._id || event.id}`);
     }
   };
 

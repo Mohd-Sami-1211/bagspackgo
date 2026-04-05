@@ -268,18 +268,22 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
               `/user/trip/booking-success?bookingId=${bookingId}&ref=${verifyData.bookingRef}`,
             );
           } else {
-            setPaymentError(
-              verifyData.message || "Payment verification failed.",
-            );
+            router.push(`/user/trip/booking-failed?return=/user/trip/guidelist/tripdetails/${packageId}`);
           }
         },
         modal: { ondismiss: () => setIsPaymentLoading(false) },
       });
+      
+      rzp.on('payment.failed', function (response) {
+         router.push(`/user/trip/booking-failed?return=/user/trip/guidelist/tripdetails/${packageId}`);
+      });
+      
       rzp.open();
     } catch (err) {
       console.error("[Payment] Error:", err);
-      setPaymentError(err.message || "Payment failed.");
-      setIsPaymentLoading(false);
+      // setPaymentError(err.message || "Payment failed.");
+      // setIsPaymentLoading(false);
+      router.push(`/user/trip/booking-failed?return=/user/trip/guidelist/tripdetails/${packageId}`);
     }
   };
 
