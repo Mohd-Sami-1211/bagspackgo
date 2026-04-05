@@ -102,14 +102,24 @@ export async function GET(req) {
             ...guideDetailsList.map(gd => ({
                 id: gd.guide._id.toString(),
                 name: gd.companyname || gd.guide.username,
-                bio: `Specialist at ${gd.destinationId || 'various destinations'}`,
+                bio: gd.bio || `Specialist at ${gd.destinationId || 'various destinations'}`,
                 location: gd.destinationId?.toLowerCase() || '',
+                rating: gd.rating || 0,
+                reviews: gd.reviews || 0,
+                touristsHandled: (gd.totalTrips || 0) + (gd.totalTreks || 0),
+                languages: gd.languages?.length ? gd.languages : ['English', 'Hindi'],
+                logo: gd.logo || null
             })),
             ...plainGuides.map(g => ({
                 id: g._id.toString(),
                 name: g.username,
                 bio: 'Experienced travel guide',
                 location: '',
+                rating: 0,
+                reviews: 0,
+                touristsHandled: 0,
+                languages: ['English'],
+                logo: null
             }))
         ];
 
@@ -155,13 +165,14 @@ export async function GET(req) {
                 id: guideInfo.id,
                 name: guideInfo.name,
                 bio: guideInfo.bio,
-                image: '/images/guides/kashmir1.jpg',
-                rating: 4.5,
-                reviews: 10,
+                logo: guideInfo.logo,
+                image: guideInfo.logo || '/images/guides/kashmir1.jpg',
+                rating: guideInfo.rating,
+                reviews: guideInfo.reviews,
                 location: guideInfo.location || (firstPkg?.destination?.toLowerCase() || ''),
                 price: firstPkg?.price || { individual: 0, couple: 0 },
-                languages: ['English', 'Hindi'],
-                touristsHandled: 100,
+                languages: guideInfo.languages,
+                touristsHandled: guideInfo.touristsHandled,
                 packages: formattedPackages,
             };
         }).filter(Boolean);

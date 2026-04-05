@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft,
@@ -36,6 +37,7 @@ const ReviewTrek = ({ guide, searchParams }) => {
   const [showFeeBreakdown, setShowFeeBreakdown] = useState(false);
   const [isPaymentLoading, setIsPaymentLoading] = useState(false);
   const [paymentError, setPaymentError] = useState("");
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   // Extract useful params
   const days = parseInt(searchParams?.get("days")) || 1;
@@ -152,6 +154,10 @@ const ReviewTrek = ({ guide, searchParams }) => {
 
   const handleMakePayment = async () => {
     if (!trekData || !paymentDetails) return;
+    if (!agreedToTerms) {
+      setPaymentError("Please agree to the Terms & Conditions and Privacy Policy to proceed.");
+      return;
+    }
     setIsPaymentLoading(true);
     setPaymentError("");
 
@@ -731,6 +737,19 @@ const ReviewTrek = ({ guide, searchParams }) => {
                     </div>
                   )}
 
+                  {/* T&C Consent */}
+                  <label className={`flex items-start gap-3 mb-5 p-4 rounded-xl border-2 cursor-pointer transition-all ${agreedToTerms ? 'border-emerald-500 bg-emerald-50/50' : 'border-gray-200 hover:border-gray-300 bg-gray-50/30'}`}>
+                    <input type="checkbox" checked={agreedToTerms} onChange={(e) => { setAgreedToTerms(e.target.checked); if (e.target.checked) setPaymentError(''); }}
+                      className="mt-0.5 h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 flex-shrink-0" />
+                    <span className="text-xs text-gray-600 leading-relaxed">
+                      I agree to bagspackgo&apos;s{' '}
+                      <Link href="/terms" target="_blank" className="text-emerald-600 font-bold hover:underline">Terms & Conditions</Link>
+                      {' '}and{' '}
+                      <Link href="/privacy" target="_blank" className="text-emerald-600 font-bold hover:underline">Privacy Policy</Link>.
+                      I understand that cancellation and refunds are subject to the platform&apos;s refund policy.
+                    </span>
+                  </label>
+
                   <button
                     onClick={handleMakePayment}
                     disabled={isPaymentLoading}
@@ -890,8 +909,8 @@ const ReviewTrek = ({ guide, searchParams }) => {
           </div>
           <button
             onClick={handleMakePayment}
-            disabled={isPaymentLoading}
-            className="flex-1 h-12 bg-emerald-600 text-white rounded-xl font-bold tracking-wide shadow-[0_5px_15px_rgba(16,185,129,0.3)] flex items-center justify-center gap-2 active:scale-[0.98] transition disabled:opacity-75"
+            disabled={isPaymentLoading || !agreedToTerms}
+            className={`flex-1 h-12 rounded-xl font-bold tracking-wide shadow-[0_5px_15px_rgba(16,185,129,0.3)] flex items-center justify-center gap-2 active:scale-[0.98] transition ${agreedToTerms ? 'bg-emerald-600 text-white' : 'bg-gray-300 text-gray-500 cursor-not-allowed shadow-none'} disabled:opacity-75`}
           >
             {isPaymentLoading ? (
               <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -900,6 +919,22 @@ const ReviewTrek = ({ guide, searchParams }) => {
             )}
           </button>
         </div>
+
+        {/* Mobile T&C Consent */}
+        {!agreedToTerms && (
+          <div className="px-4 pb-3 bg-white">
+            <label className="flex items-start gap-3 p-3 rounded-xl border border-gray-200 cursor-pointer bg-gray-50/50">
+              <input type="checkbox" checked={agreedToTerms} onChange={(e) => { setAgreedToTerms(e.target.checked); if (e.target.checked) setPaymentError(''); }}
+                className="mt-0.5 h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 flex-shrink-0" />
+              <span className="text-[10px] text-gray-500 leading-relaxed">
+                I agree to the{' '}
+                <Link href="/terms" target="_blank" className="text-emerald-600 font-bold">Terms</Link>{' & '}
+                <Link href="/privacy" target="_blank" className="text-emerald-600 font-bold">Privacy Policy</Link>{' '}
+                including the cancellation & refund policy.
+              </span>
+            </label>
+          </div>
+        )}
       </div>
 
       {/* Required Global Styles for Custom Scrollbar */}

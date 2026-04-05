@@ -79,6 +79,15 @@ export async function GET(req) {
                     pkg.provider.companyname = details.companyname;
                     pkg.provider.companyName = details.companyname;
                     pkg.provider.logo = details.logo;
+                    pkg.provider.rating = details.rating || 0;
+                    pkg.provider.reviews = details.reviews || 0;
+                    pkg.provider.totalTrips = details.totalTrips || 0;
+                    pkg.provider.totalTreks = details.totalTreks || 0;
+                }
+                // Fallback to provider rating if package rating doesn't exist
+                if (!pkg.rating) {
+                    pkg.rating = pkg.provider.rating;
+                    pkg.totalRatings = pkg.provider.reviews;
                 }
                 return pkg;
             });
