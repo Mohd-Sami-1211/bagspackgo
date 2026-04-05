@@ -14,6 +14,7 @@ import {
   FiCamera
 } from 'react-icons/fi';
 import { RiStarFill, RiStarLine } from 'react-icons/ri';
+import { Send } from 'lucide-react';
 
 const TAB_VARIANTS = {
   hidden: { opacity: 0, y: 20 },
@@ -42,6 +43,43 @@ const CommunityMainContent = () => {
   const [stories, setStories] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Comment states
+  const [expandedComments, setExpandedComments] = useState({});
+  const [commentText, setCommentText] = useState({});
+
+  const toggleComments = (id) => {
+    setExpandedComments(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const handleCommentSubmit = async (e, id) => {
+     e.preventDefault();
+     if (!commentText[id]?.trim()) return;
+     
+     try {
+       const res = await fetch(`/api/community/stories/${id}/comment`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: commentText[id] })
+       });
+       const data = await res.json();
+       if (data.success) {
+          setCommentText(prev => ({ ...prev, [id]: '' }));
+          setStories(stories.map(s => {
+             if (s._id === id) {
+                return {
+                   ...s,
+                   comments: data.count,
+                   commentsArray: [...(s.commentsArray || []), data.comment]
+                }
+             }
+             return s;
+          }));
+       }
+     } catch (err) {
+       console.error(err);
+     }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -77,14 +115,18 @@ const CommunityMainContent = () => {
   };
 
   const handleLike = async (id) => {
-    // Optimistic cache update
-    setStories(stories.map(story =>
-      story._id === id ? {
-        ...story,
-        likes: (story.likes || 0) + 1,
-        liked: true
-      } : story
-    ));
+    // Optimistic cache update toggle
+    setStories(stories.map(story => {
+      if (story._id === id) {
+        const isLiked = story.liked;
+        return {
+          ...story,
+          liked: !isLiked,
+          likes: isLiked ? Math.max(0, (story.likes || 0) - 1) : (story.likes || 0) + 1
+        };
+      }
+      return story;
+    }));
     try {
       await fetch(`/api/community/stories/${id}/like`, { method: 'PATCH' });
     } catch (e) {
@@ -93,13 +135,18 @@ const CommunityMainContent = () => {
   };
 
   const handleHelpful = async (id) => {
-    // Optimistic cache update
-    setReviews(reviews.map(review =>
-      review._id === id ? {
-        ...review,
-        helpful: (review.helpful || 0) + 1
-      } : review
-    ));
+    // Optimistic cache update toggle
+    setReviews(reviews.map(review => {
+      if (review._id === id) {
+        const isHelpful = review.isHelpful;
+        return {
+          ...review,
+          isHelpful: !isHelpful,
+          helpful: isHelpful ? Math.max(0, (review.helpful || 0) - 1) : (review.helpful || 0) + 1
+        };
+      }
+      return review;
+    }));
     try {
       await fetch(`/api/community/reviews/${id}/helpful`, { method: 'PATCH' });
     } catch (e) {
@@ -304,7 +351,7 @@ const CommunityMainContent = () => {
                                 </motion.div>
                                 {story.likes}
                               </button>
-                              <button className="flex items-center gap-2 font-bold text-sm text-gray-500 hover:text-emerald-600 transition-colors">
+                              <button onClick={() => toggleComments(story._id)} className="flex items-center gap-2 font-bold text-sm text-gray-500 hover:text-emerald-600 transition-colors">
                                 <div className="p-2 rounded-full hover:bg-emerald-50"><FiMessageSquare size={20} /></div>
                                 {story.comments}
                               </button>
@@ -313,6 +360,43 @@ const CommunityMainContent = () => {
                               <FiShare2 size={20} />
                             </button>
                           </div>
+
+                          {/* COMMENTS SECTION */}
+                          <AnimatePresence>
+                            {expandedComments[story._id] && (
+                               <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="mt-4 pt-4 border-t border-gray-100 overflow-hidden">
+                                 <div className="space-y-4 mb-4 max-h-60 overflow-y-auto custom-scrollbar pr-2">
+                                    {(story.commentsArray || []).map((c, idx) => (
+                                       <div key={idx} className="flex gap-3">
+                                          <img src={c.photo} className="w-8 h-8 rounded-full shadow-sm" alt="" />
+                                          <div className="bg-gray-50 rounded-2xl p-3 flex-1">
+                                             <div className="flex justify-between items-baseline mb-1">
+                                                <span className="font-bold text-sm text-gray-900">{c.name}</span>
+                                                <span className="text-[10px] uppercase font-bold tracking-widest text-gray-400">{new Date(c.createdAt).toLocaleDateString()}</span>
+                                             </div>
+                                             <p className="text-sm font-medium text-gray-700">{c.text}</p>
+                                          </div>
+                                       </div>
+                                    ))}
+                                    {(!story.commentsArray || story.commentsArray.length === 0) && (
+                                       <p className="text-center text-sm font-medium text-gray-400 py-3">No comments yet. Be the first!</p>
+                                    )}
+                                 </div>
+                                 <form onSubmit={(e) => handleCommentSubmit(e, story._id)} className="flex items-center gap-2">
+                                    <input 
+                                       type="text" 
+                                       placeholder="Add a comment..."
+                                       value={commentText[story._id] || ''}
+                                       onChange={(e) => setCommentText(prev => ({ ...prev, [story._id]: e.target.value }))}
+                                       className="flex-1 bg-gray-50 border border-gray-200 rounded-full px-4 py-2 text-sm font-medium focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none transition"
+                                    />
+                                    <button type="submit" disabled={!commentText[story._id]?.trim()} className="p-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 text-white rounded-full transition active:scale-95">
+                                       <Send className="w-4 h-4" />
+                                    </button>
+                                 </form>
+                               </motion.div>
+                            )}
+                          </AnimatePresence>
                         </div>
                       </motion.div>
                     ))}
@@ -396,9 +480,9 @@ const CommunityMainContent = () => {
                           <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Was this helpful?</span>
                           <button
                             onClick={() => handleHelpful(review._id)}
-                            className="flex items-center gap-1.5 text-sm font-bold text-gray-500 hover:text-emerald-600 bg-gray-50 hover:bg-emerald-50 px-4 py-2 rounded-full transition-colors border border-gray-100 hover:border-emerald-200"
+                            className={`flex items-center gap-1.5 text-sm font-bold px-4 py-2 rounded-full transition-colors border ${review.isHelpful ? 'text-emerald-600 bg-emerald-50 border-emerald-200' : 'text-gray-500 hover:text-emerald-600 bg-gray-50 hover:bg-emerald-50 border-gray-100 hover:border-emerald-200'}`}
                           >
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" /></svg>
+                            <svg className="w-4 h-4" fill={review.isHelpful ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" /></svg>
                             Yes ({review.helpful})
                           </button>
                         </div>

@@ -21,12 +21,14 @@ const SavedMainContent = () => {
     const days = record.config?.days || pkg.days || 1;
 
     let path = '';
+    const actualProviderId = pkg.provider?._id || pkg.providerId || pkg.provider || pkg._id || record.providerId || '';
+    
     if (record.itemType === 'event') {
       path = `/user/events/eventdetails/${record.itemId}`;
     } else if (record.itemType === 'trek') {
-      path = `/user/trek/guidelist/trekdetails/${pkg.providerId || pkg.provider || pkg._id || record.providerId}?trekId=${record.itemId}${dateQuery}&count=${count}&category=${cat}&days=${days}`;
+      path = `/user/trek/guidelist/trekdetails/${actualProviderId}?trekId=${pkg._id}${dateQuery}&count=${count}&category=${cat}&days=${days}`;
     } else {
-      path = `/user/trip/guidelist/tripdetails/${pkg.providerId || pkg.provider || pkg._id || record.providerId}?packageId=${record.itemId}${dateQuery}&count=${count}&category=${cat}&days=${days}`;
+      path = `/user/trip/guidelist/tripdetails/${actualProviderId}?packageId=${pkg._id}${dateQuery}&count=${count}&category=${cat}&days=${days}`;
     }
     router.push(path);
   };
@@ -76,13 +78,13 @@ const SavedMainContent = () => {
   return (
     <div className="mx-auto max-w-7xl pt-4 sm:pt-6 pb-16 px-4">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <div className="flex items-center gap-3">
-          <button onClick={() => router.back()} className="p-2 sm:p-2.5 rounded-full bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-emerald-600 transition-colors shadow-sm hidden md:block">
-            <ArrowLeft className="w-5 h-5" />
+        <div className="flex items-center gap-4">
+          <button onClick={() => router.back()} className="p-2 sm:p-2.5 rounded-2xl bg-white border border-gray-200 text-gray-600 hover:bg-emerald-50 hover:text-emerald-600 transition-all shadow-sm active:scale-95 shrink-0">
+            <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
           <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent mb-2">Saved Items</h1>
-            <p className="text-gray-500 text-sm sm:text-base">Your curated collection of trips, treks, and events.</p>
+            <h1 className="text-3xl md:text-4xl font-black bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent tracking-tight">Saved Items</h1>
+            <p className="text-gray-500 font-medium text-sm md:text-base mt-1">Your curated collection of trips, treks, and events.</p>
           </div>
         </div>
         
@@ -179,7 +181,7 @@ const SavedMainContent = () => {
                           <>
                             <div className="flex items-center text-xs text-gray-500">
                               <Calendar className="h-3.5 w-3.5 mr-1.5 text-blue-500 shrink-0" />
-                              <span className="truncate">{pkg.date ? new Date(pkg.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Flexible Date'} • {pkg.duration || 'Flexible'} hrs</span>
+                              <span className="truncate">{pkg.date ? new Date(pkg.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Flexible Date'} • {pkg.duration ? `${pkg.duration} Days` : 'Flexible'}</span>
                             </div>
                             <div className="flex items-center text-xs text-gray-500">
                               <User className="h-3.5 w-3.5 mr-1.5 text-emerald-500 shrink-0" />
@@ -217,13 +219,21 @@ const SavedMainContent = () => {
                         )}
                       </div>
 
-                      {/* Footer */}
+                       {/* Footer */}
                       <div className="mt-8 pt-4 border-t border-gray-50 flex items-end justify-between">
                         <div>
                            <p className="text-[9px] text-gray-400 uppercase tracking-widest font-black mb-0.5">Starting from</p>
                            <p className="flex items-baseline gap-1">
                              <span className={`text-xl font-black ${isPremium ? 'text-amber-600' : 'text-gray-900'}`}>
-                               ₹{Number(pkg.price?.individual || pkg.price?.starting || pkg.pricePerSlot || pkg.price || 0).toLocaleString('en-IN')}
+                               ₹{Number(
+                                  record.config?.computedPrice || 
+                                  (pkg.pricingTiers?.length > 0 ? [...pkg.pricingTiers].sort((a,b)=>a.minPeople - b.minPeople)[0].price : 0) || 
+                                  pkg.price?.individual || 
+                                  pkg.price?.starting || 
+                                  pkg.pricePerSlot || 
+                                  pkg.price || 
+                                  0
+                               ).toLocaleString('en-IN')}
                              </span>
                              <span className="text-[10px] text-gray-400 font-bold uppercase">/person</span>
                            </p>

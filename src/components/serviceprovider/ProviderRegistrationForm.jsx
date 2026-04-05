@@ -458,9 +458,9 @@ export default function ProviderRegistrationForm({ rejected = false }) {
                                                 className="mt-0.5 h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500" />
                                             <span className="text-sm text-gray-600 leading-relaxed">
                                                 {"I agree to bagspackgo's "}
-                                                <Link href="/terms" className="text-emerald-600 font-semibold hover:underline">Terms</Link>
+                                                <Link target="_blank" href="/provider-terms" className="text-emerald-600 font-semibold hover:underline">Provider Terms</Link>
                                                 {" & "}
-                                                <Link href="/privacy" className="text-emerald-600 font-semibold hover:underline">Privacy Policy</Link>
+                                                <Link target="_blank" href="/provider-privacy" className="text-emerald-600 font-semibold hover:underline">Privacy Policy</Link>
                                             </span>
                                         </label>
                                         {errors.agree && <p className="text-xs text-rose-500 pl-1">{errors.agree}</p>}

@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 
 /* ─────────────────── Custom Dropdown ─────────────────── */
@@ -109,6 +110,7 @@ const EventDetails = ({ event }) => {
   const [formErrors, setFormErrors] = useState({});
 
   const [showFeeDetails, setShowFeeDetails] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   // ── Save & Share state ──
   const [isSaved, setIsSaved] = useState(false);
@@ -338,6 +340,12 @@ const EventDetails = ({ event }) => {
     setIsProcessingPayment(true);
     setFormErrors({});
 
+    if (!agreedToTerms) {
+      setFormErrors({ terms: 'Please agree to the Terms & Conditions to proceed.' });
+      setIsProcessingPayment(false);
+      return;
+    }
+
     try {
       // Find the selected pickup point object
       const pickupObj = event.pickupPoints?.find(p => p.location === selectedPickup) || null;
@@ -412,17 +420,20 @@ const EventDetails = ({ event }) => {
             localStorage.removeItem('temp_event_booking');
             router.push(`/user/event/booking-success?bookingId=${bookingId}`);
           } else {
-            alert(verifyData.message || 'Payment verification failed');
-            setIsProcessingPayment(false);
+            router.push(`/user/event/booking-failed?return=/user/event/eventdetails/${event._id || event.id}`);
           }
         },
         modal: { ondismiss: () => setIsProcessingPayment(false) }
       });
+
+      rzp.on('payment.failed', function (response) {
+         router.push(`/user/event/booking-failed?return=/user/event/eventdetails/${event._id || event.id}`);
+      });
+
       rzp.open();
     } catch (err) {
       console.error(err);
-      alert(err.message || 'Payment failed');
-      setIsProcessingPayment(false);
+      router.push(`/user/event/booking-failed?return=/user/event/eventdetails/${event._id || event.id}`);
     }
   };
 
@@ -976,6 +987,20 @@ const EventDetails = ({ event }) => {
                                       <><ShieldCheck size={22} className="text-emerald-400" /> Pay Securely Now</>
                                     )}
                                   </button>
+
+                                  {/* T&C Consent for Events */}
+                                  <label className={`flex items-start gap-3 mt-5 p-4 rounded-xl border-2 cursor-pointer transition-all ${agreedToTerms ? 'border-emerald-500 bg-emerald-50/50' : 'border-gray-200 hover:border-gray-300 bg-white/80'}`}>
+                                    <input type="checkbox" checked={agreedToTerms} onChange={(e) => { setAgreedToTerms(e.target.checked); setFormErrors(prev => { const n = {...prev}; delete n.terms; return n; }); }}
+                                      className="mt-0.5 h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 flex-shrink-0" />
+                                    <span className="text-[11px] text-gray-600 leading-relaxed">
+                                      I agree to bagspackgo&apos;s{' '}
+                                      <Link href="/terms" target="_blank" className="text-emerald-600 font-bold hover:underline">Terms & Conditions</Link>
+                                      {' '}and{' '}
+                                      <Link href="/privacy" target="_blank" className="text-emerald-600 font-bold hover:underline">Privacy Policy</Link>.
+                                      I understand that <strong className="text-gray-800">event bookings are final — no cancellations or refunds</strong> will be issued.
+                                    </span>
+                                  </label>
+                                  {formErrors.terms && <p className="text-[10px] text-red-500 font-bold mt-2 uppercase tracking-wide flex items-center gap-1"><AlertCircle size={10} /> {formErrors.terms}</p>}
                                   <button onClick={() => setBookingStep(1)} className="w-full mt-4 py-2 font-bold text-gray-400 hover:text-gray-700 transition-colors focus:outline-none text-sm">
                                     Edit Booking Details
                                   </button>

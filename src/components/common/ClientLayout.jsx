@@ -25,10 +25,16 @@ export default function ClientLayout({ children }) {
         pathname?.includes('/bookings') ||
         pathname?.includes('/saved') ||
         pathname?.includes('/help') ||
+        pathname?.includes('/notifications') ||
+        pathname?.includes('/provider') ||
         pathname?.includes('/signin') ||
         pathname?.includes('/signup') ||
         pathname?.includes('/admin') ||
-        pathname?.includes('/serviceprovider');
+        pathname?.includes('/serviceprovider') ||
+        pathname === '/terms' ||
+        pathname === '/privacy' ||
+        pathname === '/provider-terms' ||
+        pathname === '/provider-privacy';
 
     const hideNavbar =
         pathname === '/signin' ||

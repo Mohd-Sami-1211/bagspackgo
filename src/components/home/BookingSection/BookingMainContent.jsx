@@ -187,13 +187,13 @@ const BookingMainContent = () => {
       {/* MAIN CONTENT */}
       <main className="flex-1 w-full max-w-full overflow-hidden min-h-[500px]">
         <SectionHeader>
-          <div className="flex items-center gap-3">
-             <button onClick={() => router.back()} className="p-2 sm:p-2.5 rounded-full bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-emerald-600 transition-colors shadow-sm hidden md:block">
+          <div className="flex items-center gap-4">
+             <button onClick={() => router.back()} className="p-2 sm:p-2.5 rounded-2xl bg-white border border-gray-200 text-gray-600 hover:bg-emerald-50 hover:text-emerald-600 transition-all shadow-sm active:scale-95 shrink-0">
                 <FaChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
              </button>
              <div>
-                <h2 className="text-2xl sm:text-3xl font-black text-gray-900 leading-none">My Bookings</h2>
-                <p className="text-sm font-semibold text-gray-500 mt-1">Manage and track your travel experiences.</p>
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-gray-900 leading-none tracking-tight">My Bookings</h2>
+                <p className="text-sm md:text-base font-semibold text-gray-500 mt-1.5">Manage and track your travel experiences.</p>
              </div>
           </div>
           <button

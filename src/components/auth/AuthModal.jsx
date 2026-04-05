@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { 
     X, Mail, Key, User, Phone, LogIn, UserPlus, Shield, ChevronRight, Loader2, RefreshCw
@@ -543,6 +544,12 @@ function AuthModalContent() {
                                             <button type="submit" disabled={loading} className="w-full py-3.5 rounded-xl font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-500/20 transition-all flex items-center justify-center gap-2">
                                                 {loading ? <Loader2 className="animate-spin w-5 h-5" /> : 'Continue with Email'}
                                             </button>
+                                            <p className="text-[10px] text-center text-gray-400 mt-4 px-4 leading-relaxed">
+                                                By continuing, you agree to bagspackgo&apos;s{' '}
+                                                <Link href="/terms" target="_blank" className="text-emerald-600 font-semibold hover:underline">Terms of Service</Link>
+                                                {' '}and{' '}
+                                                <Link href="/privacy" target="_blank" className="text-emerald-600 font-semibold hover:underline">Privacy Policy</Link>.
+                                            </p>
                                         </form>
                                     </motion.div>
                                 )}
@@ -698,6 +705,14 @@ function AuthModalContent() {
                                                     <><RefreshCw className="w-5 h-5" /> Send Reset Link</>
                                                 )}
                                             </button>
+                                            {providerMode === 'signup' && (
+                                                <p className="text-[10px] text-center text-gray-400 mt-4 px-4 leading-relaxed">
+                                                    By signing up as a provider, you agree to bagspackgo&apos;s{' '}
+                                                    <Link href="/provider-terms" target="_blank" className="text-emerald-600 font-semibold hover:underline">Provider Terms</Link>
+                                                    {' '}and{' '}
+                                                    <Link href="/provider-privacy" target="_blank" className="text-emerald-600 font-semibold hover:underline">Privacy Policy</Link>.
+                                                </p>
+                                            )}
                                         </form>
 
                                         {/* Toggle Signin / Signup / Cancel forgot */}

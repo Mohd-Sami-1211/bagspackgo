@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft,
@@ -1350,7 +1351,11 @@ export default function HostEventPage() {
                           required
                         />
                         <label htmlFor="terms" className="text-sm text-neutral-700">
-                          I accept the terms and conditions and confirm that all information provided is accurate.
+                          I accept bagspackgo&apos;s{' '}
+                          <Link href="/provider-terms" target="_blank" className="text-emerald-600 font-semibold hover:underline">Provider Terms & Conditions</Link>
+                          {' '}and{' '}
+                          <Link href="/provider-privacy" target="_blank" className="text-emerald-600 font-semibold hover:underline">Provider Privacy Policy</Link>{' '}
+                          and confirm that all information provided is accurate. I understand the applicable commission structure and payment terms.
                         </label>
                       </div>
                     </div>

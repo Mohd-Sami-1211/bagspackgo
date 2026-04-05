@@ -98,28 +98,41 @@ const GuideDetails = ({ guide }) => {
 
   // Calculate price based on selected package or fallback to daily rate
   const calculatePrice = () => {
+    let perPersonPrice = 0;
+    let fallbackDays = numDays;
+
     if (selectedPackage) {
-      // Use package price
-      const packagePrice = Number(
-        selectedPackage.price[category] ||
-        selectedPackage.price.individual ||
-        0,
-      );
+      fallbackDays = selectedPackage.days || numDays;
+      const tiers = selectedPackage.pricingTiers || [];
+      const matchedTier = tiers.find(t => numPeople >= t.minPeople && numPeople <= t.maxPeople) || tiers[0];
+      
+      if (matchedTier) {
+        perPersonPrice = Number(matchedTier.price);
+      } else {
+        perPersonPrice = Number(
+          selectedPackage.price?.[category] ||
+          selectedPackage.price?.individual ||
+          0
+        );
+      }
+      
       return {
-        basePrice: packagePrice * numPeople,
-        perPersonPrice: packagePrice,
-        days: selectedPackage.days,
+        basePrice: perPersonPrice * numPeople,
+        perPersonPrice: perPersonPrice,
+        days: fallbackDays,
         isPackage: true,
       };
     } else {
-      // Fallback to daily rate calculation
+      // Fallback to daily rate calculation on guide
       const dailyRate = Number(
-        guide.price[category] || guide.price.individual || 0,
+        guide.price?.[category] || guide.price?.individual || 0
       );
+      perPersonPrice = dailyRate * fallbackDays;
+      
       return {
-        basePrice: dailyRate * numPeople * numDays,
-        perPersonPrice: dailyRate * numDays,
-        days: numDays,
+        basePrice: perPersonPrice * numPeople,
+        perPersonPrice: perPersonPrice,
+        days: fallbackDays,
         isPackage: false,
       };
     }
@@ -191,7 +204,8 @@ const GuideDetails = ({ guide }) => {
               date: selectedStartDate || null,
               peopleCount: count,
               category: category,
-              days: days
+              days: priceDetails.days,
+              computedPrice: priceDetails.perPersonPrice
             }
           }),
         });
