@@ -6,8 +6,27 @@ import TrekCard from './TrekGuideCard';
 import Select from 'react-select';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { X, Calendar as CalendarIcon, Filter, Search as SearchIcon, ChevronDown, ArrowLeft, Plus, Minus } from 'lucide-react';
+import { X, Calendar as CalendarIcon, Filter, Search as SearchIcon, ChevronDown, ArrowLeft, Plus, Minus, PackageOpen, Sparkles } from 'lucide-react';
 import data from 'src/data/data.json';
+
+const kashmirOption = (data.destinations || []).find(d => d.value === 'kashmir');
+const otherOptions = (data.destinations || []).filter(d => d.value !== 'kashmir').map(dest => ({
+  ...dest,
+  isDisabled: true,
+}));
+
+const destinationOptions = kashmirOption ? [
+  kashmirOption,
+  {
+    label: 'Available Soon',
+    options: otherOptions
+  }
+] : [];
+
+const findDestination = (val) => {
+  if (kashmirOption && kashmirOption.value === val) return kashmirOption;
+  return otherOptions.find(d => d.value === val) || null;
+};
 
 const TrekSearchResults = () => {
   const router = useRouter();
@@ -25,6 +44,7 @@ const TrekSearchResults = () => {
   const [sortOption, setSortOption] = useState('rating-desc');
   const [searchQuery, setSearchQuery] = useState('');
   const [allPackages, setAllPackages] = useState([]);
+  const [otherPackagesList, setOtherPackagesList] = useState([]);
   const [activeFilter, setActiveFilter] = useState(null);
   const [trekOptions, setTrekOptions] = useState([]);
 
@@ -46,6 +66,12 @@ const TrekSearchResults = () => {
   const date = dateParam && !isNaN(new Date(dateParam).getTime())
     ? new Date(dateParam)
     : null;
+
+  // Get destination label for display  
+  const destinationLabel = useMemo(() => {
+    const dest = data.destinations.find(d => d.value === destination);
+    return dest ? dest.label : destination ? destination.charAt(0).toUpperCase() + destination.slice(1) : '';
+  }, [destination]);
 
   const [editableDestination, setEditableDestination] = useState(destination);
   const [editableTrek, setEditableTrek] = useState(trekId);
@@ -111,6 +137,7 @@ const TrekSearchResults = () => {
         if (res.ok) {
           const json = await res.json();
           setAllPackages(json.data || []);
+          setOtherPackagesList(json.otherPackages || []);
         }
       } catch (error) {
         console.error('Error loading results:', error);
@@ -298,8 +325,8 @@ const TrekSearchResults = () => {
                 <div className="space-y-1">
                   <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider ml-1">Destination</label>
                   <Select
-                    options={data.destinations}
-                    value={editableDestination ? data.destinations.find(d => d.value === editableDestination) : null}
+                    options={destinationOptions}
+                    value={findDestination(editableDestination)}
                     onChange={(opt) => {
                       setEditableDestination(opt?.value || '');
                       setEditableTrek('');
@@ -361,24 +388,126 @@ const TrekSearchResults = () => {
         <div className="py-6 space-y-6">
           <div className="grid gap-6">
             {packages.length === 0 ? (
-              <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-gray-300">
-                <p className="text-gray-400 font-medium">No results found for your filters.</p>
-              </div>
-            ) : (
-              packages.map((pkg, index) => (
+              /* ──────── NO RESULTS: Friendly "Sorry" + Other Packages ──────── */
+              <div className="space-y-8">
+                {/* Sorry Message */}
                 <motion.div
-                  key={pkg._id || index}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
+                  transition={{ duration: 0.5 }}
+                  className="text-center py-14 sm:py-20 bg-white rounded-3xl border border-dashed border-gray-200 shadow-sm"
                 >
-                  <TrekCard
-                    pkg={pkg}
-                    peopleCount={peopleCount}
-                    date={date}
-                  />
+                  <motion.div 
+                    initial={{ scale: 0 }} 
+                    animate={{ scale: 1 }} 
+                    transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+                    className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-emerald-50 to-teal-50 mb-5 border-2 border-emerald-100"
+                  >
+                    <PackageOpen className="h-9 w-9 text-emerald-400" />
+                  </motion.div>
+                  <h3 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">
+                    Sorry, No Exact Matches Found
+                  </h3>
+                  <p className="text-sm sm:text-base text-gray-400 max-w-md mx-auto leading-relaxed px-4">
+                    We couldn&apos;t find trek packages matching your exact criteria. But don&apos;t worry — we have other amazing treks{destinationLabel ? ` in ${destinationLabel}` : ''} for you!
+                  </p>
                 </motion.div>
-              ))
+
+                {/* Other Packages Section */}
+                {otherPackagesList.length > 0 && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3, duration: 0.5 }}
+                  >
+                    <div className="flex items-center gap-3 mb-5">
+                      <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full shadow-lg shadow-emerald-200/50">
+                        <Sparkles className="h-4 w-4 text-white" />
+                        <span className="text-sm font-bold text-white">We Have More to Offer!</span>
+                      </div>
+                      <div className="flex-1 h-px bg-gradient-to-r from-emerald-200 to-transparent" />
+                    </div>
+                    <p className="text-sm text-gray-500 mb-5 ml-1">
+                      Here are other available trek packages{destinationLabel ? ` for ${destinationLabel}` : ''} that you might love:
+                    </p>
+                    <div className="grid gap-5">
+                      {otherPackagesList.map((pkg, index) => (
+                        <motion.div
+                          key={pkg._id || index}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.4 + index * 0.05 }}
+                        >
+                          <TrekCard
+                            pkg={pkg}
+                            peopleCount={peopleCount}
+                            date={date}
+                          />
+                        </motion.div>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </div>
+            ) : (
+              /* ──────── HAS RESULTS: Main Results + "More Packages" Bonus ──────── */
+              <>
+                {packages.map((pkg, index) => (
+                  <motion.div
+                    key={pkg._id || index}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                  >
+                    <TrekCard
+                      pkg={pkg}
+                      peopleCount={peopleCount}
+                      date={date}
+                    />
+                  </motion.div>
+                ))}
+
+                {/* ── "More Packages" Bonus Section ── */}
+                {otherPackagesList.length > 0 && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: '-50px' }}
+                    transition={{ duration: 0.5 }}
+                    className="mt-4"
+                  >
+                    <div className="flex items-center gap-3 mb-5 mt-4">
+                      <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full shadow-lg shadow-blue-200/50">
+                        <Sparkles className="h-4 w-4 text-white" />
+                        <span className="text-sm font-bold text-white whitespace-nowrap">
+                          More Treks{destinationLabel ? ` in ${destinationLabel}` : ''}
+                        </span>
+                      </div>
+                      <div className="flex-1 h-px bg-gradient-to-r from-blue-200 to-transparent" />
+                    </div>
+                    <p className="text-sm text-gray-500 mb-5 ml-1">
+                      Explore more trek packages available{destinationLabel ? ` for ${destinationLabel}` : ''} to find your perfect adventure:
+                    </p>
+                    <div className="grid gap-5">
+                      {otherPackagesList.map((pkg, index) => (
+                        <motion.div
+                          key={`other-${pkg._id || index}`}
+                          initial={{ opacity: 0, y: 20 }}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ delay: index * 0.05 }}
+                        >
+                          <TrekCard
+                            pkg={pkg}
+                            peopleCount={peopleCount}
+                            date={date}
+                          />
+                        </motion.div>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </>
             )}
           </div>
         </div>

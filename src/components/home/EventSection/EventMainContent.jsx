@@ -506,26 +506,52 @@ const EventMainContent = () => {
                   onChange={(e) => setDestinationSearch(e.target.value)}
                 />
                 <div className="max-h-48 overflow-y-auto">
-                  {data.destinations
-                    .filter(dest =>
+                  {(() => {
+                    const filtered = data.destinations.filter(dest =>
                       dest.label.toLowerCase().includes(destinationSearch.toLowerCase())
-                    )
-                    .map(dest => (
-                      <div
-                        key={dest.value}
-                        className={`flex items-center p-2 hover:bg-[#d1fae5] rounded-md cursor-pointer text-sm ${tempFilters.destination.includes(dest.value) ? 'bg-[#a7f3d0]' : ''}`}
-                        onClick={() => handleTempFilterChange('destination', dest.value)}
-                      >
-                        <div className="flex items-center">
-                          {tempFilters.destination.includes(dest.value) ? (
-                            <Check className="mr-2 text-green-600" size={16} />
-                          ) : (
-                            <div className="w-4 h-4 mr-2 border border-neutral-300 rounded-sm" />
-                          )}
-                          {dest.label}
-                        </div>
-                      </div>
-                    ))}
+                    );
+                    const kashmir = filtered.filter(d => d.value === 'kashmir');
+                    const others = filtered.filter(d => d.value !== 'kashmir');
+
+                    return (
+                      <>
+                        {kashmir.map(dest => (
+                          <div
+                            key={dest.value}
+                            className={`flex items-center p-2 rounded-md transition-colors text-sm hover:bg-[#d1fae5] cursor-pointer ${tempFilters.destination.includes(dest.value) ? 'bg-[#a7f3d0]' : ''}`}
+                            onClick={() => handleTempFilterChange('destination', dest.value)}
+                          >
+                            <div className="flex items-center">
+                              {tempFilters.destination.includes(dest.value) ? (
+                                <Check className="mr-2 text-green-600" size={16} />
+                              ) : (
+                                <div className="w-4 h-4 mr-2 border border-neutral-300 rounded-sm" />
+                              )}
+                              <span className="text-neutral-700">{dest.label}</span>
+                            </div>
+                          </div>
+                        ))}
+
+                        {others.length > 0 && (
+                          <div className="px-2 mt-3 mb-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                            Available Soon
+                          </div>
+                        )}
+
+                        {others.map(dest => (
+                          <div
+                            key={dest.value}
+                            className={`flex items-center p-2 rounded-md transition-colors text-sm opacity-50 cursor-not-allowed`}
+                          >
+                            <div className="flex items-center">
+                              <div className="w-4 h-4 mr-2 border border-neutral-200 rounded-sm" />
+                              <span className="text-neutral-400">{dest.label}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
               <div className="flex justify-end gap-2 p-2 border-t border-neutral-200">
@@ -1004,7 +1030,7 @@ const EventMainContent = () => {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto mt-1 sm:mt-5 py-8 px-4 bg-white/50 rounded-2xl shadow-sm min-h-[60vh]">
+      <div className="w-full mt-1 sm:mt-5 py-8 px-4 bg-white/50 rounded-2xl shadow-sm min-h-[60vh]">
         <div className="flex flex-col lg:flex-row gap-8 h-full">
           {/* Sidebar Skeleton */}
           <div className="hidden lg:block lg:w-1/4 space-y-6">
@@ -1030,7 +1056,7 @@ const EventMainContent = () => {
 
   if (!loading && data.events.length === 0) {
     return (
-      <div className="max-w-7xl mx-auto mt-4 sm:mt-10 py-20 px-4 bg-white rounded-[2rem] shadow-xl border border-gray-100 min-h-[70vh] flex flex-col items-center justify-center text-center">
+      <div className="w-full mt-4 sm:mt-10 py-20 px-4 bg-white rounded-[2rem] shadow-xl border border-gray-100 min-h-[70vh] flex flex-col items-center justify-center text-center">
         <div className="relative mb-8">
           <div className="absolute inset-0 bg-green-100 rounded-full blur-3xl opacity-50 scale-150" />
           <div className="relative bg-green-50 p-8 rounded-full border border-green-100 shadow-inner">
@@ -1052,7 +1078,7 @@ const EventMainContent = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto  sm:mt-5 py-2 px-3 sm:px-4 bg-gradient-to-br from-green-50 to-blue-50 rounded-xl shadow-lg overflow-hidden -mb-16 sm:mb-40">
+    <div className="w-full  py-2 px-3 sm:px-4 bg-gradient-to-br from-green-50 to-blue-50  shadow-lg overflow-hidden mb-0 pb-8">
       {/* ── Mobile: Search Bar + Filter Toggle ── */}
       <div className="lg:hidden px-2 pt-4 pb-2 space-y-3 -mt-4">
         <div className="flex items-center gap-2">

@@ -4,6 +4,46 @@ import { Guide } from '@/models/guide.model';
 import { GuideDetails } from '@/models/guidedetails.model';
 import { Package } from '@/models/package.model';
 
+// Helper: Enrich packages with provider details
+async function enrichPackages(packages) {
+    if (packages.length === 0) return [];
+
+    const providerIds = [...new Set(packages.map(p => p.provider._id.toString()))];
+
+    const guideDetailsList = await GuideDetails.find({
+        guide: { $in: providerIds }
+    }).lean();
+
+    // Filter out treks from providers who have paused treks
+    const pausedProviderIds = new Set(
+        guideDetailsList
+            .filter(gd => gd.pausedServices?.trek === true)
+            .map(gd => gd.guide.toString())
+    );
+
+    // Remove paused and stitch companyname and logo
+    return packages
+        .filter(pkg => !pausedProviderIds.has(pkg.provider._id.toString()))
+        .map(pkg => {
+            const details = guideDetailsList.find(gd => gd.guide.toString() === pkg.provider._id.toString());
+            if (details) {
+                pkg.provider.companyname = details.companyname;
+                pkg.provider.companyName = details.companyname;
+                pkg.provider.logo = details.logo;
+                pkg.provider.rating = details.rating || 0;
+                pkg.provider.reviews = details.reviews || 0;
+                pkg.provider.totalTrips = details.totalTrips || 0;
+                pkg.provider.totalTreks = details.totalTreks || 0;
+            }
+            // Fallback to provider rating if package rating doesn't exist
+            if (!pkg.rating) {
+                pkg.rating = pkg.provider.rating;
+                pkg.totalRatings = pkg.provider.reviews;
+            }
+            return pkg;
+        });
+}
+
 export async function GET(req) {
     try {
         await dbConnect();
@@ -53,48 +93,29 @@ export async function GET(req) {
             }
         }
 
-        if (packages.length === 0) {
-            return NextResponse.json({ success: true, data: [] });
+        const enrichedPackages = await enrichPackages(packages);
+
+        // --- Fetch "other packages" for the same destination ---
+        let otherPackages = [];
+        if (destination && destination !== 'all_treks') {
+            const matchedPkgIds = new Set(packages.map(p => p._id.toString()));
+            const otherPkgQuery = {
+                status: { $in: ['active', 'published'] },
+                category: 'trek',
+                destination: { $regex: destination, $options: 'i' },
+                _id: { $nin: [...matchedPkgIds] }
+            };
+            let otherPkgs = await Package.find(otherPkgQuery).populate({
+                path: 'provider',
+                select: 'username companyname _id'
+            }).lean();
+            otherPackages = await enrichPackages(otherPkgs);
         }
 
-        const providerIds = [...new Set(packages.map(p => p.provider._id.toString()))];
-
-        const guideDetailsList = await GuideDetails.find({
-            guide: { $in: providerIds }
-        }).lean();
-
-        // Filter out treks from providers who have paused treks
-        const pausedProviderIds = new Set(
-            guideDetailsList
-                .filter(gd => gd.pausedServices?.trek === true)
-                .map(gd => gd.guide.toString())
-        );
-
-        // Remove paused and stitch companyname and logo
-        packages = packages
-            .filter(pkg => !pausedProviderIds.has(pkg.provider._id.toString()))
-            .map(pkg => {
-                const details = guideDetailsList.find(gd => gd.guide.toString() === pkg.provider._id.toString());
-                if (details) {
-                    pkg.provider.companyname = details.companyname;
-                    pkg.provider.companyName = details.companyname;
-                    pkg.provider.logo = details.logo;
-                    pkg.provider.rating = details.rating || 0;
-                    pkg.provider.reviews = details.reviews || 0;
-                    pkg.provider.totalTrips = details.totalTrips || 0;
-                    pkg.provider.totalTreks = details.totalTreks || 0;
-                }
-                // Fallback to provider rating if package rating doesn't exist
-                if (!pkg.rating) {
-                    pkg.rating = pkg.provider.rating;
-                    pkg.totalRatings = pkg.provider.reviews;
-                }
-                return pkg;
-            });
-
-        return NextResponse.json({ success: true, data: packages });
+        return NextResponse.json({ success: true, data: enrichedPackages, otherPackages });
     } catch (error) {
         console.error('Failed to fetch public treks:', error);
         return NextResponse.json({ success: false, message: 'Server error' }, { status: 500 });
     }
 }
+

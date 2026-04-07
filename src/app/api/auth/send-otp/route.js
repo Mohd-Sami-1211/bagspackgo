@@ -59,10 +59,11 @@ export async function POST(request) {
         }
 
         if (identifierType === "email") {
-            const existingUser = await User.findOne({ email: identifier });
-            const existingGuide = await Guide.findOne({ email: identifier });
+            const existingAccount = role === "user" 
+                ? await User.findOne({ email: identifier })
+                : await Guide.findOne({ email: identifier });
 
-            if (existingUser || existingGuide) {
+            if (existingAccount) {
                 return NextResponse.json(
                     {
                         success: false,

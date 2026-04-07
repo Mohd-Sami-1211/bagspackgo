@@ -1136,7 +1136,7 @@ const EventDetails = ({ event }) => {
 
             {event.destinationLink && (
               <a
-                href={event.destinationLink}
+                href={event.destinationLink.startsWith('http') ? event.destinationLink : `https://${event.destinationLink}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold py-3 rounded-xl transition-all border border-blue-200 shadow-sm group"

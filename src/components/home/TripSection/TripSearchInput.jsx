@@ -262,38 +262,50 @@ const TripSearchInput = memo(forwardRef(({ compactMode = false, onSearch }, ref)
 }));
 
 // ------------------- Destination Select -------------------
-const DestinationSelect = ({ selectedDestination, setSelectedDestination, error, clearError }) => (
-  <motion.div
-    className="relative z-[1000] w-full"
-    initial={{ opacity: 0, x: -10 }}
-    whileInView={{ opacity: 1, x: 0 }}
-    viewport={{ once: true, margin: '-50px' }}
-    transition={{ duration: 0.2, delay: 0.05 }}
-  >
-    <label className="block text-sm font-semibold text-gray-800 mb-1">Select Destination</label>
-    <Select
-      instanceId="trip-destination-select"
-      options={data.destinations}
-      value={selectedDestination}
-      onChange={(value) => {
-        setSelectedDestination(value);
-        if (value) clearError('destination');
-      }}
-      placeholder="Enter Place to Search"
-      classNamePrefix="react-select"
-      isClearable
-      styles={{
-        ...selectStyles,
-        control: (provided, state) => ({
-          ...selectStyles.control(provided, state),
-          minHeight: '36px',
-          borderColor: error ? '#ef4444' : state.isFocused ? '#10b981' : '#d1d5db',
-          boxShadow: error ? '0 0 0 1px #ef4444' : state.isFocused ? '0 0 0 1px #10b981' : null,
-        }),
-      }}
-      menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
-      menuPosition="fixed"
-    />
+const DestinationSelect = ({ selectedDestination, setSelectedDestination, error, clearError }) => {
+  const destinationOptions = [
+    ...(data.destinations || []).filter(d => d.value === 'kashmir'),
+    {
+      label: 'Available Soon',
+      options: (data.destinations || []).filter(d => d.value !== 'kashmir').map(dest => ({
+        ...dest,
+        isDisabled: true,
+      }))
+    }
+  ];
+
+  return (
+    <motion.div
+      className="relative z-[1000] w-full"
+      initial={{ opacity: 0, x: -10 }}
+      whileInView={{ opacity: 1, x: 0 }}
+      viewport={{ once: true, margin: '-50px' }}
+      transition={{ duration: 0.2, delay: 0.05 }}
+    >
+      <label className="block text-sm font-semibold text-gray-800 mb-1">Select Destination</label>
+      <Select
+        instanceId="trip-destination-select"
+        options={destinationOptions}
+        value={selectedDestination}
+        onChange={(value) => {
+          setSelectedDestination(value);
+          if (value) clearError('destination');
+        }}
+        placeholder="Enter Place to Search"
+        classNamePrefix="react-select"
+        isClearable
+        styles={{
+          ...selectStyles,
+          control: (provided, state) => ({
+            ...selectStyles.control(provided, state),
+            minHeight: '36px',
+            borderColor: error ? '#ef4444' : state.isFocused ? '#10b981' : '#d1d5db',
+            boxShadow: error ? '0 0 0 1px #ef4444' : state.isFocused ? '0 0 0 1px #10b981' : null,
+          }),
+        }}
+        menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
+        menuPosition="fixed"
+      />
     <AnimatePresence>
       {error && (
         <motion.p 
@@ -306,8 +318,9 @@ const DestinationSelect = ({ selectedDestination, setSelectedDestination, error,
         </motion.p>
       )}
     </AnimatePresence>
-  </motion.div>
-);
+    </motion.div>
+  );
+};
 
 // ------------------- Category Select -------------------
 const CategorySelect = ({ selectedCategory, setSelectedCategory }) => (

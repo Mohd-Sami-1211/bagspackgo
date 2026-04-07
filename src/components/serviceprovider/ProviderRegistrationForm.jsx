@@ -227,6 +227,7 @@ export default function ProviderRegistrationForm({ rejected = false }) {
 
     async function onSubmit(e) {
         e.preventDefault();
+        if (submitting) return;
         if (!validateStep(3)) return;
         setSubmitting(true);
         setApiError('');
@@ -399,15 +400,21 @@ export default function ProviderRegistrationForm({ rejected = false }) {
                                                             exit={{ opacity: 0, y: -10 }}
                                                             className="absolute top-[calc(100%+8px)] left-0 w-full bg-white border border-gray-100 rounded-xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] z-50 max-h-60 overflow-y-auto"
                                                         >
-                                                            {destinations.map(d => (
-                                                                <div 
-                                                                    key={d.value} 
-                                                                    onClick={() => { update('destinationId', d.value); setDestOpen(false); }}
-                                                                    className={`px-4 py-3 cursor-pointer transition-colors font-medium text-sm border-b border-gray-50 last:border-0 ${form.destinationId === d.value ? 'bg-emerald-50 text-emerald-700' : 'text-gray-700 hover:bg-gray-50 hover:text-emerald-600'}`}
-                                                                >
-                                                                    {d.label}
-                                                                </div>
-                                                            ))}
+                                                            {destinations.map(d => {
+                                                                const isAvailable = d.value === 'kashmir';
+                                                                return (
+                                                                    <div 
+                                                                        key={d.value} 
+                                                                        onClick={() => { if (isAvailable) { update('destinationId', d.value); setDestOpen(false); } }}
+                                                                        className={`px-4 py-3 transition-colors font-medium text-sm border-b border-gray-50 last:border-0 flex items-center justify-between ${!isAvailable ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} ${form.destinationId === d.value ? 'bg-emerald-50 text-emerald-700' : isAvailable ? 'text-gray-700 hover:bg-gray-50 hover:text-emerald-600' : 'text-gray-400'}`}
+                                                                    >
+                                                                        <span>{d.label}</span>
+                                                                        {!isAvailable && (
+                                                                            <span className="text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-600 px-2 py-0.5 rounded-full">Available Soon</span>
+                                                                        )}
+                                                                    </div>
+                                                                );
+                                                            })}
                                                         </motion.div>
                                                     )}
                                                 </AnimatePresence>
@@ -420,7 +427,7 @@ export default function ProviderRegistrationForm({ rejected = false }) {
                                         </FloatingInput>
                                         <FloatingInput label="Company Website" icon={Globe}>
                                             <div className="relative group">
-                                                <input type="url" value={form.website} onChange={e => update('website', e.target.value)}
+                                                <input type="text" value={form.website} onChange={e => update('website', e.target.value)}
                                                     className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none pl-11 font-medium placeholder-gray-400 text-sm"
                                                     placeholder="https://www.example.com" />
                                                 <Globe className="w-5 h-5 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors group-focus-within:text-emerald-500" />

@@ -34,11 +34,20 @@ import {
 import dataJson from 'src/data/data.json';
 
 // Use the same destination list used throughout the app
-const destinations = dataJson.destinations.map((d, i) => ({
-  id: i + 1,
-  name: d.label,
-  value: d.value
-}));
+const destinations = [
+  ...dataJson.destinations.filter(d => d.value === 'kashmir').map((d, i) => ({
+    id: i + 1,
+    label: d.label,
+    value: d.value,
+  })),
+  { isGroupHeader: true, label: 'Available Soon', value: 'GROUP_HEADER' },
+  ...dataJson.destinations.filter(d => d.value !== 'kashmir').map((d, i) => ({
+    id: i + 100,
+    label: d.label,
+    value: d.value,
+    isDisabled: true
+  }))
+];
 
 const agendaOptions = [
   { value: 'arrival', label: 'Arrival & Check-in' },
@@ -93,20 +102,30 @@ const CustomSelect = ({ value, onChange, options, placeholder, icon: Icon, iconC
             transition={{ duration: 0.15 }}
             className="absolute z-[60] w-full mt-1.5 bg-white border border-gray-100 rounded-xl shadow-xl max-h-60 overflow-y-auto no-scrollbar"
           >
-            {options.map((option) => (
+            {options.map((option) => option.isGroupHeader ? (
+              <div key={option.value} className="px-4 py-2 mt-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider bg-gray-50/50">
+                {option.label}
+              </div>
+            ) : (
               <button
                 key={option.value}
                 type="button"
+                disabled={option.isDisabled}
                 onClick={() => {
-                  onChange(option.value);
-                  setIsOpen(false);
+                  if (!option.isDisabled) {
+                    onChange(option.value);
+                    setIsOpen(false);
+                  }
                 }}
                 className={`w-full text-left px-4 py-2.5 transition-colors flex items-center justify-between text-sm
+                  ${option.isDisabled ? 'opacity-50 cursor-not-allowed' : ''}
                   ${String(value) === String(option.value)
                     ? 'bg-emerald-50 text-emerald-700 font-semibold'
                     : 'text-gray-700 hover:bg-gray-50'}`}
               >
-                <span className="truncate pr-2">{option.label}</span>
+                <div className="flex items-center gap-2 overflow-hidden">
+                  <span className="truncate pr-2">{option.label}</span>
+                </div>
                 {String(value) === String(option.value) && <Check size={14} className="text-emerald-600 shrink-0" />}
               </button>
             ))}
@@ -860,7 +879,7 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
                   <CustomSelect
                     value={packageInfo.destination}
                     onChange={(val) => handlePackageInfoChange('destination', val)}
-                    options={destinations.map(d => ({ value: d.name, label: d.name }))}
+                    options={destinations}
                     placeholder="Select a destination"
                     error={validationErrors.destination}
                   />
