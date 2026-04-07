@@ -381,49 +381,62 @@ const TrekSearchInput = memo(forwardRef((props, ref) => {
 
 // ------------------- Helper Components -------------------
 
-const TrekDestinationSelect = ({ selectedDestination, handleDestinationChange, error }) => (
-  <motion.div
-    className="relative z-[1000] w-full"
-    initial={{ opacity: 0, x: -10 }}
-    whileInView={{ opacity: 1, x: 0 }}
-    viewport={{ once: true, margin: '-50px' }}
-    transition={{ duration: 0.2, delay: 0.05 }}
-  >
-    <label className="block text-sm font-semibold text-gray-800 mb-1">Select Destination</label>
-    <Select
-      instanceId="trek-destination-select"
-      options={data.destinations.map(dest => ({ value: dest.value, label: dest.label }))}
-      value={selectedDestination}
-      onChange={handleDestinationChange}
-      placeholder="Choose a destination"
-      classNamePrefix="react-select"
-      isClearable
-      styles={{
-        ...selectStyles,
-        control: (provided, state) => ({
-          ...selectStyles.control(provided, state),
-          minHeight: '36px',
-          borderColor: error ? '#ef4444' : state.isFocused ? '#10b981' : '#d1d5db',
-          boxShadow: error ? '0 0 0 1px #ef4444' : state.isFocused ? '0 0 0 1px #10b981' : null,
-        })
-      }}
-      menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
-      menuPosition="fixed"
-    />
-    <AnimatePresence>
-      {error && (
-        <motion.p 
-          initial={{ opacity: 0, height: 0 }} 
-          animate={{ opacity: 1, height: 'auto' }} 
-          exit={{ opacity: 0, height: 0 }}
-          className="text-[11px] sm:text-xs text-red-500 font-medium mt-1 ml-1"
-        >
-          {error}
-        </motion.p>
-      )}
-    </AnimatePresence>
-  </motion.div>
-);
+const TrekDestinationSelect = ({ selectedDestination, handleDestinationChange, error }) => {
+  const destinationOptions = [
+    ...(data.destinations || []).filter(d => d.value === 'kashmir'),
+    {
+      label: 'Available Soon',
+      options: (data.destinations || []).filter(d => d.value !== 'kashmir').map(dest => ({
+        ...dest,
+        isDisabled: true,
+      }))
+    }
+  ];
+
+  return (
+    <motion.div
+      className="relative z-[1000] w-full"
+      initial={{ opacity: 0, x: -10 }}
+      whileInView={{ opacity: 1, x: 0 }}
+      viewport={{ once: true, margin: '-50px' }}
+      transition={{ duration: 0.2, delay: 0.05 }}
+    >
+      <label className="block text-sm font-semibold text-gray-800 mb-1">Select Destination</label>
+      <Select
+        instanceId="trek-destination-select"
+        options={destinationOptions}
+        value={selectedDestination}
+        onChange={handleDestinationChange}
+        placeholder="Choose a destination"
+        classNamePrefix="react-select"
+        isClearable
+        styles={{
+          ...selectStyles,
+          control: (provided, state) => ({
+            ...selectStyles.control(provided, state),
+            minHeight: '36px',
+            borderColor: error ? '#ef4444' : state.isFocused ? '#10b981' : '#d1d5db',
+            boxShadow: error ? '0 0 0 1px #ef4444' : state.isFocused ? '0 0 0 1px #10b981' : null,
+          })
+        }}
+        menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
+        menuPosition="fixed"
+      />
+      <AnimatePresence>
+        {error && (
+          <motion.p 
+            initial={{ opacity: 0, height: 0 }} 
+            animate={{ opacity: 1, height: 'auto' }} 
+            exit={{ opacity: 0, height: 0 }}
+            className="text-[11px] sm:text-xs text-red-500 font-medium mt-1 ml-1"
+          >
+            {error}
+          </motion.p>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+};
 
 const TrekNameSelect = ({ trekOptions, selectedTrek, handleTrekChange, selectedDestination, error }) => (
   <motion.div

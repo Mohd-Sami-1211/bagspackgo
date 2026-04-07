@@ -264,9 +264,13 @@ export default function TripPassPage() {
                             </h4>
                             <ul className="list-disc pl-4 space-y-2">
                                 <li>Booking is confirmed subject to payment realization.</li>
-                                <li>Cancellations made 7 days prior to departure are eligible for a 75% refund.</li>
-                                <li>Cancellations within 48 hours of departure are strictly non-refundable.</li>
-                                <li>bagspackgo acts only as an aggregator and is not directly responsible for delays caused by the service provider.</li>
+                                <li>Cancellation within 24 hours of booking is eligible for ~90% refund.</li>
+                                <li>Cancellation after 24H & more than 7 days before start is eligible for ~75% refund.</li>
+                                <li>Cancellation after 24H & less than 7 days before start is eligible for ~60% refund.</li>
+                                <li>Cancellation within 48 hours prior to start is eligible for ~30% refund.</li>
+                                <li>No refunds will be granted for no-shows or failure to participate.</li>
+                                <li>All guests must carry a valid photo ID (Aadhaar, Passport, etc.) for verification.</li>
+                                <li>bagspackgo holds final authority on all refund decisions. Our service partners are solely responsible for trip execution.</li>
                             </ul>
                         </div>
                         <div>

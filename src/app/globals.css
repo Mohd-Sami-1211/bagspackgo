@@ -119,13 +119,25 @@ select:focus {
   font-weight: 600 !important;
 }
 
-.react-datepicker__day--selected:hover {
+.react-datepicker__day--selected:hover,
+.react-datepicker__day--keyboard-selected:hover {
   background-color: #059669 !important; /* hover:bg-emerald-600 */
+  color: white !important;
+}
+
+.react-datepicker__day--selected:focus,
+.react-datepicker__day--keyboard-selected:focus {
+  color: white !important;
 }
 
 .react-datepicker__day--today {
   font-weight: bolder !important;
   color: #10b981 !important; /* text-emerald-500 */
+}
+
+.react-datepicker__day--today.react-datepicker__day--selected,
+.react-datepicker__day--today.react-datepicker__day--keyboard-selected {
+  color: white !important;
 }
 
 .react-datepicker__navigation {

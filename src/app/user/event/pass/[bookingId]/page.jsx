@@ -365,10 +365,12 @@ export default function EventPassPage() {
                             <SectionHeader icon={ShieldCheck} title="bagspackgo Policies" />
                             <ul className="list-disc pl-4 space-y-2" style={fontStyle}>
                                 <li className="leading-relaxed">Booking is confirmed subject to payment realization.</li>
-                                <li className="leading-relaxed">Cancellations made 7 days prior to the event are eligible for a 75% refund.</li>
-                                <li className="leading-relaxed">Cancellations within 48 hours of the event are strictly non-refundable.</li>
-                                <li className="leading-relaxed">bagspackgo acts only as an aggregator and is not directly responsible for delays caused by the service provider.</li>
-                                <li className="leading-relaxed">Each QR code on the pass is valid for single-use entry only.</li>
+                                <li className="leading-relaxed font-bold text-red-600">Event bookings are strictly non-refundable under all circumstances, including no-shows or late arrivals.</li>
+                                <li className="leading-relaxed">Each QR code on the pass is valid for a single-use entry only.</li>
+                                <li className="leading-relaxed">All guests must carry a valid government-issued photo ID (Aadhaar, Passport, Driving License, etc.) for check-in and verification.</li>
+                                <li className="leading-relaxed">Possession or use of illegal substances and drugs is strictly prohibited.</li>
+                                <li className="leading-relaxed">bagspackgo acts strictly as an aggregator and platform facilitator. The event organizer is solely responsible for service execution and safety.</li>
+                                <li className="leading-relaxed">Your personal data is managed strictly in compliance with our Privacy Policy.</li>
                             </ul>
                         </div>
                         <div>

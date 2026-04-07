@@ -118,12 +118,13 @@ export async function POST(request) {
         if (finalEmail) searchQueries.push({ email: finalEmail });
 
         if (searchQueries.length > 0) {
-            const existingUser = await User.findOne({ $or: searchQueries });
-            const existingGuide = await Guide.findOne({ $or: searchQueries });
+            const existingAccount = role === "user"
+                ? await User.findOne({ $or: searchQueries })
+                : await Guide.findOne({ $or: searchQueries });
 
-            if (existingUser || existingGuide) {
+            if (existingAccount) {
                 return NextResponse.json(
-                    { success: false, message: "An account with this email or phone already exists" },
+                    { success: false, message: `An account with this email or phone already exists as a ${role}` },
                     { status: 409 }
                 );
             }

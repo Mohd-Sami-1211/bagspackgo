@@ -22,10 +22,7 @@ export async function PUT(req) {
             return NextResponse.json({ success: false, message: "Valid 10-digit phone number is required" }, { status: 400 });
         }
 
-        const existingPhone = await User.findOne({ phone, _id: { $ne: user.userId } });
-        if (existingPhone) {
-            return NextResponse.json({ success: false, message: "Phone number already in use" }, { status: 409 });
-        }
+
 
         const updatedUser = await User.findByIdAndUpdate(
             user.userId,

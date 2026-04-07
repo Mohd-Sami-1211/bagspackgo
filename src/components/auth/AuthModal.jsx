@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
@@ -40,6 +40,13 @@ function AuthModalContent() {
     const [loading, setLoading] = useState(false);
     const [isRedirecting, setIsRedirecting] = useState(false);
     const [error, setError] = useState('');
+    const contentRef = useRef(null);
+
+    useEffect(() => {
+        if (error && contentRef.current) {
+            contentRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    }, [error]);
 
     // === USER STATE ===
     const [userStep, setUserStep] = useState('EMAIL'); // EMAIL, OTP, DETAILS
@@ -289,7 +296,10 @@ function AuthModalContent() {
     const handleProviderSignupStart = async (e) => {
         e.preventDefault();
         setError('');
-        if (!passwordCheck.isValid) { setError('Password too weak'); return; }
+        if (!passwordCheck.isValid) { 
+            setError('Password too weak. Needs: ' + passwordCheck.errors.join(', ')); 
+            return; 
+        }
         if (providerData.password !== providerData.confirmPassword) { setError('Passwords do not match'); return; }
         
         setLoading(true);
@@ -496,7 +506,7 @@ function AuthModalContent() {
                     )}
 
                     {/* Content Area */}
-                    <div className="px-6 sm:px-8 pt-4 pb-6 sm:pb-8 flex-1 overflow-y-auto w-full hide-scrollbar">
+                    <div ref={contentRef} className="px-6 sm:px-8 pt-4 pb-6 sm:pb-8 flex-1 overflow-y-auto w-full hide-scrollbar">
                         
                         {/* Error message */}
                         <AnimatePresence>

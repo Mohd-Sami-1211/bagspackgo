@@ -8,7 +8,7 @@ import Review from '@/models/review.model';
 export async function GET(request, { params }) {
     try {
         await dbConnect();
-        
+
         // Await params for Next.js 15+ compatibility
         const resolvedParams = await params;
         const id = resolvedParams.id;
@@ -16,24 +16,24 @@ export async function GET(request, { params }) {
         if (!id || !mongoose.Types.ObjectId.isValid(id)) {
             return NextResponse.json({ success: false, message: 'Invalid Provider ID' }, { status: 400 });
         }
-        
+
         const guideData = await Guide.findById(id).select('-password -paymentDetails -applicationFormDocs').lean();
-        
+
         if (!guideData) {
             return NextResponse.json({ success: false, message: 'Provider not found' }, { status: 404 });
         }
-        
+
         // Remove direct contact details to prevent bypassing platform
         delete guideData.email;
         delete guideData.phone;
         delete guideData.socialLinks;
         delete guideData.website;
         delete guideData.alternatePhone;
-        
+
         // Fetch GuideDetails
         const { GuideDetails } = await import('@/models/guidedetails.model');
         const details = await GuideDetails.findOne({ guide: id }).lean() || {};
-        
+
         // Merge into a comprehensive provider object
         const provider = {
             ...guideData,
@@ -52,21 +52,21 @@ export async function GET(request, { params }) {
         // Fetch packages for this provider using the correct 'provider' field
         const packages = await Package.find({ provider: id, status: 'active' })
             .populate('reviews').lean();
-            
+
         // Fetch provider's direct reviews
         const providerReviews = await Review.find({ provider: id }).lean();
-        
+
         let feedbacks = [];
-        
+
         // Add direct reviews
         providerReviews.forEach(rev => {
-             feedbacks.push({
-                 id: rev._id.toString(),
-                 user: rev.name || "Happy Traveler",
-                 rating: rev.rating || 5,
-                 comment: rev.content || "Great experience!",
-                 date: rev.createdAt ? new Date(rev.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
-             });
+            feedbacks.push({
+                id: rev._id.toString(),
+                user: rev.name || "Happy Traveler",
+                rating: rev.rating || 5,
+                comment: rev.content || "Great experience!",
+                date: rev.createdAt ? new Date(rev.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+            });
         });
 
         // Collect real reviews from the provider's packages
@@ -92,9 +92,9 @@ export async function GET(request, { params }) {
 
         // Sort latest first
         feedbacks.sort((a, b) => new Date(b.date) - new Date(a.date));
-        
-        return NextResponse.json({ 
-            success: true, 
+
+        return NextResponse.json({
+            success: true,
             provider,
             packages,
             events,

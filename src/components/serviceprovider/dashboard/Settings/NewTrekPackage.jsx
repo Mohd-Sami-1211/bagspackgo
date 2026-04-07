@@ -10,11 +10,20 @@ import {
 } from 'lucide-react';
 import dataJson from 'src/data/data.json';
 
-const destinations = dataJson.destinations.map((d, i) => ({
-  id: i + 1,
-  name: d.label,
-  value: d.value
-}));
+const destinations = [
+  ...dataJson.destinations.filter(d => d.value === 'kashmir').map((d, i) => ({
+    id: i + 1,
+    label: d.label,
+    value: d.value,
+  })),
+  { isGroupHeader: true, label: 'Available Soon', value: 'GROUP_HEADER' },
+  ...dataJson.destinations.filter(d => d.value !== 'kashmir').map((d, i) => ({
+    id: i + 100,
+    label: d.label,
+    value: d.value,
+    isDisabled: true
+  }))
+];
 
 const trekOptionsMap = {
   'Kashmir': ['Kashmir Great Lakes', 'Tarsar Marsar', 'Kolhoi Glacier', 'Other'],
@@ -61,17 +70,30 @@ const CustomSelect = ({ value, onChange, options, placeholder, disabled = false,
             transition={{ duration: 0.15 }}
             className="absolute z-50 w-full mt-1.5 bg-white border border-gray-100 rounded-xl shadow-xl max-h-56 overflow-y-auto"
           >
-            {options.map(opt => (
+            {options.map(opt => opt.isGroupHeader ? (
+              <div key={opt.value} className="px-4 py-2 mt-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider bg-gray-50/50">
+                {opt.label}
+              </div>
+            ) : (
               <button
                 key={opt.value}
                 type="button"
-                onClick={() => { onChange(opt.value); setIsOpen(false); }}
+                disabled={opt.isDisabled}
+                onClick={() => {
+                  if (!opt.isDisabled) {
+                    onChange(opt.value);
+                    setIsOpen(false);
+                  }
+                }}
                 className={`w-full text-left px-4 py-2.5 text-sm flex items-center justify-between transition-colors
+                  ${opt.isDisabled ? 'opacity-50 cursor-not-allowed' : ''}
                   ${value === opt.value
                     ? 'bg-emerald-50 text-emerald-700 font-semibold'
                     : 'text-gray-700 hover:bg-gray-50'}`}
               >
-                <span>{opt.label}</span>
+                <div className="flex items-center gap-2 overflow-hidden">
+                  <span>{opt.label}</span>
+                </div>
                 {value === opt.value && <Check size={14} className="text-emerald-600 shrink-0" />}
               </button>
             ))}
@@ -414,7 +436,7 @@ export default function NewTrekPackage({ initialData = null, isEdit = false }) {
                     <CustomSelect
                       value={packageInfo.destination}
                       onChange={val => setPackageInfo({ ...packageInfo, destination: val, trekName: '', customTrekName: '' })}
-                      options={destinations.map(d => ({ value: d.name, label: d.name }))}
+                      options={destinations}
                       placeholder="Select destination"
                       error={!!validationErrors.destination}
                     />
