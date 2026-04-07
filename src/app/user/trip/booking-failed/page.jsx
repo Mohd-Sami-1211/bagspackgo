@@ -2,8 +2,9 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { AlertTriangle, ArrowLeft, RefreshCw, XCircle } from "lucide-react";
 import { motion } from "framer-motion";
+import { Suspense } from "react";
 
-export default function TripBookingFailed() {
+function TripBookingFailedContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -60,5 +61,13 @@ export default function TripBookingFailed() {
         </div>
       </motion.div>
     </div>
+  );
+}
+
+export default function TripBookingFailed() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center">Loading...</div>}>
+      <TripBookingFailedContent />
+    </Suspense>
   );
 }
