@@ -1,22 +1,23 @@
 // src/app/user/events/layout.jsx
 export const metadata = {
-    title: 'Kashmir Events & Experiences 2026 — Unique Local Adventures',
+    title: 'Kashmir, Ladakh & Bhaderwah Events 2026 — Unique Local Adventures',
     description:
-        'Discover unique Kashmir events: skiing camps, photography tours, cultural festivals & group adventures. Limited slots — book your Kashmir experience on bagspackgo.',
+        'Discover unique Himalayan events: skiing camps in Gulmarg, photography tours in Ladakh, and cultural festivals in Bhaderwah. Book your experience on bagspackgo.',
     keywords: [
         'kashmir events',
-        'kashmir experiences',
-        'kashmir adventure activities',
+        'ladakh events',
+        'bhaderwah tourism',
+        'kishtwar trekking',
         'kashmir skiing camp',
-        'kashmir photography tour',
-        'kashmir cultural festival',
+        'ladakh photography tour',
+        'bhaderwah cultural festival',
         'things to do in kashmir',
-        'kashmir group activities',
+        'himalayan adventure activities',
     ],
     openGraph: {
-        title: 'Kashmir Events & Experiences 2026 | bagspackgo',
+        title: 'Kashmir & Ladakh Events & Experiences 2026 | bagspackgo',
         description:
-            'Book unique Kashmir events and local experiences. Skiing, photography tours, cultural festivals & more.',
+            'Book unique Himalayan events and local experiences. Skiing, photography tours, cultural festivals & more.',
         url: 'https://bagspackgo.com/user/events',
         type: 'website',
     },

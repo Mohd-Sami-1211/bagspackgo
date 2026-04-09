@@ -391,7 +391,7 @@ const ProviderProfileContent = ({ providerId }) => {
              
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                {(showAllEvents ? data.events : data.events.slice(0, 3)).map((event, idx) => (
-                   <div key={idx} onClick={() => router.push(`/user/event/eventdetails/${event._id}`)} className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-transform hover:-translate-y-1 overflow-hidden border border-gray-100 cursor-pointer flex flex-col h-full">
+                   <div key={idx} onClick={() => router.push(`/user/events/eventdetails/${event._id}`)} className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-transform hover:-translate-y-1 overflow-hidden border border-gray-100 cursor-pointer flex flex-col h-full">
                       <div className="h-44 w-full relative">
                          <img 
                            src={event.poster || event.images?.[0] || 'https://via.placeholder.com/400x300?text=Event'} 

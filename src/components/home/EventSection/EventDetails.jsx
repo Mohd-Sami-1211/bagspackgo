@@ -420,20 +420,20 @@ const EventDetails = ({ event }) => {
             localStorage.removeItem('temp_event_booking');
             router.push(`/user/event/booking-success?bookingId=${bookingId}`);
           } else {
-            router.push(`/user/event/booking-failed?return=/user/event/eventdetails/${event._id || event.id}`);
+            router.push(`/user/event/booking-failed?return=/user/events/eventdetails/${event._id || event.id}`);
           }
         },
         modal: { ondismiss: () => setIsProcessingPayment(false) }
       });
 
       rzp.on('payment.failed', function (response) {
-         router.push(`/user/event/booking-failed?return=/user/event/eventdetails/${event._id || event.id}`);
+         router.push(`/user/event/booking-failed?return=/user/events/eventdetails/${event._id || event.id}`);
       });
 
       rzp.open();
     } catch (err) {
       console.error(err);
-      router.push(`/user/event/booking-failed?return=/user/event/eventdetails/${event._id || event.id}`);
+      router.push(`/user/event/booking-failed?return=/user/events/eventdetails/${event._id || event.id}`);
     }
   };
 
