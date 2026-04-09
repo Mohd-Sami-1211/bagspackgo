@@ -107,12 +107,14 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
     const numPeople = Number(config.count || 1);
 
     let perPersonPrice = 0;
+    let tierDiscountPercent = 0;
     if (selectedPkg?.pricingTiers && selectedPkg.pricingTiers.length > 0) {
       const matchingTier =
         selectedPkg.pricingTiers.find(
           (t) => numPeople >= t.minPeople && numPeople <= t.maxPeople,
         ) || selectedPkg.pricingTiers[0];
       perPersonPrice = Number(matchingTier?.price || 0);
+      tierDiscountPercent = Number(matchingTier?.discount || 0);
     } else {
       perPersonPrice = Number(
         selectedPkg?.price?.individual ||
@@ -127,15 +129,22 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
       packageAmount = perPersonPrice * (Number(config.days) || 1) * numPeople;
     }
 
-    let discount = 0;
-    if (appliedCoupon?.type === "percent") {
-      discount = packageAmount * (appliedCoupon.value / 100);
-    } else if (appliedCoupon?.type === "flat") {
-      discount = appliedCoupon.value;
-    }
-    discount = Math.min(discount, packageAmount);
+    // Apply tier-based discount
+    const tierDiscount = packageAmount * (tierDiscountPercent / 100);
+    const amountAfterTierDiscount = packageAmount - tierDiscount;
 
-    const amountAfterDiscount = packageAmount - discount;
+    // Apply coupon discount on the tier-discounted amount
+    let couponDiscount = 0;
+    if (appliedCoupon?.type === "percent") {
+      couponDiscount = amountAfterTierDiscount * (appliedCoupon.value / 100);
+    } else if (appliedCoupon?.type === "flat") {
+      couponDiscount = appliedCoupon.value;
+    }
+    couponDiscount = Math.min(couponDiscount, amountAfterTierDiscount);
+
+    const totalDiscount = tierDiscount + couponDiscount;
+    const amountAfterDiscount = packageAmount - totalDiscount;
+
     const platformFee = amountAfterDiscount * 0.01;
     const subTotal = amountAfterDiscount + platformFee;
     const gatewayCharges = subTotal * 0.02;
@@ -146,7 +155,10 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
 
     return {
       packageAmount,
-      discount,
+      tierDiscount,
+      tierDiscountPercent,
+      couponDiscount,
+      discount: totalDiscount,
       platformFee,
       gatewayCharges,
       gstOnGateway,
@@ -635,11 +647,20 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
                     </span>
                   </div>
 
-                  {paymentDetails.discount > 0 && (
+                  {paymentDetails.tierDiscount > 0 && (
                     <div className="flex justify-between items-center text-sm font-bold text-emerald-600 bg-emerald-50/50 p-2.5 rounded-xl -mx-2.5">
-                      <span>Coupon Savings applied</span>
+                      <span>Package Discount ({paymentDetails.tierDiscountPercent}% off)</span>
                       <span>
-                        -₹{paymentDetails.discount.toLocaleString("en-IN")}
+                        -₹{Math.round(paymentDetails.tierDiscount).toLocaleString("en-IN")}
+                      </span>
+                    </div>
+                  )}
+
+                  {paymentDetails.couponDiscount > 0 && (
+                    <div className="flex justify-between items-center text-sm font-bold text-emerald-600 bg-emerald-50/50 p-2.5 rounded-xl -mx-2.5">
+                      <span>Coupon Savings</span>
+                      <span>
+                        -₹{Math.round(paymentDetails.couponDiscount).toLocaleString("en-IN")}
                       </span>
                     </div>
                   )}
@@ -793,11 +814,19 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
                     ₹{paymentDetails.packageAmount.toLocaleString("en-IN")}
                   </span>
                 </div>
-                {paymentDetails.discount > 0 && (
+                {paymentDetails.tierDiscount > 0 && (
                   <div className="flex justify-between items-center text-sm font-bold text-emerald-600 bg-emerald-50/50 p-2.5 rounded-xl -mx-2.5">
-                    <span>Coupon Savings applied</span>
+                    <span>Package Discount ({paymentDetails.tierDiscountPercent}% off)</span>
                     <span>
-                      -₹{paymentDetails.discount.toLocaleString("en-IN")}
+                      -₹{Math.round(paymentDetails.tierDiscount).toLocaleString("en-IN")}
+                    </span>
+                  </div>
+                )}
+                {paymentDetails.couponDiscount > 0 && (
+                  <div className="flex justify-between items-center text-sm font-bold text-emerald-600 bg-emerald-50/50 p-2.5 rounded-xl -mx-2.5">
+                    <span>Coupon Savings</span>
+                    <span>
+                      -₹{Math.round(paymentDetails.couponDiscount).toLocaleString("en-IN")}
                     </span>
                   </div>
                 )}

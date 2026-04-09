@@ -15,7 +15,6 @@ export default function robots() {
                     '/user/saved/',
                     '/user/notifications/',
                     '/user/help/',
-                    '/user/provider/',
                 ],
             },
         ],

@@ -12,9 +12,12 @@ export const metadata = {
         template: '%s | bagspackgo',
     },
     description:
-        'Explore Kashmir with verified local guides. Book budget & premium tour packages for Gulmarg, Pahalgam, Sonmarg & more. Customize your Kashmir trip with transparent pricing — no middlemen.',
+        'Explore Kashmir, Ladakh, Bhaderwah, and Kishtwar with verified local guides. Book budget & premium tour packages, treks, and events with transparent pricing — no middlemen.',
     keywords: [
         'kashmir tour packages',
+        'ladakh tour packages',
+        'bhaderwah tourism',
+        'kishtwar trekking',
         'kashmir trip',
         'kashmir travel',
         'local guide kashmir',
@@ -24,8 +27,10 @@ export const metadata = {
         'pahalgam',
         'sonmarg',
         'srinagar tour',
+        'ladakh trip',
         'kashmir honeymoon packages',
         'kashmir budget trip',
+        'offbeat kashmir',
     ],
     authors: [{ name: 'bagspackgo', url: 'https://bagspackgo.com' }],
     creator: 'bagspackgo',
@@ -41,6 +46,9 @@ export const metadata = {
             'max-snippet': -1,
         },
     },
+    verification: {
+        google: 'google-site-verification-id',
+    },
     openGraph: {
         type: 'website',
         locale: 'en_IN',
@@ -48,10 +56,10 @@ export const metadata = {
         siteName: 'bagspackgo',
         title: 'bagspackgo — Kashmir Tour Packages with Verified Local Guides',
         description:
-            'Explore Kashmir with verified local guides. Book budget & premium tour packages for Gulmarg, Pahalgam, Sonmarg & more. Transparent pricing, no middlemen.',
+            'Explore Kashmir, Ladakh, Bhaderwah, and Kishtwar with verified local guides. Book budget & premium tour packages, treks, and events. Transparent pricing, no middlemen.',
         images: [
             {
-                url: '/images/og-homepage.jpg',
+                url: '/logo.png',
                 width: 1200,
                 height: 630,
                 alt: 'bagspackgo — Explore Kashmir with Local Guides',
@@ -62,8 +70,8 @@ export const metadata = {
         card: 'summary_large_image',
         title: 'bagspackgo — Kashmir Tour Packages with Verified Local Guides',
         description:
-            'Book Kashmir trips with verified local guides. Budget & premium packages for Gulmarg, Pahalgam, Sonmarg.',
-        images: ['/images/og-homepage.jpg'],
+            'Book trips in Kashmir, Ladakh, and more with verified local guides. Budget & premium packages available.',
+        images: ['/logo.png'],
     },
     alternates: {
         canonical: 'https://bagspackgo.com',

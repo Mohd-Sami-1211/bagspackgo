@@ -68,17 +68,6 @@ export async function POST(request) {
         // Send confirmation emails (non-blocking)
         (async () => {
              try {
-                 let pdfBuffer = null;
-                 try {
-                     const { GET: getEventPdf } = await import('@/app/api/user/bookings/[id]/pdf/route.js');
-                     const res = await getEventPdf(null, { params: Promise.resolve({ id: booking._id.toString() }) });
-                     if (res.ok) {
-                         pdfBuffer = Buffer.from(await res.arrayBuffer());
-                     }
-                 } catch (pdfErr) {
-                     console.error('Failed to generate event PDF for email attachment:', pdfErr);
-                 }
-
                  await sendEventBookingConfirmation({
                      userEmail: userDoc?.email,
                      userName: userDoc?.username || 'Traveller',
@@ -89,8 +78,7 @@ export async function POST(request) {
                      destination: eventDoc?.destinationId || eventDoc?.location || '',
                      eventDate: eventDoc?.date,
                      numPeople: booking.slots,
-                     totalAmount: booking.amountPaid,
-                     pdfBuffer: pdfBuffer
+                     totalAmount: booking.amountPaid
                  });
              } catch (err) {
                  console.error('Booking email error:', err);

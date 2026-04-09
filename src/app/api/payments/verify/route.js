@@ -4,6 +4,7 @@ import dbConnect from '@/lib/db';
 import { Booking } from '@/models/booking.model';
 import { Event } from '@/models/event.model';
 import { getCurrentUser } from '@/lib/auth';
+import { sendEventBookingConfirmation } from '@/lib/otp-service';
 
 const RAZORPAY_SECRET = process.env.RAZORPAY_KEY_SECRET || 'rzp_test_mock_secret123';
 
@@ -73,8 +74,18 @@ export async function POST(request) {
                     }),
                     location: eventInfo.location?.city || eventInfo.location || 'TBD'
                 };
-                sendBookingConfirmationEmail(bookingDetails.contactDetails.email, user.username || bookingDetails.contactDetails.name || 'Traveler', mailDetails, newBooking._id.toString())
-                    .catch(err => console.error("Failed to send booking pass email:", err));
+                sendEventBookingConfirmation({
+                    userEmail: bookingDetails.contactDetails.email,
+                    userName: user.username || bookingDetails.contactDetails.name || 'Traveler',
+                    providerEmail: null,
+                    providerName: null,
+                    bookingId: newBooking._id.toString(),
+                    eventName: mailDetails.title,
+                    destination: mailDetails.location,
+                    eventDate: eventInfo.date,
+                    numPeople: mailDetails.slots,
+                    totalAmount: mailDetails.amount
+                }).catch(err => console.error("Failed to send booking pass email:", err));
             }
 
             return NextResponse.json({

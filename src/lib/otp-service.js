@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
-import { jsPDF } from "jspdf";
+import path from "path";
+import fs from "fs";
 
 // Create Gmail transporter
 const transporter = nodemailer.createTransport({
@@ -142,7 +143,7 @@ export async function sendWelcomeEmail(email, name, role) {
 
                     <!-- CTA Button -->
                     <div style="text-align: center; margin: 0 0 16px;">
-                        <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/signin" 
+                        <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://bagspackgo.com'}/signin" 
                            style="display: inline-block; background: linear-gradient(135deg, #22c55e, #16a34a); color: white; text-decoration: none; padding: 14px 40px; border-radius: 8px; font-size: 16px; font-weight: 600; box-shadow: 0 2px 8px rgba(34,197,94,0.3);">
                             Sign In to Get Started →
                         </a>
@@ -205,7 +206,7 @@ export async function sendApprovalEmail(providerEmail, companyName, providerName
                         </ul>
                     </div>
                     <div style="text-align: center; margin: 0 0 16px;">
-                        <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/serviceprovider" style="display: inline-block; background: linear-gradient(135deg, #22c55e, #16a34a); color: white; text-decoration: none; padding: 14px 40px; border-radius: 8px; font-size: 16px; font-weight: 600;">Go to Dashboard</a>
+                        <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://bagspackgo.com'}/serviceprovider" style="display: inline-block; background: linear-gradient(135deg, #22c55e, #16a34a); color: white; text-decoration: none; padding: 14px 40px; border-radius: 8px; font-size: 16px; font-weight: 600;">Go to Dashboard</a>
                     </div>
                 </div>
             </div>
@@ -239,34 +240,42 @@ export async function sendApprovalEmail(providerEmail, companyName, providerName
 }
 
 /**
- * Send trip booking confirmation to user and provider
+ * Helper: Build CID logo attachment from public/images/logo.png
  */
-export async function sendTripBookingConfirmation({ userEmail, userName, providerEmail, providerName, bookingRef, packageName, destination, startDate, endDate, numPeople, totalAmount, pdfBuffer, isTrek }) {
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+function getLogoAttachment() {
+    try {
+        const logoPath = path.join(process.cwd(), 'public', 'images', 'logo.png');
+        if (fs.existsSync(logoPath)) {
+            return [{
+                filename: 'logo.png',
+                path: logoPath,
+                cid: 'bagspackgo-logo'
+            }];
+        }
+    } catch (e) { console.warn('Logo file not found for email:', e.message); }
+    return [];
+}
+
+/**
+ * Send trip/trek booking confirmation to user and provider
+ */
+export async function sendTripBookingConfirmation({ userEmail, userName, providerEmail, providerName, bookingRef, packageName, destination, startDate, endDate, numPeople, totalAmount, isTrek }) {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://bagspackgo.com';
     const formattedStart = startDate ? new Date(startDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : 'TBD';
     const formattedEnd = endDate ? new Date(endDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : 'TBD';
 
     // Email to user
     if (userEmail) {
-        let attachments = [];
-        if (pdfBuffer) {
-            attachments.push({
-                filename: `bagspackgo_${isTrek ? 'Trek_' : ''}BookingPass_${bookingRef}.pdf`,
-                content: pdfBuffer,
-                contentType: 'application/pdf'
-            });
-        }
-
         const userMail = {
             from: `"bagspackgo" <${process.env.GMAIL_USER}>`,
             to: userEmail,
             subject: `✅ Booking Confirmed — ${packageName} | Ref: ${bookingRef}`,
-            attachments: attachments,
+            attachments: getLogoAttachment(),
             html: `
                 <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 30px rgba(0,0,0,0.12); border: 1px solid #f0fdf4;">
                     <div style="background: linear-gradient(135deg, #059669, #047857); padding: 48px 32px; text-align: center;">
                         <div style="background: rgba(255,255,255,1); display: inline-block; padding: 12px 24px; border-radius: 12px; margin-bottom: 24px;">
-                            <img src="${appUrl}/images/logo.png" alt="bagspackgo" style="height: 38px; width: auto; display: block;" />
+                            <img src="cid:bagspackgo-logo" alt="bagspackgo" style="height: 38px; width: auto; display: block;" />
                         </div>
                         <h1 style="color: white; margin: 0; font-size: 30px; font-weight: 800; letter-spacing: -0.02em;">Booking Confirmed!</h1>
                         <p style="color: rgba(255,255,255,0.9); margin: 12px 0 0; font-size: 16px; font-weight: 500;">Your adventure with <strong>${providerName}</strong> is ready 🎉</p>
@@ -280,9 +289,9 @@ export async function sendTripBookingConfirmation({ userEmail, userName, provide
                         </p>
                         
                         <div style="text-align: center; margin-bottom: 40px;">
-                            <a href="${appUrl}/user/${isTrek ? 'trek' : 'trip'}/pass/${bookingRef}" 
+                            <a href="${appUrl}/user/${isTrek ? 'trek' : 'trip'}/pass/${bookingRef}?print=true" 
                                style="background: #059669; color: white; text-decoration: none; padding: 18px 44px; border-radius: 14px; font-size: 16px; font-weight: 700; display: inline-block; box-shadow: 0 10px 20px rgba(5,150,105,0.25); border: 2px solid #047857;">
-                                Download Booking Pass (PDF) →
+                                Download Booking Pass ⬇
                             </a>
                             <p style="color: #94a3b8; font-size: 12px; margin-top: 14px; font-style: italic;">Note: Keep this pass ready (digital or print) for your journey.</p>
                         </div>
@@ -356,31 +365,22 @@ export async function sendTripBookingConfirmation({ userEmail, userName, provide
     }
 }
 
-export async function sendEventBookingConfirmation({ userEmail, userName, providerEmail, providerName, bookingId, eventName, destination, eventDate, numPeople, totalAmount, pdfBuffer }) {
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+export async function sendEventBookingConfirmation({ userEmail, userName, providerEmail, providerName, bookingId, eventName, destination, eventDate, numPeople, totalAmount }) {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://bagspackgo.com';
     const formattedDate = eventDate ? new Date(eventDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : 'TBD';
 
     // Email to user
     if (userEmail) {
-        let attachments = [];
-        if (pdfBuffer) {
-            attachments.push({
-                filename: `bagspackgo_EventPass_${bookingId.substring(0,8)}.pdf`,
-                content: pdfBuffer,
-                contentType: 'application/pdf'
-            });
-        }
-
         const userMail = {
             from: `"bagspackgo" <${process.env.GMAIL_USER}>`,
             to: userEmail,
             subject: `✅ Event Booking Confirmed — ${eventName} | Ref: ${bookingId.substring(0,8).toUpperCase()}`,
-            attachments: attachments,
+            attachments: getLogoAttachment(),
             html: `
                 <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 30px rgba(0,0,0,0.12); border: 1px solid #f0fdf4;">
                     <div style="background: linear-gradient(135deg, #059669, #047857); padding: 48px 32px; text-align: center;">
                         <div style="background: rgba(255,255,255,1); display: inline-block; padding: 12px 24px; border-radius: 12px; margin-bottom: 24px;">
-                            <img src="${appUrl}/images/logo.png" alt="bagspackgo" style="height: 38px; width: auto; display: block;" />
+                            <img src="cid:bagspackgo-logo" alt="bagspackgo" style="height: 38px; width: auto; display: block;" />
                         </div>
                         <h1 style="color: white; margin: 0; font-size: 30px; font-weight: 800; letter-spacing: -0.02em;">Event Booking Confirmed!</h1>
                         <p style="color: rgba(255,255,255,0.9); margin: 12px 0 0; font-size: 16px; font-weight: 500;">Get ready for <strong>${eventName}</strong> 🎉</p>
@@ -394,9 +394,9 @@ export async function sendEventBookingConfirmation({ userEmail, userName, provid
                         </p>
                         
                         <div style="text-align: center; margin-bottom: 40px;">
-                            <a href="${appUrl}/user/event/pass/${bookingId}" 
+                            <a href="${appUrl}/user/event/pass/${bookingId}?print=true" 
                                style="background: #059669; color: white; text-decoration: none; padding: 18px 44px; border-radius: 14px; font-size: 16px; font-weight: 700; display: inline-block; box-shadow: 0 10px 20px rgba(5,150,105,0.25); border: 2px solid #047857;">
-                                Download Entry Pass (PDF) →
+                                Download Booking Pass ⬇
                             </a>
                             <p style="color: #94a3b8; font-size: 12px; margin-top: 14px; font-style: italic;">Note: Present this pass (digital or print) at the event entrance.</p>
                         </div>

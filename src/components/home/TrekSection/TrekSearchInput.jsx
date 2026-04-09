@@ -383,10 +383,10 @@ const TrekSearchInput = memo(forwardRef((props, ref) => {
 
 const TrekDestinationSelect = ({ selectedDestination, handleDestinationChange, error }) => {
   const destinationOptions = [
-    ...(data.destinations || []).filter(d => d.value === 'kashmir'),
+    ...(data.destinations || []).filter(d => ['kashmir', 'ladakh', 'bhaderwah', 'kishtwar'].includes(d.value)),
     {
       label: 'Available Soon',
-      options: (data.destinations || []).filter(d => d.value !== 'kashmir').map(dest => ({
+      options: (data.destinations || []).filter(d => !['kashmir', 'ladakh', 'bhaderwah', 'kishtwar'].includes(d.value)).map(dest => ({
         ...dest,
         isDisabled: true,
       }))

@@ -11,13 +11,13 @@ import {
 import dataJson from 'src/data/data.json';
 
 const destinations = [
-  ...dataJson.destinations.filter(d => d.value === 'kashmir').map((d, i) => ({
+  ...dataJson.destinations.filter(d => ['kashmir', 'ladakh', 'bhaderwah', 'kishtwar'].includes(d.value)).map((d, i) => ({
     id: i + 1,
     label: d.label,
     value: d.value,
   })),
   { isGroupHeader: true, label: 'Available Soon', value: 'GROUP_HEADER' },
-  ...dataJson.destinations.filter(d => d.value !== 'kashmir').map((d, i) => ({
+  ...dataJson.destinations.filter(d => !['kashmir', 'ladakh', 'bhaderwah', 'kishtwar'].includes(d.value)).map((d, i) => ({
     id: i + 100,
     label: d.label,
     value: d.value,
@@ -26,9 +26,12 @@ const destinations = [
 ];
 
 const trekOptionsMap = {
-  'Kashmir': ['Kashmir Great Lakes', 'Tarsar Marsar', 'Kolhoi Glacier', 'Other'],
-  'Uttarakhand': ['Valley of Flowers', 'Kedarkantha', 'Roopkund', 'Other'],
-  'Himachal Pradesh': ['Hampta Pass', 'Bhrigu Lake', 'Pin Parvati Pass', 'Other'],
+  'kashmir': ['Kashmir Great Lakes', 'Tarsar Marsar', 'Kolhoi Glacier', 'Other'],
+  'bhaderwah': ['Kailash Kund Trek', 'Seoj Dhar Trek', 'Other'],
+  'kishtwar': ['Brahma Trek', 'Other'],
+  'ladakh': ['Chadar Trek', 'Markha Valley', 'Stok Kangri', 'Other'],
+  'uttarakhand': ['Valley of Flowers', 'Kedarkantha', 'Roopkund', 'Other'],
+  'himachal': ['Hampta Pass', 'Bhrigu Lake', 'Pin Parvati Pass', 'Other'],
   'default': ['Other']
 };
 
@@ -116,7 +119,6 @@ export default function NewTrekPackage({ initialData = null, isEdit = false }) {
   const [packageInfo, setPackageInfo] = useState({
     name: '',
     category: 'trek',
-    packageType: 'individual',
     destination: '',
     days: 3,
     trekName: '',
@@ -163,7 +165,6 @@ export default function NewTrekPackage({ initialData = null, isEdit = false }) {
       setPackageInfo({
         name: initialData.name || '',
         category: 'trek',
-        packageType: initialData.packageType || 'individual',
         destination: initialData.destination || '',
         days: initialData.days || 3,
         trekName: initialData.trekName || '',
@@ -208,8 +209,35 @@ export default function NewTrekPackage({ initialData = null, isEdit = false }) {
           sections: day.highlights?.length > 0 ? day.highlights : (day.agenda ? day.agenda.split(' | ') : [''])
         })));
       }
+    } else {
+      const savedData = localStorage.getItem('newTrekPackageDraft');
+      if (savedData) {
+        try {
+          const parsed = JSON.parse(savedData);
+          if (parsed.packageInfo) setPackageInfo(prev => ({ ...prev, ...parsed.packageInfo }));
+          if (parsed.pricingTiers) setPricingTiers(parsed.pricingTiers);
+          if (parsed.pickupDropCities) setPickupDropCities(parsed.pickupDropCities);
+          if (parsed.inclusivesList) setInclusivesList(parsed.inclusivesList);
+          if (parsed.exclusivesList) setExclusivesList(parsed.exclusivesList);
+          if (parsed.additionalPoints) setAdditionalPoints(parsed.additionalPoints);
+          if (parsed.termsAndConditions) setTermsAndConditions(parsed.termsAndConditions);
+          if (parsed.itinerary) setItinerary(parsed.itinerary);
+        } catch (e) { console.error('Error loading draft:', e); }
+      }
     }
   }, [initialData, isEdit]);
+
+  /* ── Save to Local Storage ──────────────── */
+  useEffect(() => {
+    if (!isEdit) {
+      const draft = {
+        packageInfo, pricingTiers, pickupDropCities,
+        inclusivesList, exclusivesList, additionalPoints,
+        termsAndConditions, itinerary
+      };
+      localStorage.setItem('newTrekPackageDraft', JSON.stringify(draft));
+    }
+  }, [packageInfo, pricingTiers, pickupDropCities, inclusivesList, exclusivesList, additionalPoints, termsAndConditions, itinerary, isEdit]);
 
   /* ── Itinerary day sync ─────────────────── */
   useEffect(() => {
@@ -282,7 +310,6 @@ export default function NewTrekPackage({ initialData = null, isEdit = false }) {
         packageInfo: {
           name: packageInfo.name,
           category: 'trek',
-          packageType: packageInfo.packageType,
           destination: packageInfo.destination,
           days: parseInt(packageInfo.days) || 1,
           trekName: finalTrekName,
@@ -316,6 +343,7 @@ export default function NewTrekPackage({ initialData = null, isEdit = false }) {
       });
       const result = await res.json();
       if (!res.ok) throw new Error(result.message || 'Failed to create package');
+      if (!isEdit) localStorage.removeItem('newTrekPackageDraft');
       setShowSuccess(true);
       setTimeout(() => {
         setShowSuccess(false);
@@ -423,7 +451,7 @@ export default function NewTrekPackage({ initialData = null, isEdit = false }) {
                     type="text"
                     value={packageInfo.name}
                     onChange={e => setPackageInfo({ ...packageInfo, name: e.target.value })}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all shadow-sm"
                     placeholder="E.g., Hampta Pass Epic Journey"
                   />
                   <ErrorMsg field="packageName" />

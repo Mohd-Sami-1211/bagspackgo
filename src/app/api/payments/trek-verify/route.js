@@ -51,17 +51,6 @@ export async function POST(request) {
         // Send confirmation emails (non-blocking)
         (async () => {
              try {
-                 let pdfBuffer = null;
-                 try {
-                     const { GET: getTrekPdf } = await import('@/app/api/user/trek-bookings/[id]/pdf/route.js');
-                     const res = await getTrekPdf(null, { params: Promise.resolve({ id: booking.bookingRef }) });
-                     if (res.ok) {
-                         pdfBuffer = Buffer.from(await res.arrayBuffer());
-                     }
-                 } catch (pdfErr) {
-                     console.error('Failed to generate trek PDF for email attachment:', pdfErr);
-                 }
-
                  await sendTripBookingConfirmation({
                      userEmail: userDoc?.email,
                      userName: userDoc?.username || 'Traveller',
@@ -74,7 +63,6 @@ export async function POST(request) {
                      endDate: booking.endDate,
                      numPeople: booking.numPeople,
                      totalAmount: booking.totalAmount,
-                     pdfBuffer: pdfBuffer,
                      isTrek: true
                  });
              } catch (err) {

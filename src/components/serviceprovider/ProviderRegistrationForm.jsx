@@ -401,7 +401,7 @@ export default function ProviderRegistrationForm({ rejected = false }) {
                                                             className="absolute top-[calc(100%+8px)] left-0 w-full bg-white border border-gray-100 rounded-xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] z-50 max-h-60 overflow-y-auto"
                                                         >
                                                             {destinations.map(d => {
-                                                                const isAvailable = d.value === 'kashmir';
+                                                                const isAvailable = ['kashmir', 'ladakh', 'bhaderwah', 'kishtwar'].includes(d.value);
                                                                 return (
                                                                     <div 
                                                                         key={d.value} 

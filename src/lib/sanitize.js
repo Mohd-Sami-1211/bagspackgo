@@ -15,7 +15,7 @@ export function sanitizeString(input) {
         .replace(/javascript:/gi, "") // Remove javascript: protocol
         .replace(/on\w+=/gi, "") // Remove event handlers (onclick=, onerror=, etc.)
         .replace(/\$/g, "") // Remove $ to prevent NoSQL injection operators
-        .slice(0, 500); // Hard limit input length
+        .slice(0, 5000); // Hard limit input length
 }
 
 /**
