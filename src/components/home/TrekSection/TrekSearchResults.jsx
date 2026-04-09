@@ -9,23 +9,23 @@ import 'react-datepicker/dist/react-datepicker.css';
 import { X, Calendar as CalendarIcon, Filter, Search as SearchIcon, ChevronDown, ArrowLeft, Plus, Minus, PackageOpen, Sparkles } from 'lucide-react';
 import data from 'src/data/data.json';
 
-const kashmirOption = (data.destinations || []).find(d => d.value === 'kashmir');
-const otherOptions = (data.destinations || []).filter(d => d.value !== 'kashmir').map(dest => ({
+const availableValues = ['kashmir', 'ladakh', 'bhaderwah', 'kishtwar'];
+const activeOptions = (data.destinations || []).filter(d => availableValues.includes(d.value));
+const otherOptions = (data.destinations || []).filter(d => !availableValues.includes(d.value)).map(dest => ({
   ...dest,
   isDisabled: true,
 }));
 
-const destinationOptions = kashmirOption ? [
-  kashmirOption,
+const destinationOptions = [
+  ...activeOptions,
   {
     label: 'Available Soon',
     options: otherOptions
   }
-] : [];
+];
 
 const findDestination = (val) => {
-  if (kashmirOption && kashmirOption.value === val) return kashmirOption;
-  return otherOptions.find(d => d.value === val) || null;
+  return (data.destinations || []).find(d => d.value === val) || null;
 };
 
 const TrekSearchResults = () => {
@@ -409,7 +409,10 @@ const TrekSearchResults = () => {
                     Sorry, No Exact Matches Found
                   </h3>
                   <p className="text-sm sm:text-base text-gray-400 max-w-md mx-auto leading-relaxed px-4">
-                    We couldn&apos;t find trek packages matching your exact criteria. But don&apos;t worry — we have other amazing treks{destinationLabel ? ` in ${destinationLabel}` : ''} for you!
+                    {otherPackagesList.length > 0
+                      ? <>We couldn&apos;t find trek packages matching your exact criteria. But don&apos;t worry — we have other amazing treks{destinationLabel ? ` in ${destinationLabel}` : ''} for you!</>
+                      : <>No trek packages are currently available for this destination. Please try another location or check back soon!</>
+                    }
                   </p>
                 </motion.div>
 
@@ -477,13 +480,13 @@ const TrekSearchResults = () => {
                     className="mt-4"
                   >
                     <div className="flex items-center gap-3 mb-5 mt-4">
-                      <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full shadow-lg shadow-blue-200/50">
+                      <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full shadow-lg shadow-emerald-200/50">
                         <Sparkles className="h-4 w-4 text-white" />
                         <span className="text-sm font-bold text-white whitespace-nowrap">
                           More Treks{destinationLabel ? ` in ${destinationLabel}` : ''}
                         </span>
                       </div>
-                      <div className="flex-1 h-px bg-gradient-to-r from-blue-200 to-transparent" />
+                      <div className="flex-1 h-px bg-gradient-to-r from-emerald-200 to-transparent" />
                     </div>
                     <p className="text-sm text-gray-500 mb-5 ml-1">
                       Explore more trek packages available{destinationLabel ? ` for ${destinationLabel}` : ''} to find your perfect adventure:

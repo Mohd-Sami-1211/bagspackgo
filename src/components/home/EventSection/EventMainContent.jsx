@@ -507,15 +507,13 @@ const EventMainContent = () => {
                 />
                 <div className="max-h-48 overflow-y-auto">
                   {(() => {
-                    const filtered = data.destinations.filter(dest =>
-                      dest.label.toLowerCase().includes(destinationSearch.toLowerCase())
-                    );
-                    const kashmir = filtered.filter(d => d.value === 'kashmir');
-                    const others = filtered.filter(d => d.value !== 'kashmir');
+                    const availableValues = ['kashmir', 'ladakh', 'bhaderwah', 'kishtwar'];
+                    const activeDestinations = filtered.filter(d => availableValues.includes(d.value));
+                    const others = filtered.filter(d => !availableValues.includes(d.value));
 
                     return (
                       <>
-                        {kashmir.map(dest => (
+                        {activeDestinations.map(dest => (
                           <div
                             key={dest.value}
                             className={`flex items-center p-2 rounded-md transition-colors text-sm hover:bg-[#d1fae5] cursor-pointer ${tempFilters.destination.includes(dest.value) ? 'bg-[#a7f3d0]' : ''}`}

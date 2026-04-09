@@ -89,6 +89,7 @@ async function buildFormattedGuides(packages) {
                 activities: pkg.activities,
                 itinerary: pkg.itinerary,
                 termsAndConditions: pkg.termsAndConditions,
+                additionalPoints: pkg.additionalPoints || [],
             };
         });
 
@@ -183,6 +184,11 @@ export async function GET(req) {
                 destination: { $regex: destination, $options: 'i' },
                 _id: { $nin: [...matchedPkgIds] }
             };
+            // Respect the selected packageType so "More Packages" doesn't
+            // show individual packages when the user searched for couple (and vice-versa)
+            if (category && (category === 'individual' || category === 'couple')) {
+                otherPkgQuery.packageType = category;
+            }
             const otherPackages = await Package.find(otherPkgQuery).lean();
             otherGuides = await buildFormattedGuides(otherPackages);
         }

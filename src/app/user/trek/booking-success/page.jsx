@@ -80,8 +80,8 @@ function BookingSuccessContent() {
     const destinationName = pSnapshot.destination || booking?.destination || pickupDropoff?.pickup?.city || "Himalayan Trails";
     const travelers = personalDetails?.personalDetails || [];
 
-    // Full URL to the pass which will trigger a PDF download/view when someone scans the QR
-    const passUrl = typeof window !== 'undefined' ? `${window.location.origin}/api/user/trek-bookings/${bookingId}/pdf` : `https://bagspackgo.com/api/user/trek-bookings/${bookingId}/pdf`;
+    // Full URL to the pass page — matches the "View Pass" button
+    const passUrl = typeof window !== 'undefined' ? `${window.location.origin}/user/trek/pass/${bookingId}` : `https://bagspackgo.com/user/trek/pass/${bookingId}`;
 
     const ensureString = (val) => {
         if (!val) return '';

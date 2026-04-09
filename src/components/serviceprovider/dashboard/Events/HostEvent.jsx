@@ -348,6 +348,8 @@ export default function HostEventPage() {
 
   const destinations = [
     'Kashmir',
+    'Bhaderwah',
+    'Kishtwar',
     'Uttarakhand',
     'Himachal Pradesh',
     'Ladakh',

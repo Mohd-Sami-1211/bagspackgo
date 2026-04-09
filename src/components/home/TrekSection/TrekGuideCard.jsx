@@ -20,7 +20,7 @@ const ProviderAvatar = ({ provider, premium }) => {
         src={logo}
         alt={name}
         onError={() => setImgErr(true)}
-        className="w-full h-full object-cover rounded-xl"
+        className="w-full h-full object-cover rounded-full"
       />
     );
   }
@@ -37,7 +37,7 @@ const ProviderAvatar = ({ provider, premium }) => {
   const colorIdx = name ? name.charCodeAt(0) % colors.length : 0;
 
   return (
-    <div className={`w-full h-full flex items-center justify-center rounded-xl bg-gradient-to-br ${premium ? 'from-amber-400 to-yellow-500' : colors[colorIdx]}`}>
+    <div className={`w-full h-full flex items-center justify-center rounded-full bg-gradient-to-br ${colors[colorIdx]}`}>
       <span className="text-white font-bold text-xl tracking-wider">{initials}</span>
     </div>
   );
@@ -65,7 +65,9 @@ const TrekGuideCard = ({ pkg, peopleCount = 1, peopleRange, date }) => {
   const tiers = pkg.pricingTiers || [];
   const matchedTier = tiers.find(t => numPeople >= t.minPeople && numPeople <= t.maxPeople) || (tiers.length > 0 ? [...tiers].sort((a,b)=>a.minPeople-b.minPeople)[0] : null);
   
-  const pricePerPerson = matchedTier ? Number(matchedTier.price) : Number(pkg.price || 0);
+  const originalPricePerPerson = matchedTier ? Number(matchedTier.price) : Number(pkg.price || 0);
+  const discountPercent = matchedTier ? Number(matchedTier.discount || 0) : 0;
+  const pricePerPerson = discountPercent > 0 ? originalPricePerPerson * (1 - (discountPercent / 100)) : originalPricePerPerson;
   const numDays = pkg.days || 1;
   const daysLabel = pkg.days ? `${pkg.days} Day${pkg.days > 1 ? 's' : ''}` : 'N/A';
 
@@ -73,7 +75,7 @@ const TrekGuideCard = ({ pkg, peopleCount = 1, peopleRange, date }) => {
   const peopleLabel = `${numPeople} pax`;
 
   // Handle premium flag
-  const isPremium = pkg.type === 'premium';
+  const isPremium = false; // Logic removed
   
   const handleViewDetails = () => {
     if (navigating) return;
@@ -94,18 +96,10 @@ const TrekGuideCard = ({ pkg, peopleCount = 1, peopleRange, date }) => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, ease: [0.25, 0.8, 0.25, 1] }}
       whileHover={{ y: -2, transition: { type: 'spring', stiffness: 300, damping: 20 } }}
-      className={`bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border relative ${
-        isPremium ? 'border-amber-400/30' : 'border-gray-100'
-      }`}
+      className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border relative border-gray-100"
     >
 
-      {/* Premium ribbon (Mobile only) */}
-      {isPremium && (
-        <div className="flex sm:hidden items-center gap-1.5 px-4 py-1.5 bg-gradient-to-r from-amber-500 to-yellow-400">
-          <Crown className="h-3.5 w-3.5 text-white" />
-          <span className="text-xs font-semibold text-white tracking-wide">Premium Package</span>
-        </div>
-      )}
+
 
       <div className="flex flex-col sm:flex-row">
         {/* ── Main Content ─────────────────────────────── */}
@@ -114,8 +108,8 @@ const TrekGuideCard = ({ pkg, peopleCount = 1, peopleRange, date }) => {
           {/* === TOP: Avatar + Package Name (big) + Company (small) === */}
           <div className="flex items-start gap-3 sm:gap-4">
             {/* Avatar / Image */}
-            <div className="flex-shrink-0 w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden shadow-sm border border-gray-100">
-              <ProviderAvatar provider={pkg.provider} premium={isPremium} />
+            <div className="flex-shrink-0 w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden shadow-sm border border-gray-100">
+              <ProviderAvatar provider={pkg.provider} />
             </div>
 
             <div className="flex-1 min-w-0">
@@ -174,22 +168,29 @@ const TrekGuideCard = ({ pkg, peopleCount = 1, peopleRange, date }) => {
           {/* === MOBILE: Price + CTA at bottom === */}
           <div className="mt-4 pt-3 border-t border-gray-100 sm:hidden flex items-center justify-between gap-3">
             <div>
-              <p className="text-[10px] text-gray-400 uppercase tracking-wide font-semibold">
-                {pkg.type === 'premium' ? 'Premium' : 'Starting From'} · Per Person
+              <p className="text-[10px] text-gray-400 uppercase tracking-wide font-semibold mb-1">
+                Starting From · Per Person
               </p>
-              <p className={`text-2xl font-extrabold ${isPremium ? 'text-amber-600' : 'text-emerald-600'}`}>
-                ₹{pricePerPerson.toLocaleString('en-IN')}
-              </p>
+              {discountPercent > 0 ? (
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <p className="text-2xl font-extrabold leading-none text-emerald-600">
+                    ₹{Math.round(pricePerPerson).toLocaleString('en-IN')}
+                  </p>
+                  <p className="text-xs font-bold text-gray-400 line-through">
+                    ₹{Math.round(originalPricePerPerson).toLocaleString('en-IN')}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-2xl font-extrabold leading-none text-emerald-600">
+                  ₹{Math.round(pricePerPerson).toLocaleString('en-IN')}
+                </p>
+              )}
             </div>
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={handleViewDetails}
               disabled={navigating}
-              className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap ${
-                isPremium
-                  ? 'bg-gradient-to-r from-amber-400 to-yellow-400 text-white'
-                  : 'bg-emerald-500 hover:bg-emerald-600 text-white'
-              }`}
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap bg-emerald-500 hover:bg-emerald-600 text-white"
             >
               <>View <ArrowRight className="h-3.5 w-3.5" /></>
             </motion.button>
@@ -197,36 +198,34 @@ const TrekGuideCard = ({ pkg, peopleCount = 1, peopleRange, date }) => {
         </div>
 
         {/* ── Right Panel (desktop only) ────────────────── */}
-        <div className={`hidden sm:flex flex-col items-center justify-between gap-5 px-5 py-5 min-w-[180px] max-w-[200px] shadow-inner relative transition-all duration-500 overflow-hidden ${
-          isPremium
-            ? 'bg-slate-900' // Solid midnight for contrast
-            : 'bg-gradient-to-b from-emerald-600 to-teal-500'
-        }`}>
-          {isPremium && (
-            <>
-              {/* Background Crown Watermark */}
-              <Crown className="absolute -right-6 -top-6 h-32 w-32 text-amber-500/10 rotate-12" />
-              {/* Vertical Side Label */}
-              <div className="absolute left-0 top-0 bottom-0 w-1 bg-amber-500" />
-            </>
-          )}
+        <div className="hidden sm:flex flex-col items-center justify-between gap-5 px-5 py-5 min-w-[180px] max-w-[200px] shadow-inner relative transition-all duration-500 overflow-hidden bg-gradient-to-b from-emerald-600 to-teal-500">
+
 
           {/* Price section */}
           <div className="text-center w-full relative z-10">
-            {isPremium && (
-               <div className="flex justify-center mb-3">
-                 <div className="p-2 bg-amber-500/20 rounded-full border border-amber-500/30">
-                   <Crown className="h-6 w-6 text-amber-500 fill-amber-500" />
-                 </div>
-               </div>
-            )}
-            <p className={`text-[11px] uppercase tracking-widest font-black mb-1 ${isPremium ? 'text-amber-500' : 'text-emerald-100'}`}>
-              {isPremium ? 'Premium Package' : 'Starting from'}
+
+            <p className="text-[11px] uppercase tracking-widest font-black mb-1.5 text-emerald-100">
+              Starting from
             </p>
-            <p className="text-3xl font-black text-white drop-shadow-lg">
-              ₹{pricePerPerson.toLocaleString('en-IN')}
-            </p>
-            <p className={`text-[10px] sm:text-xs mt-1.5 font-bold uppercase tracking-widest ${isPremium ? 'text-amber-400' : 'text-teal-100'}`}>
+            <div className="flex flex-col items-center justify-center">
+              {discountPercent > 0 ? (
+                <>
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <span className="text-[11px] font-bold text-white/50 line-through">₹{Math.round(originalPricePerPerson).toLocaleString('en-IN')}</span>
+                    <span className="text-[9px] font-black px-1.5 py-0.5 rounded text-white uppercase tracking-wider bg-emerald-900/60 font-bold">-{discountPercent}%</span>
+                  </div>
+                  <p className="text-3xl font-black text-white drop-shadow-lg leading-tight">
+                    ₹{Math.round(pricePerPerson).toLocaleString('en-IN')}
+                  </p>
+                </>
+              ) : (
+                <p className="text-3xl font-black text-white drop-shadow-lg leading-tight">
+                  ₹{Math.round(pricePerPerson).toLocaleString('en-IN')}
+                </p>
+              )}
+            </div>
+
+            <p className="text-[10px] sm:text-xs mt-1.5 font-bold uppercase tracking-widest text-teal-100">
               Per Person
             </p>
           </div>

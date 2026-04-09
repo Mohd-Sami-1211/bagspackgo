@@ -13,7 +13,7 @@ const ProviderAvatar = ({ guide, premium }) => {
         src={guide.logo}
         alt={guide.name}
         onError={() => setImgErr(true)}
-        className="w-full h-full object-cover rounded-xl"
+        className="w-full h-full object-cover rounded-full"
       />
     );
   }
@@ -30,7 +30,7 @@ const ProviderAvatar = ({ guide, premium }) => {
   const colorIdx = guide.name ? guide.name.charCodeAt(0) % colors.length : 0;
 
   return (
-    <div className={`w-full h-full flex items-center justify-center rounded-xl bg-gradient-to-br ${premium ? 'from-amber-400 to-yellow-500' : colors[colorIdx]}`}>
+    <div className={`w-full h-full flex items-center justify-center rounded-full bg-gradient-to-br ${premium ? 'from-amber-400 to-yellow-500' : colors[colorIdx]}`}>
       <span className="text-white font-bold text-xl tracking-wider">{initials}</span>
     </div>
   );
@@ -62,11 +62,15 @@ const GuideCard = ({ guide, category, daysRange, peopleCount = 1, date, selected
   // Use peopleCount (number) to match against provider pricing tiers
   const numPeople = Math.max(1, peopleCount);
   
-  let pricePerPerson, totalPrice, numDays, daysLabel, peopleLabel;
+  let pricePerPerson, originalPricePerPerson, discountPercent = 0, totalPrice, numDays, daysLabel, peopleLabel;
   if (matchedPackage) {
     const tiers = matchedPackage.pricingTiers || [];
     const matchedTier = tiers.find(t => numPeople >= t.minPeople && numPeople <= t.maxPeople) || tiers[0];
-    pricePerPerson = matchedTier ? Number(matchedTier.price) : Number(matchedPackage.price[category] || matchedPackage.price.individual || 0);
+    
+    originalPricePerPerson = matchedTier ? Number(matchedTier.price) : Number(matchedPackage.price?.[category] || matchedPackage.price?.individual || 0);
+    discountPercent = matchedTier ? Number(matchedTier.discount || 0) : 0;
+    pricePerPerson = discountPercent > 0 ? originalPricePerPerson * (1 - (discountPercent / 100)) : originalPricePerPerson;
+
     numDays = matchedPackage.days;
     totalPrice = pricePerPerson * numPeople;
     daysLabel = `${numDays} day${numDays > 1 ? 's' : ''}`;
@@ -77,7 +81,8 @@ const GuideCard = ({ guide, category, daysRange, peopleCount = 1, date, selected
       peopleLabel = `${numPeople} pax`;
     }
   } else {
-    pricePerPerson = Number(guide.price?.[category] || guide.price?.individual || 0);
+    originalPricePerPerson = Number(guide.price?.[category] || guide.price?.individual || 0);
+    pricePerPerson = originalPricePerPerson;
     numDays = daysRange?.includes('-') ? parseInt(daysRange.split('-')[1]) || 1 : 1;
     totalPrice = pricePerPerson * numPeople * numDays;
     daysLabel = daysRange ? `${daysRange} days` : 'Custom';
@@ -125,7 +130,7 @@ const GuideCard = ({ guide, category, daysRange, peopleCount = 1, date, selected
           {/* === TOP: Avatar + Package Name (big) + Company (small) === */}
           <div className="flex items-start gap-3 sm:gap-4">
             {/* Avatar */}
-            <div className="flex-shrink-0 w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden shadow-sm border border-gray-100">
+            <div className="flex-shrink-0 w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden shadow-sm border border-gray-100">
               <ProviderAvatar guide={guide} premium={isPremium} />
             </div>
 
@@ -183,12 +188,23 @@ const GuideCard = ({ guide, category, daysRange, peopleCount = 1, date, selected
           {/* === MOBILE: Price + CTA at bottom === */}
           <div className="mt-4 pt-3 border-t border-gray-100 sm:hidden flex items-center justify-between gap-3">
             <div>
-              <p className="text-[10px] text-gray-400 uppercase tracking-wide font-semibold">
+              <p className="text-[10px] text-gray-400 uppercase tracking-wide font-semibold mb-1">
                 {matchedPackage ? 'Package' : 'From'} · {category === 'couple' ? 'Per Couple' : 'Per Person'}
               </p>
-              <p className={`text-2xl font-extrabold ${isPremium ? 'text-amber-600' : 'text-emerald-600'}`}>
-                ₹{pricePerPerson.toLocaleString('en-IN')}
-              </p>
+              {discountPercent > 0 ? (
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <p className={`text-2xl font-extrabold leading-none ${isPremium ? 'text-amber-600' : 'text-emerald-600'}`}>
+                    ₹{Math.round(pricePerPerson).toLocaleString('en-IN')}
+                  </p>
+                  <p className="text-xs font-bold text-gray-400 line-through">
+                    ₹{Math.round(originalPricePerPerson).toLocaleString('en-IN')}
+                  </p>
+                </div>
+              ) : (
+                <p className={`text-2xl font-extrabold leading-none ${isPremium ? 'text-amber-600' : 'text-emerald-600'}`}>
+                  ₹{Math.round(pricePerPerson).toLocaleString('en-IN')}
+                </p>
+              )}
             </div>
             <motion.button
               whileTap={{ scale: 0.95 }}
@@ -229,12 +245,28 @@ const GuideCard = ({ guide, category, daysRange, peopleCount = 1, date, selected
                  </div>
                </div>
             )}
-            <p className={`text-[11px] uppercase tracking-widest font-black mb-1 ${isPremium ? 'text-amber-500' : 'text-emerald-100'}`}>
+            <p className={`text-[11px] uppercase tracking-widest font-black mb-1.5 ${isPremium ? 'text-amber-500' : 'text-emerald-100'}`}>
               {matchedPackage ? (isPremium ? 'Premium Package' : 'Package Deal') : 'Starting from'}
             </p>
-            <p className="text-3xl font-black text-white drop-shadow-lg">
-              ₹{pricePerPerson.toLocaleString('en-IN')}
-            </p>
+            
+            <div className="flex flex-col items-center justify-center">
+              {discountPercent > 0 ? (
+                <>
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <span className="text-[11px] font-bold text-white/50 line-through">₹{Math.round(originalPricePerPerson).toLocaleString('en-IN')}</span>
+                    <span className={`text-[9px] font-black px-1.5 py-0.5 rounded text-white uppercase tracking-wider ${isPremium ? 'bg-amber-500/80 shadow-[0_0_10px_rgba(245,158,11,0.5)]' : 'bg-emerald-900/60 font-bold'}`}>-{discountPercent}%</span>
+                  </div>
+                  <p className="text-3xl font-black text-white drop-shadow-lg leading-tight">
+                    ₹{Math.round(pricePerPerson).toLocaleString('en-IN')}
+                  </p>
+                </>
+              ) : (
+                <p className="text-3xl font-black text-white drop-shadow-lg leading-tight">
+                  ₹{Math.round(pricePerPerson).toLocaleString('en-IN')}
+                </p>
+              )}
+            </div>
+
             <p className={`text-[10px] sm:text-xs mt-1.5 font-bold uppercase tracking-widest ${isPremium ? 'text-amber-400' : 'text-teal-100'}`}>
               {category === 'couple' ? 'Per Couple' : 'Per Person'}
             </p>

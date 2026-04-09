@@ -35,13 +35,13 @@ import dataJson from 'src/data/data.json';
 
 // Use the same destination list used throughout the app
 const destinations = [
-  ...dataJson.destinations.filter(d => d.value === 'kashmir').map((d, i) => ({
+  ...dataJson.destinations.filter(d => ['kashmir', 'ladakh', 'bhaderwah', 'kishtwar'].includes(d.value)).map((d, i) => ({
     id: i + 1,
     label: d.label,
     value: d.value,
   })),
   { isGroupHeader: true, label: 'Available Soon', value: 'GROUP_HEADER' },
-  ...dataJson.destinations.filter(d => d.value !== 'kashmir').map((d, i) => ({
+  ...dataJson.destinations.filter(d => !['kashmir', 'ladakh', 'bhaderwah', 'kishtwar'].includes(d.value)).map((d, i) => ({
     id: i + 100,
     label: d.label,
     value: d.value,
@@ -169,11 +169,6 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
   const [exclusivesList, setExclusivesList] = useState([{ id: 1, text: '' }]);
   const [additionalPoints, setAdditionalPoints] = useState([{ id: 1, text: '' }]);
 
-  // Activities State
-  const [activities, setActivities] = useState([
-    { id: 1, name: '', details: '' },
-  ]);
-
   // Terms and Conditions State
   const [termsAndConditions, setTermsAndConditions] = useState([
     { id: 1, text: '' },
@@ -226,8 +221,8 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
       if (initialData.exclusivesList?.length > 0) {
         setExclusivesList(initialData.exclusivesList.map((text, i) => ({ id: i + 1, text })));
       }
-      if (initialData.activities?.length > 0) {
-        setActivities(initialData.activities.map((a, i) => ({ id: i + 1, ...a })));
+      if (initialData.additionalPoints?.length > 0) {
+        setAdditionalPoints(initialData.additionalPoints.map((text, i) => ({ id: i + 1, text: typeof text === 'string' ? text : text.text || '' })));
       }
       if (initialData.termsAndConditions?.length > 0) {
         setTermsAndConditions(initialData.termsAndConditions.map((text, i) => ({ id: i + 1, text })));
@@ -248,7 +243,7 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
           if (parsed.pickupDropCities) setPickupDropCities(parsed.pickupDropCities);
           if (parsed.inclusivesList) setInclusivesList(parsed.inclusivesList);
           if (parsed.exclusivesList) setExclusivesList(parsed.exclusivesList);
-          if (parsed.activities) setActivities(parsed.activities);
+          if (parsed.additionalPoints) setAdditionalPoints(parsed.additionalPoints);
           if (parsed.termsAndConditions) setTermsAndConditions(parsed.termsAndConditions);
           if (parsed.itinerary) setItinerary(parsed.itinerary);
           if (parsed.daysCount) setDaysCount(parsed.daysCount);
@@ -268,20 +263,37 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
         pickupDropCities,
         inclusivesList,
         exclusivesList,
-        activities,
+        additionalPoints,
         termsAndConditions,
         itinerary,
         daysCount
       };
       localStorage.setItem('newTripPackageDraft', JSON.stringify(dataToSave));
     }
-  }, [packageInfo, pricingTiers, pickupDropCities, inclusivesList, exclusivesList, activities, termsAndConditions, itinerary, daysCount, isEdit]);
+  }, [packageInfo, pricingTiers, pickupDropCities, inclusivesList, exclusivesList, additionalPoints, termsAndConditions, itinerary, daysCount, isEdit]);
 
   // Tab configurations
+  // Check if a section is complete for tab indicators
+  const getSectionComplete = (tabId) => {
+    switch (tabId) {
+      case 'package-info':
+        return !!(packageInfo.name.trim() && packageInfo.destination &&
+          pricingTiers.some(t => t.price && parseInt(t.price) > 0) &&
+          pickupDropCities.some(c => c.cityName.trim() && c.locations?.some(l => l.name.trim())));
+      case 'inclusives':
+        return !!(inclusivesList.some(i => i.text.trim()) && exclusivesList.some(e => e.text.trim()));
+      case 'itinerary':
+        return itinerary.length > 0 && itinerary.every(day => day.isCompleted);
+      case 'terms':
+        return !!(termsAndConditions.some(t => t.text.trim()));
+      default:
+        return false;
+    }
+  };
+
   const tabs = [
     { id: 'package-info', name: 'Package Info', icon: <Calendar size={18} /> },
     { id: 'inclusives', name: 'Inclusions & Exclusions', icon: <Check size={18} /> },
-    { id: 'activities', name: 'Activities', icon: <Navigation size={18} /> },
     { id: 'itinerary', name: 'Itinerary', icon: <MapPin size={18} /> },
     { id: 'terms', name: 'Terms & Conditions', icon: <FileText size={18} /> },
   ];
@@ -316,46 +328,11 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
     }
   }, [daysCount, itinerary.length]);
 
-  // Auto-switch to tab with validation errors
-  useEffect(() => {
-    // When validation errors change and we're not on the correct tab,
-    // automatically switch to the tab with the first error
-    if (Object.keys(validationErrors).length > 0) {
-      const firstError = Object.keys(validationErrors)[0];
-      let targetTab = activeTab;
-
-      if (firstError.startsWith('packageName') || firstError.startsWith('price') || firstError.startsWith('destination')) {
-        targetTab = 'package-info';
-      } else if (firstError.startsWith('inclusive_')) {
-        targetTab = 'inclusives';
-      } else if (firstError.startsWith('day_')) {
-        targetTab = 'itinerary';
-      }
-
-      if (targetTab !== activeTab) {
-        setActiveTab(targetTab);
-
-        // Scroll to error after tab switch
-        setTimeout(() => {
-          const element = document.querySelector(`[data-error="${firstError}"]`);
-          if (element) {
-            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            // Add highlight effect to the error field
-            element.classList.add('ring-2', 'ring-red-500');
-            setTimeout(() => {
-              element.classList.remove('ring-2', 'ring-red-500');
-            }, 2000);
-          }
-        }, 300);
-      }
-    }
-  }, [validationErrors, activeTab]);
-
   // Validate form before submission - RETURNS errors object directly
   const validateForm = () => {
     const errors = {};
 
-    // Package Info Validation
+    // ── Package Info Validation ──
     if (!packageInfo.name.trim()) errors.packageName = 'Package name is required';
     if (!packageInfo.destination) errors.destination = 'Destination is required';
 
@@ -365,12 +342,28 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
       errors.price = 'At least one pricing tier with a valid price is required';
     }
 
-    // No need to validate empty inclusives or exclusives since they are optional.
+    // Pickup city validation
+    const hasValidCity = pickupDropCities.some(c => c.cityName.trim() && c.locations?.some(l => l.name.trim()));
+    if (!hasValidCity) {
+      errors.pickupCity = 'At least one pickup/drop-off city with a specific location name is required';
+    }
 
-    // NOTE: Itinerary validation is optional — providers can fill it partially
-    // Only validate day items that are marked as completed
+    // ── Inclusions & Exclusions Validation ──
+    const hasValidInclusion = inclusivesList.some(i => i.text.trim());
+    if (!hasValidInclusion) {
+      errors.inclusive_required = 'At least one inclusion is required';
+    }
+
+    const hasValidExclusion = exclusivesList.some(e => e.text.trim());
+    if (!hasValidExclusion) {
+      errors.exclusive_required = 'At least one exclusion is required';
+    }
+
+    // ── Itinerary Validation — ALL days must be completed ──
     itinerary.forEach((day, index) => {
-      if (day.isCompleted) {
+      if (!day.isCompleted) {
+        errors[`day_${index}_incomplete`] = `Day ${day.day} itinerary must be completed`;
+      } else {
         if (!day.location.trim()) {
           errors[`day_${index}_location`] = `Day ${index + 1} location is required`;
         }
@@ -382,6 +375,12 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
         }
       }
     });
+
+    // ── Terms & Conditions Validation ──
+    const hasValidTerm = termsAndConditions.some(t => t.text.trim());
+    if (!hasValidTerm) {
+      errors.terms_required = 'At least one term or condition is required';
+    }
 
     setValidationErrors(errors);
     return errors; // Return errors directly, not relying on state
@@ -395,11 +394,27 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
     if (Object.keys(errors).length > 0) {
       const firstError = Object.keys(errors)[0];
       // Auto-switch to the tab with the first error
-      if (firstError.startsWith('packageName') || firstError.startsWith('price') || firstError.startsWith('destination')) {
+      if (firstError.startsWith('packageName') || firstError.startsWith('price') || firstError.startsWith('destination') || firstError.startsWith('pickupCity')) {
         setActiveTab('package-info');
+      } else if (firstError.startsWith('inclusive_') || firstError.startsWith('exclusive_')) {
+        setActiveTab('inclusives');
       } else if (firstError.startsWith('day_')) {
         setActiveTab('itinerary');
+      } else if (firstError.startsWith('terms_')) {
+        setActiveTab('terms');
       }
+
+      setTimeout(() => {
+        const element = document.querySelector(`[data-error="${firstError}"]`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          element.classList.add('ring-2', 'ring-red-500');
+          setTimeout(() => {
+            element.classList.remove('ring-2', 'ring-red-500');
+          }, 2000);
+        }
+      }, 300);
+
       return;
     }
 
@@ -426,7 +441,6 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
         inclusivesList: inclusivesList.filter(i => i.text.trim()),
         exclusivesList: exclusivesList.filter(e => e.text.trim()),
         additionalPoints: additionalPoints.filter(p => p.text.trim()),
-        activities: activities.filter(a => a.name.trim() && a.details.trim()),
         itinerary: itinerary.filter(day => day.location?.trim() || day.agenda?.trim()), // Only save filled-in days
         termsAndConditions: termsAndConditions.filter(t => t.text.trim()),
       };
@@ -549,26 +563,6 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
   const handleExclusiveChange = (id, value) => {
     setExclusivesList(exclusivesList.map(item =>
       item.id === id ? { ...item, text: value } : item
-    ));
-  };
-
-  // Activities Handlers
-  const handleAddActivity = () => {
-    const newId = activities.length > 0 ? Math.max(...activities.map(a => a.id)) + 1 : 1;
-    setActivities([...activities, { id: newId, name: '', details: '' }]);
-  };
-
-  const handleRemoveActivity = (id) => {
-    if (activities.length > 1) {
-      setActivities(activities.filter(activity => activity.id !== id));
-    }
-  };
-
-  const handleActivityChange = (id, field, value) => {
-    setActivities(activities.map(activity =>
-      activity.id === id
-        ? { ...activity, [field]: field === 'details' ? value.slice(0, 150) : value }
-        : activity
     ));
   };
 
@@ -988,18 +982,26 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
             </div>
 
             {/* Pickup & Drop Off Locations */}
-            <div className="bg-emerald-50/50 p-6 rounded-xl border border-emerald-100 mt-6 md:col-span-12">
+            <div className={`p-6 rounded-xl border mt-6 md:col-span-12 ${validationErrors.pickupCity ? 'bg-rose-50/50 border-rose-200' : 'bg-emerald-50/50 border-emerald-100'}`} data-error="pickupCity">
               <div className="flex justify-between items-center mb-4">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-800">Pickup & Drop Off Locations</h3>
+                  <h3 className="text-lg font-semibold text-gray-800">Pickup & Drop Off Locations *</h3>
                   <p className="text-sm text-gray-500">Add cities and specific locations for your customers</p>
                 </div>
                 <button type="button" onClick={() => {
-                  setPickupDropCities([...pickupDropCities, { id: Date.now(), cityName: '', locations: [{ id: Date.now(), name: '', mapLink: '' }] }]);
+                  const cityId = Date.now();
+                  setPickupDropCities(prev => [...prev, { id: cityId, cityName: '', locations: [{ id: cityId + 1, name: '', mapLink: '' }] }]);
                 }} className="text-sm bg-white text-emerald-600 border border-emerald-200 px-3 py-1.5 rounded-lg flex items-center gap-2 hover:bg-emerald-100">
                   <Plus size={16} /> Add City
                 </button>
               </div>
+
+              {validationErrors.pickupCity && (
+                <div className="mb-4 p-2.5 bg-rose-50 border border-rose-200 text-rose-600 text-[12px] rounded-lg flex items-center gap-2">
+                  <AlertCircle size={13} />
+                  {validationErrors.pickupCity}
+                </div>
+              )}
 
               <div className="space-y-4">
                 {pickupDropCities.map((city, cIdx) => (
@@ -1010,36 +1012,55 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
                         placeholder="City Name (e.g., Delhi, Srinagar)"
                         value={city.cityName}
                         onChange={e => {
-                          const newCities = [...pickupDropCities];
-                          newCities[cIdx].cityName = e.target.value;
-                          setPickupDropCities(newCities);
+                          const val = e.target.value;
+                          setPickupDropCities(prev => prev.map((c, i) =>
+                            i === cIdx ? { ...c, cityName: val } : c
+                          ));
+                          if (validationErrors.pickupCity) {
+                            setValidationErrors(prev => {
+                              const newErrors = { ...prev };
+                              delete newErrors.pickupCity;
+                              return newErrors;
+                            });
+                          }
                         }}
                         className="font-semibold text-gray-800 bg-transparent border-b border-gray-200 outline-none w-1/2 md:w-1/3 py-1 px-2 focus:border-emerald-500"
                       />
-                      <button type="button" onClick={() => setPickupDropCities(pickupDropCities.filter(c => c.id !== city.id))} className="text-gray-400 hover:text-red-500 p-2 rounded-lg hover:bg-red-50">
-                        <Trash2 size={18} />
-                      </button>
+                      {pickupDropCities.length > 1 && (
+                        <button type="button" onClick={() => setPickupDropCities(prev => prev.filter(c => c.id !== city.id))} className="text-gray-400 hover:text-red-500 p-2 rounded-lg hover:bg-red-50">
+                          <Trash2 size={18} />
+                        </button>
+                      )}
                     </div>
 
                     <div className="space-y-3 pl-2 sm:pl-4 border-l-2 border-emerald-50 sm:ml-2 mt-2">
                       {city.locations.map((loc, lIdx) => (
                         <div key={loc.id} className="flex flex-col sm:flex-row gap-3 items-end sm:items-center">
                           <input type="text" placeholder="Location Name (e.g., Airport, ISBT)" value={loc.name} onChange={e => {
-                            const newCities = [...pickupDropCities];
-                            newCities[cIdx].locations[lIdx].name = e.target.value;
-                            setPickupDropCities(newCities);
+                            const val = e.target.value;
+                            setPickupDropCities(prev => prev.map((c, i) =>
+                              i === cIdx ? { ...c, locations: c.locations.map((l, j) => j === lIdx ? { ...l, name: val } : l) } : c
+                            ));
+                            if (validationErrors.pickupCity) {
+                              setValidationErrors(prev => {
+                                const newErrors = { ...prev };
+                                delete newErrors.pickupCity;
+                                return newErrors;
+                              });
+                            }
                           }} className="w-full sm:flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-emerald-500" />
                           <input type="text" placeholder="Google Maps Link (Optional)" value={loc.mapLink} onChange={e => {
-                            const newCities = [...pickupDropCities];
-                            newCities[cIdx].locations[lIdx].mapLink = e.target.value;
-                            setPickupDropCities(newCities);
+                            const val = e.target.value;
+                            setPickupDropCities(prev => prev.map((c, i) =>
+                              i === cIdx ? { ...c, locations: c.locations.map((l, j) => j === lIdx ? { ...l, mapLink: val } : l) } : c
+                            ));
                           }} className="w-full sm:flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-emerald-500" />
 
                           {city.locations.length > 1 && (
                             <button type="button" onClick={() => {
-                              const newCities = [...pickupDropCities];
-                              newCities[cIdx].locations = newCities[cIdx].locations.filter(l => l.id !== loc.id);
-                              setPickupDropCities(newCities);
+                              setPickupDropCities(prev => prev.map((c, i) =>
+                                i === cIdx ? { ...c, locations: c.locations.filter(l => l.id !== loc.id) } : c
+                              ));
                             }} className="text-red-400 hover:text-red-600 shrink-0 p-2 w-full sm:w-auto flex justify-center hover:bg-red-50 rounded-lg">
                               <span className="sm:hidden text-sm mr-2">Remove</span><X size={18} />
                             </button>
@@ -1047,9 +1068,9 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
                         </div>
                       ))}
                       <button type="button" onClick={() => {
-                        const newCities = [...pickupDropCities];
-                        newCities[cIdx].locations.push({ id: Date.now(), name: '', mapLink: '' });
-                        setPickupDropCities(newCities);
+                        setPickupDropCities(prev => prev.map((c, i) =>
+                          i === cIdx ? { ...c, locations: [...c.locations, { id: Date.now(), name: '', mapLink: '' }] } : c
+                        ));
                       }} className="text-emerald-600 text-xs font-semibold flex items-center gap-1 mt-2 hover:bg-emerald-50 px-2 py-1.5 rounded-lg w-fit">
                         <Plus size={14} /> Add Location
                       </button>
@@ -1070,13 +1091,19 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
             </div>
 
             {/* Inclusives Section */}
-            <div className="bg-white p-6 rounded-xl border border-emerald-100 shadow-sm">
+            <div className={`bg-white p-6 rounded-xl border shadow-sm ${validationErrors.inclusive_required ? 'border-rose-200 ring-1 ring-rose-100' : 'border-emerald-100'}`} data-error="inclusive_required">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2 text-emerald-700">
                   <Check size={20} />
-                  <h3 className="text-lg font-semibold">What's Included</h3>
+                  <h3 className="text-lg font-semibold">What's Included *</h3>
                 </div>
               </div>
+              {validationErrors.inclusive_required && (
+                <div className="mb-4 p-2.5 bg-rose-50 border border-rose-200 text-rose-600 text-[12px] rounded-lg flex items-center gap-2">
+                  <AlertCircle size={13} />
+                  {validationErrors.inclusive_required}
+                </div>
+              )}
               
               <div className="space-y-3">
                 {inclusivesList.map((item, index) => (
@@ -1118,13 +1145,19 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
             </div>
 
             {/* Exclusives Section */}
-            <div className="bg-white p-6 rounded-xl border border-rose-100 shadow-sm mt-6">
+            <div className={`bg-white p-6 rounded-xl border shadow-sm mt-6 ${validationErrors.exclusive_required ? 'border-rose-300 ring-1 ring-rose-100' : 'border-rose-100'}`} data-error="exclusive_required">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2 text-rose-700">
                   <X size={20} />
-                  <h3 className="text-lg font-semibold">What's Excluded</h3>
+                  <h3 className="text-lg font-semibold">What's Excluded *</h3>
                 </div>
               </div>
+              {validationErrors.exclusive_required && (
+                <div className="mb-4 p-2.5 bg-rose-50 border border-rose-200 text-rose-600 text-[12px] rounded-lg flex items-center gap-2">
+                  <AlertCircle size={13} />
+                  {validationErrors.exclusive_required}
+                </div>
+              )}
               
               <div className="space-y-3">
                 {exclusivesList.map((item, index) => (
@@ -1216,82 +1249,8 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
           </div>
         );
 
-      case 'activities':
-        return (
-          <div className="space-y-6">
-            <div className="text-center mb-8">
-              <h3 className="text-lg font-semibold text-gray-800">Package Activities (Optional)</h3>
-              <p className="text-gray-600 mt-1">Define the activities included in your package</p>
-            </div>
 
-            <div className="space-y-4">
-              {activities.map((activity, index) => (
-                <motion.div
-                  key={activity.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="bg-white border border-gray-200 rounded-xl p-6"
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center font-bold">
-                      {index + 1}
-                    </div>
-                    <div className="flex-1 space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Activity Name
-                        </label>
-                        <input
-                          type="text"
-                          value={activity.name}
-                          onChange={(e) => handleActivityChange(activity.id, 'name', e.target.value)}
-                          className="w-full border border-gray-200 rounded-lg px-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
-                          placeholder="Enter activity name"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Activity Details (max 150 characters)
-                        </label>
-                        <div className="relative">
-                          <textarea
-                            value={activity.details}
-                            onChange={(e) => handleActivityChange(activity.id, 'details', e.target.value)}
-                            className="w-full border border-gray-200 rounded-lg px-4 py-3 pr-16 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none resize-none transition-all"
-                            rows="3"
-                            placeholder="Describe the activity in detail"
-                            maxLength={150}
-                          />
-                          <div className="absolute right-3 bottom-3 text-xs text-gray-500">
-                            {activity.details.length}/150
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    {activities.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveActivity(activity.id)}
-                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"
-                      >
-                        <Trash2 size={20} />
-                      </button>
-                    )}
-                  </div>
-                </motion.div>
-              ))}
-            </div>
 
-            <button
-              type="button"
-              onClick={handleAddActivity}
-              className="w-full border-2 border-dashed border-gray-300 rounded-xl py-4 hover:border-emerald-500 hover:bg-emerald-50 transition-all flex items-center justify-center gap-2"
-            >
-              <Plus size={20} className="text-emerald-600" />
-              <span className="font-medium text-emerald-600">Add New Activity</span>
-            </button>
-          </div>
-        );
 
       case 'itinerary':
         if (currentDayEditing !== null) {
@@ -1543,7 +1502,8 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
                 <label className="block text-sm font-semibold text-gray-800 mb-3 flex items-center justify-between">
                   <span>Day Highlights <span className="text-gray-400 font-normal ml-1">(max 5 points, 100 chars each)</span></span>
                   {dayData.highlights.length < 5 && (
-                    <button 
+                    <button
+                       type="button"
                        onClick={() => handleAddHighlight(currentDayEditing)}
                        className="text-xs font-medium text-emerald-600 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1.5 rounded-lg transition-colors flex items-center"
                     >
@@ -1569,6 +1529,7 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
                       </div>
                       {dayData.highlights.length > 1 && (
                         <button
+                          type="button"
                           onClick={() => handleRemoveHighlight(currentDayEditing, index)}
                           className="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors shrink-0 mt-1 opacity-100 sm:opacity-0 group-hover:opacity-100"
                           title="Remove highlight"
@@ -1608,7 +1569,8 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
-                  className="bg-white border border-gray-200 rounded-xl p-6 hover:border-emerald-300 transition-all"
+                  className={`bg-white border rounded-xl p-6 transition-all ${validationErrors[`day_${index}_incomplete`] ? 'border-rose-300 ring-1 ring-rose-100' : 'border-gray-200 hover:border-emerald-300'}`}
+                  data-error={`day_${index}_incomplete`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
@@ -1666,6 +1628,12 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
                     </div>
                   )}
 
+                  {validationErrors[`day_${index}_incomplete`] && (
+                    <div className="mt-4 p-2.5 bg-rose-50 border border-rose-200 rounded-lg flex items-center gap-2 text-[12px] text-rose-600 font-medium">
+                      <AlertCircle size={14} />Day {day.day} details are empty! Click "Create" to fill in the itinerary.
+                    </div>
+                  )}
+
                   {validationErrors[`day_${index}_location`] && (
                     <div className="mt-3 p-2.5 bg-rose-50 border border-rose-100 rounded-lg flex items-center gap-2 text-[12px] text-rose-600">
                       <AlertCircle size={13} />Location is required for Day {day.day}
@@ -1698,10 +1666,17 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
       case 'terms':
         return (
           <div className="space-y-6">
-            <div className="text-center mb-8">
-              <h3 className="text-lg font-semibold text-gray-800">Terms & Conditions (Optional)</h3>
+            <div className="text-center mb-8" data-error="terms_required">
+              <h3 className="text-lg font-semibold text-gray-800">Terms & Conditions *</h3>
               <p className="text-gray-600 mt-1">Define the terms and conditions for your package (max 200 characters each)</p>
             </div>
+
+            {validationErrors.terms_required && (
+              <div className="mb-2 p-2.5 bg-rose-50 border border-rose-200 text-rose-600 text-[12px] rounded-lg flex items-center gap-2">
+                <AlertCircle size={13} />
+                {validationErrors.terms_required}
+              </div>
+            )}
 
             <div className="space-y-4">
               {termsAndConditions.map((term, index) => (
@@ -1757,7 +1732,6 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
             <div className="bg-gray-50 p-4 rounded-xl mt-6">
               <h4 className="font-semibold text-gray-800 mb-2">Important Guidelines:</h4>
               <ul className="text-sm text-gray-600 space-y-1">
-                <li>• Clearly state cancellation and refund policies</li>
                 <li>• Mention any age restrictions or requirements</li>
                 <li>• Specify what's not included in the package</li>
                 <li>• Include health and safety guidelines</li>
@@ -1815,23 +1789,32 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
           {/* Tabs Navigation */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="flex border-b border-gray-100 overflow-x-auto no-scrollbar">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex-1 min-w-[120px] py-4 flex items-center justify-center gap-3 text-[13px] font-bold transition-all ${
-                    activeTab === tab.id 
-                    ? 'text-emerald-600 border-b-2 border-emerald-600 bg-emerald-50/50' 
-                    : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
-                  }`}
-                >
-                  <div className={activeTab === tab.id ? 'text-emerald-500' : 'text-gray-300'}>
-                    {tab.icon}
-                  </div>
-                  {tab.name}
-                </button>
-              ))}
+              {tabs.map((tab) => {
+                const isComplete = getSectionComplete(tab.id);
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`flex-1 min-w-[120px] py-4 flex items-center justify-center gap-2 text-[13px] font-bold transition-all ${
+                      activeTab === tab.id 
+                      ? 'text-emerald-600 border-b-2 border-emerald-600 bg-emerald-50/50' 
+                      : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className={activeTab === tab.id ? 'text-emerald-500' : 'text-gray-300'}>
+                      {tab.icon}
+                    </div>
+                    <span className="hidden sm:inline">{tab.name}</span>
+                    <span className="sm:hidden text-[11px]">{tab.name.split(' ')[0]}</span>
+                    {isComplete ? (
+                      <div className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" title="Section complete" />
+                    ) : (
+                      <div className="w-2 h-2 rounded-full bg-gray-200 shrink-0" title="Section incomplete" />
+                    )}
+                  </button>
+                );
+              })}
             </div>
 
             {/* Tab Content */}

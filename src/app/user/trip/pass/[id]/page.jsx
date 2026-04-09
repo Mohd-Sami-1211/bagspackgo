@@ -103,8 +103,8 @@ export default function TripPassPage() {
     const travelers = personalDetails?.personalDetails || [];
 
     const passUrl = typeof window !== 'undefined' 
-        ? `${window.location.origin}/api/user/${booking?.bookingType === 'trek' ? 'trek' : 'trip'}-bookings/${id}/pdf` 
-        : `https://bagspackgo.com/api/user/${booking?.bookingType === 'trek' ? 'trek' : 'trip'}-bookings/${id}/pdf`;
+        ? `${window.location.origin}/user/${booking?.bookingType === 'trek' ? 'trek' : 'trip'}/pass/${id}` 
+        : `https://bagspackgo.com/user/${booking?.bookingType === 'trek' ? 'trek' : 'trip'}/pass/${id}`;
 
     return (
         <div className="min-h-screen bg-[#F0FDF4] p-4 sm:p-8 flex items-center justify-center font-sans" style={{ fontFamily: "'Outfit', sans-serif" }}>

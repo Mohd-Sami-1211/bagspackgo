@@ -9,23 +9,23 @@ import 'react-datepicker/dist/react-datepicker.css';
 import { X, Calendar as CalendarIcon, Filter, Search as SearchIcon, ChevronDown, ArrowLeft, Plus, Minus, PackageOpen, Sparkles } from 'lucide-react';
 import data from 'src/data/data.json';
 
-const kashmirOption = (data.destinations || []).find(d => d.value === 'kashmir');
-const otherOptions = (data.destinations || []).filter(d => d.value !== 'kashmir').map(dest => ({
+const availableValues = ['kashmir', 'ladakh', 'bhaderwah', 'kishtwar'];
+const activeOptions = (data.destinations || []).filter(d => availableValues.includes(d.value));
+const otherOptions = (data.destinations || []).filter(d => !availableValues.includes(d.value)).map(dest => ({
   ...dest,
   isDisabled: true,
 }));
 
-const destinationOptions = kashmirOption ? [
-  kashmirOption,
+const destinationOptions = [
+  ...activeOptions,
   {
     label: 'Available Soon',
     options: otherOptions
   }
-] : [];
+];
 
 const findDestination = (val) => {
-  if (kashmirOption && kashmirOption.value === val) return kashmirOption;
-  return otherOptions.find(d => d.value === val) || null;
+  return (data.destinations || []).find(d => d.value === val) || null;
 };
 
 const SearchResults = () => {
@@ -401,7 +401,10 @@ const SearchResults = () => {
                     Sorry, No Exact Matches Found
                   </h3>
                   <p className="text-sm sm:text-base text-gray-400 max-w-md mx-auto leading-relaxed px-4">
-                    We couldn&apos;t find packages matching your exact criteria. But don&apos;t worry — we have other amazing offerings{destinationLabel ? ` in ${destinationLabel}` : ''} for you!
+                    {otherGuides.length > 0 
+                      ? <>We couldn&apos;t find packages matching your exact criteria. But don&apos;t worry — we have other amazing offerings{destinationLabel ? ` in ${destinationLabel}` : ''} for you!</>
+                      : <>No trip packages are currently available for this destination. Please try another location or check back soon!</>
+                    }
                   </p>
                 </motion.div>
 
@@ -412,10 +415,12 @@ const SearchResults = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3, duration: 0.5 }}
                   >
-                    <div className="flex items-center gap-3 mb-5">
+                    <div className="flex items-center gap-3 mb-5 mt-4">
                       <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full shadow-lg shadow-emerald-200/50">
                         <Sparkles className="h-4 w-4 text-white" />
-                        <span className="text-sm font-bold text-white">We Have More to Offer!</span>
+                        <span className="text-sm font-bold text-white whitespace-nowrap">
+                          More Packages{destinationLabel ? ` in ${destinationLabel}` : ''}
+                        </span>
                       </div>
                       <div className="flex-1 h-px bg-gradient-to-r from-emerald-200 to-transparent" />
                     </div>
@@ -424,17 +429,9 @@ const SearchResults = () => {
                     </p>
                     <div className="grid gap-5">
                       {otherGuides.map((guide, index) => {
-                        const packagesInRange = getPackagesInRange(guide, daysRange);
-                        if (!daysRange || packagesInRange.length === 0) {
-                          return (
-                            <motion.div key={guide.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 + index * 0.05 }}>
-                              <GuideCard guide={guide} category={category} daysRange={daysRange} peopleCount={peopleCount} date={date} />
-                            </motion.div>
-                          );
-                        }
-                        return packagesInRange.map((pkg, pIdx) => (
-                          <motion.div key={`${guide.id}-${pkg.id}`} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 + (index * 0.05) + (pIdx * 0.02) }}>
-                            <GuideCard guide={guide} category={category} daysRange={daysRange} peopleCount={peopleCount} date={date} selectedPackage={pkg} />
+                        return guide.packages.map((pkg, pIdx) => (
+                          <motion.div key={`other-${guide.id}-${pkg.id}`} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: (index * 0.05) + (pIdx * 0.02) }}>
+                            <GuideCard guide={guide} category={category} daysRange={null} peopleCount={peopleCount} date={date} selectedPackage={pkg} />
                           </motion.div>
                         ));
                       })}
@@ -471,30 +468,22 @@ const SearchResults = () => {
                     className="mt-4"
                   >
                     <div className="flex items-center gap-3 mb-5 mt-4">
-                      <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full shadow-lg shadow-blue-200/50">
+                      <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full shadow-lg shadow-emerald-200/50">
                         <Sparkles className="h-4 w-4 text-white" />
                         <span className="text-sm font-bold text-white whitespace-nowrap">
                           More Packages{destinationLabel ? ` in ${destinationLabel}` : ''}
                         </span>
                       </div>
-                      <div className="flex-1 h-px bg-gradient-to-r from-blue-200 to-transparent" />
+                      <div className="flex-1 h-px bg-gradient-to-r from-emerald-200 to-transparent" />
                     </div>
                     <p className="text-sm text-gray-500 mb-5 ml-1">
                       Explore more trip packages available{destinationLabel ? ` for ${destinationLabel}` : ''} to find your perfect getaway:
                     </p>
                     <div className="grid gap-5">
                       {otherGuides.map((guide, index) => {
-                        const packagesInRange = getPackagesInRange(guide, daysRange);
-                        if (!daysRange || packagesInRange.length === 0) {
-                          return (
-                            <motion.div key={`other-${guide.id}`} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: index * 0.05 }}>
-                              <GuideCard guide={guide} category={category} daysRange={daysRange} peopleCount={peopleCount} date={date} />
-                            </motion.div>
-                          );
-                        }
-                        return packagesInRange.map((pkg, pIdx) => (
+                        return guide.packages.map((pkg, pIdx) => (
                           <motion.div key={`other-${guide.id}-${pkg.id}`} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: (index * 0.05) + (pIdx * 0.02) }}>
-                            <GuideCard guide={guide} category={category} daysRange={daysRange} peopleCount={peopleCount} date={date} selectedPackage={pkg} />
+                            <GuideCard guide={guide} category={category} daysRange={null} peopleCount={peopleCount} date={date} selectedPackage={pkg} />
                           </motion.div>
                         ));
                       })}

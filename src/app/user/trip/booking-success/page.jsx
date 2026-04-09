@@ -84,8 +84,8 @@ function BookingSuccessContent() {
     const destinationName = pSnapshot.destination || booking?.destination || arrivalDeparture?.arrival?.city || "Kashmir Valleys";
     const travelers = personalDetails?.personalDetails || [];
 
-    // Full URL to the pass which will trigger a PDF download/view when someone scans the QR
-    const passUrl = typeof window !== 'undefined' ? `${window.location.origin}/api/user/trip-bookings/${bookingId}/pdf` : `https://bagspackgo.com/api/user/trip-bookings/${bookingId}/pdf`;
+    // Full URL to the pass page — matches the "View Pass" button
+    const passUrl = typeof window !== 'undefined' ? `${window.location.origin}/user/trip/pass/${bookingId}` : `https://bagspackgo.com/user/trip/pass/${bookingId}`;
 
     const ensureString = (val) => {
         if (!val) return '';

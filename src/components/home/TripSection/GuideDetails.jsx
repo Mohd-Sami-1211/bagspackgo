@@ -13,14 +13,17 @@ import {
   Hotel,
   Clock,
   Map,
+  Crown,
+  Bookmark,
+  CheckCircle2,
+  Minus,
+  ExternalLink,
+  AlertCircle,
+  Navigation,
   Utensils,
   Car,
   ShieldCheck,
-  Mountain,
-  Minus,
-  Navigation,
-  Bookmark,
-  ExternalLink,
+  Mountain
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
@@ -569,10 +572,11 @@ const GuideDetails = ({ guide }) => {
   };
 
   return (
-    <div
-      className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 -mt-16 sm:-mt-10 md:-mt-12 lg:-mt-14 mb-10"
-      ref={pageTopRef}
-    >
+    <>
+      <div
+        className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 -mt-16 sm:-mt-10 md:-mt-12 lg:-mt-14"
+        ref={pageTopRef}
+      >
       {/* Toast Notification - Centered Fix */}
       {showSaveToast && (
         <div className="fixed bottom-10 inset-x-0 flex justify-center z-[100] px-4">
@@ -595,10 +599,7 @@ const GuideDetails = ({ guide }) => {
         <div className="max-w-7xl mx-auto relative flex flex-col items-center">
 
           <div
-            className={`relative shadow-2xl rounded-2xl sm:rounded-3xl lg:rounded-full px-4 sm:px-8 pt-10 pb-4 sm:pt-6 sm:pb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between w-full max-w-5xl mx-auto gap-3 sm:gap-8 lg:gap-2 transition-all hover:shadow-emerald-500/10 ${isPremiumPackage
-                ? "bg-gradient-to-r from-amber-400/90 via-yellow-400 to-amber-300"
-                : "bg-gradient-to-r from-emerald-400 to-green-300"
-              }`}
+            className="relative shadow-2xl rounded-2xl sm:rounded-3xl lg:rounded-full px-4 sm:px-8 pt-10 pb-4 sm:pt-6 sm:pb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between w-full max-w-5xl mx-auto gap-3 sm:gap-8 lg:gap-2 transition-all hover:shadow-emerald-500/10 bg-gradient-to-r from-emerald-400 to-green-300"
           >
             {/* Mobile Back Button - Inside Card */}
             <button 
@@ -618,23 +619,15 @@ const GuideDetails = ({ guide }) => {
               <span className="text-sm sm:text-base pr-1">Back</span>
             </button>
 
-            {/* Premium Badge */}
-            {isPremiumPackage && (
-              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10 flex flex-col items-center">
-                <div className="flex items-center bg-gray-900 text-amber-400 rounded-full px-4 py-1.5 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] border border-amber-400/30 shadow-2xl ring-2 ring-white/10">
-                  <Crown className="w-3.5 h-3.5 mr-2 animate-pulse" />
-                  Premium Luxury
-                </div>
-              </div>
-            )}
+
 
             {/* Rating Badge */}
-            <div className={`absolute top-2 right-2 sm:top-2 sm:right-6 lg:right-10 flex items-center bg-white/95 backdrop-blur-md rounded-full px-3 py-1.5 text-xs font-black text-gray-950 shadow-xl ring-1 ring-gray-200 ${!selectedPackage?.rating && "opacity-90"}`}>
-              <Star className={`w-4 h-4 mr-2 ${selectedPackage?.rating > 0 ? 'text-amber-500 fill-amber-500' : 'text-gray-300 fill-gray-300'}`} />
-              {selectedPackage?.rating > 0 ? (
+            <div className={`absolute top-2 right-2 sm:top-2 sm:right-6 lg:right-10 flex items-center bg-white/95 backdrop-blur-md rounded-full px-3 py-1.5 text-xs font-black text-gray-950 shadow-xl ring-1 ring-gray-200 ${!guide?.rating && "opacity-90"}`}>
+              <Star className={`w-4 h-4 mr-2 ${guide?.rating > 0 ? 'text-amber-500 fill-amber-500' : 'text-gray-300 fill-gray-300'}`} />
+              {guide?.rating > 0 ? (
                 <>
-                  {selectedPackage.rating}
-                  <span className="ml-1.5 text-gray-400 text-[10px] font-bold">({selectedPackage.reviews || 0})</span>
+                  {guide.rating}
+                  <span className="ml-1.5 text-gray-400 text-[10px] font-bold">({guide.reviews || 0})</span>
                 </>
               ) : (
                 <span className="text-gray-500 text-[10px] uppercase tracking-wider">No ratings yet</span>
@@ -642,22 +635,20 @@ const GuideDetails = ({ guide }) => {
             </div>
 
             {/* Main Info Cluster */}
-            <div className="flex items-center w-full sm:w-auto mt-1 sm:mt-0 justify-start sm:justify-start gap-3 sm:gap-6">
+            <div className="flex items-center w-full sm:flex-1 min-w-0 mt-1 sm:mt-0 justify-start gap-3 sm:gap-6">
               <a
                 href={`/user/provider/${guide.providerId || guide._id || guide.id}`}
-                className={`w-12 h-12 sm:w-20 sm:h-20 lg:w-24 lg:h-24 rounded-full flex items-center justify-center shadow-2xl border-4 flex-shrink-0 relative overflow-hidden group/avatar cursor-pointer hover:scale-105 transition-all duration-300 ${isPremiumPackage ? "bg-white border-amber-200/50 hover:border-amber-400" : "bg-white border-emerald-100 hover:border-emerald-300"
-                  }`}
+                className="w-12 h-12 sm:w-20 sm:h-20 lg:w-24 lg:h-24 rounded-full flex items-center justify-center shadow-2xl border-4 flex-shrink-0 relative overflow-hidden group/avatar cursor-pointer hover:scale-105 transition-all duration-300 bg-white border-emerald-100 hover:border-emerald-300"
               >
-                <div className={`text-xl sm:text-2xl lg:text-3xl font-black italic tracking-tighter transition-transform group-hover/avatar:scale-110 ${isPremiumPackage ? "text-amber-600" : "text-emerald-600"
-                  }`}>
+                <div className="text-xl sm:text-2xl lg:text-3xl font-black italic tracking-tighter transition-transform group-hover/avatar:scale-110 text-emerald-600">
                   {guide.companyName ? guide.companyName.split(" ").map((n) => n[0]).join("") : guide.name.split(" ").map((n) => n[0]).join("")}
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-tr from-white/0 to-white/20 pointer-events-none" />
               </a>
 
-              <div className="min-w-0 pr-2 sm:pr-4 drop-shadow-md text-left flex-1">
+              <div className="min-w-0 pr-20 sm:pr-4 drop-shadow-md text-left flex-1">
                 <a href={`/user/provider/${guide.providerId || guide._id || guide.id}`} className="group/title block">
-                  <h2 className="text-base sm:text-xl lg:text-2xl font-black text-white leading-tight mb-1 sm:mb-2 tracking-tight uppercase group-hover/title:text-emerald-50 transition-colors">
+                  <h2 className="text-base sm:text-xl lg:text-2xl font-black text-white leading-tight mb-1 sm:mb-2 tracking-tight uppercase group-hover/title:text-emerald-50 transition-colors truncate">
                     {selectedPackage ? selectedPackage.label : guide.name}
                   </h2>
                 </a>
@@ -674,13 +665,7 @@ const GuideDetails = ({ guide }) => {
                   </a>
                 </div>
 
-                {isPremiumPackage && (
-                  <div className="flex items-center mt-3 justify-center sm:justify-start flex-wrap gap-2">
-                    <span className="flex items-center text-[10px] sm:text-xs font-black px-3 py-1.5 rounded-xl bg-amber-400/90 text-gray-950 shadow-[0_10px_20px_rgba(251,191,36,0.3)] tracking-tighter uppercase italic">
-                      VVIP Access Granted
-                    </span>
-                  </div>
-                )}
+
               </div>
             </div>
 
@@ -739,8 +724,11 @@ const GuideDetails = ({ guide }) => {
           </div>
         </div>
       </div>
+    </div>
 
-      <div className="w-full max-w-7xl mx-auto flex flex-col lg:flex-row gap-4 sm:gap-6 md:gap-8 pt-4 sm:pt-6 pb-8 sm:pb-10 bg-gradient-to-br from-green-50 to-blue-50 rounded-xl p-4 sm:p-6">
+    {/* Full Screen Layout for Detail Panes */}
+    <div className="w-full bg-gradient-to-br from-green-50 to-blue-50 py-8 pb-12 overflow-hidden shadow-inner">
+      <div className="w-full px-3 sm:px-4 md:px-6 lg:px-8 flex flex-col lg:flex-row gap-4 sm:gap-6 md:gap-8">
         <div className="w-full lg:w-8/12">
           <div className="flex bg-white rounded-t-xl shadow-sm overflow-hidden border border-gray-200 mb-1.5">
             {[
@@ -1094,10 +1082,7 @@ const GuideDetails = ({ guide }) => {
                   <div className="flex justify-end mt-4 sm:mt-6">
                     <button
                       onClick={handleNextTab}
-                      className={`px-4 py-2 text-white rounded-lg hover:from-green-600 hover:to-green-700 flex items-center text-sm shadow-sm transition-colors ${isPremiumPackage
-                          ? "bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600"
-                          : "bg-gradient-to-br from-green-400 to-green-600"
-                        }`}
+                      className="inline-flex items-center justify-center px-6 py-2.5 text-sm font-bold rounded-xl transition-all shadow-md active:scale-95 bg-emerald-600 hover:bg-emerald-700 text-white"
                     >
                       Next <ArrowRight className="ml-2 h-4 w-4" />
                     </button>
@@ -1135,6 +1120,8 @@ const GuideDetails = ({ guide }) => {
         </div>
 
         <div className="w-full lg:w-4/12 mt-6 lg:mt-0">
+
+
           <div
             className={`rounded-xl shadow-md overflow-hidden border mb-6 sm:mb-12 ${isPremiumPackage
                 ? "border-amber-200 bg-gradient-to-b from-white to-amber-50"
@@ -1157,10 +1144,7 @@ const GuideDetails = ({ guide }) => {
                 {packageInclusions.map((item, index) => (
                   <div key={index} className="flex items-start">
                     <div
-                      className={`flex-shrink-0 p-1.5 sm:p-2 rounded-lg mr-3 sm:mr-4 ${isPremiumPackage
-                          ? "bg-gradient-to-br from-amber-100 to-yellow-100"
-                          : "bg-green-50"
-                        }`}
+                      className="flex-shrink-0 p-1.5 sm:p-2 rounded-lg mr-3 sm:mr-4 bg-green-50"
                     >
                       {item.icon}
                     </div>
@@ -1235,49 +1219,16 @@ const GuideDetails = ({ guide }) => {
                 </div>
               )}
 
-              <div className="mt-4 sm:mt-6 pt-4 border-t border-gray-200">
-                <h4 className="font-medium text-gray-800 mb-2 text-sm sm:text-base">
-                  Activities Included
-                </h4>
-                <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                  {selectedPackage?.activities?.length > 0 ? (
-                    selectedPackage.activities.slice(0, 6).map((activity, i) => (
-                      <span
-                        key={i}
-                        className={`px-2 sm:px-2.5 py-1 text-xs rounded-full ${isPremiumPackage
-                            ? "bg-gradient-to-r from-amber-100 to-yellow-100 text-amber-700"
-                            : "bg-green-50 text-green-700"
-                          }`}
-                      >
-                        {activity.name}
-                      </span>
-                    ))
-                  ) : (
-                    <span className="text-xs text-gray-500 italic">No specific activities</span>
-                  )}
-                  {selectedPackage?.activities?.length > 6 && (
-                    <span className="px-2 sm:px-2.5 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
-                      +{selectedPackage.activities.length - 6} more
-                    </span>
-                  )}
-                </div>
-              </div>
             </div>
           </div>
 
           {/* Pickup and Dropoff Section - Restored as Separate Card */}
           {selectedPackage?.pickupDropCities?.length > 0 && (
             <div
-              className={`rounded-xl shadow-md overflow-hidden border mb-6 sm:mb-12 ${isPremiumPackage
-                  ? "border-amber-200 bg-gradient-to-b from-white to-amber-50"
-                  : "border-gray-100 bg-white"
-                }`}
+              className="rounded-xl shadow-md overflow-hidden border mb-6 sm:mb-12 border-gray-100 bg-white"
             >
               <div
-                className={`px-4 sm:px-5 py-3 ${isPremiumPackage
-                    ? "bg-gradient-to-r from-amber-500 to-yellow-500"
-                    : "bg-green-500"
-                  }`}
+                className="px-4 sm:px-5 py-3 bg-green-500"
               >
                 <h2 className="text-white font-semibold text-base flex items-center gap-2">
                   <MapPin className="w-4 h-4 ml-0" /> Available Pickups
@@ -1289,7 +1240,7 @@ const GuideDetails = ({ guide }) => {
                   {selectedPackage.pickupDropCities.map((city, idx) => (
                     <div key={idx} className="flex flex-col gap-3">
                       <div className="flex items-center gap-2 pb-1 border-b border-gray-100">
-                        <div className={`p-1.5 rounded-lg ${isPremiumPackage ? 'bg-amber-100 text-amber-600' : 'bg-emerald-100 text-emerald-600'}`}>
+                        <div className="p-1.5 rounded-lg bg-emerald-100 text-emerald-600">
                           <Navigation className="w-3.5 h-3.5" />
                         </div>
                         <span className="font-bold text-gray-900 text-xs tracking-tight uppercase">
@@ -1301,7 +1252,7 @@ const GuideDetails = ({ guide }) => {
                         {city.locations.map((loc, lIdx) => (
                           <div key={lIdx} className="flex items-center justify-between group bg-gray-50/70 hover:bg-gray-100/80 p-2.5 rounded-xl border border-gray-100/50 hover:border-gray-200 transition-all">
                             <div className="flex items-center text-xs text-gray-600 min-w-0 pr-2">
-                              <div className={`w-1.5 h-1.5 rounded-full mr-2.5 shrink-0 ${isPremiumPackage ? 'bg-amber-400/80' : 'bg-emerald-400/80'}`} />
+                              <div className="w-1.5 h-1.5 rounded-full mr-2.5 shrink-0 bg-emerald-400/80" />
                               <span className="truncate font-medium">{loc.name}</span>
                             </div>
                             {loc.mapLink ? (
@@ -1309,7 +1260,7 @@ const GuideDetails = ({ guide }) => {
                                 href={loc.mapLink}
                                 target="_blank"
                                 rel="noreferrer"
-                                className={`p-1.5 rounded-lg transition-all flex-shrink-0 bg-white shadow-sm border border-gray-100 ${isPremiumPackage ? 'text-amber-500 hover:bg-amber-500 hover:text-white' : 'text-emerald-500 hover:bg-emerald-500 hover:text-white'}`}
+                                className="p-1.5 rounded-lg transition-all flex-shrink-0 bg-white shadow-sm border border-gray-100 text-emerald-500 hover:bg-emerald-500 hover:text-white"
                                 title="Expand Map"
                               >
                                 <ExternalLink className="w-3.5 h-3.5" />
@@ -1334,6 +1285,7 @@ const GuideDetails = ({ guide }) => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 
