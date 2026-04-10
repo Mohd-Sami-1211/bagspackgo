@@ -6,7 +6,7 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import EventCard from 'src/components/home/EventSection/EventCard';
 import initialData from 'src/data/data.json';
-import { Search, Calendar, Tag, MapPin } from 'lucide-react';
+import { Search, Calendar, Tag, MapPin, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -116,12 +116,12 @@ const EventMainContent = () => {
           icon: <MapPin className="mr-2 text-green-500" size={16} />
         },
         {
-          name: 'Event Types',
-          data: Array.from(new Set((data.events || []).map(e => e.type))),
+          name: 'Organizers',
+          data: data.organizers || [],
           fields: [
-            { name: 'type', weight: 2 }
+            { name: 'name', weight: 3 }
           ],
-          icon: <Tag className="mr-2 text-green-500" size={16} />
+          icon: <User className="mr-2 text-green-500" size={16} />
         }
       ];
 
@@ -162,10 +162,9 @@ const EventMainContent = () => {
         .map(event => {
           let priority = 0;
 
-          // Direct matches
+          // Direct matches (Event Name)
           priority += getPriorityScore(event?.name, q) * 3;
           priority += getPriorityScore(event?.title, q) * 3;
-          priority += getPriorityScore(event?.type, q) * 2;
 
           // Destination matches
           if (event.destination) {
@@ -1112,11 +1111,11 @@ const EventMainContent = () => {
         </div>
 
         {/* Mobile Search */}
-        <div className="relative">
+        <div className="relative z-50">
           <div className="relative flex">
             <Input
               type="text"
-              placeholder="Search events, guides, destinations..."
+              placeholder="Search events, organizers, destinations..."
               className="w-full rounded-full pl-4 pr-10"
               value={searchQuery || ''}
               onChange={(e) => {
@@ -1145,7 +1144,7 @@ const EventMainContent = () => {
 
           {/* Mobile Suggestions Dropdown */}
           {showSuggestions && searchQuery && !activeSearch && (
-            <div className="absolute z-30 w-full mt-1 bg-white border border-neutral-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+            <div className="absolute z-50 w-full mt-1 bg-white border border-neutral-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
               {getPrioritySuggestions(searchQuery).map((group, groupIndex) => (
                 <div key={`group-${groupIndex}`} className="p-2 border-b border-neutral-100 last:border-0">
                   <div className="flex items-center text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-1">
@@ -1210,11 +1209,11 @@ const EventMainContent = () => {
             </h2>
 
             {/* Enhanced Search Bar */}
-            <div className="relative w-1/2">
+            <div className="relative w-1/2 z-50">
               <div className="relative flex">
                 <Input
                   type="text"
-                  placeholder="Search events, guides, destinations, types..."
+                  placeholder="Search events, organizers, destinations..."
                   className="w-full rounded-full pl-4 pr-10"
                   value={searchQuery || ''}
                   onChange={(e) => {
@@ -1243,7 +1242,7 @@ const EventMainContent = () => {
 
               {/* Desktop Suggestions Dropdown */}
               {showSuggestions && searchQuery && !activeSearch && (
-                <div className="absolute z-10 w-full mt-1 bg-white border border-neutral-200 rounded-lg shadow-lg max-h-80 overflow-y-auto">
+                <div className="absolute z-50 w-full mt-1 bg-white border border-neutral-200 rounded-lg shadow-lg max-h-80 overflow-y-auto">
                   {getPrioritySuggestions(searchQuery).map((group, groupIndex) => (
                     <div key={`group-${groupIndex}`} className="p-2 border-b border-neutral-100 last:border-0">
                       <div className="flex items-center text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-1">
