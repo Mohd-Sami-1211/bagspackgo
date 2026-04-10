@@ -7,6 +7,8 @@ import 'react-datepicker/dist/react-datepicker.css';
 import EventCard from 'src/components/home/EventSection/EventCard';
 import initialData from 'src/data/data.json';
 import { Search, Calendar, Tag, MapPin } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 const EventMainContent = () => {
   // State for events and filters
@@ -20,7 +22,7 @@ const EventMainContent = () => {
         const res = await fetch('/api/events');
         const json = await res.json();
           if (json.success) {
-            setData(prev => ({ ...prev, events: json.events }));
+            setData(prev => ({ ...prev, events: json.events, organizers: json.organizers || [] }));
           }
         } catch (err) {
           console.error('Failed to fetch events:', err);
@@ -399,6 +401,11 @@ const EventMainContent = () => {
   };
 
   const getFilteredOrganizers = () => {
+    // If the backend returns all organizers, use them. Otherwise fallback to deriving from events.
+    if (data.organizers && data.organizers.length > 0) {
+      return data.organizers.sort((a, b) => a.name.localeCompare(b.name));
+    }
+    
     let eventsToConsider = data.events;
     if (filters.destination && filters.destination.length > 0) {
       eventsToConsider = eventsToConsider.filter(e => filters.destination.includes(e.destinationId));
@@ -462,7 +469,7 @@ const EventMainContent = () => {
   ].filter(Boolean).length;
 
   // ── Shared filter panel content (used on both desktop sidebar and mobile drawer) ──
-  const FilterPanel = () => (
+  const renderFilterPanel = () => (
     <div className="w-full bg-white/90 p-3 sm:p-4 mb-3 rounded-lg">
       {/* Destination Filter */}
       <div className={`mb-4 sm:mb-6 shadow-sm p-3 rounded-lg ${filters.destination.length > 0 ? 'bg-green-50' : ''}`}>
@@ -498,15 +505,20 @@ const EventMainContent = () => {
               className="mt-2 bg-white overflow-hidden"
             >
               <div className='p-2'>
-                <input
+                <Input
                   type="text"
                   placeholder="Search destinations..."
-                  className="w-full p-2 text-sm border border-neutral-300 rounded-md mb-2 focus:ring-1 focus:ring-green-400 focus:border-green-400 focus:outline-none"
+                  className="mb-2"
                   value={destinationSearch}
                   onChange={(e) => setDestinationSearch(e.target.value)}
                 />
                 <div className="max-h-48 overflow-y-auto">
                   {(() => {
+                    const filtered = (data.destinations || []).filter(d => 
+                      !destinationSearch || 
+                      d.label?.toLowerCase().includes(destinationSearch.toLowerCase()) ||
+                      d.value?.toLowerCase().includes(destinationSearch.toLowerCase())
+                    );
                     const availableValues = ['kashmir', 'ladakh', 'bhaderwah', 'kishtwar'];
                     const activeDestinations = filtered.filter(d => availableValues.includes(d.value));
                     const others = filtered.filter(d => !availableValues.includes(d.value));
@@ -1016,13 +1028,14 @@ const EventMainContent = () => {
       </div>
 
       {/* Reset All Button */}
-      <button
-        className="w-full py-2 bg-green-100 hover:text-white text-neutral-700 rounded-md shadow hover:bg-red-500 transition-colors flex items-center justify-center text-sm"
+      <Button
+        variant="outline"
+        className="w-full text-gray-500 hover:text-red-600 hover:bg-red-50 hover:border-red-100 transition-colors flex items-center justify-center text-sm gap-2 mt-4"
         onClick={resetAllFilters}
       >
-        <RefreshCcw className="mr-2" size={16} />
+        <RefreshCcw size={16} />
         Reset All Filters
-      </button>
+      </Button>
     </div>
   );
 
@@ -1054,29 +1067,30 @@ const EventMainContent = () => {
 
   if (!loading && data.events.length === 0) {
     return (
-      <div className="w-full mt-4 sm:mt-10 py-20 px-4 bg-white rounded-[2rem] shadow-xl border border-gray-100 min-h-[70vh] flex flex-col items-center justify-center text-center">
-        <div className="relative mb-8">
-          <div className="absolute inset-0 bg-green-100 rounded-full blur-3xl opacity-50 scale-150" />
-          <div className="relative bg-green-50 p-8 rounded-full border border-green-100 shadow-inner">
-            <Calendar size={64} className="text-green-500" />
+      <div className="w-full mt-4 sm:mt-10 py-16 px-4 bg-white rounded-2xl shadow-sm border border-gray-200 min-h-[60vh] flex flex-col items-center justify-center text-center">
+        <div className="relative mb-6">
+          <div className="relative bg-emerald-50 p-6 rounded-full border border-emerald-100">
+            <Calendar size={48} className="text-emerald-500" />
           </div>
         </div>
-        <h2 className="text-3xl font-black text-gray-900 mb-3 tracking-tight">No Upcoming Events</h2>
-        <p className="text-gray-500 max-w-md mx-auto mb-10 text-lg font-medium leading-relaxed">
-          We&apos;re currently preparing new adventures and curated experiences. Please check back later or explore our trips and treks.
+        <h2 className="text-2xl font-bold text-gray-900 mb-3 tracking-tight">No Upcoming Events</h2>
+        <p className="text-gray-500 max-w-sm mx-auto mb-8 text-[15px] font-medium leading-relaxed">
+          We're preparing new adventures and curated experiences. Check back later or explore our trips and treks!
         </p>
-        <div className="flex flex-col sm:flex-row gap-4">
-          <a href="/user/trip" className="px-8 py-3 bg-gray-950 text-white rounded-xl font-bold hover:bg-black transition-all shadow-lg hover:shadow-black/20 hover:-translate-y-0.5">Explore Trips</a>
-          <button onClick={() => window.location.reload()} className="px-8 py-3 bg-white text-gray-700 border border-gray-200 rounded-xl font-bold hover:bg-gray-50 transition-all flex items-center justify-center gap-2">
-            <RefreshCcw size={18} /> Refresh Page
-          </button>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Button asChild className="rounded-full px-6">
+            <a href="/user/trip">Explore Trips</a>
+          </Button>
+          <Button variant="outline" onClick={() => window.location.reload()} className="rounded-full px-6 gap-2">
+            <RefreshCcw size={15} /> Refresh Page
+          </Button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full  py-2 px-3 sm:px-4 bg-gradient-to-br from-green-50 to-blue-50  shadow-lg overflow-hidden mb-0 pb-8">
+    <div className="w-full py-2 px-3 sm:px-4 bg-gray-50/80 border-t border-gray-100 overflow-hidden mb-0 pb-8 min-h-screen">
       {/* ── Mobile: Search Bar + Filter Toggle ── */}
       <div className="lg:hidden px-2 pt-4 pb-2 space-y-3 -mt-4">
         <div className="flex items-center gap-2">
@@ -1100,10 +1114,10 @@ const EventMainContent = () => {
         {/* Mobile Search */}
         <div className="relative">
           <div className="relative flex">
-            <input
+            <Input
               type="text"
               placeholder="Search events, guides, destinations..."
-              className="w-full p-2.5 pl-4 pr-10 border border-neutral-300 rounded-full focus:ring-1 focus:ring-green-400 focus:border-green-400 focus:outline-none text-sm"
+              className="w-full rounded-full pl-4 pr-10"
               value={searchQuery || ''}
               onChange={(e) => {
                 const value = e.target.value || '';
@@ -1173,7 +1187,7 @@ const EventMainContent = () => {
             className="lg:hidden overflow-hidden"
           >
             <div className="px-2 pb-4">
-              <FilterPanel />
+              {renderFilterPanel()}
             </div>
           </motion.div>
         )}
@@ -1184,7 +1198,7 @@ const EventMainContent = () => {
         {/* Left Filters Section — hidden on mobile */}
         <div className="hidden lg:block lg:w-1/4">
           <h2 className='text-2xl p-6 font-bold text-neutral-800'>Filters</h2>
-          <FilterPanel />
+          {renderFilterPanel()}
         </div>
 
         {/* Right Content Section */}
@@ -1198,10 +1212,10 @@ const EventMainContent = () => {
             {/* Enhanced Search Bar */}
             <div className="relative w-1/2">
               <div className="relative flex">
-                <input
+                <Input
                   type="text"
                   placeholder="Search events, guides, destinations, types..."
-                  className="w-full p-2 pl-4 pr-10 border border-neutral-300 rounded-full focus:ring-1 focus:ring-green-400 focus:border-green-400 focus:outline-none text-sm"
+                  className="w-full rounded-full pl-4 pr-10"
                   value={searchQuery || ''}
                   onChange={(e) => {
                     const value = e.target.value || '';

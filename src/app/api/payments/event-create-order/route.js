@@ -29,6 +29,24 @@ export async function POST(request) {
             return NextResponse.json({ success: false, message: 'Booking not found or already processed' }, { status: 404 });
         }
 
+        // ── Fresh slot availability check before initiating payment ──
+        const { Event } = await import('@/models/event.model');
+        const eventDoc = await Event.findById(booking.event).select('totalSlots bookedSlots').lean();
+        if (!eventDoc) {
+            return NextResponse.json({ success: false, message: 'Event no longer exists' }, { status: 404 });
+        }
+        const available = eventDoc.totalSlots - (eventDoc.bookedSlots || 0);
+        if (booking.slots > available) {
+            // Cancel the stale pending booking
+            booking.status = 'cancelled';
+            await booking.save();
+            return NextResponse.json({ 
+                success: false, 
+                soldOut: true,
+                message: available <= 0 ? 'This event is now sold out.' : `Only ${available} slot(s) remaining.`
+            }, { status: 409 });
+        }
+
         const options = {
             amount: Math.round(amount * 100), // paise
             currency: 'INR',

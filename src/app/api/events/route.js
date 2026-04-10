@@ -100,11 +100,19 @@ export async function GET(request) {
             }
         });
 
+        // Fetch all registered companies that are authorized for events
+        const allEventGuides = await GuideDetails.find({
+            "pausedServices.event": { $ne: true }
+        }).select("companyname").lean();
+        
+        const allOrganizers = [...new Set(allEventGuides.map(g => g.companyname).filter(Boolean))].map(name => ({ id: name, name }));
+
         return NextResponse.json({
             success: true,
             total: finalTotal,
             page,
             totalPages: Math.ceil(finalTotal / limit),
+            organizers: allOrganizers,
             events: finalEvents.map((e) => {
                 const guideInfo = guideMap[e.guide.toString()] || {};
                 return {

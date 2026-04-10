@@ -15,11 +15,12 @@ export default function EventPassPage() {
         const fetchBooking = async () => {
             if (!bookingId) return;
             try {
-                const res = await fetch('/api/user/bookings');
+                const res = await fetch(`/api/public/pass/${bookingId}`);
                 const data = await res.json();
-                if (data.success) {
-                    const found = data.data?.find(b => b.id === bookingId || b._id === bookingId);
-                    setBooking(found);
+                if (data.success && data.data) {
+                    setBooking(data.data);
+                } else {
+                    setBooking(null);
                 }
             } catch (e) {
                 console.error(e);
@@ -71,7 +72,7 @@ export default function EventPassPage() {
     const pickupPoints = booking.pickupPoints || [];
 
     // Font style
-    const fontStyle = { fontFamily: "'Outfit', system-ui, -apple-system, sans-serif" };
+    const fontStyle = {};
 
     const SectionHeader = ({ icon: Icon, title, iconColor = 'text-emerald-600' }) => (
         <h4 className="font-semibold text-gray-800 uppercase tracking-widest mb-3 text-[11px] flex items-center gap-2" style={fontStyle}>
@@ -94,7 +95,6 @@ export default function EventPassPage() {
     return (
         <div className="min-h-screen bg-[#F0FDF4] p-4 sm:p-8 flex items-center justify-center" style={fontStyle}>
             <style dangerouslySetInnerHTML={{ __html: `
-                @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
                 header, nav, footer, .secondary-nav-wrapper { display: none !important; }
 
                 @media print {
