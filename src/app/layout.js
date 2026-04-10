@@ -1,9 +1,14 @@
 // src/app/layout.js — Server Component (enables metadata for ALL pages)
 import './globals.css';
-import { Inter } from 'next/font/google';
+import { DM_Sans } from 'next/font/google';
 import ClientLayout from '@/components/common/ClientLayout';
 
-const inter = Inter({ subsets: ['latin'] });
+const dmSans = DM_Sans({
+    subsets: ['latin'],
+    weight: ['400', '500', '600', '700', '800'],
+    display: 'swap',
+    variable: '--font-dm-sans',
+});
 
 export const metadata = {
     metadataBase: new URL('https://bagspackgo.com'),
@@ -80,9 +85,9 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
     return (
-        <html lang="en" className="w-full overflow-x-hidden">
+        <html lang="en" className={`${dmSans.variable} w-full overflow-x-hidden`}>
             <body
-                className={`${inter.className} bg-white/90 text-gray-800 min-h-screen flex flex-col w-full max-w-[100vw] overflow-x-hidden`}
+                className={`${dmSans.className} bg-white/90 text-gray-800 min-h-screen flex flex-col w-full max-w-[100vw] overflow-x-hidden antialiased`}
             >
                 <ClientLayout>{children}</ClientLayout>
             </body>
