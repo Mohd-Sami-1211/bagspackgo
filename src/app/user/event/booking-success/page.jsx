@@ -22,14 +22,22 @@ function BookingSuccessContent() {
     const fontStyle = {};
 
     useEffect(() => {
-        const fetchBookings = async () => {
+        const fetchBooking = async () => {
             if (!bookingId) { setLoading(false); return; }
             try {
-                const res = await fetch('/api/user/bookings');
-                const data = await res.json();
-                if (data.success) {
-                    const found = data.data?.find(b => b.id === bookingId || b._id === bookingId);
-                    setBooking(found || null);
+                // Primary: use the public pass endpoint (works without auth)
+                const publicRes = await fetch(`/api/public/pass/${bookingId}`, { cache: 'no-store' });
+                const publicData = await publicRes.json();
+                if (publicData.success && publicData.data) {
+                    setBooking(publicData.data);
+                } else {
+                    // Fallback: try the authenticated user bookings endpoint
+                    const authRes = await fetch('/api/user/bookings', { cache: 'no-store' });
+                    const authData = await authRes.json();
+                    if (authData.success) {
+                        const found = authData.data?.find(b => b.id === bookingId || b._id === bookingId);
+                        setBooking(found || null);
+                    }
                 }
             } catch (e) {
                 console.error('Fetch booking error:', e);
@@ -38,7 +46,7 @@ function BookingSuccessContent() {
                 setTimeout(() => setShowContent(true), 150);
             }
         };
-        fetchBookings();
+        fetchBooking();
     }, [bookingId]);
 
     const handleDownloadPDF = () => {

@@ -1,11 +1,11 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { QRCodeSVG } from 'qrcode.react';
 import Image from 'next/image';
 import { MapPin, User, CheckCircle2, Ticket, Calendar, Users, Clock, ExternalLink, X, Sparkles, AlertTriangle, ShieldCheck, Navigation, List } from 'lucide-react';
 
-export default function EventPassPage() {
+function EventPassContent() {
     const { bookingId } = useParams();
     const searchParams = useSearchParams();
     const [booking, setBooking] = useState(null);
@@ -13,17 +13,29 @@ export default function EventPassPage() {
 
     useEffect(() => {
         const fetchBooking = async () => {
-            if (!bookingId) return;
+            if (!bookingId) { setLoading(false); return; }
             try {
-                const res = await fetch(`/api/public/pass/${bookingId}`);
+                const res = await fetch(`/api/public/pass/${bookingId}`, { cache: 'no-store' });
                 const data = await res.json();
                 if (data.success && data.data) {
                     setBooking(data.data);
                 } else {
+                    console.warn('Pass API returned:', data.message);
                     setBooking(null);
                 }
             } catch (e) {
-                console.error(e);
+                console.error('Pass fetch error:', e);
+                // Retry once after a short delay (handles race with DB write)
+                try {
+                    await new Promise(r => setTimeout(r, 1500));
+                    const retryRes = await fetch(`/api/public/pass/${bookingId}`, { cache: 'no-store' });
+                    const retryData = await retryRes.json();
+                    if (retryData.success && retryData.data) {
+                        setBooking(retryData.data);
+                    }
+                } catch (retryErr) {
+                    console.error('Pass retry failed:', retryErr);
+                }
             } finally {
                 setLoading(false);
             }
@@ -381,5 +393,17 @@ export default function EventPassPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function EventPassPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center p-8 bg-[#F0FDF4]">
+                <div className="w-12 h-12 border-4 border-emerald-100 border-t-emerald-600 rounded-full animate-spin"></div>
+            </div>
+        }>
+            <EventPassContent />
+        </Suspense>
     );
 }
