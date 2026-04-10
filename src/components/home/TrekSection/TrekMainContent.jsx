@@ -62,16 +62,12 @@ const adventures = [
 ];
 
 const faqs = [
-  { question: 'What is the best time for trekking in Kashmir?',      answer: 'Most treks operate June–September when trails are open and weather is pleasant. Early-season (May–June) and late-season (October) options are available on select listings.' },
-  { question: 'Do I need prior trekking experience?',                answer: 'It depends on the difficulty level. Each trek listing specifies the experience required. Beginner-friendly routes are clearly tagged on the platform.' },
-  { question: 'What gear should I carry?',                           answer: 'Each guide provides a specific gear checklist. Essentials include trekking shoes, layered clothing, rain gear, a headlamp, and personal medications.' },
-  { question: 'Are guides and porters included?',                    answer: 'Yes. Every trek is led by verified local guides. Porter and cook availability is listed on each package.' },
-  { question: 'How is altitude sickness managed?',                   answer: 'Guides plan proper acclimatization days into the itinerary. First-aid trained staff accompany all high-altitude treks.' },
-  { question: 'Are meals and accommodation provided?',               answer: "Most packages include all meals and camping accommodation. Specific inclusions are listed on each guide's page." },
-  { question: 'Is travel insurance required?',                       answer: 'Not mandatory, but strongly recommended for high-altitude treks. Consult your guide for specific advice before departure.' },
-  { question: 'Can I join as a solo traveler?',                      answer: 'Absolutely — solo travelers can join group departures. Use our Merger feature to connect with others on the same route.' },
-  { question: 'How do permits and local regulations work?',          answer: 'Local guides handle all permits and fees. These costs are typically included in the trek package price.' },
-  { question: 'What if I need to cancel or reschedule?',             answer: 'Cancellation and rescheduling policies are set by individual guides. Review the terms on each listing or contact the guide directly.' },
+  { question: 'What is bagspackgo?', answer: 'A direct travel platform for Kashmir and Ladakh. We connect you straight to verified local guides, without middlemen or hidden fees.' },
+  { question: 'How does it work?', answer: 'Browse fixed packages for Trips, Treks, or Events. As our itineraries are expertly pre-planned, they cannot be customized. Book instantly and receive your E-Ticket.' },
+  { question: 'Are the local guides verified?', answer: 'Yes. We thoroughly verify every local guide for safety, expertise, and professionalism before they can list their packages.' },
+  { question: 'How can I book a package?', answer: 'Select a package, choose your dates and group size, and pay securely online. You will immediately receive a Booking Pass with your guide\'s contact info.' },
+  { question: 'What are Events?', answer: 'Events are thrilling, date-specific adventures hosted by local experts. Discover and book these action-packed, adrenaline-fueled group experiences directly in our Events section.' },
+  { question: 'Is it trustworthy to buy a package from bagspackgo?', answer: 'Completely. Your payment is processed through a secure gateway, and your booking connects directly to a verified local guide. We ensure absolute transparency.' },
 ];
 
 /* ─── SectionHeading (identical to TripMainContent) ────────── */
@@ -436,7 +432,7 @@ export default function TrekMainContent() {
         <div><AdContent /></div>
         <div><PopularDestinations /></div>
         <div><AdventureSlider /></div>
-        <div><Testimonials /></div>
+        {/* <div><Testimonials /></div> */}
         <div id="about" className="scroll-mt-24"><AboutUs /></div>
         <div id="faq" className="scroll-mt-24">
           <FAQ

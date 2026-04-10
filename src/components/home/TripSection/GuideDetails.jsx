@@ -595,11 +595,11 @@ const GuideDetails = ({ guide }) => {
 
       {/* Auth Gate Overlay — replaced by global AuthModal */}
       {/* Guide Card - Made Responsive */}
-      <div className="w-full bg-white pb-6 sm:pb-8 md:pb-10">
+      <div className="w-full bg-white pb-6 sm:pb-8 md:pb-10 font-sans border-b">
         <div className="max-w-7xl mx-auto relative flex flex-col items-center">
 
           <div
-            className="relative shadow-2xl rounded-2xl sm:rounded-3xl lg:rounded-full px-4 sm:px-8 pt-10 pb-4 sm:pt-6 sm:pb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between w-full max-w-5xl mx-auto gap-3 sm:gap-8 lg:gap-2 transition-all hover:shadow-emerald-500/10 bg-gradient-to-r from-emerald-400 to-green-300"
+            className="relative rounded-2xl px-4 sm:px-8 pt-10 pb-4 sm:pt-6 sm:pb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between w-full max-w-5xl mx-auto gap-3 sm:gap-8 lg:gap-2 bg-slate-900 border border-slate-800 shadow-sm"
           >
             {/* Mobile Back Button - Inside Card */}
             <button 
@@ -672,21 +672,21 @@ const GuideDetails = ({ guide }) => {
             {/* Trip Details & Actions - Refined Alignment */}
             <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto justify-center sm:justify-end mt-4 sm:mt-0">
               <div className="flex gap-2.5 justify-center w-full sm:w-auto">
-                <div className="bg-white/10 backdrop-blur-3xl px-4 sm:px-6 py-2.5 rounded-[22px] text-center shadow-[0_15px_40px_-10px_rgba(0,0,0,0.2)] border border-white/20 min-w-[75px] sm:min-w-[100px] hover:bg-white/20 transition-all group/badge">
-                  <p className="text-white/70 text-[8px] font-black uppercase tracking-[0.1em] mb-0.5 group-hover/badge:text-white">Variant</p>
-                  <p className="font-black capitalize text-white text-xs sm:text-base leading-none tracking-tight">
+                <div className="bg-slate-800/50 px-4 sm:px-6 py-2.5 rounded-xl text-center border border-slate-700 min-w-[75px] sm:min-w-[100px]">
+                  <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">Variant</p>
+                  <p className="font-semibold capitalize text-white text-xs sm:text-sm leading-none tracking-tight">
                     {category}
                   </p>
                 </div>
-                <div className="bg-white/10 backdrop-blur-3xl px-4 sm:px-6 py-2.5 rounded-[22px] text-center shadow-[0_15px_40px_-10px_rgba(0,0,0,0.2)] border border-white/20 min-w-[75px] sm:min-w-[100px] hover:bg-white/20 transition-all group/badge">
-                  <p className="text-white/70 text-[8px] font-black uppercase tracking-[0.1em] mb-0.5 group-hover/badge:text-white">Stay</p>
-                  <p className="font-black text-white text-xs sm:text-base leading-none tracking-tight">
+                <div className="bg-slate-800/50 px-4 sm:px-6 py-2.5 rounded-xl text-center border border-slate-700 min-w-[75px] sm:min-w-[100px]">
+                  <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">Stay</p>
+                  <p className="font-semibold text-white text-xs sm:text-sm leading-none tracking-tight">
                     {priceDetails.days}D / {priceDetails.days - 1}N
                   </p>
                 </div>
-                <div className="bg-white/10 backdrop-blur-3xl px-4 sm:px-6 py-2.5 rounded-[22px] text-center shadow-[0_15px_40px_-10px_rgba(0,0,0,0.2)] border border-white/20 min-w-[75px] sm:min-w-[100px] hover:bg-white/20 transition-all group/badge">
-                  <p className="text-white/70 text-[8px] font-black uppercase tracking-[0.1em] mb-0.5 group-hover/badge:text-white">Guests</p>
-                  <p className="font-black text-white text-xs sm:text-base leading-none tracking-tight">
+                <div className="bg-slate-800/50 px-4 sm:px-6 py-2.5 rounded-xl text-center border border-slate-700 min-w-[75px] sm:min-w-[100px]">
+                  <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">Guests</p>
+                  <p className="font-semibold text-white text-xs sm:text-sm leading-none tracking-tight">
                     {numPeople} Slot
                   </p>
                 </div>
@@ -727,7 +727,7 @@ const GuideDetails = ({ guide }) => {
     </div>
 
     {/* Full Screen Layout for Detail Panes */}
-    <div className="w-full bg-gradient-to-br from-green-50 to-blue-50 py-8 pb-12 overflow-hidden shadow-inner">
+    <div className="w-full bg-slate-50 py-8 pb-12 overflow-hidden font-sans">
       <div className="w-full px-3 sm:px-4 md:px-6 lg:px-8 flex flex-col lg:flex-row gap-4 sm:gap-6 md:gap-8">
         <div className="w-full lg:w-8/12">
           <div className="flex bg-white rounded-t-xl shadow-sm overflow-hidden border border-gray-200 mb-1.5">
@@ -739,11 +739,11 @@ const GuideDetails = ({ guide }) => {
               <button
                 key={tab.key}
                 onClick={() => !isTabDisabled(tab.key) && setActiveTab(tab.key)}
-                className={`flex-1 text-center text-xs sm:text-sm font-medium py-3 transition-all ${activeTab === tab.key
-                    ? "text-green-600 border-b-2 border-green-600 bg-white"
+                className={`flex-1 text-center text-xs sm:text-sm font-semibold py-3 border-b-2 transition-all ${activeTab === tab.key
+                    ? "text-slate-900 border-slate-900 bg-white"
                     : isTabDisabled(tab.key)
-                      ? "text-gray-400 bg-gray-50 cursor-not-allowed"
-                      : "text-gray-500 hover:text-gray-700 bg-gray-50"
+                      ? "text-slate-400 bg-slate-50/50 cursor-not-allowed border-transparent"
+                      : "text-slate-500 hover:text-slate-700 bg-slate-50/50 border-transparent hover:bg-slate-100/50"
                   }`}
                 disabled={isTabDisabled(tab.key)}
               >
@@ -806,11 +806,11 @@ const GuideDetails = ({ guide }) => {
                     {/* Timeline for medium screens and up */}
                     <div className="hidden md:block md:w-1/4 pr-5">
                       <div className="relative h-full">
-                        <div className="absolute left-1/2 top-0 h-full w-1.5 bg-gray-100 rounded-full -translate-x-1/2">
+                        <div className="absolute left-1/2 top-0 h-full w-0.5 bg-slate-200 -translate-x-1/2">
                           <div
-                            className={`w-1.5 rounded-full transition-all duration-500 ${isPremiumPackage
-                                ? "bg-gradient-to-b from-amber-400 to-yellow-400"
-                                : "bg-green-400"
+                            className={`w-0.5 transition-all duration-500 ${isPremiumPackage
+                                ? "bg-amber-500"
+                                : "bg-slate-900"
                               }`}
                             style={{
                               height: `${(currentDay / numDays) * 100}%`,
@@ -830,15 +830,15 @@ const GuideDetails = ({ guide }) => {
                                 onClick={() => handleDayNodeClick(dayNum)}
                               >
                                 <div
-                                  className={`absolute left-1/2 transform -translate-x-1/2 w-10 h-10 flex items-center justify-center rounded-full text-sm font-semibold transition-all duration-300 ${isCurrent
+                                  className={`absolute left-1/2 transform -translate-x-1/2 w-8 h-8 flex items-center justify-center rounded-full text-xs font-semibold transition-all duration-300 ${isCurrent
                                       ? isPremiumPackage
-                                        ? "bg-gradient-to-r from-amber-500 to-yellow-500 text-white ring-4 ring-amber-200 scale-110 shadow-lg"
-                                        : "bg-green-500 text-white ring-4 ring-green-200 scale-110 shadow-lg"
+                                        ? "bg-amber-500 text-white ring-2 ring-offset-2 ring-amber-500 shadow-sm"
+                                        : "bg-slate-900 text-white ring-2 ring-offset-2 ring-slate-900 shadow-sm"
                                       : isActive
                                         ? isPremiumPackage
-                                          ? "bg-gradient-to-r from-amber-400 to-yellow-400 text-white shadow-md"
-                                          : "bg-green-400 text-white shadow-md"
-                                        : "bg-gray-200 text-gray-600"
+                                          ? "bg-amber-100 text-amber-700 border border-amber-200"
+                                          : "bg-slate-100 text-slate-700 border border-slate-200"
+                                        : "bg-white text-slate-400 border border-slate-200"
                                     }`}
                                 >
                                   {dayNum}
@@ -875,15 +875,14 @@ const GuideDetails = ({ guide }) => {
                                     <button
                                       onClick={() => handleDayNodeClick(dayNum)}
                                       className={`
-                                        flex-shrink-0 flex items-center justify-center rounded-full font-semibold 
-                                        transition-all duration-300 relative z-20
-                                        ${isCurrent ? "w-12 h-12 scale-110 ring-4 shadow-lg" : ""}
-                                        ${!isCurrent && isActive ? "w-10 h-10 shadow-md" : ""}
-                                        ${!isActive ? "w-10 h-10 bg-gray-200 text-gray-600" : ""}
-                                        ${isCurrent && isPremiumPackage ? "bg-gradient-to-r from-amber-500 to-yellow-500 text-white ring-amber-300" : ""}
-                                        ${isCurrent && !isPremiumPackage ? "bg-green-500 text-white ring-green-300" : ""}
-                                        ${!isCurrent && isActive && isPremiumPackage ? "bg-gradient-to-r from-amber-400 to-yellow-400 text-white" : ""}
-                                        ${!isCurrent && isActive && !isPremiumPackage ? "bg-green-400 text-white" : ""}
+                                        flex-shrink-0 flex items-center justify-center rounded-full font-semibold text-sm
+                                        transition-all duration-200 relative z-20 
+                                        ${isCurrent ? "w-10 h-10 ring-2 ring-offset-2 shadow-sm" : "w-10 h-10 border"}
+                                        ${!isActive ? "bg-slate-50 text-slate-400 border-slate-200" : ""}
+                                        ${isCurrent && isPremiumPackage ? "bg-amber-600 text-white ring-amber-600" : ""}
+                                        ${isCurrent && !isPremiumPackage ? "bg-slate-900 text-white ring-slate-900" : ""}
+                                        ${!isCurrent && isActive && isPremiumPackage ? "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100" : ""}
+                                        ${!isCurrent && isActive && !isPremiumPackage ? "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100" : ""}
                                       `}
                                       ref={(el) =>
                                         (nodeRefs.current[index] = el)
@@ -916,11 +915,11 @@ const GuideDetails = ({ guide }) => {
                           <div
                             key={index}
                             ref={(el) => (dayCardRefs.current[index] = el)}
-                            className={`p-4 sm:p-5 rounded-lg border transition-all group ${isCurrentDay
+                            className={`p-4 sm:p-5 rounded-xl border transition-all duration-200 group ${isCurrentDay
                                 ? isPremiumPackage
-                                  ? "border-amber-300 bg-gradient-to-br from-amber-50 to-white ring-1 ring-amber-100 shadow-lg"
-                                  : "border-green-300 bg-green-50 ring-1 ring-green-100 shadow-lg"
-                                : "border-gray-200 hover:border-gray-300 hover:shadow-md"
+                                  ? "border-amber-300 bg-amber-50/50 shadow-sm ring-1 ring-amber-300"
+                                  : "border-slate-800 bg-white shadow-sm ring-1 ring-slate-800"
+                                : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
                               } cursor-pointer`}
                             onClick={() => {
                               handleDayNodeClick(dayNum);
@@ -929,31 +928,31 @@ const GuideDetails = ({ guide }) => {
                           >
                             <div className="flex justify-between items-start">
                               <div className="w-full">
-                                <h4 className="font-medium text-gray-900 flex items-center">
+                                <h4 className="font-semibold text-slate-900 flex items-center">
                                   <span
-                                    className={`w-7 h-7 flex items-center justify-center rounded-full mr-3 text-sm font-semibold ${isCurrentDay
+                                    className={`w-6 h-6 flex items-center justify-center rounded-full mr-3 text-xs font-bold ${isCurrentDay
                                         ? isPremiumPackage
-                                          ? "bg-gradient-to-r from-amber-500 to-yellow-500 text-white"
-                                          : "bg-green-500 text-white"
+                                          ? "bg-amber-600 text-white"
+                                          : "bg-slate-900 text-white"
                                         : isPremiumPackage
-                                          ? "bg-gradient-to-r from-amber-100 to-yellow-100 text-amber-600"
-                                          : "bg-green-100 text-green-600"
+                                          ? "bg-amber-100 text-amber-700"
+                                          : "bg-slate-100 text-slate-700"
                                       }`}
                                   >
                                     {day.dayNumber}
                                   </span>
                                   <span
-                                    className={`font-semibold text-sm sm:text-base ${isPremiumPackage
-                                        ? "text-amber-600"
-                                        : "text-green-600"
+                                    className={`text-sm sm:text-base ${isPremiumPackage
+                                        ? "text-amber-800"
+                                        : "text-slate-900"
                                       }`}
                                   >
                                     {day.location}
                                   </span>
                                 </h4>
-                                <p className="text-xs sm:text-sm text-gray-500 mt-1.5 ml-10 flex items-center">
-                                  <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-2 text-gray-400" />
-                                  <span className="font-medium text-gray-600">
+                                <p className="text-xs sm:text-sm text-slate-500 mt-1 ml-9 flex items-center">
+                                  <Calendar className="h-3.5 w-3.5 mr-2 text-slate-400" />
+                                  <span className="font-medium">
                                     {day.date}
                                   </span>
                                 </p>
@@ -1082,7 +1081,7 @@ const GuideDetails = ({ guide }) => {
                   <div className="flex justify-end mt-4 sm:mt-6">
                     <button
                       onClick={handleNextTab}
-                      className="inline-flex items-center justify-center px-6 py-2.5 text-sm font-bold rounded-xl transition-all shadow-md active:scale-95 bg-emerald-600 hover:bg-emerald-700 text-white"
+                      className="inline-flex items-center justify-center px-6 py-2.5 text-sm font-semibold rounded-md transition-all bg-slate-900 hover:bg-slate-800 text-white"
                     >
                       Next <ArrowRight className="ml-2 h-4 w-4" />
                     </button>
@@ -1123,18 +1122,18 @@ const GuideDetails = ({ guide }) => {
 
 
           <div
-            className={`rounded-xl shadow-md overflow-hidden border mb-6 sm:mb-12 ${isPremiumPackage
-                ? "border-amber-200 bg-gradient-to-b from-white to-amber-50"
-                : "border-gray-100 bg-white"
+            className={`rounded-xl overflow-hidden border mb-6 sm:mb-12 shadow-sm ${isPremiumPackage
+                ? "border-amber-200 bg-amber-50/10"
+                : "border-slate-200 bg-white"
               }`}
           >
             <div
-              className={`px-4 sm:px-5 py-3 ${isPremiumPackage
-                  ? "bg-gradient-to-r from-amber-500 to-yellow-500"
-                  : "bg-green-500"
+              className={`px-4 sm:px-5 py-3 border-b ${isPremiumPackage
+                  ? "bg-amber-50 border-amber-100"
+                  : "bg-slate-50 border-slate-100"
                 }`}
             >
-              <h2 className="text-white font-semibold text-base">
+              <h2 className="text-slate-900 font-semibold text-base">
                 What's Included
               </h2>
             </div>
@@ -1222,16 +1221,15 @@ const GuideDetails = ({ guide }) => {
             </div>
           </div>
 
-          {/* Pickup and Dropoff Section - Restored as Separate Card */}
           {selectedPackage?.pickupDropCities?.length > 0 && (
             <div
-              className="rounded-xl shadow-md overflow-hidden border mb-6 sm:mb-12 border-gray-100 bg-white"
+              className="rounded-xl shadow-sm overflow-hidden border mb-6 sm:mb-12 border-slate-200 bg-white"
             >
               <div
-                className="px-4 sm:px-5 py-3 bg-green-500"
+                className="px-4 sm:px-5 py-3 bg-slate-50 border-b border-slate-100"
               >
-                <h2 className="text-white font-semibold text-base flex items-center gap-2">
-                  <MapPin className="w-4 h-4 ml-0" /> Available Pickups
+                <h2 className="text-slate-900 font-semibold text-base flex items-center gap-2">
+                  <MapPin className="w-4 h-4 ml-0 text-slate-500" /> Available Pickups
                 </h2>
               </div>
 

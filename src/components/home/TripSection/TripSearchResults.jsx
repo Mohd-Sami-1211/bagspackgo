@@ -8,6 +8,7 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { X, Calendar as CalendarIcon, Filter, Search as SearchIcon, ChevronDown, ArrowLeft, Plus, Minus, PackageOpen, Sparkles } from 'lucide-react';
 import data from 'src/data/data.json';
+import { Button } from '@/components/ui/button';
 
 const availableValues = ['kashmir', 'ladakh', 'bhaderwah', 'kishtwar'];
 const activeOptions = (data.destinations || []).filter(d => availableValues.includes(d.value));
@@ -200,19 +201,20 @@ const SearchResults = () => {
   }
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-green-50 to-blue-50 -mt-20">
+    <div className="min-h-screen w-full bg-slate-50 font-sans pb-12 -mt-20">
       {/* Refined Header - Single Line Action Bar */}
-      <div className="w-full bg-white border-b sticky top-12 z-[30] shadow-sm">
+      <div className="w-full bg-white border-b sticky top-0 z-[30] shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex items-center gap-3">
             {/* Back Button */}
-            <motion.button
-              whileTap={{ scale: 0.9 }}
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => router.back()}
-              className="p-2 hover:bg-emerald-50 text-emerald-600 rounded-xl transition-colors shrink-0"
+              className="text-slate-600 shrink-0"
             >
-              <ArrowLeft size={20} />
-            </motion.button>
+              <ArrowLeft size={18} />
+            </Button>
 
             {/* Search Bar */}
             <div className="relative flex-1">
@@ -231,14 +233,15 @@ const SearchResults = () => {
             <div className="flex items-center gap-1.5 sm:gap-2">
               {/* Sort Toggle */}
               <div className="relative">
-                <button
+                <Button
+                  variant="outline"
                   onClick={() => setShowSortDropdown(!showSortDropdown)}
-                  className="p-2 sm:px-4 sm:py-2.5 bg-emerald-50 text-emerald-700 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-emerald-100 transition-colors border border-emerald-100/50 shadow-sm shrink-0"
+                  className="font-medium shrink-0"
                 >
-                  <Filter size={18} />
+                  <Filter size={16} className="mr-2" />
                   <span className="hidden sm:inline">Sort</span>
-                  <ChevronDown size={14} className={`hidden sm:inline transition-transform duration-300 ${showSortDropdown ? 'rotate-180' : ''}`} />
-                </button>
+                  <ChevronDown size={14} className={`ml-2 hidden sm:inline transition-transform duration-200 ${showSortDropdown ? 'rotate-180' : ''}`} />
+                </Button>
                 
                 <AnimatePresence>
                   {showSortDropdown && (
@@ -282,19 +285,19 @@ const SearchResults = () => {
               {/* Modify Button */}
               {isEditing ? (
                 <div className="flex gap-2">
-                  <button onClick={handleCancel} className="px-3 sm:px-4 py-2 bg-gray-100 text-gray-600 rounded-xl text-sm font-bold hover:bg-gray-200">Cancel</button>
-                  <button onClick={handleApplyChanges} disabled={isApplying} className="px-3 sm:px-4 py-2 bg-emerald-500 text-white rounded-xl text-sm font-bold shadow-md shadow-emerald-200">
+                  <Button variant="outline" onClick={handleCancel}>Cancel</Button>
+                  <Button onClick={handleApplyChanges} disabled={isApplying}>
                     {isApplying ? 'Applying...' : 'Apply'}
-                  </button>
+                  </Button>
                 </div>
               ) : (
-                <button
+                <Button
                   onClick={() => setIsEditing(true)}
-                  className="px-3 sm:px-4 py-2 sm:py-2.5 bg-gray-900 text-white rounded-xl text-sm font-bold hover:bg-emerald-600 transition-all flex items-center gap-1.5 shadow-md shadow-gray-200 hover:shadow-emerald-200"
+                  className="bg-slate-900 hover:bg-slate-800 text-white"
                 >
-                  <CalendarIcon size={16} className="hidden sm:inline" />
+                  <CalendarIcon size={16} className="hidden sm:inline mr-2" />
                   <span>Modify</span>
-                </button>
+                </Button>
               )}
             </div>
           </div>
@@ -383,60 +386,41 @@ const SearchResults = () => {
               /* ──────── NO RESULTS: Friendly "Sorry" + Other Packages ──────── */
               <div className="space-y-8">
                 {/* Sorry Message */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5 }}
-                  className="text-center py-14 sm:py-20 bg-white rounded-3xl border border-dashed border-gray-200 shadow-sm"
-                >
-                  <motion.div 
-                    initial={{ scale: 0 }} 
-                    animate={{ scale: 1 }} 
-                    transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-                    className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-emerald-50 to-teal-50 mb-5 border-2 border-emerald-100"
-                  >
-                    <PackageOpen className="h-9 w-9 text-emerald-400" />
-                  </motion.div>
-                  <h3 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">
-                    Sorry, No Exact Matches Found
+                <div className="text-center py-16 bg-white rounded-xl border shadow-sm">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 mb-4 border border-slate-200">
+                    <PackageOpen className="h-8 w-8 text-slate-500" />
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-900 mb-2">
+                    No Exact Matches Found
                   </h3>
-                  <p className="text-sm sm:text-base text-gray-400 max-w-md mx-auto leading-relaxed px-4">
+                  <p className="text-sm text-slate-500 max-w-md mx-auto">
                     {otherGuides.length > 0 
                       ? <>We couldn&apos;t find packages matching your exact criteria. But don&apos;t worry — we have other amazing offerings{destinationLabel ? ` in ${destinationLabel}` : ''} for you!</>
                       : <>No trip packages are currently available for this destination. Please try another location or check back soon!</>
                     }
                   </p>
-                </motion.div>
+                </div>
 
                 {/* Other Packages Section */}
                 {otherGuides.length > 0 && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3, duration: 0.5 }}
-                  >
-                    <div className="flex items-center gap-3 mb-5 mt-4">
-                      <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full shadow-lg shadow-emerald-200/50">
-                        <Sparkles className="h-4 w-4 text-white" />
-                        <span className="text-sm font-bold text-white whitespace-nowrap">
-                          More Packages{destinationLabel ? ` in ${destinationLabel}` : ''}
-                        </span>
-                      </div>
-                      <div className="flex-1 h-px bg-gradient-to-r from-emerald-200 to-transparent" />
+                  <div>
+                    <div className="mb-6">
+                      <h4 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                        <Sparkles className="h-5 w-5 text-emerald-600" />
+                        More Packages{destinationLabel ? ` in ${destinationLabel}` : ''}
+                      </h4>
+                      <p className="text-sm text-slate-500 mt-1">Here are other available trip packages that you might love:</p>
                     </div>
-                    <p className="text-sm text-gray-500 mb-5 ml-1">
-                      Here are other available trip packages{destinationLabel ? ` for ${destinationLabel}` : ''} that you might love:
-                    </p>
-                    <div className="grid gap-5">
+                    <div className="grid gap-6">
                       {otherGuides.map((guide, index) => {
                         return guide.packages.map((pkg, pIdx) => (
-                          <motion.div key={`other-${guide.id}-${pkg.id}`} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: (index * 0.05) + (pIdx * 0.02) }}>
+                          <motion.div key={`other-${guide.id}-${pkg.id}`} initial={{ opacity: 0, y: 15 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                             <GuideCard guide={guide} category={category} daysRange={null} peopleCount={peopleCount} date={date} selectedPackage={pkg} />
                           </motion.div>
                         ));
                       })}
                     </div>
-                  </motion.div>
+                  </div>
                 )}
               </div>
             ) : (
@@ -460,26 +444,15 @@ const SearchResults = () => {
 
                 {/* ── "More Packages" Bonus Section ── */}
                 {otherGuides.length > 0 && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, margin: '-50px' }}
-                    transition={{ duration: 0.5 }}
-                    className="mt-4"
-                  >
-                    <div className="flex items-center gap-3 mb-5 mt-4">
-                      <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full shadow-lg shadow-emerald-200/50">
-                        <Sparkles className="h-4 w-4 text-white" />
-                        <span className="text-sm font-bold text-white whitespace-nowrap">
-                          More Packages{destinationLabel ? ` in ${destinationLabel}` : ''}
-                        </span>
-                      </div>
-                      <div className="flex-1 h-px bg-gradient-to-r from-emerald-200 to-transparent" />
+                  <div className="mt-8 pt-8 border-t border-slate-200">
+                    <div className="mb-6">
+                      <h4 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                        <Sparkles className="h-5 w-5 text-emerald-600" />
+                        More Packages{destinationLabel ? ` in ${destinationLabel}` : ''}
+                      </h4>
+                      <p className="text-sm text-slate-500 mt-1">Explore more trip packages available to find your perfect getaway:</p>
                     </div>
-                    <p className="text-sm text-gray-500 mb-5 ml-1">
-                      Explore more trip packages available{destinationLabel ? ` for ${destinationLabel}` : ''} to find your perfect getaway:
-                    </p>
-                    <div className="grid gap-5">
+                    <div className="grid gap-6">
                       {otherGuides.map((guide, index) => {
                         return guide.packages.map((pkg, pIdx) => (
                           <motion.div key={`other-${guide.id}-${pkg.id}`} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: (index * 0.05) + (pIdx * 0.02) }}>
@@ -488,7 +461,7 @@ const SearchResults = () => {
                         ));
                       })}
                     </div>
-                  </motion.div>
+                  </div>
                 )}
               </>
             )}
@@ -521,13 +494,13 @@ const selectStyles = {
   option: (provided, state) => ({
     ...provided,
     borderRadius: '6px',
-    backgroundColor: state.isSelected ? '#a7f3d0' : state.isFocused ? '#d1fae5' : 'white',
-    color: state.isSelected ? '#065f46' : '#1e293b',
+    backgroundColor: state.isSelected ? '#f1f5f9' : state.isFocused ? '#f8fafc' : 'white',
+    color: '#0f172a',
     margin: '4px 0',
     padding: '8px 12px',
     transition: 'all 0.15s ease-out',
-    '&:active': { backgroundColor: '#6ee7b7', color: '#064e3b' },
-    '&:hover:not(:active)': { backgroundColor: '#d1fae5', boxShadow: 'inset 0 0 0 1px #a7f3d0' },
+    '&:active': { backgroundColor: '#e2e8f0', color: '#0f172a' },
+    '&:hover:not(:active)': { backgroundColor: '#f1f5f9', boxShadow: 'none' },
   }),
 };
 

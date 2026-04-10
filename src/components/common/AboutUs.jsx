@@ -49,8 +49,8 @@ const AboutUs = () => {
   return (
     <section className="relative">
       
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 mb-16 -mt-16">
-        <div className="text-center pt-20">
+      <div className="w-full px-4 sm:px-6 md:px-8 mb-16 -mt-16">
+        <div className="text-center pt-20 mb-10">
           <motion.h2 
             className="text-4xl md:text-5xl font-bold text-gray-800 mb-4"
             initial={{ scale: 0.9 }}
@@ -80,7 +80,7 @@ const AboutUs = () => {
 
       
       <div className="bg-gradient-to-br from-green-50 to-blue-50 pt-10 pb-12 sm:pt-16 sm:pb-20">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-4 sm:px-6 md:px-8">
           <div className="grid lg:grid-cols-2 gap-10 md:gap-16 mb-16 sm:mb-24 items-center">
             {/* Left side: Images cascade */}
             <motion.div
@@ -119,21 +119,21 @@ const AboutUs = () => {
             </motion.div>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8">
             {features.map((feature, index) => (
               <Card 
                 key={feature.title} 
-                className="p-4 sm:p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 bg-white/80 backdrop-blur-sm border-0 shadow-lg"
+                className="p-5 sm:p-6 bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow duration-200"
                 initial={{ y: 20, opacity: 0 }}
                 whileInView={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.4, delay: 0.05 * index }}
                 viewport={{ once: true }}
               >
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-green-500 to-blue-500 rounded-lg sm:rounded-xl flex items-center justify-center mb-3 sm:mb-4">
-                  <feature.iconComponent className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-emerald-50 rounded-xl flex items-center justify-center mb-4 border border-emerald-100/50">
+                  <feature.iconComponent className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600" strokeWidth={1.5} />
                 </div>
-                <h4 className="text-base sm:text-xl font-bold text-gray-900 mb-1.5 sm:mb-3">{feature.title}</h4>
-                <p className="text-gray-500 text-[11px] sm:text-sm leading-relaxed line-clamp-2 sm:line-clamp-none">{feature.description}</p>
+                <h4 className="text-base sm:text-lg font-semibold text-slate-900 mb-2">{feature.title}</h4>
+                <p className="text-slate-500 text-xs sm:text-sm leading-relaxed">{feature.description}</p>
               </Card>
             ))}
           </div>

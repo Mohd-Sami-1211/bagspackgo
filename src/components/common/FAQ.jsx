@@ -3,37 +3,38 @@ import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 
 const FAQ = ({ faqs, activeIndex, toggleFAQ }) => {
-  return ( <div className="px-4 max-w-7xl mx-auto">
+  return ( <div className="px-4 sm:px-6 md:px-8 w-full mx-auto">
 <motion.div
-initial={{ opacity: 0, y: 20 }}
-whileInView={{ opacity: 1, y: 0 }}
-transition={{ duration: 0.6 }}
-viewport={{ once: true }}
-className="text-center mb-10"
+  initial={{ opacity: 0, y: 20 }}
+  whileInView={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.6 }}
+  viewport={{ once: true }}
+  className="text-center mb-10"
 >
-<motion.h2
-className="text-4xl md:text-5xl font-bold text-gray-800 mb-4"
-initial={{ scale: 0.9 }}
-whileInView={{ scale: 1 }}
-transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
->
-Frequently Asked <span className="text-green-600">Questions</span>
-</motion.h2>
-<motion.div
-className="h-1 bg-gradient-to-r from-amber-400 to-amber-600 mx-auto w-24 rounded-full mb-8"
-initial={{ width: 0 }}
-whileInView={{ width: 96 }}
-transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
-/>
+  <motion.h2
+    className="text-4xl md:text-5xl font-bold text-gray-800 mb-4"
+    initial={{ scale: 0.9 }}
+    whileInView={{ scale: 1 }}
+    transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
+  >
+    Frequently Asked <span className="text-green-600">Questions</span>
+  </motion.h2>
+  <motion.div
+    className="h-1 bg-gradient-to-r from-amber-400 to-amber-600 mx-auto w-24 rounded-full mb-8"
+    initial={{ width: 0 }}
+    whileInView={{ width: 96 }}
+    transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
+  />
+</motion.div>
 
     <motion.div
       initial={{ opacity: 0, y: 50 }}
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.8 }}
       viewport={{ once: true }}
-      className="max-w-7xl mx-auto bg-gradient-to-br from-green-50 to-blue-50 rounded-2xl p-6 sm:p-8"
+      className="w-full mx-auto bg-gradient-to-br from-green-50 to-blue-50 rounded-2xl p-6 sm:p-8"
     >
-      <div className="max-w-7xl mx-auto">
+      <div className="w-full mx-auto">
         <div className="grid gap-8 md:grid-cols-2">
           {faqs.map((faq, index) => (
             <motion.div
@@ -76,11 +77,8 @@ transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
         </div>
       </div>
     </motion.div>
-  </motion.div>
-</div>
-
-
-);
+  </div>
+  );
 };
 
 export default FAQ;
