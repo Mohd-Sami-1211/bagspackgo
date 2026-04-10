@@ -8,8 +8,8 @@ import {
   User,
   Ticket,
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
-
 
 const EventCard = ({ event }) => {
   const router = useRouter();
@@ -69,15 +69,8 @@ const EventCard = ({ event }) => {
       <div className="w-full sm:w-3/4 flex flex-col">
         {/* Top - Image */}
         <div className="relative h-48 sm:h-56 w-full bg-neutral-900 flex-shrink-0 overflow-hidden">
-          {/* Blurred Desktop Backdrop */}
-          <div 
-            className="hidden sm:block absolute inset-0 opacity-40 scale-110 blur-xl transition-all"
-            style={{ 
-              backgroundImage: `url(${event.image || '/images/EventCover.webp'})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-            }}
-          />
+          {/* Clean image background */}
+          <div className="hidden sm:block absolute inset-0 bg-neutral-950 transition-all" />
           <img
             src={event.image || '/images/EventCover.webp'}
             alt={event.name}
@@ -179,14 +172,12 @@ const EventCard = ({ event }) => {
           <span className="text-emerald-600 font-bold mb-1">Available Now</span>
           <span className="text-xs text-neutral-500">Secure your spot today</span>
         </div>
-        <motion.button
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
+        <Button
           onClick={handleViewDetails}
-          className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md hover:shadow-lg transition-all text-sm"
+          className="w-full h-11 text-[13px] rounded-xl shadow-sm hover:shadow-md transition-shadow"
         >
           View Details
-        </motion.button>
+        </Button>
       </div>
     </motion.div>
   );

@@ -10,6 +10,9 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 
 /* ─────────────────── Custom Dropdown ─────────────────── */
 const CustomSelect = ({ value, onChange, options, placeholder }) => {
@@ -108,6 +111,7 @@ const EventDetails = ({ event }) => {
   const toggleFaq = (index) => setExpandedFaqs(prev => ({ ...prev, [index]: !prev[index] }));
 
   const [formErrors, setFormErrors] = useState({});
+  const [slotError, setSlotError] = useState('');
 
   const [showFeeDetails, setShowFeeDetails] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
@@ -292,6 +296,12 @@ const EventDetails = ({ event }) => {
   const handleReviewJourney = () => {
     const errors = {};
 
+    const max = event.slotsLeft !== undefined ? event.slotsLeft : 50;
+    if (bookingSlots > max) {
+        setSlotError(`Only ${max} slots available`);
+        return window.scrollTo({ top: 100, behavior: 'smooth' });
+    }
+
     if (!formData.contactDetails.email) errors['contact.email'] = 'Email is required';
     if (!formData.contactDetails.phone) errors['contact.phone'] = 'Phone is required';
 
@@ -363,7 +373,13 @@ const EventDetails = ({ event }) => {
         })
       });
       const bookData = await bookRes.json();
-      if (!bookData.success) throw new Error(bookData.message || 'Booking failed');
+      if (!bookData.success) {
+        if (bookData.message?.toLowerCase().includes('sold out') || bookData.message?.toLowerCase().includes('slot')) {
+          router.push(`/user/event/booking-failed?soldOut=true&return=/user/events`);
+          return;
+        }
+        throw new Error(bookData.message || 'Booking failed');
+      }
       const bookingId = bookData.bookingId;
 
       const orderRes = await fetch('/api/payments/event-create-order', {
@@ -372,7 +388,13 @@ const EventDetails = ({ event }) => {
         body: JSON.stringify({ amount: totalPayable, bookingId })
       });
       const orderData = await orderRes.json();
-      if (!orderData.success) throw new Error(orderData.message || 'Order creation failed');
+      if (!orderData.success) {
+        if (orderData.soldOut) {
+          router.push(`/user/event/booking-failed?soldOut=true&return=/user/events`);
+          return;
+        }
+        throw new Error(orderData.message || 'Order creation failed');
+      }
 
       const { orderId, key } = orderData;
       const isMock = !process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || orderId?.startsWith('mock_order_');
@@ -388,7 +410,14 @@ const EventDetails = ({ event }) => {
               })
           });
           const verifyData = await verifyRes.json();
-          if (!verifyData.success) throw new Error('Payment verification failed');
+          if (!verifyData.success) {
+            if (verifyData.soldOut) {
+              router.push(`/user/event/booking-failed?soldOut=true&return=/user/events`);
+            } else {
+              throw new Error(verifyData.message || 'Payment verification failed');
+            }
+            return;
+          }
           
           localStorage.removeItem('pending_booking');
           localStorage.removeItem('temp_event_booking');
@@ -419,6 +448,10 @@ const EventDetails = ({ event }) => {
             localStorage.removeItem('pending_booking');
             localStorage.removeItem('temp_event_booking');
             router.push(`/user/event/booking-success?bookingId=${bookingId}`);
+          } else if (verifyData.soldOut) {
+            localStorage.removeItem('pending_booking');
+            localStorage.removeItem('temp_event_booking');
+            router.push(`/user/event/booking-failed?soldOut=true&return=/user/events`);
           } else {
             router.push(`/user/event/booking-failed?return=/user/events/eventdetails/${event._id || event.id}`);
           }
@@ -461,7 +494,7 @@ const EventDetails = ({ event }) => {
   // ── BOOKING VIEW ──
   if (currentView === 'booking') {
     return (
-      <div className="w-full bg-[#F7F9FC] min-h-screen pb-24 relative z-[60] pt-6 sm:pt-8 -mt-20 border border-gray-200 shadow-2xl">
+      <div className="w-full bg-gray-50 min-h-screen pb-24 relative z-[60] pt-6 sm:pt-8 -mt-20 border-t border-gray-200">
         {saveToast}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
           {bookingStep === 1 ? (
@@ -484,23 +517,45 @@ const EventDetails = ({ event }) => {
                         <p className="text-gray-500 text-sm font-medium">₹{event.price?.toLocaleString()} per person</p>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between bg-gray-50 p-2 rounded-xl border border-gray-100 w-full sm:w-48 shadow-inner">
-                      <button
-                        onClick={() => setBookingSlots(s => Math.max(1, s - 1))}
-                        className="w-10 h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:text-emerald-600 hover:border-emerald-300 shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500 active:scale-90"
-                      >
-                        <Minus size={18} />
-                      </button>
-                      <div className="flex flex-col items-center">
-                        <span className="text-2xl font-black text-gray-900 leading-none">{bookingSlots}</span>
-                        <span className="text-[10px] text-gray-400 font-bold uppercase mt-1">Slots</span>
-                      </div>
-                      <button
-                        onClick={() => setBookingSlots(s => Math.min(event.slotsLeft || 50, s + 1))}
-                        className="w-10 h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:text-emerald-600 hover:border-emerald-300 shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500 active:scale-90"
-                      >
-                        <Plus size={18} />
-                      </button>
+                    <div className="flex flex-col items-end gap-2">
+                        <div className="flex items-center justify-between bg-gray-50 p-2 rounded-xl border border-gray-100 w-full sm:w-48 shadow-inner">
+                            <button
+                                onClick={() => {
+                                    setBookingSlots(s => Math.max(1, s - 1));
+                                    setSlotError('');
+                                }}
+                                className="w-10 h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:text-emerald-600 hover:border-emerald-200 shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500 active:scale-90"
+                            >
+                                <Minus size={18} />
+                            </button>
+                            <div className="flex flex-col items-center">
+                                <span className="text-2xl font-black text-gray-900 leading-none">{bookingSlots}</span>
+                                <span className="text-[10px] text-gray-400 font-bold uppercase mt-1">Slots</span>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    const max = event.slotsLeft !== undefined ? event.slotsLeft : 50;
+                                    if (bookingSlots >= max) {
+                                      setSlotError(`Only ${max} slots available`);
+                                      return;
+                                    }
+                                    setBookingSlots(s => s + 1);
+                                    setSlotError('');
+                                }}
+                                className="w-10 h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:text-emerald-600 hover:border-emerald-200 shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500 active:scale-90"
+                            >
+                                <Plus size={18} />
+                            </button>
+                        </div>
+                        {slotError && (
+                            <motion.p 
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="text-[10px] font-bold text-red-500 uppercase tracking-wider"
+                            >
+                                ⚠ {slotError}
+                            </motion.p>
+                        )}
                     </div>
                   </div>
                 </div>
@@ -592,8 +647,8 @@ const EventDetails = ({ event }) => {
                       <label className="block text-sm font-bold text-gray-700 mb-1.5">Email Address <span className="text-red-500">*</span></label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none"><Mail className="h-4 w-4 text-gray-400" /></div>
-                        <input type="email" placeholder="your@email.com" value={formData.contactDetails.email} onChange={e => handleContactChange('email', e.target.value)}
-                          className={`w-full py-2.5 sm:py-3 pr-2.5 sm:pr-3 pl-10 border rounded-xl outline-none text-sm transition-all focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-gray-50 focus:bg-white ${formErrors['contact.email'] ? 'border-red-500' : 'border-gray-300'}`} />
+                        <Input type="email" placeholder="your@email.com" value={formData.contactDetails.email} onChange={e => handleContactChange('email', e.target.value)}
+                          className={`w-full pl-10 h-12 bg-gray-50 focus:bg-white transition-all ${formErrors['contact.email'] ? 'border-red-500 ring-red-500' : 'border-gray-200'}`} />
                       </div>
                       {formErrors['contact.email'] && <p className="text-[10px] text-red-500 font-bold mt-1 ml-1 uppercase letter-spacing-wide">⚠ {formErrors['contact.email']}</p>}
                     </div>
@@ -601,8 +656,8 @@ const EventDetails = ({ event }) => {
                       <label className="block text-sm font-bold text-gray-700 mb-1.5">Phone Number <span className="text-red-500">*</span></label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none"><Phone className="h-4 w-4 text-gray-400" /></div>
-                        <input type="tel" placeholder="9876543210" value={formData.contactDetails.phone} onChange={e => handleContactChange('phone', e.target.value)}
-                          className={`w-full py-2.5 sm:py-3 pr-2.5 sm:pr-3 pl-10 border rounded-xl outline-none text-sm transition-all focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-gray-50 focus:bg-white ${formErrors['contact.phone'] ? 'border-red-500' : 'border-gray-300'}`} maxLength="10" />
+                        <Input type="tel" placeholder="9876543210" value={formData.contactDetails.phone} onChange={e => handleContactChange('phone', e.target.value)}
+                          className={`w-full pl-10 h-12 bg-gray-50 focus:bg-white transition-all ${formErrors['contact.phone'] ? 'border-red-500 ring-red-500' : 'border-gray-200'}`} maxLength="10" />
                       </div>
                       {formErrors['contact.phone'] && <p className="text-[10px] text-red-500 font-bold mt-1 ml-1 uppercase letter-spacing-wide">⚠ {formErrors['contact.phone']}</p>}
                     </div>
@@ -655,22 +710,22 @@ const EventDetails = ({ event }) => {
                                 <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-5 bg-white rounded-b-xl overflow-visible">
                                   <div>
                                     <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Full Name <span className="text-emerald-500">*</span></label>
-                                    <input placeholder="As per official ID" value={p.name || ''} onChange={e => handleParticipantChange(i, 'name', e.target.value)}
-                                      className={selectClassName + (formErrors[`p.${i}.name`] ? ' border-red-500 bg-red-50/30' : '')} />
+                                    <Input placeholder="As per official ID" value={p.name || ''} onChange={e => handleParticipantChange(i, 'name', e.target.value)}
+                                      className={`h-11 ${formErrors[`p.${i}.name`] ? 'border-red-500 ring-red-500 bg-red-50/30' : 'border-gray-200'}`} />
                                     {formErrors[`p.${i}.name`] && <p className="text-[10px] text-red-500 font-bold mt-1 uppercase">⚠ {formErrors[`p.${i}.name`]}</p>}
                                   </div>
                                   <div>
                                     <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Age <span className="text-emerald-500">*</span></label>
-                                    <input placeholder="Enter age" type="number" min="1" max="100" value={p.age || ''} onChange={e => handleParticipantChange(i, 'age', e.target.value)}
-                                      className={selectClassName + (formErrors[`p.${i}.age`] ? ' border-red-500 bg-red-50/30' : '')} />
+                                    <Input placeholder="Enter age" type="number" min="1" max="100" value={p.age || ''} onChange={e => handleParticipantChange(i, 'age', e.target.value)}
+                                      className={`h-11 ${formErrors[`p.${i}.age`] ? 'border-red-500 ring-red-500 bg-red-50/30' : 'border-gray-200'}`} />
                                     {formErrors[`p.${i}.age`] && <p className="text-[10px] text-red-500 font-bold mt-1 uppercase">⚠ {formErrors[`p.${i}.age`]}</p>}
                                   </div>
                                   <div>
                                     <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Mobile Number <span className="text-emerald-500">*</span></label>
                                     <div className="relative">
                                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Phone className="h-4 w-4 text-gray-400" /></div>
-                                      <input placeholder="9876543210" type="tel" maxLength="10" value={p.phone || ''} onChange={e => handleParticipantChange(i, 'phone', e.target.value)}
-                                        className={`w-full p-2.5 pl-10 border rounded-lg outline-none text-sm border-gray-300 bg-white appearance-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500` + (formErrors[`p.${i}.phone`] ? ' border-red-500 bg-red-50/30' : '')} />
+                                      <Input placeholder="9876543210" type="tel" maxLength="10" value={p.phone || ''} onChange={e => handleParticipantChange(i, 'phone', e.target.value)}
+                                        className={`h-11 pl-10 ${formErrors[`p.${i}.phone`] ? 'border-red-500 ring-red-500 bg-red-50/30' : 'border-gray-200'}`} />
                                     </div>
                                     {formErrors[`p.${i}.phone`] && <p className="text-[10px] text-red-500 font-bold mt-1 uppercase">⚠ {formErrors[`p.${i}.phone`]}</p>}
                                   </div>
@@ -690,8 +745,8 @@ const EventDetails = ({ event }) => {
                                   </div>
                                   <div className="relative z-[50]">
                                     <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Nationality <span className="text-emerald-500">*</span></label>
-                                    <input placeholder="E.g., Indian" value={p.nationality || ''} onChange={e => handleParticipantChange(i, 'nationality', e.target.value)}
-                                      className={selectClassName + (formErrors[`p.${i}.nationality`] ? ' border-red-500 bg-red-50/30' : '')} />
+                                    <Input placeholder="E.g., Indian" value={p.nationality || ''} onChange={e => handleParticipantChange(i, 'nationality', e.target.value)}
+                                      className={`h-11 ${formErrors[`p.${i}.nationality`] ? 'border-red-500 ring-red-500 bg-red-50/30' : 'border-gray-200'}`} />
                                     {formErrors[`p.${i}.nationality`] && <p className="text-[10px] text-red-500 font-bold mt-1 uppercase">⚠ {formErrors[`p.${i}.nationality`]}</p>}
                                   </div>
                                   <div className="relative z-[40]">
@@ -713,8 +768,8 @@ const EventDetails = ({ event }) => {
                                   {p.idType && (
                                     <div>
                                       <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">ID Number <span className="text-emerald-500">*</span></label>
-                                      <input placeholder="Enter ID number" value={p.idNumber || ''} onChange={e => handleParticipantChange(i, 'idNumber', e.target.value)}
-                                        className={selectClassName + (formErrors[`p.${i}.idNumber`] ? ' border-red-500 bg-red-50/30' : '')} />
+                                      <Input placeholder="Enter ID number" value={p.idNumber || ''} onChange={e => handleParticipantChange(i, 'idNumber', e.target.value)}
+                                        className={`h-11 ${formErrors[`p.${i}.idNumber`] ? 'border-red-500 ring-red-500 bg-red-50/30' : 'border-gray-200'}`} />
                                       {formErrors[`p.${i}.idNumber`] && <p className="text-[10px] text-red-500 font-bold mt-1 uppercase">⚠ {formErrors[`p.${i}.idNumber`]}</p>}
                                     </div>
                                   )}
@@ -845,9 +900,9 @@ const EventDetails = ({ event }) => {
                     )}
                   </div>
                   <div className="p-6 bg-[#FAFAFA]">
-                    <button onClick={handleReviewJourney} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded-xl transition-all shadow-md hover:shadow-lg active:scale-[0.98] text-lg flex items-center justify-center gap-2 group focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2">
-                      Continue to Review <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                    </button>
+                    <Button onClick={handleReviewJourney} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-14 rounded-xl text-lg flex items-center justify-center gap-2">
+                      Continue to Review <ChevronRight className="w-5 h-5 ml-1" />
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -855,19 +910,20 @@ const EventDetails = ({ event }) => {
           ) : (
             <div className="max-w-7xl mx-auto">
               {/* ── Review Journey View ── */}
-              <div className="bg-white rounded-[2rem] border border-gray-200 shadow-2xl overflow-hidden relative">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-50 rounded-full blur-3xl -mx-32 -my-32 pointer-events-none" />
+              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden relative">
 
                 <div className="p-8 sm:p-12 relative z-10">
                   <div className="flex items-center gap-6 mb-10">
-                    <button
+                    <Button
+                      variant="outline"
+                      size="icon"
                       onClick={() => setBookingStep(1)}
-                      className="w-12 h-12 rounded-2xl border border-gray-100 bg-gray-50 flex items-center justify-center text-gray-400 hover:text-emerald-600 hover:border-emerald-200 hover:bg-emerald-50 transition-all flex-shrink-0 shadow-sm group"
+                      className="w-12 h-12 rounded-2xl border-gray-200 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
                     >
-                      <ArrowLeft size={24} className="group-hover:-translate-x-1 transition-transform" />
-                    </button>
+                      <ArrowLeft size={24} />
+                    </Button>
                     <div className="text-left">
-                      <h2 className="text-3xl font-black text-gray-900 leading-none mb-1">Review & Pay</h2>
+                      <h2 className="text-2xl font-bold text-gray-900 leading-none mb-1">Review & Pay</h2>
                       <p className="text-gray-500 text-sm font-medium">Verify all details before payment.</p>
                     </div>
                   </div>
@@ -881,7 +937,7 @@ const EventDetails = ({ event }) => {
                           <div className="w-full max-h-80 rounded-xl overflow-hidden mb-4 border border-black shadow-lg bg-black flex items-center justify-center">
                             <img src={event.image || '/images/EventCover.webp'} alt={event.name} className="max-w-full max-h-80 w-auto h-auto object-contain shadow-2xl" />
                           </div>
-                          <p className="font-black text-gray-900 text-xl leading-tight mb-2">{event.name}</p>
+                          <p className="font-bold text-gray-900 text-xl leading-tight mb-2">{event.name}</p>
                           <p className="font-bold text-gray-600 text-sm flex items-center gap-2"><Calendar size={15} className="text-emerald-500" /> {formattedDate}</p>
                         </div>
 
@@ -978,20 +1034,27 @@ const EventDetails = ({ event }) => {
                                 <div className="mt-8 pt-6 border-t border-emerald-200">
                                   <div className="flex justify-between items-baseline mb-6 gap-4">
                                     <span className="text-base sm:text-lg font-bold text-gray-900">Total Payable</span>
-                                    <span className="text-3xl sm:text-4xl font-black text-emerald-600 leading-none whitespace-nowrap">₹{totalPayable.toLocaleString()}</span>
+                                    <span className="text-3xl sm:text-4xl font-bold text-emerald-600 leading-none whitespace-nowrap">₹{totalPayable.toLocaleString()}</span>
                                   </div>
-                                  <button onClick={handleBooking} disabled={isProcessingPayment} className="w-full bg-gray-900 hover:bg-black text-white font-bold py-4 sm:py-5 rounded-2xl transition-all shadow-xl shadow-gray-900/20 text-lg flex items-center justify-center gap-3 relative overflow-hidden focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2 disabled:opacity-80 active:scale-[0.98]">
+                                  <Button onClick={handleBooking} disabled={isProcessingPayment} className="w-full h-14 rounded-xl text-lg flex items-center justify-center gap-3">
                                     {isProcessingPayment ? (
                                       <span className="flex items-center gap-2"><div className="w-5 h-5 border-2 border-emerald-500 border-t-white rounded-full animate-spin" /> Processing...</span>
                                     ) : (
                                       <><ShieldCheck size={22} className="text-emerald-400" /> Pay Securely Now</>
                                     )}
-                                  </button>
+                                  </Button>
 
                                   {/* T&C Consent for Events */}
                                   <label className={`flex items-start gap-3 mt-5 p-4 rounded-xl border-2 cursor-pointer transition-all ${agreedToTerms ? 'border-emerald-500 bg-emerald-50/50' : 'border-gray-200 hover:border-gray-300 bg-white/80'}`}>
-                                    <input type="checkbox" checked={agreedToTerms} onChange={(e) => { setAgreedToTerms(e.target.checked); setFormErrors(prev => { const n = {...prev}; delete n.terms; return n; }); }}
-                                      className="mt-0.5 h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 flex-shrink-0" />
+                                    <div className="pt-0.5">
+                                      <Checkbox 
+                                        checked={agreedToTerms} 
+                                        onCheckedChange={(checked) => { 
+                                          setAgreedToTerms(checked === true); 
+                                          setFormErrors(prev => { const n = {...prev}; delete n.terms; return n; }); 
+                                        }} 
+                                      />
+                                    </div>
                                     <span className="text-[11px] text-gray-600 leading-relaxed">
                                       I agree to bagspackgo&apos;s{' '}
                                       <Link href="/terms" target="_blank" className="text-emerald-600 font-bold hover:underline">Terms & Conditions</Link>
@@ -1001,9 +1064,9 @@ const EventDetails = ({ event }) => {
                                     </span>
                                   </label>
                                   {formErrors.terms && <p className="text-[10px] text-red-500 font-bold mt-2 uppercase tracking-wide flex items-center gap-1"><AlertCircle size={10} /> {formErrors.terms}</p>}
-                                  <button onClick={() => setBookingStep(1)} className="w-full mt-4 py-2 font-bold text-gray-400 hover:text-gray-700 transition-colors focus:outline-none text-sm">
+                                  <Button variant="ghost" onClick={() => setBookingStep(1)} className="w-full mt-4 font-bold text-gray-500 hover:text-gray-800 transition-colors text-sm">
                                     Edit Booking Details
-                                  </button>
+                                  </Button>
                                 </div>
                               </div>
                             );
@@ -1034,13 +1097,15 @@ const EventDetails = ({ event }) => {
           {/* Left: Poster with Back Button */}
           <div className="w-full md:w-1/2 lg:w-2/3 flex flex-col gap-4">
             <div className="rounded-xl overflow-hidden shadow-lg relative bg-neutral-900 group">
-              <button
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={() => router.push('/user/events')}
-                className="absolute top-4 left-4 z-20 flex items-center gap-2 bg-black/40 backdrop-blur-md text-white hover:bg-black/60 px-4 py-2 rounded-full font-semibold transition-all group/back border border-white/20 shadow-lg"
+                className="absolute top-4 left-4 z-20 flex items-center gap-2 bg-black/40 backdrop-blur-md text-white hover:bg-black/60 rounded-full font-semibold border border-white/20"
               >
-                <ArrowLeft size={18} />
-                <span className="text-sm hidden sm:inline">Back</span>
-              </button>
+                <ArrowLeft size={16} />
+                <span className="hidden sm:inline">Back</span>
+              </Button>
               <img
                 src={event.image || '/images/EventCover.webp'}
                 alt={event.name}
@@ -1050,14 +1115,13 @@ const EventDetails = ({ event }) => {
 
             {/* Book Now Button */}
             {event.slotsLeft > 0 ? (
-              <button
+              <Button
                 onClick={handleBookNowClick}
-                className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white shadow-xl py-4 rounded-xl font-bold flex items-center justify-center gap-3 transform hover:-translate-y-0.5 transition-all text-lg group"
+                className="w-full h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold flex items-center justify-center gap-2 text-lg"
               >
-                <Ticket className="w-6 h-6 group-hover:scale-110 transition-transform" />
+                <Ticket className="w-5 h-5" />
                 <span>Book Now · ₹{event.price?.toLocaleString()}</span>
-                <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </button>
+              </Button>
             ) : (
               <div className="w-full bg-neutral-100 text-neutral-500 shadow-sm py-4 rounded-xl font-bold flex items-center justify-center gap-3 text-lg border border-neutral-200">
                 <AlertCircle className="w-6 h-6" />
@@ -1071,26 +1135,24 @@ const EventDetails = ({ event }) => {
             <div>
               {/* Save & Share buttons */}
               <div className="flex items-center justify-end gap-2 mb-4">
-                <button
+                <Button
+                  variant="outline"
                   onClick={handleShareEvent}
-                  className="flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 font-semibold rounded-xl transition-all border border-gray-200 shadow-sm group"
+                  className="flex items-center gap-2 rounded-xl text-gray-700 font-semibold shadow-sm"
                   title="Share Event"
                 >
-                  <Share2 size={16} className="text-gray-500 group-hover:text-emerald-600 transition-colors" />
-                  <span className="text-sm">Share</span>
-                </button>
-                <button
+                  <Share2 size={16} className="text-gray-500" />
+                  <span>Share</span>
+                </Button>
+                <Button
+                  variant={isSaved ? "secondary" : "outline"}
                   onClick={handleSaveEvent}
-                  className={`flex items-center gap-2 px-4 py-2 font-semibold rounded-xl transition-all border shadow-sm group ${
-                    isSaved
-                      ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200'
-                      : 'bg-gray-50 hover:bg-gray-100 text-gray-700 border-gray-200'
-                  }`}
+                  className={`flex items-center gap-2 rounded-xl font-semibold shadow-sm ${isSaved ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200' : 'text-gray-700'}`}
                   title={isSaved ? 'Remove from Saved' : 'Save Event'}
                 >
-                  <Bookmark size={16} className={`transition-colors ${isSaved ? 'text-emerald-500 fill-emerald-500' : 'text-gray-500 group-hover:text-emerald-600'}`} />
-                  <span className="text-sm">{isSaved ? 'Saved' : 'Save'}</span>
-                </button>
+                  <Bookmark size={16} className={isSaved ? 'text-emerald-500 fill-emerald-500' : 'text-gray-500'} />
+                  <span>{isSaved ? 'Saved' : 'Save'}</span>
+                </Button>
               </div>
 
               <div className="flex items-center gap-2 mb-3">
@@ -1258,11 +1320,11 @@ const EventDetails = ({ event }) => {
 
               {/* Next Button */}
               <div className="flex justify-end pt-4 border-t border-gray-100">
-                <button onClick={goToNextTab}
-                  className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-semibold transition-all shadow-md hover:shadow-lg group">
+                <Button onClick={goToNextTab}
+                  className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold h-12 px-6">
                   Next: Itinerary
-                  <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </button>
+                  <ChevronRight className="w-5 h-5 ml-1" />
+                </Button>
               </div>
             </div>
           )}
@@ -1294,11 +1356,11 @@ const EventDetails = ({ event }) => {
               )}
 
               <div className="flex justify-end pt-4 border-t border-gray-100">
-                <button onClick={goToNextTab}
-                  className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-semibold transition-all shadow-md hover:shadow-lg group">
+                <Button onClick={goToNextTab}
+                  className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold h-12 px-6">
                   Next: Important Info
-                  <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </button>
+                  <ChevronRight className="w-5 h-5 ml-1" />
+                </Button>
               </div>
             </div>
           )}
@@ -1389,12 +1451,12 @@ const EventDetails = ({ event }) => {
                   {event.slotsLeft > 0 ? "Ready for the adventure? Click below to finalize your booking and secure your slots." : "Unfortunately, all slots for this event have been booked."}
                 </p>
                 {event.slotsLeft > 0 && (
-                  <button onClick={handleBookNowClick}
-                    className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white shadow-xl py-4 px-12 rounded-xl font-bold flex items-center justify-center gap-3 transform hover:-translate-y-1 transition-all group">
-                    <Ticket className="w-6 h-6 group-hover:scale-110 transition-transform" />
+                  <Button onClick={handleBookNowClick}
+                    className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold h-14 px-12 flex items-center justify-center gap-3">
+                    <Ticket className="w-5 h-5" />
                     <span className="text-lg sm:text-xl">Continue to Booking</span>
-                    <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                  </button>
+                    <ChevronRight className="w-5 h-5 ml-1" />
+                  </Button>
                 )}
               </div>
             </div>

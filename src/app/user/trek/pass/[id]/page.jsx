@@ -29,19 +29,13 @@ export default function TrekPassPage() {
         const fetchBooking = async () => {
             if (!id) return;
             try {
-                // Check treks first
-                const trekRes = await fetch('/api/user/trek-bookings');
-                const trekData = await trekRes.json();
-                let found = trekData.success ? trekData.data?.find(b => b.id === id || b._id === id) : null;
+                const res = await fetch(`/api/public/pass/${id}`);
+                const data = await res.json();
                 
-                if (found) {
-                    setBooking({ ...found, bookingType: 'trek' });
+                if (data.success && data.data) {
+                    setBooking(data.data);
                 } else {
-                    // Check trips as fallback
-                    const tRes = await fetch('/api/user/trip-bookings');
-                    const tData = await tRes.json();
-                    found = tData.success ? tData.data?.find(b => b.id === id || b._id === id) : null;
-                    if (found) setBooking({ ...found, bookingType: 'trip' });
+                    setBooking(null);
                 }
             } catch (e) {
                 console.error(e);

@@ -25,6 +25,11 @@ export async function POST(request) {
         const booking = await Booking.findOne({ _id: bookingId, user: user.userId });
         if (!booking) return NextResponse.json({ success: false, message: 'Booking not found' }, { status: 404 });
 
+        // Prevent double-verification
+        if (booking.status === 'confirmed') {
+            return NextResponse.json({ success: true, message: 'Booking already confirmed.', bookingId: booking._id.toString() });
+        }
+
         // Verify Razorpay signature
         const isMock = razorpay_order_id?.startsWith('mock_order_') || (!razorpay_signature && !process.env.RAZORPAY_KEY_ID);
         if (!isMock && RAZORPAY_SECRET) {
@@ -35,14 +40,9 @@ export async function POST(request) {
             }
         }
 
-        // Mark booking confirmed
-        booking.status = 'confirmed';
-        booking.paymentId = razorpay_payment_id || 'mock_payment';
-        if (razorpay_order_id) booking.orderId = razorpay_order_id;
-        
-        await booking.save();
-
-        // Update event booked slots atomically — only if enough slots remain
+        // ═══════ ATOMIC SLOT RESERVATION (do this BEFORE confirming booking) ═══════
+        // This is the critical race-condition guard. Only one concurrent request
+        // can successfully increment bookedSlots if it would stay <= totalSlots.
         const slotUpdate = await Event.findOneAndUpdate(
             { 
                 _id: booking.event, 
@@ -51,12 +51,29 @@ export async function POST(request) {
             { $inc: { bookedSlots: booking.slots } },
             { new: true }
         );
+
         if (!slotUpdate) {
-            // Revert booking status if slots ran out (race condition)
-            booking.status = 'pending';
+            // Slots ran out — mark booking as sold_out so the user gets a clear message.
+            // The payment was captured but slots are gone. Mark for manual refund.
+            booking.status = 'cancelled';
+            booking.paymentId = razorpay_payment_id || 'mock_payment';
+            if (razorpay_order_id) booking.orderId = razorpay_order_id;
             await booking.save();
-            return NextResponse.json({ success: false, message: 'Slots are no longer available. Booking could not be confirmed.' }, { status: 400 });
+
+            return NextResponse.json({ 
+                success: false, 
+                soldOut: true,
+                message: 'This event is now sold out. Your payment will be refunded within 5-7 business days.',
+                bookingId: booking._id.toString()
+            }, { status: 409 });
         }
+
+        // Slots reserved successfully — now confirm the booking
+        booking.status = 'confirmed';
+        booking.paymentId = razorpay_payment_id || 'mock_payment';
+        if (razorpay_order_id) booking.orderId = razorpay_order_id;
+        
+        await booking.save();
 
         // Fetch related data for emails
         const [userDoc, eventDoc] = await Promise.all([
