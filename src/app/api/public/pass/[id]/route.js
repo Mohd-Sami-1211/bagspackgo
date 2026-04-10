@@ -5,6 +5,9 @@ import { TripBooking } from '@/models/tripbooking.model';
 import { TrekBooking } from '@/models/trekbooking.model';
 import mongoose from 'mongoose';
 
+export const dynamic = 'force-dynamic';
+
+
 export async function GET(req, context) {
     const params = await context.params;
     const { id } = params;
