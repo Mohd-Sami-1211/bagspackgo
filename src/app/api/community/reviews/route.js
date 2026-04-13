@@ -11,7 +11,7 @@ export async function GET() {
         const user = await getCurrentUser();
         const currentUserId = user?.userId?.toString() || null;
         
-        const reviews = await Review.find({}).sort({ createdAt: -1 });
+        const reviews = await Review.find({ $or: [{ provider: { $exists: false } }, { provider: null }] }).sort({ createdAt: -1 });
         
         const mappedReviews = reviews.map(r => {
             const obj = r.toObject();
@@ -33,7 +33,7 @@ export async function POST(request) {
         const body = await request.json();
         
         const user = await getCurrentUser();
-        if (user && user.role === 'user') {
+        if (user) {
             body.userId = user.userId;
         }
 

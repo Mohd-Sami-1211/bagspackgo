@@ -329,6 +329,7 @@ export default function HostEventPage() {
     pickupPoints: [{ location: '', link: '', time: '' }],
     itinerary: ['', '', ''],
     photographs: [],
+    termsAndConditions: [''],
     poster: null
   });
 
@@ -349,7 +350,7 @@ export default function HostEventPage() {
   const destinations = [
     'Kashmir',
     'Bhaderwah',
-    'Kishtwar',
+    'Warwan and Marwah Valley',
     'Uttarakhand',
     'Himachal Pradesh',
     'Ladakh',
@@ -374,6 +375,7 @@ export default function HostEventPage() {
     'Requirements',
     'Itinerary',
     'Photographs',
+    'Terms & Conditions',
     'Poster & Finalize'
   ];
 
@@ -416,6 +418,10 @@ export default function HostEventPage() {
     }
     // Step 6 (Photographs) — optional, no validation
     if (step === 7) {
+      const validTc = formData.termsAndConditions.filter(t => t.trim());
+      if (validTc.length === 0) errors.termsAndConditions = 'At least one term or condition is required';
+    }
+    if (step === 8) {
       if (!acceptedTerms) errors.terms = 'You must accept the terms';
     }
     setStepErrors(errors);
@@ -541,7 +547,7 @@ export default function HostEventPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateStep(7)) return;
+    if (!validateStep(8)) return;
     setSubmitting(true);
     setApiError('');
 
@@ -580,6 +586,7 @@ export default function HostEventPage() {
           pickupPoints: formData.pickupPoints.filter(p => p.location.trim()),
           itinerary: formData.itinerary.filter(s => s.trim()),
           photographs: formData.photographs,
+          termsAndConditions: formData.termsAndConditions.filter(t => t.trim()),
           poster: posterData,
         }),
       });
@@ -673,7 +680,7 @@ export default function HostEventPage() {
                     faqs: [{ question: '', answer: '' }, { question: '', answer: '' }, { question: '', answer: '' }],
                     whatToBring: [''], restrictions: [''],
                     pickupPoints: [{ location: '', link: '', time: '' }],
-                    itinerary: ['', '', ''], photographs: [], poster: null
+                    itinerary: ['', '', ''], photographs: [], termsAndConditions: [''], poster: null
                   });
                   setActiveSection(0);
                   setAcceptedTerms(false);
@@ -1219,8 +1226,64 @@ export default function HostEventPage() {
                   </div>
                 )}
 
-                {/* Section 8: Poster & Finalize */}
+                {/* Section 8: Terms & Conditions */}
                 {activeSection === 7 && (
+                  <div className="space-y-6 sm:space-y-8">
+                    <SectionHeader
+                      title="Terms & Conditions"
+                      description="Add your event-specific terms and conditions that attendees must accept"
+                      icon={Tag}
+                      number={7}
+                    />
+
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <label className="block text-sm font-semibold text-neutral-700">
+                          Event Terms & Conditions <span className="text-red-500">*</span>
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, termsAndConditions: [...prev.termsAndConditions, ''] }))}
+                          className="flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-colors text-sm"
+                        >
+                          <Plus className="w-4 h-4" />
+                          <span className="hidden sm:inline">Add More</span>
+                          <span className="sm:hidden">Add</span>
+                        </button>
+                      </div>
+                      {stepErrors.termsAndConditions && <p className="text-xs text-red-500 font-medium ml-1">{stepErrors.termsAndConditions}</p>}
+                      <div className="space-y-3">
+                        {formData.termsAndConditions.map((tc, index) => (
+                          <div key={index} className="flex items-start gap-2 sm:gap-3">
+                            <span className="w-6 h-6 bg-emerald-100 text-emerald-700 rounded-full text-xs flex items-center justify-center font-semibold flex-shrink-0 mt-2.5">
+                              {index + 1}
+                            </span>
+                            <textarea
+                              value={tc}
+                              onChange={(e) => handleArrayField('termsAndConditions', index, e.target.value)}
+                              placeholder={index === 0 ? 'e.g., Cancellation is allowed up to 48 hours before the event' : 'Add another term or condition'}
+                              className="flex-1 px-4 py-3 rounded-xl border border-neutral-200 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 text-sm resize-none"
+                              rows={2}
+                              required={index === 0}
+                            />
+                            {formData.termsAndConditions.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => removeArrayField('termsAndConditions', index)}
+                                className="p-2.5 sm:p-3 text-red-500 hover:bg-red-50 rounded-xl transition-colors flex-shrink-0 mt-1"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Section 9: Poster & Finalize */}
+                {activeSection === 8 && (
                   <div className="space-y-6 sm:space-y-8">
                     <SectionHeader
                       title="Poster & Finalize"

@@ -293,23 +293,39 @@ function BookingSuccessContent() {
                                 )}
                             </div>
 
-                            {/* ═══════ TRAVELLER DETAILS ═══════ */}
+                            {/* ═══════ TRAVELLER DETAILS WITH QR ═══════ */}
                             {travelers.length > 0 && (
                                 <div className="p-6 sm:p-8 border-b border-gray-100">
-                                    <h3 className="text-sm font-extrabold text-gray-900 uppercase tracking-widest mb-4" style={fontStyle}>Traveller Details</h3>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                        {travelers.map((t, idx) => (
-                                            <div key={idx} className="flex flex-col p-3 border border-gray-200 rounded-xl bg-white shadow-sm gap-1">
-                                                <p className="font-semibold text-gray-900 text-sm flex items-center gap-2" style={fontStyle}>
-                                                    <User className="w-4 h-4 text-emerald-600 shrink-0" /> {t.name || "Unnamed"}
-                                                </p>
-                                                <div className="text-[10px] font-medium text-gray-500 uppercase space-y-0.5 pl-6" style={fontStyle}>
-                                                    <p>{t.idType || 'ID'}: <span className="text-gray-900 font-semibold">{t.idNumber || 'N/A'}</span></p>
-                                                    <p>{t.gender || "-"} | {t.age || "-"} yrs {t.bloodGroup ? `| ${t.bloodGroup}` : ''}</p>
-                                                    {t.country && <p>Country: {t.country}</p>}
+                                    <h3 className="text-sm font-extrabold text-gray-900 uppercase tracking-widest mb-4" style={fontStyle}>Passenger Tickets & Entry QRs</h3>
+                                    <div className="grid grid-cols-1 gap-4">
+                                        {travelers.map((t, idx) => {
+                                            const verifyUrl = `${typeof window !== 'undefined' ? window.location.origin : 'https://bagspackgo.com'}/serviceprovider/scan?bookingId=${bookingId}&passCode=${t.passCode}`;
+                                            return (
+                                                <div key={idx} className="flex flex-row items-center p-4 border border-emerald-200 rounded-xl bg-emerald-50/20 shadow-sm gap-4">
+                                                    <div className="shrink-0 flex flex-col items-center justify-center p-3 bg-white border border-emerald-100 rounded-2xl shadow-[0_4px_10px_rgba(0,0,0,0.05)] w-[100px] sm:w-[110px]">
+                                                        <p className="text-[8px] font-semibold text-emerald-800 uppercase tracking-widest mb-1.5 text-center leading-tight" style={fontStyle}>Entry QR</p>
+                                                        <div className="p-1 max-w-[80px] w-full bg-white">
+                                                            <QRCodeSVG value={verifyUrl} size={72} level="M" style={{ width: '100%', height: 'auto' }} />
+                                                        </div>
+                                                        <p className="text-[8px] font-mono font-semibold text-gray-600 mt-1.5 tracking-widest text-center">{t.passCode || 'CODE'}</p>
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="font-bold text-gray-900 text-base flex items-center gap-2 mb-1" style={fontStyle}>
+                                                            <Ticket className="w-4 h-4 text-emerald-600 shrink-0" /> <span className="truncate">{t.name || "Unnamed"}</span>
+                                                        </p>
+                                                        <div className="text-left mt-1 space-y-0.5" style={fontStyle}>
+                                                            <p className="text-[10px] font-medium text-gray-500 uppercase truncate">
+                                                                {t.idType || 'ID'}: <span className="text-gray-900 font-semibold">{t.idNumber || 'N/A'}</span>
+                                                            </p>
+                                                            <p className="text-[10px] font-medium text-gray-500 uppercase truncate">
+                                                                {t.gender || "-"} | {t.age || "-"} yrs {t.bloodGroup ? `| ${t.bloodGroup}` : ''}
+                                                            </p>
+                                                            {t.country && <p className="text-[10px] font-medium text-gray-500 uppercase truncate">Country: {t.country}</p>}
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             )}
@@ -393,7 +409,15 @@ function BookingSuccessContent() {
                                     </div>
                                     <div>
                                         <SectionTitle icon={CheckCircle2} title="Provider Terms & Conditions" />
-                                        <p className="italic font-medium text-gray-400 text-sm" style={fontStyle}>No terms provided by the organizer.</p>
+                                        {booking?.termsAndConditions?.length > 0 ? (
+                                            <ul className="list-disc pl-4 space-y-1.5 text-sm text-gray-600" style={fontStyle}>
+                                                {booking.termsAndConditions.map((tc, index) => (
+                                                    <li key={index} className="leading-relaxed">{tc}</li>
+                                                ))}
+                                            </ul>
+                                        ) : (
+                                            <p className="italic font-medium text-gray-400 text-sm" style={fontStyle}>No terms provided by the organizer.</p>
+                                        )}
                                     </div>
                                 </div>
                             </div>

@@ -259,10 +259,10 @@ const TripSearchInput = memo(forwardRef(({ compactMode = false, onSearch }, ref)
 // ------------------- Destination Select -------------------
 const DestinationSelect = ({ selectedDestination, setSelectedDestination, error, clearError }) => {
   const destinationOptions = [
-    ...(data.destinations || []).filter(d => ['kashmir', 'ladakh', 'bhaderwah', 'kishtwar'].includes(d.value)),
+    ...(data.destinations || []).filter(d => ['kashmir', 'ladakh', 'bhaderwah', 'warwan-marwah-valley'].includes(d.value)),
     {
       label: 'Available Soon',
-      options: (data.destinations || []).filter(d => !['kashmir', 'ladakh', 'bhaderwah', 'kishtwar'].includes(d.value)).map(dest => ({
+      options: (data.destinations || []).filter(d => !['kashmir', 'ladakh', 'bhaderwah', 'warwan-marwah-valley'].includes(d.value)).map(dest => ({
         ...dest,
         isDisabled: true,
       }))

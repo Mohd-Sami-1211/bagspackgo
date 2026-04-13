@@ -166,7 +166,7 @@ const PopularDestinations = () => {
                       images={places[slideIdx].images}
                       name={places[slideIdx].name}
                       description={places[slideIdx].description}
-                      bgColor="from-green-500 to-green-700"
+                      bgColor="bg-slate-900"
                       textColor="text-white"
                     />
                   </motion.div>
@@ -191,7 +191,7 @@ const PopularDestinations = () => {
                     images={place.images}
                     name={place.name}
                     description={place.description}
-                    bgColor="from-green-500 to-green-700"
+                    bgColor="bg-slate-900"
                     textColor="text-white"
                   />
                 </div>

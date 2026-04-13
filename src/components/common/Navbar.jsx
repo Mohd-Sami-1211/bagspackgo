@@ -49,7 +49,7 @@ export default function Navbar() {
       {/* Logo Section */}
       <a
         href="/"
-        className="inline-block w-[110px] sm:w-[150px] h-[35px] sm:h-[40px] overflow-hidden relative rounded-3xl bg-white flex-shrink-0"
+        className="inline-block w-[110px] sm:w-[150px] h-[35px] sm:h-[40px] overflow-hidden relative rounded-full bg-white shadow-sm flex-shrink-0"
       >
         <Image
           src="/images/logo.svg"

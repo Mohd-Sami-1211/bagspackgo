@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { QRCodeSVG } from 'qrcode.react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { MapPin, User, Mail, Phone, Instagram, Facebook, Globe, CheckCircle2, Navigation, Mountain, X } from 'lucide-react';
 
 const formatTimeWithAMPM = (time) => {
@@ -167,7 +168,11 @@ export default function TrekPassPage() {
                         </div>
                         <div className="flex-1 w-full md:text-right border-l-4 border-emerald-500 pl-4 sm:pl-6 bg-emerald-50/30 p-4 rounded-r-2xl shrink-0 flex flex-col justify-center">
                             <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest mb-1.5 md:text-right">{booking?.bookingType === 'trek' ? 'Trek Managed By' : 'Trip Managed By'}</p>
-                            <h2 className="text-lg sm:text-xl font-black text-gray-900 md:text-right">{providerName}</h2>
+                            <h2 className="text-lg sm:text-xl font-black text-gray-900 md:text-right">
+                                {booking?.provider ? (
+                                    <Link href={`/user/provider/${booking.provider}`} className="hover:text-emerald-700 hover:underline">{providerName}</Link>
+                                ) : providerName}
+                            </h2>
                             <div className="flex flex-col md:items-end gap-1 mt-3">
                                 {booking?.providerPhone && (
                                     <p className="text-[10px] sm:text-xs font-bold text-gray-600 flex items-center gap-1.5">

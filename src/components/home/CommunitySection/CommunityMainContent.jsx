@@ -27,6 +27,8 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 
 // ─── Animation Variants ────────────────────────────────────
 const TAB_VARIANTS = {
@@ -76,6 +78,8 @@ const StarRating = ({ rating, size = 'md', interactive = false, onChange }) => {
 
 // ─── Main Community Component ───────────────────────────────
 const CommunityMainContent = () => {
+  const { user } = useAuth();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState('stories');
 
   // Modals state
@@ -91,9 +95,14 @@ const CommunityMainContent = () => {
   const [reviews, setReviews] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Comment states
+  // Comment and Dropdown states
   const [expandedComments, setExpandedComments] = useState({});
   const [commentText, setCommentText] = useState({});
+  const [openDropdowns, setOpenDropdowns] = useState({});
+
+  const toggleDropdown = (id) => {
+    setOpenDropdowns(prev => ({ ...prev, [id]: !prev[id] }));
+  };
 
   const toggleComments = (id) => {
     setExpandedComments(prev => ({ ...prev, [id]: !prev[id] }));
@@ -101,6 +110,10 @@ const CommunityMainContent = () => {
 
   const handleCommentSubmit = async (e, id) => {
      e.preventDefault();
+     if (!user) {
+         router.push('/user/login');
+         return;
+     }
      if (!commentText[id]?.trim()) return;
      
      try {
@@ -214,6 +227,10 @@ const CommunityMainContent = () => {
   }, [reviews]);
 
   const handleLike = async (id) => {
+    if (!user) {
+        router.push('/user/login');
+        return;
+    }
     setStories(stories.map(story => {
       if (story._id === id) {
         const isLiked = story.liked;
@@ -233,6 +250,10 @@ const CommunityMainContent = () => {
   };
 
   const handleHelpful = async (id) => {
+    if (!user) {
+        router.push('/user/login');
+        return;
+    }
     setReviews(reviews.map(review => {
       if (review._id === id) {
         const isHelpful = review.isHelpful;
@@ -261,15 +282,51 @@ const CommunityMainContent = () => {
       reader.readAsDataURL(file);
     }
   };
+  const handleShare = async (id, type = 'stories') => {
+    const url = `${window.location.origin}/community?${type}=${id}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'bagspackgo Community', url });
+      } catch (err) {
+        console.error('Error sharing:', err);
+      }
+    } else {
+      navigator.clipboard.writeText(url);
+      window.alert('Link copied to clipboard!');
+    }
+  };
+
+  const handleDeleteStory = async (id) => {
+    if (!user) {
+        router.push('/user/login');
+        return;
+    }
+    if (window.confirm('Are you sure you want to delete this story?')) {
+      try {
+        const res = await fetch(`/api/community/stories/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+           setStories(stories.filter(s => s._id !== id));
+           setOpenDropdowns(prev => { const n = {...prev}; delete n[id]; return n; });
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  };
 
   const submitStory = async (e) => {
     e.preventDefault();
-    if (!storyForm.content.trim() || !storyForm.name.trim()) return;
+    if (!user) {
+        router.push('/user/login');
+        return;
+    }
+    const posterName = user.name || user.username || user.email?.split('@')[0] || 'Traveler';
+    if (!storyForm.content.trim()) return;
 
     const newStoryData = {
-      name: storyForm.name,
-      handle: `@${storyForm.name.toLowerCase().replace(/\s+/g, '').substring(0, 15)}`,
-      photo: `https://ui-avatars.com/api/?name=${encodeURIComponent(storyForm.name)}&background=10b981&color=fff`,
+      name: posterName,
+      handle: `@${posterName.toLowerCase().replace(/\s+/g, '').substring(0, 15)}`,
+      photo: `https://ui-avatars.com/api/?name=${encodeURIComponent(posterName)}&background=10b981&color=fff`,
       content: storyForm.content,
       media: storyForm.imagePreview,
       location: storyForm.location || ''
@@ -284,7 +341,7 @@ const CommunityMainContent = () => {
       const data = await res.json();
       if (data.success) {
         setStories([data.data, ...stories]);
-        setStoryForm({ name: '', content: '', location: '', imagePreview: null });
+        setStoryForm({ content: '', location: '', imagePreview: null });
         setShowStoryModal(false);
       }
     } catch (error) {
@@ -294,11 +351,16 @@ const CommunityMainContent = () => {
 
   const submitReview = async (e) => {
     e.preventDefault();
-    if (!reviewForm.title.trim() || !reviewForm.content.trim() || !reviewForm.name.trim()) return;
+    if (!user) {
+        router.push('/user/login');
+        return;
+    }
+    const posterName = user.name || user.username || user.email?.split('@')[0] || 'Traveler';
+    if (!reviewForm.title.trim() || !reviewForm.content.trim()) return;
 
     const newReviewData = {
-      name: reviewForm.name,
-      photo: `https://ui-avatars.com/api/?name=${encodeURIComponent(reviewForm.name)}&background=f59e0b&color=fff`,
+      name: posterName,
+      photo: `https://ui-avatars.com/api/?name=${encodeURIComponent(posterName)}&background=f59e0b&color=fff`,
       rating: reviewForm.rating,
       title: reviewForm.title,
       content: reviewForm.content
@@ -313,7 +375,7 @@ const CommunityMainContent = () => {
       const data = await res.json();
       if (data.success) {
         setReviews([data.data, ...reviews]);
-        setReviewForm({ name: '', title: '', content: '', rating: 5 });
+        setReviewForm({ title: '', content: '', rating: 5 });
         setShowReviewModal(false);
       }
     } catch (error) {
@@ -404,7 +466,10 @@ const CommunityMainContent = () => {
                   {/* Create Post Trigger */}
                   <Card
                     className="cursor-pointer group hover:shadow-md transition-all duration-200 border-gray-200/70"
-                    onClick={() => setShowStoryModal(true)}
+                    onClick={() => {
+                        if (!user) { router.push('/user/login'); return; }
+                        setShowStoryModal(true);
+                    }}
                   >
                     <CardContent className="p-4 sm:p-5 flex items-center gap-3 sm:gap-4">
                       <div className="w-11 h-11 rounded-full border-2 border-dashed border-gray-300 bg-gray-50 flex items-center justify-center text-gray-400 group-hover:text-emerald-500 group-hover:border-emerald-400 group-hover:bg-emerald-50 transition-all">
@@ -444,9 +509,26 @@ const CommunityMainContent = () => {
                                   </div>
                                 </div>
                               </div>
-                              <Button variant="ghost" size="icon" className="rounded-full text-gray-300 hover:text-gray-500 h-8 w-8">
-                                <MoreHorizontal className="w-4 h-4" />
-                              </Button>
+                              <div className="relative">
+                                <Button onClick={() => toggleDropdown(story._id)} variant="ghost" size="icon" className="rounded-full text-gray-300 hover:text-gray-500 h-8 w-8">
+                                  <MoreHorizontal className="w-4 h-4" />
+                                </Button>
+                                {openDropdowns[story._id] && (
+                                  <div className="absolute right-0 mt-2 w-36 bg-white border border-gray-100 shadow-xl rounded-xl overflow-hidden z-20 py-1">
+                                    <button onClick={() => { handleShare(story._id, 'stories'); toggleDropdown(story._id); }} className="w-full text-left px-4 py-2 hover:bg-gray-50 text-gray-700 text-sm font-medium transition-colors">
+                                      Share
+                                    </button>
+                                    <button onClick={() => { window.alert('Post reported to moderators.'); toggleDropdown(story._id); }} className="w-full text-left px-4 py-2 hover:bg-gray-50 text-gray-700 text-sm font-medium transition-colors">
+                                      Report
+                                    </button>
+                                    {(user && user.userId === story.userId) && (
+                                      <button onClick={() => { handleDeleteStory(story._id); toggleDropdown(story._id); }} className="w-full text-left px-4 py-2 hover:bg-rose-50 text-rose-600 text-sm font-medium transition-colors">
+                                        Delete
+                                      </button>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
                             </div>
 
                             <p className="mt-4 text-[15px] text-gray-700 leading-relaxed">
@@ -493,7 +575,7 @@ const CommunityMainContent = () => {
                                   <span className="tabular-nums">{story.comments}</span>
                                 </button>
                               </div>
-                              <button className="p-2 text-gray-300 hover:text-gray-500 rounded-full hover:bg-gray-50 transition-colors">
+                              <button onClick={() => handleShare(story._id, 'stories')} className="p-2 text-gray-300 hover:text-gray-500 rounded-full hover:bg-gray-50 transition-colors">
                                 <Share2 className="w-[18px] h-[18px]" />
                               </button>
                             </div>
@@ -585,7 +667,10 @@ const CommunityMainContent = () => {
                   {/* Write Review Header */}
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-bold text-gray-900">Recent Reviews</h3>
-                    <Button onClick={() => setShowReviewModal(true)} size="sm" className="rounded-full gap-1.5 text-[13px]">
+                    <Button onClick={() => {
+                        if (!user) { router.push('/user/login'); return; }
+                        setShowReviewModal(true);
+                    }} size="sm" className="rounded-full gap-1.5 text-[13px]">
                       <Plus className="w-3.5 h-3.5" /> Write Review
                     </Button>
                   </div>
@@ -667,7 +752,10 @@ const CommunityMainContent = () => {
                 </p>
 
                 <Button
-                  onClick={() => activeTab === 'stories' ? setShowStoryModal(true) : setShowReviewModal(true)}
+                  onClick={() => {
+                      if (!user) { router.push('/user/login'); return; }
+                      activeTab === 'stories' ? setShowStoryModal(true) : setShowReviewModal(true);
+                  }}
                   className="w-full bg-gray-900 hover:bg-gray-800 text-white rounded-xl gap-2 h-11"
                 >
                   <Plus className="w-4 h-4" />
@@ -703,34 +791,6 @@ const CommunityMainContent = () => {
               </Card>
             )}
 
-            {/* Top Reviewers */}
-            {activeTab === 'reviews' && topReviewers.length > 0 && (
-              <Card className="rounded-2xl border-gray-200/70">
-                <CardHeader className="pb-1 p-5">
-                  <div className="flex items-center gap-2 text-gray-900 font-bold text-sm">
-                    <Award className="text-[#fbbc04] w-4 h-4" />
-                    Top Reviewers
-                  </div>
-                </CardHeader>
-                <CardContent className="p-5 pt-3">
-                  <div className="space-y-4">
-                    {topReviewers.map((user, idx) => (
-                      <div key={idx} className="flex items-center gap-3">
-                        <Avatar className="w-9 h-9">
-                          <AvatarImage src={user.photo} />
-                          <AvatarFallback>{user.name[0]}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <div className="font-semibold text-[14px] text-gray-900 truncate">{user.name}</div>
-                          <div className="text-[11px] font-semibold text-[#fbbc04] tabular-nums">{user.points} pts</div>
-                        </div>
-                        {idx === 0 && <Badge variant="warning" className="text-[10px] py-0.5 px-2">🏆</Badge>}
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
           </div>
           </div>
         </div>
@@ -759,14 +819,6 @@ const CommunityMainContent = () => {
 
                 <form onSubmit={submitStory}>
                   <CardContent className="p-5 space-y-4">
-                    <Input
-                      type="text"
-                      placeholder="Your name"
-                      value={storyForm.name}
-                      onChange={e => setStoryForm({ ...storyForm, name: e.target.value })}
-                      maxLength={30}
-                    />
-
                     <Textarea
                       value={storyForm.content}
                       onChange={e => setStoryForm({ ...storyForm, content: e.target.value })}
@@ -812,7 +864,7 @@ const CommunityMainContent = () => {
                     <Button
                       type="submit"
                       size="sm"
-                      disabled={!storyForm.content.trim() || !storyForm.name.trim()}
+                      disabled={!storyForm.content.trim()}
                       className="rounded-full bg-gray-900 hover:bg-gray-800 px-5"
                     >
                       Post
@@ -860,17 +912,6 @@ const CommunityMainContent = () => {
 
                     <div className="space-y-3">
                       <div>
-                        <label className="block text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-1.5 pl-0.5">Name</label>
-                        <Input
-                          type="text"
-                          value={reviewForm.name}
-                          onChange={(e) => setReviewForm({ ...reviewForm, name: e.target.value })}
-                          placeholder="e.g. Rahul Verma"
-                          maxLength={30}
-                        />
-                      </div>
-
-                      <div>
                         <label className="block text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-1.5 pl-0.5">Title</label>
                         <Input
                           type="text"
@@ -895,7 +936,7 @@ const CommunityMainContent = () => {
                   <CardFooter className="px-5 pb-5 pt-0 justify-end border-t border-gray-100 pt-4">
                     <Button
                       type="submit"
-                      disabled={!reviewForm.title.trim() || !reviewForm.content.trim() || !reviewForm.name.trim()}
+                      disabled={!reviewForm.title.trim() || !reviewForm.content.trim()}
                       className="rounded-full w-full sm:w-auto"
                     >
                       Publish Review

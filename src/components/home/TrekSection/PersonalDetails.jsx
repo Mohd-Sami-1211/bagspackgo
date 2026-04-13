@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import Select from 'react-select';
 import { User, Mail, Phone, ChevronDown, Upload, ArrowLeft, ArrowRight, PersonStanding, BriefcaseMedical, Check, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '@/context/AuthContext';
 
 /* ── Emerald-themed select styling ── */
 const customSelectStyles = {
@@ -10,10 +11,10 @@ const customSelectStyles = {
     ...provided,
     minHeight: '40px',
     fontSize: '0.875rem',
-    borderColor: state.isFocused ? '#10b981' : '#d1d5db',
-    boxShadow: state.isFocused ? '0 0 0 1px #10b981' : null,
-    '&:hover': { borderColor: state.isFocused ? '#10b981' : '#d1d5db' },
-    borderRadius: '0.5rem',
+    borderColor: state.isFocused ? '#22c55e' : '#e2e8f0',
+    boxShadow: state.isFocused ? '0 0 0 1px #22c55e' : null,
+    '&:hover': { borderColor: state.isFocused ? '#22c55e' : '#cbd5e1' },
+    borderRadius: '0.375rem',
     backgroundColor: '#fff',
     cursor: 'pointer',
     padding: '2px'
@@ -62,12 +63,23 @@ const PersonalDetails = ({
   // minPeople and maxPeople should be the same (both equal to the selected count)
   const numPeople = Math.max(1, minPeople);
 
+  const { user } = useAuth();
   // Contact details state
   const [contactDetails, setContactDetails] = useState({
-    email: '',
-    mobile: '',
+    email: user?.email || '',
+    mobile: user?.phone || '',
     emergencyContact: ''
   });
+
+  useEffect(() => {
+    if (user && (!contactDetails.email || !contactDetails.mobile)) {
+        setContactDetails(prev => ({
+            ...prev,
+            email: prev.email || user.email || "",
+            mobile: prev.mobile || user.phone || ""
+        }));
+    }
+  }, [user]);
 
   // Trekker details state
   const [trekkerDetails, setTrekkerDetails] = useState([]);
@@ -317,11 +329,11 @@ const PersonalDetails = ({
           onClick={() => toggleSection(index)}
           className={`w-full flex items-center justify-between px-4 py-3 transition-colors ${
             isExpanded 
-              ? 'bg-emerald-50 border-b border-emerald-100' 
+              ? 'bg-gray-50 border-b border-gray-100' 
               : hasErrors 
                 ? 'bg-red-50 hover:bg-red-100/60' 
                 : filled 
-                  ? 'bg-gray-50 hover:bg-gray-100' 
+                  ? 'bg-emerald-50 hover:bg-emerald-100/60' 
                   : 'bg-white hover:bg-gray-50'
           }`}
         >
@@ -567,15 +579,18 @@ const PersonalDetails = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <h3 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-4 flex items-center">
-        <PersonStanding className="h-5 w-5 sm:h-6 sm:w-6 text-green-600 mr-2" />
-        Trekker Details
-      </h3>
+      <div className="bg-slate-50/80 border-b border-gray-100 p-4 sm:px-6 sm:py-5 -mx-4 sm:-mx-6 -mt-4 sm:-mt-6 mb-6 rounded-t-xl">
+        <h3 className="text-xl font-bold text-gray-900 flex items-center">
+          <PersonStanding className="h-5 w-5 text-gray-500 mr-2.5" />
+          Trekker Information
+        </h3>
+        <p className="text-xs text-gray-500 mt-1 font-medium">Please provide accurate information for all trekkers.</p>
+      </div>
 
       {/* Contact Details Section */}
-      <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
         <h4 className="text-base font-semibold text-gray-800 mb-4 flex items-center">
-          <span className="w-6 h-6 flex items-center justify-center bg-white text-green-800 rounded-full mr-2.5 text-xs font-bold shadow-sm">
+          <span className="w-6 h-6 flex items-center justify-center bg-gray-100 text-gray-700 rounded-full mr-2.5 text-xs font-bold shadow-sm">
             1
           </span>
           Contact & Emergency Information
@@ -651,9 +666,9 @@ const PersonalDetails = ({
       </div>
 
       {/* Trekker Details Section - Accordion based */}
-      <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 mt-6">
         <h4 className="text-base font-semibold text-gray-800 mb-2 flex items-center">
-          <span className="w-6 h-6 flex items-center justify-center bg-white text-green-800 rounded-full mr-2.5 text-xs font-bold shadow-sm">
+          <span className="w-6 h-6 flex items-center justify-center bg-gray-100 text-gray-700 rounded-full mr-2.5 text-xs font-bold shadow-sm">
             2
           </span>
           Trekker Information ({numPeople} {numPeople === 1 ? 'Person' : 'People'})
@@ -678,7 +693,7 @@ const PersonalDetails = ({
         </button>
         <button
           type="submit"
-          className="px-5 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-all flex items-center shadow-md shadow-emerald-200/50 hover:shadow-lg group text-sm font-semibold active:scale-[0.98]"
+          className="px-5 py-2.5 bg-gray-900 text-white rounded-xl hover:bg-gray-800 transition-all flex items-center shadow-sm hover:shadow-md group text-sm font-semibold active:scale-[0.98]"
         >
           Review Trek
           <ArrowRight className="h-4 w-4 ml-2 transition-transform group-hover:translate-x-1" />

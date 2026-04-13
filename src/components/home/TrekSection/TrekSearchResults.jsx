@@ -9,7 +9,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 import { X, Calendar as CalendarIcon, Filter, Search as SearchIcon, ChevronDown, ArrowLeft, Plus, Minus, PackageOpen, Sparkles } from 'lucide-react';
 import data from 'src/data/data.json';
 
-const availableValues = ['kashmir', 'ladakh', 'bhaderwah', 'kishtwar'];
+const availableValues = ['kashmir', 'ladakh', 'bhaderwah', 'warwan-marwah-valley'];
 const activeOptions = (data.destinations || []).filter(d => availableValues.includes(d.value));
 const otherOptions = (data.destinations || []).filter(d => !availableValues.includes(d.value)).map(dest => ({
   ...dest,

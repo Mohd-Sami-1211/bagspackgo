@@ -8,7 +8,7 @@ const PhotoCard = ({
   images, 
   name, 
   description, 
-  bgColor="from-blue-500 to-blue-700", 
+  bgColor="bg-slate-900", 
   textColor="text-white",
   autoSlide = true
 }) => {
@@ -152,9 +152,9 @@ const PhotoCard = ({
               damping: 30,
               duration: 0.8
             }}
-            className={`absolute inset-0 bg-gradient-to-br ${bgColor} ${textColor} p-6 rounded-xl shadow-lg overflow-y-auto`}
+            className={`absolute inset-0 ${bgColor.includes('bg-') ? bgColor : `bg-gradient-to-br ${bgColor}`} ${textColor} p-6 rounded-xl shadow-lg border border-slate-700 overflow-y-auto`}
           >
-            <h3 className="text-2xl font-bold mb-4">{name}</h3>
+            <h3 className="text-xl sm:text-2xl font-bold tracking-tight mb-4">{name}</h3>
             <p className="leading-relaxed">{description}</p>
           </motion.div>
         </AnimatePresence>

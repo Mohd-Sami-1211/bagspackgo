@@ -577,18 +577,17 @@ const GuideDetails = ({ guide }) => {
         className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 -mt-16 sm:-mt-10 md:-mt-12 lg:-mt-14"
         ref={pageTopRef}
       >
-      {/* Toast Notification - Centered Fix */}
+      {/* Toast Notification - Shadcn Style */}
       {showSaveToast && (
-        <div className="fixed bottom-10 inset-x-0 flex justify-center z-[100] px-4">
-          <div className="bg-gray-950 border border-white/20 text-white px-6 py-4 rounded-3xl flex items-center shadow-[0_20px_50px_rgba(0,0,0,0.3)] backdrop-blur-xl animate-in fade-in slide-in-from-bottom-5 duration-300 ring-1 ring-white/10">
-            <div className="bg-emerald-500 p-1.5 rounded-full mr-3 shadow-lg shadow-emerald-500/20">
-              <Bookmark className="h-4 w-4 text-white fill-white" />
+        <div className="fixed bottom-4 sm:bottom-6 sm:right-6 z-[100] flex w-full max-w-[420px] flex-col p-4 sm:p-0">
+          <div className="pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border border-slate-200 bg-white p-6 shadow-lg animate-in fade-in slide-in-from-bottom-5 font-sans">
+            <div className="flex-1 space-y-1">
+              <p className="text-sm font-semibold text-slate-950">Package Saved</p>
+              <p className="text-sm text-slate-500">Added to your favorites.</p>
             </div>
-            <div className="flex flex-col">
-              <span className="text-sm font-black tracking-tight uppercase">Package Saved!</span>
-              <p className="text-[10px] text-gray-400 font-bold tracking-wide">Added to your global favorites</p>
-            </div>
-            <a href="/user/saved" className="ml-6 text-xs font-black text-emerald-400 hover:text-emerald-300 transition-all bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl whitespace-nowrap border border-white/5 uppercase tracking-widest">Explore</a>
+            <a href="/user/saved" className="inline-flex h-8 items-center justify-center rounded-md border border-slate-200 bg-transparent px-3 text-sm font-medium text-slate-950 transition-colors hover:bg-slate-100 focus:outline-none focus:ring-1 focus:ring-slate-950 disabled:pointer-events-none disabled:opacity-50">
+              View
+            </a>
           </div>
         </div>
       )}
@@ -599,99 +598,93 @@ const GuideDetails = ({ guide }) => {
         <div className="max-w-7xl mx-auto relative flex flex-col items-center">
 
           <div
-            className="relative rounded-2xl px-4 sm:px-8 pt-10 pb-4 sm:pt-6 sm:pb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between w-full max-w-5xl mx-auto gap-3 sm:gap-8 lg:gap-2 bg-slate-900 border border-slate-800 shadow-sm"
+            className="relative rounded-xl px-4 sm:px-8 pt-10 pb-4 sm:pt-6 sm:pb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between w-full max-w-5xl mx-auto gap-3 sm:gap-8 lg:gap-6 bg-slate-50/50 border border-gray-200 shadow-sm"
           >
             {/* Mobile Back Button - Inside Card */}
             <button 
               onClick={() => router.back()} 
-              className="absolute top-4 left-4 flex sm:hidden items-center justify-center p-2 bg-white/20 hover:bg-white/30 rounded-full transition-all text-white backdrop-blur-md border border-white/20"
+              className="absolute top-4 left-4 flex sm:hidden items-center justify-center p-2 bg-gray-50 hover:bg-gray-100 rounded-full transition-all text-gray-700 border border-gray-200"
             >
               <ArrowLeft className="w-4 h-4" />
             </button>
             {/* Desktop Back Button */}
             <button
               onClick={() => router.back()}
-              className="hidden md:flex absolute md:top-1/2 md:-left-28 lg:-left-36 md:-translate-y-1/2 group items-center justify-center gap-2 transition-all w-fit bg-white/90 hover:bg-white text-gray-700 font-bold px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-gray-100 shadow-md hover:shadow-lg hover:text-emerald-700 hover:border-emerald-200 z-[30] active:scale-95 backdrop-blur-sm"
+              className="hidden md:flex absolute md:top-1/2 md:-left-28 lg:-left-36 md:-translate-y-1/2 group items-center justify-center gap-2 transition-all w-fit bg-white hover:bg-gray-50 text-gray-700 font-medium px-4 py-2 rounded-full border border-gray-200 shadow-sm hover:text-emerald-700 z-[30] active:scale-95"
             >
-              <div className="bg-gray-50 group-hover:bg-emerald-100 text-gray-600 group-hover:text-emerald-700 p-1 rounded-full transition-colors">
-                <ArrowLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              </div>
-              <span className="text-sm sm:text-base pr-1">Back</span>
+              <ArrowLeft className="w-4 h-4" />
+              <span className="text-sm ml-1.5">Back</span>
             </button>
 
-
-
             {/* Rating Badge */}
-            <div className={`absolute top-2 right-2 sm:top-2 sm:right-6 lg:right-10 flex items-center bg-white/95 backdrop-blur-md rounded-full px-3 py-1.5 text-xs font-black text-gray-950 shadow-xl ring-1 ring-gray-200 ${!guide?.rating && "opacity-90"}`}>
-              <Star className={`w-4 h-4 mr-2 ${guide?.rating > 0 ? 'text-amber-500 fill-amber-500' : 'text-gray-300 fill-gray-300'}`} />
+            <div className="absolute top-4 right-4 sm:top-6 sm:right-6 flex items-center bg-gray-50 rounded-full px-3 py-1 text-xs font-medium text-gray-700 border border-gray-200">
+              <Star className={`w-3.5 h-3.5 mr-1 ${guide?.rating > 0 ? 'text-amber-500 fill-amber-500' : 'text-gray-400'}`} />
               {guide?.rating > 0 ? (
                 <>
                   {guide.rating}
-                  <span className="ml-1.5 text-gray-400 text-[10px] font-bold">({guide.reviews || 0})</span>
+                  <span className="ml-1 text-gray-500">({guide.reviews || 0})</span>
                 </>
               ) : (
-                <span className="text-gray-500 text-[10px] uppercase tracking-wider">No ratings yet</span>
+                <span className="text-gray-500 text-[10px] uppercase">No ratings</span>
               )}
             </div>
 
             {/* Main Info Cluster */}
-            <div className="flex items-center w-full sm:flex-1 min-w-0 mt-1 sm:mt-0 justify-start gap-3 sm:gap-6">
+            <div className="flex items-center w-full sm:flex-1 min-w-0 mt-1 sm:mt-0 justify-start gap-4 sm:gap-6">
               <a
                 href={`/user/provider/${guide.providerId || guide._id || guide.id}`}
-                className="w-12 h-12 sm:w-20 sm:h-20 lg:w-24 lg:h-24 rounded-full flex items-center justify-center shadow-2xl border-4 flex-shrink-0 relative overflow-hidden group/avatar cursor-pointer hover:scale-105 transition-all duration-300 bg-white border-emerald-100 hover:border-emerald-300"
+                className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 rounded-full flex items-center justify-center bg-emerald-50 border border-emerald-100 flex-shrink-0 hover:border-emerald-200 transition-colors"
               >
-                <div className="text-xl sm:text-2xl lg:text-3xl font-black italic tracking-tighter transition-transform group-hover/avatar:scale-110 text-emerald-600">
+                <div className="text-xl sm:text-2xl font-semibold text-emerald-700">
                   {guide.companyName ? guide.companyName.split(" ").map((n) => n[0]).join("") : guide.name.split(" ").map((n) => n[0]).join("")}
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-tr from-white/0 to-white/20 pointer-events-none" />
               </a>
 
-              <div className="min-w-0 pr-20 sm:pr-4 drop-shadow-md text-left flex-1">
-                <a href={`/user/provider/${guide.providerId || guide._id || guide.id}`} className="group/title block">
-                  <h2 className="text-base sm:text-xl lg:text-2xl font-black text-white leading-tight mb-1 sm:mb-2 tracking-tight uppercase group-hover/title:text-emerald-50 transition-colors truncate">
-                    {selectedPackage ? selectedPackage.label : guide.name}
-                  </h2>
-                </a>
+              <div className="min-w-0 pr-20 sm:pr-4 text-left flex-1">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
+                  <a href={`/user/provider/${guide.providerId || guide._id || guide.id}`} className="group/title block min-w-0">
+                    <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold text-gray-900 leading-tight truncate group-hover/title:text-emerald-700 transition-colors">
+                      {selectedPackage ? selectedPackage.label : guide.name}
+                    </h2>
+                  </a>
+                  {isPremiumPackage && (
+                    <span className="shrink-0 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200">
+                      <Crown className="w-3.5 h-3.5 mr-1" /> Premium
+                    </span>
+                  )}
+                </div>
 
-                <div className="flex flex-col gap-1.5 sm:gap-2.5 items-start sm:items-start">
-                  <div className="flex items-center text-[10px] sm:text-[11px] text-white/90 font-black tracking-widest uppercase">
-                    <MapPin className="h-3.5 w-3.5 mr-1.5 text-white/80" />
+                <div className="flex flex-col gap-2 items-start sm:items-start text-sm text-gray-600">
+                  <div className="flex items-center font-medium">
+                    <MapPin className="h-4 w-4 mr-1.5 text-gray-400" />
                     {selectedPackage?.destination || guide.location}
                   </div>
 
-                  <a href={`/user/provider/${guide.providerId || guide._id || guide.id}`} className="group/provider inline-flex items-center gap-1.5 sm:gap-2 p-1 sm:p-1.5 bg-white/10 rounded-lg sm:rounded-xl hover:bg-white/20 transition-all border border-white/10 shadow-sm w-fit">
-                    <span className="text-[9px] sm:text-[11px] text-white/70 uppercase tracking-widest font-extrabold ml-1">By</span>
-                    <span className="text-xs sm:text-base font-black text-white ml-0.5 mr-1 sm:mr-2 truncate max-w-[120px] sm:max-w-none">{guide.companyName || guide.name}</span>
+                  <a href={`/user/provider/${guide.providerId || guide._id || guide.id}`} className="inline-flex items-center text-sm hover:text-emerald-700 transition-colors">
+                    <span className="text-gray-500 mr-1.5">By</span>
+                    <span className="font-medium text-gray-900 truncate">{guide.companyName || guide.name}</span>
                   </a>
                 </div>
-
-
               </div>
             </div>
 
-            {/* Trip Details & Actions - Refined Alignment */}
+            {/* Trip Details & Actions */}
             <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto justify-center sm:justify-end mt-4 sm:mt-0">
-              <div className="flex gap-2.5 justify-center w-full sm:w-auto">
-                <div className="bg-slate-800/50 px-4 sm:px-6 py-2.5 rounded-xl text-center border border-slate-700 min-w-[75px] sm:min-w-[100px]">
-                  <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">Variant</p>
-                  <p className="font-semibold capitalize text-white text-xs sm:text-sm leading-none tracking-tight">
-                    {category}
-                  </p>
+              <div className="flex gap-3 justify-center w-full sm:w-auto">
+                <div className="bg-gray-50 px-4 py-3 rounded-lg text-center border border-gray-200 min-w-[80px]">
+                  <p className="text-gray-500 text-[10px] font-medium uppercase tracking-wider mb-1">Variant</p>
+                  <p className="font-semibold text-gray-900 text-sm capitalize">{category}</p>
                 </div>
-                <div className="bg-slate-800/50 px-4 sm:px-6 py-2.5 rounded-xl text-center border border-slate-700 min-w-[75px] sm:min-w-[100px]">
-                  <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">Stay</p>
-                  <p className="font-semibold text-white text-xs sm:text-sm leading-none tracking-tight">
-                    {priceDetails.days}D / {priceDetails.days - 1}N
-                  </p>
+                <div className="bg-gray-50 px-4 py-3 rounded-lg text-center border border-gray-200 min-w-[80px]">
+                  <p className="text-gray-500 text-[10px] font-medium uppercase tracking-wider mb-1">Stay</p>
+                  <p className="font-semibold text-gray-900 text-sm">{priceDetails.days}D / {priceDetails.days - 1}N</p>
                 </div>
-                <div className="bg-slate-800/50 px-4 sm:px-6 py-2.5 rounded-xl text-center border border-slate-700 min-w-[75px] sm:min-w-[100px]">
-                  <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">Guests</p>
-                  <p className="font-semibold text-white text-xs sm:text-sm leading-none tracking-tight">
-                    {numPeople} Slot
-                  </p>
+                <div className="bg-gray-50 px-4 py-3 rounded-lg text-center border border-gray-200 min-w-[80px]">
+                  <p className="text-gray-500 text-[10px] font-medium uppercase tracking-wider mb-1">Guests</p>
+                  <p className="font-semibold text-gray-900 text-sm">{numPeople} Slot</p>
                 </div>
               </div>
-              <div className="flex gap-2.5">
+              <div className="flex gap-2">
                 <button
                   onClick={async () => {
                     try {
@@ -709,15 +702,15 @@ const GuideDetails = ({ guide }) => {
                       console.error('Error sharing', err);
                     }
                   }}
-                  className="p-2 bg-white/90 rounded-full shadow-md hover:bg-white transition-colors backdrop-blur-sm flex-shrink-0"
+                  className="p-2.5 bg-gray-50 rounded-lg hover:bg-gray-100 border border-gray-200 transition-colors text-gray-600 hover:text-gray-900 flex-shrink-0"
                 >
-                  <Share2 className="h-4 w-4 text-gray-600" />
+                  <Share2 className="h-4 w-4" />
                 </button>
                 <button
                   onClick={handleSavePackage}
-                  className="p-2 bg-white/90 rounded-full shadow-md hover:bg-white transition-colors backdrop-blur-sm flex-shrink-0"
+                  className="p-2.5 bg-gray-50 rounded-lg hover:bg-gray-100 border border-gray-200 transition-colors flex-shrink-0"
                 >
-                  <Bookmark className={`h-4 w-4 ${isSaved ? 'text-emerald-500 fill-emerald-500' : 'text-gray-600'}`} />
+                  <Bookmark className={`h-4 w-4 ${isSaved ? 'text-emerald-600 fill-emerald-600' : 'text-gray-600'}`} />
                 </button>
               </div>
             </div>
@@ -808,10 +801,7 @@ const GuideDetails = ({ guide }) => {
                       <div className="relative h-full">
                         <div className="absolute left-1/2 top-0 h-full w-0.5 bg-slate-200 -translate-x-1/2">
                           <div
-                            className={`w-0.5 transition-all duration-500 ${isPremiumPackage
-                                ? "bg-amber-500"
-                                : "bg-slate-900"
-                              }`}
+                            className={`w-0.5 transition-all duration-500 bg-emerald-600`}
                             style={{
                               height: `${(currentDay / numDays) * 100}%`,
                             }}
@@ -831,14 +821,10 @@ const GuideDetails = ({ guide }) => {
                               >
                                 <div
                                   className={`absolute left-1/2 transform -translate-x-1/2 w-8 h-8 flex items-center justify-center rounded-full text-xs font-semibold transition-all duration-300 ${isCurrent
-                                      ? isPremiumPackage
-                                        ? "bg-amber-500 text-white ring-2 ring-offset-2 ring-amber-500 shadow-sm"
-                                        : "bg-slate-900 text-white ring-2 ring-offset-2 ring-slate-900 shadow-sm"
+                                      ? "bg-emerald-600 text-white ring-2 ring-offset-2 ring-emerald-600 shadow-sm"
                                       : isActive
-                                        ? isPremiumPackage
-                                          ? "bg-amber-100 text-amber-700 border border-amber-200"
-                                          : "bg-slate-100 text-slate-700 border border-slate-200"
-                                        : "bg-white text-slate-400 border border-slate-200"
+                                        ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
+                                        : "bg-white text-slate-400 border border-gray-200"
                                     }`}
                                 >
                                   {dayNum}
@@ -878,11 +864,9 @@ const GuideDetails = ({ guide }) => {
                                         flex-shrink-0 flex items-center justify-center rounded-full font-semibold text-sm
                                         transition-all duration-200 relative z-20 
                                         ${isCurrent ? "w-10 h-10 ring-2 ring-offset-2 shadow-sm" : "w-10 h-10 border"}
-                                        ${!isActive ? "bg-slate-50 text-slate-400 border-slate-200" : ""}
-                                        ${isCurrent && isPremiumPackage ? "bg-amber-600 text-white ring-amber-600" : ""}
-                                        ${isCurrent && !isPremiumPackage ? "bg-slate-900 text-white ring-slate-900" : ""}
-                                        ${!isCurrent && isActive && isPremiumPackage ? "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100" : ""}
-                                        ${!isCurrent && isActive && !isPremiumPackage ? "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100" : ""}
+                                        ${!isActive ? "bg-gray-50 text-gray-400 border-gray-200" : ""}
+                                        ${isCurrent ? "bg-emerald-600 text-white ring-emerald-600" : ""}
+                                        ${!isCurrent && isActive ? "bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100" : ""}
                                       `}
                                       ref={(el) =>
                                         (nodeRefs.current[index] = el)
@@ -916,61 +900,59 @@ const GuideDetails = ({ guide }) => {
                             key={index}
                             ref={(el) => (dayCardRefs.current[index] = el)}
                             className={`p-4 sm:p-5 rounded-xl border transition-all duration-200 group ${isCurrentDay
-                                ? isPremiumPackage
-                                  ? "border-amber-300 bg-amber-50/50 shadow-sm ring-1 ring-amber-300"
-                                  : "border-slate-800 bg-white shadow-sm ring-1 ring-slate-800"
-                                : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
-                              } cursor-pointer`}
+                                  ? "border-emerald-500 bg-emerald-50/30 shadow-sm ring-1 ring-emerald-500"
+                                  : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
+                                } cursor-pointer`}
                             onClick={() => {
                               handleDayNodeClick(dayNum);
                               handleViewDay(dayNum);
                             }}
                           >
-                            <div className="flex justify-between items-start">
-                              <div className="w-full">
+                            <div className="flex justify-between items-start gap-4">
+                              <div className="flex-1 min-w-0">
                                 <h4 className="font-semibold text-slate-900 flex items-center">
                                   <span
-                                    className={`w-6 h-6 flex items-center justify-center rounded-full mr-3 text-xs font-bold ${isCurrentDay
-                                        ? isPremiumPackage
-                                          ? "bg-amber-600 text-white"
-                                          : "bg-slate-900 text-white"
-                                        : isPremiumPackage
-                                          ? "bg-amber-100 text-amber-700"
-                                          : "bg-slate-100 text-slate-700"
+                                    className={`w-6 h-6 flex items-center justify-center rounded-full mr-3 text-xs font-bold shrink-0 ${isCurrentDay
+                                        ? "bg-emerald-600 text-white"
+                                        : "bg-emerald-50 text-emerald-700"
                                       }`}
                                   >
                                     {day.dayNumber}
                                   </span>
                                   <span
-                                    className={`text-sm sm:text-base ${isPremiumPackage
-                                        ? "text-amber-800"
-                                        : "text-slate-900"
-                                      }`}
+                                    className={`text-sm sm:text-base text-gray-900 truncate`}
                                   >
                                     {day.location}
                                   </span>
                                 </h4>
                                 <p className="text-xs sm:text-sm text-slate-500 mt-1 ml-9 flex items-center">
-                                  <Calendar className="h-3.5 w-3.5 mr-2 text-slate-400" />
-                                  <span className="font-medium">
+                                  <Calendar className="h-3.5 w-3.5 mr-2 text-slate-400 shrink-0" />
+                                  <span className="font-medium truncate">
                                     {day.date}
                                   </span>
                                 </p>
                               </div>
+                              {day.destinationPhotos?.[0] && (
+                                <div className="shrink-0 ml-3">
+                                  <img 
+                                    src={day.destinationPhotos[0]} 
+                                    alt={day.location}
+                                    className="w-20 h-20 sm:w-24 sm:h-24 rounded-lg object-cover border border-slate-200"
+                                  />
+                                </div>
+                              )}
                             </div>
 
                             <div className="mt-3.5 ml-10 flex flex-col gap-3">
                               {/* Badges */}
                               <div className="flex flex-wrap gap-2">
                                 {day.agenda && (
-                                  <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${isPremiumPackage ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-green-100 text-green-700 border-green-200'
-                                    }`}>
+                                  <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border bg-emerald-50 text-emerald-700 border-emerald-100`}>
                                     {AGENDA_LABELS[day.agenda?.toLowerCase()] || <span className="capitalize">{day.agenda?.replace(/-/g, ' ')}</span>}
                                   </span>
                                 )}
                                 {day.isDayTrip && (
-                                  <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${isPremiumPackage ? 'bg-orange-100 text-orange-700 border-orange-200' : 'bg-blue-100 text-blue-700 border-blue-200'
-                                    }`}>
+                                  <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border bg-blue-50 text-blue-700 border-blue-100`}>
                                     <Car className="w-3 h-3 mr-1" /> Day Trip
                                   </span>
                                 )}
@@ -979,11 +961,11 @@ const GuideDetails = ({ guide }) => {
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-1">
                                 {/* Logistics & Time */}
                                 <div className="flex items-start space-x-3">
-                                  <div className={`p-2 rounded-xl flex-shrink-0 ${isPremiumPackage ? 'bg-amber-50' : 'bg-blue-50'}`}>
+                                  <div className={`p-2 rounded-xl flex-shrink-0 bg-gray-50`}>
                                     {day.agenda === 'travel-day' || day.isDayTrip ? (
-                                      <Navigation className={`h-4 w-4 ${isPremiumPackage ? 'text-amber-500' : 'text-blue-500'}`} />
+                                      <Navigation className={`h-4 w-4 text-gray-500`} />
                                     ) : (
-                                      <Clock className={`h-4 w-4 ${isPremiumPackage ? 'text-amber-500' : 'text-blue-500'}`} />
+                                      <Clock className={`h-4 w-4 text-gray-500`} />
                                     )}
                                   </div>
                                   <div className="min-w-0">
@@ -1081,7 +1063,7 @@ const GuideDetails = ({ guide }) => {
                   <div className="flex justify-end mt-4 sm:mt-6">
                     <button
                       onClick={handleNextTab}
-                      className="inline-flex items-center justify-center px-6 py-2.5 text-sm font-semibold rounded-md transition-all bg-slate-900 hover:bg-slate-800 text-white"
+                      className="inline-flex items-center justify-center px-6 py-2.5 text-sm font-semibold rounded-md transition-all bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
                     >
                       Next <ArrowRight className="ml-2 h-4 w-4" />
                     </button>

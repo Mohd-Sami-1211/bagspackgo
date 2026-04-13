@@ -50,37 +50,33 @@ const AboutUs = () => {
     <section className="relative">
       
       <div className="w-full px-4 sm:px-6 md:px-8 mb-16 -mt-16">
-        <div className="text-center pt-20 mb-10">
-          <motion.h2 
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          viewport={{ once: true }}
+          className="text-center pt-20 mb-4"
+        >
+          <motion.h2
             className="text-4xl md:text-5xl font-bold text-gray-800 mb-4"
             initial={{ scale: 0.9 }}
             whileInView={{ scale: 1 }}
-            transition={{ 
-              duration: 0.5, 
-              delay: 0.2,
-              type: "spring",
-              stiffness: 100
-            }}
+            transition={{ duration: 0.5, delay: 0.2, type: "spring", stiffness: 100 }}
           >
             About <span className="text-green-600">bagspackgo</span>
           </motion.h2>
-          <motion.div 
-            className="h-1 bg-gradient-to-r from-amber-400 to-amber-600 mx-auto w-24 rounded-full mb-12"
+          <motion.div
+            className="h-1 bg-gradient-to-r from-amber-400 to-amber-600 mx-auto w-24 rounded-full mb-8"
             initial={{ width: 0 }}
             whileInView={{ width: 96 }}
-            transition={{ 
-              duration: 0.8, 
-              delay: 0.3,
-              type: "spring",
-              stiffness: 50
-            }}
+            transition={{ duration: 0.8, delay: 0.3, type: "spring", stiffness: 50 }}
           />
-        </div>
+        </motion.div>
       </div>
 
       
-      <div className="bg-gradient-to-br from-green-50 to-blue-50 pt-10 pb-12 sm:pt-16 sm:pb-20">
-        <div className="w-full px-4 sm:px-6 md:px-8">
+      <div className="bg-slate-50 border-t border-b border-slate-100 pt-10 pb-12 sm:pt-16 sm:pb-20">
+        <div className="w-full px-4 sm:px-6 md:px-8 max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-10 md:gap-16 mb-16 sm:mb-24 items-center">
             {/* Left side: Images cascade */}
             <motion.div
@@ -88,10 +84,10 @@ const AboutUs = () => {
                whileInView={{ x: 0, opacity: 1 }}
                transition={{ duration: 0.6 }}
                viewport={{ once: true }}
-               className="relative lg:h-[400px] flex gap-4 hidden sm:flex"
+               className="relative lg:h-[400px] gap-4 hidden sm:flex"
             >
-               <img src="/images/Pahalgam1.jpeg" alt="Hiking in Kashmir" className="w-[55%] h-[95%] object-cover rounded-3xl shadow-2xl mt-[5%]" />
-               <img src="/images/Dal1.jpeg" alt="Shikara on Dal lake" className="w-[45%] h-[85%] object-cover rounded-3xl shadow-xl absolute right-0 top-0 border-4 border-white transform transition-transform duration-500 hover:scale-105" />
+               <img src="/images/Pahalgam1.jpeg" alt="Hiking in Kashmir" className="w-[55%] h-[95%] object-cover rounded-xl shadow-md mt-[5%]" />
+               <img src="/images/Dal1.jpeg" alt="Shikara on Dal lake" className="w-[45%] h-[85%] object-cover rounded-xl shadow-md absolute right-0 top-0 border-4 border-white transform transition-transform duration-500 hover:scale-105" />
             </motion.div>
             
             {/* Right side: Text Content */}
@@ -102,17 +98,17 @@ const AboutUs = () => {
               viewport={{ once: true }}
               className="max-w-xl mx-auto lg:mx-0 text-center lg:text-left pt-6 lg:pt-0"
             >
-              <h3 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-6 leading-tight">
+              <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mb-6 leading-tight">
                 Redefining the way you experience the world
               </h3>
-              <div className="space-y-4 sm:space-y-5 text-gray-600 text-base sm:text-lg leading-relaxed">
+              <div className="space-y-4 sm:space-y-5 text-slate-600 text-sm sm:text-base leading-relaxed">
                 <p>
-                  At <span className="font-semibold text-green-700">bagspackgo</span>, we don't just sell tour packages; we build bridges between curious travelers and authentic local cultures. We cut out the middlemen to connect you directly with verified local guides, artisans, and storytellers.
+                  At <span className="font-semibold text-emerald-700">bagspackgo</span>, we don't just sell tour packages; we build bridges between curious travelers and authentic local cultures. We cut out the middlemen to connect you directly with verified local guides, artisans, and storytellers.
                 </p>
                 <p>
                   Born out of a deep love for the undiscovered, our mission is to make every journey deeply personal. Whether you're seeking a quiet retreat in a remote mountain valley or a thrilling expedition across glaciers, we guarantee transparent pricing and absolute flexibility.
                 </p>
-                <p className="font-medium text-gray-800 italic pt-2">
+                <p className="font-medium text-slate-800 italic pt-2">
                   — Experience the pulse of the destination, tailored exactly to you.
                 </p>
               </div>

@@ -132,6 +132,12 @@ const eventSchema = new mongoose.Schema(
             default: [],
         },
 
+        // Terms and Conditions — provider-specified policies
+        termsAndConditions: {
+            type: [String],
+            default: [],
+        },
+
         // Poster (Step 8) — stored as base64 data URL or cloud URL
         poster: {
             type: String,

@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     LayoutDashboard, Users, UserCheck, FileText, Package,
     CalendarCheck, CreditCard, Headphones, Bell, Settings,
-    LogOut, Shield, ChevronRight, Menu, X, ClipboardList
+    LogOut, Shield, ChevronRight, Menu, X, ClipboardList, Heart
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -18,6 +18,7 @@ const navItems = [
     { label: 'Bookings',      icon: CalendarCheck,   href: '/admin/bookings',        badge: null },
     { label: 'Packages',      icon: Package,         href: '/admin/packages',        badge: null },
     { label: 'Requests',      icon: ClipboardList,   href: '/admin/requests',        badge: 'requests' },
+    { label: 'Event Wishes',  icon: Heart,           href: '/admin/wishes',          badge: null },
     { label: 'Payments',      icon: CreditCard,      href: '/admin/payments',        badge: null },
     { label: 'Support',       icon: Headphones,      href: '/admin/support',         badge: 'support' },
     { label: 'Notifications', icon: Bell,            href: '/admin/notifications',   badge: 'notifications' },

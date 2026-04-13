@@ -7,7 +7,7 @@ export async function POST(request, context) {
     const params = await context.params;
     try {
         const user = await getCurrentUser();
-        if (!user || user.role !== 'user') return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
+        if (!user) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
 
         const body = await request.json();
         const { text } = body;
@@ -22,10 +22,12 @@ export async function POST(request, context) {
         const story = await Story.findById(id);
         if (!story) return NextResponse.json({ success: false }, { status: 404 });
         
+        const commenterName = user.name || user.username || user.firstName || user.email?.split('@')[0] || 'Traveler';
+
         const newComment = {
             user: user.userId,
-            name: `${user.firstName || 'Traveler'} ${user.lastName || ''}`.trim(),
-            photo: `https://ui-avatars.com/api/?name=${encodeURIComponent(user.firstName || 'Traveler')}&background=10b981&color=fff`,
+            name: commenterName,
+            photo: `https://ui-avatars.com/api/?name=${encodeURIComponent(commenterName)}&background=10b981&color=fff`,
             text: text.trim(),
             createdAt: new Date()
         };

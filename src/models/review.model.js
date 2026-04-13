@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 
 const reviewSchema = new mongoose.Schema({
+    userId: { type: String },
     name: { type: String, required: true },
     photo: { type: String },
     title: { type: String },

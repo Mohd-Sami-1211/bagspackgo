@@ -71,6 +71,7 @@ export async function GET(request, context) {
                 guide: event.guide,
                 guideName: guideName,
                 photographs: event.photographs || [],
+                termsAndConditions: event.termsAndConditions || [],
                 destinationLink: event.destinationLink,
                 createdAt: event.createdAt
             },

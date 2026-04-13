@@ -7,7 +7,7 @@ export const metadata = {
         'kashmir events',
         'ladakh events',
         'bhaderwah tourism',
-        'kishtwar trekking',
+        'warwan and marwah valley trekking',
         'kashmir skiing camp',
         'ladakh photography tour',
         'bhaderwah cultural festival',

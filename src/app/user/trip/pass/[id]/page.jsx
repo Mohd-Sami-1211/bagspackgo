@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { QRCodeSVG } from 'qrcode.react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { MapPin, User, Mail, Phone, Instagram, Facebook, Globe, CheckCircle2, Navigation, X } from 'lucide-react';
 
 const formatTimeWithAMPM = (time) => {
@@ -158,7 +159,11 @@ export default function TripPassPage() {
                         </div>
                         <div className="flex-1 w-full md:text-right border-l-4 border-emerald-500 pl-4 sm:pl-6 bg-emerald-50/30 p-4 rounded-r-2xl shrink-0 flex flex-col justify-center">
                             <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest mb-1.5 md:text-right">Trip Managed By</p>
-                            <h2 className="text-lg sm:text-xl font-black text-gray-900 md:text-right">{providerName}</h2>
+                            <h2 className="text-lg sm:text-xl font-black text-gray-900 md:text-right">
+                                {booking?.provider ? (
+                                    <Link href={`/user/provider/${booking.provider}`} className="hover:text-emerald-700 hover:underline">{providerName}</Link>
+                                ) : providerName}
+                            </h2>
                             <div className="flex flex-col md:items-end gap-1 mt-3">
                                 {booking?.providerPhone && (
                                     <p className="text-[10px] sm:text-xs font-bold text-gray-600 flex items-center gap-1.5">
@@ -173,7 +178,6 @@ export default function TripPassPage() {
                                 <div className="flex gap-4 mt-2">
                                     {booking?.instagram && <a href={booking.instagram.startsWith('http') ? booking.instagram : `https://instagram.com/${booking.instagram}`} target="_blank" rel="noreferrer"><Instagram className="w-4 h-4 sm:w-5 sm:h-5 text-pink-500 hover:opacity-80 transition-opacity cursor-pointer" /></a>}
                                     {booking?.facebook && <a href={booking.facebook.startsWith('http') ? booking.facebook : `https://facebook.com/${booking.facebook}`} target="_blank" rel="noreferrer"><Facebook className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 hover:opacity-80 transition-opacity cursor-pointer" /></a>}
-                                    {booking?.website && <a href={booking.website.startsWith('http') ? booking.website : `https://${booking.website}`} target="_blank" rel="noreferrer"><Globe className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600 hover:opacity-80 transition-opacity cursor-pointer" /></a>}
                                 </div>
                             </div>
                         </div>
@@ -195,12 +199,24 @@ export default function TripPassPage() {
                                     <p className="font-bold text-gray-900 text-sm sm:text-base">{formatDate(startDate)}</p>
                                 </div>
                                 <div className="text-center sm:text-left">
-                                    <p className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Pickup</p>
-                                    <p className="font-bold text-gray-900 text-[10px] sm:text-xs">{(arrivalDeparture?.pickup?.location && arrivalDeparture?.pickup?.time) ? `${arrivalDeparture.pickup.location} @ ${arrivalDeparture.pickup.time}` : 'TBD'}</p>
+                                    <p className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 flex items-center justify-center sm:justify-start gap-1">Pickup</p>
+                                    {(arrivalDeparture?.pickup?.address && arrivalDeparture?.pickup?.time) ? (
+                                        <div className="flex flex-col gap-0.5">
+                                            <p className="font-bold text-gray-900 text-[10px] sm:text-xs leading-tight">{arrivalDeparture.pickup.address} {arrivalDeparture.pickup.location ? `(${arrivalDeparture.pickup.location})` : ''}</p>
+                                            <p className="font-medium text-gray-500 text-[9px] sm:text-[10px]">{formatDate(arrivalDeparture.pickup.date || startDate)} @ {arrivalDeparture.pickup.time}</p>
+                                            <a href={arrivalDeparture.pickup.mapLink || `https://maps.google.com/?q=${encodeURIComponent(arrivalDeparture.pickup.address + ' ' + (arrivalDeparture.pickup.location || ''))}`} target="_blank" rel="noreferrer" className="text-[9px] text-emerald-600 font-bold hover:underline flex items-center justify-center sm:justify-start mt-0.5"><MapPin className="w-2.5 h-2.5 mr-0.5" /> View Map</a>
+                                        </div>
+                                    ) : <p className="font-bold text-gray-900 text-[10px] sm:text-xs">TBD</p>}
                                 </div>
                                 <div className="text-center sm:text-left">
-                                    <p className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Dropoff</p>
-                                    <p className="font-bold text-gray-900 text-[10px] sm:text-xs">{(arrivalDeparture?.dropoff?.location && arrivalDeparture?.dropoff?.time) ? `${arrivalDeparture.dropoff.location} @ ${arrivalDeparture.dropoff.time}` : 'TBD'}</p>
+                                    <p className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 flex items-center justify-center sm:justify-start gap-1">Dropoff</p>
+                                    {(arrivalDeparture?.dropoff?.address && arrivalDeparture?.dropoff?.time) ? (
+                                        <div className="flex flex-col gap-0.5">
+                                            <p className="font-bold text-gray-900 text-[10px] sm:text-xs leading-tight">{arrivalDeparture.dropoff.address} {arrivalDeparture.dropoff.location ? `(${arrivalDeparture.dropoff.location})` : ''}</p>
+                                            <p className="font-medium text-gray-500 text-[9px] sm:text-[10px]">{formatDate(arrivalDeparture.dropoff.date || booking.endDate || startDate)} @ {arrivalDeparture.dropoff.time}</p>
+                                            <a href={arrivalDeparture.dropoff.mapLink || `https://maps.google.com/?q=${encodeURIComponent(arrivalDeparture.dropoff.address + ' ' + (arrivalDeparture.dropoff.location || ''))}`} target="_blank" rel="noreferrer" className="text-[9px] text-emerald-600 font-bold hover:underline flex items-center justify-center sm:justify-start mt-0.5"><MapPin className="w-2.5 h-2.5 mr-0.5" /> View Map</a>
+                                        </div>
+                                    ) : <p className="font-bold text-gray-900 text-[10px] sm:text-xs">TBD</p>}
                                 </div>
                                 <div className="text-center sm:text-left">
                                     <p className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Guests</p>
@@ -346,11 +362,21 @@ export default function TripPassPage() {
                                             {/* Day 1 Pickup */}
                                             {idx === 0 && booking.arrivalDeparture?.pickup?.address && (
                                                 <div className="mb-2 p-1.5 bg-emerald-50 rounded border border-emerald-100 flex items-start gap-1.5">
-                                                    <Navigation className="w-3 h-3 text-emerald-600 shrink-0 mt-0.5" />
+                                                    <Navigation className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                                                     <div className="min-w-0">
-                                                        <p className="text-[9px] font-bold text-gray-800 leading-tight">
-                                                            Pickup from {booking.arrivalDeparture.pickup.address}{booking.arrivalDeparture.pickup.location ? `, ${booking.arrivalDeparture.pickup.location}` : ''} at {booking.arrivalDeparture.pickup.time || 'given time'}.
+                                                        <p className="text-[10px] font-bold text-gray-800 leading-tight mb-0.5">
+                                                            Day 1 Pickup Details
                                                         </p>
+                                                        <p className="text-[9px] font-medium text-gray-600 leading-tight mb-1">
+                                                            <span className="font-bold">Date:</span> {formatDate(booking.arrivalDeparture.pickup.date || startDate)} &nbsp;|&nbsp; 
+                                                            <span className="font-bold">Time:</span> {booking.arrivalDeparture.pickup.time || 'TBD'}
+                                                        </p>
+                                                        <p className="text-[9px] font-medium text-gray-600 leading-tight mb-1">
+                                                            <span className="font-bold">Location:</span> {booking.arrivalDeparture.pickup.address}{booking.arrivalDeparture.pickup.location ? `, ${booking.arrivalDeparture.pickup.location}` : ''}.
+                                                        </p>
+                                                        <a href={booking.arrivalDeparture.pickup.mapLink || `https://maps.google.com/?q=${encodeURIComponent(booking.arrivalDeparture.pickup.address + ' ' + booking.arrivalDeparture.pickup.location)}`} target="_blank" rel="noreferrer" className="text-[10px] text-emerald-600 font-bold hover:underline inline-flex items-center mt-0.5">
+                                                            <MapPin className="w-3 h-3 mr-1" /> Open Map Directions
+                                                        </a>
                                                     </div>
                                                 </div>
                                             )}
@@ -358,15 +384,34 @@ export default function TripPassPage() {
                                             {/* Last Day Dropoff */}
                                             {idx === itineraryList.length - 1 && booking.arrivalDeparture?.dropoff?.address && (
                                                 <div className="mb-2 p-1.5 bg-blue-50 rounded border border-blue-100 flex items-start gap-1.5">
-                                                    <Navigation className="w-3 h-3 text-blue-600 shrink-0 mt-0.5" />
+                                                    <Navigation className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
                                                     <div className="min-w-0">
-                                                        <p className="text-[9px] font-bold text-gray-800 leading-tight">
-                                                            Drop off at {booking.arrivalDeparture.dropoff.address}{booking.arrivalDeparture.dropoff.location ? `, ${booking.arrivalDeparture.dropoff.location}` : ''} at {booking.arrivalDeparture.dropoff.time || 'given time'}.
+                                                        <p className="text-[10px] font-bold text-gray-800 leading-tight mb-0.5">
+                                                            Final Dropoff Details
                                                         </p>
+                                                        <p className="text-[9px] font-medium text-gray-600 leading-tight mb-1">
+                                                            <span className="font-bold">Date:</span> {formatDate(booking.arrivalDeparture.dropoff.date || booking.endDate || startDate)} &nbsp;|&nbsp; 
+                                                            <span className="font-bold">Time:</span> {booking.arrivalDeparture.dropoff.time || 'TBD'}
+                                                        </p>
+                                                        <p className="text-[9px] font-medium text-gray-600 leading-tight mb-1">
+                                                            <span className="font-bold">Location:</span> {booking.arrivalDeparture.dropoff.address}{booking.arrivalDeparture.dropoff.location ? `, ${booking.arrivalDeparture.dropoff.location}` : ''}.
+                                                        </p>
+                                                        <a href={booking.arrivalDeparture.dropoff.mapLink || `https://maps.google.com/?q=${encodeURIComponent(booking.arrivalDeparture.dropoff.address + ' ' + booking.arrivalDeparture.dropoff.location)}`} target="_blank" rel="noreferrer" className="text-[10px] text-blue-600 font-bold hover:underline inline-flex items-center mt-0.5">
+                                                            <MapPin className="w-3 h-3 mr-1" /> Open Map Directions
+                                                        </a>
                                                     </div>
                                                 </div>
                                             )}
 
+                                            {day.destinationPhotos && day.destinationPhotos.length > 0 && (
+                                                <div className="mb-2">
+                                                    <div className="flex gap-2 flex-wrap pb-1">
+                                                        {day.destinationPhotos.map((photo, pIdx) => (
+                                                            <Image key={pIdx} src={photo} alt={`Destination`} width={60} height={40} className="object-cover rounded border border-gray-200 shadow-sm print:max-w-none w-[60px] h-[40px] shrink-0" />
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
                                             {day.agenda && <p className="mb-1 text-[10px] text-gray-700 font-semibold capitalize">{day.agenda.replace(/-/g, ' ')}</p>}
                                             {((day.activities && day.activities.length > 0) || (day.highlights && day.highlights.length > 0)) && (
                                                 <div className="mb-2">
@@ -379,7 +424,7 @@ export default function TripPassPage() {
                                                 </div>
                                             )}
                                             {day.hotelPhotos && day.hotelPhotos.length > 0 && (
-                                                <div className="mb-2">
+                                                <div className="mb-2 mt-2">
                                                     <p className="text-[10px] font-bold text-gray-800 mb-1 flex items-center gap-1">
                                                         <span className="text-gray-500 font-medium">Hotel:</span> {day.hotelName || 'Selected Accommodation'} 
                                                         {day.hotelStars && <span className="text-[#D4AF37] tracking-widest text-[8px] uppercase border px-1 py-0.5 rounded-full border-amber-200 bg-amber-50">⭐ {day.hotelStars} Star</span>}
@@ -387,18 +432,6 @@ export default function TripPassPage() {
                                                     <div className="flex gap-2 flex-wrap pb-1">
                                                         {day.hotelPhotos.map((photo, pIdx) => (
                                                             <Image key={pIdx} src={photo} alt={`${day.hotelName || 'Hotel'}`} width={60} height={40} className="object-cover rounded border border-gray-200 shadow-sm print:max-w-none w-[60px] h-[40px] shrink-0" />
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
-                                            {day.destinationPhotos && day.destinationPhotos.length > 0 && (
-                                                <div className="mb-1">
-                                                    <p className="text-[10px] font-bold text-gray-800 mb-1">
-                                                        <span className="text-gray-500 font-medium">Destination:</span> {day.location || `Day ${day.day} Location`}
-                                                    </p>
-                                                    <div className="flex gap-2 flex-wrap pb-1">
-                                                        {day.destinationPhotos.map((photo, pIdx) => (
-                                                            <Image key={pIdx} src={photo} alt={`Destination`} width={60} height={40} className="object-cover rounded border border-gray-200 shadow-sm print:max-w-none w-[60px] h-[40px] shrink-0" />
                                                         ))}
                                                     </div>
                                                 </div>

@@ -322,7 +322,7 @@ const ReviewTrek = ({ guide, searchParams }) => {
   const duration = trekConfig.days || days;
 
   return (
-    <div className="min-h-screen bg-[#F0FDF4]/30 pt-0 sm:pt-2 pb-24 lg:pb-8 px-4 sm:px-6 lg:px-8 font-sans selection:bg-emerald-200 relative -mt-16 sm:-mt-10 md:-mt-12 lg:-mt-14">
+    <div className="min-h-screen bg-slate-50 pt-0 sm:pt-2 pb-24 lg:pb-8 px-4 sm:px-6 lg:px-8 font-sans selection:bg-slate-200 relative -mt-16 sm:-mt-10 md:-mt-12 lg:-mt-14">
       {/* Hide footer only on this page */}
       <style
         dangerouslySetInnerHTML={{
@@ -338,23 +338,23 @@ const ReviewTrek = ({ guide, searchParams }) => {
         <div className="flex items-center gap-4 mb-4 sm:mb-8">
           <button
             onClick={() => router.back()}
-            className="w-10 h-10 flex items-center justify-center bg-white border border-gray-200 text-gray-600 rounded-full hover:bg-gray-50 transition shadow-sm shrink-0"
+            className="w-10 h-10 flex items-center justify-center bg-white border border-gray-200 text-gray-700 rounded-full hover:bg-gray-50 transition shadow-sm shrink-0"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-4 h-4" />
           </button>
           <div>
-            <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest mb-1">
-              Checkout
+            <p className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-widest mb-0.5">
+              Review & Pay
             </p>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight leading-none">
-              Review Booking
+              Trek Summary
             </h1>
           </div>
         </div>
 
         {/* --- Card 1: Trek Overview --- */}
-        <div className="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-emerald-50/50 p-6 sm:p-8 overflow-hidden relative">
-          <div className="absolute top-0 left-0 w-2 h-full bg-emerald-500"></div>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8 overflow-hidden relative">
+          <div className="absolute top-0 left-0 w-1.5 h-full bg-gray-900"></div>
 
           <div className="mb-6 pb-6 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
@@ -371,12 +371,12 @@ const ReviewTrek = ({ guide, searchParams }) => {
                   "—"}
               </div>
             </div>
-            <div className="bg-emerald-50 px-4 py-2 rounded-xl border border-emerald-100/50 w-fit shrink-0">
-              <p className="text-[10px] font-bold text-emerald-700 tracking-wider uppercase mb-0.5">
-                Trek Dates
+            <div className="bg-gray-50 px-4 py-3 rounded-lg border border-gray-200 w-fit shrink-0">
+              <p className="text-[10px] font-bold text-gray-500 tracking-widest uppercase mb-1">
+                Trek Date
               </p>
-              <p className="text-sm font-bold text-emerald-900 flex items-center gap-1.5">
-                <Calendar className="w-4 h-4" />
+              <p className="text-sm font-bold text-gray-900 flex items-center gap-1.5">
+                <Calendar className="w-4 h-4 text-gray-400" />
                 {date.toLocaleDateString("en-US", {
                   day: "numeric",
                   month: "short",

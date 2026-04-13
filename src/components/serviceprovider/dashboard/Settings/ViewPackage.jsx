@@ -252,6 +252,26 @@ export default function ViewPackage({ pkg }) {
                                 </div>
                             )}
 
+                            {pkg.additionalPoints?.length > 0 && (
+                                <div>
+                                    <h3 className="text-[15px] font-black text-gray-900 mb-3 flex items-center gap-2">
+                                        <Info size={18} className="text-emerald-500" /> Additional Information
+                                    </h3>
+                                    <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-5 shadow-sm space-y-2">
+                                        {pkg.additionalPoints.map((point, idx) => {
+                                            const text = typeof point === 'string' ? point : point.text;
+                                            if (!text?.trim()) return null;
+                                            return (
+                                                <div key={idx} className="flex gap-3 text-[13px] text-emerald-800 leading-relaxed">
+                                                    <span className="font-bold shrink-0">•</span>
+                                                    <span>{text}</span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+
                             {pkg.photos?.length > 0 && (
                                 <div>
                                     <h3 className="text-[15px] font-black text-gray-900 mb-3 flex items-center gap-2">

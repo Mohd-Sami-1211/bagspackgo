@@ -340,7 +340,7 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
   const travelers = personalDetails?.personalDetails || [];
 
   return (
-    <div className="min-h-screen bg-[#F0FDF4]/30 pt-0 sm:pt-2 pb-24 lg:pb-8 px-4 sm:px-6 lg:px-8 font-sans selection:bg-emerald-200 relative -mt-16 sm:-mt-10 md:-mt-12 lg:-mt-14">
+    <div className="min-h-screen bg-slate-50 pt-6 sm:pt-8 pb-24 lg:pb-8 px-4 sm:px-6 lg:px-8 font-sans selection:bg-slate-200 relative -mt-20 sm:-mt-20 md:-mt-20 lg:-mt-20">
       {/* Hide footer only on this page */}
       <style
         dangerouslySetInnerHTML={{
@@ -348,31 +348,27 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
         }}
       />
 
-      {/* Decorative Blob */}
-      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-emerald-100/40 rounded-full blur-[100px] -z-10 pointer-events-none translate-x-1/3 -translate-y-1/3"></div>
-
       <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8 relative z-10">
         {/* Header Section */}
         <div className="flex items-center gap-4 mb-4 sm:mb-8">
           <button
             onClick={() => router.back()}
-            className="w-10 h-10 flex items-center justify-center bg-white border border-gray-200 text-gray-600 rounded-full hover:bg-gray-50 transition shadow-sm shrink-0"
+            className="w-10 h-10 flex items-center justify-center bg-white border border-gray-200 text-gray-700 rounded-full hover:bg-gray-50 transition shadow-sm shrink-0"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-4 h-4" />
           </button>
           <div>
-            <p className="text-[10px] sm:text-xs font-bold text-emerald-600 uppercase tracking-[0.15em] mb-0.5">
-              Checkout
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-0.5">
+              Review & Pay
             </p>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight leading-none">
-              Review Booking
+              Trip Summary
             </h1>
           </div>
         </div>
 
         {/* --- Card 1: Trip Overview --- */}
-        <div className="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-emerald-50/50 p-6 sm:p-8 overflow-hidden relative">
-          <div className="absolute top-0 left-0 w-2 h-full bg-emerald-500"></div>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8 overflow-hidden relative">
 
           <div className="mb-6 pb-6 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
@@ -386,12 +382,12 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
                 {guide?.location || tripData?.selectedPackage?.destination}
               </div>
             </div>
-            <div className="bg-emerald-50 px-4 py-2 rounded-xl border border-emerald-100/50 w-fit shrink-0">
-              <p className="text-[10px] font-bold text-emerald-700 tracking-wider uppercase text-emerald-600/80 mb-0.5">
-                Travel Dates
+            <div className="bg-gray-50 px-4 py-3 rounded-lg border border-gray-200 w-fit shrink-0">
+              <p className="text-xs font-semibold text-slate-500 tracking-wider uppercase mb-1">
+                Travel Date
               </p>
-              <p className="text-sm font-bold text-emerald-900 flex items-center gap-1.5">
-                <Calendar className="w-4 h-4" />
+              <p className="text-sm font-bold text-gray-900 flex items-center gap-1.5">
+                <Calendar className="w-4 h-4 text-gray-400" />
                 {date.toLocaleDateString("en-US", {
                   day: "numeric",
                   month: "short",
@@ -403,32 +399,32 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
             <div className="flex flex-col">
-              <p className="text-[10px] font-bold text-gray-400 tracking-wider uppercase text-emerald-600/80 mb-1.5 flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-gray-400" /> Duration
+              <p className="text-xs font-semibold text-slate-500 tracking-wider uppercase mb-1.5 flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-slate-400" /> Duration
               </p>
               <p className="font-bold text-gray-800 text-sm sm:text-base">
                 {days} Days
               </p>
             </div>
             <div className="flex flex-col">
-              <p className="text-[10px] font-bold text-gray-400 tracking-wider uppercase text-emerald-600/80 mb-1.5 flex items-center gap-1.5">
-                <Hotel className="w-3.5 h-3.5 text-gray-400" /> Stay
+              <p className="text-xs font-semibold text-slate-500 tracking-wider uppercase mb-1.5 flex items-center gap-1.5">
+                <Hotel className="w-3.5 h-3.5 text-slate-400" /> Stay
               </p>
               <p className="font-bold text-gray-800 text-sm sm:text-base">
                 {Math.max(1, days - 1)} Nights
               </p>
             </div>
             <div className="flex flex-col">
-              <p className="text-[10px] font-bold text-gray-400 tracking-wider uppercase text-emerald-600/80 mb-1.5 flex items-center gap-1.5">
-                <Users className="w-3.5 h-3.5 text-gray-400" /> Guests
+              <p className="text-xs font-semibold text-slate-500 tracking-wider uppercase mb-1.5 flex items-center gap-1.5">
+                <Users className="w-3.5 h-3.5 text-slate-400" /> Guests
               </p>
               <p className="font-bold text-gray-800 text-sm sm:text-base">
                 {count} Pax
               </p>
             </div>
             <div className="flex flex-col">
-              <p className="text-[10px] font-bold text-gray-400 tracking-wider uppercase text-emerald-600/80 mb-1.5 flex items-center gap-1.5">
-                <Luggage className="w-3.5 h-3.5 text-gray-400" /> Category
+              <p className="text-xs font-semibold text-slate-500 tracking-wider uppercase mb-1.5 flex items-center gap-1.5">
+                <Luggage className="w-3.5 h-3.5 text-slate-400" /> Category
               </p>
               <p className="font-bold text-gray-800 text-sm sm:text-base capitalize">
                 {category}
@@ -440,7 +436,7 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
         {/* --- Double Grid for Logistics & Travelers --- */}
         <div className="grid sm:grid-cols-2 gap-6">
           {/* Logistics Card */}
-          <div className="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-6 sm:p-8 flex flex-col">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8 flex flex-col">
             <h3 className="text-base font-bold text-gray-900 mb-6 flex items-center gap-2">
               <Navigation className="w-5 h-5 text-emerald-500" /> Transportation
             </h3>
@@ -450,7 +446,7 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
               {/* Pickup Node */}
               <div className="relative z-10 pl-8">
                 <div className="absolute top-0.5 left-0 w-4 h-4 rounded-full border-[4px] border-emerald-100 bg-emerald-500"></div>
-                <p className="text-[10px] font-bold text-emerald-600 tracking-wider uppercase text-emerald-600/80 mb-1 line-clamp-1 truncate pr-2">
+                <p className="text-xs font-semibold text-slate-500 tracking-wider uppercase mb-1 line-clamp-1 truncate pr-2">
                   Pickup • {arrivalDeparture?.pickup?.time || "TBD"}
                 </p>
                 <p
@@ -477,7 +473,7 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
               {/* Dropoff Node */}
               <div className="relative z-10 pl-8">
                 <div className="absolute top-0.5 left-0 w-4 h-4 rounded-full border-[4px] border-emerald-100 bg-gray-400"></div>
-                <p className="text-[10px] font-bold text-gray-500 tracking-wider uppercase text-emerald-600/80 mb-1 line-clamp-1 truncate pr-2">
+                <p className="text-xs font-semibold text-slate-500 tracking-wider uppercase mb-1 line-clamp-1 truncate pr-2">
                   Drop Off • {arrivalDeparture?.dropoff?.time || "TBD"}
                 </p>
                 <p
@@ -504,7 +500,7 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
           </div>
 
           {/* Travelers Card */}
-          <div className="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 overflow-hidden flex flex-col">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
             <div className="px-6 py-5 sm:px-8 border-b border-gray-50 flex items-center justify-between">
               <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
                 <User className="w-5 h-5 text-emerald-500" /> Travelers
@@ -542,7 +538,7 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
                     </div>
                     {t.idType && (
                       <div className="text-right">
-                        <p className="text-[9px] font-bold text-gray-400 tracking-wider uppercase text-emerald-600/80">
+                        <p className="text-[9px] font-bold text-gray-400 tracking-widest uppercase">
                           {t.idType?.label ||
                             (typeof t.idType === "string" ? t.idType : "ID")}
                         </p>
@@ -577,7 +573,7 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
 
         {/* --- Checkout Control Deck (Hidden on mobile) --- */}
         {paymentDetails && (
-          <div className="hidden lg:block bg-white rounded-[32px] shadow-[0_15px_40px_rgb(0,0,0,0.06)] border border-emerald-100 overflow-hidden mt-2">
+          <div className="hidden lg:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mt-2">
             <div className="grid md:grid-cols-2">
               {/* Left Side: Coupon & Assurances */}
               <div className="p-6 sm:p-8 border-b md:border-b-0 md:border-r border-gray-100 bg-gray-50/50 flex flex-col justify-between">
@@ -593,18 +589,18 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
                           type="text"
                           value={couponCode}
                           onChange={(e) => setCouponCode(e.target.value)}
-                          className="flex-1 w-full bg-white border border-gray-200 rounded-2xl px-5 py-3.5 text-sm font-bold text-gray-800 placeholder:text-gray-400 placeholder:font-medium focus:ring-2 focus:ring-emerald-500 outline-none uppercase shadow-sm transition-all"
+                          className="flex-1 w-full bg-white border border-gray-200 rounded-lg px-4 py-2.5 text-sm font-medium text-gray-800 placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500 outline-none uppercase shadow-sm transition-all"
                           placeholder="COUPON CODE"
                         />
                         <button
                           onClick={handleApplyCoupon}
-                          className="absolute right-1.5 top-1.5 bottom-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl px-5 transition text-xs shadow-sm active:scale-95"
+                          className="absolute right-1 top-1 bottom-1 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-md px-4 transition text-xs shadow-sm active:scale-95"
                         >
                           Apply
                         </button>
                       </div>
                     ) : (
-                      <div className="flex items-center justify-between bg-emerald-50/80 border border-emerald-200/60 px-5 py-3.5 rounded-2xl shadow-sm transition-all">
+                      <div className="flex items-center justify-between bg-emerald-50 border border-emerald-200 px-4 py-2.5 rounded-lg shadow-sm transition-all">
                         <div className="flex items-center gap-2">
                           <div className="bg-emerald-500 p-1 rounded-full">
                             <CheckCircle2 className="w-3 h-3 text-white" />
@@ -743,7 +739,7 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
                 <div className="pt-6 mt-2 border-t border-gray-100">
                   <div className="flex justify-between items-end mb-6">
                     <div className="flex flex-col">
-                      <span className="text-[10px] font-bold text-gray-400 tracking-wider uppercase text-emerald-600/80 mb-1">
+                      <span className="text-xs font-semibold text-slate-500 tracking-wider uppercase mb-1">
                         Total Payable
                       </span>
                       <span className="font-bold text-gray-900 text-3xl leading-none tracking-tight">
@@ -778,7 +774,7 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
                   <button
                     onClick={handleMakePayment}
                     disabled={isPaymentLoading}
-                    className="w-full h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold text-lg transition-all flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-75 disabled:cursor-not-allowed shadow-[0_10px_20px_rgba(16,185,129,0.25)] group"
+                    className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium text-base transition-all flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-75 disabled:cursor-not-allowed group shadow-sm"
                   >
                     {isPaymentLoading ? (
                       <div className="w-5 h-5 border-[3px] border-white/30 border-t-white rounded-full animate-spin" />
@@ -797,7 +793,7 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
       </div>
 
       {/* Mobile Floating Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] lg:hidden z-50 flex flex-col origin-bottom rounded-t-3xl transition-transform">
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-md lg:hidden z-50 flex flex-col origin-bottom transition-transform">
         {/* Expandable Breakdown Drawer */}
         <AnimatePresence>
           {showFeeBreakdown && paymentDetails && (
@@ -832,7 +828,7 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
                 )}
 
                 <div className="flex flex-col gap-2 pt-3 border-t border-gray-200">
-                  <p className="text-xs font-bold text-gray-800 tracking-wider uppercase text-emerald-600/80">
+                  <p className="text-xs font-semibold text-slate-500 tracking-wider uppercase">
                     Service & Gateway Fees (Incl GST)
                   </p>
                   <div className="flex justify-between items-center text-xs font-semibold text-gray-500 pl-2">
@@ -866,7 +862,7 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
 
                 {/* Coupon Input Mobile */}
                 <div className="mt-4 flex flex-col gap-3">
-                  <label className="text-[10px] font-bold text-gray-400 tracking-wider uppercase text-emerald-600/80">
+                  <label className="text-xs font-semibold text-slate-500 tracking-wider uppercase">
                     Have a Promo Code?
                   </label>
                   {!appliedCoupon ? (
@@ -875,29 +871,29 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
                         type="text"
                         value={couponCode}
                         onChange={(e) => setCouponCode(e.target.value)}
-                        className="flex-1 bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-xs font-bold text-gray-800 placeholder:text-gray-300 outline-none uppercase shadow-sm"
+                        className="flex-1 bg-white border border-gray-200 rounded-md px-3 py-2 text-sm font-medium text-gray-800 placeholder:text-gray-400 outline-none uppercase shadow-sm"
                         placeholder="ENTER COUPON"
                       />
                       <button
                         onClick={handleApplyCoupon}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl px-4 text-xs shadow-sm active:scale-95"
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-md px-4 text-xs shadow-sm active:scale-95"
                       >
                         Apply
                       </button>
                     </div>
                   ) : (
-                    <div className="flex items-center justify-between bg-emerald-50 border border-emerald-200 px-3 py-2.5 rounded-xl shadow-sm">
+                    <div className="flex items-center justify-between bg-emerald-50 border border-emerald-200 px-3 py-2 rounded-md shadow-sm">
                       <div className="flex items-center gap-1.5">
                         <div className="bg-emerald-500 p-0.5 rounded-full">
                           <CheckCircle2 className="w-3 h-3 text-white" />
                         </div>
-                        <span className="font-bold text-emerald-800 text-xs tracking-tight">
+                        <span className="font-medium text-emerald-800 text-sm tracking-tight">
                           {appliedCoupon.code}
                         </span>
                       </div>
                       <button
                         onClick={removeCoupon}
-                        className="text-[10px] font-bold text-emerald-600 underline tracking-tight"
+                        className="text-xs font-medium text-emerald-600 underline tracking-tight"
                       >
                         Remove
                       </button>
@@ -929,7 +925,7 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
               )}
             </button>
             <div className="flex flex-col">
-              <p className="text-[10px] font-bold text-gray-400 tracking-wider uppercase text-emerald-600/80 leading-none">
+              <p className="text-xs font-semibold text-slate-500 tracking-wider uppercase mb-0.5 leading-none">
                 Total Payable
               </p>
               <p className="font-bold text-gray-900 text-xl tracking-tight leading-tight mt-0.5">
@@ -943,7 +939,7 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
           <button
             onClick={handleMakePayment}
             disabled={isPaymentLoading || !agreedToTerms}
-            className={`flex-1 h-12 rounded-xl font-bold tracking-wide shadow-[0_5px_15px_rgba(16,185,129,0.3)] flex items-center justify-center gap-2 active:scale-[0.98] transition ${agreedToTerms ? 'bg-emerald-600 text-white' : 'bg-gray-300 text-gray-500 cursor-not-allowed shadow-none'} disabled:opacity-75`}
+            className={`flex-1 h-12 rounded-lg font-medium tracking-wide shadow-sm flex items-center justify-center gap-2 active:scale-[0.98] transition ${agreedToTerms ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-slate-200 text-slate-500 cursor-not-allowed shadow-none'} disabled:opacity-75`}
           >
             {isPaymentLoading ? (
               <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />

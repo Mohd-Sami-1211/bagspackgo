@@ -199,6 +199,9 @@ export async function POST(request) {
         const whatsExcluded = (body.whatsExcluded || []).filter(
             (w) => typeof w === "string" && w.trim()
         );
+        const termsAndConditions = (body.termsAndConditions || []).filter(
+            (t) => typeof t === "string" && t.trim()
+        );
 
         // Create the event
         const event = await Event.create({
@@ -229,6 +232,7 @@ export async function POST(request) {
             })),
             itinerary: itinerary.map(sanitizeString),
             photographs: body.photographs || [],
+            termsAndConditions: termsAndConditions.map(sanitizeString),
             poster: body.poster || "",
             status: body.status === "draft" ? "draft" : "published",
         });

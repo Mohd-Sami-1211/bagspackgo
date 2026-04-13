@@ -36,7 +36,7 @@ export async function POST(request) {
         
         // Attempt to associate with logged in user if available
         const user = await getCurrentUser();
-        if (user && user.role === 'user') {
+        if (user) {
             body.userId = user.userId;
         }
 

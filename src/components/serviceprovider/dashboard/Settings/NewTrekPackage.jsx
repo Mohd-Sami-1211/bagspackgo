@@ -11,13 +11,13 @@ import {
 import dataJson from 'src/data/data.json';
 
 const destinations = [
-  ...dataJson.destinations.filter(d => ['kashmir', 'ladakh', 'bhaderwah', 'kishtwar'].includes(d.value)).map((d, i) => ({
+  ...dataJson.destinations.filter(d => ['kashmir', 'ladakh', 'bhaderwah', 'warwan-marwah-valley'].includes(d.value)).map((d, i) => ({
     id: i + 1,
     label: d.label,
     value: d.value,
   })),
   { isGroupHeader: true, label: 'Available Soon', value: 'GROUP_HEADER' },
-  ...dataJson.destinations.filter(d => !['kashmir', 'ladakh', 'bhaderwah', 'kishtwar'].includes(d.value)).map((d, i) => ({
+  ...dataJson.destinations.filter(d => !['kashmir', 'ladakh', 'bhaderwah', 'warwan-marwah-valley'].includes(d.value)).map((d, i) => ({
     id: i + 100,
     label: d.label,
     value: d.value,
@@ -28,7 +28,7 @@ const destinations = [
 const trekOptionsMap = {
   'kashmir': ['Kashmir Great Lakes', 'Tarsar Marsar', 'Kolhoi Glacier', 'Other'],
   'bhaderwah': ['Kailash Kund Trek', 'Seoj Dhar Trek', 'Other'],
-  'kishtwar': ['Brahma Trek', 'Other'],
+  'warwan-marwah-valley': ['Brahma Trek', 'Other'],
   'ladakh': ['Chadar Trek', 'Markha Valley', 'Stok Kangri', 'Other'],
   'uttarakhand': ['Valley of Flowers', 'Kedarkantha', 'Roopkund', 'Other'],
   'himachal': ['Hampta Pass', 'Bhrigu Lake', 'Pin Parvati Pass', 'Other'],
