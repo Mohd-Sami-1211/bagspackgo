@@ -1061,6 +1061,21 @@ export default function EventDetailView({ eventId }) {
                                         </div>
                                     </CollapsibleSection>
                                 )}
+
+                                {event.termsAndConditions?.length > 0 && (
+                                    <CollapsibleSection title="Terms & Conditions" icon={FileText} badge={event.termsAndConditions.length}>
+                                        <ol className="space-y-3 pt-2">
+                                            {event.termsAndConditions.map((tc, i) => (
+                                                <li key={i} className="flex items-start gap-3">
+                                                    <span className="w-6 h-6 bg-emerald-100 text-emerald-700 rounded-full text-xs flex items-center justify-center font-bold flex-shrink-0 mt-0.5">
+                                                        {i + 1}
+                                                    </span>
+                                                    <span className="text-neutral-700 text-sm leading-relaxed">{tc}</span>
+                                                </li>
+                                            ))}
+                                        </ol>
+                                    </CollapsibleSection>
+                                )}
                             </div>
                         </motion.div>
                     )}

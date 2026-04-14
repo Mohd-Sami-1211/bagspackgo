@@ -10,9 +10,9 @@ const selectStyles = {
     minHeight: '38px',
     fontSize: '0.875rem',
     fontWeight: 500,
-    borderColor: state.isFocused ? '#10b981' : '#e5e7eb',
-    boxShadow: state.isFocused ? '0 0 0 1px #10b981' : null,
-    '&:hover': { borderColor: state.isFocused ? '#10b981' : '#e5e7eb' },
+    borderColor: state.isFocused ? '#1e293b' : '#e5e7eb',
+    boxShadow: state.isFocused ? '0 0 0 1px #1e293b' : null,
+    '&:hover': { borderColor: state.isFocused ? '#1e293b' : '#e5e7eb' },
     borderRadius: '8px',
     backgroundColor: '#F9FAFB',
     cursor: 'pointer',
@@ -31,8 +31,8 @@ const selectStyles = {
   option: (provided, state) => ({
     ...provided,
     borderRadius: '8px',
-    backgroundColor: state.isSelected ? '#d1fae5' : state.isFocused ? '#f0fdf4' : 'white',
-    color: state.isSelected ? '#065f46' : '#1e293b',
+    backgroundColor: state.isSelected ? '#f1f5f9' : state.isFocused ? '#f8fafc' : 'white',
+    color: state.isSelected ? '#0f172a' : '#475569',
     fontWeight: state.isSelected ? 600 : 400,
     margin: '2px 0',
     padding: '8px 12px',
@@ -45,8 +45,8 @@ const selectStyles = {
   indicatorSeparator: () => ({ display: 'none' }),
   dropdownIndicator: (provided, state) => ({
     ...provided,
-    color: state.isFocused ? '#10b981' : '#9ca3af',
-    '&:hover': { color: '#10b981' },
+    color: state.isFocused ? '#1e293b' : '#9ca3af',
+    '&:hover': { color: '#1e293b' },
     padding: '0 8px',
   }),
 };
@@ -208,8 +208,10 @@ const ArrDep = ({ defaultLocation, onNext, onBack, startDate, duration, pickupDr
       </button>
 
       <div className="max-w-3xl mx-auto">
-        <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-1">Pickup & Drop Off Details</h2>
-        <p className="text-gray-500 mb-6 sm:mb-8 text-sm">Provide your pickup and drop off information</p>
+        <div className="bg-slate-50/80 border border-gray-100 p-6 rounded-xl mb-8">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">Pickup & Drop Off Details</h2>
+          <p className="text-gray-500 text-sm font-medium">Provide your pickup and drop off information for a smooth journey</p>
+        </div>
 
         {/* Tabs */}
         <div className="flex flex-wrap mb-6 sm:mb-8 border-b border-gray-200">
@@ -220,10 +222,10 @@ const ArrDep = ({ defaultLocation, onNext, onBack, startDate, duration, pickupDr
             <button
               key={tab.key}
               onClick={() => setActiveSection(tab.key)}
-              className={`px-4 py-2.5 font-semibold text-sm flex items-center gap-2 transition-colors ${
+              className={`px-4 py-2.5 font-medium text-sm flex items-center gap-2 transition-colors border-b-2 ${
                 activeSection === tab.key
-                  ? 'text-emerald-600 border-b-2 border-emerald-600 -mb-px'
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? 'text-gray-900 border-gray-900'
+                  : 'text-gray-500 border-transparent hover:text-gray-700'
               }`}
             >
               <Car className="h-4 w-4" />
@@ -234,11 +236,11 @@ const ArrDep = ({ defaultLocation, onNext, onBack, startDate, duration, pickupDr
 
         <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
           {/* ── Destination Banner ── */}
-          <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-xl p-4 border border-emerald-100 flex items-center gap-3">
-            <MapPin className="h-5 w-5 text-emerald-600 shrink-0" />
+          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 flex items-center gap-3">
+            <MapPin className="h-5 w-5 text-gray-400 shrink-0" />
             <div>
-              <p className="text-xs font-bold text-emerald-600 uppercase tracking-wider">Your Destination</p>
-              <p className="text-base font-semibold text-gray-800 mt-0.5">{defaultLocation}</p>
+              <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Your Destination</p>
+              <p className="text-base font-medium text-gray-900 mt-0.5">{defaultLocation}</p>
             </div>
           </div>
 
@@ -246,7 +248,7 @@ const ArrDep = ({ defaultLocation, onNext, onBack, startDate, duration, pickupDr
             <div className="space-y-5">
               {/* Pickup City */}
               <div>
-                <label className={labelClass}><MapPin className="h-3.5 w-3.5 text-emerald-600" /> Pickup City*</label>
+                <label className={labelClass}><MapPin className="h-3.5 w-3.5 text-gray-400" /> Pickup City*</label>
                 <Select
                   instanceId="pickup-city"
                   options={cityOptions}
@@ -262,7 +264,7 @@ const ArrDep = ({ defaultLocation, onNext, onBack, startDate, duration, pickupDr
 
               {/* Pickup Address */}
               <div>
-                <label className={labelClass}><MapPin className="h-3.5 w-3.5 text-emerald-600" /> Pickup Address*</label>
+                <label className={labelClass}><MapPin className="h-3.5 w-3.5 text-gray-400" /> Pickup Address*</label>
                 <Select
                   instanceId="pickup-address"
                   options={getLocationOptions(formData.arrival.city?.value)}
@@ -280,13 +282,13 @@ const ArrDep = ({ defaultLocation, onNext, onBack, startDate, duration, pickupDr
               {/* Date & Time */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
                 <div>
-                  <label className={labelClass}><Calendar className="h-3.5 w-3.5 text-emerald-600" /> Pickup Date</label>
+                  <label className={labelClass}><Calendar className="h-3.5 w-3.5 text-gray-400" /> Pickup Date</label>
                   <div className="px-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-sm font-medium text-gray-800">
                     {formatDate(startDate)}
                   </div>
                 </div>
                 <div>
-                  <label className={labelClass}><Clock className="h-3.5 w-3.5 text-emerald-600" /> Pickup Time*</label>
+                  <label className={labelClass}><Clock className="h-3.5 w-3.5 text-gray-400" /> Pickup Time*</label>
                   <div className="flex gap-1.5 items-center">
                     <div className="flex-1">
                       <Select instanceId="arr-hour" options={hourOptions} value={formData.arrival.time}
@@ -316,7 +318,7 @@ const ArrDep = ({ defaultLocation, onNext, onBack, startDate, duration, pickupDr
             <div className="space-y-5">
               {/* Drop Off City */}
               <div>
-                <label className={labelClass}><MapPin className="h-3.5 w-3.5 text-emerald-600" /> Drop Off City*</label>
+                <label className={labelClass}><MapPin className="h-3.5 w-3.5 text-gray-400" /> Drop Off City*</label>
                 <Select
                   instanceId="dropoff-city"
                   options={cityOptions}
@@ -332,7 +334,7 @@ const ArrDep = ({ defaultLocation, onNext, onBack, startDate, duration, pickupDr
 
               {/* Drop Off Address */}
               <div>
-                <label className={labelClass}><MapPin className="h-3.5 w-3.5 text-emerald-600" /> Drop Off Address*</label>
+                <label className={labelClass}><MapPin className="h-3.5 w-3.5 text-gray-400" /> Drop Off Address*</label>
                 <Select
                   instanceId="dropoff-address"
                   options={getLocationOptions(formData.departure.city?.value)}
@@ -350,13 +352,13 @@ const ArrDep = ({ defaultLocation, onNext, onBack, startDate, duration, pickupDr
               {/* Date & Time */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
                 <div>
-                  <label className={labelClass}><Calendar className="h-3.5 w-3.5 text-emerald-600" /> Drop Off Date</label>
+                  <label className={labelClass}><Calendar className="h-3.5 w-3.5 text-gray-400" /> Drop Off Date</label>
                   <div className="px-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-sm font-medium text-gray-800">
                     {formatDate(dropoffDate)}
                   </div>
                 </div>
                 <div>
-                  <label className={labelClass}><Clock className="h-3.5 w-3.5 text-emerald-600" /> Drop Off Time*</label>
+                  <label className={labelClass}><Clock className="h-3.5 w-3.5 text-gray-400" /> Drop Off Time*</label>
                   <div className="flex gap-1.5 items-center">
                     <div className="flex-1">
                       <Select instanceId="dep-hour" options={hourOptions} value={formData.departure.time}
@@ -395,7 +397,7 @@ const ArrDep = ({ defaultLocation, onNext, onBack, startDate, duration, pickupDr
             </button>
             <button
               type="submit"
-              className="w-full sm:w-auto px-6 py-2.5 bg-green-600 text-white rounded-xl hover:bg-green-700 active:scale-95 transition-all flex items-center justify-center gap-2 text-sm font-semibold shadow-md shadow-green-200/60"
+              className="w-full sm:w-auto px-6 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 active:scale-95 transition-all flex items-center justify-center gap-2 text-sm font-medium shadow-sm"
             >
               Save & Continue
               <ArrowRight className="h-4 w-4" />
@@ -404,16 +406,16 @@ const ArrDep = ({ defaultLocation, onNext, onBack, startDate, duration, pickupDr
         </form>
 
         {/* Tips */}
-        <div className="mt-8 p-4 sm:p-5 bg-emerald-50 rounded-xl border border-emerald-100">
-          <h4 className="font-semibold text-emerald-800 mb-3 flex items-center gap-2 text-sm sm:text-base">
-            <Car className="h-4 w-4 text-emerald-600" />
+        <div className="mt-8 p-5 bg-gray-50 rounded-lg border border-gray-200">
+          <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2 text-sm">
+            <Car className="h-4 w-4 text-gray-500" />
             Transportation Tips
           </h4>
-          <ul className="text-sm text-emerald-700 space-y-2">
-            <li className="flex items-start gap-2"><span className="mt-0.5 shrink-0">•</span><span>Be at your pickup point at least 10 minutes before the scheduled time</span></li>
-            <li className="flex items-start gap-2"><span className="mt-0.5 shrink-0">•</span><span>Our driver will contact you 30 minutes before reaching your location</span></li>
-            <li className="flex items-start gap-2"><span className="mt-0.5 shrink-0">•</span><span>Keep your booking confirmation ready for verification at pickup</span></li>
-            <li className="flex items-start gap-2"><span className="mt-0.5 shrink-0">•</span><span>Ensure your luggage is within the permitted size and weight limits</span></li>
+          <ul className="text-sm text-gray-600 space-y-2">
+            <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-gray-300 mt-1.5 shrink-0" /><span>Be at your pickup point at least 10 minutes before the scheduled time</span></li>
+            <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-gray-300 mt-1.5 shrink-0" /><span>Our driver will contact you 30 minutes before reaching your location</span></li>
+            <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-gray-300 mt-1.5 shrink-0" /><span>Keep your booking confirmation ready for verification at pickup</span></li>
+            <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-gray-300 mt-1.5 shrink-0" /><span>Ensure your luggage is within the permitted size and weight limits</span></li>
           </ul>
         </div>
       </div>

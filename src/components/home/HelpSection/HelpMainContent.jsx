@@ -15,13 +15,9 @@ export default function HelpMainContent() {
   const [success, setSuccess] = useState(false);
 
   // Form states
-  const [phone, setPhone] = useState(user?.phone || '');
+  const [phone, setPhone] = useState('');
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
-
-  useEffect(() => {
-    if (user?.phone && !phone) setPhone(user.phone);
-  }, [user]);
 
   useEffect(() => {
     fetchQueries();

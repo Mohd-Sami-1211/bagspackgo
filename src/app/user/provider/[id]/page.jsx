@@ -145,13 +145,13 @@ async function ProviderJsonLd({ id }) {
                     kashmir: '34.0837',
                     ladakh: '34.1526',
                     bhaderwah: '32.9806',
-                    kishtwar: '33.3106'
+                    "warwan-marwah-valley": '33.3106'
                 }[destination] || '28.6139',
                 longitude: {
                     kashmir: '74.7973',
                     ladakh: '77.5771',
                     bhaderwah: '75.7135',
-                    kishtwar: '75.7661'
+                    "warwan-marwah-valley": '75.7661'
                 }[destination] || '77.2090',
             },
             areaServed: {

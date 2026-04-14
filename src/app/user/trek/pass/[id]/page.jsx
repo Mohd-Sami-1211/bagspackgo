@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { QRCodeSVG } from 'qrcode.react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { MapPin, User, Mail, Phone, Instagram, Facebook, Globe, CheckCircle2, Navigation, Mountain, X } from 'lucide-react';
 
 const formatTimeWithAMPM = (time) => {
@@ -91,14 +92,15 @@ export default function TrekPassPage() {
     const termsAndConditionsList = getList('termsAndConditions');
     const itineraryList = getList('itinerary');
     
-    const packageName = pSnapshot.name || booking?.packageName || (booking.bookingType === 'trip' ? "Premium Trip Package" : "Premium Trek Package");
+    const packageName = pSnapshot.name || booking?.packageName || "Premium Trek Package";
     const providerName = booking?.guideName || booking?.companyName || gSnapshot.companyName || gSnapshot.name || booking?.providerName || "bagspackgo Verified Partner";
-    const destinationName = pSnapshot.destination || booking?.destination || arrivalDepartureOrPickupDropoff?.pickup?.city || (booking.bookingType === 'trip' ? "Kashmir Valleys" : "Himalayan Trails");
+    const destinationName = pSnapshot.destination || booking?.destination || arrivalDepartureOrPickupDropoff?.pickup?.city || "Himalayan Trails";
     const travelers = personalDetails?.personalDetails || [];
+    const gallery = getList('gallery');
 
     const passUrl = typeof window !== 'undefined' 
-        ? `${window.location.origin}/user/${booking?.bookingType === 'trek' ? 'trek' : 'trip'}/pass/${id}` 
-        : `https://bagspackgo.com/user/${booking?.bookingType === 'trek' ? 'trek' : 'trip'}/pass/${id}`;
+        ? `${window.location.origin}/user/trek/pass/${id}` 
+        : `https://bagspackgo.com/user/trek/pass/${id}`;
 
     return (
         <div className="min-h-screen bg-[#F0FDF4] p-4 sm:p-8 flex items-center justify-center font-sans" style={{ fontFamily: "'Outfit', sans-serif" }}>
@@ -167,7 +169,11 @@ export default function TrekPassPage() {
                         </div>
                         <div className="flex-1 w-full md:text-right border-l-4 border-emerald-500 pl-4 sm:pl-6 bg-emerald-50/30 p-4 rounded-r-2xl shrink-0 flex flex-col justify-center">
                             <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest mb-1.5 md:text-right">{booking?.bookingType === 'trek' ? 'Trek Managed By' : 'Trip Managed By'}</p>
-                            <h2 className="text-lg sm:text-xl font-black text-gray-900 md:text-right">{providerName}</h2>
+                            <h2 className="text-lg sm:text-xl font-black text-gray-900 md:text-right">
+                                {booking?.provider ? (
+                                    <Link href={`/user/provider/${booking.provider}`} className="hover:text-emerald-700 hover:underline">{providerName}</Link>
+                                ) : providerName}
+                            </h2>
                             <div className="flex flex-col md:items-end gap-1 mt-3">
                                 {booking?.providerPhone && (
                                     <p className="text-[10px] sm:text-xs font-bold text-gray-600 flex items-center gap-1.5">
@@ -182,7 +188,6 @@ export default function TrekPassPage() {
                                 <div className="flex gap-4 mt-2">
                                     {booking?.instagram && <a href={booking.instagram.startsWith('http') ? booking.instagram : `https://instagram.com/${booking.instagram}`} target="_blank" rel="noreferrer"><Instagram className="w-4 h-4 sm:w-5 sm:h-5 text-pink-500 hover:opacity-80 transition-opacity cursor-pointer" /></a>}
                                     {booking?.facebook && <a href={booking.facebook.startsWith('http') ? booking.facebook : `https://facebook.com/${booking.facebook}`} target="_blank" rel="noreferrer"><Facebook className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 hover:opacity-80 transition-opacity cursor-pointer" /></a>}
-                                    {booking?.website && <a href={booking.website.startsWith('http') ? booking.website : `https://${booking.website}`} target="_blank" rel="noreferrer"><Globe className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600 hover:opacity-80 transition-opacity cursor-pointer" /></a>}
                                 </div>
                             </div>
                         </div>
@@ -204,12 +209,24 @@ export default function TrekPassPage() {
                                     <p className="font-bold text-gray-900 text-sm sm:text-base">{formatDate(startDate)}</p>
                                 </div>
                                 <div className="text-center sm:text-left">
-                                    <p className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Pickup</p>
-                                    <p className="font-bold text-gray-900 text-[10px] sm:text-xs">{(arrivalDepartureOrPickupDropoff?.pickup?.location && arrivalDepartureOrPickupDropoff?.pickup?.time) ? `${arrivalDepartureOrPickupDropoff.pickup.location} @ ${arrivalDepartureOrPickupDropoff.pickup.time}` : 'TBD'}</p>
+                                    <p className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 flex items-center justify-center sm:justify-start gap-1">Pickup</p>
+                                    {(arrivalDepartureOrPickupDropoff?.pickup?.address && arrivalDepartureOrPickupDropoff?.pickup?.time) ? (
+                                        <div className="flex flex-col gap-0.5">
+                                            <p className="font-bold text-gray-900 text-[10px] sm:text-xs leading-tight">{arrivalDepartureOrPickupDropoff.pickup.address} {arrivalDepartureOrPickupDropoff.pickup.location ? `(${arrivalDepartureOrPickupDropoff.pickup.location})` : ''}</p>
+                                            <p className="font-medium text-gray-500 text-[9px] sm:text-[10px]">{formatDate(arrivalDepartureOrPickupDropoff.pickup.date || startDate)} @ {arrivalDepartureOrPickupDropoff.pickup.time}</p>
+                                            <a href={arrivalDepartureOrPickupDropoff.pickup.mapLink || `https://maps.google.com/?q=${encodeURIComponent(arrivalDepartureOrPickupDropoff.pickup.address + ' ' + (arrivalDepartureOrPickupDropoff.pickup.location || ''))}`} target="_blank" rel="noreferrer" className="text-[9px] text-emerald-600 font-bold hover:underline flex items-center justify-center sm:justify-start mt-0.5"><MapPin className="w-2.5 h-2.5 mr-0.5" /> View Map</a>
+                                        </div>
+                                    ) : <p className="font-bold text-gray-900 text-[10px] sm:text-xs">TBD</p>}
                                 </div>
                                 <div className="text-center sm:text-left">
-                                    <p className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Dropoff</p>
-                                    <p className="font-bold text-gray-900 text-[10px] sm:text-xs">{(arrivalDepartureOrPickupDropoff?.dropoff?.location && arrivalDepartureOrPickupDropoff?.dropoff?.time) ? `${arrivalDepartureOrPickupDropoff.dropoff.location} @ ${arrivalDepartureOrPickupDropoff.dropoff.time}` : 'TBD'}</p>
+                                    <p className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 flex items-center justify-center sm:justify-start gap-1">Dropoff</p>
+                                    {(arrivalDepartureOrPickupDropoff?.dropoff?.address && arrivalDepartureOrPickupDropoff?.dropoff?.time) ? (
+                                        <div className="flex flex-col gap-0.5">
+                                            <p className="font-bold text-gray-900 text-[10px] sm:text-xs leading-tight">{arrivalDepartureOrPickupDropoff.dropoff.address} {arrivalDepartureOrPickupDropoff.dropoff.location ? `(${arrivalDepartureOrPickupDropoff.dropoff.location})` : ''}</p>
+                                            <p className="font-medium text-gray-500 text-[9px] sm:text-[10px]">{formatDate(arrivalDepartureOrPickupDropoff.dropoff.date || booking.endDate || startDate)} @ {arrivalDepartureOrPickupDropoff.dropoff.time}</p>
+                                            <a href={arrivalDepartureOrPickupDropoff.dropoff.mapLink || `https://maps.google.com/?q=${encodeURIComponent(arrivalDepartureOrPickupDropoff.dropoff.address + ' ' + (arrivalDepartureOrPickupDropoff.dropoff.location || ''))}`} target="_blank" rel="noreferrer" className="text-[9px] text-emerald-600 font-bold hover:underline flex items-center justify-center sm:justify-start mt-0.5"><MapPin className="w-2.5 h-2.5 mr-0.5" /> View Map</a>
+                                        </div>
+                                    ) : <p className="font-bold text-gray-900 text-[10px] sm:text-xs">TBD</p>}
                                 </div>
                                 <div className="text-center sm:text-left">
                                     <p className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Guests</p>
@@ -336,6 +353,20 @@ export default function TrekPassPage() {
                         </div>
                     )}
 
+                    {/* Trek Gallery Snippet */}
+                    {gallery && gallery.length > 0 && (
+                        <div className="mt-8 pt-6 border-t border-emerald-100 print-section">
+                            <h4 className="font-bold text-gray-800 uppercase tracking-widest mb-4 text-[11px] flex items-center gap-2">
+                                <Mountain className="w-3 h-3 text-emerald-600" /> Trek Gallery
+                            </h4>
+                            <div className="flex flex-wrap gap-3">
+                                {gallery.slice(0, 5).map((photo, pIdx) => (
+                                    <Image key={pIdx} priority src={photo} alt={`Trek Photo`} width={120} height={80} className="object-cover rounded-xl border border-gray-200 shadow-sm print:max-w-none w-[120px] h-[80px] shrink-0" />
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Detailed Itinerary Row */}
                     {itineraryList.length > 0 && (
                         <div className="mt-8 pt-6 border-t border-emerald-100 print-section">
@@ -355,27 +386,25 @@ export default function TrekPassPage() {
                                             {/* Day 1 Pickup */}
                                             {idx === 0 && arrivalDepartureOrPickupDropoff?.pickup?.address && (
                                                 <div className="mb-2 p-1.5 bg-emerald-50 rounded border border-emerald-100 flex items-start gap-1.5">
-                                                    <Navigation className="w-3 h-3 text-emerald-600 shrink-0 mt-0.5" />
+                                                    <Navigation className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                                                     <div className="min-w-0">
-                                                        <p className="text-[9px] font-bold text-gray-800 leading-tight">
-                                                            Pickup from {arrivalDepartureOrPickupDropoff.pickup.address}{arrivalDepartureOrPickupDropoff.pickup.location ? `, ${arrivalDepartureOrPickupDropoff.pickup.location}` : ''} at {arrivalDepartureOrPickupDropoff.pickup.time || 'given time'}.
+                                                        <p className="text-[10px] font-bold text-gray-800 leading-tight mb-0.5">
+                                                            Day 1 Pickup Details
                                                         </p>
+                                                        <p className="text-[9px] font-medium text-gray-600 leading-tight mb-1">
+                                                            <span className="font-bold">Date:</span> {formatDate(arrivalDepartureOrPickupDropoff.pickup.date || startDate)} &nbsp;|&nbsp; 
+                                                            <span className="font-bold">Time:</span> {arrivalDepartureOrPickupDropoff.pickup.time || 'TBD'}
+                                                        </p>
+                                                        <p className="text-[9px] font-medium text-gray-600 leading-tight mb-1">
+                                                            <span className="font-bold">Location:</span> {arrivalDepartureOrPickupDropoff.pickup.address}{arrivalDepartureOrPickupDropoff.pickup.location ? `, ${arrivalDepartureOrPickupDropoff.pickup.location}` : ''}.
+                                                        </p>
+                                                        <a href={arrivalDepartureOrPickupDropoff.pickup.mapLink || `https://maps.google.com/?q=${encodeURIComponent(arrivalDepartureOrPickupDropoff.pickup.address + ' ' + (arrivalDepartureOrPickupDropoff.pickup.location || ''))}`} target="_blank" rel="noreferrer" className="text-[10px] text-emerald-600 font-bold hover:underline inline-flex items-center mt-0.5">
+                                                            <MapPin className="w-3 h-3 mr-1" /> Open Map Directions
+                                                        </a>
                                                     </div>
                                                 </div>
                                             )}
                                             
-                                            {/* Last Day Dropoff */}
-                                            {idx === itineraryList.length - 1 && arrivalDepartureOrPickupDropoff?.dropoff?.address && (
-                                                <div className="mb-2 p-1.5 bg-blue-50 rounded border border-blue-100 flex items-start gap-1.5">
-                                                    <Navigation className="w-3 h-3 text-blue-600 shrink-0 mt-0.5" />
-                                                    <div className="min-w-0">
-                                                        <p className="text-[9px] font-bold text-gray-800 leading-tight">
-                                                            Drop off at {arrivalDepartureOrPickupDropoff.dropoff.address}{arrivalDepartureOrPickupDropoff.dropoff.location ? `, ${arrivalDepartureOrPickupDropoff.dropoff.location}` : ''} at {arrivalDepartureOrPickupDropoff.dropoff.time || 'given time'}.
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            )}
-
                                             {(() => {
                                                 let sections = [];
                                                 if (day.highlights && day.highlights.length > 0) {
@@ -414,15 +443,37 @@ export default function TrekPassPage() {
                                                     </div>
                                                 </div>
                                             )}
-                                            {day.destinationPhotos && day.destinationPhotos.length > 0 && (
+                                            {(day.destinationPhotos?.length > 0 || day.photos?.length > 0) && (
                                                 <div className="mb-1">
                                                     <p className="text-[10px] font-bold text-gray-800 mb-1">
-                                                        <span className="text-gray-500 font-medium">Destination:</span> {day.location || `Day ${day.day} Location`}
+                                                        <span className="text-gray-500 font-medium">{day.photos?.length ? 'Trek Views' : 'Destination'}:</span> {day.location || `Day ${day.day} Location`}
                                                     </p>
                                                     <div className="flex gap-2 flex-wrap pb-1">
-                                                        {day.destinationPhotos.map((photo, pIdx) => (
-                                                            <Image key={pIdx} src={photo} alt={`Destination`} width={60} height={40} className="object-cover rounded border border-gray-200 shadow-sm print:max-w-none w-[60px] h-[40px] shrink-0" />
+                                                        {(day.destinationPhotos || day.photos).map((photo, pIdx) => (
+                                                            <Image key={pIdx} src={photo} alt={`Destination View`} width={60} height={40} className="object-cover rounded border border-gray-200 shadow-sm print:max-w-none w-[60px] h-[40px] shrink-0" />
                                                         ))}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Last Day Dropoff */}
+                                            {idx === itineraryList.length - 1 && arrivalDepartureOrPickupDropoff?.dropoff?.address && (
+                                                <div className="mb-2 mt-4 p-1.5 bg-blue-50 rounded border border-blue-100 flex items-start gap-1.5">
+                                                    <Navigation className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                                                    <div className="min-w-0">
+                                                        <p className="text-[10px] font-bold text-gray-800 leading-tight mb-0.5">
+                                                            Final Dropoff Details
+                                                        </p>
+                                                        <p className="text-[9px] font-medium text-gray-600 leading-tight mb-1">
+                                                            <span className="font-bold">Date:</span> {formatDate(arrivalDepartureOrPickupDropoff.dropoff.date || booking.endDate || startDate)} &nbsp;|&nbsp; 
+                                                            <span className="font-bold">Time:</span> {arrivalDepartureOrPickupDropoff.dropoff.time || 'TBD'}
+                                                        </p>
+                                                        <p className="text-[9px] font-medium text-gray-600 leading-tight mb-1">
+                                                            <span className="font-bold">Location:</span> {arrivalDepartureOrPickupDropoff.dropoff.address}{arrivalDepartureOrPickupDropoff.dropoff.location ? `, ${arrivalDepartureOrPickupDropoff.dropoff.location}` : ''}.
+                                                        </p>
+                                                        <a href={arrivalDepartureOrPickupDropoff.dropoff.mapLink || `https://maps.google.com/?q=${encodeURIComponent(arrivalDepartureOrPickupDropoff.dropoff.address + ' ' + (arrivalDepartureOrPickupDropoff.dropoff.location || ''))}`} target="_blank" rel="noreferrer" className="text-[10px] text-blue-600 font-bold hover:underline inline-flex items-center mt-0.5">
+                                                            <MapPin className="w-3 h-3 mr-1" /> Open Map Directions
+                                                        </a>
                                                     </div>
                                                 </div>
                                             )}

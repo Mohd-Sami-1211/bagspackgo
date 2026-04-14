@@ -62,12 +62,12 @@ const adventures = [
 ];
 
 const faqs = [
-  { question: 'What is bagspackgo?', answer: 'A travel platform that connects tourists directly with verified local guides and small travel firms.' },
-  { question: 'How is bagspackgo different?', answer: 'Direct access to local guides, full itinerary customization, and transparent pricing — no middlemen.' },
-  { question: 'How do I book a tour?', answer: 'Search by destination, dates, and group size, then book a guide directly through the platform.' },
-  { question: 'Can I customize my itinerary?', answer: 'Yes! Collaborate with your guide to add or remove services and activities any time.' },
-  { question: 'Are guides verified?', answer: 'All guides undergo identity checks, quality screening, and have community reviews.' },
-  { question: 'What payment methods are accepted?', answer: 'Credit/debit cards, UPI, net banking, and digital wallets via our secure payment gateway.' },
+  { question: 'What is bagspackgo?', answer: 'A direct travel platform for Kashmir and Ladakh. We connect you straight to verified local guides, without middlemen or hidden fees.' },
+  { question: 'How does it work?', answer: 'Browse fixed packages for Trips, Treks, or Events. As our itineraries are expertly pre-planned, they cannot be customized. Book instantly and receive your E-Ticket.' },
+  { question: 'Are the local guides verified?', answer: 'Yes. We thoroughly verify every local guide for safety, expertise, and professionalism before they can list their packages.' },
+  { question: 'How can I book a package?', answer: 'Select a package, choose your dates and group size, and pay securely online. You will immediately receive a Booking Pass with your guide\'s contact info.' },
+  { question: 'What are Events?', answer: 'Events are thrilling, date-specific adventures hosted by local experts. Discover and book these action-packed, adrenaline-fueled group experiences directly in our Events section.' },
+  { question: 'Is it trustworthy to buy a package from bagspackgo?', answer: 'Completely. Your payment is processed through a secure gateway, and your booking connects directly to a verified local guide. We ensure absolute transparency.' },
 ];
 
 
@@ -117,7 +117,7 @@ const PopularDestinations = () => {
   };
 
   return (
-    <section className="px-4 sm:px-6 py-6 max-w-7xl mx-auto">
+    <section className="px-4 sm:px-6 md:px-8 py-6 w-full mx-auto">
       <SectionHeading pre="Kashmir Crown" accent="Jewels" />
 
       {/* Category tabs */}
@@ -166,7 +166,7 @@ const PopularDestinations = () => {
                       images={places[slideIdx].images}
                       name={places[slideIdx].name}
                       description={places[slideIdx].description}
-                      bgColor="from-green-500 to-green-700"
+                      bgColor="bg-slate-900"
                       textColor="text-white"
                     />
                   </motion.div>
@@ -191,7 +191,7 @@ const PopularDestinations = () => {
                     images={place.images}
                     name={place.name}
                     description={place.description}
-                    bgColor="from-green-500 to-green-700"
+                    bgColor="bg-slate-900"
                     textColor="text-white"
                   />
                 </div>
@@ -255,7 +255,7 @@ const AdventureSlider = () => {
   };
 
   return (
-    <section ref={sectionRef} className="py-6 px-4 sm:px-6 max-w-7xl mx-auto overflow-hidden">
+    <section ref={sectionRef} className="py-6 px-4 sm:px-6 md:px-8 w-full mx-auto overflow-hidden">
       <div>
         <SectionHeading pre="Thrill Seeker's" accent="Paradise" />
 
@@ -387,30 +387,30 @@ export default function TripMainContent() {
   const [activeIndex, setActiveIndex] = useState(null);
 
   return (
-    <div className="w-full h-full flex flex-col items-center overflow-x-hidden">
+    <div className="w-full h-full flex flex-col items-center overflow-x-hidden font-sans">
       {/* ── Hero + Search ───────────────────────────────── */}
       <div className="relative w-full">
         <div
-          className="w-full h-[260px] sm:h-[320px] md:h-[380px] lg:h-[400px] bg-center bg-cover bg-no-repeat relative overflow-hidden flex items-center justify-center text-center px-4"
-          style={{ backgroundImage: "url('/images/hero.svg')", backgroundPosition: 'center top' }}
+          className="w-full h-[300px] sm:h-[400px] bg-slate-900 relative overflow-hidden flex flex-col items-center justify-center text-center px-4"
         >
-          {/* Main Hero Content - Explicitly Centered */}
-          <div className="z-20 w-full flex justify-center mt-[-60px] sm:mt-[-60px] md:mt-[-88px] lg:mt-[-120px] pointer-events-none px-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 30 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }} 
-              transition={{ duration: 0.8, ease: "easeOut" }}
-              className="text-center w-full"
-            >
-              <h1 className="text-[2.5rem] sm:text-[3.5rem] md:text-[4rem] lg:text-[4.5rem] xl:text-[5rem] leading-[1.15] font-extrabold text-white tracking-tight uppercase drop-shadow-[0_6px_6px_rgba(0,0,0,0.8)] filter md:whitespace-nowrap">
-                Your <span className="text-emerald-400 drop-shadow-[0_2px_10px_rgba(16,185,129,0.5)]">Next</span> Adventure
-              </h1>
-            </motion.div>
-          </div>
-
-          {/* Overlay to ensure text pops up while keeping image bright */}
-          <div className="absolute inset-0 bg-black/20 z-0" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 z-0" />
+          {/* Subtle hero background image */}
+          <div 
+            className="absolute inset-0 opacity-40 bg-cover bg-center"
+            style={{ backgroundImage: "url('/images/hero.svg')" }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-slate-900/50 z-0" />
+          
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }} 
+            transition={{ duration: 0.7, ease: "easeOut" }}
+            className="relative z-20 w-full max-w-4xl -mt-10"
+          >
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white tracking-tight mb-4">
+              Your <span className="text-emerald-400">Next</span> Adventure
+            </h1>
+            
+          </motion.div>
         </div>
 
         <div className="w-full px-4 -mt-24 sm:-mt-32 md:-mt-44 lg:-mt-40 relative z-20 pb-4 flex justify-center">
@@ -425,11 +425,17 @@ export default function TripMainContent() {
       {/* ── Sections (Even spacing) ────────────────────────── */}
       <div className="flex flex-col gap-10 sm:gap-16 md:gap-24 mt-8 md:mt-12 pb-8 md:pb-16">
         <div><AdContent /></div>
-        <div><PopularDestinations /></div>
-        <div><AdventureSlider /></div>
-        <div><Testimonials /></div>
-        <div id="about" className="scroll-mt-24"><AboutUs /></div>
-        <div id="faq" className="scroll-mt-24">
+        <div className="w-full">
+          <PopularDestinations />
+        </div>
+        <div className="w-full">
+          <AdventureSlider />
+        </div>
+        {/* <div><Testimonials /></div> */}
+        <div id="about" className="scroll-mt-24 w-full">
+          <AboutUs />
+        </div>
+        <div id="faq" className="scroll-mt-24 w-full">
           <FAQ
             faqs={faqs}
             activeIndex={activeIndex}

@@ -67,21 +67,20 @@ export default function PendingBookingNotification() {
 
   return (
     <div className="fixed bottom-4 sm:bottom-6 left-0 right-0 sm:left-auto sm:right-6 pointer-events-none z-[9999] flex justify-center sm:justify-end px-4 sm:px-0 animate-in slide-in-from-bottom-5 fade-in duration-500">
-      <div className="bg-white border border-emerald-500/30 rounded-2xl shadow-[0_20px_50px_-5px_max(rgba(16,185,129,0.3))] p-4 sm:p-5 w-full max-w-[340px] sm:max-w-sm relative overflow-hidden flex flex-col ring-4 ring-emerald-50 pointer-events-auto">
-        <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-emerald-400 to-emerald-600"></div>
+      <div className="bg-white border border-slate-200 rounded-xl shadow-xl p-5 w-full max-w-[340px] sm:max-w-sm relative overflow-hidden flex flex-col pointer-events-auto">
         <div className="flex items-start gap-3">
-          <div className="bg-emerald-50 p-2 rounded-xl mt-0.5 border border-emerald-100">
-             <AlertCircle className="w-6 h-6 text-emerald-600" />
+          <div className="mt-0.5">
+             <AlertCircle className="w-5 h-5 text-emerald-600" />
           </div>
-          <div className="flex flex-col flex-1 pr-6">
-            <h4 className="text-[15px] font-extrabold text-gray-900 tracking-tight leading-none mb-1">Pending Booking!</h4>
-            <p className="text-[13px] font-semibold text-gray-500 leading-snug">
+          <div className="flex flex-col flex-1 pr-1 text-left">
+            <h4 className="text-sm font-bold text-slate-900 tracking-tight leading-none mb-1">Pending Booking</h4>
+            <p className="text-xs font-medium text-slate-500 leading-snug">
               You left a booking incomplete. Would you like to resume where you left off?
             </p>
           </div>
         </div>
         
-        <div className="mt-5 flex items-center justify-between gap-3">
+        <div className="mt-4 flex items-center justify-end gap-2">
            <button
              onClick={() => {
                 const pendingStr = localStorage.getItem('pending_booking');
@@ -92,7 +91,7 @@ export default function PendingBookingNotification() {
                 }
                 setShow(false);
              }}
-             className="flex-1 py-2 px-3 text-xs font-bold text-gray-500 hover:bg-gray-100 hover:text-gray-800 rounded-xl transition-colors border border-gray-100"
+             className="cursor-pointer py-1.5 px-3 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-md transition-colors"
            >
              Ignore
            </button>
@@ -101,13 +100,13 @@ export default function PendingBookingNotification() {
                 sessionStorage.setItem('hide_pending_booking', 'true');
                 setShow(false);
              }}
-             className="flex-1 py-2 px-3 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-xl transition-colors border border-emerald-100"
+             className="cursor-pointer py-1.5 px-3 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-md transition-colors"
            >
              Later
            </button>
            <a
              href={bookingData.url}
-             className="flex-1 py-2 px-3 text-center text-xs font-black text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors shadow-sm shadow-emerald-200"
+             className="cursor-pointer py-1.5 px-3 text-center text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-md transition-colors"
            >
              Resume
            </a>

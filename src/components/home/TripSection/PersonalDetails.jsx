@@ -7,6 +7,7 @@ import {
   X, Heart, Users, Check, AlertCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '@/context/AuthContext';
 
 /* ── Custom dropdown styling ─────────────────────────── */
 const customSelectStyles = {
@@ -14,9 +15,9 @@ const customSelectStyles = {
     ...provided,
     minHeight: '40px',
     fontSize: '0.85rem',
-    borderColor: state.isFocused ? '#10b981' : '#d1d5db',
-    boxShadow: state.isFocused ? '0 0 0 1px #10b981' : null,
-    '&:hover': { borderColor: state.isFocused ? '#10b981' : '#d1d5db' },
+    borderColor: state.isFocused ? '#1e293b' : '#d1d5db',
+    boxShadow: state.isFocused ? '0 0 0 1px #1e293b' : null,
+    '&:hover': { borderColor: state.isFocused ? '#1e293b' : '#d1d5db' },
     borderRadius: '8px',
     backgroundColor: '#fff',
     cursor: 'pointer',
@@ -26,8 +27,8 @@ const customSelectStyles = {
   option: (p, state) => ({
     ...p,
     borderRadius: '6px',
-    backgroundColor: state.isSelected ? '#a7f3d0' : state.isFocused ? '#d1fae5' : 'white',
-    color: state.isSelected ? '#065f46' : '#1e293b',
+    backgroundColor: state.isSelected ? '#f1f5f9' : state.isFocused ? '#f8fafc' : 'white',
+    color: state.isSelected ? '#0f172a' : '#475569',
     padding: '8px 12px', margin: '4px 0',
     '&:active': { backgroundColor: '#6ee7b7' },
   }),
@@ -54,11 +55,21 @@ const PersonalDetails = ({
   // Now count is always an exact number (from the counter)
   const numPeople = Math.max(1, parseInt(countRaw) || 1);
 
+  const { user } = useAuth();
   // Contact details state
   const [contactDetails, setContactDetails] = useState({
-    email: "",
-    mobile: "",
+    email: user?.email || "",
+    mobile: user?.phone || "",
   });
+
+  useEffect(() => {
+    if (user && (!contactDetails.email || !contactDetails.mobile)) {
+        setContactDetails(prev => ({
+            email: prev.email || user.email || "",
+            mobile: prev.mobile || user.phone || ""
+        }));
+    }
+  }, [user]);
 
   // Personal details state - fixed number based on count
   const [personalDetails, setPersonalDetails] = useState([]);
@@ -260,18 +271,19 @@ const PersonalDetails = ({
           onClick={() => toggleSection(index)}
           className={`w-full flex items-center justify-between px-4 py-3 transition-colors ${
             isExpanded 
-              ? 'bg-emerald-50 border-b border-emerald-100' 
+              ? 'bg-gray-50 border-b border-gray-100' 
               : hasErrors 
                 ? 'bg-red-50 hover:bg-red-100/60' 
                 : filled 
-                  ? 'bg-gray-50 hover:bg-gray-100' 
+                  ? 'bg-emerald-50 hover:bg-emerald-100/60' 
                   : 'bg-white hover:bg-gray-50'
           }`}
         >
           <div className="flex items-center gap-3 min-w-0">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-              hasErrors ? 'bg-red-100 text-red-600' : filled ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-100 text-gray-500'
-            }`}>
+            <div
+              className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                hasErrors ? 'bg-red-50 text-red-600 border border-red-100' : filled ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-gray-100 text-gray-500 border border-gray-200'
+              }`}>
               {hasErrors ? (
                 <AlertCircle className="w-4 h-4" />
               ) : filled ? (
@@ -460,15 +472,18 @@ const PersonalDetails = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <h3 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-4 flex items-center">
-        <Users className="h-5 w-5 sm:h-6 sm:w-6 text-emerald-600 mr-2" />
-        Personal Details
-      </h3>
+      <div className="bg-slate-50/80 border-b border-gray-100 p-4 sm:px-6 sm:py-5 -mx-4 sm:-mx-6 -mt-4 sm:-mt-6 mb-6 rounded-t-xl">
+        <h3 className="text-xl font-bold text-gray-900 flex items-center">
+          <Users className="h-5 w-5 text-gray-500 mr-2.5" />
+          Personal Details
+        </h3>
+        <p className="text-xs text-gray-500 mt-1 font-medium">Please provide accurate information for all travellers.</p>
+      </div>
 
       {/* Contact Details Section */}
-      <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
         <h4 className="text-base font-semibold text-gray-800 mb-4 flex items-center">
-          <span className="w-6 h-6 flex items-center justify-center bg-white text-emerald-700 rounded-full mr-2.5 text-xs font-bold shadow-sm">1</span>
+          <span className="w-6 h-6 flex items-center justify-center bg-gray-100 text-gray-700 rounded-full mr-2.5 text-xs font-bold shadow-sm">1</span>
           Contact Information
         </h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -515,10 +530,10 @@ const PersonalDetails = ({
       </div>
 
       {/* Traveller Details Section - Accordion based */}
-      <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 mt-6">
         <h4 className="text-base font-semibold text-gray-800 mb-2 flex items-center justify-between">
           <div className="flex items-center">
-            <span className="w-6 h-6 flex items-center justify-center bg-white text-emerald-700 rounded-full mr-2.5 text-xs font-bold shadow-sm">2</span>
+            <span className="w-6 h-6 flex items-center justify-center bg-gray-100 text-gray-700 rounded-full mr-2.5 text-xs font-bold shadow-sm">2</span>
             {category === 'couple'
               ? `Traveller Details (${numPeople} ${numPeople === 1 ? 'Couple' : 'Couples'} — ${totalTravellers} People)`
               : `Traveller Details (${numPeople} ${numPeople === 1 ? 'Person' : 'People'})`
@@ -546,7 +561,7 @@ const PersonalDetails = ({
         </button>
         <button
           type="submit"
-          className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors flex items-center shadow-sm hover:shadow-md group text-sm"
+          className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors flex items-center shadow-sm hover:shadow-md group text-sm font-medium"
         >
           Review Journey
           <ArrowRight className="h-4 w-4 ml-2 transition-transform group-hover:translate-x-1" />

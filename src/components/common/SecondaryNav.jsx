@@ -29,13 +29,13 @@ export default function SecondaryNav() {
   }, [pathname]);
 
   return (
-    <div className="relative bg-white/50 shadow-sm w-full overflow-hidden">
+    <div className="relative bg-white border-b border-slate-200 w-full overflow-hidden shadow-sm">
       {/* Desktop / Tablet - Improved centering */}
       <div className="hidden md:flex justify-center w-full text-gray-700 font-medium text-lg relative px-4">
         <div className="flex justify-center md:gap-16 lg:gap-32 w-full max-w-5xl">
           {/* Underline indicator */}
           <motion.div
-            className="absolute bottom-0 h-1 bg-green-500 rounded-full"
+            className="absolute bottom-0 h-0.5 bg-emerald-600 rounded-t-full"
             animate={{
               width: underlineWidth,
               left: underlineLeft,
@@ -56,13 +56,12 @@ export default function SecondaryNav() {
                 key={tab.label}
                 href={tab.path}
                 ref={el => tabRefs.current[idx] = el}
-                className={`relative py-4 flex items-center gap-2 ${isActive ? 'text-green-600 font-semibold' : 'hover:text-green-500'
-                  }`}
+                className={`relative py-4 flex items-center gap-2 text-sm transition-colors ${isActive ? 'text-emerald-700 font-semibold' : 'text-slate-600 hover:text-emerald-600 font-medium'}`}
               >
                 <motion.span
                   animate={{
                     scale: isActive ? 1.05 : 1,
-                    color: isActive ? '#16a34a' : '#374151'
+                    color: isActive ? '#047857' : '#475569'
                   }}
                   transition={{ type: 'spring', stiffness: 500 }}
                   className="flex items-center gap-2 whitespace-nowrap"
@@ -86,14 +85,14 @@ export default function SecondaryNav() {
               href={tab.path}
               ref={el => tabRefs.current[idx] = el}
               className={`
-                flex flex-col items-center justify-center py-3 
-                ${isActive ? 'text-green-600 font-semibold' : 'text-gray-700 hover:text-green-500'}
+                flex flex-col items-center justify-center py-3 transition-colors
+                ${isActive ? 'text-emerald-700 font-semibold bg-emerald-50/50' : 'text-slate-600 hover:text-emerald-600 font-medium'}
               `}
             >
               <motion.div
                 animate={{
                   scale: isActive ? 1.05 : 1,
-                  color: isActive ? '#16a34a' : '#374151'
+                  color: isActive ? '#047857' : '#475569'
                 }}
                 transition={{ type: 'spring', stiffness: 500 }}
                 className="flex flex-col items-center justify-center gap-1"

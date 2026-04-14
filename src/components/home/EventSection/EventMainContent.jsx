@@ -518,7 +518,7 @@ const EventMainContent = () => {
                       d.label?.toLowerCase().includes(destinationSearch.toLowerCase()) ||
                       d.value?.toLowerCase().includes(destinationSearch.toLowerCase())
                     );
-                    const availableValues = ['kashmir', 'ladakh', 'bhaderwah', 'kishtwar'];
+                    const availableValues = ['kashmir', 'ladakh', 'bhaderwah', 'warwan-marwah-valley'];
                     const activeDestinations = filtered.filter(d => availableValues.includes(d.value));
                     const others = filtered.filter(d => !availableValues.includes(d.value));
 

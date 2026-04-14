@@ -4,7 +4,7 @@ import {
   MapPin, Clock, Calendar, Star, User, Ticket, ChevronRight, Info,
   AlertCircle, Map, CheckCircle, CreditCard, ShieldCheck, ArrowLeft,
   Mail, Phone, Upload, XCircle, ChevronDown, ExternalLink, HelpCircle,
-  Minus, Plus, Navigation, Users, Sparkles, Bookmark, Share2
+  Minus, Plus, Navigation, Users, Sparkles, Bookmark, Share2, FileText
 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 
-/* ─────────────────── Custom Dropdown ─────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Custom Dropdown â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const CustomSelect = ({ value, onChange, options, placeholder }) => {
   const [isOpen, setIsOpen] = useState(false);
   const selectRef = useRef(null);
@@ -34,10 +34,10 @@ const CustomSelect = ({ value, onChange, options, placeholder }) => {
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full p-2.5 border rounded-lg text-left flex items-center justify-between transition-all bg-white text-sm outline-none ${isOpen ? 'border-emerald-500 ring-2 ring-emerald-500/20' : 'border-gray-300 hover:border-emerald-400'} ${value ? 'text-gray-800' : 'text-gray-400'}`}
+        className={`w-full p-2.5 border rounded-lg text-left flex items-center justify-between transition-all bg-white text-sm outline-none ${isOpen ? 'border-[#10b981] ring-1 ring-[#10b981] shadow-[0_0_0_1px_#10b981]' : 'border-[#d1d5db] hover:border-[#10b981]'} ${value ? 'text-gray-900' : 'text-gray-400'}`}
       >
         <span className="truncate">{value ? options.find(o => o.value === value)?.label : placeholder}</span>
-        <ChevronDown size={16} className={`text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown size={14} className={`text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       <AnimatePresence>
@@ -47,17 +47,17 @@ const CustomSelect = ({ value, onChange, options, placeholder }) => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -5 }}
             transition={{ duration: 0.15 }}
-            className="absolute z-50 w-full mt-1 bg-white rounded-lg shadow-xl border border-gray-100 py-1 max-h-48 overflow-y-auto"
+            className="absolute z-50 w-full mt-1 bg-white rounded-lg shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-1px_rgba(0,0,0,0.06)] border border-gray-100 p-1 max-h-48 overflow-y-auto"
           >
             {options.map((opt) => (
               <button
                 key={opt.value}
                 type="button"
                 onClick={() => { onChange(opt.value); setIsOpen(false); }}
-                className={`w-full px-3 py-2 text-left text-sm transition-colors flex items-center justify-between ${value === opt.value ? 'bg-emerald-50 text-emerald-700 font-medium' : 'hover:bg-gray-50 text-gray-700'}`}
+                className={`w-full px-3 py-2 text-left text-sm transition-all flex items-center justify-between rounded-md my-0.5 ${value === opt.value ? 'bg-[#a7f3d0] text-[#065f46] font-medium' : 'hover:bg-[#d1fae5] hover:shadow-[inset_0_0_0_1px_#a7f3d0] text-[#1e293b]'}`}
               >
                 {opt.label}
-                {value === opt.value && <CheckCircle size={14} className="text-emerald-500" />}
+                {value === opt.value && <CheckCircle size={14} className="text-[#065f46]" />}
               </button>
             ))}
           </motion.div>
@@ -73,10 +73,10 @@ const EventDetails = ({ event }) => {
   const isUserAuthenticated = !authLoading && user?.role === "user";
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // ── View state: 'details' or 'booking' ──
+  // â”€â”€ View state: 'details' or 'booking' â”€â”€
   const [currentView, setCurrentView] = useState('details');
 
-  // ── Tabs for the details view ──
+  // â”€â”€ Tabs for the details view â”€â”€
   const [activeTab, setActiveTab] = useState('eventDetails');
   const tabsRef = useRef(null);
   const tabs = [
@@ -96,10 +96,10 @@ const EventDetails = ({ event }) => {
     }
   };
 
-  // ── Photo lightbox ──
+  // â”€â”€ Photo lightbox â”€â”€
   const [lightboxPhoto, setLightboxPhoto] = useState(null);
 
-  // ── Booking state ──
+  // â”€â”€ Booking state â”€â”€
   const [bookingSlots, setBookingSlots] = useState(1);
   const [bookingStep, setBookingStep] = useState(1);
   const [selectedPickup, setSelectedPickup] = useState('');
@@ -116,14 +116,27 @@ const EventDetails = ({ event }) => {
   const [showFeeDetails, setShowFeeDetails] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
 
-  // ── Save & Share state ──
+  // â”€â”€ Save & Share state â”€â”€
   const [isSaved, setIsSaved] = useState(false);
+  const [isWished, setIsWished] = useState(false);
   const [showSaveToast, setShowSaveToast] = useState(false);
 
   const [formData, setFormData] = useState({
-    contactDetails: { email: '', phone: '' },
+    contactDetails: { email: user?.email || '', phone: user?.phone || '' },
     participants: [createEmptyParticipant()],
   });
+
+  useEffect(() => {
+    if (user && (!formData.contactDetails.email || !formData.contactDetails.phone)) {
+        setFormData(prev => ({
+            ...prev,
+            contactDetails: {
+                email: prev.contactDetails.email || user.email || '',
+                phone: prev.contactDetails.phone || user.phone || ''
+            }
+        }));
+    }
+  }, [user]);
 
   useEffect(() => {
     if (!isInitialized) {
@@ -193,7 +206,7 @@ const EventDetails = ({ event }) => {
     }
   }, [currentView, authLoading, isUserAuthenticated, openAuthModal]);
 
-  // ── Check if event is saved ──
+  // â”€â”€ Check if event is saved â”€â”€
   useEffect(() => {
     if (!isUserAuthenticated) return;
     (async () => {
@@ -203,6 +216,15 @@ const EventDetails = ({ event }) => {
         if (data.success && data.saved) {
           const eventId = event._id || event.id;
           setIsSaved(data.saved.some(item => item.itemId === eventId));
+        }
+      } catch {}
+
+      try {
+        const eventId = event._id || event.id;
+        const res = await fetch(`/api/user/events/${eventId}/wish/status`);
+        if (res.ok) {
+            const data = await res.json();
+            setIsWished(data.isWished);
         }
       } catch {}
     })();
@@ -232,6 +254,24 @@ const EventDetails = ({ event }) => {
       }
     } catch (err) {
       console.error('Failed to update saved status', err);
+    }
+  };
+
+  const handleWish = async () => {
+    if (!isUserAuthenticated) {
+      openAuthModal({ closable: true, tab: 'user' });
+      return;
+    }
+    try {
+      const eventId = event._id || event.id;
+      const res = await fetch(`/api/user/events/${eventId}/wish`, {
+          method: 'POST'
+      });
+      if (res.ok) {
+          setIsWished(true);
+      }
+    } catch (err) {
+      console.error('Failed to wish for event', err);
     }
   };
 
@@ -470,28 +510,27 @@ const EventDetails = ({ event }) => {
     }
   };
 
-  // ── Custom select style override for emerald theme ──
-  const selectClassName = "w-full p-2.5 border rounded-lg outline-none text-sm border-gray-300 bg-white appearance-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500";
+  // â”€â”€ Custom select style override for emerald theme â”€â”€
+  const selectClassName = "w-full p-2.5 border rounded-lg outline-none text-sm border-gray-300 bg-white appearance-none focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600";
 
-  /* ═══════════════════ RENDER ═══════════════════ */
+  /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• RENDER â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
-  // ── Save Toast ──
+  // â”€â”€ Save Toast â”€â”€
   const saveToast = showSaveToast && (
-    <div className="fixed bottom-10 inset-x-0 flex justify-center z-[100] px-4">
-      <div className="bg-gray-950 border border-white/20 text-white px-6 py-4 rounded-3xl flex items-center shadow-[0_20px_50px_rgba(0,0,0,0.3)] backdrop-blur-xl animate-in fade-in slide-in-from-bottom-5 duration-300 ring-1 ring-white/10">
-        <div className="bg-emerald-500 p-1.5 rounded-full mr-3 shadow-lg shadow-emerald-500/20">
-          <Bookmark className="h-4 w-4 text-white fill-white" />
+    <div className="fixed bottom-4 sm:bottom-6 sm:right-6 z-[100] flex w-full max-w-[420px] flex-col p-4 sm:p-0">
+      <div className="pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border border-slate-200 bg-white p-6 shadow-lg animate-in fade-in slide-in-from-bottom-5 font-sans">
+        <div className="flex-1 space-y-1">
+          <p className="text-sm font-semibold text-slate-950">Event Saved</p>
+          <p className="text-sm text-slate-500">Added to your favorites.</p>
         </div>
-        <div className="flex flex-col">
-          <span className="text-sm font-black tracking-tight uppercase">Event Saved!</span>
-          <p className="text-[10px] text-gray-400 font-bold tracking-wide">Added to your favorites</p>
-        </div>
-        <a href="/user/saved" className="ml-6 text-xs font-black text-emerald-400 hover:text-emerald-300 transition-all bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl whitespace-nowrap border border-white/5 uppercase tracking-widest">Explore</a>
+        <a href="/user/saved" className="inline-flex h-8 items-center justify-center rounded-md border border-slate-200 bg-transparent px-3 text-sm font-medium text-slate-950 transition-colors hover:bg-slate-100 focus:outline-none focus:ring-1 focus:ring-slate-950 disabled:pointer-events-none disabled:opacity-50">
+          View
+        </a>
       </div>
     </div>
   );
 
-  // ── BOOKING VIEW ──
+  // â”€â”€ BOOKING VIEW â”€â”€
   if (currentView === 'booking') {
     return (
       <div className="w-full bg-gray-50 min-h-screen pb-24 relative z-[60] pt-6 sm:pt-8 -mt-20 border-t border-gray-200">
@@ -499,7 +538,7 @@ const EventDetails = ({ event }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
           {bookingStep === 1 ? (
             <div className="flex flex-col lg:flex-row gap-8 items-start">
-              {/* ── Form Details (Left) ── */}
+              {/* â”€â”€ Form Details (Left) â”€â”€ */}
               <div className="w-full lg:w-[65%] space-y-6">
 
                 {/* Card: Number of Participants */}
@@ -508,13 +547,13 @@ const EventDetails = ({ event }) => {
                     <div className="flex items-start gap-4">
                       <button
                         onClick={() => { setCurrentView('details'); setBookingStep(1); }}
-                        className="mt-1 w-8 h-8 rounded-full border border-gray-200 bg-white flex items-center justify-center text-gray-400 hover:text-emerald-600 hover:border-emerald-200 hover:bg-emerald-50 transition-all flex-shrink-0 shadow-sm group"
+                        className="mt-1 w-8 h-8 rounded-full border border-gray-200 bg-white flex items-center justify-center text-gray-400 hover:text-gray-900 hover:border-gray-200 hover:bg-gray-50 transition-all flex-shrink-0 shadow-sm group"
                       >
                         <ArrowLeft size={18} className="group-hover:-translate-x-0.5 transition-transform" />
                       </button>
                       <div>
                         <h2 className="text-xl font-bold text-gray-900 mb-1">Number of Participants</h2>
-                        <p className="text-gray-500 text-sm font-medium">₹{event.price?.toLocaleString()} per person</p>
+                        <p className="text-gray-500 text-sm font-medium">{"\u20B9"}{event.price?.toLocaleString()} per person</p>
                       </div>
                     </div>
                     <div className="flex flex-col items-end gap-2">
@@ -524,7 +563,7 @@ const EventDetails = ({ event }) => {
                                     setBookingSlots(s => Math.max(1, s - 1));
                                     setSlotError('');
                                 }}
-                                className="w-10 h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:text-emerald-600 hover:border-emerald-200 shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500 active:scale-90"
+                                className="w-10 h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:text-gray-900 hover:border-gray-200 shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-emerald-600 active:scale-90"
                             >
                                 <Minus size={18} />
                             </button>
@@ -542,7 +581,7 @@ const EventDetails = ({ event }) => {
                                     setBookingSlots(s => s + 1);
                                     setSlotError('');
                                 }}
-                                className="w-10 h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:text-emerald-600 hover:border-emerald-200 shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500 active:scale-90"
+                                className="w-10 h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:text-gray-900 hover:border-gray-200 shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-emerald-600 active:scale-90"
                             >
                                 <Plus size={18} />
                             </button>
@@ -553,7 +592,7 @@ const EventDetails = ({ event }) => {
                                 animate={{ opacity: 1, y: 0 }}
                                 className="text-[10px] font-bold text-red-500 uppercase tracking-wider"
                             >
-                                ⚠ {slotError}
+                                {"\u26A0"} {slotError}
                             </motion.p>
                         )}
                     </div>
@@ -568,10 +607,10 @@ const EventDetails = ({ event }) => {
                       <button
                         type="button"
                         onClick={() => setPickupDropdownOpen(!pickupDropdownOpen)}
-                        className={`w-full px-4 py-3 rounded-xl border flex items-center justify-between transition-all bg-white shadow-sm outline-none focus:ring-2 focus:ring-emerald-500/50 ${formErrors['pickup'] ? 'border-red-500 animate-pulse' : selectedPickup ? 'border-emerald-500 bg-emerald-50/10' : 'border-gray-200 hover:border-emerald-300'}`}
+                        className={`w-full px-4 py-3 rounded-lg border flex items-center justify-between transition-all bg-white shadow-sm outline-none ${formErrors['pickup'] ? 'border-red-500 ring-1 ring-red-500' : selectedPickup ? 'border-[#10b981] shadow-[0_0_0_1px_#10b981]' : 'border-[#d1d5db] hover:border-[#10b981]'}`}
                       >
                         <div className="flex items-center gap-3 min-w-0 flex-1">
-                          <MapPin size={18} className={selectedPickup ? 'text-emerald-500' : 'text-gray-400'} />
+                          <MapPin size={18} className={selectedPickup ? 'text-gray-900' : 'text-gray-400'} />
                           {selectedPickup ? (
                             <div className="min-w-0 text-left">
                               <p className="font-semibold text-gray-900 text-sm truncate">{selectedPickup}</p>
@@ -592,7 +631,7 @@ const EventDetails = ({ event }) => {
                               target="_blank"
                               rel="noopener noreferrer"
                               onClick={(e) => e.stopPropagation()}
-                              className="flex items-center gap-1 text-emerald-600 hover:text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-2 py-1 text-xs font-semibold transition-all focus:outline-none"
+                              className="flex items-center gap-1 text-gray-900 hover:text-gray-900 bg-gray-50 border border-gray-200 rounded-lg px-2 py-1 text-xs font-semibold transition-all focus:outline-none"
                             >
                               <Navigation size={12} /> <span className="hidden sm:inline">Map</span>
                             </a>
@@ -608,17 +647,17 @@ const EventDetails = ({ event }) => {
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -8 }}
                             transition={{ duration: 0.15 }}
-                            className="absolute z-50 w-full mt-2 bg-white rounded-xl shadow-xl border border-gray-100 py-2 max-h-60 overflow-y-auto"
+                            className="absolute z-50 w-full mt-1 bg-white rounded-lg shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-1px_rgba(0,0,0,0.06)] border border-gray-100 p-1 max-h-60 overflow-y-auto"
                           >
                             {event.pickupPoints.map((point, i) => (
                               <button
                                 key={i}
                                 type="button"
                                 onClick={() => { setSelectedPickup(point.location); setPickupDropdownOpen(false); }}
-                                className={`w-full px-4 py-3 text-left transition-colors flex items-center justify-between gap-3 ${selectedPickup === point.location ? 'bg-emerald-50/60 text-emerald-800' : 'hover:bg-gray-50 text-gray-700'}`}
+                                className={`w-full px-3 py-2 text-left transition-all flex items-center justify-between gap-3 rounded-md my-0.5 ${selectedPickup === point.location ? 'bg-[#a7f3d0] text-[#065f46] font-medium' : 'hover:bg-[#d1fae5] hover:shadow-[inset_0_0_0_1px_#a7f3d0] text-[#1e293b]'}`}
                               >
                                 <div className="flex items-center gap-3 min-w-0 flex-1">
-                                  <MapPin size={16} className={selectedPickup === point.location ? 'text-emerald-500' : 'text-gray-400'} />
+                                  <MapPin size={16} className={selectedPickup === point.location ? 'text-gray-900' : 'text-gray-400'} />
                                   <div className="min-w-0">
                                     <p className="font-semibold text-sm truncate">{point.location}</p>
                                     {point.time && (
@@ -628,7 +667,7 @@ const EventDetails = ({ event }) => {
                                     )}
                                   </div>
                                 </div>
-                                {selectedPickup === point.location && <CheckCircle size={18} className="text-emerald-500 flex-shrink-0" />}
+                                {selectedPickup === point.location && <CheckCircle size={18} className="text-[#065f46] flex-shrink-0" />}
                               </button>
                             ))}
                           </motion.div>
@@ -650,7 +689,7 @@ const EventDetails = ({ event }) => {
                         <Input type="email" placeholder="your@email.com" value={formData.contactDetails.email} onChange={e => handleContactChange('email', e.target.value)}
                           className={`w-full pl-10 h-12 bg-gray-50 focus:bg-white transition-all ${formErrors['contact.email'] ? 'border-red-500 ring-red-500' : 'border-gray-200'}`} />
                       </div>
-                      {formErrors['contact.email'] && <p className="text-[10px] text-red-500 font-bold mt-1 ml-1 uppercase letter-spacing-wide">⚠ {formErrors['contact.email']}</p>}
+                      {formErrors['contact.email'] && <p className="text-[10px] text-red-500 font-bold mt-1 ml-1 uppercase letter-spacing-wide">{"\u26A0"} {formErrors['contact.email']}</p>}
                     </div>
                     <div>
                       <label className="block text-sm font-bold text-gray-700 mb-1.5">Phone Number <span className="text-red-500">*</span></label>
@@ -659,7 +698,7 @@ const EventDetails = ({ event }) => {
                         <Input type="tel" placeholder="9876543210" value={formData.contactDetails.phone} onChange={e => handleContactChange('phone', e.target.value)}
                           className={`w-full pl-10 h-12 bg-gray-50 focus:bg-white transition-all ${formErrors['contact.phone'] ? 'border-red-500 ring-red-500' : 'border-gray-200'}`} maxLength="10" />
                       </div>
-                      {formErrors['contact.phone'] && <p className="text-[10px] text-red-500 font-bold mt-1 ml-1 uppercase letter-spacing-wide">⚠ {formErrors['contact.phone']}</p>}
+                      {formErrors['contact.phone'] && <p className="text-[10px] text-red-500 font-bold mt-1 ml-1 uppercase letter-spacing-wide">{"\u26A0"} {formErrors['contact.phone']}</p>}
                     </div>
                   </div>
                 </div>
@@ -678,23 +717,23 @@ const EventDetails = ({ event }) => {
                         <div key={i} className={`border border-gray-200 rounded-xl bg-white shadow-sm transition-all group ${isExpanded ? 'z-40 relative' : 'z-10 relative'}`} style={{ overflow: isExpanded ? 'visible' : 'hidden' }}>
                           <button
                             onClick={() => toggleSection(i)}
-                            className={`w-full flex justify-between items-center p-4 sm:p-5 transition-colors ${isExpanded ? 'bg-emerald-50/40 border-b border-gray-200 cursor-default rounded-t-xl' : isFilled ? 'bg-gray-50 hover:bg-gray-100 rounded-xl' : 'bg-white hover:bg-gray-50 rounded-xl'}`}
+                            className={`w-full flex justify-between items-center p-4 sm:p-5 transition-colors ${isExpanded ? 'bg-gray-50/40 border-b border-gray-200 cursor-default rounded-t-xl' : isFilled ? 'bg-gray-50 hover:bg-gray-100 rounded-xl' : 'bg-white hover:bg-gray-50 rounded-xl'}`}
                           >
                             <div className="flex items-center gap-4">
-                              <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-colors shadow-sm font-bold text-sm ${formErrors[`p.${i}.name`] || formErrors[`p.${i}.age`] || formErrors[`p.${i}.gender`] ? 'bg-red-50 text-red-500 border border-red-200' : isFilled ? 'bg-emerald-100 text-emerald-600 border border-emerald-200' : 'bg-white border border-gray-300 text-gray-500 group-hover:border-emerald-300 group-hover:text-emerald-500'}`}>
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-colors shadow-sm font-bold text-sm ${formErrors[`p.${i}.name`] || formErrors[`p.${i}.age`] || formErrors[`p.${i}.gender`] ? 'bg-red-50 text-red-500 border border-red-200' : isFilled ? 'bg-gray-100 text-gray-900 border border-gray-200' : 'bg-white border border-gray-300 text-gray-500 group-hover:border-gray-300 group-hover:text-gray-900'}`}>
                                 {isFilled ? <CheckCircle className="w-4 h-4" /> : (i + 1)}
                               </div>
                               <div className="text-left">
                                 <p className="text-sm font-bold text-gray-900">Traveller {i + 1}</p>
                                 {!isExpanded && isFilled && (
                                   <p className="text-xs text-gray-500 truncate mt-0.5 font-medium">
-                                    {p.name} · Age {p.age} · {p.gender?.charAt(0).toUpperCase() + p.gender?.slice(1)}
+                                    {p.name} {"\u00B7"} Age {p.age} {"\u00B7"} {p.gender?.charAt(0).toUpperCase() + p.gender?.slice(1)}
                                   </p>
                                 )}
                               </div>
                             </div>
                             <motion.div animate={{ rotate: isExpanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
-                              <ChevronDown className={`w-5 h-5 ${isExpanded ? 'text-emerald-600' : 'text-gray-400'}`} />
+                              <ChevronDown className={`w-5 h-5 ${isExpanded ? 'text-gray-900' : 'text-gray-400'}`} />
                             </motion.div>
                           </button>
 
@@ -709,28 +748,28 @@ const EventDetails = ({ event }) => {
                               >
                                 <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-5 bg-white rounded-b-xl overflow-visible">
                                   <div>
-                                    <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Full Name <span className="text-emerald-500">*</span></label>
+                                    <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Full Name <span className="text-gray-900">*</span></label>
                                     <Input placeholder="As per official ID" value={p.name || ''} onChange={e => handleParticipantChange(i, 'name', e.target.value)}
                                       className={`h-11 ${formErrors[`p.${i}.name`] ? 'border-red-500 ring-red-500 bg-red-50/30' : 'border-gray-200'}`} />
-                                    {formErrors[`p.${i}.name`] && <p className="text-[10px] text-red-500 font-bold mt-1 uppercase">⚠ {formErrors[`p.${i}.name`]}</p>}
+                                    {formErrors[`p.${i}.name`] && <p className="text-[10px] text-red-500 font-bold mt-1 uppercase">{"\u26A0"} {formErrors[`p.${i}.name`]}</p>}
                                   </div>
                                   <div>
-                                    <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Age <span className="text-emerald-500">*</span></label>
+                                    <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Age <span className="text-gray-900">*</span></label>
                                     <Input placeholder="Enter age" type="number" min="1" max="100" value={p.age || ''} onChange={e => handleParticipantChange(i, 'age', e.target.value)}
                                       className={`h-11 ${formErrors[`p.${i}.age`] ? 'border-red-500 ring-red-500 bg-red-50/30' : 'border-gray-200'}`} />
-                                    {formErrors[`p.${i}.age`] && <p className="text-[10px] text-red-500 font-bold mt-1 uppercase">⚠ {formErrors[`p.${i}.age`]}</p>}
+                                    {formErrors[`p.${i}.age`] && <p className="text-[10px] text-red-500 font-bold mt-1 uppercase">{"\u26A0"} {formErrors[`p.${i}.age`]}</p>}
                                   </div>
                                   <div>
-                                    <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Mobile Number <span className="text-emerald-500">*</span></label>
+                                    <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Mobile Number <span className="text-gray-900">*</span></label>
                                     <div className="relative">
                                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Phone className="h-4 w-4 text-gray-400" /></div>
                                       <Input placeholder="9876543210" type="tel" maxLength="10" value={p.phone || ''} onChange={e => handleParticipantChange(i, 'phone', e.target.value)}
                                         className={`h-11 pl-10 ${formErrors[`p.${i}.phone`] ? 'border-red-500 ring-red-500 bg-red-50/30' : 'border-gray-200'}`} />
                                     </div>
-                                    {formErrors[`p.${i}.phone`] && <p className="text-[10px] text-red-500 font-bold mt-1 uppercase">⚠ {formErrors[`p.${i}.phone`]}</p>}
+                                    {formErrors[`p.${i}.phone`] && <p className="text-[10px] text-red-500 font-bold mt-1 uppercase">{"\u26A0"} {formErrors[`p.${i}.phone`]}</p>}
                                   </div>
                                   <div className="relative z-[60]">
-                                    <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Gender <span className="text-emerald-500">*</span></label>
+                                    <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Gender <span className="text-gray-900">*</span></label>
                                     <CustomSelect
                                       value={p.gender || ''}
                                       onChange={(val) => handleParticipantChange(i, 'gender', val)}
@@ -741,16 +780,16 @@ const EventDetails = ({ event }) => {
                                       ]}
                                       placeholder="Select Gender"
                                     />
-                                    {formErrors[`p.${i}.gender`] && <p className="text-[10px] text-red-500 font-bold mt-1 uppercase">⚠ {formErrors[`p.${i}.gender`]}</p>}
+                                    {formErrors[`p.${i}.gender`] && <p className="text-[10px] text-red-500 font-bold mt-1 uppercase">{"\u26A0"} {formErrors[`p.${i}.gender`]}</p>}
                                   </div>
                                   <div className="relative z-[50]">
-                                    <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Nationality <span className="text-emerald-500">*</span></label>
+                                    <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Nationality <span className="text-gray-900">*</span></label>
                                     <Input placeholder="E.g., Indian" value={p.nationality || ''} onChange={e => handleParticipantChange(i, 'nationality', e.target.value)}
                                       className={`h-11 ${formErrors[`p.${i}.nationality`] ? 'border-red-500 ring-red-500 bg-red-50/30' : 'border-gray-200'}`} />
-                                    {formErrors[`p.${i}.nationality`] && <p className="text-[10px] text-red-500 font-bold mt-1 uppercase">⚠ {formErrors[`p.${i}.nationality`]}</p>}
+                                    {formErrors[`p.${i}.nationality`] && <p className="text-[10px] text-red-500 font-bold mt-1 uppercase">{"\u26A0"} {formErrors[`p.${i}.nationality`]}</p>}
                                   </div>
                                   <div className="relative z-[40]">
-                                    <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">ID Type <span className="text-emerald-500">*</span></label>
+                                    <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">ID Type <span className="text-gray-900">*</span></label>
                                     <CustomSelect
                                       value={p.idType || ''}
                                       onChange={(val) => handleParticipantChange(i, 'idType', val)}
@@ -763,14 +802,14 @@ const EventDetails = ({ event }) => {
                                       ]}
                                       placeholder="Select ID Proof"
                                     />
-                                    {formErrors[`p.${i}.idType`] && <p className="text-[10px] text-red-500 font-bold mt-1 uppercase">⚠ {formErrors[`p.${i}.idType`]}</p>}
+                                    {formErrors[`p.${i}.idType`] && <p className="text-[10px] text-red-500 font-bold mt-1 uppercase">{"\u26A0"} {formErrors[`p.${i}.idType`]}</p>}
                                   </div>
                                   {p.idType && (
                                     <div>
-                                      <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">ID Number <span className="text-emerald-500">*</span></label>
+                                      <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">ID Number <span className="text-gray-900">*</span></label>
                                       <Input placeholder="Enter ID number" value={p.idNumber || ''} onChange={e => handleParticipantChange(i, 'idNumber', e.target.value)}
                                         className={`h-11 ${formErrors[`p.${i}.idNumber`] ? 'border-red-500 ring-red-500 bg-red-50/30' : 'border-gray-200'}`} />
-                                      {formErrors[`p.${i}.idNumber`] && <p className="text-[10px] text-red-500 font-bold mt-1 uppercase">⚠ {formErrors[`p.${i}.idNumber`]}</p>}
+                                      {formErrors[`p.${i}.idNumber`] && <p className="text-[10px] text-red-500 font-bold mt-1 uppercase">{"\u26A0"} {formErrors[`p.${i}.idNumber`]}</p>}
                                     </div>
                                   )}
 
@@ -778,16 +817,16 @@ const EventDetails = ({ event }) => {
                                   {/* ID Proof Upload Section */}
                                   <div className="md:col-span-2 pt-4 border-t border-gray-100 mt-2">
                                     <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Upload ID Proof (Front Side) <span className="text-red-500">*</span></label>
-                                    <div className={`relative border-2 border-dashed rounded-xl p-4 transition-all ${p.idProofImage ? 'border-emerald-200 bg-emerald-50/30' : formErrors[`p.${i}.idProofImage`] ? 'border-red-300 bg-red-50/30 animate-pulse' : 'border-gray-200 hover:border-emerald-200 bg-gray-50'}`}>
+                                    <div className={`relative border-2 border-dashed rounded-xl p-4 transition-all ${p.idProofImage ? 'border-gray-200 bg-gray-50/30' : formErrors[`p.${i}.idProofImage`] ? 'border-red-300 bg-red-50/30 animate-pulse' : 'border-gray-200 hover:border-gray-200 bg-gray-50'}`}>
                                       {p.idProofImage ? (
                                         <div className="flex items-center justify-between gap-4">
                                           <div className="flex items-center gap-3">
-                                            <div className="relative w-12 h-12 rounded-lg bg-white border border-emerald-100 overflow-hidden flex-shrink-0 shadow-sm">
+                                            <div className="relative w-12 h-12 rounded-lg bg-white border border-gray-200 overflow-hidden flex-shrink-0 shadow-sm">
                                               <img src={p.idProofImage} alt="ID Preview" className="w-full h-full object-cover" />
                                             </div>
                                             <div>
-                                              <p className="text-xs font-bold text-emerald-900">ID Proof Uploaded</p>
-                                              <p className="text-[10px] text-emerald-600 font-medium">Ready for verification</p>
+                                              <p className="text-xs font-bold text-gray-900">ID Proof Uploaded</p>
+                                              <p className="text-[10px] text-gray-900 font-medium">Ready for verification</p>
                                             </div>
                                           </div>
                                           <button onClick={() => handleParticipantChange(i, 'idProofImage', '')} className="p-2 bg-white rounded-full text-red-500 hover:bg-red-50 transition-colors shadow-sm">
@@ -834,7 +873,7 @@ const EventDetails = ({ event }) => {
                                         </label>
                                       )}
                                     </div>
-                                    {formErrors[`p.${i}.idProofImage`] && <p className="text-[10px] text-red-500 font-bold mt-1.5 uppercase">⚠ {formErrors[`p.${i}.idProofImage`]}</p>}
+                                    {formErrors[`p.${i}.idProofImage`] && <p className="text-[10px] text-red-500 font-bold mt-1.5 uppercase">{"\u26A0"} {formErrors[`p.${i}.idProofImage`]}</p>}
                                   </div>
                                 </div>
                               </motion.div>
@@ -848,7 +887,7 @@ const EventDetails = ({ event }) => {
 
               </div>
 
-              {/* ── Event Summary Sticky Block (Right) ── */}
+              {/* â”€â”€ Event Summary Sticky Block (Right) â”€â”€ */}
               <div className="w-full lg:w-[35%] lg:sticky lg:top-28">
                 <div className="bg-white rounded-2xl border border-gray-200 shadow-xl shadow-gray-200/40 overflow-hidden">
                   <div className="hidden lg:block p-6 border-b border-gray-100 bg-white">
@@ -861,7 +900,7 @@ const EventDetails = ({ event }) => {
                     </div>
                     <div className="space-y-4 mb-6">
                       <div className="flex items-start gap-3 text-sm text-gray-700 font-medium">
-                        <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center flex-shrink-0 text-emerald-500"><Calendar size={16} /></div>
+                        <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center flex-shrink-0 text-gray-900"><Calendar size={16} /></div>
                         <div className="flex flex-col">
                           <span className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-0.5">Start Date</span>
                           {formattedDate}
@@ -869,7 +908,7 @@ const EventDetails = ({ event }) => {
                       </div>
                       {event.duration && (
                         <div className="flex items-start gap-3 text-sm text-gray-700 font-medium">
-                          <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center flex-shrink-0 text-emerald-500"><Clock size={16} /></div>
+                          <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center flex-shrink-0 text-gray-900"><Clock size={16} /></div>
                           <div className="flex flex-col">
                             <span className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-0.5">Duration</span>
                             {event.duration}
@@ -877,7 +916,7 @@ const EventDetails = ({ event }) => {
                         </div>
                       )}
                       <div className="flex items-start gap-3 text-sm text-gray-700 font-medium">
-                        <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center flex-shrink-0 text-emerald-500"><MapPin size={16} /></div>
+                        <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center flex-shrink-0 text-gray-900"><MapPin size={16} /></div>
                         <div className="flex flex-col">
                           <span className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-0.5">Location</span>
                           {event.destinationId}
@@ -891,7 +930,7 @@ const EventDetails = ({ event }) => {
                         <ul className="space-y-2.5">
                           {event.highlights.slice(0, 4).map((h, idx) => (
                             <li key={idx} className="flex items-start gap-2.5 text-sm text-gray-700 font-medium">
-                              <CheckCircle size={15} className="text-emerald-500 mt-0.5 flex-shrink-0" />
+                              <CheckCircle size={15} className="text-gray-900 mt-0.5 flex-shrink-0" />
                               <span>{h}</span>
                             </li>
                           ))}
@@ -909,7 +948,7 @@ const EventDetails = ({ event }) => {
             </div>
           ) : (
             <div className="max-w-7xl mx-auto">
-              {/* ── Review Journey View ── */}
+              {/* â”€â”€ Review Journey View â”€â”€ */}
               <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden relative">
 
                 <div className="p-8 sm:p-12 relative z-10">
@@ -918,7 +957,7 @@ const EventDetails = ({ event }) => {
                       variant="outline"
                       size="icon"
                       onClick={() => setBookingStep(1)}
-                      className="w-12 h-12 rounded-2xl border-gray-200 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+                      className="w-12 h-12 rounded-2xl border-gray-200 text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors"
                     >
                       <ArrowLeft size={24} />
                     </Button>
@@ -931,21 +970,21 @@ const EventDetails = ({ event }) => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                     {/* Left: Summary Grid */}
                     <div className="space-y-6">
-                      <div className="bg-gray-50/80 rounded-2xl p-6 border border-gray-100 space-y-5">
+                      <div className="bg-gray-50/50 rounded-2xl p-6 border border-gray-200 space-y-5">
                         <div>
-                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Event Summary</p>
-                          <div className="w-full max-h-80 rounded-xl overflow-hidden mb-4 border border-black shadow-lg bg-black flex items-center justify-center">
-                            <img src={event.image || '/images/EventCover.webp'} alt={event.name} className="max-w-full max-h-80 w-auto h-auto object-contain shadow-2xl" />
+                          <p className="text-[10px] font-bold text-gray-900 uppercase tracking-widest mb-3">Event Summary</p>
+                          <div className="w-full max-h-80 rounded-xl overflow-hidden mb-4 border border-gray-200 shadow-sm bg-black flex items-center justify-center">
+                            <img src={event.image || '/images/EventCover.webp'} alt={event.name} className="max-w-full max-h-80 w-auto h-auto object-contain" />
                           </div>
                           <p className="font-bold text-gray-900 text-xl leading-tight mb-2">{event.name}</p>
-                          <p className="font-bold text-gray-600 text-sm flex items-center gap-2"><Calendar size={15} className="text-emerald-500" /> {formattedDate}</p>
+                          <p className="font-bold text-gray-500 text-sm flex items-center gap-2"><Calendar size={15} className="text-emerald-600" /> {formattedDate}</p>
                         </div>
 
                         {selectedPickup && (
                           <div className="pt-4 border-t border-gray-200">
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Pickup Details</p>
-                            <div className="flex items-center gap-2 text-sm font-semibold text-gray-900">
-                              <MapPin size={16} className="text-emerald-500 flex-shrink-0" />
+                            <p className="text-[10px] font-bold text-gray-900 uppercase tracking-widest mb-2">Pickup Details</p>
+                            <div className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                              <MapPin size={16} className="text-emerald-600 flex-shrink-0" />
                               <span className="truncate">{selectedPickup}</span>
                             </div>
                             {selectedPickupObj?.time && <p className="text-gray-500 text-xs font-medium mt-1 ml-6">{selectedPickupObj.time}</p>}
@@ -953,17 +992,17 @@ const EventDetails = ({ event }) => {
                         )}
 
                         <div className="pt-4 border-t border-gray-200">
-                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Travellers ({bookingSlots})</p>
+                          <p className="text-[10px] font-bold text-gray-900 uppercase tracking-widest mb-3">Travellers ({bookingSlots})</p>
                           <div className="space-y-2.5">
                             {Array.from({ length: bookingSlots }).map((_, i) => (
                               <div key={i} className="flex justify-between items-center text-sm">
-                                <span className="font-bold text-gray-800">{formData.participants[i]?.name}</span>
+                                <span className="font-bold text-gray-900">{formData.participants[i]?.name}</span>
                                 <div className="flex flex-col items-end gap-1">
                                   <span className="text-gray-500 font-medium capitalize">
-                                    {formData.participants[i]?.gender?.charAt(0)} · {formData.participants[i]?.age}
+                                    {formData.participants[i]?.gender?.charAt(0)} {"\u00B7"} {formData.participants[i]?.age}
                                   </span>
                                   {formData.participants[i]?.idProofImage && (
-                                    <span className="text-[9px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded font-bold flex items-center gap-1 border border-emerald-200">
+                                    <span className="text-[9px] bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded font-bold flex items-center gap-1 border border-emerald-200">
                                       <CheckCircle size={8} /> ID ATTACHED
                                     </span>
                                   )}
@@ -977,9 +1016,9 @@ const EventDetails = ({ event }) => {
 
                     {/* Right: Payment Breakdown */}
                     <div>
-                      <div className="border border-emerald-200 bg-emerald-50/50 rounded-2xl p-6 sm:p-8 h-full flex flex-col justify-between">
+                      <div className="border border-gray-200 bg-gray-50/50 rounded-2xl p-6 sm:p-8 h-full flex flex-col justify-between">
                         <div>
-                          <p className="text-xs font-bold text-emerald-800 uppercase tracking-widest mb-6">Payment Breakdown</p>
+                          <p className="text-xs font-bold text-gray-900 uppercase tracking-widest mb-6">Payment Breakdown</p>
 
                           {/* Calculation variables */}
                           {(() => {
@@ -987,20 +1026,20 @@ const EventDetails = ({ event }) => {
                               <div className="space-y-5">
                                 <div className="flex justify-between items-start gap-4 text-gray-700 font-bold text-sm sm:text-base">
                                   <span className="flex-1">Booking Amount ({bookingSlots} {bookingSlots === 1 ? 'slot' : 'slots'})</span>
-                                  <span className="text-gray-900 whitespace-nowrap">₹{subtotal.toLocaleString()}</span>
+                                  <span className="text-gray-900 whitespace-nowrap">{"\u20B9"}{subtotal.toLocaleString()}</span>
                                 </div>
 
-                                <div className="pt-2 border-t border-emerald-100/50">
+                                <div className="pt-2 border-t border-gray-200/50">
                                   <button
                                     onClick={() => setShowFeeDetails(!showFeeDetails)}
-                                    className="flex items-center justify-between w-full text-gray-500 hover:text-emerald-700 transition-colors group"
+                                    className="flex items-center justify-between w-full text-gray-500 hover:text-gray-900 transition-colors group"
                                   >
                                     <div className="flex items-center gap-2 text-xs sm:text-sm font-bold uppercase tracking-wide flex-1 min-w-0">
-                                      <Info size={14} className="text-emerald-500 flex-shrink-0" />
+                                      <Info size={14} className="text-gray-900 flex-shrink-0" />
                                       <span className="truncate">Convenience Fees</span>
                                       <ChevronDown size={14} className={`flex-shrink-0 transition-transform duration-300 ${showFeeDetails ? 'rotate-180' : ''}`} />
                                     </div>
-                                    <span className="font-bold whitespace-nowrap ml-2">₹{totalFees.toLocaleString()}</span>
+                                    <span className="font-bold whitespace-nowrap ml-2">{"\u20B9"}{totalFees.toLocaleString()}</span>
                                   </button>
 
                                   <AnimatePresence>
@@ -1012,18 +1051,18 @@ const EventDetails = ({ event }) => {
                                         transition={{ duration: 0.3 }}
                                         className="overflow-hidden"
                                       >
-                                        <div className="mt-3 space-y-2.5 pl-6 pr-2 py-3 bg-white/50 rounded-xl border border-emerald-100/30">
+                                        <div className="mt-3 space-y-2.5 pl-6 pr-2 py-3 bg-white/50 rounded-xl border border-gray-200/30">
                                           <div className="flex justify-between items-center gap-4 text-[11px] sm:text-xs font-medium text-gray-500">
                                             <span className="flex-1">Platform Charges (3%)</span>
-                                            <span className="whitespace-nowrap">₹{platformFee.toLocaleString()}</span>
+                                            <span className="whitespace-nowrap">{"\u20B9"}{platformFee.toLocaleString()}</span>
                                           </div>
                                           <div className="flex justify-between items-center gap-4 text-[11px] sm:text-xs font-medium text-gray-500">
                                             <span className="flex-1">Gateway Charges (2%)</span>
-                                            <span className="whitespace-nowrap">₹{gatewayFee.toLocaleString()}</span>
+                                            <span className="whitespace-nowrap">{"\u20B9"}{gatewayFee.toLocaleString()}</span>
                                           </div>
                                           <div className="flex justify-between items-center gap-4 text-[11px] sm:text-xs font-medium text-gray-500">
                                             <span className="flex-1">GST on Gateway (18%)</span>
-                                            <span className="whitespace-nowrap">₹{gstOnGateway.toLocaleString()}</span>
+                                            <span className="whitespace-nowrap">{"\u20B9"}{gstOnGateway.toLocaleString()}</span>
                                           </div>
                                         </div>
                                       </motion.div>
@@ -1031,39 +1070,42 @@ const EventDetails = ({ event }) => {
                                   </AnimatePresence>
                                 </div>
 
-                                <div className="mt-8 pt-6 border-t border-emerald-200">
+                                <div className="mt-8 pt-6 border-t border-gray-200">
                                   <div className="flex justify-between items-baseline mb-6 gap-4">
                                     <span className="text-base sm:text-lg font-bold text-gray-900">Total Payable</span>
-                                    <span className="text-3xl sm:text-4xl font-bold text-emerald-600 leading-none whitespace-nowrap">₹{totalPayable.toLocaleString()}</span>
+                                    <span className="text-3xl sm:text-4xl font-bold text-gray-900 leading-none whitespace-nowrap">{"\u20B9"}{totalPayable.toLocaleString()}</span>
                                   </div>
-                                  <Button onClick={handleBooking} disabled={isProcessingPayment} className="w-full h-14 rounded-xl text-lg flex items-center justify-center gap-3">
-                                    {isProcessingPayment ? (
-                                      <span className="flex items-center gap-2"><div className="w-5 h-5 border-2 border-emerald-500 border-t-white rounded-full animate-spin" /> Processing...</span>
-                                    ) : (
-                                      <><ShieldCheck size={22} className="text-emerald-400" /> Pay Securely Now</>
-                                    )}
-                                  </Button>
-
                                   {/* T&C Consent for Events */}
-                                  <label className={`flex items-start gap-3 mt-5 p-4 rounded-xl border-2 cursor-pointer transition-all ${agreedToTerms ? 'border-emerald-500 bg-emerald-50/50' : 'border-gray-200 hover:border-gray-300 bg-white/80'}`}>
-                                    <div className="pt-0.5">
-                                      <Checkbox 
-                                        checked={agreedToTerms} 
-                                        onCheckedChange={(checked) => { 
-                                          setAgreedToTerms(checked === true); 
-                                          setFormErrors(prev => { const n = {...prev}; delete n.terms; return n; }); 
-                                        }} 
-                                      />
-                                    </div>
-                                    <span className="text-[11px] text-gray-600 leading-relaxed">
+                                  <label className={`flex items-start gap-3 mb-5 mt-5 p-4 rounded-xl border-2 cursor-pointer transition-all ${agreedToTerms ? 'border-emerald-500 bg-emerald-50/50' : 'border-gray-200 hover:border-gray-300 bg-gray-50/30'}`}>
+                                    <input type="checkbox" checked={agreedToTerms} onChange={(e) => { 
+                                      setAgreedToTerms(e.target.checked); 
+                                      if (e.target.checked) setFormErrors(prev => { const n = {...prev}; delete n.terms; return n; }); 
+                                    }}
+                                      className="mt-0.5 h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 flex-shrink-0" />
+                                    <span className="text-xs text-gray-600 leading-relaxed">
                                       I agree to bagspackgo&apos;s{' '}
                                       <Link href="/terms" target="_blank" className="text-emerald-600 font-bold hover:underline">Terms & Conditions</Link>
                                       {' '}and{' '}
                                       <Link href="/privacy" target="_blank" className="text-emerald-600 font-bold hover:underline">Privacy Policy</Link>.
-                                      I understand that <strong className="text-gray-800">event bookings are final — no cancellations or refunds</strong> will be issued.
+                                      I understand that cancellation and refunds are subject to the platform&apos;s refund policy.
                                     </span>
                                   </label>
                                   {formErrors.terms && <p className="text-[10px] text-red-500 font-bold mt-2 uppercase tracking-wide flex items-center gap-1"><AlertCircle size={10} /> {formErrors.terms}</p>}
+
+                                  <button
+                                    onClick={handleBooking}
+                                    disabled={isProcessingPayment}
+                                    className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium text-base transition-all flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-75 disabled:cursor-not-allowed group shadow-sm"
+                                  >
+                                    {isProcessingPayment ? (
+                                      <div className="w-5 h-5 border-[3px] border-white/30 border-t-white rounded-full animate-spin" />
+                                    ) : (
+                                      <>
+                                        Confirm & Pay Securely
+                                        <ChevronRight className="w-5 h-5 opacity-70 group-hover:translate-x-1 transition-transform" />
+                                      </>
+                                    )}
+                                  </button>
                                   <Button variant="ghost" onClick={() => setBookingStep(1)} className="w-full mt-4 font-bold text-gray-500 hover:text-gray-800 transition-colors text-sm">
                                     Edit Booking Details
                                   </Button>
@@ -1085,12 +1127,12 @@ const EventDetails = ({ event }) => {
     );
   }
 
-  /* ═══════════════════ DETAILS VIEW ═══════════════════ */
+  /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• DETAILS VIEW â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
   return (
     <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 py-8 -mt-20 mb-16">
       {saveToast}
 
-      {/* ── Top Section: Poster (left) + Info (right) ── */}
+      {/* â”€â”€ Top Section: Poster (left) + Info (right) â”€â”€ */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
         <div className="flex flex-col md:flex-row gap-6">
 
@@ -1120,12 +1162,22 @@ const EventDetails = ({ event }) => {
                 className="w-full h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold flex items-center justify-center gap-2 text-lg"
               >
                 <Ticket className="w-5 h-5" />
-                <span>Book Now · ₹{event.price?.toLocaleString()}</span>
+                <span>Book Now {"\u00B7"} {"\u20B9"}{event.price?.toLocaleString()}</span>
               </Button>
             ) : (
-              <div className="w-full bg-neutral-100 text-neutral-500 shadow-sm py-4 rounded-xl font-bold flex items-center justify-center gap-3 text-lg border border-neutral-200">
-                <AlertCircle className="w-6 h-6" />
-                <span>Sold Out</span>
+              <div className="flex flex-col gap-2">
+                <div className="w-full bg-neutral-100 text-neutral-500 shadow-sm py-4 rounded-xl font-bold flex items-center justify-center gap-3 text-lg border border-neutral-200">
+                  <AlertCircle className="w-6 h-6" />
+                  <span>Sold Out</span>
+                </div>
+                <Button 
+                   onClick={handleWish}
+                   disabled={isWished}
+                   variant="outline"
+                   className={`w-full h-14 rounded-xl font-bold flex items-center justify-center gap-2 text-base border-emerald-600 text-emerald-700 hover:bg-emerald-50 focus:ring-emerald-600 ${isWished ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                   {isWished ? 'Wished!' : 'Wish for more slots'}
+                </Button>
               </div>
             )}
           </div>
@@ -1147,23 +1199,29 @@ const EventDetails = ({ event }) => {
                 <Button
                   variant={isSaved ? "secondary" : "outline"}
                   onClick={handleSaveEvent}
-                  className={`flex items-center gap-2 rounded-xl font-semibold shadow-sm ${isSaved ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200' : 'text-gray-700'}`}
+                  className={`flex items-center gap-2 rounded-xl font-semibold shadow-sm ${isSaved ? 'bg-gray-50 hover:bg-gray-100 text-gray-900 border-gray-200' : 'text-gray-700'}`}
                   title={isSaved ? 'Remove from Saved' : 'Save Event'}
                 >
-                  <Bookmark size={16} className={isSaved ? 'text-emerald-500 fill-emerald-500' : 'text-gray-500'} />
+                  <Bookmark size={16} className={isSaved ? 'text-gray-900 fill-emerald-600' : 'text-gray-500'} />
                   <span>{isSaved ? 'Saved' : 'Save'}</span>
                 </Button>
               </div>
 
               <div className="flex items-center gap-2 mb-3">
-                <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                  <span className="text-emerald-700 font-black text-sm">
+                <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                  <span className="text-gray-900 font-black text-sm">
                     {(event.guideName || 'G').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
                   </span>
                 </div>
                 <div>
                   <p className="text-xs text-gray-400 uppercase tracking-wider font-bold">Organized by</p>
-                  <p className="text-sm font-bold text-gray-800">{event.guideName || 'Local Organizer'}</p>
+                  <p className="text-sm font-bold text-gray-800">
+                    {(event.guide || event.guideId) ? (
+                        <Link href={`/user/provider/${event.guide?._id || event.guideId || event.guide}`} className="hover:text-emerald-700 hover:underline">
+                            {event.guideName || 'Local Organizer'}
+                        </Link>
+                    ) : (event.guideName || 'Local Organizer')}
+                  </p>
                 </div>
               </div>
 
@@ -1212,7 +1270,7 @@ const EventDetails = ({ event }) => {
         </div>
       </motion.div>
 
-      {/* ── Tabs Section ── */}
+      {/* â”€â”€ Tabs Section â”€â”€ */}
       <div ref={tabsRef} className="bg-white/90 backdrop-blur-sm px-4 sm:px-6 py-4 shadow-lg rounded-2xl overflow-hidden scroll-mt-20">
         {/* Tab Headers */}
         <div className="border-b border-gray-200 mb-6">
@@ -1222,7 +1280,7 @@ const EventDetails = ({ event }) => {
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
                 className={`whitespace-nowrap py-3.5 px-3 border-b-2 font-semibold text-sm sm:text-base capitalize transition-all flex-shrink-0 ${activeTab === tab.key
-                  ? 'border-emerald-500 text-emerald-600'
+                  ? 'border-emerald-600 text-gray-900'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
               >
@@ -1235,12 +1293,12 @@ const EventDetails = ({ event }) => {
         {/* Tab Content */}
         <motion.div key={activeTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
 
-          {/* ═══ TAB 1: Event Details ═══ */}
+          {/* â•â•â• TAB 1: Event Details â•â•â• */}
           {activeTab === 'eventDetails' && (
             <div className="w-full min-w-0 overflow-hidden break-words space-y-8">
               {/* About */}
               <div>
-                <h2 className="text-lg sm:text-xl font-bold text-emerald-600 mb-3 border-b-2 border-emerald-50 pb-2">About This Event</h2>
+                <h2 className="text-lg sm:text-xl font-bold text-emerald-600 mb-3 border-b-2 border-gray-50 pb-2">About This Event</h2>
                 <div className="text-gray-700 whitespace-pre-wrap break-words leading-relaxed text-sm sm:text-base">
                   {event.about || 'No description provided.'}
                 </div>
@@ -1249,8 +1307,8 @@ const EventDetails = ({ event }) => {
               {/* Photographs Gallery */}
               {event.photographs?.length > 0 && (
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                    <Sparkles className="text-emerald-500" size={20} /> Gallery
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <Sparkles className="text-gray-900" size={20} /> Gallery
                   </h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                     {event.photographs.map((photo, i) => (
@@ -1270,7 +1328,7 @@ const EventDetails = ({ event }) => {
               {/* Highlights */}
               {event.highlights?.length > 0 && (
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                     <Sparkles className="text-amber-500" size={20} /> Highlights
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -1287,13 +1345,13 @@ const EventDetails = ({ event }) => {
               {/* What's Included */}
               {event.whatsIncluded?.length > 0 && (
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                    <CheckCircle className="text-emerald-500" size={20} /> What&apos;s Included
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <CheckCircle className="text-gray-900" size={20} /> What&apos;s Included
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {event.whatsIncluded.map((item, i) => item && (
-                      <div key={i} className="flex items-center gap-2.5 text-gray-700 bg-emerald-50/60 p-3 rounded-lg border border-emerald-100 max-w-full overflow-hidden">
-                        <CheckCircle className="text-emerald-500 flex-shrink-0" size={16} />
+                      <div key={i} className="flex items-center gap-2.5 text-gray-700 bg-gray-50/60 p-3 rounded-lg border border-gray-200 max-w-full overflow-hidden">
+                        <CheckCircle className="text-gray-900 flex-shrink-0" size={16} />
                         <span className="break-words w-full text-sm">{item}</span>
                       </div>
                     ))}
@@ -1304,7 +1362,7 @@ const EventDetails = ({ event }) => {
               {/* What's Excluded */}
               {event.whatsExcluded?.length > 0 && (
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                     <XCircle className="text-red-500" size={20} /> What&apos;s Excluded
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -1329,19 +1387,19 @@ const EventDetails = ({ event }) => {
             </div>
           )}
 
-          {/* ═══ TAB 2: Itinerary ═══ */}
+          {/* â•â•â• TAB 2: Itinerary â•â•â• */}
           {activeTab === 'itinerary' && (
             <div className="space-y-6">
-              <h2 className="text-lg sm:text-xl font-bold text-emerald-600 mb-2 border-b-2 border-emerald-50 pb-2">Event Itinerary</h2>
+              <h2 className="text-lg sm:text-xl font-bold text-emerald-600 mb-2 border-b-2 border-gray-50 pb-2">Event Itinerary</h2>
 
               {event.itinerary?.length > 0 ? (
-                <div className="relative pl-6 border-l-2 border-emerald-100 space-y-6 py-4">
+                <div className="relative pl-6 border-l-2 border-gray-200 space-y-6 py-4">
                   {event.itinerary.map((step, i) => (
                     <div key={i} className="relative">
-                      <div className="absolute -left-[31px] top-1 w-4 h-4 rounded-full bg-emerald-500 border-4 border-white shadow-sm" />
-                      <div className="bg-white p-4 rounded-xl shadow-sm border border-emerald-50 hover:shadow-md transition-shadow">
+                      <div className="absolute -left-[31px] top-1 w-4 h-4 rounded-full bg-emerald-600 border-4 border-white shadow-sm" />
+                      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-50 hover:shadow-md transition-shadow">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Step {i + 1}</span>
+                          <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full">Step {i + 1}</span>
                         </div>
                         <p className="text-gray-700 font-medium text-sm sm:text-base">{step}</p>
                       </div>
@@ -1365,12 +1423,12 @@ const EventDetails = ({ event }) => {
             </div>
           )}
 
-          {/* ═══ TAB 3: Important Info ═══ */}
+          {/* â•â•â• TAB 3: Important Info â•â•â• */}
           {activeTab === 'info' && (
             <div className="space-y-8">
               {/* What to Bring */}
               <div className="bg-blue-50 p-5 sm:p-6 rounded-2xl border border-blue-100 shadow-sm">
-                <h3 className="text-blue-800 font-bold mb-4 flex items-center gap-2 text-base sm:text-lg">
+                <h3 className="text-gray-900 font-bold mb-4 flex items-center gap-2 text-base sm:text-lg">
                   <Info size={20} /> What to Bring
                 </h3>
                 {event.whatToBring?.length > 0 ? (
@@ -1389,7 +1447,7 @@ const EventDetails = ({ event }) => {
 
               {/* Restrictions */}
               <div className="bg-rose-50 p-5 sm:p-6 rounded-2xl border border-rose-100 shadow-sm">
-                <h3 className="text-rose-800 font-bold mb-4 flex items-center gap-2 text-base sm:text-lg">
+                <h3 className="text-gray-900 font-bold mb-4 flex items-center gap-2 text-base sm:text-lg">
                   <AlertCircle size={20} /> Essential Restrictions
                 </h3>
                 {event.restrictions?.length > 0 ? (
@@ -1406,10 +1464,29 @@ const EventDetails = ({ event }) => {
                 )}
               </div>
 
+              {/* Terms & Conditions */}
+              {event.termsAndConditions?.length > 0 && (
+                <div className="bg-amber-50 p-5 sm:p-6 rounded-2xl border border-amber-100 shadow-sm">
+                  <h3 className="text-gray-900 font-bold mb-4 flex items-center gap-2 text-base sm:text-lg">
+                    <FileText size={20} className="text-amber-600" /> Terms & Conditions
+                  </h3>
+                  <ol className="space-y-2.5">
+                    {event.termsAndConditions.map((tc, i) => (
+                      <li key={i} className="flex items-start gap-2.5 text-amber-800 text-sm leading-relaxed">
+                        <span className="w-5 h-5 bg-amber-200 text-amber-800 rounded-full text-[10px] flex items-center justify-center font-bold flex-shrink-0 mt-0.5">
+                          {i + 1}
+                        </span>
+                        <span>{tc}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+
               {/* FAQs */}
               {event.faqs?.length > 0 && (
                 <div>
-                  <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                  <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                     <HelpCircle size={20} className="text-amber-500" /> Frequently Asked Questions
                   </h3>
                   <div className="space-y-3">
@@ -1450,12 +1527,21 @@ const EventDetails = ({ event }) => {
                 <p className="text-gray-500 text-center max-w-md text-sm">
                   {event.slotsLeft > 0 ? "Ready for the adventure? Click below to finalize your booking and secure your slots." : "Unfortunately, all slots for this event have been booked."}
                 </p>
-                {event.slotsLeft > 0 && (
+                {event.slotsLeft > 0 ? (
                   <Button onClick={handleBookNowClick}
                     className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold h-14 px-12 flex items-center justify-center gap-3">
                     <Ticket className="w-5 h-5" />
                     <span className="text-lg sm:text-xl">Continue to Booking</span>
                     <ChevronRight className="w-5 h-5 ml-1" />
+                  </Button>
+                ) : (
+                  <Button 
+                    onClick={handleWish}
+                    disabled={isWished}
+                    variant="outline"
+                    className={`w-full sm:w-auto border-emerald-600 text-emerald-700 hover:bg-emerald-50 focus:ring-emerald-600 rounded-xl font-bold h-14 px-12 flex items-center justify-center gap-3 ${isWished ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    <span className="text-lg sm:text-xl">{isWished ? 'Wished!' : 'Wish for more slots'}</span>
                   </Button>
                 )}
               </div>
@@ -1464,7 +1550,7 @@ const EventDetails = ({ event }) => {
         </motion.div>
       </div>
 
-      {/* ── Photo Lightbox ── */}
+      {/* â”€â”€ Photo Lightbox â”€â”€ */}
       <AnimatePresence>
         {lightboxPhoto && (
           <motion.div
@@ -1497,3 +1583,4 @@ const EventDetails = ({ event }) => {
 };
 
 export default EventDetails;
+

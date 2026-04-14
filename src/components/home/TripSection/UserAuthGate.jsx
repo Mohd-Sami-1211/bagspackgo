@@ -208,14 +208,14 @@ export default function UserAuthGate({ onAuthenticated }) {
                 className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden"
             >
                 {/* Header */}
-                <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-8 text-center relative">
-                    <div className="w-16 h-16 bg-white/20 rounded-2xl mx-auto mb-4 flex items-center justify-center">
+                <div className="bg-slate-900 p-8 text-center relative">
+                    <div className="w-16 h-16 bg-white/10 rounded-2xl mx-auto mb-4 flex items-center justify-center">
                         <span className="text-3xl">🎒</span>
                     </div>
                     <h2 className="text-2xl font-bold text-white mb-1">
                         {mode === 'login' ? 'Welcome Back!' : 'Join bagspackgo'}
                     </h2>
-                    <p className="text-green-100 text-sm">
+                    <p className="text-slate-400 text-sm">
                         {mode === 'login' ? 'Sign in to continue booking' : 'Create your free account'}
                     </p>
                 </div>
@@ -253,7 +253,7 @@ export default function UserAuthGate({ onAuthenticated }) {
                                             />
                                         </div>
                                         <button onClick={handleLoginSendOTP} disabled={loading}
-                                            className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-2 hover:shadow-lg transition disabled:opacity-60">
+                                            className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition disabled:opacity-60">
                                             {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Send OTP <ArrowRight className="w-4 h-4" /></>}
                                         </button>
                                     </div>
@@ -269,7 +269,7 @@ export default function UserAuthGate({ onAuthenticated }) {
                                         </p>
                                         <OTPInput value={loginOTP} onChange={setLoginOTP} disabled={loading} />
                                         <button onClick={handleLoginVerify} disabled={loading || loginOTP.length < 4}
-                                            className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-2 hover:shadow-lg transition disabled:opacity-60">
+                                            className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition disabled:opacity-60">
                                             {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Verify & Sign In <CheckCircle className="w-4 h-4" /></>}
                                         </button>
                                         <p className="text-center text-sm text-gray-500">
@@ -297,7 +297,7 @@ export default function UserAuthGate({ onAuthenticated }) {
                                                 className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-100 outline-none transition text-gray-900" />
                                         </div>
                                         <button onClick={handleSignupSendOTP} disabled={loading}
-                                            className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-2 hover:shadow-lg transition disabled:opacity-60">
+                                            className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition disabled:opacity-60">
                                             {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Send OTP <ArrowRight className="w-4 h-4" /></>}
                                         </button>
                                     </div>
@@ -311,7 +311,7 @@ export default function UserAuthGate({ onAuthenticated }) {
                                         <p className="text-sm text-gray-600 text-center">Enter OTP sent to <strong>{signupId}</strong></p>
                                         <OTPInput value={signupOTP} onChange={setSignupOTP} disabled={loading} />
                                         <button onClick={handleSignupVerifyOTP} disabled={loading || signupOTP.length < 4}
-                                            className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-2 hover:shadow-lg transition disabled:opacity-60">
+                                            className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition disabled:opacity-60">
                                             {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Verify OTP <ArrowRight className="w-4 h-4" /></>}
                                         </button>
                                         <p className="text-center text-sm text-gray-500">
@@ -341,7 +341,7 @@ export default function UserAuthGate({ onAuthenticated }) {
                                                 className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-100 outline-none transition text-gray-900" />
                                         </div>
                                         <button onClick={handleSignupComplete} disabled={loading || !signupName.trim()}
-                                            className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-2 hover:shadow-lg transition disabled:opacity-60">
+                                            className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition disabled:opacity-60">
                                             {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Create Account <CheckCircle className="w-4 h-4" /></>}
                                         </button>
                                     </div>

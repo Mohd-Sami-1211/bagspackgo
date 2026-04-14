@@ -3,7 +3,8 @@ import { useEffect, useState, Suspense } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { QRCodeSVG } from 'qrcode.react';
 import Image from 'next/image';
-import { MapPin, User, CheckCircle2, Ticket, Calendar, Users, Clock, ExternalLink, X, Sparkles, AlertTriangle, ShieldCheck, Navigation, List } from 'lucide-react';
+import Link from 'next/link';
+import { MapPin, User, CheckCircle2, Ticket, Calendar, Users, Clock, ExternalLink, X, Sparkles, AlertTriangle, ShieldCheck, Navigation, List, Mail, Phone, Instagram, Facebook } from 'lucide-react';
 
 function EventPassContent() {
     const { bookingId } = useParams();
@@ -178,7 +179,27 @@ function EventPassContent() {
                         </div>
                         <div className="flex-1 w-full md:text-right border-l-4 border-emerald-500 pl-4 sm:pl-6 bg-emerald-50/30 p-4 rounded-r-2xl shrink-0 flex flex-col justify-center">
                             <p className="text-xs font-semibold text-emerald-600 uppercase tracking-widest mb-1.5 md:text-right" style={fontStyle}>Organized By</p>
-                            <h2 className="text-lg sm:text-xl font-extrabold text-gray-900 md:text-right" style={fontStyle}>{companyName}</h2>
+                            <h2 className="text-lg sm:text-xl font-extrabold text-gray-900 md:text-right" style={fontStyle}>
+                                {booking?.providerId ? (
+                                    <Link href={`/user/provider/${booking.providerId}`} className="hover:text-emerald-700 hover:underline">{companyName}</Link>
+                                ) : companyName}
+                            </h2>
+                            <div className="flex flex-col md:items-end gap-1 mt-3">
+                                {booking?.providerPhone && (
+                                    <p className="text-[10px] sm:text-xs font-bold text-gray-600 flex items-center gap-1.5" style={fontStyle}>
+                                        <Phone className="w-3 h-3 text-emerald-500" /> +91 {booking.providerPhone}
+                                    </p>
+                                )}
+                                {booking?.providerEmail && (
+                                    <p className="text-[10px] sm:text-xs font-bold text-gray-600 flex items-center gap-1.5" style={fontStyle}>
+                                        <Mail className="w-3 h-3 text-emerald-500" /> {booking.providerEmail}
+                                    </p>
+                                )}
+                                <div className="flex gap-4 mt-2">
+                                    {booking?.instagram && <a href={booking.instagram.startsWith('http') ? booking.instagram : `https://instagram.com/${booking.instagram}`} target="_blank" rel="noreferrer"><Instagram className="w-4 h-4 sm:w-5 sm:h-5 text-pink-500 hover:opacity-80 transition-opacity cursor-pointer" /></a>}
+                                    {booking?.facebook && <a href={booking.facebook.startsWith('http') ? booking.facebook : `https://facebook.com/${booking.facebook}`} target="_blank" rel="noreferrer"><Facebook className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 hover:opacity-80 transition-opacity cursor-pointer" /></a>}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -387,7 +408,15 @@ function EventPassContent() {
                         </div>
                         <div>
                             <SectionHeader icon={CheckCircle2} title="Provider Terms & Conditions" />
-                            <p className="italic font-medium text-gray-400" style={fontStyle}>No terms provided by the organizer.</p>
+                            {booking?.termsAndConditions?.length > 0 ? (
+                                <ul className="list-disc pl-4 space-y-2" style={fontStyle}>
+                                    {booking.termsAndConditions.map((tc, index) => (
+                                        <li key={index} className="leading-relaxed">{tc}</li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p className="italic font-medium text-gray-400" style={fontStyle}>No terms provided by the organizer.</p>
+                            )}
                         </div>
                     </div>
                 </div>

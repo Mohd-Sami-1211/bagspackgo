@@ -17,12 +17,12 @@ export const metadata = {
         template: '%s | bagspackgo',
     },
     description:
-        'Explore Kashmir, Ladakh, Bhaderwah, and Kishtwar with verified local guides. Book budget & premium tour packages, treks, and events with transparent pricing — no middlemen.',
+        'Explore Kashmir, Ladakh, Bhaderwah, and Warwan and Marwah Valley with verified local guides. Book budget & premium tour packages, treks, and events with transparent pricing — no middlemen.',
     keywords: [
         'kashmir tour packages',
         'ladakh tour packages',
         'bhaderwah tourism',
-        'kishtwar trekking',
+        'warwan and marwah valley trekking',
         'kashmir trip',
         'kashmir travel',
         'local guide kashmir',
@@ -61,7 +61,7 @@ export const metadata = {
         siteName: 'bagspackgo',
         title: 'bagspackgo — Kashmir Tour Packages with Verified Local Guides',
         description:
-            'Explore Kashmir, Ladakh, Bhaderwah, and Kishtwar with verified local guides. Book budget & premium tour packages, treks, and events. Transparent pricing, no middlemen.',
+            'Explore Kashmir, Ladakh, Bhaderwah, and Warwan and Marwah Valley with verified local guides. Book budget & premium tour packages, treks, and events. Transparent pricing, no middlemen.',
         images: [
             {
                 url: '/logo.png',

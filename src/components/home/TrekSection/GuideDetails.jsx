@@ -286,112 +286,129 @@ const TrekGuideDetails = ({ guide }) => {
 
         {/* ── Toast ── */}
         {showSaveToast && (
-          <div className="fixed bottom-10 inset-x-0 flex justify-center z-[100] px-4">
-            <div className="bg-gray-950 border border-white/20 text-white px-6 py-4 rounded-3xl flex items-center shadow-[0_20px_50px_rgba(0,0,0,0.3)] backdrop-blur-xl animate-in fade-in slide-in-from-bottom-5 duration-300 ring-1 ring-white/10">
-              <div className="bg-emerald-500 p-1.5 rounded-full mr-3 shadow-lg shadow-emerald-500/20">
-                <Bookmark className="h-4 w-4 text-white fill-white" />
+          <div className="fixed bottom-4 sm:bottom-6 sm:right-6 z-[100] flex w-full max-w-[420px] flex-col p-4 sm:p-0">
+            <div className="pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border border-slate-200 bg-white p-6 shadow-lg animate-in fade-in slide-in-from-bottom-5 font-sans">
+              <div className="flex-1 space-y-1">
+                <p className="text-sm font-semibold text-slate-950">Trek Saved</p>
+                <p className="text-sm text-slate-500">Added to your favorites.</p>
               </div>
-              <div className="flex flex-col">
-                <span className="text-sm font-black tracking-tight uppercase">Trek Saved!</span>
-                <p className="text-[10px] text-gray-400 font-bold tracking-wide">Added to your favorites</p>
-              </div>
-              <a href="/user/saved" className="ml-6 text-xs font-black text-emerald-400 hover:text-emerald-300 transition-all bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl whitespace-nowrap border border-white/5 uppercase tracking-widest">Explore</a>
+              <a href="/user/saved" className="inline-flex h-8 items-center justify-center rounded-md border border-slate-200 bg-transparent px-3 text-sm font-medium text-slate-950 transition-colors hover:bg-slate-100 focus:outline-none focus:ring-1 focus:ring-slate-950 disabled:pointer-events-none disabled:opacity-50">
+                View
+              </a>
             </div>
           </div>
         )}
 
         {/* ── Hero Card ── */}
-        <div className="w-full bg-white pb-6 sm:pb-8 md:pb-10">
+        <div className="w-full pb-6 sm:pb-8 md:pb-10">
           <div className="max-w-7xl mx-auto relative flex flex-col items-center">
             <div
-              className="relative shadow-2xl rounded-2xl sm:rounded-3xl lg:rounded-full px-4 sm:px-8 pt-10 pb-4 sm:pt-6 sm:pb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between w-full max-w-5xl mx-auto gap-3 sm:gap-8 lg:gap-2 transition-all hover:shadow-emerald-500/10 bg-gradient-to-r from-emerald-400 to-green-300"
+              className="relative rounded-xl px-4 sm:px-8 pt-10 pb-4 sm:pt-6 sm:pb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between w-full max-w-5xl mx-auto gap-3 sm:gap-8 lg:gap-6 bg-slate-50/50 border border-gray-200 shadow-sm"
             >
-              {/* Mobile back */}
-              <button onClick={() => router.back()} className="absolute top-4 left-4 flex sm:hidden items-center justify-center p-2 bg-white/20 hover:bg-white/30 rounded-full transition-all text-white backdrop-blur-md border border-white/20">
+              {/* Mobile Back Button - Inside Card */}
+              <button 
+                onClick={() => router.back()} 
+                className="absolute top-4 left-4 flex sm:hidden items-center justify-center p-2 bg-gray-50 hover:bg-gray-100 rounded-full transition-all text-gray-700 border border-gray-200"
+              >
                 <ArrowLeft className="w-4 h-4" />
               </button>
-
-              {/* Desktop back */}
-              <button onClick={() => router.back()} className="hidden md:flex absolute md:top-1/2 md:-left-28 lg:-left-36 md:-translate-y-1/2 group items-center justify-center gap-2 transition-all w-fit bg-white/90 hover:bg-white text-gray-700 font-bold px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-gray-100 shadow-md hover:shadow-lg hover:text-emerald-700 hover:border-emerald-200 z-[30] active:scale-95 backdrop-blur-sm">
-                <div className="bg-gray-50 group-hover:bg-emerald-100 text-gray-600 group-hover:text-emerald-700 p-1 rounded-full transition-colors">
-                  <ArrowLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                </div>
-                <span className="text-sm sm:text-base pr-1">Back</span>
+              {/* Desktop Back Button */}
+              <button
+                onClick={() => router.back()}
+                className="hidden md:flex absolute md:top-1/2 md:-left-28 lg:-left-36 md:-translate-y-1/2 group items-center justify-center gap-2 transition-all w-fit bg-white hover:bg-gray-50 text-gray-700 font-medium px-4 py-2 rounded-full border border-gray-200 shadow-sm hover:text-emerald-700 z-[30] active:scale-95"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span className="text-sm ml-1.5">Back</span>
               </button>
 
-
-
-              {/* Rating */}
-              <div className={`absolute top-2 right-2 sm:top-2 sm:right-6 lg:right-10 flex items-center bg-white/95 backdrop-blur-md rounded-full px-3 py-1.5 text-xs font-black text-gray-950 shadow-xl ring-1 ring-gray-200 ${!trekPackage?.provider?.rating && "opacity-90"}`}>
-                <Star className={`w-4 h-4 mr-2 ${trekPackage?.provider?.rating > 0 ? 'text-amber-500 fill-amber-500' : 'text-gray-300 fill-gray-300'}`} />
+              {/* Rating Badge */}
+              <div className="absolute top-4 right-4 sm:top-6 sm:right-6 flex items-center bg-gray-50 rounded-full px-3 py-1 text-xs font-medium text-gray-700 border border-gray-200">
+                <Star className={`w-3.5 h-3.5 mr-1 ${trekPackage?.provider?.rating > 0 ? 'text-amber-500 fill-amber-500' : 'text-gray-400'}`} />
                 {trekPackage?.provider?.rating > 0 ? (
-                  <>{trekPackage.provider.rating}<span className="ml-1.5 text-gray-400 text-[10px] font-bold">({trekPackage.provider.reviews || trekPackage.provider.totalRatings || 0})</span></>
+                  <>
+                    {trekPackage.provider.rating}
+                    <span className="ml-1 text-gray-500">({trekPackage.provider.reviews || trekPackage.provider.totalRatings || 0})</span>
+                  </>
                 ) : (
-                  <span className="text-gray-500 text-[10px] uppercase tracking-wider">No ratings yet</span>
+                  <span className="text-gray-500 text-[10px] uppercase">No ratings</span>
                 )}
               </div>
 
-              {/* Main info */}
-              <div className="flex items-center w-full sm:w-auto mt-1 sm:mt-0 justify-start sm:justify-start gap-3 sm:gap-6">
-                <a href={`/user/provider/${providerId}`}
-                  className="w-12 h-12 sm:w-20 sm:h-20 lg:w-24 lg:h-24 rounded-full flex items-center justify-center shadow-2xl border-4 flex-shrink-0 relative overflow-hidden group/avatar cursor-pointer hover:scale-105 transition-all duration-300 bg-white border-emerald-100 hover:border-emerald-300">
-                  <div className="text-xl sm:text-2xl lg:text-3xl font-black italic tracking-tighter transition-transform group-hover/avatar:scale-110 text-emerald-600">
+              {/* Main Info Cluster */}
+              <div className="flex items-center w-full sm:flex-1 min-w-0 mt-1 sm:mt-0 justify-start gap-4 sm:gap-6">
+                <a
+                  href={`/user/provider/${providerId}`}
+                  className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 rounded-full flex items-center justify-center bg-emerald-50 border border-emerald-100 flex-shrink-0 hover:border-emerald-200 transition-colors"
+                >
+                  <div className="text-xl sm:text-2xl font-semibold text-emerald-700">
                     {initials}
                   </div>
-                  <div className="absolute inset-0 bg-gradient-to-tr from-white/0 to-white/20 pointer-events-none" />
                 </a>
 
-                <div className="min-w-0 pr-20 sm:pr-4 drop-shadow-md text-left flex-1">
+                <div className="min-w-0 pr-20 sm:pr-4 text-left flex-1">
                   <a href={`/user/provider/${providerId}`} className="group/title block">
-                    <h2 className="text-base sm:text-xl lg:text-2xl font-black text-white leading-tight mb-1 sm:mb-2 tracking-tight uppercase group-hover/title:text-emerald-50 transition-colors truncate">
+                    <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold text-gray-900 leading-tight mb-2 truncate group-hover/title:text-emerald-700 transition-colors">
                       {trekName}
                     </h2>
                   </a>
-                  <div className="flex flex-col gap-1.5 sm:gap-2.5 items-start sm:items-start">
-                    <div className="flex items-center text-[10px] sm:text-[11px] text-white/90 font-black tracking-widest uppercase">
-                      <MapPin className="h-3.5 w-3.5 mr-1.5 text-white/80" />
+
+                  <div className="flex flex-col gap-2 items-start sm:items-start text-sm text-gray-600">
+                    <div className="flex items-center font-medium">
+                      <MapPin className="h-4 w-4 mr-1.5 text-gray-400" />
                       {destination}
                     </div>
-                    <a href={`/user/provider/${providerId}`} className="group/provider inline-flex items-center gap-1.5 sm:gap-2 p-1 sm:p-1.5 bg-white/10 rounded-lg sm:rounded-xl hover:bg-white/20 transition-all border border-white/10 shadow-sm w-fit">
-                      <span className="text-[9px] sm:text-[11px] text-white/70 uppercase tracking-widest font-extrabold ml-1">By</span>
-                      <span className="text-xs sm:text-base font-black text-white ml-0.5 mr-1 sm:mr-2 truncate max-w-[120px] sm:max-w-none">{companyName}</span>
+
+                    <a href={`/user/provider/${providerId}`} className="inline-flex items-center text-sm hover:text-emerald-700 transition-colors">
+                      <span className="text-gray-500 mr-1.5">By</span>
+                      <span className="font-medium text-gray-900 truncate">{companyName}</span>
                     </a>
                   </div>
-
-
                 </div>
               </div>
 
-              {/* Stats + Actions */}
+              {/* Trip Details & Actions */}
               <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto justify-center sm:justify-end mt-4 sm:mt-0">
-                <div className="flex gap-2.5 justify-center w-full sm:w-auto">
-                  <div className="bg-white/10 backdrop-blur-3xl px-4 sm:px-6 py-2.5 rounded-[22px] text-center shadow-[0_15px_40px_-10px_rgba(0,0,0,0.2)] border border-white/20 min-w-[75px] sm:min-w-[100px] hover:bg-white/20 transition-all group/badge">
-                    <p className="text-white/70 text-[8px] font-black uppercase tracking-[0.1em] mb-0.5 group-hover/badge:text-white">Difficulty</p>
-                    <p className="font-black capitalize text-white text-xs sm:text-base leading-none tracking-tight">{difficulty}</p>
+                <div className="flex gap-3 justify-center w-full sm:w-auto">
+                  <div className="bg-gray-50 px-4 py-3 rounded-lg text-center border border-gray-200 min-w-[80px]">
+                    <p className="text-gray-500 text-[10px] font-medium uppercase tracking-wider mb-1">Difficulty</p>
+                    <p className="font-semibold text-gray-900 text-sm capitalize">{difficulty}</p>
                   </div>
-                  <div className="bg-white/10 backdrop-blur-3xl px-4 sm:px-6 py-2.5 rounded-[22px] text-center shadow-[0_15px_40px_-10px_rgba(0,0,0,0.2)] border border-white/20 min-w-[75px] sm:min-w-[100px] hover:bg-white/20 transition-all group/badge">
-                    <p className="text-white/70 text-[8px] font-black uppercase tracking-[0.1em] mb-0.5 group-hover/badge:text-white">Duration</p>
-                    <p className="font-black text-white text-xs sm:text-base leading-none tracking-tight">{duration} Days</p>
+                  <div className="bg-gray-50 px-4 py-3 rounded-lg text-center border border-gray-200 min-w-[80px]">
+                    <p className="text-gray-500 text-[10px] font-medium uppercase tracking-wider mb-1">Duration</p>
+                    <p className="font-semibold text-gray-900 text-sm">{duration} Days</p>
                   </div>
-                  <div className="bg-white/10 backdrop-blur-3xl px-4 sm:px-6 py-2.5 rounded-[22px] text-center shadow-[0_15px_40px_-10px_rgba(0,0,0,0.2)] border border-white/20 min-w-[75px] sm:min-w-[100px] hover:bg-white/20 transition-all group/badge">
-                    <p className="text-white/70 text-[8px] font-black uppercase tracking-[0.1em] mb-0.5 group-hover/badge:text-white">Trekkers</p>
-                    <p className="font-black text-white text-xs sm:text-base leading-none tracking-tight">{peopleCount} Slot</p>
+                  <div className="bg-gray-50 px-4 py-3 rounded-lg text-center border border-gray-200 min-w-[80px]">
+                    <p className="text-gray-500 text-[10px] font-medium uppercase tracking-wider mb-1">Trekkers</p>
+                    <p className="font-semibold text-gray-900 text-sm">{peopleCount} Slot</p>
                   </div>
                 </div>
-                <div className="flex gap-2.5">
+                <div className="flex gap-2">
                   <button
                     onClick={async () => {
                       try {
-                        if (navigator.share) { await navigator.share({ title: trekName, url: window.location.href }); }
-                        else { await navigator.clipboard.writeText(window.location.href); alert('Link copied!'); }
-                      } catch { }
+                        if (navigator.share) {
+                          await navigator.share({
+                            title: trekName,
+                            text: `Check out this amazing trek on bagspackgo!`,
+                            url: window.location.href,
+                          });
+                        } else {
+                          await navigator.clipboard.writeText(window.location.href);
+                          alert('Link copied to clipboard!');
+                        }
+                      } catch (err) {
+                        console.error('Error sharing', err);
+                      }
                     }}
-                    className="p-2 bg-white/90 rounded-full shadow-md hover:bg-white transition-colors backdrop-blur-sm flex-shrink-0"
+                    className="p-2.5 bg-gray-50 rounded-lg hover:bg-gray-100 border border-gray-200 transition-colors text-gray-600 hover:text-gray-900 flex-shrink-0"
                   >
-                    <Share2 className="h-4 w-4 text-gray-600" />
+                    <Share2 className="h-4 w-4" />
                   </button>
-                  <button onClick={handleSavePackage} className="p-2 bg-white/90 rounded-full shadow-md hover:bg-white transition-colors backdrop-blur-sm flex-shrink-0">
-                    <Bookmark className={`h-4 w-4 ${isSaved ? 'text-emerald-500 fill-emerald-500' : 'text-gray-600'}`} />
+                  <button
+                    onClick={handleSavePackage}
+                    className="p-2.5 bg-gray-50 rounded-lg hover:bg-gray-100 border border-gray-200 transition-colors flex-shrink-0"
+                  >
+                    <Bookmark className={`h-4 w-4 ${isSaved ? 'text-emerald-600 fill-emerald-600' : 'text-gray-600'}`} />
                   </button>
                 </div>
               </div>
@@ -401,7 +418,7 @@ const TrekGuideDetails = ({ guide }) => {
       </div>{/* Close the constrained max-w-7xl wrapper */}
 
       {/* ── Full Width Detail Panes ── */}
-      <div className="w-full bg-gradient-to-br from-green-50 to-blue-50 py-8 pb-12 overflow-hidden shadow-inner">
+      <div className="w-full bg-slate-50 py-8 pb-12 overflow-hidden shadow-inner">
         <div className="w-full px-3 sm:px-4 md:px-6 lg:px-8 flex flex-col lg:flex-row gap-4 sm:gap-6 md:gap-8">
 
           {/* ── Left: Tabs ── */}
@@ -416,11 +433,11 @@ const TrekGuideDetails = ({ guide }) => {
                 <button
                   key={tab.key}
                   onClick={() => !isTabDisabled(tab.key) && setActiveTab(tab.key)}
-                  className={`flex-1 text-center text-xs sm:text-sm font-medium py-3 transition-all ${activeTab === tab.key
-                    ? 'text-green-600 border-b-2 border-green-600 bg-white'
+                  className={`flex-1 text-center text-xs sm:text-sm font-medium py-3 transition-all border-b-2 ${activeTab === tab.key
+                    ? 'text-emerald-700 border-emerald-600 bg-white'
                     : isTabDisabled(tab.key)
-                      ? 'text-gray-400 bg-gray-50 cursor-not-allowed'
-                      : 'text-gray-500 hover:text-gray-700 bg-gray-50'
+                      ? 'text-gray-400 bg-gray-50 cursor-not-allowed border-transparent'
+                      : 'text-gray-500 hover:text-gray-700 bg-gray-50 border-transparent'
                     }`}
                   disabled={isTabDisabled(tab.key)}
                 >
@@ -437,8 +454,8 @@ const TrekGuideDetails = ({ guide }) => {
                 <>
                   <div className="flex justify-between items-center mb-5">
                     <div className="flex items-center gap-3">
-                      <div className="p-2.5 bg-emerald-100 rounded-xl">
-                        <Compass className="h-5 w-5 text-emerald-600" />
+                      <div className="p-2.5 bg-gray-100 rounded-xl">
+                        <Compass className="h-5 w-5 text-gray-700" />
                       </div>
                       <h3 className="text-base sm:text-lg font-bold text-gray-800">Trek Itinerary</h3>
                     </div>
@@ -448,14 +465,14 @@ const TrekGuideDetails = ({ guide }) => {
                   {/* Trek highlight chips */}
                   {trekPackage?.altitude && (
                     <div className="flex flex-wrap gap-2 mb-5">
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 border border-emerald-100 text-emerald-700 text-xs font-bold rounded-full">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 border border-gray-100 text-gray-700 text-xs font-bold rounded-full">
                         <Mountain className="w-3.5 h-3.5" /> Max Altitude: {trekPackage.altitude}
                       </span>
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-teal-50 border border-teal-100 text-teal-700 text-xs font-bold rounded-full">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 border border-gray-100 text-gray-700 text-xs font-bold rounded-full">
                         <Calendar className="w-3.5 h-3.5" /> {duration} Days
                       </span>
                       {peopleCount > 0 && (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 border border-blue-100 text-blue-700 text-xs font-bold rounded-full">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 border border-gray-100 text-gray-700 text-xs font-bold rounded-full">
                           <Users className="w-3.5 h-3.5" /> {peopleCount} Trekkers
                         </span>
                       )}
@@ -467,7 +484,7 @@ const TrekGuideDetails = ({ guide }) => {
                     {/* Photos Gallery */}
                     {Array.isArray(trekPackage?.photos) && trekPackage.photos.length > 0 && (
                       <div className="mb-6">
-                        <h4 className="text-sm font-black text-emerald-700 uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <h4 className="text-sm font-black text-gray-700 uppercase tracking-widest mb-4 flex items-center gap-2">
                           <Camera className="w-4 h-4" /> Trek Gallery
                         </h4>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -490,7 +507,7 @@ const TrekGuideDetails = ({ guide }) => {
                     <div className="flex justify-end mt-6">
                       <button
                         onClick={handleNextTab}
-                        className="px-4 py-2 text-white rounded-lg flex items-center text-sm shadow-sm transition-colors bg-gradient-to-br from-emerald-400 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700"
+                        className="px-6 py-2.5 text-white rounded-lg flex items-center text-sm font-semibold shadow-sm transition-all bg-emerald-600 hover:bg-emerald-700 active:scale-95"
                       >
                         Next <ArrowRight className="ml-2 h-4 w-4" />
                       </button>
@@ -530,17 +547,17 @@ const TrekGuideDetails = ({ guide }) => {
 
 
             {/* Inclusions */}
-            <div className="rounded-xl shadow-md overflow-hidden border mb-6 sm:mb-8 border-gray-100 bg-white">
-              <div className="px-4 sm:px-5 py-3 bg-gradient-to-r from-emerald-500 to-teal-500">
-                <h2 className="text-white font-semibold text-base flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 opacity-90" /> What's Included
+            <div className="rounded-xl shadow-sm overflow-hidden border mb-6 border-gray-200 bg-white">
+              <div className="px-5 py-4 bg-gray-50 border-b border-gray-100">
+                <h2 className="text-gray-900 font-bold text-base flex items-center gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-gray-500" /> What's Included
                 </h2>
               </div>
               <div className="p-4 sm:p-5">
                 <div className="space-y-4 sm:space-y-5">
                   {packageInclusions.map((item, i) => (
                     <div key={i} className="flex items-start">
-                      <div className="flex-shrink-0 p-1.5 sm:p-2 rounded-lg mr-3 sm:mr-4 bg-emerald-50">
+                      <div className="flex-shrink-0 p-2 rounded-lg mr-4 bg-gray-50 border border-gray-100">
                         {item.icon}
                       </div>
                       <div className="min-w-0">
@@ -549,7 +566,7 @@ const TrekGuideDetails = ({ guide }) => {
                           <ul className="mt-2 space-y-1">
                             {item.items.map((d, j) => (
                               <li key={j} className="flex items-start text-xs text-gray-500">
-                                <svg className="h-3 w-3 text-emerald-500 mr-1.5 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg className="h-3 w-3 text-gray-400 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                 </svg>
                                 {d}
@@ -597,7 +614,7 @@ const TrekGuideDetails = ({ guide }) => {
             </div>
 
             {/* Quick stats */}
-            <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-5">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
               <h4 className="text-xs font-black text-gray-500 uppercase tracking-widest mb-4">Trek Stats</h4>
               <div className="space-y-3">
                 {[
@@ -622,7 +639,7 @@ const TrekGuideDetails = ({ guide }) => {
             {/* Pickup and Dropoff Section */}
             {trekPackage?.pickupDropCities?.length > 0 && (
               <div className="rounded-xl shadow-md overflow-hidden border mb-6 sm:mb-8 border-gray-100 bg-white">
-                <div className="px-4 sm:px-5 py-3 bg-emerald-500">
+                <div className="px-4 sm:px-5 py-3 bg-emerald-600">
                   <h2 className="text-white font-semibold text-base flex items-center gap-2">
                     <MapPin className="w-4 h-4 ml-0" /> Available Pickups
                   </h2>

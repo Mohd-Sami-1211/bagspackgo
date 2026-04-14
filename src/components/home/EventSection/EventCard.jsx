@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 const EventCard = ({ event }) => {
   const router = useRouter();
@@ -102,15 +103,21 @@ const EventCard = ({ event }) => {
             <div>
               <h2 className="text-lg sm:text-xl font-bold text-neutral-800 mb-1 leading-tight line-clamp-1">{event.name}</h2>
               <p className="text-neutral-500 flex items-center gap-1.5">
-                <User size={14} className="text-emerald-500" />
-                <span className="text-sm font-medium">{event.guideName || "Local Guide"}</span>
+                <User size={14} className="text-gray-900" />
+                <span className="text-sm font-medium">
+                  {(event.guide || event.guideId) ? (
+                      <Link href={`/user/provider/${event.guide?._id || event.guideId || event.guide}`} className="hover:text-emerald-700 hover:underline" onClick={(e) => e.stopPropagation()}>
+                          {event.guideName || "Local Guide"}
+                      </Link>
+                  ) : (event.guideName || "Local Guide")}
+                </span>
               </p>
             </div>
             {/* Price */}
-            <div className="inline-flex items-center bg-emerald-50 border border-emerald-100 px-3 py-1.5 rounded-lg flex-shrink-0">
+            <div className="inline-flex items-center bg-gray-50 border border-gray-200 px-3 py-1.5 rounded-lg flex-shrink-0">
               <span className="text-xs text-neutral-500 mr-1.5">Starting from:</span>
-              <span className="text-lg font-bold text-emerald-600">
-                ₹{event.price?.toLocaleString('en-IN') || '0'}
+              <span className="text-lg font-bold text-gray-900">
+                {"\u20B9"}{event.price?.toLocaleString('en-IN') || '0'}
               </span>
             </div>
           </div>
@@ -141,8 +148,8 @@ const EventCard = ({ event }) => {
 
             {/* Duration */}
             <div className="flex items-start gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center flex-shrink-0">
-                <Clock className="text-emerald-500" size={15} />
+              <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center flex-shrink-0">
+                <Clock className="text-gray-900" size={15} />
               </div>
               <div className="min-w-0">
                 <p className="text-[11px] uppercase tracking-wider text-neutral-500 font-semibold mb-0.5">Duration</p>
@@ -167,11 +174,20 @@ const EventCard = ({ event }) => {
       </div>
 
       {/* Right Side CTA */}
-      <div className="w-full sm:w-1/4 bg-gradient-to-br from-emerald-50 to-teal-50/30 border-t sm:border-t-0 sm:border-l border-neutral-100 flex flex-col items-center justify-center p-5 sm:p-6 gap-3">
-        <div className="hidden sm:flex flex-col items-center text-center mb-2">
-          <span className="text-emerald-600 font-bold mb-1">Available Now</span>
-          <span className="text-xs text-neutral-500">Secure your spot today</span>
-        </div>
+      <div className="w-full sm:w-1/4 bg-gradient-to-br from-gray-50 to-gray-100/30 border-t sm:border-t-0 sm:border-l border-neutral-100 flex flex-col items-center justify-center p-5 sm:p-6 gap-3">
+        {event.slotsLeft > 0 ? (
+          <div className="hidden sm:flex flex-col items-center text-center mb-2">
+            <span className="text-gray-900 font-bold mb-1">Available Now</span>
+            <span className="text-xs text-neutral-500">Secure your spot today</span>
+          </div>
+        ) : (
+          <div className="hidden sm:flex flex-col items-center text-center mb-2">
+            <span className="inline-flex items-center gap-1.5 text-neutral-500 font-bold mb-1">
+              Sold Out
+            </span>
+            <span className="text-xs text-neutral-400">No slots remaining</span>
+          </div>
+        )}
         <Button
           onClick={handleViewDetails}
           className="w-full h-11 text-[13px] rounded-xl shadow-sm hover:shadow-md transition-shadow"
@@ -184,3 +200,4 @@ const EventCard = ({ event }) => {
 };
 
 export default EventCard;
+

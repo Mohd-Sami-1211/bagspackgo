@@ -35,13 +35,13 @@ import dataJson from 'src/data/data.json';
 
 // Use the same destination list used throughout the app
 const destinations = [
-  ...dataJson.destinations.filter(d => ['kashmir', 'ladakh', 'bhaderwah', 'kishtwar'].includes(d.value)).map((d, i) => ({
+  ...dataJson.destinations.filter(d => ['kashmir', 'ladakh', 'bhaderwah', 'warwan-marwah-valley'].includes(d.value)).map((d, i) => ({
     id: i + 1,
     label: d.label,
     value: d.value,
   })),
   { isGroupHeader: true, label: 'Available Soon', value: 'GROUP_HEADER' },
-  ...dataJson.destinations.filter(d => !['kashmir', 'ladakh', 'bhaderwah', 'kishtwar'].includes(d.value)).map((d, i) => ({
+  ...dataJson.destinations.filter(d => !['kashmir', 'ladakh', 'bhaderwah', 'warwan-marwah-valley'].includes(d.value)).map((d, i) => ({
     id: i + 100,
     label: d.label,
     value: d.value,

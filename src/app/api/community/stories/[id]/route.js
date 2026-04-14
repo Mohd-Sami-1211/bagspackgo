@@ -3,7 +3,7 @@ import Story from '@/models/story.model';
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 
-export async function PATCH(request, context) {
+export async function DELETE(request, context) {
     const params = await context.params;
     try {
         const user = await getCurrentUser();
@@ -15,17 +15,13 @@ export async function PATCH(request, context) {
         const story = await Story.findById(id);
         if (!story) return NextResponse.json({ success: false }, { status: 404 });
         
-        const stringUserId = user.userId.toString();
-        const hasLiked = story.likes && story.likes.some(likedId => likedId.toString() === stringUserId);
-        
-        if (hasLiked) {
-            story.likes = story.likes.filter(likedId => likedId.toString() !== stringUserId);
-        } else {
-            story.likes.push(user.userId);
+        if (story.userId && story.userId !== user.userId) {
+            return NextResponse.json({ success: false, message: 'Forbidden' }, { status: 403 });
         }
-        await story.save();
         
-        return NextResponse.json({ success: true, likes: story.likes.length, isLiked: !hasLiked }, { status: 200 });
+        await Story.findByIdAndDelete(id);
+        
+        return NextResponse.json({ success: true, message: 'Deleted' }, { status: 200 });
     } catch (error) {
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
