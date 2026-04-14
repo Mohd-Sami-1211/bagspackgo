@@ -7,6 +7,8 @@ import { CalendarCheck, Search, RefreshCcw, Plus, Minus } from 'lucide-react';
 import data from 'src/data/data.json';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 const TrekSearchInput = memo(forwardRef((props, ref) => {
   const router = useRouter();
@@ -205,7 +207,7 @@ const TrekSearchInput = memo(forwardRef((props, ref) => {
       whileInView="onscreen"
       viewport={{ once: true, amount: 0.2 }}
       variants={scrollVariants}
-      className="bg-white/90 rounded-2xl shadow-lg p-2 w-full max-w-full md:max-w-5xl min-h-[180px] hover:shadow-xl transition-shadow duration-300"
+      className={`bg-white border shadow-sm rounded-xl p-3 sm:p-5 w-full max-w-full md:max-w-5xl min-h-[160px] transition-all`}
     >
       {!isMounted ? (
         <div className="w-full h-[180px] bg-white/50 animate-pulse rounded-2xl" />
@@ -219,7 +221,7 @@ const TrekSearchInput = memo(forwardRef((props, ref) => {
           {/* Left Section - Destination and Trek */}
           <motion.div
             variants={itemVariants}
-            className="flex-[1.2] bg-[#C3EFE6] rounded-xl p-2.5 sm:p-3 space-y-2 sm:space-y-3 w-full md:w-auto relative z-10"
+            className="flex-1 space-y-3 sm:space-y-4 w-full md:w-auto relative z-10"
           >
             <TrekDestinationSelect
               selectedDestination={selectedDestination}
@@ -238,7 +240,7 @@ const TrekSearchInput = memo(forwardRef((props, ref) => {
           {/* Right Section - People, Date and Search */}
           <motion.div
             variants={itemVariants}
-            className="flex-[2] bg-[#C3EFE6] rounded-xl p-2.5 sm:p-3 flex flex-col justify-between w-full md:w-auto relative z-20"
+            className="flex-[2] space-y-3 sm:space-y-4 flex flex-col justify-between w-full md:w-auto relative z-20"
           >
             {/* People Counter */}
             <motion.div
@@ -254,7 +256,7 @@ const TrekSearchInput = memo(forwardRef((props, ref) => {
                 viewport={{ once: true, margin: '-30px' }}
                 transition={{ duration: 0.3 }}
               >
-                <label className="block text-sm font-semibold text-gray-800 mb-1">No. of People</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">No. of People</label>
                 <div className={`flex items-center bg-white border rounded-lg h-[36px] transition-all ${errors.peopleCount ? 'border-red-500 shadow-[0_0_0_1px_#ef4444]' : 'border-gray-300 hover:border-emerald-400'}`}>
                   <button
                     type="button"
@@ -290,9 +292,9 @@ const TrekSearchInput = memo(forwardRef((props, ref) => {
               </motion.div>
             </motion.div>
 
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 sm:items-end mt-2 sm:mt-3">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-end mt-2 sm:mt-1">
               <motion.div variants={itemVariants} className="flex-1 relative z-[60] w-full">
-                <label className="block text-sm font-semibold text-gray-800 mb-1">Enter Date</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Date</label>
                 <DatePicker
                   selected={startDate}
                   onChange={handleDateChange}
@@ -301,12 +303,12 @@ const TrekSearchInput = memo(forwardRef((props, ref) => {
                       <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                         <CalendarCheck className="h-5 w-5 text-gray-400" />
                       </div>
-                      <input
+                      <Input
                         type="text"
                         value={dateInput}
                         onChange={handleInputChange}
                         placeholder="DD/MM/YYYY"
-                        className={`bg-white border text-gray-800 text-sm rounded-md focus:ring-green-500 focus:border-green-500 block w-full pl-9 pr-2 py-1.5 transition-all ${errors.date ? 'border-red-500 shadow-[0_0_0_1px_#ef4444]' : 'border-gray-300'}`}
+                        className={`w-full pl-9 ${errors.date ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                       />
                     </motion.div>
                   }
@@ -337,39 +339,32 @@ const TrekSearchInput = memo(forwardRef((props, ref) => {
                 </AnimatePresence>
               </motion.div>
 
-              <div className="flex gap-3 flex-wrap sm:flex-nowrap justify-center sm:justify-end w-full sm:w-auto">
+              <div className="flex gap-2 sm:gap-3 flex-wrap sm:flex-nowrap justify-end w-full sm:w-auto mt-2">
                 <AnimatePresence mode="wait">
                   {isSearching ? (
-                    <motion.div key="searching" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="w-full sm:w-32 flex justify-center py-1">
-                      <motion.div className="h-8 w-8 rounded-full border-2 border-green-500 border-t-transparent" animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} />
+                    <motion.div key="searching" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="w-full sm:w-32 flex justify-center py-2">
+                      <div className="h-5 w-5 rounded-full border-2 border-green-600 border-t-transparent animate-spin" />
                     </motion.div>
                   ) : (
-                    <motion.button
+                    <Button
                       key="search"
-                      variants={buttonVariants}
-                      initial="rest"
-                      whileHover="hover"
-                      whileTap="tap"
                       onClick={handleSearch}
-                      className="flex items-center justify-center gap-2 px-6 py-1.5 bg-[#28A745] hover:bg-green-600 text-white text-base rounded-md transition w-full sm:w-32"
+                      className="w-full sm:w-[120px] bg-green-600 hover:bg-green-700"
                     >
-                      <Search size={16} />
+                      <Search className="mr-2 h-4 w-4" />
                       Search
-                    </motion.button>
+                    </Button>
                   )}
                 </AnimatePresence>
 
-                <motion.button
-                  variants={buttonVariants}
-                  initial="rest"
-                  whileHover="hover"
-                  whileTap="tap"
+                <Button
+                  variant="outline"
                   onClick={handleReset}
-                  className="flex items-center justify-center gap-1 px-4 py-1.5 bg-[#A6D8BA] hover:bg-red-500 hover:text-white text-sm rounded-md transition w-full sm:w-24"
+                  className="w-full sm:w-[100px]"
                 >
-                  <RefreshCcw size={14} />
+                  <RefreshCcw className="mr-2 h-4 w-4" />
                   Reset
-                </motion.button>
+                </Button>
               </div>
             </div>
           </motion.div>

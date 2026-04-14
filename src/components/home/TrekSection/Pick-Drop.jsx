@@ -10,9 +10,9 @@ const selectStyles = {
     minHeight: '38px',
     fontSize: '0.875rem',
     fontWeight: 500,
-    borderColor: state.isFocused ? '#1e293b' : '#e5e7eb',
-    boxShadow: state.isFocused ? '0 0 0 1px #1e293b' : null,
-    '&:hover': { borderColor: state.isFocused ? '#1e293b' : '#e5e7eb' },
+    borderColor: state.isFocused ? '#10b981' : '#e5e7eb',
+    boxShadow: state.isFocused ? '0 0 0 1px #10b981' : null,
+    '&:hover': { borderColor: state.isFocused ? '#10b981' : '#e5e7eb' },
     borderRadius: '8px',
     backgroundColor: '#F9FAFB',
     cursor: 'pointer',
@@ -45,8 +45,8 @@ const selectStyles = {
   indicatorSeparator: () => ({ display: 'none' }),
   dropdownIndicator: (provided, state) => ({
     ...provided,
-    color: state.isFocused ? '#1e293b' : '#9ca3af',
-    '&:hover': { color: '#1e293b' },
+    color: state.isFocused ? '#10b981' : '#9ca3af',
+    '&:hover': { color: '#10b981' },
     padding: '0 8px',
   }),
 };
@@ -262,7 +262,7 @@ const PickupDropoff = ({ defaultLocation, onNext, onBack, startDate, duration, p
               onClick={() => setActiveSection(tab.key)}
               className={`px-4 py-2.5 font-medium text-sm flex items-center gap-2 transition-colors border-b-2 ${
                 activeSection === tab.key
-                  ? 'text-gray-900 border-gray-900'
+                  ? 'text-emerald-700 border-emerald-600'
                   : 'text-gray-500 border-transparent hover:text-gray-700'
               }`}
             >
@@ -451,7 +451,7 @@ const PickupDropoff = ({ defaultLocation, onNext, onBack, startDate, duration, p
             </button>
             <button
               type="submit"
-              className="w-full sm:w-auto px-6 py-2.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800 active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-sm font-medium shadow-sm"
+              className="w-full sm:w-auto px-6 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-sm font-medium shadow-sm"
             >
               Save & Continue
               <ArrowRight className="h-4 w-4" />

@@ -293,7 +293,7 @@ const SearchResults = () => {
               ) : (
                 <Button
                   onClick={() => setIsEditing(true)}
-                  className="bg-slate-900 hover:bg-slate-800 text-white"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white"
                 >
                   <CalendarIcon size={16} className="hidden sm:inline mr-2" />
                   <span>Modify</span>

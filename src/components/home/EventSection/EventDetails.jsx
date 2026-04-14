@@ -1075,33 +1075,37 @@ const EventDetails = ({ event }) => {
                                     <span className="text-base sm:text-lg font-bold text-gray-900">Total Payable</span>
                                     <span className="text-3xl sm:text-4xl font-bold text-gray-900 leading-none whitespace-nowrap">{"\u20B9"}{totalPayable.toLocaleString()}</span>
                                   </div>
-                                  <Button onClick={handleBooking} disabled={isProcessingPayment} className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-base flex items-center justify-center gap-3">
-                                    {isProcessingPayment ? (
-                                      <span className="flex items-center gap-2"><div className="w-4 h-4 border-2 border-gray-400 border-t-white rounded-full animate-spin" /> Processing...</span>
-                                    ) : (
-                                      <><ShieldCheck size={20} className="text-gray-400" /> Pay Securely Now</>
-                                    )}
-                                  </Button>
-
                                   {/* T&C Consent for Events */}
-                                  <label className={`flex items-start gap-3 mt-5 p-4 rounded-xl border-2 cursor-pointer transition-all ${agreedToTerms ? 'border-emerald-600 bg-gray-50/50' : 'border-gray-200 hover:border-gray-300 bg-white/80'}`}>
-                                    <div className="pt-0.5">
-                                      <Checkbox 
-                                        checked={agreedToTerms} 
-                                        onCheckedChange={(checked) => { 
-                                          setAgreedToTerms(checked === true); 
-                                          setFormErrors(prev => { const n = {...prev}; delete n.terms; return n; }); 
-                                        }} 
-                                      />
-                                    </div>
-                                    <span className="text-[11px] text-gray-600 leading-relaxed">
+                                  <label className={`flex items-start gap-3 mb-5 mt-5 p-4 rounded-xl border-2 cursor-pointer transition-all ${agreedToTerms ? 'border-emerald-500 bg-emerald-50/50' : 'border-gray-200 hover:border-gray-300 bg-gray-50/30'}`}>
+                                    <input type="checkbox" checked={agreedToTerms} onChange={(e) => { 
+                                      setAgreedToTerms(e.target.checked); 
+                                      if (e.target.checked) setFormErrors(prev => { const n = {...prev}; delete n.terms; return n; }); 
+                                    }}
+                                      className="mt-0.5 h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 flex-shrink-0" />
+                                    <span className="text-xs text-gray-600 leading-relaxed">
                                       I agree to bagspackgo&apos;s{' '}
                                       <Link href="/terms" target="_blank" className="text-emerald-600 font-bold hover:underline">Terms & Conditions</Link>
                                       {' '}and{' '}
                                       <Link href="/privacy" target="_blank" className="text-emerald-600 font-bold hover:underline">Privacy Policy</Link>.
+                                      I understand that cancellation and refunds are subject to the platform&apos;s refund policy.
                                     </span>
                                   </label>
                                   {formErrors.terms && <p className="text-[10px] text-red-500 font-bold mt-2 uppercase tracking-wide flex items-center gap-1"><AlertCircle size={10} /> {formErrors.terms}</p>}
+
+                                  <button
+                                    onClick={handleBooking}
+                                    disabled={isProcessingPayment}
+                                    className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium text-base transition-all flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-75 disabled:cursor-not-allowed group shadow-sm"
+                                  >
+                                    {isProcessingPayment ? (
+                                      <div className="w-5 h-5 border-[3px] border-white/30 border-t-white rounded-full animate-spin" />
+                                    ) : (
+                                      <>
+                                        Confirm & Pay Securely
+                                        <ChevronRight className="w-5 h-5 opacity-70 group-hover:translate-x-1 transition-transform" />
+                                      </>
+                                    )}
+                                  </button>
                                   <Button variant="ghost" onClick={() => setBookingStep(1)} className="w-full mt-4 font-bold text-gray-500 hover:text-gray-800 transition-colors text-sm">
                                     Edit Booking Details
                                   </Button>

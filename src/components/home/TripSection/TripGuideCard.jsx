@@ -281,7 +281,7 @@ const GuideCard = ({ guide, category, daysRange, peopleCount = 1, date, selected
             className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 ${
               isPremium
                 ? 'bg-amber-500 text-white hover:bg-amber-600 focus:ring-amber-500'
-                : 'bg-slate-900 text-white hover:bg-slate-800 focus:ring-slate-900'
+                : 'bg-emerald-600 text-white hover:bg-emerald-700 focus:ring-emerald-600'
             }`}
           >
             <>{isPremium ? 'View Premium' : 'View Details'} <ArrowRight className="h-4 w-4" /></>

@@ -70,7 +70,7 @@ const faqs = [
   { question: 'Is it trustworthy to buy a package from bagspackgo?', answer: 'Completely. Your payment is processed through a secure gateway, and your booking connects directly to a verified local guide. We ensure absolute transparency.' },
 ];
 
-/* ─── SectionHeading (identical to TripMainContent) ────────── */
+/* ─── SectionHeading ────────── */
 const SectionHeading = ({ pre, accent }) => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
@@ -96,7 +96,7 @@ const SectionHeading = ({ pre, accent }) => (
   </motion.div>
 );
 
-/* ── DESTINATIONS (tabbed – one category at a time) ── identical structure to TripMainContent */
+/* ── DESTINATIONS (tabbed – one category at a time) ── */
 const PopularDestinations = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [dir,       setDir]       = useState(1);
@@ -117,7 +117,7 @@ const PopularDestinations = () => {
   };
 
   return (
-    <section className="px-4 sm:px-6 py-6 max-w-7xl mx-auto">
+    <section className="px-4 sm:px-6 md:px-8 py-6 w-full mx-auto">
       <SectionHeading pre="Kashmir's" accent="Premier Treks" />
 
       {/* Category tabs */}
@@ -205,7 +205,7 @@ const PopularDestinations = () => {
   );
 };
 
-/* ── ADVENTURES (video slider — single video at a time) — identical structure */
+/* ── ADVENTURES (video slider — single video at a time) ── */
 const AdventureSlider = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction,    setDirection]    = useState(1);
@@ -256,7 +256,7 @@ const AdventureSlider = () => {
   };
 
   return (
-    <section ref={sectionRef} className="py-6 px-4 sm:px-6 max-w-7xl mx-auto overflow-hidden">
+    <section ref={sectionRef} className="py-6 px-4 sm:px-6 md:px-8 w-full mx-auto overflow-hidden">
       <div>
         <SectionHeading pre="Trekker's" accent="Paradise" />
 
@@ -313,7 +313,7 @@ const AdventureSlider = () => {
   );
 };
 
-/* ── TESTIMONIALS (horizontal scroll on mobile) — identical structure */
+/* ── TESTIMONIALS (horizontal scroll on mobile) ── */
 const Testimonials = () => {
   const [idx,  setIdx]  = useState(0);
   const [data, setData] = useState(dummyTestimonials);
@@ -387,54 +387,55 @@ export default function TrekMainContent() {
   const [activeIndex, setActiveIndex] = useState(null);
 
   return (
-    <div className="w-full flex flex-col items-center overflow-x-hidden">
-      {/* ── Hero + Search Section ────────────────────────────── */}
-      <section className="relative w-full">
+    <div className="w-full h-full flex flex-col items-center overflow-x-hidden font-sans">
+      {/* ── Hero + Search ───────────────────────────────── */}
+      <div className="relative w-full">
         <div
-          className="w-full h-[260px] sm:h-[320px] md:h-[380px] lg:h-[400px] bg-center bg-cover bg-no-repeat relative overflow-hidden flex items-center justify-center text-center px-4"
-          style={{ backgroundImage: "url('/images/hero.svg')", backgroundPosition: 'center top' }}
+          className="w-full h-[300px] sm:h-[400px] bg-slate-900 relative overflow-hidden flex flex-col items-center justify-center text-center px-4"
         >
-          {/* Main Hero Content - Explicitly Centered */}
-          <div className="z-20 w-full flex justify-center mt-[-60px] sm:mt-[-60px] md:mt-[-88px] lg:mt-[-120px] pointer-events-none px-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 30 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }} 
-              transition={{ duration: 0.8, ease: "easeOut" }}
-              className="text-center w-full"
-            >
-              <h1 className="text-[2.5rem] sm:text-[3.5rem] md:text-[4rem] lg:text-[4.5rem] xl:text-[5rem] leading-[1.15] font-extrabold text-white tracking-tight uppercase drop-shadow-[0_6px_6px_rgba(0,0,0,0.8)] filter md:whitespace-nowrap">
-                Conquer <span className="text-emerald-400 drop-shadow-[0_2px_10px_rgba(16,185,129,0.5)]">Every</span> Summit
-              </h1>
-            </motion.div>
-          </div>
-
-          {/* Unified Shading Layer (to match Trip section organic feel) */}
-          <div className="absolute inset-0 bg-black/20 z-10" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 z-10" />
+          {/* Subtle hero background image */}
+          <div 
+            className="absolute inset-0 opacity-40 bg-cover bg-center"
+            style={{ backgroundImage: "url('/images/hero.svg')" }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-slate-900/50 z-0" />
+          
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }} 
+            transition={{ duration: 0.7, ease: "easeOut" }}
+            className="relative z-20 w-full max-w-4xl -mt-10"
+          >
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white tracking-tight mb-4">
+              Conquer <span className="text-emerald-400">Every</span> Summit
+            </h1>
+            
+          </motion.div>
         </div>
 
-        {/* Search Input Container - Precisely positioned and Centered */}
-        <div className="w-full px-4 -mt-24 sm:-mt-32 md:-mt-44 lg:-mt-40 relative z-30 pb-4 flex justify-center">
+        <div className="w-full px-4 -mt-24 sm:-mt-32 md:-mt-44 lg:-mt-40 relative z-20 pb-4 flex justify-center">
           <div className="w-full max-w-5xl">
-            <motion.div 
-              initial={{ opacity: 0, y: 25 }} 
-              animate={{ opacity: 1, y: 0 }} 
-              transition={{ duration: 0.6, ease: 'easeOut', delay: 0.45 }}
-            >
+            <motion.div initial={{ opacity: 0, y: 25 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: 'easeOut', delay: 0.45 }}>
               <TrekSearchInput />
             </motion.div>
           </div>
         </div>
-      </section>
+      </div>
 
       {/* ── Sections (Even spacing) ────────────────────────── */}
       <div className="flex flex-col gap-10 sm:gap-16 md:gap-24 mt-8 md:mt-12 pb-8 md:pb-16">
         <div><AdContent /></div>
-        <div><PopularDestinations /></div>
-        <div><AdventureSlider /></div>
+        <div className="w-full">
+          <PopularDestinations />
+        </div>
+        <div className="w-full">
+          <AdventureSlider />
+        </div>
         {/* <div><Testimonials /></div> */}
-        <div id="about" className="scroll-mt-24"><AboutUs /></div>
-        <div id="faq" className="scroll-mt-24">
+        <div id="about" className="scroll-mt-24 w-full">
+          <AboutUs />
+        </div>
+        <div id="faq" className="scroll-mt-24 w-full">
           <FAQ
             faqs={faqs}
             activeIndex={activeIndex}

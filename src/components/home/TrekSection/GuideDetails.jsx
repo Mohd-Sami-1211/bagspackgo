@@ -433,11 +433,11 @@ const TrekGuideDetails = ({ guide }) => {
                 <button
                   key={tab.key}
                   onClick={() => !isTabDisabled(tab.key) && setActiveTab(tab.key)}
-                  className={`flex-1 text-center text-xs sm:text-sm font-medium py-3 transition-all ${activeTab === tab.key
-                    ? 'text-gray-900 border-b-2 border-gray-900 bg-white'
+                  className={`flex-1 text-center text-xs sm:text-sm font-medium py-3 transition-all border-b-2 ${activeTab === tab.key
+                    ? 'text-emerald-700 border-emerald-600 bg-white'
                     : isTabDisabled(tab.key)
-                      ? 'text-gray-400 bg-gray-50 cursor-not-allowed'
-                      : 'text-gray-500 hover:text-gray-700 bg-gray-50'
+                      ? 'text-gray-400 bg-gray-50 cursor-not-allowed border-transparent'
+                      : 'text-gray-500 hover:text-gray-700 bg-gray-50 border-transparent'
                     }`}
                   disabled={isTabDisabled(tab.key)}
                 >
@@ -507,7 +507,7 @@ const TrekGuideDetails = ({ guide }) => {
                     <div className="flex justify-end mt-6">
                       <button
                         onClick={handleNextTab}
-                        className="px-6 py-2.5 text-white rounded-xl flex items-center text-sm font-bold shadow-sm transition-all bg-gray-900 hover:bg-gray-800 active:scale-95"
+                        className="px-6 py-2.5 text-white rounded-lg flex items-center text-sm font-semibold shadow-sm transition-all bg-emerald-600 hover:bg-emerald-700 active:scale-95"
                       >
                         Next <ArrowRight className="ml-2 h-4 w-4" />
                       </button>
@@ -614,7 +614,7 @@ const TrekGuideDetails = ({ guide }) => {
             </div>
 
             {/* Quick stats */}
-            <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-5">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
               <h4 className="text-xs font-black text-gray-500 uppercase tracking-widest mb-4">Trek Stats</h4>
               <div className="space-y-3">
                 {[
@@ -639,7 +639,7 @@ const TrekGuideDetails = ({ guide }) => {
             {/* Pickup and Dropoff Section */}
             {trekPackage?.pickupDropCities?.length > 0 && (
               <div className="rounded-xl shadow-md overflow-hidden border mb-6 sm:mb-8 border-gray-100 bg-white">
-                <div className="px-4 sm:px-5 py-3 bg-emerald-500">
+                <div className="px-4 sm:px-5 py-3 bg-emerald-600">
                   <h2 className="text-white font-semibold text-base flex items-center gap-2">
                     <MapPin className="w-4 h-4 ml-0" /> Available Pickups
                   </h2>

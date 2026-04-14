@@ -11,9 +11,9 @@ const customSelectStyles = {
     ...provided,
     minHeight: '40px',
     fontSize: '0.875rem',
-    borderColor: state.isFocused ? '#22c55e' : '#e2e8f0',
-    boxShadow: state.isFocused ? '0 0 0 1px #22c55e' : null,
-    '&:hover': { borderColor: state.isFocused ? '#22c55e' : '#cbd5e1' },
+    borderColor: state.isFocused ? '#10b981' : '#e2e8f0',
+    boxShadow: state.isFocused ? '0 0 0 1px #10b981' : null,
+    '&:hover': { borderColor: state.isFocused ? '#10b981' : '#cbd5e1' },
     borderRadius: '0.375rem',
     backgroundColor: '#fff',
     cursor: 'pointer',
@@ -693,7 +693,7 @@ const PersonalDetails = ({
         </button>
         <button
           type="submit"
-          className="px-5 py-2.5 bg-gray-900 text-white rounded-xl hover:bg-gray-800 transition-all flex items-center shadow-sm hover:shadow-md group text-sm font-semibold active:scale-[0.98]"
+          className="px-5 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all flex items-center shadow-sm hover:shadow-md group text-sm font-semibold active:scale-[0.98]"
         >
           Review Trek
           <ArrowRight className="h-4 w-4 ml-2 transition-transform group-hover:translate-x-1" />
