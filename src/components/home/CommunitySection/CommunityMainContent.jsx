@@ -78,7 +78,7 @@ const StarRating = ({ rating, size = 'md', interactive = false, onChange }) => {
 
 // ─── Main Community Component ───────────────────────────────
 const CommunityMainContent = () => {
-  const { user } = useAuth();
+  const { user, openAuthModal } = useAuth();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('stories');
 
@@ -111,7 +111,7 @@ const CommunityMainContent = () => {
   const handleCommentSubmit = async (e, id) => {
      e.preventDefault();
      if (!user) {
-         router.push('/user/login');
+         openAuthModal();
          return;
      }
      if (!commentText[id]?.trim()) return;
@@ -228,7 +228,7 @@ const CommunityMainContent = () => {
 
   const handleLike = async (id) => {
     if (!user) {
-        router.push('/user/login');
+        openAuthModal();
         return;
     }
     setStories(stories.map(story => {
@@ -251,7 +251,7 @@ const CommunityMainContent = () => {
 
   const handleHelpful = async (id) => {
     if (!user) {
-        router.push('/user/login');
+        openAuthModal();
         return;
     }
     setReviews(reviews.map(review => {
@@ -298,7 +298,7 @@ const CommunityMainContent = () => {
 
   const handleDeleteStory = async (id) => {
     if (!user) {
-        router.push('/user/login');
+        openAuthModal();
         return;
     }
     if (window.confirm('Are you sure you want to delete this story?')) {
@@ -317,7 +317,7 @@ const CommunityMainContent = () => {
   const submitStory = async (e) => {
     e.preventDefault();
     if (!user) {
-        router.push('/user/login');
+        openAuthModal();
         return;
     }
     const posterName = user.name || user.username || user.email?.split('@')[0] || 'Traveler';
@@ -352,7 +352,7 @@ const CommunityMainContent = () => {
   const submitReview = async (e) => {
     e.preventDefault();
     if (!user) {
-        router.push('/user/login');
+        openAuthModal();
         return;
     }
     const posterName = user.name || user.username || user.email?.split('@')[0] || 'Traveler';
@@ -467,7 +467,7 @@ const CommunityMainContent = () => {
                   <Card
                     className="cursor-pointer group hover:shadow-md transition-all duration-200 border-gray-200/70"
                     onClick={() => {
-                        if (!user) { router.push('/user/login'); return; }
+                        if (!user) { openAuthModal(); return; }
                         setShowStoryModal(true);
                     }}
                   >
@@ -668,7 +668,7 @@ const CommunityMainContent = () => {
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-bold text-gray-900">Recent Reviews</h3>
                     <Button onClick={() => {
-                        if (!user) { router.push('/user/login'); return; }
+                        if (!user) { openAuthModal(); return; }
                         setShowReviewModal(true);
                     }} size="sm" className="rounded-full gap-1.5 text-[13px]">
                       <Plus className="w-3.5 h-3.5" /> Write Review
@@ -753,7 +753,7 @@ const CommunityMainContent = () => {
 
                 <Button
                   onClick={() => {
-                      if (!user) { router.push('/user/login'); return; }
+                      if (!user) { openAuthModal(); return; }
                       activeTab === 'stories' ? setShowStoryModal(true) : setShowReviewModal(true);
                   }}
                   className="w-full bg-gray-900 hover:bg-gray-800 text-white rounded-xl gap-2 h-11"

@@ -96,7 +96,7 @@ export default function TrekPassPage() {
     const providerName = booking?.guideName || booking?.companyName || gSnapshot.companyName || gSnapshot.name || booking?.providerName || "bagspackgo Verified Partner";
     const destinationName = pSnapshot.destination || booking?.destination || arrivalDepartureOrPickupDropoff?.pickup?.city || "Himalayan Trails";
     const travelers = personalDetails?.personalDetails || [];
-    const gallery = getList('gallery');
+    const gallery = getList('photos');
 
     const passUrl = typeof window !== 'undefined' 
         ? `${window.location.origin}/user/trek/pass/${id}` 
