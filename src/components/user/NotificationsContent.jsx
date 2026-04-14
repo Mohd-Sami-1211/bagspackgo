@@ -78,7 +78,7 @@ const NotificationsContent = () => {
   }
 
   return (
-    <div className="w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 mb-16 font-sans">
+    <div className="w-full px-4 sm:px-6 lg:px-8 mt-4 sm:mt-8 pt-0 pb-4 sm:pb-6 mb-16 font-sans">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-6 gap-4">
         <div className="flex items-center gap-3 sm:gap-4">
           <Button
