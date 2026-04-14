@@ -100,6 +100,8 @@ export default function TripPassPage() {
     const passUrl = typeof window !== 'undefined' 
         ? `${window.location.origin}/user/${booking?.bookingType === 'trek' ? 'trek' : 'trip'}/pass/${id}` 
         : `https://bagspackgo.com/user/${booking?.bookingType === 'trek' ? 'trek' : 'trip'}/pass/${id}`;
+        
+    const qrPrintUrl = passUrl + "?print=true";
 
     return (
         <div className="min-h-screen bg-[#F0FDF4] p-4 sm:p-8 flex items-center justify-center font-sans" style={{ fontFamily: "'Outfit', sans-serif" }}>
@@ -193,7 +195,7 @@ export default function TripPassPage() {
                 <div className="p-5 sm:p-8 sm:pt-6 bg-white flex flex-col shrink-0 min-h-[300px]">
                     <div className="flex flex-col sm:flex-row justify-between gap-6 sm:gap-8 mb-8 sm:mb-10 print-section">
                         <div className="flex-1 bg-gray-50 rounded-2xl p-4 sm:p-6 border border-gray-200">
-                            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 sm:gap-6">
+                            <div className="grid grid-cols-2 md:grid-cols-[auto_1fr_1fr_auto_auto_auto] gap-4 sm:gap-6 items-start">
                                 <div className="text-center sm:text-left">
                                     <p className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Travel Date</p>
                                     <p className="font-bold text-gray-900 text-sm sm:text-base">{formatDate(startDate)}</p>
@@ -223,6 +225,15 @@ export default function TripPassPage() {
                                     <p className="font-bold text-gray-900 text-sm sm:text-base">{numPeople} Pax</p>
                                 </div>
                                 <div className="text-center sm:text-left">
+                                    <p className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Booked On</p>
+                                    <p className="font-bold text-gray-900 text-sm sm:text-base">
+                                        {(booking.createdAt || booking.bookingDate) ? (() => { 
+                                            const d = new Date(booking.createdAt || booking.bookingDate); 
+                                            return `${d.toLocaleDateString('en-GB')} ${d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`; 
+                                        })() : '—'}
+                                    </p>
+                                </div>
+                                <div className="text-center sm:text-left">
                                     <p className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Paid</p>
                                     <p className="font-black text-emerald-600 text-sm sm:text-base">₹{Number(totalAmount || 0).toLocaleString('en-IN')}</p>
                                 </div>
@@ -230,9 +241,9 @@ export default function TripPassPage() {
                         </div>
                         
                         <div className="shrink-0 flex flex-col items-center justify-center p-4 bg-white border-2 border-emerald-100 rounded-2xl shadow-sm w-full sm:w-[180px] mt-4 sm:mt-0 print:border-emerald-200">
-                            <p className="text-[10px] font-bold text-emerald-800 uppercase tracking-widest mb-2 text-center leading-tight">Scan for PDF</p>
-                            <a href={passUrl} target="_blank" rel="noopener noreferrer" className="cursor-pointer hover:opacity-80 transition-opacity" title="Click to view PDF">
-                                <QRCodeSVG value={passUrl} size={110} level="H" />
+                            <p className="text-[10px] font-bold text-emerald-800 uppercase tracking-widest mb-2 text-center leading-tight">Scan to Download</p>
+                            <a href={qrPrintUrl} target="_blank" rel="noopener noreferrer" className="cursor-pointer hover:opacity-80 transition-opacity" title="Click to download PDF">
+                                <QRCodeSVG value={qrPrintUrl} size={110} level="H" />
                             </a>
                             <p className="text-[10px] font-mono text-gray-400 mt-2 truncate w-full text-center overflow-hidden">{id}</p>
                         </div>

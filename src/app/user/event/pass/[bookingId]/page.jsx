@@ -214,7 +214,7 @@ function EventPassContent() {
                 {/* ═══════ EVENT DETAILS GRID ═══════ */}
                 <div className="p-5 sm:p-8 sm:pt-6 bg-white flex flex-col shrink-0">
                     <div className="bg-gray-50 rounded-2xl p-4 sm:p-6 border border-gray-200 mb-8 print-section">
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6">
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-[auto_auto_auto_auto_auto_auto] gap-4 sm:gap-6">
                             <div>
                                 <p className="text-[9px] sm:text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1" style={fontStyle}>Event Date</p>
                                 <p className="font-semibold text-gray-900 text-sm sm:text-base" style={fontStyle}>{formatDate(eventDate)}</p>
@@ -234,6 +234,15 @@ function EventPassContent() {
                             <div>
                                 <p className="text-[9px] sm:text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1" style={fontStyle}>Guests</p>
                                 <p className="font-semibold text-gray-900 text-sm sm:text-base" style={fontStyle}>{booking.people} Pax</p>
+                            </div>
+                            <div>
+                                <p className="text-[9px] sm:text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1" style={fontStyle}>Booked On</p>
+                                <p className="font-semibold text-gray-900 text-sm sm:text-base" style={fontStyle}>
+                                    {(booking.createdAt || booking.bookingDate) ? (() => { 
+                                        const d = new Date(booking.createdAt || booking.bookingDate); 
+                                        return `${d.toLocaleDateString('en-GB')} ${d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`; 
+                                    })() : '—'}
+                                </p>
                             </div>
                             <div>
                                 <p className="text-[9px] sm:text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1" style={fontStyle}>Total Paid</p>
