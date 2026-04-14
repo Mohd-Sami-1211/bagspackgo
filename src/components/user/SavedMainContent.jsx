@@ -2,7 +2,12 @@
 import { useMemo, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bookmark, MapPin, Calendar, Clock, Crown, Trash2, ArrowRight, ArrowLeft, User, Users } from 'lucide-react';
+import { Bookmark, MapPin, Calendar, Clock, Trash2, ArrowRight, ArrowLeft, User, Users, Compass, Mountain, Ticket } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 
 const SavedMainContent = () => {
   const router = useRouter();
@@ -14,7 +19,6 @@ const SavedMainContent = () => {
     e.preventDefault();
     const pkg = record.item;
     
-    // For packages without deep details, fallback to UI elements seamlessly
     const cat = record.config?.category || pkg.packageCategory || 'individual';
     const count = record.config?.peopleCount || 1;
     const dateQuery = record.config?.date ? `&date=${new Date(record.config.date).toISOString()}` : '';
@@ -51,7 +55,6 @@ const SavedMainContent = () => {
   }, []);
 
   const handleUnsave = async (itemId) => {
-    // Optimistic UI update
     setSavedItems((prev) => prev.filter((s) => s.itemId !== itemId));
     try {
       await fetch(`/api/user/saved?itemId=${itemId}`, { method: 'DELETE' });
@@ -67,37 +70,54 @@ const SavedMainContent = () => {
     });
   }, [savedItems, categoryFilter]);
 
+  const TYPE_CONFIG = {
+    trip: { label: 'Trip', icon: Compass, color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200' },
+    trek: { label: 'Trek', icon: Mountain, color: 'text-sky-700', bg: 'bg-sky-50', border: 'border-sky-200' },
+    event: { label: 'Event', icon: Ticket, color: 'text-violet-700', bg: 'bg-violet-50', border: 'border-violet-200' },
+  };
+
   if (loading) {
-     return (
-       <div className="flex justify-center items-center h-64">
-         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-emerald-500"></div>
-       </div>
-     );
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="w-8 h-8 rounded-full border-2 border-gray-200 border-t-gray-900 animate-spin"></div>
+      </div>
+    );
   }
 
   return (
-    <div className="mx-auto max-w-7xl pt-4 sm:pt-6 pb-16 px-4">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <div className="flex items-center gap-4">
-          <button onClick={() => router.back()} className="p-2 sm:p-2.5 rounded-2xl bg-white border border-gray-200 text-gray-600 hover:bg-emerald-50 hover:text-emerald-600 transition-all shadow-sm active:scale-95 shrink-0">
-            <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6" />
-          </button>
+    <div className="w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 mb-16 font-sans">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-6 gap-6">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => router.back()}
+            className="shrink-0"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
           <div>
-            <h1 className="text-3xl md:text-4xl font-black bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent tracking-tight">Saved Items</h1>
-            <p className="text-gray-500 font-medium text-sm md:text-base mt-1">Your curated collection of trips, treks, and events.</p>
+            <div className="flex items-center gap-2 mb-1">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">Saved Items</h1>
+              <div className="p-1 px-2 bg-emerald-100 text-emerald-700 rounded-md text-xs font-semibold flex items-center gap-1">
+                <Bookmark className="w-3 h-3" />
+                {savedItems.length} Saved
+              </div>
+            </div>
+            <p className="text-sm text-gray-500">Your curated collection of trips, treks, and events.</p>
           </div>
         </div>
         
         {/* Category Filters */}
-        <div className="flex flex-wrap w-full md:w-auto bg-white rounded-lg shadow-sm border border-gray-100 p-1">
+        <div className="flex bg-gray-50 border border-gray-200 p-1 rounded-lg self-start sm:self-auto w-full sm:w-auto overflow-x-auto">
           {['all', 'trip', 'trek', 'event'].map((cat) => (
             <button
               key={cat}
               onClick={() => setCategoryFilter(cat)}
-              className={`flex-1 md:flex-none px-3 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors capitalize text-center ${
+              className={`flex-1 sm:flex-none px-4 py-1.5 rounded-md text-xs font-semibold capitalize whitespace-nowrap transition-all ${
                 categoryFilter === cat
-                  ? 'bg-emerald-500 text-white shadow-sm'
-                  : 'text-gray-600 hover:bg-gray-50'
+                  ? 'bg-white text-gray-900 shadow-sm border border-gray-200/50'
+                  : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
               }`}
             >
               {cat === 'all' ? 'All Items' : `${cat}s`}
@@ -106,125 +126,116 @@ const SavedMainContent = () => {
         </div>
       </div>
 
+      <Separator className="mb-6" />
+
       <AnimatePresence mode="popLayout">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
           {filteredItems.length > 0 ? (
              filteredItems.map((record) => {
                 const pkg = record.item;
-                const isPremium = pkg.type === 'premium';
+                const typeCfg = TYPE_CONFIG[record.itemType] || TYPE_CONFIG.trip;
+                
                 return (
                   <motion.div
                     layout
                     initial={{ opacity: 0, scale: 0.95, y: 10 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                    transition={{ duration: 0.25, ease: [0.25, 0.8, 0.25, 1] }}
+                    transition={{ duration: 0.2 }}
                     key={record._id}
-                    className={`group relative flex flex-col bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border ${
-                       isPremium ? 'border-amber-400/30' : 'border-gray-100 hover:border-emerald-100'
-                    }`}
                   >
-                    {/* Top Accent Bar */}
-                    <div className={`h-1 w-full ${isPremium ? 'bg-gradient-to-r from-amber-400 to-yellow-400' : 'bg-gradient-to-r from-emerald-400 to-teal-400'}`} />
-
-                    <div className="p-5 flex flex-col flex-grow relative">
-                      {/* Unsave Button */}
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleUnsave(record.itemId);
-                        }}
-                        className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-sm border border-gray-100 text-gray-400 hover:text-red-500 hover:border-red-100 hover:bg-red-50 transition-all z-10 opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100"
-                        title="Remove from saved"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-
-                      <div className="flex items-start gap-4 mb-4">
-                        {/* Dynamic Avatar / Icon */}
-                        <div className={`w-14 h-14 rounded-xl flex items-center justify-center shrink-0 shadow-sm border ${
-                           isPremium ? 'bg-gradient-to-br from-amber-400 to-yellow-500 border-amber-300' : 'bg-gradient-to-br from-emerald-500 to-teal-500 border-emerald-400'
-                        }`}>
-                           {pkg.coverImage || (pkg.images && pkg.images[0]) ? (
-                             <img src={pkg.coverImage || pkg.images[0]} className="w-full h-full object-cover rounded-xl" alt="" />
-                           ) : (
-                             <span className="text-white font-black text-xl tracking-wider">
-                               {(pkg.label || pkg.title || pkg.name || 'B')[0].toUpperCase()}
-                             </span>
-                           )}
+                    <Card
+                      onClick={(e) => handleOpenConfig(e, record)}
+                      className="group flex flex-col h-full bg-white overflow-hidden border-gray-200/80 cursor-pointer hover:shadow-md hover:border-emerald-300 transition-all duration-200 relative"
+                    >
+                      <div className="p-4 flex flex-col flex-grow">
+                        {/* Unsave Button */}
+                        <div className="absolute top-3 right-3 z-10 transition-opacity duration-200">
+                          <Button
+                            variant="secondary"
+                            size="icon"
+                            className="w-7 h-7 bg-white/90 backdrop-blur border shadow-sm text-gray-400 hover:text-red-600 hover:bg-red-50"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleUnsave(record.itemId);
+                            }}
+                            title="Remove from saved"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
                         </div>
-                        
-                        <div className="flex-1 min-w-0 pr-8">
-                           <div className="flex gap-1.5 mb-1.5">
-                             <span className={`px-2 py-0.5 text-[9px] font-black uppercase tracking-wider rounded-md border ${
-                                record.itemType === 'trip' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 
-                                record.itemType === 'trek' ? 'bg-blue-50 text-blue-600 border-blue-100' : 
-                                'bg-violet-50 text-violet-600 border-violet-100'
-                             }`}>
-                               {record.itemType}
-                             </span>
-                             {isPremium && (
-                               <span className="px-2 py-0.5 text-[9px] font-black uppercase tracking-wider rounded-md border bg-amber-50 text-amber-600 border-amber-100 flex items-center">
-                                 <Crown className="w-2.5 h-2.5 mr-1" /> Premium
+
+                        <div className="flex items-start gap-4 mb-4">
+                          {/* Image */}
+                          <div className={`w-14 h-14 rounded-lg flex items-center justify-center shrink-0 border bg-gray-50 overflow-hidden ${typeCfg.border}`}>
+                             {pkg.coverImage || (pkg.images && pkg.images[0]) ? (
+                               <img src={pkg.coverImage || pkg.images[0]} className="w-full h-full object-cover" alt="" />
+                             ) : (
+                               <span className="text-gray-400 font-bold text-xl uppercase">
+                                 {(pkg.label || pkg.title || pkg.name || 'B')[0]}
                                </span>
                              )}
-                           </div>
-                           <h3 className={`font-extrabold text-base leading-tight truncate ${isPremium ? 'text-amber-700' : 'text-emerald-700 group-hover:text-emerald-600'}`}>
-                             {pkg.label || pkg.title || pkg.name || 'Untitled Package'}
-                           </h3>
+                          </div>
+                          
+                          <div className="flex-1 min-w-0 pr-6">
+                             <div className="mb-1.5">
+                               <Badge variant="outline" className={`text-[9px] uppercase tracking-wider font-bold rounded flex w-fit items-center gap-1 ${typeCfg.bg} ${typeCfg.color} ${typeCfg.border}`}>
+                                 <typeCfg.icon className="w-2.5 h-2.5" />
+                                 {typeCfg.label}
+                               </Badge>
+                             </div>
+                             <h3 className="font-bold text-sm text-gray-900 leading-snug truncate group-hover:text-emerald-700 transition-colors">
+                               {pkg.label || pkg.title || pkg.name || 'Untitled Package'}
+                             </h3>
+                          </div>
+                        </div>
+                        
+                        <Separator className="mb-3 opacity-50" />
+                        
+                        {/* Details */}
+                        <div className="flex flex-col gap-2">
+                          {record.itemType === 'event' ? (
+                            <>
+                              <div className="flex items-center text-xs text-gray-500 font-medium">
+                                <Calendar className="h-3.5 w-3.5 mr-2 text-gray-400 shrink-0" />
+                                <span className="truncate">{pkg.date ? new Date(pkg.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Flexible Date'}</span>
+                              </div>
+                              <div className="flex items-center text-xs text-gray-500 font-medium">
+                                <User className="h-3.5 w-3.5 mr-2 text-gray-400 shrink-0" />
+                                <span className="truncate">By {pkg.organizer || 'Host'}</span>
+                              </div>
+                              <div className="flex items-center text-xs text-gray-500 font-medium">
+                                <Users className="h-3.5 w-3.5 mr-2 text-gray-400 shrink-0" />
+                                <span>{pkg.slotsRemaining || 0} Slots Remaining</span>
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <div className="flex items-center text-xs text-gray-500 font-medium">
+                                <MapPin className="h-3.5 w-3.5 mr-2 text-gray-400 shrink-0" />
+                                <span className="truncate">{pkg.destination || pkg.location || 'Location varies'}</span>
+                              </div>
+                              <div className="flex items-center text-xs text-gray-500 font-medium">
+                                <Clock className="h-3.5 w-3.5 mr-2 text-gray-400 shrink-0" />
+                                <span>{pkg.days ? `${pkg.days} Days` : 'Duration varies'}</span>
+                              </div>
+                              {record.config?.date && (
+                                <div className="mt-1 flex items-center text-[11px] text-gray-500 font-semibold bg-gray-50 w-fit px-2 py-1 rounded inline-flex border border-gray-100">
+                                  Planning for: {new Date(record.config.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                </div>
+                              )}
+                            </>
+                          )}
                         </div>
                       </div>
-                      
-                      {/* Secondary Info */}
-                      <div className="flex flex-col gap-2 mt-2">
-                        {record.itemType === 'event' ? (
-                          <>
-                            <div className="flex items-center text-xs text-gray-500">
-                              <Calendar className="h-3.5 w-3.5 mr-1.5 text-blue-500 shrink-0" />
-                              <span className="truncate">{pkg.date ? new Date(pkg.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Flexible Date'} • {pkg.duration ? `${pkg.duration} Days` : 'Flexible'}</span>
-                            </div>
-                            <div className="flex items-center text-xs text-gray-500">
-                              <User className="h-3.5 w-3.5 mr-1.5 text-emerald-500 shrink-0" />
-                              <span className="truncate">By {pkg.organizer || 'Premium Host'}</span>
-                            </div>
-                            <div className="flex items-center text-xs font-bold text-amber-600 bg-amber-50 rounded px-1.5 py-0.5 w-fit">
-                              <Users className="h-3.5 w-3.5 mr-1.5 shrink-0" />
-                              <span>{pkg.slotsRemaining || 0} Slots Remaining</span>
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            <div className="flex items-center text-xs text-gray-500">
-                              <MapPin className="h-3.5 w-3.5 mr-1.5 text-blue-500 shrink-0" />
-                              <span className="truncate">{pkg.destination || pkg.location || 'Location varies'}</span>
-                            </div>
-                            <div className="flex items-center justify-between text-xs text-gray-500">
-                              <div className="flex items-center">
-                                <Clock className="h-3.5 w-3.5 mr-1.5 text-emerald-500 shrink-0" />
-                                <span>{pkg.days ? `${pkg.days} Days / ${pkg.nights || pkg.days - 1} Nights` : 'Duration varies'}</span>
-                              </div>
-                              {pkg.packageCategory && (
-                                <span className="px-2 py-0.5 bg-gray-50 border border-gray-100 rounded text-[10px] uppercase font-bold text-gray-400">
-                                    {pkg.packageCategory}
-                                </span>
-                              )}
-                            </div>
-                            {record.config?.date && (
-                               <div className="flex items-center text-xs text-gray-500 font-semibold bg-gray-50 w-fit px-2 py-1 rounded-md border border-gray-100">
-                                 <Calendar className="h-3.5 w-3.5 mr-1.5 text-gray-400 shrink-0" />
-                                 Planning for: {new Date(record.config.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-                               </div>
-                            )}
-                          </>
-                        )}
-                      </div>
 
-                       {/* Footer */}
-                      <div className="mt-8 pt-4 border-t border-gray-50 flex items-end justify-between">
+                      {/* Footer */}
+                      <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between mt-auto">
                         <div>
-                           <p className="text-[9px] text-gray-400 uppercase tracking-widest font-black mb-0.5">Starting from</p>
+                           <p className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold mb-0.5">Starting from</p>
                            <p className="flex items-baseline gap-1">
-                             <span className={`text-xl font-black ${isPremium ? 'text-amber-600' : 'text-gray-900'}`}>
+                             <span className="text-base font-bold text-gray-900 tabular-nums">
                                ₹{Number(
                                   record.config?.computedPrice || 
                                   (pkg.pricingTiers?.length > 0 ? [...pkg.pricingTiers].sort((a,b)=>a.minPeople - b.minPeople)[0].price : 0) || 
@@ -235,21 +246,13 @@ const SavedMainContent = () => {
                                   0
                                ).toLocaleString('en-IN')}
                              </span>
-                             <span className="text-[10px] text-gray-400 font-bold uppercase">/person</span>
                            </p>
                         </div>
-                        <button 
-                          onClick={(e) => handleOpenConfig(e, record)}
-                          className={`flex items-center justify-center w-10 h-10 rounded-xl transition-all shadow-sm group-hover:shadow-md ${
-                            isPremium 
-                              ? 'bg-amber-100 text-amber-700 hover:bg-amber-500 hover:text-white' 
-                              : 'bg-gray-50 text-emerald-600 hover:bg-emerald-500 hover:text-white border border-gray-100 hover:border-emerald-500'
-                          }`}
-                        >
-                           <ArrowRight className="w-4 h-4" />
-                        </button>
+                        <Button variant="ghost" size="icon" className="w-8 h-8 rounded-full text-emerald-600 hover:bg-emerald-100 hover:text-emerald-700">
+                           <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+                        </Button>
                       </div>
-                    </div>
+                    </Card>
                   </motion.div>
                 );
              })
@@ -257,21 +260,20 @@ const SavedMainContent = () => {
             <motion.div 
               initial={{ opacity: 0 }} 
               animate={{ opacity: 1 }} 
-              className="col-span-full py-20 flex flex-col items-center justify-center text-center bg-white rounded-2xl border border-dashed border-gray-200"
+              className="col-span-full py-20 flex flex-col items-center justify-center text-center px-4"
             >
-              <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mb-4">
-                 <Bookmark className="h-8 w-8 text-emerald-400" />
+              <div className="w-16 h-16 bg-gray-50 border border-gray-100 rounded-xl flex items-center justify-center mb-4">
+                 <Bookmark className="h-7 w-7 text-gray-300" />
               </div>
-              <h3 className="text-xl font-bold text-gray-800 mb-2">No saved items yet</h3>
-              <p className="text-gray-500 max-w-sm mb-6">Discover amazing trips and add them to your collection by clicking the save icon.</p>
-              <a href="/" className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg transition-colors shadow-sm">
-                Explore Packages
-              </a>
+              <h3 className="text-base font-semibold text-gray-700 mb-1">No saved items yet</h3>
+              <p className="text-sm text-gray-400 max-w-sm mb-6">Discover amazing trips and add them to your collection by clicking the save icon.</p>
+              <Button onClick={() => router.push('/')}>
+                 Explore Packages
+              </Button>
             </motion.div>
           )}
         </div>
       </AnimatePresence>
-
     </div>
   );
 };

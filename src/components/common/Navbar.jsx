@@ -16,6 +16,7 @@ function getInitials(name) {
 export default function Navbar() {
   const [showSignIn, setShowSignIn] = useState(true);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const { user, isAuthenticated, loading, logout, openAuthModal } = useAuth();
   const dropdownRef = useRef(null);
 
@@ -150,7 +151,7 @@ export default function Navbar() {
                 <button
                   onClick={() => {
                     setShowDropdown(false);
-                    logout();
+                    setShowLogoutConfirm(true);
                   }}
                   className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
                 >
@@ -212,6 +213,33 @@ export default function Navbar() {
           </div>
         )}
       </div>
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 z-[1000] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl border border-gray-100 flex flex-col pointer-events-auto">
+            <h3 className="text-xl font-bold text-gray-900 mb-2 tracking-tight">Confirm Logout</h3>
+            <p className="text-gray-500 text-sm font-medium mb-6">Are you sure you want to log out of your account?</p>
+            <div className="flex items-center gap-3 w-full">
+              <button 
+                onClick={() => setShowLogoutConfirm(false)}
+                className="flex-1 py-2.5 rounded-lg border border-gray-200 text-gray-600 font-semibold hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={() => {
+                  setShowLogoutConfirm(false);
+                  logout();
+                }}
+                className="flex-1 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold transition-colors flex items-center justify-center gap-2"
+              >
+                <LogOut size={16} /> Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </nav>
   );
 }

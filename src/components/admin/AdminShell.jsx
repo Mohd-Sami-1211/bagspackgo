@@ -56,6 +56,7 @@ function NavItem({ item, collapsed }) {
 
 function Sidebar({ collapsed, onClose }) {
     const { admin, logout } = useAdmin();
+    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
     return (
         <div className={`flex flex-col h-full bg-gray-900 border-r border-gray-800 transition-all duration-300 ${collapsed ? 'w-[68px]' : 'w-[240px]'}`}>
@@ -92,7 +93,7 @@ function Sidebar({ collapsed, onClose }) {
                         {!collapsed && <span className="text-sm font-medium">Settings</span>}
                     </motion.div>
                 </Link>
-                <motion.div whileHover={{ x: 2 }} onClick={logout} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:text-red-400 hover:bg-red-500/10 cursor-pointer group">
+                <motion.div whileHover={{ x: 2 }} onClick={() => setShowLogoutConfirm(true)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-400 hover:text-red-400 hover:bg-red-500/10 cursor-pointer group">
                     <LogOut className="w-[18px] h-[18px] flex-shrink-0 text-gray-500 group-hover:text-red-400" />
                     {!collapsed && <span className="text-sm font-medium">Logout</span>}
                 </motion.div>
@@ -104,6 +105,33 @@ function Sidebar({ collapsed, onClose }) {
                     </div>
                 )}
             </div>
+
+            {/* Logout Confirmation Modal */}
+            {showLogoutConfirm && (
+                <div className="fixed inset-0 z-[1000] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-gray-900 rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-gray-800">
+                        <h3 className="text-xl font-bold text-white mb-2">Confirm Logout</h3>
+                        <p className="text-gray-400 text-sm mb-6">Are you sure you want to log out of the admin panel?</p>
+                        <div className="flex items-center gap-3">
+                            <button 
+                                onClick={() => setShowLogoutConfirm(false)}
+                                className="flex-1 py-2.5 rounded-lg border border-gray-700 text-gray-300 font-semibold hover:bg-gray-800 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button 
+                                onClick={() => {
+                                    setShowLogoutConfirm(false);
+                                    logout();
+                                }}
+                                className="flex-1 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold transition-colors"
+                            >
+                                Logout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
