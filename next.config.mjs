@@ -2,7 +2,13 @@
 const nextConfig = {
     experimental: {
         serverActions: {
-            bodySizeLimit: '10mb',
+            bodySizeLimit: '15mb',
+        },
+    },
+    // Increase body size limit for API route handlers (App Router)
+    api: {
+        bodyParser: {
+            sizeLimit: '15mb',
         },
     },
     async headers() {

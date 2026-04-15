@@ -5,6 +5,9 @@ import { Guide } from "@/models/guide.model";
 import { Event } from "@/models/event.model";
 import { sanitizeString } from "@/lib/sanitize";
 
+// Allow larger request bodies for image uploads and longer execution time
+export const maxDuration = 60; // seconds
+
 /**
  * POST /api/provider/events
  * Create a new event (must be an approved provider).

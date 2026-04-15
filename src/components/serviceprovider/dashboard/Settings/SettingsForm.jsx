@@ -78,6 +78,8 @@ export default function SettingsForm() {
     setActive(id);
     if (id === 'packages') {
       router.push('/serviceprovider/dashboard/settings/packages');
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -94,22 +96,22 @@ export default function SettingsForm() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className="mx-auto w-full max-w-6xl pb-12 pt-6"
+          className="mx-auto w-full max-w-7xl pb-8"
         >
-          <div className="mb-10 px-2 space-y-1">
-            <h1 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight">Settings</h1>
-            <p className="text-gray-500 font-medium text-lg">Manage your business profile, packages, and account preferences.</p>
+          <div className="mb-8 px-2 space-y-1">
+            <h1 className="text-[17px] font-black text-gray-900 tracking-tight leading-none mb-1">Settings</h1>
+            <p className="text-[11px] text-gray-400 font-medium">Manage your business profile, packages, and account preferences.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 px-2">
             {menuItems.map(({ id, label, icon: Icon, desc }) => (
               <button
                 key={id}
-                className="group relative flex flex-col items-start p-6 md:p-8 bg-white border border-gray-100 rounded-[2rem] shadow-sm hover:shadow-[0_8px_30px_rgba(16,185,129,0.08)] hover:border-emerald-100 transition-all duration-300 text-left overflow-hidden hover:-translate-y-1"
+                className="group relative flex flex-col items-start p-6 md:p-8 bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md hover:border-emerald-200 transition-all duration-300 text-left overflow-hidden hover:-translate-y-1"
                 onClick={() => handleMenuItemClick(id)}
               >
                 {/* Decorative background circle */}
-                <div className="absolute -right-10 -top-10 w-32 h-32 bg-emerald-50 rounded-full group-hover:scale-[2] transition-transform duration-700 ease-out opacity-0 group-hover:opacity-100 -z-0"></div>
+                
 
                 <div className="relative z-10 p-3.5 bg-gray-50 text-gray-600 rounded-2xl group-hover:bg-emerald-500 group-hover:text-white transition-colors duration-300 mb-5 border border-gray-100 group-hover:border-emerald-400">
                   <Icon size={26} className="stroke-[2.5]" />
@@ -134,21 +136,24 @@ export default function SettingsForm() {
           initial={{ opacity: 0, x: 40 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.3 }}
-          className="w-full min-h-screen bg-white mt-4 rounded-2xl"
+          className="w-full max-w-5xl mx-auto"
         >
-          <div className="flex items-center gap-3 border-b px-4 py-4">
+          <div className="flex items-center gap-3 mb-6 px-1">
             <button
-              className="p-2 rounded-full hover:bg-gray-100"
+              className="w-9 h-9 flex items-center justify-center bg-white border border-gray-200 text-gray-500 rounded-xl hover:bg-gray-50 transition-all shadow-sm active:scale-95 shrink-0"
               onClick={() => setActive(null)}
             >
-              <ArrowLeft size={22} />
+              <ArrowLeft size={16} />
             </button>
-            <h2 className="text-lg font-semibold">
-              {menuItems.find((m) => m.id === active)?.label}
-            </h2>
+            <div>
+              <h2 className="text-[17px] font-black text-gray-900 tracking-tight leading-none mb-1">
+                {menuItems.find((m) => m.id === active)?.label}
+              </h2>
+              <p className="text-[11px] text-gray-400 font-medium">{menuItems.find((m) => m.id === active)?.desc}</p>
+            </div>
           </div>
 
-          <div className="px-5 py-6">
+          <div className="w-full">
             {active === 'profile' && <ProfileContent initialEditMode={searchParams.get('edit') === 'true'} />}
             {active === 'payments' && <PaymentsContent />}
             {active === 'status' && <ServiceStatusContent />}
@@ -376,7 +381,7 @@ function ProfileContent({ initialEditMode = false }) {
   const textareaClasses = `${baseInputStyles} pr-4 resize-none ${currentTheme}`;
   const selectClasses = `${baseInputStyles} px-4 ${currentTheme} ${!isEditing && "appearance-none"}`;
   const labelClasses = "block text-[11px] font-bold text-gray-500 mb-1.5 uppercase tracking-wider pl-1";
-  const cardClasses = `bg-white rounded-3xl border ${isEditing ? 'border-emerald-100 shadow-[0_8px_30px_rgba(16,185,129,0.08)]' : 'border-gray-100 shadow-sm'} p-6 md:p-8 relative overflow-hidden transition-all duration-300`;
+  const cardClasses = `bg-white rounded-2xl border ${isEditing ? 'border-emerald-100 shadow-md border-emerald-200' : 'border-gray-100 shadow-sm'} p-6 md:p-8 relative overflow-hidden transition-all duration-300`;
   const iconWrapperClasses = `absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none transition-colors ${isEditing ? 'text-emerald-500' : 'text-gray-400'}`;
 
   return (
@@ -385,7 +390,7 @@ function ProfileContent({ initialEditMode = false }) {
       {/* ── Crop Modal ── */}
       {cropModal && cropSrc && (
         <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl shadow-2xl p-6 w-full max-w-sm flex flex-col items-center gap-5">
+          <div className="bg-white rounded-2xl shadow-lg p-6 w-full max-w-sm flex flex-col items-center gap-5">
             <h3 className="text-lg font-bold text-gray-900 tracking-tight">Adjust your logo</h3>
             <p className="text-xs text-gray-500 -mt-3 text-center">Drag to reposition · Use slider to zoom</p>
 
@@ -394,7 +399,7 @@ function ProfileContent({ initialEditMode = false }) {
             <img ref={cropImgRef} src={cropSrc} alt="" className="hidden" onLoad={drawCrop} />
 
             {/* Circular crop preview */}
-            <div className="relative w-[280px] h-[280px] rounded-full overflow-hidden ring-4 ring-emerald-400 ring-offset-2 cursor-grab active:cursor-grabbing select-none"
+            <div className="relative w-[280px] h-[280px] rounded-full overflow-hidden ring-2 ring-emerald-500 ring-offset-2 cursor-grab active:cursor-grabbing select-none"
               onMouseDown={handleCropMouseDown}
               onMouseMove={handleCropMouseMove}
               onMouseUp={handleCropMouseUp}
@@ -440,7 +445,7 @@ function ProfileContent({ initialEditMode = false }) {
       )}
 
       {/* Brand New Clean Header Concept */}
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 md:p-8 mb-8 flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-8 transition-all relative overflow-hidden">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 md:p-8 mb-8 flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-8 transition-all relative overflow-hidden">
 
         {/* Logo Avatar Section */}
         <div className="flex flex-col items-center gap-2 shrink-0 z-10">
@@ -449,7 +454,7 @@ function ProfileContent({ initialEditMode = false }) {
             onMouseLeave={() => isEditing && setIsHovering(false)}
             onClick={() => isEditing && fileInputRef.current?.click()}
           >
-            <div className={`w-32 h-32 md:w-36 md:h-36 rounded-full flex items-center justify-center overflow-hidden transition-all duration-300 ${isEditing ? 'border-2 border-emerald-400 border-dashed bg-emerald-100/60' : 'border-4 border-emerald-100 bg-emerald-50 shadow-md'}`}>
+            <div className={`w-24 h-24 md:w-36 md:h-36 rounded-full flex items-center justify-center overflow-hidden transition-all duration-300 ${isEditing ? 'border-2 border-emerald-400 border-dashed bg-emerald-100/60' : 'border-4 border-emerald-100 bg-emerald-50 shadow-md'}`}>
               {formData.logo ? (
                 <img src={formData.logo} alt="Company Logo" className="w-full h-full object-cover" />
               ) : (
@@ -533,7 +538,7 @@ function ProfileContent({ initialEditMode = false }) {
 
           {/* General Information Section */}
           <div className={cardClasses}>
-            <div className={`absolute top-0 right-0 w-32 h-32 bg-emerald-50 rounded-bl-[100px] -z-10 transition-opacity duration-300 ${isEditing ? 'opacity-100' : 'opacity-40'}`}></div>
+            <div className={`absolute top-0 right-0 w-24 h-24 bg-emerald-50 rounded-bl-3xl -z-10 transition-opacity duration-300 ${isEditing ? 'opacity-100' : 'opacity-40'}`}></div>
             <div className="flex items-center gap-3 mb-8">
               <div className="p-3 bg-emerald-100/50 rounded-2xl text-emerald-600">
                 <User size={22} className="stroke-[2.5]" />
@@ -606,7 +611,7 @@ function ProfileContent({ initialEditMode = false }) {
 
           {/* Bank Details Section */}
           <div className={`${cardClasses} ${isEditing ? 'border-blue-100 shadow-[0_8px_30px_rgba(59,130,246,0.08)]' : ''}`}>
-            <div className={`absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-bl-[100px] -z-10 transition-opacity duration-300 ${isEditing ? 'opacity-100' : 'opacity-40'}`}></div>
+            <div className={`absolute top-0 right-0 w-24 h-24 bg-blue-50 rounded-bl-3xl -z-10 transition-opacity duration-300 ${isEditing ? 'opacity-100' : 'opacity-40'}`}></div>
             <div className="flex items-center gap-3 mb-8">
               <div className="p-3 bg-blue-100/50 rounded-2xl text-blue-600">
                 <Building size={22} className="stroke-[2.5]" />
@@ -620,7 +625,7 @@ function ProfileContent({ initialEditMode = false }) {
               </div>
             </div>
 
-            <div className={`p-6 rounded-[1.5rem] border grid grid-cols-1 md:grid-cols-2 gap-6 relative overflow-hidden transition-colors duration-300 ${isEditing ? 'bg-blue-50/50 border-blue-100' : 'bg-gray-50/50 border-gray-100'}`}>
+            <div className={`p-6 rounded-2xl border grid grid-cols-1 md:grid-cols-2 gap-6 relative overflow-hidden transition-colors duration-300 ${isEditing ? 'bg-blue-50/50 border-blue-100' : 'bg-gray-50/50 border-gray-100'}`}>
               {/* Decorative background element for bank card feel */}
               <div className="absolute -right-10 -bottom-10 opacity-5 pointer-events-none">
                 <CreditCard size={150} />
@@ -823,7 +828,7 @@ function PaymentsContent() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 pb-12 animate-in fade-in duration-500">
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 md:p-8">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 md:p-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-emerald-100 rounded-2xl text-emerald-600">
@@ -886,7 +891,7 @@ function PaymentsContent() {
         {/* Transactions List */}
         <div className="space-y-4">
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-16">
+            <div className="w-full min-h-[50vh] flex flex-col items-center justify-center">
               <Loader2 className="animate-spin text-emerald-500 mb-4" size={32} />
               <p className="text-gray-500 font-medium">Loading payments...</p>
             </div>
@@ -1030,7 +1035,7 @@ function ServiceStatusContent() {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto space-y-8 pb-12 animate-in fade-in duration-500 flex justify-center py-20">
+      <div className="w-full min-h-[50vh] flex flex-col items-center justify-center animate-in fade-in duration-500">
         <Loader2 className="animate-spin text-emerald-500" size={40} />
       </div>
     );
@@ -1048,7 +1053,7 @@ function ServiceStatusContent() {
       {/* Confirmation Modal */}
       {confirmModal.isOpen && (
         <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl shadow-2xl p-6 md:p-8 w-full max-w-md">
+          <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8 w-full max-w-md">
             <h3 className="text-xl font-black text-gray-900 mb-2">Pause {confirmModal.service.charAt(0).toUpperCase() + confirmModal.service.slice(1)} Bookings?</h3>
             <p className="text-sm text-gray-500 font-medium mb-6">
               This will hide all your {confirmModal.service} packages from customers. They will not be able to book them until you resume services.
@@ -1081,7 +1086,7 @@ function ServiceStatusContent() {
         </div>
       )}
 
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 md:p-8">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 md:p-8">
         <div className="flex items-center gap-3 mb-8">
           <div className="p-3 bg-emerald-100 rounded-2xl text-emerald-600">
             <Power size={22} className="stroke-[2.5]" />
@@ -1188,7 +1193,7 @@ function NotificationsContent() {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto space-y-8 pb-12 animate-in fade-in duration-500 flex justify-center py-20">
+      <div className="w-full min-h-[50vh] flex flex-col items-center justify-center animate-in fade-in duration-500">
         <Loader2 className="animate-spin text-emerald-500" size={40} />
       </div>
     );
@@ -1196,7 +1201,7 @@ function NotificationsContent() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-12 animate-in fade-in duration-500">
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 md:p-8">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 md:p-8">
         <div className="flex items-center gap-3 mb-8">
           <div className="p-3 bg-emerald-100 rounded-2xl text-emerald-600">
             <Bell size={22} className="stroke-[2.5]" />
@@ -1311,7 +1316,7 @@ function SecurityContent() {
     <div className="max-w-4xl mx-auto space-y-8 pb-12 animate-in fade-in duration-500">
 
       {/* Password Change Section */}
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 md:p-8">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 md:p-8">
         <div className="flex items-center gap-3 mb-8">
           <div className="p-3 bg-emerald-100 rounded-2xl text-emerald-600">
             <KeyRound size={22} className="stroke-[2.5]" />
@@ -1463,7 +1468,7 @@ function HelpContent() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-12 animate-in fade-in duration-500 relative">
-      <div className="bg-gradient-to-br from-emerald-600 to-teal-800 rounded-3xl p-8 md:p-12 text-white relative overflow-hidden shadow-xl">
+      <div className="bg-gradient-to-br from-emerald-600 to-teal-800 rounded-2xl p-8 md:p-12 text-white relative overflow-hidden shadow-xl">
         <LifeBuoy size={120} className="absolute -right-10 -bottom-10 text-white/10" />
 
         <h2 className="text-3xl font-black mb-3">How can we help you today?</h2>
@@ -1497,7 +1502,7 @@ function HelpContent() {
       </div>
 
       {/* Support History */}
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 md:p-8">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 md:p-8">
         <div className="flex items-center gap-3 mb-8">
           <div className="p-3 bg-gray-100 rounded-2xl text-gray-600">
             <MessageSquare size={22} className="stroke-[2.5]" />
@@ -1551,7 +1556,7 @@ function HelpContent() {
       {/* Write message Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-xl overflow-hidden animate-in zoom-in-95 duration-200">
+          <div className="bg-white rounded-2xl shadow-lg w-full max-w-xl overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="p-6 md:p-8">
               <div className="flex items-center justify-between mb-6">
                 <div>

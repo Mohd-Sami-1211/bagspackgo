@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
+import { compressImage } from '@/lib/imageCompression';
 
 /* ── Custom dropdown styling ─────────────────────────── */
 const customSelectStyles = {
@@ -160,18 +161,28 @@ const PersonalDetails = ({
     }
   };
 
-  const handleIdImageUpload = (index, e) => {
+  const handleIdImageUpload = async (index, e) => {
     const file = e.target.files[0];
     if (!file) return;
     if (file.size > 2 * 1024 * 1024) { alert("Image size should be less than 2MB"); return; }
-    const reader = new FileReader();
-    reader.onloadend = () => {
+    try {
+      const compressed = await compressImage(file, { maxWidth: 1200, quality: 0.75 });
       const newDetails = [...personalDetails];
       newDetails[index].idImage = file;
-      newDetails[index].idImagePreview = reader.result;
+      newDetails[index].idImagePreview = compressed;
       setPersonalDetails(newDetails);
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      console.error('Compression error:', err);
+      // Fallback to raw
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const newDetails = [...personalDetails];
+        newDetails[index].idImage = file;
+        newDetails[index].idImagePreview = reader.result;
+        setPersonalDetails(newDetails);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const toggleSection = (index) => {

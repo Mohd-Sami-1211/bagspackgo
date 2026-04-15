@@ -301,7 +301,7 @@ const Packages = () => {
                </button>
                <button 
                   onClick={() => router.push(`/serviceprovider/dashboard/settings/packages/view/${pkg.id}`)}
-                  className="h-9 px-3.5 bg-emerald-600 text-white rounded-xl text-[12px] font-bold hover:bg-emerald-700 transition-all shadow-md shadow-emerald-200/50 active:scale-95 flex items-center gap-1.5"
+                  className="h-9 px-3.5 bg-emerald-600 text-white rounded-xl text-[12px] font-bold hover:bg-emerald-700 transition-all shadow-sm active:scale-95 flex items-center gap-1.5"
                >
                 <Eye size={14} />
                 <span>View</span>
@@ -318,8 +318,14 @@ const Packages = () => {
       
       {/* ── Page Header & Command Bar ─────────────────────── */}
       <div className="flex items-center gap-3">
+        <button
+          onClick={() => router.push('/serviceprovider/dashboard/settings')}
+          className="w-9 h-9 flex items-center justify-center bg-white border border-gray-200 text-gray-500 rounded-xl hover:bg-gray-50 transition-all shadow-sm active:scale-95 shrink-0"
+        >
+          <ArrowLeft size={16} />
+        </button>
         <div className="flex items-center gap-2.5 flex-1 min-w-0">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-200 shrink-0">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-sm shrink-0">
             <PackageIcon className="w-4 h-4 text-white" />
           </div>
           <div className="min-w-0">
@@ -342,7 +348,7 @@ const Packages = () => {
           <div className="relative">
             <button
               onClick={() => setShowAddMenu(!showAddMenu)}
-              className="px-3 py-2 bg-emerald-600 text-white rounded-xl text-[12px] font-bold hover:bg-emerald-700 shadow-lg shadow-emerald-200 transition-all active:scale-[0.98] flex items-center gap-1.5"
+              className="px-3 py-2 bg-emerald-600 text-white rounded-xl text-[12px] font-bold hover:bg-emerald-700 shadow-sm transition-all active:scale-[0.98] flex items-center gap-1.5"
             >
               <Plus size={16} />
               <span className="hidden sm:inline">Add Package</span>
@@ -495,7 +501,7 @@ const Packages = () => {
               </p>
               <button
                 onClick={() => { setShowAddMenu(true); setSearch(''); }}
-                className="px-8 py-3 bg-emerald-600 text-white font-bold rounded-2xl text-[12px] hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200"
+                className="px-8 py-3 bg-emerald-600 text-white font-bold rounded-2xl text-[12px] hover:bg-emerald-700 transition-all shadow-sm"
               >
                 Create new package
               </button>
@@ -506,7 +512,7 @@ const Packages = () => {
               initial={{ opacity: 0 }} animate={{ opacity: 1 }}
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
             >
-              <AnimatePresence mode="popLayout">
+              <AnimatePresence>
                 {filteredPackages.map((pkg, idx) => (
                   <PackageCard key={pkg.id} pkg={pkg} index={idx} />
                 ))}
@@ -528,7 +534,7 @@ const Packages = () => {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden"
+              className="relative w-full max-w-sm bg-white rounded-2xl shadow-lg overflow-hidden"
             >
               <div className="p-6 text-center">
                 <div className="w-16 h-16 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-rose-100">

@@ -32,6 +32,7 @@ import {
   Shield
 } from 'lucide-react';
 import dataJson from 'src/data/data.json';
+import { compressImage, fetchWithRetry } from '@/lib/imageCompression';
 
 // Use the same destination list used throughout the app
 const destinations = [
@@ -448,11 +449,11 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
       console.log('Submitting package:', formData);
 
       const endpoint = isEdit ? `/api/provider/packages?id=${initialData._id}` : '/api/provider/packages';
-      const res = await fetch(endpoint, {
+      const res = await fetchWithRetry(endpoint, {
         method: isEdit ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
-      });
+      }, { timeoutMs: 60000, maxRetries: 2 });
 
       const result = await res.json();
 
@@ -469,7 +470,11 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
       }, 2500);
     } catch (error) {
       console.error('Error creating package:', error);
-      alert(`Error: ${error.message}`);
+      if (error.name === 'AbortError') {
+        alert('The request timed out. Please check your internet connection and try again.');
+      } else {
+        alert(`Error: ${error.message}`);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -659,7 +664,15 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
           return;
         }
         const reader = new FileReader();
-        reader.onload = (e) => updateField(e.target.result);
+        reader.onload = async (e) => {
+          try {
+            const compressed = await compressImage(value, { maxWidth: 1200, quality: 0.75 });
+            updateField(compressed);
+          } catch (err) {
+            console.error('Compression error:', err);
+            updateField(e.target.result); // fallback to raw
+          }
+        };
         reader.readAsDataURL(value);
       } else {
         updateField(value);
@@ -675,20 +688,14 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
         alert('Some files exceed the 5MB limit and were skipped.');
       }
       
-      const promises = validFiles.map(file => {
-        return new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onload = (e) => resolve(e.target.result);
-          reader.readAsDataURL(file);
-        });
-      });
+      const promises = validFiles.map(file => compressImage(file, { maxWidth: 1200, quality: 0.75 }));
 
-      Promise.all(promises).then(base64Images => {
+      Promise.all(promises).then(compressedImages => {
         const updatedItinerary = [...itinerary];
         const existingPhotos = updatedItinerary[dayIndex][field] || [];
         updatedItinerary[dayIndex] = {
           ...updatedItinerary[dayIndex],
-          [field]: [...existingPhotos, ...base64Images]
+          [field]: [...existingPhotos, ...compressedImages]
         };
         setItinerary(updatedItinerary);
       });
@@ -1759,7 +1766,7 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
             <ArrowLeft size={18} />
           </button>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-200">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-sm">
               <Calendar className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -1773,7 +1780,7 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
           type="submit"
           form="packageForm"
           disabled={isSubmitting}
-          className="w-full sm:w-auto px-6 py-2.5 bg-emerald-600 text-white rounded-xl text-[13px] font-bold hover:bg-emerald-700 shadow-lg shadow-emerald-200 transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+          className="w-full sm:w-auto px-6 py-2.5 bg-emerald-600 text-white rounded-xl text-[13px] font-bold hover:bg-emerald-700 shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
         >
           {isSubmitting ? (
             <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -1872,7 +1879,7 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="flex-1 sm:flex-none bg-emerald-600 text-white px-8 py-2.5 rounded-xl text-[13px] font-bold hover:bg-emerald-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-emerald-200"
+                  className="flex-1 sm:flex-none bg-emerald-600 text-white px-8 py-2.5 rounded-xl text-[13px] font-bold hover:bg-emerald-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm"
                 >
                   <Save size={16} />
                   {isSubmitting ? (isEdit ? 'Updating...' : 'Publishing...') : (isEdit ? 'Save Changes' : 'Save & Publish')}
@@ -1898,7 +1905,7 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
               initial={{ scale: 0.95, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 20 }}
-              className="relative bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl overflow-hidden"
+              className="relative bg-white rounded-2xl p-6 max-w-sm w-full shadow-lg overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center gap-4 mb-4">
@@ -1927,7 +1934,7 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
                 </button>
                 <button
                   onClick={() => setShowUnsavedAlert(false)}
-                  className="flex-1 px-4 py-2.5 bg-emerald-600 text-white text-[13px] font-bold rounded-xl hover:bg-emerald-700 shadow-lg shadow-emerald-200 transition-all"
+                  className="flex-1 px-4 py-2.5 bg-emerald-600 text-white text-[13px] font-bold rounded-xl hover:bg-emerald-700 shadow-sm transition-all"
                 >
                   Continue
                 </button>
@@ -1952,7 +1959,7 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 exit={{ scale: 0.8, opacity: 0 }}
                 transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-                className="relative bg-white rounded-[32px] sm:rounded-[40px] shadow-2xl p-6 sm:p-10 flex flex-col items-center text-center max-w-[calc(100%-2rem)] sm:max-w-sm w-full overflow-hidden border border-gray-100"
+                className="relative bg-white rounded-[32px] sm:rounded-[40px] shadow-lg p-6 sm:p-10 flex flex-col items-center text-center max-w-[calc(100%-2rem)] sm:max-w-sm w-full overflow-hidden border border-gray-100"
               >
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 via-teal-500 to-emerald-600" />
               <motion.div

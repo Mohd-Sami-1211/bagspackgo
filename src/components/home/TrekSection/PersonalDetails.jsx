@@ -4,6 +4,7 @@ import Select from 'react-select';
 import { User, Mail, Phone, ChevronDown, Upload, ArrowLeft, ArrowRight, PersonStanding, BriefcaseMedical, Check, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
+import { compressImage } from '@/lib/imageCompression';
 
 /* ── Emerald-themed select styling ── */
 const customSelectStyles = {
@@ -182,18 +183,27 @@ const PersonalDetails = ({
     }
   };
 
-  const handleIdImageUpload = (index, e) => {
+  const handleIdImageUpload = async (index, e) => {
     const file = e.target.files[0];
     if (!file) return;
-
-    const reader = new FileReader();
-    reader.onloadend = () => {
+    try {
+      const compressed = await compressImage(file, { maxWidth: 1200, quality: 0.75 });
       const newDetails = [...trekkerDetails];
       newDetails[index].idImage = file;
-      newDetails[index].idImagePreview = reader.result;
+      newDetails[index].idImagePreview = compressed;
       setTrekkerDetails(newDetails);
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      console.error('Compression error:', err);
+      // Fallback to raw
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const newDetails = [...trekkerDetails];
+        newDetails[index].idImage = file;
+        newDetails[index].idImagePreview = reader.result;
+        setTrekkerDetails(newDetails);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const toggleSection = (index) => {
