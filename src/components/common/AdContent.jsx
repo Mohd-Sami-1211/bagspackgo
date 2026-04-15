@@ -53,7 +53,9 @@ export default function AdContent() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [direction, setDirection] = useState(1);
   const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
   const touchEndX = useRef(0);
+  const isHorizontalSwipe = useRef(false);
 
   const nextSlide = useCallback(() => {
     setDirection(1);
@@ -72,22 +74,31 @@ export default function AdContent() {
 
   const handleTouchStart = (e) => {
     touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+    isHorizontalSwipe.current = false;
   };
   const handleTouchMove = (e) => {
     touchEndX.current = e.touches[0].clientX;
+    const diffX = Math.abs(touchStartX.current - touchEndX.current);
+    const diffY = Math.abs(touchStartY.current - e.touches[0].clientY);
+    // Only consider it a swipe if horizontal movement dominates
+    if (diffX > diffY && diffX > 15) {
+      isHorizontalSwipe.current = true;
+    }
   };
   const handleTouchEnd = () => {
+    if (!isHorizontalSwipe.current) return;
     const diff = touchStartX.current - touchEndX.current;
-    if (Math.abs(diff) > 40) {
+    if (Math.abs(diff) > 50) {
       if (diff > 0) nextSlide();
       else prevSlide();
     }
   };
 
   return (
-    <section className="relative -mt-4 mx-4 ">
+    <section className="relative -mt-4 mx-4">
       <div
-        className="w-full md:w-[96%] mx-auto relative overflow-hidden rounded-2xl shadow-2xl"
+        className="w-full md:w-[96%] mx-auto relative overflow-hidden rounded-2xl shadow-2xl touch-pan-y"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -102,12 +113,12 @@ export default function AdContent() {
                 animate={{
                   x: 0,
                   opacity: 1,
-                  transition: { type: "spring", damping: 25, stiffness: 120 }
+                  transition: { type: "spring", damping: 30, stiffness: 200 }
                 }}
                 exit={{
                   x: direction > 0 ? -300 : 300,
                   opacity: 0,
-                  transition: { duration: 0.4 }
+                  transition: { duration: 0.3 }
                 }}
                 className={`relative flex flex-col md:flex-row-reverse w-full bg-gradient-to-r ${promo.colors.bg} ${promo.colors.text} pb-10 md:pb-0`}
               >
@@ -137,7 +148,8 @@ export default function AdContent() {
                     alt={promo.title}
                     fill
                     className="object-cover"
-                    priority
+                    loading="lazy"
+                    quality={75}
                   />
                   <div className="absolute inset-0 bg-gradient-to-r from-white/10 via-transparent to-transparent z-10" />
                 </div>

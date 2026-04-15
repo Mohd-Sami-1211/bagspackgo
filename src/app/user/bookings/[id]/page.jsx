@@ -130,106 +130,94 @@ function CancelModal({ onClose, onConfirm, loading }) {
     };
 
     return (
-        <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+        <div 
+            className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200 font-sans"
             onClick={(e) => e.target === e.currentTarget && onClose()}
         >
-            <motion.div
-                initial={{ opacity: 0, y: 40, scale: 0.96 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 40, scale: 0.96 }}
-                className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden"
-            >
+            <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
                 {/* Header */}
-                <div className="bg-gradient-to-r from-red-500 to-rose-600 px-6 py-5 text-white">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center">
-                            <AlertTriangle className="w-5 h-5" />
-                        </div>
-                        <div>
-                            <h3 className="text-lg font-black">Cancel Booking</h3>
-                            <p className="text-sm text-white/80">This action cannot be undone</p>
-                        </div>
+                <div className="px-6 py-5 border-b border-gray-100 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center shrink-0">
+                        <AlertTriangle className="w-5 h-5 text-emerald-600" />
+                    </div>
+                    <div>
+                        <h3 className="text-lg font-semibold text-gray-900 tracking-tight">Cancel Booking</h3>
+                        <p className="text-sm text-gray-500">This action cannot be undone.</p>
                     </div>
                 </div>
 
                 <div className="p-6">
-                    <AnimatePresence mode="wait">
-                        {step === 'reason' && (
-                            <motion.div key="reason" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }}>
-                                <p className="text-sm font-semibold text-gray-600 mb-4">Please tell us why you want to cancel:</p>
-                                <div className="grid grid-cols-2 gap-2 mb-4">
-                                    {reasons.map(r => (
-                                        <button
-                                            key={r}
-                                            onClick={() => setReason(r)}
-                                            className={`text-xs font-bold px-3 py-2.5 rounded-xl border-2 text-left transition-all ${reason === r ? 'border-red-500 bg-red-50 text-red-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}
-                                        >
-                                            {r}
-                                        </button>
-                                    ))}
-                                </div>
-                                {reason === 'Other' && (
-                                    <textarea
-                                        className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-800 resize-none outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100"
-                                        rows={3}
-                                        placeholder="Tell us more..."
-                                        onChange={(e) => setReason('Other: ' + e.target.value)}
-                                    />
-                                )}
-                                <div className="flex gap-3 mt-4">
-                                    <button onClick={onClose} className="flex-1 py-3 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50 transition">
-                                        Keep Booking
-                                    </button>
+                    {step === 'reason' && (
+                        <div className="animate-in fade-in slide-in-from-right-4 duration-200">
+                            <p className="text-sm font-medium text-gray-700 mb-4">Please tell us why you want to cancel:</p>
+                            <div className="grid grid-cols-2 gap-2 mb-4">
+                                {reasons.map(r => (
                                     <button
-                                        onClick={handleNext}
-                                        disabled={!reason.trim()}
-                                        className="flex-1 py-3 rounded-xl bg-red-500 hover:bg-red-600 text-sm font-black text-white shadow-lg shadow-red-200 transition disabled:opacity-40"
+                                        key={r}
+                                        onClick={() => setReason(r)}
+                                        className={`text-xs font-semibold px-3 py-2.5 rounded-lg border text-left transition-all ${reason === r ? 'border-emerald-600 bg-emerald-50 text-emerald-700' : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50'}`}
                                     >
-                                        Continue
+                                        {r}
                                     </button>
-                                </div>
-                            </motion.div>
-                        )}
-
-                        {step === 'confirm' && (
-                            <motion.div key="confirm" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }}>
-                                <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 mb-4">
-                                    <p className="text-xs font-bold text-orange-700 uppercase tracking-widest mb-1">Reason</p>
-                                    <p className="text-sm font-semibold text-gray-800">{reason}</p>
-                                </div>
-                                <p className="text-sm font-semibold text-gray-600 mb-2">
-                                    Type <span className="font-black text-red-600 font-mono">confirm</span> to proceed:
-                                </p>
-                                <input
-                                    type="text"
-                                    value={confirmText}
-                                    onChange={(e) => setConfirmText(e.target.value)}
-                                    placeholder="Type 'confirm'"
-                                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm font-mono text-gray-900 outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100 mb-4"
-                                    onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+                                ))}
+                            </div>
+                            {reason === 'Other' && (
+                                <textarea
+                                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 resize-none outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                                    rows={3}
+                                    placeholder="Tell us more..."
+                                    onChange={(e) => setReason('Other: ' + e.target.value)}
                                 />
-                                <div className="flex gap-3">
-                                    <button onClick={() => setStep('reason')} className="flex-1 py-3 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50 transition">
-                                        Back
-                                    </button>
-                                    <button
-                                        onClick={handleSubmit}
-                                        disabled={confirmText.trim().toLowerCase() !== 'confirm' || loading}
-                                        className="flex-1 py-3 rounded-xl bg-red-500 hover:bg-red-600 text-sm font-black text-white shadow-lg shadow-red-200 transition disabled:opacity-40 flex items-center justify-center gap-2"
-                                    >
-                                        {loading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Cancel Booking'}
-                                    </button>
-                                </div>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
+                            )}
+                            <div className="flex gap-3 mt-6">
+                                <button onClick={onClose} className="flex-1 py-2 rounded-md border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors">
+                                    Keep Booking
+                                </button>
+                                <button
+                                    onClick={handleNext}
+                                    disabled={!reason.trim()}
+                                    className="flex-1 py-2 rounded-md bg-emerald-600 hover:bg-emerald-700 text-sm font-medium text-white shadow-sm transition-colors disabled:opacity-50"
+                                >
+                                    Continue
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {step === 'confirm' && (
+                        <div className="animate-in fade-in slide-in-from-right-4 duration-200">
+                            <div className="bg-gray-50 border border-gray-100 rounded-lg p-4 mb-4">
+                                <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Reason</p>
+                                <p className="text-sm font-semibold text-gray-900">{reason}</p>
+                            </div>
+                            <p className="text-sm font-medium text-gray-700 mb-2">
+                                Type <span className="font-bold text-emerald-600 select-none">confirm</span> to proceed:
+                            </p>
+                            <input
+                                type="text"
+                                value={confirmText}
+                                onChange={(e) => setConfirmText(e.target.value)}
+                                placeholder="Type 'confirm'"
+                                className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm font-mono text-gray-900 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 mb-6"
+                                onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+                            />
+                            <div className="flex gap-3">
+                                <button onClick={() => setStep('reason')} className="flex-1 py-2 rounded-md border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors">
+                                    Back
+                                </button>
+                                <button
+                                    onClick={handleSubmit}
+                                    disabled={confirmText.trim().toLowerCase() !== 'confirm' || loading}
+                                    className="flex-1 py-2 rounded-md bg-emerald-600 hover:bg-emerald-700 text-sm font-medium text-white shadow-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                                >
+                                    {loading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Cancel Booking'}
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
-            </motion.div>
-        </motion.div>
+            </div>
+        </div>
     );
 }
 
@@ -278,14 +266,22 @@ function BookingPassEmbed({ booking }) {
                             </p>
                         )}
                     </div>
-                    <div className="text-left sm:text-right">
-                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Booking Ref</p>
-                        <p className="text-xl font-black text-gray-900 font-mono tracking-wider">
-                            {booking.bookingRef || booking.id?.substring(0, 8).toUpperCase()}
-                        </p>
-                        <span className="inline-block text-[10px] font-black text-emerald-700 bg-emerald-100 px-3 py-0.5 rounded-full mt-1 border border-emerald-200">
-                            Payment Confirmed
-                        </span>
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                        <div className="text-left sm:text-right">
+                            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Booking Ref</p>
+                            <p className="text-xl font-black text-gray-900 font-mono tracking-wider">
+                                {booking.bookingRef || booking.id?.substring(0, 8).toUpperCase()}
+                            </p>
+                            <span className="inline-block text-[10px] font-black text-emerald-700 bg-emerald-100 px-3 py-0.5 rounded-full mt-1 border border-emerald-200">
+                                Payment Confirmed
+                            </span>
+                        </div>
+                        {passUrl && (
+                            <div className="shrink-0 bg-white p-1.5 rounded-xl border border-emerald-200 shadow-sm flex flex-col items-center ml-0 sm:ml-2">
+                                <QRCodeSVG value={passUrl} size={64} level="H" />
+                                <p className="text-[7px] font-bold text-emerald-800 uppercase tracking-[0.1em] mt-1">Scan for Pass</p>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
@@ -386,12 +382,7 @@ function BookingPassEmbed({ booking }) {
                             Passenger Manifest
                         </p>
                         <div className="flex flex-col gap-3">
-                            {travelers.map((t, i) => {
-                                const verifyUrl = typeof window !== 'undefined' 
-                                    ? `${window.location.origin}/serviceprovider/scan?bookingId=${booking.id}&passCode=${t.passCode}` 
-                                    : `https://bagspackgo.com/serviceprovider/scan?bookingId=${booking.id}&passCode=${t.passCode}`;
-
-                                return (
+                            {travelers.map((t, i) => (
                                 <div key={i} className="flex justify-between items-center p-4 border border-emerald-100 rounded-2xl bg-emerald-50/30">
                                     <div>
                                         <p className="text-base font-bold text-gray-900 mb-0.5">{t.name || 'Unnamed Passenger'}</p>
@@ -403,12 +394,8 @@ function BookingPassEmbed({ booking }) {
                                         </p>
                                         {t.phone && <p className="text-[10px] font-medium text-gray-500 mt-0.5">Contact: <span className="text-gray-900 font-semibold">{t.phone}</span></p>}
                                     </div>
-                                    <div className="shrink-0 bg-white p-1.5 rounded-lg border border-emerald-200 shadow-sm ml-4 flex flex-col items-center justify-center">
-                                        <QRCodeSVG value={verifyUrl} size={70} level="H" />
-                                        <p className="text-[8px] font-bold text-emerald-800 uppercase tracking-widest mt-1">Scan to Enter</p>
-                                    </div>
                                 </div>
-                            )})}
+                            ))}
                         </div>
                     </div>
                 )}
@@ -460,7 +447,7 @@ export default function BookingDetailPage() {
                         endDate: raw.endDate,
                         price: raw.totalAmount,
                         duration: `${raw.days} Days`,
-                        passUrl: `/user/trip/pass/${raw.id}`,
+                        passUrl: `/user/trip/pass/${raw.id || raw._id}`,
                     };
                 }
             }
@@ -479,7 +466,7 @@ export default function BookingDetailPage() {
                         endDate: raw.endDate,
                         price: raw.totalAmount,
                         duration: `${raw.days} Days`,
-                        passUrl: `/user/trek/pass/${raw.id}`,
+                        passUrl: `/user/trek/pass/${raw.id || raw._id}`,
                         arrivalDeparture: raw.pickupDropoff || raw.arrivalDeparture || {},
                     };
                 }
@@ -498,7 +485,7 @@ export default function BookingDetailPage() {
                         date: raw.date,
                         price: raw.price,
                         duration: raw.duration || '1 Day',
-                        passUrl: `/user/event/pass/${raw.id}`,
+                        passUrl: `/user/event/pass/${raw.id || raw._id}`,
                         // Normalize for UI components
                         personalDetails: { personalDetails: raw.participants || [] },
                         selectedPickup: raw.selectedPickup || null,
@@ -633,17 +620,17 @@ export default function BookingDetailPage() {
                                 <QrCode className="w-4 h-4" /> View Pass
                             </Link>
                         )}
-                        {/* Print Pass */}
+                        {/* Download Pass */}
                         {!cancelStatus && booking.passUrl && (
                             <Link href={`${booking.passUrl}?print=true`} target="_blank"
                                 className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-50 text-sm font-bold transition">
-                                <Printer className="w-4 h-4" /> Print
+                                <Download className="w-4 h-4" /> Download / Print
                             </Link>
                         )}
                         {/* Cancel */}
                         {canCancel && (
                             <button onClick={() => setShowCancelModal(true)}
-                                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 text-sm font-bold transition">
+                                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 text-sm font-bold transition">
                                 <XCircle className="w-4 h-4" /> Cancel Booking
                             </button>
                         )}
@@ -720,6 +707,7 @@ export default function BookingDetailPage() {
                                 { label: 'Duration', value: booking.duration },
                                 { label: 'Slots Booked', value: `${booking.people || 1} Pax` },
                                 { label: 'Category', value: booking.category || 'Event' },
+                                { label: 'Booked On', value: (booking.createdAt || booking.bookingDate) ? (() => { const d = new Date(booking.createdAt || booking.bookingDate); return `${d.toLocaleDateString('en-GB')} ${d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`; })() : '—' },
                                 { label: 'Amount Paid', value: rupee(booking.price), highlight: true },
                             ].map(({ label, value, highlight }) => (
                                 <div key={label}>
@@ -769,7 +757,8 @@ export default function BookingDetailPage() {
                                 { label: 'Travellers', value: `${booking.people || 1} Pax` },
                                 ...(booking?.type?.toLowerCase() !== 'trek' ? [{ label: 'Category', value: booking.category }] : []),
                                 { label: 'Pickup', value: booking.arrivalDeparture?.pickup?.address ? `${booking.arrivalDeparture.pickup.address}${booking.arrivalDeparture.pickup.location ? `, ${booking.arrivalDeparture.pickup.location}` : ''} @ ${formatTimeWithAMPM(booking.arrivalDeparture.pickup.time) || 'TBD'}` : 'TBD' },
-                                { label: 'Dropoff', value: booking.arrivalDeparture?.dropoff?.address ? `${booking.arrivalDeparture.dropoff.address}${booking.arrivalDeparture.dropoff.location ? `, ${booking.arrivalDeparture.dropoff.location}` : ''} @ ${formatTimeWithAMPM(booking.arrivalDeparture.dropoff.time) || 'TBD'}` : 'TBD' },
+                                { label: 'Dropoff', value: booking.arrivalDeparture?.dropoff?.address ? `${booking.arrivalDeparture.dropoff.address}${booking.arrivalDeparture.dropoff.location ? `, ${booking.arrivalDeparture.dropoff.location}` : ''} ${booking.arrivalDeparture.dropoff.time ? `@ ${formatTimeWithAMPM(booking.arrivalDeparture.dropoff.time)}` : ''}` : 'TBD' },
+                                { label: 'Booked On', value: (booking.createdAt || booking.bookingDate) ? (() => { const d = new Date(booking.createdAt || booking.bookingDate); return `${d.toLocaleDateString('en-GB')} ${d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`; })() : '—' },
                                 { label: 'Amount Paid', value: rupee(booking.price), highlight: true },
                             ].map(({ label, value, highlight }) => (
                                 <div key={label}>

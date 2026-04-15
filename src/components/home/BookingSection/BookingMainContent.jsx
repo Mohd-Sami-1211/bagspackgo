@@ -1,9 +1,14 @@
 'use client';
 import { useMemo, useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import { FaClipboardList, FaUsers, FaHeart, FaFilter, FaCalendarAlt, FaHistory, FaChevronLeft } from 'react-icons/fa';
+import { ArrowLeft, SlidersHorizontal, Calendar, Compass, Mountain, Ticket, Inbox } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
 import BookingCard from 'src/components/home/BookingSection/BookingCard';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+
 const BookingMainContent = () => {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('upcoming-bookings');
@@ -34,22 +39,26 @@ const BookingMainContent = () => {
 
         if (eventsData.success && eventsData.data) {
           eventsData.data.forEach(b => {
+            const bId = b.id || b._id;
             allFetched.push({
               ...b,
+              id: bId,
               type: 'Event',
               name: ensureString(b.name),
               destination: ensureString(b.destination),
               category: ensureString(b.category),
               guide: ensureString(b.guide),
-              createdAt: b.createdAt,
+              passUrl: b.passUrl || `/user/event/pass/${bId}`,
+              createdAt: b.createdAt || b.bookingDate,
             });
           });
         }
 
         if (tripsData.success && tripsData.data) {
           tripsData.data.forEach(b => {
+            const bId = b.id || b._id;
             allFetched.push({
-              id: b.id,
+              id: bId,
               type: 'Trip',
               name: ensureString(b.packageName),
               date: b.startDate,
@@ -63,7 +72,7 @@ const BookingMainContent = () => {
               bookingRef: b.bookingRef,
               duration: `${b.days} Days`,
               image: b.packageSnapshot?.poster || '/images/hero.svg',
-              passUrl: `/user/trip/pass/${b.id}`,
+              passUrl: `/user/trip/pass/${bId}`,
               cancellationDetails: b.cancellationDetails || {},
               personalDetails: b.personalDetails || {},
               arrivalDeparture: b.arrivalDeparture || {},
@@ -72,15 +81,16 @@ const BookingMainContent = () => {
               companyName: b.companyName || '',
               providerPhone: b.providerPhone || '',
               providerEmail: b.providerEmail || '',
-              createdAt: b.createdAt,
+              createdAt: b.createdAt || b.bookingDate,
             });
           });
         }
 
         if (treksData.success && treksData.data) {
           treksData.data.forEach(b => {
+            const bId = b.id || b._id;
             allFetched.push({
-              id: b.id,
+              id: bId,
               type: 'Trek',
               name: ensureString(b.packageName),
               date: b.startDate,
@@ -94,13 +104,18 @@ const BookingMainContent = () => {
               bookingRef: b.bookingRef,
               duration: `${b.days} Days`,
               image: b.packageSnapshot?.poster || '/images/hero.svg',
-              passUrl: `/user/trek/pass/${b.id}`,
-              createdAt: b.createdAt,
+              passUrl: `/user/trek/pass/${bId}`,
+              createdAt: b.createdAt || b.bookingDate,
             });
           });
         }
 
-        allFetched.sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date));
+        // Sort by newest bookings first using creation date (createdAt)
+        allFetched.sort((a, b) => {
+          const timeA = new Date(a.createdAt || a.date || 0).getTime();
+          const timeB = new Date(b.createdAt || b.date || 0).getTime();
+          return timeB - timeA;
+        });
         setAllBookings(allFetched);
       } catch (err) {
         console.error('Failed to fetch bookings:', err);
@@ -117,114 +132,118 @@ const BookingMainContent = () => {
 
   const filteredBookings = useMemo(() => {
     return allBookings.filter((b) => {
-      const matchStatus = 
+      const matchStatus =
         bookingStatusFilter === 'all' ||
         (bookingStatusFilter === 'upcoming' && (new Date(b.date) >= new Date() && !['cancelled', 'refund_initiated', 'cancellation_requested'].includes(b.status))) ||
         (bookingStatusFilter === 'completed' && (new Date(b.date) < new Date() && !['cancelled', 'refund_initiated', 'cancellation_requested'].includes(b.status))) ||
         (bookingStatusFilter === 'cancelled' && ['cancelled', 'cancellation_requested', 'refund_initiated'].includes(b.status));
-      
+
       const matchCategory = bookingCategoryFilter === 'all' || b.type === bookingCategoryFilter;
       return matchStatus && matchCategory;
     });
   }, [allBookings, bookingStatusFilter, bookingCategoryFilter]);
 
-  const SectionHeader = ({ children }) => (
-    <div className="flex items-center justify-between mb-4">
-      {children}
-    </div>
-  );
-
-  const Fallback = ({ title, subtitle }) => (
-    <div className="flex flex-col items-center justify-center py-14 text-center text-gray-500">
-      <div className="w-36 h-36 rounded-2xl bg-gradient-to-tr from-emerald-50 to-teal-50 flex items-center justify-center mb-4">
-        <svg className="w-12 h-12 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7" />
-          <path strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" d="M16 3v4M8 3v4M3 11h18" />
-        </svg>
-      </div>
-      <h3 className="text-lg font-black text-gray-700 mb-2">{title}</h3>
-      <p className="text-sm">{subtitle}</p>
-    </div>
-  );
-
-  const FilterContent = () => (
-    <div className="space-y-6">
-      <div>
-        <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Status</label>
-        <div className="flex flex-col gap-3">
-          {['all', 'upcoming', 'completed', 'cancelled'].map(s => (
-            <label key={s} className="flex items-center gap-3 cursor-pointer group">
-              <input type="radio" checked={bookingStatusFilter === s} onChange={() => setBookingStatusFilter(s)} className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 border-gray-300" />
-              <span className="text-sm font-bold text-gray-700 group-hover:text-emerald-600 transition-colors capitalize">{s === 'all' ? 'All Status' : s}</span>
-            </label>
-          ))}
-        </div>
-      </div>
-      <div>
-        <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Category</label>
-        <div className="flex flex-col gap-3">
-          {['all', 'Trip', 'Trek', 'Event'].map(c => (
-            <label key={c} className="flex items-center gap-3 cursor-pointer group">
-              <input type="radio" checked={bookingCategoryFilter === c} onChange={() => setBookingCategoryFilter(c)} className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 border-gray-300" />
-              <span className="text-sm font-bold text-gray-700 group-hover:text-emerald-600 transition-colors capitalize">{c === 'all' ? 'All Categories' : c}</span>
-            </label>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
+  // ——— Filter chips data ———
+  const statusFilters = [
+    { key: 'all', label: 'All' },
+    { key: 'upcoming', label: 'Upcoming' },
+    { key: 'completed', label: 'Completed' },
+    { key: 'cancelled', label: 'Cancelled' },
+  ];
+  const categoryFilters = [
+    { key: 'all', label: 'All Types' },
+    { key: 'Trip', label: 'Trips', icon: Compass },
+    { key: 'Trek', label: 'Treks', icon: Mountain },
+    { key: 'Event', label: 'Events', icon: Ticket },
+  ];
 
   return (
-    <div className="flex flex-col md:flex-row gap-6 mx-auto max-w-7xl mb-16 px-4 py-8">
-      {/* SIDEBAR Filters (Large screens) */}
-      <aside className="hidden md:block md:w-64 shrink-0 bg-white rounded-3xl shadow-xl shadow-emerald-900/5 border border-emerald-50 p-6 h-fit sticky top-24">
-        <h3 className="text-lg font-black text-gray-900 mb-6 flex items-center gap-2">
-           <FaFilter className="text-emerald-500" /> Filters
-        </h3>
-        <FilterContent />
-      </aside>
+    <div className="w-full px-4 sm:px-6 lg:px-8 py-2 sm:py-4 mb-16 font-sans">
 
-      {/* MAIN CONTENT */}
-      <main className="flex-1 w-full max-w-full overflow-hidden min-h-[500px]">
-        <SectionHeader>
-          <div className="flex items-center gap-4">
-             <button onClick={() => router.back()} className="p-2 sm:p-2.5 rounded-2xl bg-white border border-gray-200 text-gray-600 hover:bg-emerald-50 hover:text-emerald-600 transition-all shadow-sm active:scale-95 shrink-0">
-                <FaChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-             </button>
-             <div>
-                <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-gray-900 leading-none tracking-tight">My Bookings</h2>
-                <p className="text-sm md:text-base font-semibold text-gray-500 mt-1.5">Manage and track your travel experiences.</p>
-             </div>
-          </div>
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="md:hidden flex items-center gap-2 px-4 py-2 text-sm font-black rounded-xl border-2 border-emerald-100 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors"
-          >
-            <FaFilter className="text-xs" /> Filters
-          </button>
-        </SectionHeader>
-
-        {/* Mobile Filters Dropdown */}
-        <AnimatePresence>
-          {showFilters && (
-             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="md:hidden bg-white p-6 rounded-3xl shadow-lg border border-emerald-100 mb-6 overflow-hidden">
-                <FilterContent />
-             </motion.div>
-          )}
-        </AnimatePresence>
-
-        <div className="space-y-4 pt-2">
-          {loading ? (
-             <Fallback title="Loading bookings..." subtitle="Fetching your latest data..." />
-          ) : filteredBookings.length ? (
-            filteredBookings.map((b) => (
-              <BookingCard key={b.id} booking={b} onClick={() => router.push(`/user/bookings/${b.id}`)} />
-            ))
-          ) : (
-            <Fallback title="No bookings found" subtitle="Try adjusting your filters to see more results." />
-          )}
+      {/* ——— Page header ——— */}
+      <div className="flex items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
+        <button
+          onClick={() => router.back()}
+          className="p-2 rounded-lg bg-white border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-all shadow-sm shrink-0"
+        >
+          <ArrowLeft className="w-4 h-4" />
+        </button>
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">My Bookings</h1>
+          <p className="text-sm text-gray-500 mt-0.5">Manage and track your travel experiences.</p>
         </div>
-      </main>
+      </div>
+
+      {/* ——— Filter chips ——— */}
+      <div className="space-y-3 mb-6">
+        {/* Status filters */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
+          {statusFilters.map(f => (
+            <button
+              key={f.key}
+              onClick={() => setBookingStatusFilter(f.key)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all border ${
+                bookingStatusFilter === f.key
+                  ? 'bg-gray-900 text-white border-gray-900'
+                  : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50 hover:border-gray-300'
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+        {/* Category filters */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
+          {categoryFilters.map(f => {
+            const Icon = f.icon;
+            return (
+              <button
+                key={f.key}
+                onClick={() => setBookingCategoryFilter(f.key)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all border ${
+                  bookingCategoryFilter === f.key
+                    ? 'bg-gray-900 text-white border-gray-900'
+                    : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50 hover:border-gray-300'
+                }`}
+              >
+                {Icon && <Icon className="w-3 h-3" />}
+                {f.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <Separator className="mb-6" />
+
+      {/* ——— Results count ——— */}
+      {!loading && (
+        <p className="text-xs font-medium text-gray-400 mb-4">
+          {filteredBookings.length} booking{filteredBookings.length !== 1 ? 's' : ''} found
+        </p>
+      )}
+
+      {/* ——— Booking list ——— */}
+      <div className="space-y-3">
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-2 border-gray-200 border-t-gray-900 mb-4" />
+            <p className="text-sm font-medium text-gray-500">Loading your bookings…</p>
+          </div>
+        ) : filteredBookings.length > 0 ? (
+          filteredBookings.map((b) => (
+            <BookingCard key={b.id} booking={b} onClick={() => router.push(`/user/bookings/${b.id}`)} />
+          ))
+        ) : (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="w-16 h-16 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center mb-4">
+              <Inbox className="w-7 h-7 text-gray-300" />
+            </div>
+            <h3 className="text-base font-semibold text-gray-700 mb-1">No bookings found</h3>
+            <p className="text-sm text-gray-400 max-w-xs">Try adjusting your filters or book your next adventure.</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

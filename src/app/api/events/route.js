@@ -4,6 +4,8 @@ import { Event } from "@/models/event.model";
 import { Guide } from "@/models/guide.model";
 import { GuideDetails } from "@/models/guidedetails.model";
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/events
  * Public API — returns all published events for the user-facing side.
@@ -52,24 +54,18 @@ export async function GET(request) {
 
         const skip = (page - 1) * limit;
 
-        const [eventsList, totalRaw] = await Promise.all([
-            Event.find(query)
-                .sort(sortObj)
-                // Not using skip/limit here yet, wait until after filter
-                .lean(),
-            Event.countDocuments(query),
-        ]);
+        // Select only needed fields — exclude large text/binary fields like 'about' and 'photographs' for the list view
+        const eventsList = await Event.find(query)
+            .select('title date duration pricePerSlot eventType rating bookedSlots totalSlots location destination poster guide highlights whatsIncluded whatsExcluded faqs whatToBring restrictions pickupPoints itinerary destinationLink createdAt status')
+            .sort(sortObj)
+            .lean();
 
-        // Fetch guide info for each event
+        // Fetch guide info and details concurrently
         const guideIds = [...new Set(eventsList.map((e) => e.guide.toString()))];
-        const guides = await Guide.find({ _id: { $in: guideIds } })
-            .select("username email")
-            .lean();
-        const guideDetailsList = await GuideDetails.find({
-            guide: { $in: guideIds },
-        })
-            .select("guide companyname pausedServices")
-            .lean();
+        const [guides, guideDetailsList] = await Promise.all([
+            Guide.find({ _id: { $in: guideIds } }).select("username email").lean(),
+            GuideDetails.find({ guide: { $in: guideIds } }).select("guide companyname pausedServices").lean(),
+        ]);
 
         // 🛑 Filter out paused events
         const pausedEventGuides = new Set(
@@ -100,12 +96,12 @@ export async function GET(request) {
             }
         });
 
-        // Fetch all registered companies that are authorized for events
-        const allEventGuides = await GuideDetails.find({
-            "pausedServices.event": { $ne: true }
-        }).select("companyname").lean();
-        
-        const allOrganizers = [...new Set(allEventGuides.map(g => g.companyname).filter(Boolean))].map(name => ({ id: name, name }));
+        // Derive organizers from already-fetched guideDetailsList instead of a separate DB query
+        const allOrganizers = [...new Set(
+            guideDetailsList
+                .filter(gd => !gd.pausedServices?.event && gd.companyname)
+                .map(gd => gd.companyname)
+        )].map(name => ({ id: name, name }));
 
         return NextResponse.json({
             success: true,

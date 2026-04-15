@@ -62,6 +62,7 @@ const TrekGuideDetails = ({ guide }) => {
 
   const scrollContainerRef = useRef(null);
   const nodeRefs = useRef([]);
+  const tabsRef = useRef(null);
   const dayCardRefs = useRef([]);
   const dayCardsContainerRef = useRef(null);
 
@@ -225,8 +226,14 @@ const TrekGuideDetails = ({ guide }) => {
   const isTabDisabled = key => key === 'personalDetails' ? !pickupDropoffCompleted : false;
 
   const handleNextTab = () => {
-    if (activeTab === 'itinerary') setActiveTab('pickupDropoff');
-    else if (activeTab === 'pickupDropoff' && pickupDropoffCompleted) setActiveTab('personalDetails');
+    if (activeTab === 'itinerary') {
+       setActiveTab('pickupDropoff');
+       setTimeout(() => tabsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+    }
+    else if (activeTab === 'pickupDropoff' && pickupDropoffCompleted) {
+       setActiveTab('personalDetails');
+       setTimeout(() => tabsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+    }
   };
 
   const handleBack = () => {
@@ -239,6 +246,7 @@ const TrekGuideDetails = ({ guide }) => {
     setPickupDropoffData(data);
     setPickupDropoffCompleted(true);
     setActiveTab('personalDetails');
+    setTimeout(() => tabsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
   };
 
   const handleSavePersonalDetails = data => {
@@ -422,7 +430,7 @@ const TrekGuideDetails = ({ guide }) => {
         <div className="w-full px-3 sm:px-4 md:px-6 lg:px-8 flex flex-col lg:flex-row gap-4 sm:gap-6 md:gap-8">
 
           {/* ── Left: Tabs ── */}
-          <div className="w-full lg:w-8/12">
+          <div className="w-full lg:w-8/12" ref={tabsRef}>
             {/* Tab bar */}
             <div className="flex bg-white rounded-t-xl shadow-sm overflow-hidden border border-gray-200 mb-1.5">
               {[
@@ -504,6 +512,110 @@ const TrekGuideDetails = ({ guide }) => {
                       ))}
                     </div>
 
+                    {/* Mobile-only: Show package details inline before Next button */}
+                    <div className="lg:hidden mt-6 space-y-6">
+                      {/* What's Included */}
+                      <div className="rounded-xl overflow-hidden border border-gray-200 bg-white">
+                        <div className="px-5 py-4 bg-gray-50 border-b border-gray-100">
+                          <h2 className="text-gray-900 font-bold text-base flex items-center gap-2">
+                            <CheckCircle2 className="w-5 h-5 text-gray-500" /> What's Included
+                          </h2>
+                        </div>
+                        <div className="p-4">
+                          <div className="space-y-4">
+                            {packageInclusions.map((item, i) => (
+                              <div key={i} className="flex items-start">
+                                <div className="flex-shrink-0 p-2 rounded-lg mr-4 bg-gray-50 border border-gray-100">{item.icon}</div>
+                                <div className="min-w-0">
+                                  <h4 className="font-medium text-gray-800 text-sm">{item.title}</h4>
+                                  {item.items?.length > 0 && (
+                                    <ul className="mt-2 space-y-1">
+                                      {item.items.map((d, j) => (
+                                        <li key={j} className="flex items-start text-xs text-gray-500">
+                                          <svg className="h-3 w-3 text-gray-400 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                                          {d}
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+
+                          {trekPackage?.exclusivesList && trekPackage.exclusivesList.length > 0 && (
+                            <div className="mt-4 pt-4 border-t border-gray-200">
+                              <h4 className="font-medium text-gray-800 mb-3 text-sm">What's NOT Included</h4>
+                              <ul className="space-y-2">
+                                {trekPackage.exclusivesList.map((item, index) => (
+                                  <li key={item.id || index} className="flex items-start text-xs text-gray-600">
+                                    <Minus className="h-3 w-3 text-red-500 mr-2 mt-0.5 flex-shrink-0" />
+                                    <span>{item.text || item}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                          {trekPackage?.additionalPoints && trekPackage.additionalPoints.length > 0 && trekPackage.additionalPoints.some(p => p.text?.trim()) && (
+                            <div className="mt-4 pt-4 border-t border-gray-200">
+                              <h4 className="font-medium text-gray-800 mb-3 text-sm">Important Notes</h4>
+                              <ul className="space-y-2.5">
+                                {trekPackage.additionalPoints.filter(item => item.text?.trim()).map((item, index) => (
+                                  <li key={item.id || index} className="flex items-start text-xs text-gray-600 bg-gray-50/80 p-2.5 rounded-lg border border-gray-100">
+                                    <AlertCircle className="h-3.5 w-3.5 text-amber-500 mr-2 mt-0.5 flex-shrink-0" />
+                                    <span className="leading-relaxed font-medium">{item.text || item}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Available Pickups */}
+                      {trekPackage?.pickupDropCities?.length > 0 && (
+                        <div className="rounded-xl overflow-hidden border border-gray-100 bg-white">
+                          <div className="px-4 py-3 bg-emerald-600">
+                            <h2 className="text-white font-semibold text-base flex items-center gap-2">
+                              <MapPin className="w-4 h-4" /> Available Pickups
+                            </h2>
+                          </div>
+                          <div className="p-4">
+                            <div className="space-y-6">
+                              {trekPackage.pickupDropCities.map((city, idx) => (
+                                <div key={idx} className="flex flex-col gap-3">
+                                  <div className="flex items-center gap-2 pb-1 border-b border-gray-100">
+                                    <div className="p-1.5 rounded-lg bg-emerald-100 text-emerald-600"><Navigation className="w-3.5 h-3.5" /></div>
+                                    <span className="font-bold text-gray-900 text-xs tracking-tight uppercase">{city.cityName}</span>
+                                  </div>
+                                  <div className="grid grid-cols-1 gap-2.5">
+                                    {city.locations.map((loc, lIdx) => (
+                                      <div key={lIdx} className="flex items-center justify-between group bg-gray-50/70 hover:bg-gray-100/80 p-2.5 rounded-xl border border-gray-100/50 hover:border-gray-200 transition-all">
+                                        <div className="flex items-center text-xs text-gray-600 min-w-0 pr-2">
+                                          <div className="w-1.5 h-1.5 rounded-full mr-2.5 shrink-0 bg-emerald-400/80" />
+                                          <span className="truncate font-medium">{loc.name}</span>
+                                        </div>
+                                        {loc.mapLink ? (
+                                          <a href={loc.mapLink} target="_blank" rel="noreferrer" className="p-1.5 rounded-lg transition-all flex-shrink-0 bg-white shadow-sm border border-gray-100 text-emerald-500 hover:bg-emerald-500 hover:text-white" title="Expand Map">
+                                            <ExternalLink className="w-3.5 h-3.5" />
+                                          </a>
+                                        ) : (
+                                          <button onClick={() => alert("Coordinate details for this location were not provided.")} className="p-1.5 rounded-lg text-gray-300 bg-white/50 border border-gray-50 flex-shrink-0 cursor-help">
+                                            <ExternalLink className="w-3.5 h-3.5" />
+                                          </button>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
                     <div className="flex justify-end mt-6">
                       <button
                         onClick={handleNextTab}
@@ -542,8 +654,8 @@ const TrekGuideDetails = ({ guide }) => {
             </div>
           </div>
 
-          {/* ── Right: Sidebar ── */}
-          <div className="w-full lg:w-4/12 space-y-4">
+          {/* ── Right: Sidebar (desktop only) ── */}
+          <div className="w-full lg:w-4/12 space-y-4 hidden lg:block">
 
 
             {/* Inclusions */}

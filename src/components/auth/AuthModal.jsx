@@ -277,6 +277,14 @@ function AuthModalContent() {
             if (res.ok) {
                 localStorage.removeItem('bgp_auth_state');
                 onLogin(data.user);
+
+                // If stayOnPage is set (e.g. from community section), don't redirect to dashboard
+                if (authModalOptions?.stayOnPage) {
+                    closeAuthModal();
+                    setLoading(false);
+                    return;
+                }
+
                 setIsRedirecting(true);
                 if (data.user.applicationStatus === 'approved') {
                     window.location.href = '/serviceprovider/dashboard'; // Force layout refresh for provider side

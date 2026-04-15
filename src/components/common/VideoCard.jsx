@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
  * - Respects `isVisible` from the parent's useInView — pauses when off-screen.
  * - Uses the `poster` attribute so a thumbnail shows while the video file loads.
  * - On mobile the video is NOT auto-started until the card is visible.
+ * - touch-pan-y allows vertical page scrolling through this element.
  */
 const VideoCard = ({
   media,
@@ -36,7 +37,7 @@ const VideoCard = ({
 
   return (
     <div
-      className="relative h-full w-full cursor-pointer select-none"
+      className="relative h-full w-full cursor-pointer select-none touch-pan-y"
       onClick={onClick}
       aria-label={isFlipped ? 'Flip back' : 'Flip to see details'}
     >
@@ -67,18 +68,19 @@ const VideoCard = ({
 
               {/*
                 Video:
-                - preload="metadata" so thumbnail loads and video begins quickly
-                - poster shows the first frame thumbnail immediately (no blank box)
+                - preload="metadata" so only the first frame/metadata are fetched, not the entire file
+                - poster shows a thumbnail immediately (no blank box)
                 - playsInline required for iOS
               */}
               <video
                 ref={videoRef}
                 src={media.src}
+                poster={media.poster}
                 className="h-full w-full object-cover"
                 loop
                 muted
                 playsInline
-                preload="auto"
+                preload="metadata"
               />
             </div>
           </motion.div>
@@ -89,9 +91,9 @@ const VideoCard = ({
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.97 }}
             transition={{ duration: 0.3 }}
-            className={`absolute inset-0 flex flex-col justify-center ${color.includes('bg-') ? color : `bg-gradient-to-br ${color}`} ${textColor} p-5 sm:p-8 rounded-xl sm:rounded-2xl shadow-lg border border-slate-700 overflow-y-auto`}
+            className={`absolute inset-0 flex flex-col justify-start pt-2 sm:pt-8 pb-4 ${color.includes('bg-') ? color : `bg-gradient-to-br ${color}`} ${textColor} px-5 sm:px-8 rounded-xl sm:rounded-2xl shadow-lg border border-slate-700 overflow-y-auto`}
           >
-            <h3 className="text-xl sm:text-2xl font-bold tracking-tight mb-3">{name}</h3>
+            <h3 className="text-xl sm:text-2xl font-bold tracking-tight mb-2 sm:mb-3 mt-1 sm:mt-4">{name}</h3>
             <p className="mb-4 leading-relaxed text-sm sm:text-base opacity-95">{description}</p>
             <h4 className="font-semibold mb-2 text-sm uppercase tracking-wider opacity-80">Popular Locations</h4>
             <ul className="list-disc pl-5 space-y-1 text-sm">

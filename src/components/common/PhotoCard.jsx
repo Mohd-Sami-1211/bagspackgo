@@ -16,7 +16,9 @@ const PhotoCard = ({
   const [isFlipped, setIsFlipped] = useState(false);
   const [direction, setDirection] = useState(1);
   const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
   const touchEndX = useRef(0);
+  const isSwiping = useRef(false);
   
   const nextSlide = useCallback((e) => {
     e?.stopPropagation();
@@ -31,22 +33,34 @@ const PhotoCard = ({
   }, [images.length]);
 
   const toggleFlip = () => {
-    setIsFlipped(!isFlipped);
+    // Only flip if the user did NOT just swipe
+    if (!isSwiping.current) {
+      setIsFlipped(!isFlipped);
+    }
+    isSwiping.current = false;
   };
 
-  // Touch swipe handlers
+  // Touch swipe handlers — only capture horizontal swipes, allow vertical scrolling
   const handleTouchStart = (e) => {
     touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+    isSwiping.current = false;
   };
 
   const handleTouchMove = (e) => {
     touchEndX.current = e.touches[0].clientX;
+    const diffX = Math.abs(touchStartX.current - touchEndX.current);
+    const diffY = Math.abs(touchStartY.current - e.touches[0].clientY);
+    // If horizontal movement is dominant, it's a swipe — prevent page scroll
+    if (diffX > diffY && diffX > 10) {
+      isSwiping.current = true;
+    }
   };
 
   const handleTouchEnd = () => {
     if (isFlipped) return;
     const diff = touchStartX.current - touchEndX.current;
-    if (Math.abs(diff) > 40) {
+    if (Math.abs(diff) > 50 && isSwiping.current) {
       if (diff > 0) {
         nextSlide();
       } else {
@@ -68,7 +82,7 @@ const PhotoCard = ({
 
   return (
     <div
-      className="relative h-full w-full cursor-pointer"
+      className="relative h-full w-full cursor-pointer touch-pan-y"
       onClick={toggleFlip}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
@@ -91,15 +105,10 @@ const PhotoCard = ({
             <motion.div
               key={currentIndex}
               custom={direction}
-              initial={{ opacity: 0, x: direction > 0 ? 50 : -50 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: direction > 0 ? -50 : 50 }}
-              transition={{ 
-                type: "spring",
-                stiffness: 300,
-                damping: 30,
-                duration: 0.8
-              }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
               className="absolute inset-0"
             >
               <Image
@@ -107,8 +116,9 @@ const PhotoCard = ({
                 alt={name}
                 fill
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                className="object-cover transition-transform duration-500 hover:scale-105"
-                priority
+                className="object-cover"
+                loading="lazy"
+                quality={75}
               />
             </motion.div>
           </AnimatePresence>
@@ -117,7 +127,7 @@ const PhotoCard = ({
           <button
             onClick={(e) => prevSlide(e)}
             className="hidden md:flex absolute left-2 top-1/2 -translate-y-1/2 bg-black/30 p-2 rounded-full z-30 opacity-0 hover:bg-black/50 transition-all pointer-events-auto"
-            style={{ opacity: 1 }} // Force visible on hover of the parent
+            style={{ opacity: 1 }}
           >
             <ChevronLeft className="text-white" size={20} />
           </button>
@@ -146,12 +156,7 @@ const PhotoCard = ({
             initial={{ rotateY: 90, opacity: 0 }}
             animate={{ rotateY: 0, opacity: 1 }}
             exit={{ rotateY: -90, opacity: 0 }}
-            transition={{ 
-              type: "spring",
-              stiffness: 300,
-              damping: 30,
-              duration: 0.8
-            }}
+            transition={{ duration: 0.3 }}
             className={`absolute inset-0 ${bgColor.includes('bg-') ? bgColor : `bg-gradient-to-br ${bgColor}`} ${textColor} p-6 rounded-xl shadow-lg border border-slate-700 overflow-y-auto`}
           >
             <h3 className="text-xl sm:text-2xl font-bold tracking-tight mb-4">{name}</h3>
