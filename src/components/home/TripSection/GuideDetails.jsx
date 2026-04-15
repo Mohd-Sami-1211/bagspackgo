@@ -528,8 +528,21 @@ const GuideDetails = ({ guide }) => {
         personalDetails: formData.personalDetails || [],
         children: formData.children || [],
       },
-      guide: guide,
-      selectedPackage: selectedPackage,
+      guide: {
+        _id: guide._id || guide.id,
+        name: guide.name,
+        companyName: guide.companyName,
+        location: guide.location,
+        destination: guide.destination,
+        providerId: guide.providerId,
+        rating: guide.rating,
+        reviews: guide.reviews
+      },
+      selectedPackage: selectedPackage ? {
+        _id: selectedPackage._id || selectedPackage.id,
+        label: selectedPackage.label,
+        destination: selectedPackage.destination,
+      } : null,
       tripConfig: {
         category,
         days: priceDetails.days,
@@ -1196,6 +1209,7 @@ const GuideDetails = ({ guide }) => {
                   startDate={selectedStartDate}
                   duration={tripDuration}
                   pickupDropCities={selectedPackage?.pickupDropCities || []}
+                  packageId={packageId}
                 />
               </div>
             )}
@@ -1209,6 +1223,7 @@ const GuideDetails = ({ guide }) => {
                   onNext={handleNextTab}
                   onSubmit={handleReviewJourney}
                   onBack={handleBack}
+                  packageId={packageId}
                 />
               </div>
             )}

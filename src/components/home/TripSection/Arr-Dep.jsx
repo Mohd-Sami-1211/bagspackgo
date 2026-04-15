@@ -51,7 +51,7 @@ const selectStyles = {
   }),
 };
 
-const ArrDep = ({ defaultLocation, onNext, onBack, startDate, duration, pickupDropCities }) => {
+const ArrDep = ({ defaultLocation, onNext, onBack, startDate, duration, pickupDropCities, packageId }) => {
   const [formData, setFormData] = useState({
     arrival: { city: null, pickupAddress: null, time: null, ampm: { value: 'AM', label: 'AM' } },
     departure: { city: null, dropoffAddress: null, time: null, ampm: { value: 'PM', label: 'PM' } },
@@ -70,7 +70,7 @@ const ArrDep = ({ defaultLocation, onNext, onBack, startDate, duration, pickupDr
     if (!isInitialized) {
        let loadedFromSession = false;
        try {
-         const saved = localStorage.getItem("temp_arr_dep_details");
+         const saved = localStorage.getItem(`temp_arr_dep_details_${packageId || 'default'}`);
          if (saved) {
            const parsed = JSON.parse(saved);
            if (parsed) {
@@ -97,7 +97,7 @@ const ArrDep = ({ defaultLocation, onNext, onBack, startDate, duration, pickupDr
                     formData.departure.city || formData.departure.dropoffAddress || formData.departure.time;
     
     if (hasData) {
-      localStorage.setItem("temp_arr_dep_details", JSON.stringify(formData));
+      localStorage.setItem(`temp_arr_dep_details_${packageId || 'default'}`, JSON.stringify(formData));
       
       const pendingData = localStorage.getItem('pending_booking');
       let parsedPending = pendingData ? JSON.parse(pendingData) : { ignored: false };

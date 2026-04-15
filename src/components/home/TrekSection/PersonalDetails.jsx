@@ -58,7 +58,8 @@ const PersonalDetails = ({
   maxPeople = 1,
   onNext,
   onSave,
-  onBack
+  onBack,
+  packageId,
 }) => {
   // The peopleCount is now the exact number, not a range
   // minPeople and maxPeople should be the same (both equal to the selected count)
@@ -103,7 +104,7 @@ const PersonalDetails = ({
       let initialData = [];
 
       try {
-        const saved = localStorage.getItem("temp_trek_personal_details");
+        const saved = localStorage.getItem(`temp_trek_personal_details_${packageId || 'default'}`);
         if (saved) {
           const parsed = JSON.parse(saved);
           if (parsed.numPeople === numPeople) {
@@ -150,7 +151,7 @@ const PersonalDetails = ({
         idImage: null,
         idImagePreview: ''
       }));
-      localStorage.setItem("temp_trek_personal_details", JSON.stringify({
+      localStorage.setItem(`temp_trek_personal_details_${packageId || 'default'}`, JSON.stringify({
         numPeople, contactDetails, trekkerDetails: safeTrekkerDetails
       }));
     }

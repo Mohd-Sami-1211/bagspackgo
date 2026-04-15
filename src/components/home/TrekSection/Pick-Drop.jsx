@@ -51,7 +51,7 @@ const selectStyles = {
   }),
 };
 
-const PickupDropoff = ({ defaultLocation, onNext, onBack, startDate, duration, pickupDropCities }) => {
+const PickupDropoff = ({ defaultLocation, onNext, onBack, startDate, duration, pickupDropCities, packageId }) => {
   const [formData, setFormData] = useState({
     arrival: { city: null, pickupAddress: null, time: null, ampm: { value: 'AM', label: 'AM' } },
     departure: { city: null, dropoffAddress: null, time: null, ampm: { value: 'PM', label: 'PM' } },
@@ -69,7 +69,7 @@ const PickupDropoff = ({ defaultLocation, onNext, onBack, startDate, duration, p
     if (!isInitialized) {
        let loadedFromSession = false;
        try {
-         const saved = localStorage.getItem("temp_trek_pick_drop");
+         const saved = localStorage.getItem(`temp_trek_pick_drop_${packageId || 'default'}`);
          if (saved) {
            const parsed = JSON.parse(saved);
            if (parsed) {
@@ -96,7 +96,7 @@ const PickupDropoff = ({ defaultLocation, onNext, onBack, startDate, duration, p
                     formData.departure.city || formData.departure.dropoffAddress || formData.departure.time;
     
     if (hasData) {
-      localStorage.setItem("temp_trek_pick_drop", JSON.stringify(formData));
+      localStorage.setItem(`temp_trek_pick_drop_${packageId || 'default'}`, JSON.stringify(formData));
     }
   }, [formData, isInitialized]);
 

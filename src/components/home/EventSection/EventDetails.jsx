@@ -422,6 +422,32 @@ const EventDetails = ({ event }) => {
       }
       const bookingId = bookData.bookingId;
 
+      // ── Free Event: skip payment gateway entirely ──
+      if (totalPayable === 0) {
+        const verifyRes = await fetch('/api/payments/event-verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            razorpay_order_id: `mock_order_free_${Date.now()}`,
+            razorpay_payment_id: `free_pay_${Date.now()}`,
+            bookingId
+          })
+        });
+        const verifyData = await verifyRes.json();
+        if (!verifyData.success) {
+          if (verifyData.soldOut) {
+            router.push(`/user/event/booking-failed?soldOut=true&return=/user/events`);
+          } else {
+            throw new Error(verifyData.message || 'Booking confirmation failed');
+          }
+          return;
+        }
+        localStorage.removeItem('pending_booking');
+        localStorage.removeItem('temp_event_booking');
+        router.push(`/user/event/booking-success?bookingId=${bookingId}`);
+        return;
+      }
+
       const orderRes = await fetch('/api/payments/event-create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -553,7 +579,7 @@ const EventDetails = ({ event }) => {
                       </button>
                       <div>
                         <h2 className="text-xl font-bold text-gray-900 mb-1">Number of Participants</h2>
-                        <p className="text-gray-500 text-sm font-medium">{"\u20B9"}{event.price?.toLocaleString()} per person</p>
+                        <p className="text-gray-500 text-sm font-medium">{event.price ? <>{"\u20B9"}{event.price.toLocaleString()} per person</> : 'Free per person'}</p>
                       </div>
                     </div>
                     <div className="flex flex-col items-end gap-2">
@@ -962,8 +988,8 @@ const EventDetails = ({ event }) => {
                       <ArrowLeft size={24} />
                     </Button>
                     <div className="text-left">
-                      <h2 className="text-2xl font-bold text-gray-900 leading-none mb-1">Review & Pay</h2>
-                      <p className="text-gray-500 text-sm font-medium">Verify all details before payment.</p>
+                      <h2 className="text-2xl font-bold text-gray-900 leading-none mb-1">{totalPayable === 0 ? 'Review & Confirm' : 'Review & Pay'}</h2>
+                      <p className="text-gray-500 text-sm font-medium">{totalPayable === 0 ? 'Verify all details before confirming.' : 'Verify all details before payment.'}</p>
                     </div>
                   </div>
 
@@ -1018,7 +1044,7 @@ const EventDetails = ({ event }) => {
                     <div>
                       <div className="border border-gray-200 bg-gray-50/50 rounded-2xl p-6 sm:p-8 h-full flex flex-col justify-between">
                         <div>
-                          <p className="text-xs font-bold text-gray-900 uppercase tracking-widest mb-6">Payment Breakdown</p>
+                          <p className="text-xs font-bold text-gray-900 uppercase tracking-widest mb-6">{totalPayable === 0 ? 'Booking Summary' : 'Payment Breakdown'}</p>
 
                           {/* Calculation variables */}
                           {(() => {
@@ -1029,6 +1055,7 @@ const EventDetails = ({ event }) => {
                                   <span className="text-gray-900 whitespace-nowrap">{"\u20B9"}{subtotal.toLocaleString()}</span>
                                 </div>
 
+                                {totalPayable > 0 && (
                                 <div className="pt-2 border-t border-gray-200/50">
                                   <button
                                     onClick={() => setShowFeeDetails(!showFeeDetails)}
@@ -1069,11 +1096,12 @@ const EventDetails = ({ event }) => {
                                     )}
                                   </AnimatePresence>
                                 </div>
+                                )}
 
                                 <div className="mt-8 pt-6 border-t border-gray-200">
                                   <div className="flex justify-between items-baseline mb-6 gap-4">
-                                    <span className="text-base sm:text-lg font-bold text-gray-900">Total Payable</span>
-                                    <span className="text-3xl sm:text-4xl font-bold text-gray-900 leading-none whitespace-nowrap">{"\u20B9"}{totalPayable.toLocaleString()}</span>
+                                    <span className="text-base sm:text-lg font-bold text-gray-900">{totalPayable === 0 ? 'Total' : 'Total Payable'}</span>
+                                    <span className="text-3xl sm:text-4xl font-bold text-gray-900 leading-none whitespace-nowrap">{totalPayable === 0 ? 'Free' : <>{"\u20B9"}{totalPayable.toLocaleString()}</>}</span>
                                   </div>
                                   {/* T&C Consent for Events */}
                                   <label className={`flex items-start gap-3 mb-5 mt-5 p-4 rounded-xl border-2 cursor-pointer transition-all ${agreedToTerms ? 'border-emerald-500 bg-emerald-50/50' : 'border-gray-200 hover:border-gray-300 bg-gray-50/30'}`}>
@@ -1101,7 +1129,7 @@ const EventDetails = ({ event }) => {
                                       <div className="w-5 h-5 border-[3px] border-white/30 border-t-white rounded-full animate-spin" />
                                     ) : (
                                       <>
-                                        Confirm & Pay Securely
+                                        {totalPayable === 0 ? 'Confirm Booking' : 'Confirm & Pay Securely'}
                                         <ChevronRight className="w-5 h-5 opacity-70 group-hover:translate-x-1 transition-transform" />
                                       </>
                                     )}
@@ -1162,7 +1190,7 @@ const EventDetails = ({ event }) => {
                 className="w-full h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold flex items-center justify-center gap-2 text-lg"
               >
                 <Ticket className="w-5 h-5" />
-                <span>Book Now {"\u00B7"} {"\u20B9"}{event.price?.toLocaleString()}</span>
+                <span>Book Now {"\u00B7"} {event.price ? <>{"\u20B9"}{event.price.toLocaleString()}</> : 'Free'}</span>
               </Button>
             ) : (
               <div className="flex flex-col gap-2">
