@@ -15,7 +15,9 @@ export async function DELETE(request, context) {
         const story = await Story.findById(id);
         if (!story) return NextResponse.json({ success: false }, { status: 404 });
         
-        if (story.userId && story.userId !== user.userId) {
+        // Allow deletion if owner OR if user is the official bagspackgo account
+        const isAdmin = user.email === 'bagspackgo01@gmail.com';
+        if (!isAdmin && story.userId && story.userId !== user.userId) {
             return NextResponse.json({ success: false, message: 'Forbidden' }, { status: 403 });
         }
         

@@ -15,7 +15,11 @@ import {
   Send,
   Star,
   MoreHorizontal,
-  ThumbsUp
+  ThumbsUp,
+  Video,
+  Reply,
+  BadgeCheck,
+  Trash2
 } from 'lucide-react';
 
 // shadcn/ui primitives
@@ -28,7 +32,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 // ─── Animation Variants ────────────────────────────────────
 const TAB_VARIANTS = {
@@ -76,18 +80,28 @@ const StarRating = ({ rating, size = 'md', interactive = false, onChange }) => {
   );
 };
 
+// ─── Constants ──────────────────────────────────────────────
+const OFFICIAL_EMAIL = 'bagspackgo01@gmail.com';
+
+// Helper to check if a story/comment is from the official account
+const isOfficialPost = (item) => {
+  return item?.name === 'bagspackgo' || item?.handle === '@bagspackgo';
+};
+
 // ─── Main Community Component ───────────────────────────────
 const CommunityMainContent = () => {
   const { user, openAuthModal } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState('stories');
 
   // Modals state
   const [showStoryModal, setShowStoryModal] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
 
-  // Form states
-  const [storyForm, setStoryForm] = useState({ name: '', content: '', location: '', imagePreview: null });
+  // Form states — mediaPreviews is an array of { url, type: 'image'|'video' }
+  const [storyForm, setStoryForm] = useState({ content: '', location: '', mediaPreviews: [] });
+  const [mediaFiles, setMediaFiles] = useState([]);
   const [reviewForm, setReviewForm] = useState({ name: '', title: '', content: '', rating: 5 });
   const fileInputRef = useRef(null);
 
@@ -99,6 +113,21 @@ const CommunityMainContent = () => {
   const [expandedComments, setExpandedComments] = useState({});
   const [commentText, setCommentText] = useState({});
   const [openDropdowns, setOpenDropdowns] = useState({});
+
+  // Reply tracking: { storyId: { parentId, parentName } }
+  const [replyTo, setReplyTo] = useState({});
+
+  // @Mention autocomplete state
+  const [mentionQuery, setMentionQuery] = useState('');
+  const [mentionResults, setMentionResults] = useState([]);
+  const [showMentions, setShowMentions] = useState(false);
+  const [activeMentionField, setActiveMentionField] = useState(null); // 'comment-{storyId}' or 'post'
+  const mentionDebounceRef = useRef(null);
+
+  // Loading and Input Refs
+  const [isSubmittingStory, setIsSubmittingStory] = useState(false);
+  const [submittingCommentId, setSubmittingCommentId] = useState(null);
+  const commentInputRefs = useRef({});
 
   const toggleDropdown = (id) => {
     setOpenDropdowns(prev => ({ ...prev, [id]: !prev[id] }));
@@ -114,17 +143,26 @@ const CommunityMainContent = () => {
          openAuthModal();
          return;
      }
-     if (!commentText[id]?.trim()) return;
+     if (!commentText[id]?.trim() || submittingCommentId === id) return;
      
+     setSubmittingCommentId(id);
      try {
+       const payload = { text: commentText[id] };
+       // Attach parentId if replying to a comment
+       if (replyTo[id]?.parentId) {
+         payload.parentId = replyTo[id].parentId;
+       }
+
        const res = await fetch(`/api/community/stories/${id}/comment`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: commentText[id] })
+          body: JSON.stringify(payload)
        });
        const data = await res.json();
        if (data.success) {
           setCommentText(prev => ({ ...prev, [id]: '' }));
+          setReplyTo(prev => { const n = {...prev}; delete n[id]; return n; });
+          setShowMentions(false);
           setStories(stories.map(s => {
              if (s._id === id) {
                 return {
@@ -138,7 +176,135 @@ const CommunityMainContent = () => {
        }
      } catch (err) {
        console.error(err);
+     } finally {
+       setSubmittingCommentId(null);
      }
+  };
+
+  const handleCommentLike = async (storyId, commentId) => {
+    if (!user) {
+      openAuthModal();
+      return;
+    }
+    try {
+      const res = await fetch(`/api/community/stories/${storyId}/comment/${commentId}/like`, { method: 'POST' });
+      const data = await res.json();
+      
+      if (data.success) {
+        setStories(prevStories => prevStories.map(s => {
+          if (String(s._id) === String(storyId)) {
+            const newComments = s.commentsArray.map(c => {
+              if (String(c._id) === String(commentId)) {
+                return { ...c, liked: data.liked, likesCount: data.likes };
+              }
+              return c;
+            });
+            return { ...s, commentsArray: newComments };
+          }
+          return s;
+        }));
+      } else {
+        alert(data.error || 'Could not verify your like. Please try logging out and in.');
+      }
+    } catch (err) {
+      console.error('Like comment error:', err);
+      alert('Network error. If you just updated the app, please restart the dev server.');
+    }
+  };
+
+  const handleCommentDelete = async (storyId, commentId) => {
+    if (!window.confirm("Are you sure you want to delete this comment?")) return;
+    try {
+      const res = await fetch(`/api/community/stories/${storyId}/comment/${commentId}`, { method: 'DELETE' });
+      const data = await res.json();
+      
+      if (data.success) {
+        setStories(prevStories => prevStories.map(s => {
+          if (String(s._id) === String(storyId)) {
+            return {
+              ...s,
+              comments: (s.comments || 1) - 1,
+              commentsArray: s.commentsArray.filter(c => 
+                String(c._id) !== String(commentId) && String(c.parentId) !== String(commentId)
+              )
+            };
+          }
+          return s;
+        }));
+      } else {
+        alert(data.error || 'Failed to delete. You may not have permission for this.');
+      }
+    } catch (err) {
+       console.error('Delete comment error', err);
+       alert('Connection failure. Please check your internet or restart dev server.');
+    }
+  };
+
+  // @Mention autocomplete search
+  const searchMentions = async (query) => {
+    try {
+      const res = await fetch(`/api/community/mentions?q=${encodeURIComponent(query)}`);
+      const data = await res.json();
+      if (data.success) {
+        setMentionResults(data.data || []);
+        setShowMentions(data.data?.length > 0);
+      }
+    } catch (err) {
+      console.error('Mention search error:', err);
+    }
+  };
+
+  const handleMentionClick = async (companyName) => {
+    if (companyName.toLowerCase() === 'bagspackgo') return; // Do not navigate for official account
+    try {
+      const res = await fetch(`/api/community/mentions?q=${encodeURIComponent(companyName)}`);
+      const data = await res.json();
+      if (data.success && data.data && data.data.length > 0) {
+        const match = data.data.find(m => m.name.toLowerCase() === companyName.toLowerCase());
+        if (match && !match.isOfficial) {
+          router.push(`/user/provider/${match.id}`);
+        }
+      }
+    } catch (err) {
+      console.error('Mention navigation error:', err);
+    }
+  };
+
+  const handleTextInputWithMentions = (text, fieldId) => {
+    // Detect @mention trigger
+    const cursorPos = text.length;
+    const lastAtIndex = text.lastIndexOf('@');
+    
+    if (lastAtIndex >= 0) {
+      const afterAt = text.substring(lastAtIndex + 1);
+      // Only trigger if we're at the @ or typing after it (no space after @ yet)
+      if (!afterAt.includes(' ') && afterAt.length <= 30) {
+        setActiveMentionField(fieldId);
+        setMentionQuery(afterAt);
+        // Debounce the search
+        if (mentionDebounceRef.current) clearTimeout(mentionDebounceRef.current);
+        mentionDebounceRef.current = setTimeout(() => searchMentions(afterAt), 250);
+        return;
+      }
+    }
+    setShowMentions(false);
+  };
+
+  const insertMention = (name, fieldId) => {
+    if (fieldId === 'post') {
+      const text = storyForm.content;
+      const lastAtIndex = text.lastIndexOf('@');
+      const newText = text.substring(0, lastAtIndex) + `@[${name}] `;
+      setStoryForm({ ...storyForm, content: newText });
+    } else if (fieldId.startsWith('comment-')) {
+      const storyId = fieldId.replace('comment-', '');
+      const text = commentText[storyId] || '';
+      const lastAtIndex = text.lastIndexOf('@');
+      const newText = text.substring(0, lastAtIndex) + `@[${name}] `;
+      setCommentText(prev => ({ ...prev, [storyId]: newText }));
+    }
+    setShowMentions(false);
+    setMentionQuery('');
   };
 
   useEffect(() => {
@@ -161,6 +327,19 @@ const CommunityMainContent = () => {
     };
     fetchData();
   }, []);
+
+  // Deep linking scroll
+  useEffect(() => {
+    const targetStory = searchParams.get('stories');
+    if (targetStory && !isLoading && stories.length > 0) {
+      setTimeout(() => {
+        const el = document.getElementById(`story-${targetStory}`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 500);
+    }
+  }, [searchParams, isLoading, stories.length]);
 
   const reviewStats = useMemo(() => {
     if (!reviews || reviews.length === 0) {
@@ -272,18 +451,37 @@ const CommunityMainContent = () => {
     }
   };
 
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
+  // Multi-media upload handler (images + videos)
+  const handleMediaUpload = (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+
+    const newFiles = [...mediaFiles];
+    const newPreviews = [...storyForm.mediaPreviews];
+
+    files.forEach(file => {
+      const isVideo = file.type.startsWith('video/');
       const reader = new FileReader();
       reader.onloadend = () => {
-        setStoryForm(prev => ({ ...prev, imagePreview: reader.result }));
+        newPreviews.push({ url: reader.result, type: isVideo ? 'video' : 'image' });
+        newFiles.push(file);
+        setStoryForm(prev => ({ ...prev, mediaPreviews: [...newPreviews] }));
+        setMediaFiles([...newFiles]);
       };
       reader.readAsDataURL(file);
-    }
+    });
   };
+
+  const removeMedia = (index) => {
+    setStoryForm(prev => ({
+      ...prev,
+      mediaPreviews: prev.mediaPreviews.filter((_, i) => i !== index)
+    }));
+    setMediaFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleShare = async (id, type = 'stories') => {
-    const url = `${window.location.origin}/community?${type}=${id}`;
+    const url = `${window.location.origin}/user/community?${type}=${id}`;
     if (navigator.share) {
       try {
         await navigator.share({ title: 'bagspackgo Community', url });
@@ -321,14 +519,16 @@ const CommunityMainContent = () => {
         return;
     }
     const posterName = user.name || user.username || user.email?.split('@')[0] || 'Traveler';
-    if (!storyForm.content.trim()) return;
+    const isOfficial = user.email === OFFICIAL_EMAIL;
+    if (!storyForm.content.trim() || isSubmittingStory) return;
 
+    setIsSubmittingStory(true);
     const newStoryData = {
-      name: posterName,
-      handle: `@${posterName.toLowerCase().replace(/\s+/g, '').substring(0, 15)}`,
-      photo: `https://ui-avatars.com/api/?name=${encodeURIComponent(posterName)}&background=10b981&color=fff`,
+      name: isOfficial ? 'bagspackgo' : posterName,
+      handle: isOfficial ? '@bagspackgo' : `@${posterName.toLowerCase().replace(/\s+/g, '').substring(0, 15)}`,
+      photo: isOfficial ? '/favicon.ico' : `https://ui-avatars.com/api/?name=${encodeURIComponent(posterName)}&background=10b981&color=fff`,
       content: storyForm.content,
-      media: storyForm.imagePreview,
+      media: storyForm.mediaPreviews.map(m => m.url),
       location: storyForm.location || ''
     };
 
@@ -341,11 +541,14 @@ const CommunityMainContent = () => {
       const data = await res.json();
       if (data.success) {
         setStories([data.data, ...stories]);
-        setStoryForm({ content: '', location: '', imagePreview: null });
+        setStoryForm({ content: '', location: '', mediaPreviews: [] });
+        setMediaFiles([]);
         setShowStoryModal(false);
       }
     } catch (error) {
       console.error("Error posting story:", error);
+    } finally {
+      setIsSubmittingStory(false);
     }
   };
 
@@ -426,11 +629,11 @@ const CommunityMainContent = () => {
       <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 relative -mt-24 z-10">
 
         {/* ─── Tab Navigation ─── */}
-        <Card className="p-1.5 max-w-sm mx-auto mb-10 flex relative overflow-hidden shadow-lg shadow-gray-200/60">
+        <div className="p-1.5 max-w-sm mx-auto mb-10 flex relative overflow-hidden rounded-xl bg-white border border-gray-200 shadow-sm">
           <button
             onClick={() => setActiveTab('stories')}
             className={cn(
-              "relative flex-1 py-3 text-[13px] font-bold tracking-wide rounded-xl transition-colors z-10",
+              "relative flex-1 py-2.5 text-[13px] font-bold tracking-wide rounded-lg transition-colors z-10",
               activeTab === 'stories' ? 'text-white' : 'text-gray-500 hover:text-gray-800'
             )}
           >
@@ -439,7 +642,7 @@ const CommunityMainContent = () => {
           <button
             onClick={() => setActiveTab('reviews')}
             className={cn(
-              "relative flex-1 py-3 text-[13px] font-bold tracking-wide rounded-xl transition-colors z-10",
+              "relative flex-1 py-2.5 text-[13px] font-bold tracking-wide rounded-lg transition-colors z-10",
               activeTab === 'reviews' ? 'text-white' : 'text-gray-500 hover:text-gray-800'
             )}
           >
@@ -447,12 +650,12 @@ const CommunityMainContent = () => {
           </button>
 
           <motion.div
-            className="absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] bg-emerald-600 rounded-xl shadow-md z-0"
+            className="absolute top-1 bottom-1 w-[calc(50%-4px)] bg-emerald-600 rounded-lg shadow-sm z-0"
             initial={false}
-            animate={{ left: activeTab === 'stories' ? '6px' : 'calc(50%)' }}
+            animate={{ left: activeTab === 'stories' ? '4px' : 'calc(50%)' }}
             transition={{ type: "spring", stiffness: 350, damping: 28 }}
           />
-        </Card>
+        </div>
 
         {/* ─── Main Layout Grid ─── */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
@@ -491,20 +694,32 @@ const CommunityMainContent = () => {
                         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
                         key={story._id}
                       >
-                        <Card className="rounded-2xl overflow-hidden border-gray-200/70 hover:shadow-sm transition-shadow">
+                        <Card id={`story-${story._id}`} className="rounded-2xl overflow-hidden border-gray-200/70 hover:shadow-sm transition-shadow">
                           {/* Story Header */}
                           <CardHeader className="p-5 pb-3">
                             <div className="flex justify-between items-start">
                               <div className="flex items-center gap-3">
-                                <Avatar className="w-10 h-10 ring-2 ring-gray-100">
-                                  <AvatarImage src={story.photo} alt={story.name} />
+                                <Avatar className={cn("w-10 h-10 ring-2", isOfficialPost(story) ? "ring-blue-200 bg-white" : "ring-gray-100")}>
+                                  <AvatarImage src={story.photo} alt={story.name} className={cn(isOfficialPost(story) && "object-contain p-0.5")} />
                                   <AvatarFallback>{story.name?.[0]}</AvatarFallback>
                                 </Avatar>
                                 <div>
-                                  <div className="font-semibold text-[15px] text-gray-900 leading-tight">{story.name}</div>
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="font-semibold text-[15px] text-gray-900 leading-tight">
+                                      {story.name}
+                                    </span>
+                                    {isOfficialPost(story) && <BadgeCheck className="w-[18px] h-[18px] text-white fill-blue-500" />}
+                                  </div>
                                   <div className="text-xs text-gray-400 flex items-center gap-1.5 mt-0.5">
-                                    <span className="text-emerald-600/70 font-medium">{story.handle}</span>
-                                    <span className="text-gray-300">·</span>
+                                    {story.location && (
+                                      <>
+                                        <div className="flex items-center gap-1 text-gray-500 font-medium">
+                                          <MapPin className="w-3 h-3 text-emerald-500/70" />
+                                          <span>{story.location}</span>
+                                        </div>
+                                        <span className="text-gray-300">·</span>
+                                      </>
+                                    )}
                                     <span>{timeAgo(story.createdAt)}</span>
                                   </div>
                                 </div>
@@ -521,7 +736,7 @@ const CommunityMainContent = () => {
                                     <button onClick={() => { window.alert('Post reported to moderators.'); toggleDropdown(story._id); }} className="w-full text-left px-4 py-2 hover:bg-gray-50 text-gray-700 text-sm font-medium transition-colors">
                                       Report
                                     </button>
-                                    {(user && user.userId === story.userId) && (
+                                    {(user && (user.userId === story.userId || user.email === 'bagspackgo01@gmail.com')) && (
                                       <button onClick={() => { handleDeleteStory(story._id); toggleDropdown(story._id); }} className="w-full text-left px-4 py-2 hover:bg-rose-50 text-rose-600 text-sm font-medium transition-colors">
                                         Delete
                                       </button>
@@ -531,26 +746,66 @@ const CommunityMainContent = () => {
                               </div>
                             </div>
 
-                            <p className="mt-4 text-[15px] text-gray-700 leading-relaxed">
-                              {story.content}
+                            <p className="mt-4 text-[15px] text-gray-700 leading-relaxed whitespace-pre-line">
+                              {/* Render @mentions as styled text */}
+                              {story.content.split(/(@\[[^\]]+\]|@\w+)/g).map((part, i) => {
+                                if (part.startsWith('@[') && part.endsWith(']')) {
+                                  const name = part.substring(2, part.length - 1);
+                                  return (
+                                    <span key={i} onClick={() => handleMentionClick(name)} className="text-emerald-600 font-semibold cursor-pointer hover:underline">
+                                      @{name}
+                                    </span>
+                                  );
+                                } else if (part.startsWith('@')) {
+                                  const name = part.substring(1);
+                                  return (
+                                    <span key={i} onClick={() => handleMentionClick(name)} className="text-emerald-600 font-semibold cursor-pointer hover:underline">
+                                      {part}
+                                    </span>
+                                  );
+                                }
+                                return part;
+                              })}
                             </p>
                           </CardHeader>
 
-                          {/* Story Media */}
-                          {story.media && (
-                            <div className="w-full bg-gray-100 border-y border-gray-100">
-                              <img src={story.media} alt="Post media" className="w-full max-h-[520px] object-cover" />
-                            </div>
-                          )}
+                          {/* Story Media — supports multiple images and videos */}
+                          {story.media && (Array.isArray(story.media) ? story.media : [story.media]).filter(Boolean).length > 0 && (() => {
+                            const mediaArr = (Array.isArray(story.media) ? story.media : [story.media]).filter(Boolean);
+                            const isVideo = (url) => /\.(mp4|webm|mov|ogg)$/i.test(url) || url.startsWith('data:video/');
+                            
+                            return (
+                              <div className={cn(
+                                "w-full border-y border-gray-100 overflow-hidden",
+                                mediaArr.length === 1 ? '' : 'grid gap-0.5',
+                                mediaArr.length === 2 && 'grid-cols-2',
+                                mediaArr.length === 3 && 'grid-cols-2',
+                                mediaArr.length >= 4 && 'grid-cols-2'
+                              )}>
+                                {mediaArr.map((m, idx) => (
+                                  <div key={idx} className={cn(
+                                    "relative bg-gray-100 overflow-hidden",
+                                    mediaArr.length === 1 ? 'max-h-[520px]' : 'aspect-square',
+                                    mediaArr.length === 3 && idx === 0 && 'row-span-2 aspect-auto'
+                                  )}>
+                                    {isVideo(m) ? (
+                                      <video
+                                        src={m}
+                                        controls
+                                        className="w-full h-full object-cover"
+                                        preload="metadata"
+                                      />
+                                    ) : (
+                                      <img src={m} alt={`Post media ${idx + 1}`} className="w-full h-full object-cover" />
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            );
+                          })()}
 
                           {/* Story Actions */}
                           <CardFooter className="p-5 pt-3 flex-col items-stretch gap-0">
-                            {story.location && (
-                              <Badge variant="outline" className="w-fit mb-4 gap-1.5 uppercase tracking-[0.12em] text-[10px] font-semibold text-gray-500 border-gray-200 bg-gray-50">
-                                <MapPin className="w-3 h-3 text-emerald-500" /> {story.location}
-                              </Badge>
-                            )}
-
                             <Separator />
 
                             <div className="flex items-center justify-between pt-3">
@@ -584,38 +839,156 @@ const CommunityMainContent = () => {
                             <AnimatePresence>
                               {expandedComments[story._id] && (
                                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="mt-3 pt-3 border-t border-gray-100 overflow-hidden">
-                                   <div className="space-y-3 mb-3 max-h-60 overflow-y-auto custom-scrollbar pr-2">
-                                      {(story.commentsArray || []).map((c, idx) => (
-                                         <div key={idx} className="flex gap-2.5">
-                                            <Avatar className="w-7 h-7 flex-shrink-0">
-                                              <AvatarImage src={c.photo} />
-                                              <AvatarFallback className="text-[10px]">{c.name?.[0]}</AvatarFallback>
-                                            </Avatar>
-                                            <div className="bg-gray-50 rounded-2xl px-3 py-2 flex-1">
-                                               <div className="flex justify-between items-baseline mb-0.5">
-                                                  <span className="font-semibold text-[13px] text-gray-900">{c.name}</span>
-                                                  <span className="text-[10px] text-gray-400 font-medium tabular-nums">{timeAgo(c.createdAt)}</span>
-                                               </div>
-                                               <p className="text-[13px] text-gray-600 leading-relaxed">{c.text}</p>
+                                   <div className="space-y-3 mb-3 max-h-80 overflow-y-auto custom-scrollbar pr-2">
+                                      {(() => {
+                                        const allComments = story.commentsArray || [];
+                                        // Separate top-level comments and replies
+                                        const topLevel = allComments.filter(c => !c.parentId);
+                                        const repliesMap = {};
+                                        allComments.forEach(c => {
+                                          if (c.parentId) {
+                                            const pid = c.parentId.toString();
+                                            if (!repliesMap[pid]) repliesMap[pid] = [];
+                                            repliesMap[pid].push(c);
+                                          }
+                                        });
+
+                                        const renderComment = (c, idx, isReply = false) => {
+                                          const commentId = c._id?.toString() || idx;
+                                          const replies = repliesMap[commentId] || [];
+                                          const official = isOfficialPost(c);
+
+                                          return (
+                                            <div key={commentId}>
+                                              <div className={cn("flex gap-2.5", isReply && "ml-8 mt-2")}>
+                                                <Avatar className={cn("w-7 h-7 flex-shrink-0", official && "ring-1 ring-blue-200 bg-white")}>
+                                                  <AvatarImage src={c.photo} className={cn(official && "object-contain p-0.5")} />
+                                                  <AvatarFallback className="text-[10px]">{c.name?.[0]}</AvatarFallback>
+                                                </Avatar>
+                                                <div className="bg-gray-50 rounded-2xl px-3 py-2 flex-1">
+                                                   <div className="flex justify-between items-baseline mb-0.5">
+                                                      <div className="flex items-center gap-1.5">
+                                                        <span className="font-semibold text-[13px] text-gray-900">{c.name}</span>
+                                                        {official && <BadgeCheck className="w-3.5 h-3.5 text-white fill-blue-500" />}
+                                                      </div>
+                                                      <span className="text-[10px] text-gray-400 font-medium tabular-nums">{timeAgo(c.createdAt)}</span>
+                                                   </div>
+                                                   <p className="text-[13px] text-gray-600 leading-relaxed">
+                                                     {c.text.split(/(@\[[^\]]+\]|@\w+)/g).map((part, pi) => {
+                                                       if (part.startsWith('@[') && part.endsWith(']')) {
+                                                         const name = part.substring(2, part.length - 1);
+                                                         return (
+                                                           <span key={pi} onClick={() => handleMentionClick(name)} className="text-emerald-600 font-semibold cursor-pointer hover:underline">
+                                                             @{name}
+                                                           </span>
+                                                         );
+                                                       } else if (part.startsWith('@')) {
+                                                         const name = part.substring(1);
+                                                         return (
+                                                           <span key={pi} onClick={() => handleMentionClick(name)} className="text-emerald-600 font-semibold cursor-pointer hover:underline">
+                                                             {part}
+                                                           </span>
+                                                         );
+                                                       }
+                                                       return part;
+                                                     })}
+                                                   </p>
+                                                   <div className="flex items-center gap-4 mt-1.5">
+                                                     <button
+                                                       onClick={() => handleCommentLike(story._id, commentId)}
+                                                       className={cn("text-[11px] font-semibold flex items-center gap-1", c.liked ? 'text-rose-500' : 'text-gray-400 hover:text-rose-500')}
+                                                     >
+                                                       <Heart className={cn("w-3 h-3", c.liked && 'fill-current')} /> {c.likesCount || 0}
+                                                     </button>
+                                                     <button
+                                                       onClick={() => {
+                                                         setReplyTo(prev => ({ ...prev, [story._id]: { parentId: commentId, parentName: c.name } }));
+                                                         setTimeout(() => commentInputRefs.current[story._id]?.focus(), 50);
+                                                       }}
+                                                       className="text-[11px] text-gray-400 hover:text-emerald-600 font-semibold flex items-center gap-1"
+                                                     >
+                                                       <Reply className="w-3 h-3" /> Reply
+                                                     </button>
+                                                     {(user && (user.userId === c.user || user.userId === story.userId)) && (
+                                                       <button
+                                                         onClick={() => handleCommentDelete(story._id, commentId)}
+                                                         className="text-[11px] text-gray-400 hover:text-rose-500 font-semibold flex items-center gap-1 ml-auto"
+                                                       >
+                                                         <Trash2 className="w-3 h-3" />
+                                                       </button>
+                                                     )}
+                                                   </div>
+                                                </div>
+                                              </div>
+                                              {/* Render replies */}
+                                              {replies.map((r, ri) => renderComment(r, ri, true))}
                                             </div>
-                                         </div>
-                                      ))}
-                                      {(!story.commentsArray || story.commentsArray.length === 0) && (
-                                         <p className="text-center text-sm text-gray-400 py-4">No comments yet. Be the first!</p>
-                                      )}
+                                          );
+                                        };
+
+                                        return topLevel.length > 0 ? (
+                                          topLevel.map((c, idx) => renderComment(c, idx))
+                                        ) : (
+                                          <p className="text-center text-sm text-gray-400 py-4">No comments yet. Be the first!</p>
+                                        );
+                                      })()}
                                    </div>
-                                   <form onSubmit={(e) => handleCommentSubmit(e, story._id)} className="flex items-center gap-2">
-                                      <Input
-                                         type="text"
-                                         placeholder="Add a comment…"
-                                         value={commentText[story._id] || ''}
-                                         onChange={(e) => setCommentText(prev => ({ ...prev, [story._id]: e.target.value }))}
-                                         className="flex-1 rounded-full h-9 text-[13px]"
-                                      />
-                                      <Button type="submit" size="icon" disabled={!commentText[story._id]?.trim()} className="rounded-full h-9 w-9">
-                                         <Send className="w-3.5 h-3.5" />
-                                      </Button>
-                                   </form>
+
+                                   {/* Reply indicator */}
+                                   {replyTo[story._id] && (
+                                     <div className="flex items-center gap-2 mb-2 px-2 py-1.5 bg-emerald-50 rounded-lg text-xs font-medium text-emerald-700 border border-emerald-100">
+                                       <Reply className="w-3 h-3" />
+                                       Replying to <span className="font-bold">{replyTo[story._id].parentName}</span>
+                                       <button onClick={() => setReplyTo(prev => { const n = {...prev}; delete n[story._id]; return n; })} className="ml-auto text-emerald-500 hover:text-emerald-800">
+                                         <X className="w-3 h-3" />
+                                       </button>
+                                     </div>
+                                   )}
+
+                                   {/* Comment form with @mentions */}
+                                   <div className="relative">
+                                     <form onSubmit={(e) => handleCommentSubmit(e, story._id)} className="flex items-center gap-2">
+                                        <Input
+                                           ref={el => commentInputRefs.current[story._id] = el}
+                                           type="text"
+                                           placeholder={replyTo[story._id] ? `Reply to ${replyTo[story._id].parentName}…` : "Add a comment…"}
+                                           value={commentText[story._id] || ''}
+                                           disabled={submittingCommentId === story._id}
+                                           onChange={(e) => {
+                                             const val = e.target.value;
+                                             setCommentText(prev => ({ ...prev, [story._id]: val }));
+                                             handleTextInputWithMentions(val, `comment-${story._id}`);
+                                           }}
+                                           className="flex-1 rounded-full h-9 text-[13px]"
+                                        />
+                                        <Button type="submit" size="icon" disabled={!commentText[story._id]?.trim() || submittingCommentId === story._id} className="rounded-full h-9 w-9">
+                                           <Send className="w-3.5 h-3.5" />
+                                        </Button>
+                                     </form>
+                                     
+                                     {/* @Mention autocomplete dropdown */}
+                                     {showMentions && activeMentionField === `comment-${story._id}` && mentionResults.length > 0 && (
+                                       <div className="absolute left-0 right-12 bottom-full mb-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden z-30 max-h-48 overflow-y-auto">
+                                         {mentionResults.map((m) => (
+                                           <button
+                                             key={m.id}
+                                             type="button"
+                                             onClick={() => insertMention(m.name, `comment-${story._id}`)}
+                                             className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-gray-50 transition-colors text-left"
+                                           >
+                                             <Avatar className={cn("w-6 h-6", m.isOfficial && "ring-1 ring-blue-200")}>
+                                               <AvatarImage src={m.logo || `https://ui-avatars.com/api/?name=${encodeURIComponent(m.name)}&background=10b981&color=fff`} />
+                                               <AvatarFallback className="text-[9px]">{m.name?.[0]}</AvatarFallback>
+                                             </Avatar>
+                                             <span className="text-sm font-medium text-gray-800 flex items-center gap-1">
+                                               {m.name}
+                                               {m.isOfficial && <BadgeCheck className="w-3.5 h-3.5 text-blue-500 fill-blue-500" />}
+                                             </span>
+                                           </button>
+                                         ))}
+                                       </div>
+                                     )}
+                                   </div>
                                  </motion.div>
                               )}
                             </AnimatePresence>
@@ -819,26 +1192,69 @@ const CommunityMainContent = () => {
 
                 <form onSubmit={submitStory}>
                   <CardContent className="p-5 space-y-4">
-                    <Textarea
-                      value={storyForm.content}
-                      onChange={e => setStoryForm({ ...storyForm, content: e.target.value })}
-                      placeholder="What's your travel story?"
-                      className="min-h-[100px]"
-                      autoFocus
-                    />
+                    <div className="relative">
+                      <Textarea
+                        value={storyForm.content}
+                        onChange={e => {
+                          const val = e.target.value;
+                          setStoryForm({ ...storyForm, content: val });
+                          handleTextInputWithMentions(val, 'post');
+                        }}
+                        placeholder="What's your travel story? Use @ to tag service providers…"
+                        className="min-h-[100px]"
+                        autoFocus
+                      />
 
-                    {storyForm.imagePreview && (
-                      <div className="relative w-full h-44 rounded-xl overflow-hidden bg-gray-100 border border-gray-200">
-                        <img src={storyForm.imagePreview} className="w-full h-full object-cover" alt="Preview" />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setStoryForm({ ...storyForm, imagePreview: null })}
-                          className="absolute top-2 right-2 bg-black/50 text-white rounded-full backdrop-blur-md hover:bg-black/70 h-7 w-7"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </Button>
+                      {/* @Mention autocomplete for post content */}
+                      {showMentions && activeMentionField === 'post' && mentionResults.length > 0 && (
+                        <div className="absolute left-0 right-0 bottom-full mb-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden z-30 max-h-48 overflow-y-auto">
+                          {mentionResults.map((m) => (
+                            <button
+                              key={m.id}
+                              type="button"
+                              onClick={() => insertMention(m.name, 'post')}
+                              className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-gray-50 transition-colors text-left"
+                            >
+                              <Avatar className={cn("w-6 h-6", m.isOfficial && "ring-1 ring-blue-200")}>
+                                <AvatarImage src={m.logo || `https://ui-avatars.com/api/?name=${encodeURIComponent(m.name)}&background=10b981&color=fff`} />
+                                <AvatarFallback className="text-[9px]">{m.name?.[0]}</AvatarFallback>
+                              </Avatar>
+                              <span className="text-sm font-medium text-gray-800 flex items-center gap-1">
+                                {m.name}
+                                {m.isOfficial && <BadgeCheck className="w-3.5 h-3.5 text-blue-500 fill-blue-500" />}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Multi-media previews */}
+                    {storyForm.mediaPreviews.length > 0 && (
+                      <div className="grid grid-cols-3 gap-2">
+                        {storyForm.mediaPreviews.map((m, idx) => (
+                          <div key={idx} className="relative rounded-xl overflow-hidden bg-gray-100 border border-gray-200 aspect-square">
+                            {m.type === 'video' ? (
+                              <video src={m.url} className="w-full h-full object-cover" muted />
+                            ) : (
+                              <img src={m.url} className="w-full h-full object-cover" alt={`Preview ${idx + 1}`} />
+                            )}
+                            {m.type === 'video' && (
+                              <div className="absolute bottom-1.5 left-1.5 bg-black/60 text-white text-[9px] px-1.5 py-0.5 rounded-md font-semibold flex items-center gap-1">
+                                <Video className="w-2.5 h-2.5" /> Video
+                              </div>
+                            )}
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => removeMedia(idx)}
+                              className="absolute top-1 right-1 bg-black/50 text-white rounded-full backdrop-blur-md hover:bg-black/70 h-6 w-6"
+                            >
+                              <X className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        ))}
                       </div>
                     )}
 
@@ -854,11 +1270,14 @@ const CommunityMainContent = () => {
                     </div>
                   </CardContent>
 
-                  <CardFooter className="px-5 pb-5 pt-0 justify-between border-t border-gray-100 pt-4">
-                    <div>
-                      <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
+                  <CardFooter className="px-5 pb-5 justify-between border-t border-gray-100 pt-4">
+                    <div className="flex items-center gap-1">
+                      <input type="file" ref={fileInputRef} onChange={handleMediaUpload} accept="image/*,video/*" multiple className="hidden" />
                       <Button type="button" variant="ghost" size="sm" onClick={() => fileInputRef.current?.click()} className="rounded-full text-emerald-600 hover:bg-emerald-50 gap-1.5 text-[13px]">
                         <Camera className="w-4 h-4" /> Photo
+                      </Button>
+                      <Button type="button" variant="ghost" size="sm" onClick={() => fileInputRef.current?.click()} className="rounded-full text-blue-600 hover:bg-blue-50 gap-1.5 text-[13px]">
+                        <Video className="w-4 h-4" /> Video
                       </Button>
                     </div>
                     <Button
@@ -933,7 +1352,7 @@ const CommunityMainContent = () => {
                     </div>
                   </CardContent>
 
-                  <CardFooter className="px-5 pb-5 pt-0 justify-end border-t border-gray-100 pt-4">
+                  <CardFooter className="px-5 pb-5 justify-end border-t border-gray-100 pt-4">
                     <Button
                       type="submit"
                       disabled={!reviewForm.title.trim() || !reviewForm.content.trim()}

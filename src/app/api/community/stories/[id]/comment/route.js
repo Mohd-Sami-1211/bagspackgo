@@ -10,7 +10,7 @@ export async function POST(request, context) {
         if (!user) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
 
         const body = await request.json();
-        const { text } = body;
+        const { text, parentId } = body;
         
         if (!text || text.trim() === '') {
             return NextResponse.json({ success: false, message: 'Comment text is required' }, { status: 400 });
@@ -24,11 +24,15 @@ export async function POST(request, context) {
         
         const commenterName = user.name || user.username || user.firstName || user.email?.split('@')[0] || 'Traveler';
 
+        // Check if this is the official bagspackgo account
+        const isOfficial = user.email === 'bagspackgo01@gmail.com';
+
         const newComment = {
             user: user.userId,
-            name: commenterName,
-            photo: `https://ui-avatars.com/api/?name=${encodeURIComponent(commenterName)}&background=10b981&color=fff`,
+            name: isOfficial ? 'bagspackgo' : commenterName,
+            photo: isOfficial ? '/favicon.ico' : `https://ui-avatars.com/api/?name=${encodeURIComponent(commenterName)}&background=10b981&color=fff`,
             text: text.trim(),
+            parentId: parentId || null,
             createdAt: new Date()
         };
         

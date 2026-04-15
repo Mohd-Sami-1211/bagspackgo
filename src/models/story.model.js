@@ -1,5 +1,15 @@
 import mongoose from 'mongoose';
 
+const commentSchema = new mongoose.Schema({
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    name: String,
+    photo: String,
+    text: { type: String, required: true },
+    parentId: { type: mongoose.Schema.Types.ObjectId, default: null },
+    likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    createdAt: { type: Date, default: Date.now }
+});
+
 const storySchema = new mongoose.Schema({
     userId: { type: String },
     name: { type: String, required: true },
@@ -7,16 +17,11 @@ const storySchema = new mongoose.Schema({
     photo: { type: String },
     content: { type: String, required: true },
     location: { type: String },
-    media: { type: String },
+    media: [{ type: String }],
     likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-    comments: [{
-        user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-        name: String,
-        photo: String,
-        text: { type: String, required: true },
-        createdAt: { type: Date, default: Date.now }
-    }]
+    comments: [commentSchema]
 }, { timestamps: true });
 
 const Story = mongoose.models.Story || mongoose.model('Story', storySchema);
 export default Story;
+
