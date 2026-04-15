@@ -49,6 +49,7 @@ const PersonalDetails = ({
   onSave,
   onBack,
   onSubmit,
+  packageId,
 }) => {
   const searchParams = useSearchParams();
   const countRaw = searchParams.get("count") || "1";
@@ -103,7 +104,7 @@ const PersonalDetails = ({
 
     let loadedFromSession = false;
     try {
-      const saved = localStorage.getItem("temp_personal_details");
+      const saved = localStorage.getItem(`temp_personal_details_${packageId || 'default'}`);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed.category === category && parsed.totalTravellers === totalTravellers) {
@@ -140,7 +141,7 @@ const PersonalDetails = ({
         const { idImage, idImagePreview, ...rest } = p;
         return rest;
       });
-      localStorage.setItem("temp_personal_details", JSON.stringify({
+      localStorage.setItem(`temp_personal_details_${packageId || 'default'}`, JSON.stringify({
         category, totalTravellers, contactDetails, personalDetails: safePersonalDetails
       }));
     }

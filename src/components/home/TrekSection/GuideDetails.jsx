@@ -258,7 +258,18 @@ const TrekGuideDetails = ({ guide }) => {
         personalDetails: data.personalDetails || [],
         emergencyContacts: data.emergencyContacts || [],
       },
-      guide,
+      guide: {
+        _id: guide._id,
+        name: guide.name,
+        destination: guide.destination,
+        location: guide.location,
+        provider: guide.provider ? {
+          _id: guide.provider._id || guide.provider,
+          companyname: guide.provider.companyname || guide.provider.companyName || guide.provider.username,
+          rating: guide.provider.rating,
+          reviews: guide.provider.reviews
+        } : null,
+      },
       trekConfig: {
         trekId: trekPackage._id,
         peopleCount,
@@ -637,6 +648,7 @@ const TrekGuideDetails = ({ guide }) => {
                   onBack={handleBack}
                   startDate={selectedStartDate}
                   duration={duration}
+                  packageId={trekPackage?._id}
                 />
               )}
 
@@ -649,6 +661,7 @@ const TrekGuideDetails = ({ guide }) => {
                   onNext={handleNextTab}
                   onBack={handleBack}
                   isTrek={true}
+                  packageId={trekPackage?._id}
                 />
               )}
             </div>
