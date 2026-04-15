@@ -49,7 +49,7 @@ export default function ViewPackage({ pkg }) {
             <ArrowLeft size={18} />
           </button>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-200 shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-sm shrink-0">
               {isTrek ? <Tent size={20} className="text-white" /> : <PackageIcon size={20} className="text-white" />}
             </div>
             <div>

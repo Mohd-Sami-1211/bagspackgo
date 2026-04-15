@@ -211,7 +211,7 @@ const TrekSearchResults = () => {
   }
 
   return (
-    <div className="min-h-screen w-full bg-slate-50 font-sans pb-12 -mt-12">
+    <div className="min-h-screen w-full bg-slate-50 font-sans pb-12 -mt-12np">
       {/* Refined Header - Single Line Action Bar */}
       <div className="w-full bg-white border-b sticky top-0 z-[30] shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-3">

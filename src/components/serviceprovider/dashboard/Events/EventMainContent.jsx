@@ -575,7 +575,7 @@ export default function EventMainContent() {
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
             onClick={() => router.push('/serviceprovider/dashboard/events/hostevent')}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold shadow-sm hover:shadow-md hover:shadow-emerald-200 transition"
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold shadow-sm hover:shadow-md hover:shadow-emerald-200 transition w-full sm:w-auto"
           >
             <Plus className="w-4 h-4" />
             Host New Event
@@ -640,7 +640,7 @@ export default function EventMainContent() {
               </p>
               <button
                 onClick={() => router.push('/serviceprovider/dashboard/events/hostevent')}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 text-white font-semibold text-sm hover:bg-emerald-700 transition"
+                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 text-white font-semibold text-sm hover:bg-emerald-700 transition w-full sm:w-auto"
               >
                 <Plus className="w-4 h-4" />
                 Host New Event

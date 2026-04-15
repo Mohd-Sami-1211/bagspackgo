@@ -34,6 +34,7 @@ import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { compressImage } from '@/lib/imageCompression';
 
 // ─── Animation Variants ────────────────────────────────────
 const TAB_VARIANTS = {
@@ -467,14 +468,36 @@ const CommunityMainContent = () => {
 
     files.forEach(file => {
       const isVideo = file.type.startsWith('video/');
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        newPreviews.push({ url: reader.result, type: isVideo ? 'video' : 'image' });
-        newFiles.push(file);
-        setStoryForm(prev => ({ ...prev, mediaPreviews: [...newPreviews] }));
-        setMediaFiles([...newFiles]);
-      };
-      reader.readAsDataURL(file);
+      if (isVideo) {
+        // Videos: read as-is (no compression)
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          newPreviews.push({ url: reader.result, type: 'video' });
+          newFiles.push(file);
+          setStoryForm(prev => ({ ...prev, mediaPreviews: [...newPreviews] }));
+          setMediaFiles([...newFiles]);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        // Images: compress before adding
+        compressImage(file, { maxWidth: 1200, quality: 0.75 }).then(compressed => {
+          newPreviews.push({ url: compressed, type: 'image' });
+          newFiles.push(file);
+          setStoryForm(prev => ({ ...prev, mediaPreviews: [...newPreviews] }));
+          setMediaFiles([...newFiles]);
+        }).catch(err => {
+          console.error('Compression error:', err);
+          // Fallback to raw
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            newPreviews.push({ url: reader.result, type: 'image' });
+            newFiles.push(file);
+            setStoryForm(prev => ({ ...prev, mediaPreviews: [...newPreviews] }));
+            setMediaFiles([...newFiles]);
+          };
+          reader.readAsDataURL(file);
+        });
+      }
     });
   };
 

@@ -26,6 +26,7 @@ import {
   Sparkles,
   Camera
 } from 'lucide-react';
+import { compressImage, fetchWithRetry } from '@/lib/imageCompression';
 
 // ── Sub-components defined at module level to prevent re-creation on every render ──
 
@@ -522,23 +523,30 @@ export default function HostEventPage() {
     setActiveSection(prev => Math.max(prev - 1, 0));
   };
 
-  const handlePhotographUpload = (e) => {
+  const handlePhotographUpload = async (e) => {
     const files = Array.from(e.target.files);
     if (formData.photographs.length + files.length > 10) {
       alert('You can upload a maximum of 10 photographs.');
       return;
     }
-    files.forEach(file => {
+    const validFiles = files.filter(file => {
       if (file.size > 5 * 1024 * 1024) {
         alert(`${file.name} is too large. Max 5MB per image.`);
-        return;
+        return false;
       }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData(prev => ({ ...prev, photographs: [...prev.photographs, reader.result] }));
-      };
-      reader.readAsDataURL(file);
+      return true;
     });
+
+    try {
+      // Compress gallery photos to keep payload small while preserving quality
+      const compressedImages = await Promise.all(
+        validFiles.map(f => compressImage(f, { maxWidth: 1200, quality: 0.75 }))
+      );
+      setFormData(prev => ({ ...prev, photographs: [...prev.photographs, ...compressedImages] }));
+    } catch (err) {
+      console.error("Compression error:", err);
+      alert('Error compressing images. Please try again.');
+    }
   };
 
   const removePhotograph = (index) => {
@@ -552,44 +560,50 @@ export default function HostEventPage() {
     setApiError('');
 
     try {
-      // Convert poster to base64 if it exists
+      // Compress poster — higher quality since it's the hero image
       let posterData = '';
       if (formData.poster && formData.poster instanceof File) {
-        posterData = await new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result);
-          reader.readAsDataURL(formData.poster);
-        });
+        posterData = await compressImage(formData.poster, { maxWidth: 1400, quality: 0.80 });
       }
 
-      const res = await fetch('/api/provider/events', {
+      const payload = JSON.stringify({
+        title: formData.title,
+        eventType: formData.eventType === 'Others' ? formData.customEventType : formData.eventType,
+        location: formData.location,
+        date: formData.date,
+        duration: formData.duration,
+        totalSlots: formData.totalSlots,
+        pricePerSlot: formData.pricePerSlot,
+        destination: formData.destination,
+        destinationLink: formData.destinationLink,
+        about: formData.about,
+        status: publishMode === 'draft' ? 'draft' : 'published',
+        highlights: formData.highlights.filter(h => h.trim()),
+        whatsIncluded: formData.whatsIncluded.filter(w => w.trim()),
+        whatsExcluded: formData.whatsExcluded.filter(w => w.trim()),
+        faqs: formData.faqs.filter(f => f.question.trim() && f.answer.trim()),
+        whatToBring: formData.whatToBring.filter(w => w.trim()),
+        restrictions: formData.restrictions.filter(r => r.trim()),
+        pickupPoints: formData.pickupPoints.filter(p => p.location.trim()),
+        itinerary: formData.itinerary.filter(s => s.trim()),
+        photographs: formData.photographs,
+        termsAndConditions: formData.termsAndConditions.filter(t => t.trim()),
+        poster: posterData,
+      });
+
+      // Warn if payload is very large (> 4 MB)
+      const payloadSizeMB = new Blob([payload]).size / (1024 * 1024);
+      if (payloadSizeMB > 12) {
+        setApiError('Your images are too large. Please remove some photographs or use smaller images and try again.');
+        setSubmitting(false);
+        return;
+      }
+
+      const res = await fetchWithRetry('/api/provider/events', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: formData.title,
-          eventType: formData.eventType === 'Others' ? formData.customEventType : formData.eventType,
-          location: formData.location,
-          date: formData.date,
-          duration: formData.duration,
-          totalSlots: formData.totalSlots,
-          pricePerSlot: formData.pricePerSlot,
-          destination: formData.destination,
-          destinationLink: formData.destinationLink,
-          about: formData.about,
-          status: publishMode === 'draft' ? 'draft' : 'published',
-          highlights: formData.highlights.filter(h => h.trim()),
-          whatsIncluded: formData.whatsIncluded.filter(w => w.trim()),
-          whatsExcluded: formData.whatsExcluded.filter(w => w.trim()),
-          faqs: formData.faqs.filter(f => f.question.trim() && f.answer.trim()),
-          whatToBring: formData.whatToBring.filter(w => w.trim()),
-          restrictions: formData.restrictions.filter(r => r.trim()),
-          pickupPoints: formData.pickupPoints.filter(p => p.location.trim()),
-          itinerary: formData.itinerary.filter(s => s.trim()),
-          photographs: formData.photographs,
-          termsAndConditions: formData.termsAndConditions.filter(t => t.trim()),
-          poster: posterData,
-        }),
-      });
+        body: payload,
+      }, { timeoutMs: 90000, maxRetries: 2 });
 
       const data = await res.json();
       if (data.success) {
@@ -599,7 +613,11 @@ export default function HostEventPage() {
       }
     } catch (err) {
       console.error('Publish error:', err);
-      setApiError('Network error. Please check your connection and try again.');
+      if (err.name === 'AbortError') {
+        setApiError('The request timed out. Please check your internet connection and try again.');
+      } else {
+        setApiError('Network error. Please check your connection and try again.');
+      }
     } finally {
       setSubmitting(false);
     }

@@ -281,7 +281,7 @@ export default function TripMainContent() {
         </motion.div>
       ) : (
         <div className="flex flex-col gap-3">
-          <AnimatePresence mode="popLayout">
+          <AnimatePresence>
             {list.map((b, i) => <BookingCard key={b.id} booking={b} index={i} />)}
           </AnimatePresence>
         </div>

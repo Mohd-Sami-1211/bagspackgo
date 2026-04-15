@@ -9,6 +9,7 @@ import {
   AlertCircle, Navigation,
 } from 'lucide-react';
 import dataJson from 'src/data/data.json';
+import { compressImage, fetchWithRetry } from '@/lib/imageCompression';
 
 const destinations = [
   ...dataJson.destinations.filter(d => ['kashmir', 'ladakh', 'bhaderwah', 'warwan-marwah-valley'].includes(d.value)).map((d, i) => ({
@@ -259,9 +260,9 @@ export default function NewTrekPackage({ initialData = null, isEdit = false }) {
     if (!files.length) return;
     if (photos.length + files.length > 5) { alert('Max 5 photos allowed.'); return; }
     if (files.some(f => f.size > 5 * 1024 * 1024)) { alert('Each file must be ≤ 5 MB.'); return; }
-    Promise.all(files.map(f => new Promise(res => {
-      const r = new FileReader(); r.onload = e => res(e.target.result); r.readAsDataURL(f);
-    }))).then(imgs => setPhotos(prev => [...prev, ...imgs].slice(0, 5)));
+    Promise.all(files.map(f => compressImage(f, { maxWidth: 1200, quality: 0.75 })))
+      .then(imgs => setPhotos(prev => [...prev, ...imgs].slice(0, 5)))
+      .catch(err => { console.error('Compression error:', err); alert('Error compressing images. Please try again.'); });
   };
 
   /* ── Validation ─────────────────────────── */
@@ -336,11 +337,11 @@ export default function NewTrekPackage({ initialData = null, isEdit = false }) {
         photos
       };
       const endpoint = isEdit ? `/api/provider/packages?id=${initialData._id}` : '/api/provider/packages';
-      const res = await fetch(endpoint, {
+      const res = await fetchWithRetry(endpoint, {
         method: isEdit ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
-      });
+      }, { timeoutMs: 60000, maxRetries: 2 });
       const result = await res.json();
       if (!res.ok) throw new Error(result.message || 'Failed to create package');
       if (!isEdit) localStorage.removeItem('newTrekPackageDraft');
@@ -351,7 +352,11 @@ export default function NewTrekPackage({ initialData = null, isEdit = false }) {
       }, 2500);
     } catch (err) {
       console.error(err);
-      alert(`Error: ${err.message}`);
+      if (err.name === 'AbortError') {
+        alert('The request timed out. Please check your internet connection and try again.');
+      } else {
+        alert(`Error: ${err.message}`);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -385,7 +390,7 @@ export default function NewTrekPackage({ initialData = null, isEdit = false }) {
             <ArrowLeft size={18} />
           </button>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-200">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-sm">
               <Tent size={20} className="text-white" />
             </div>
             <div>
@@ -398,7 +403,7 @@ export default function NewTrekPackage({ initialData = null, isEdit = false }) {
           type="button"
           onClick={handleSubmit}
           disabled={isSubmitting}
-          className="w-full sm:w-auto px-6 py-2.5 bg-emerald-600 text-white rounded-xl text-[13px] font-bold hover:bg-emerald-700 shadow-lg shadow-emerald-200 transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-70"
+          className="w-full sm:w-auto px-6 py-2.5 bg-emerald-600 text-white rounded-xl text-[13px] font-bold hover:bg-emerald-700 shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-70"
         >
           {isSubmitting ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save size={16} />}
           <span>{isEdit && initialData?.status !== 'inactive' ? 'Update Trek' : 'Publish Trek'}</span>
@@ -936,7 +941,7 @@ export default function NewTrekPackage({ initialData = null, isEdit = false }) {
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.8, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-              className="relative bg-white rounded-[24px] sm:rounded-[32px] shadow-2xl p-6 sm:p-10 flex flex-col items-center text-center max-w-[calc(100%-2rem)] sm:max-w-sm w-full mx-4 border border-gray-100"
+              className="relative bg-white rounded-[24px] sm:rounded-[32px] shadow-lg p-6 sm:p-10 flex flex-col items-center text-center max-w-[calc(100%-2rem)] sm:max-w-sm w-full mx-4 border border-gray-100"
             >
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 via-teal-500 to-emerald-600 rounded-t-[32px]" />
               <motion.div

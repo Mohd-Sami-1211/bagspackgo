@@ -11,6 +11,7 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import destinationsData from 'src/data/data.json';
+import { compressImage, fetchWithRetry } from '@/lib/imageCompression';
 
 const STEPS = [
     { id: 1, title: 'Business Info', subtitle: 'Tell us about your company' },
@@ -232,20 +233,13 @@ export default function ProviderRegistrationForm({ rejected = false }) {
         setSubmitting(true);
         setApiError('');
         try {
-            const toBase64 = file => new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = error => reject(error);
-            });
-
             let licenseBase64 = typeof form.licenseFile === 'string' ? form.licenseFile : '';
             let idBase64 = typeof form.idFile === 'string' ? form.idFile : '';
             
-            if (form.licenseFile instanceof File) licenseBase64 = await toBase64(form.licenseFile);
-            if (form.idFile instanceof File) idBase64 = await toBase64(form.idFile);
+            if (form.licenseFile instanceof File) licenseBase64 = await compressImage(form.licenseFile);
+            if (form.idFile instanceof File) idBase64 = await compressImage(form.idFile);
 
-            const res = await fetch('/api/provider/apply', {
+            const res = await fetchWithRetry('/api/provider/apply', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -257,7 +251,7 @@ export default function ProviderRegistrationForm({ rejected = false }) {
                     idFile: idBase64,
                     availability: form.availability, agree: form.agree,
                 }),
-            });
+            }, { timeoutMs: 60000, maxRetries: 2 });
             const data = await res.json();
             if (data.success) {
                 setSubmitted(true);
@@ -267,8 +261,12 @@ export default function ProviderRegistrationForm({ rejected = false }) {
             } else {
                 setApiError(data.message || 'Something went wrong.');
             }
-        } catch {
-            setApiError('Network error. Check your connection.');
+        } catch (err) {
+            if (err.name === 'AbortError') {
+                setApiError('The request timed out. Please check your internet connection and try again.');
+            } else {
+                setApiError('Network error. Please check your connection and try again.');
+            }
         } finally {
             setSubmitting(false);
         }
