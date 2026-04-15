@@ -18,11 +18,12 @@ export async function DELETE(request, context) {
         const comment = story.comments.id(commentId);
         if (!comment) return NextResponse.json({ success: false, error: 'Comment not found' }, { status: 404 });
 
-        // User can delete if they own the comment OR they own the entire post
+        // User can delete if they own the comment OR they own the entire post OR they are the official account
         const isCommentOwner = comment.user?.toString() === decoded.userId;
         const isPostOwner = story.userId?.toString() === decoded.userId;
+        const isAdmin = user.email === 'bagspackgo01@gmail.com';
 
-        if (!isCommentOwner && !isPostOwner) {
+        if (!isCommentOwner && !isPostOwner && !isAdmin) {
             return NextResponse.json({ success: false, error: 'Unauthorized to delete this comment' }, { status: 403 });
         }
 

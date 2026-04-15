@@ -7,6 +7,9 @@ const commentSchema = new mongoose.Schema({
     text: { type: String, required: true },
     parentId: { type: mongoose.Schema.Types.ObjectId, default: null },
     likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    isVerifiedProvider: { type: Boolean, default: false },
+    providerId: { type: String, default: '' },
+    providerLogo: { type: String, default: '' },
     createdAt: { type: Date, default: Date.now }
 });
 
@@ -19,7 +22,10 @@ const storySchema = new mongoose.Schema({
     location: { type: String },
     media: [{ type: String }],
     likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-    comments: [commentSchema]
+    comments: [commentSchema],
+    isVerifiedProvider: { type: Boolean, default: false },
+    providerId: { type: String, default: '' },
+    providerLogo: { type: String, default: '' }
 }, { timestamps: true });
 
 const Story = mongoose.models.Story || mongoose.model('Story', storySchema);

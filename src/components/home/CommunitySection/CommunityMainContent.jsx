@@ -19,7 +19,8 @@ import {
   Video,
   Reply,
   BadgeCheck,
-  Trash2
+  Trash2,
+  ShieldCheck
 } from 'lucide-react';
 
 // shadcn/ui primitives
@@ -83,14 +84,19 @@ const StarRating = ({ rating, size = 'md', interactive = false, onChange }) => {
 // ─── Constants ──────────────────────────────────────────────
 const OFFICIAL_EMAIL = 'bagspackgo01@gmail.com';
 
-// Helper to check if a story/comment is from the official account
+// Helper to check if a story/comment is from the official bagspackgo account
 const isOfficialPost = (item) => {
   return item?.name === 'bagspackgo' || item?.handle === '@bagspackgo';
 };
 
+// Helper to check if post/comment is from a verified service provider
+const isVerifiedProviderPost = (item) => {
+  return item?.isVerifiedProvider === true && item?.providerId;
+};
+
 // ─── Main Community Component ───────────────────────────────
 const CommunityMainContent = () => {
-  const { user, openAuthModal } = useAuth();
+  const { user, openAuthModal, checkAuth } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState('stories');
@@ -140,7 +146,7 @@ const CommunityMainContent = () => {
   const handleCommentSubmit = async (e, id) => {
      e.preventDefault();
      if (!user) {
-         openAuthModal();
+         openAuthModal({ stayOnPage: true });
          return;
      }
      if (!commentText[id]?.trim() || submittingCommentId === id) return;
@@ -183,7 +189,7 @@ const CommunityMainContent = () => {
 
   const handleCommentLike = async (storyId, commentId) => {
     if (!user) {
-      openAuthModal();
+      openAuthModal({ stayOnPage: true });
       return;
     }
     try {
@@ -407,7 +413,7 @@ const CommunityMainContent = () => {
 
   const handleLike = async (id) => {
     if (!user) {
-        openAuthModal();
+        openAuthModal({ stayOnPage: true });
         return;
     }
     setStories(stories.map(story => {
@@ -430,7 +436,7 @@ const CommunityMainContent = () => {
 
   const handleHelpful = async (id) => {
     if (!user) {
-        openAuthModal();
+        openAuthModal({ stayOnPage: true });
         return;
     }
     setReviews(reviews.map(review => {
@@ -496,7 +502,7 @@ const CommunityMainContent = () => {
 
   const handleDeleteStory = async (id) => {
     if (!user) {
-        openAuthModal();
+        openAuthModal({ stayOnPage: true });
         return;
     }
     if (window.confirm('Are you sure you want to delete this story?')) {
@@ -515,7 +521,7 @@ const CommunityMainContent = () => {
   const submitStory = async (e) => {
     e.preventDefault();
     if (!user) {
-        openAuthModal();
+        openAuthModal({ stayOnPage: true });
         return;
     }
     const posterName = user.name || user.username || user.email?.split('@')[0] || 'Traveler';
@@ -523,6 +529,7 @@ const CommunityMainContent = () => {
     if (!storyForm.content.trim() || isSubmittingStory) return;
 
     setIsSubmittingStory(true);
+    // Let the API handle provider detection and verified badge assignment
     const newStoryData = {
       name: isOfficial ? 'bagspackgo' : posterName,
       handle: isOfficial ? '@bagspackgo' : `@${posterName.toLowerCase().replace(/\s+/g, '').substring(0, 15)}`,
@@ -555,7 +562,7 @@ const CommunityMainContent = () => {
   const submitReview = async (e) => {
     e.preventDefault();
     if (!user) {
-        openAuthModal();
+        openAuthModal({ stayOnPage: true });
         return;
     }
     const posterName = user.name || user.username || user.email?.split('@')[0] || 'Traveler';
@@ -670,7 +677,7 @@ const CommunityMainContent = () => {
                   <Card
                     className="cursor-pointer group hover:shadow-md transition-all duration-200 border-gray-200/70"
                     onClick={() => {
-                        if (!user) { openAuthModal(); return; }
+                        if (!user) { openAuthModal({ stayOnPage: true }); return; }
                         setShowStoryModal(true);
                     }}
                   >
@@ -699,16 +706,37 @@ const CommunityMainContent = () => {
                           <CardHeader className="p-5 pb-3">
                             <div className="flex justify-between items-start">
                               <div className="flex items-center gap-3">
-                                <Avatar className={cn("w-10 h-10 ring-2", isOfficialPost(story) ? "ring-blue-200 bg-white" : "ring-gray-100")}>
+                                <Avatar 
+                                  onClick={() => isVerifiedProviderPost(story) ? router.push(`/user/provider/${story.providerId}`) : undefined}
+                                  className={cn(
+                                  "w-10 h-10 ring-2",
+                                  isOfficialPost(story) ? "ring-blue-200 bg-white" :
+                                  isVerifiedProviderPost(story) ? "ring-emerald-200 bg-white cursor-pointer hover:ring-emerald-300 transition-shadow" : "ring-gray-100"
+                                )}>
                                   <AvatarImage src={story.photo} alt={story.name} className={cn(isOfficialPost(story) && "object-contain p-0.5")} />
                                   <AvatarFallback>{story.name?.[0]}</AvatarFallback>
                                 </Avatar>
                                 <div>
                                   <div className="flex items-center gap-1.5">
-                                    <span className="font-semibold text-[15px] text-gray-900 leading-tight">
-                                      {story.name}
-                                    </span>
+                                    {isVerifiedProviderPost(story) ? (
+                                      <span
+                                        className="font-semibold text-[15px] text-gray-900 leading-tight cursor-pointer hover:text-emerald-700 hover:underline transition-colors"
+                                        onClick={() => router.push(`/user/provider/${story.providerId}`)}
+                                      >
+                                        {story.name}
+                                      </span>
+                                    ) : (
+                                      <span className="font-semibold text-[15px] text-gray-900 leading-tight">
+                                        {story.name}
+                                      </span>
+                                    )}
                                     {isOfficialPost(story) && <BadgeCheck className="w-[18px] h-[18px] text-white fill-blue-500" />}
+                                    {isVerifiedProviderPost(story) && (
+                                      <span className="inline-flex items-center gap-0.5 bg-emerald-50 text-emerald-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full border border-emerald-200">
+                                        <ShieldCheck className="w-3 h-3" />
+                                        Verified
+                                      </span>
+                                    )}
                                   </div>
                                   <div className="text-xs text-gray-400 flex items-center gap-1.5 mt-0.5">
                                     {story.location && (
@@ -736,7 +764,7 @@ const CommunityMainContent = () => {
                                     <button onClick={() => { window.alert('Post reported to moderators.'); toggleDropdown(story._id); }} className="w-full text-left px-4 py-2 hover:bg-gray-50 text-gray-700 text-sm font-medium transition-colors">
                                       Report
                                     </button>
-                                    {(user && (user.userId === story.userId || user.email === 'bagspackgo01@gmail.com')) && (
+                                    {(user && (user.id === story.userId || user.email === 'bagspackgo01@gmail.com')) && (
                                       <button onClick={() => { handleDeleteStory(story._id); toggleDropdown(story._id); }} className="w-full text-left px-4 py-2 hover:bg-rose-50 text-rose-600 text-sm font-medium transition-colors">
                                         Delete
                                       </button>
@@ -857,21 +885,43 @@ const CommunityMainContent = () => {
                                           const commentId = c._id?.toString() || idx;
                                           const replies = repliesMap[commentId] || [];
                                           const official = isOfficialPost(c);
+                                          const verifiedProvider = isVerifiedProviderPost(c);
 
                                           return (
                                             <div key={commentId}>
                                               <div className={cn("flex gap-2.5", isReply && "ml-8 mt-2")}>
-                                                <Avatar className={cn("w-7 h-7 flex-shrink-0", official && "ring-1 ring-blue-200 bg-white")}>
+                                                <Avatar 
+                                                  onClick={() => verifiedProvider ? router.push(`/user/provider/${c.providerId}`) : undefined}
+                                                  className={cn(
+                                                  "w-7 h-7 flex-shrink-0",
+                                                  official ? "ring-1 ring-blue-200 bg-white" :
+                                                  verifiedProvider ? "ring-1 ring-emerald-200 bg-white cursor-pointer hover:ring-emerald-300 transition-shadow" : ""
+                                                )}>
                                                   <AvatarImage src={c.photo} className={cn(official && "object-contain p-0.5")} />
                                                   <AvatarFallback className="text-[10px]">{c.name?.[0]}</AvatarFallback>
                                                 </Avatar>
                                                 <div className="bg-gray-50 rounded-2xl px-3 py-2 flex-1">
                                                    <div className="flex justify-between items-baseline mb-0.5">
-                                                      <div className="flex items-center gap-1.5">
-                                                        <span className="font-semibold text-[13px] text-gray-900">{c.name}</span>
+                                                      <div className="flex items-center gap-1.5 flex-wrap">
+                                                        {verifiedProvider ? (
+                                                          <span
+                                                            className="font-semibold text-[13px] text-gray-900 cursor-pointer hover:text-emerald-700 hover:underline transition-colors"
+                                                            onClick={() => router.push(`/user/provider/${c.providerId}`)}
+                                                          >
+                                                            {c.name}
+                                                          </span>
+                                                        ) : (
+                                                          <span className="font-semibold text-[13px] text-gray-900">{c.name}</span>
+                                                        )}
                                                         {official && <BadgeCheck className="w-3.5 h-3.5 text-white fill-blue-500" />}
+                                                        {verifiedProvider && (
+                                                          <span className="inline-flex items-center gap-0.5 bg-emerald-50 text-emerald-700 text-[9px] font-bold px-1 py-px rounded-full border border-emerald-200">
+                                                            <ShieldCheck className="w-2.5 h-2.5" />
+                                                            Verified
+                                                          </span>
+                                                        )}
                                                       </div>
-                                                      <span className="text-[10px] text-gray-400 font-medium tabular-nums">{timeAgo(c.createdAt)}</span>
+                                                      <span className="text-[10px] text-gray-400 font-medium tabular-nums flex-shrink-0">{timeAgo(c.createdAt)}</span>
                                                    </div>
                                                    <p className="text-[13px] text-gray-600 leading-relaxed">
                                                      {c.text.split(/(@\[[^\]]+\]|@\w+)/g).map((part, pi) => {
@@ -909,7 +959,7 @@ const CommunityMainContent = () => {
                                                      >
                                                        <Reply className="w-3 h-3" /> Reply
                                                      </button>
-                                                     {(user && (user.userId === c.user || user.userId === story.userId)) && (
+                                                     {(user && (user.id === c.user || user.id === story.userId || user.email === 'bagspackgo01@gmail.com')) && (
                                                        <button
                                                          onClick={() => handleCommentDelete(story._id, commentId)}
                                                          className="text-[11px] text-gray-400 hover:text-rose-500 font-semibold flex items-center gap-1 ml-auto"
@@ -1041,7 +1091,7 @@ const CommunityMainContent = () => {
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-bold text-gray-900">Recent Reviews</h3>
                     <Button onClick={() => {
-                        if (!user) { openAuthModal(); return; }
+                        if (!user) { openAuthModal({ stayOnPage: true }); return; }
                         setShowReviewModal(true);
                     }} size="sm" className="rounded-full gap-1.5 text-[13px]">
                       <Plus className="w-3.5 h-3.5" /> Write Review
@@ -1126,7 +1176,7 @@ const CommunityMainContent = () => {
 
                 <Button
                   onClick={() => {
-                      if (!user) { openAuthModal(); return; }
+                      if (!user) { openAuthModal({ stayOnPage: true }); return; }
                       activeTab === 'stories' ? setShowStoryModal(true) : setShowReviewModal(true);
                   }}
                   className="w-full bg-gray-900 hover:bg-gray-800 text-white rounded-xl gap-2 h-11"
