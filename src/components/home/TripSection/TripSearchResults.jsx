@@ -187,11 +187,11 @@ const SearchResults = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen w-full bg-slate-50 -mt-20 flex flex-col items-center justify-center">
         <motion.div 
           key="loader"
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-          className="flex flex-col items-center justify-center min-h-[60vh] gap-4"
+          className="flex flex-col items-center gap-4"
         >
           <div className="w-10 h-10 border-[3px] border-emerald-100 border-t-emerald-600 rounded-full animate-spin" />
           <p className="text-[13px] font-medium text-gray-400">Finding your perfect guides...</p>
@@ -414,9 +414,9 @@ const SearchResults = () => {
                     <div className="grid gap-6">
                       {otherGuides.map((guide, index) => {
                         return guide.packages.map((pkg, pIdx) => (
-                          <motion.div key={`other-${guide.id}-${pkg.id}`} initial={{ opacity: 0, y: 15 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+                          <div key={`other-${guide.id}-${pkg.id}`}>
                             <GuideCard guide={guide} category={category} daysRange={null} peopleCount={peopleCount} date={date} selectedPackage={pkg} />
-                          </motion.div>
+                          </div>
                         ));
                       })}
                     </div>
@@ -455,9 +455,9 @@ const SearchResults = () => {
                     <div className="grid gap-6">
                       {otherGuides.map((guide, index) => {
                         return guide.packages.map((pkg, pIdx) => (
-                          <motion.div key={`other-${guide.id}-${pkg.id}`} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: (index * 0.05) + (pIdx * 0.02) }}>
+                          <div key={`other-${guide.id}-${pkg.id}`}>
                             <GuideCard guide={guide} category={category} daysRange={null} peopleCount={peopleCount} date={date} selectedPackage={pkg} />
-                          </motion.div>
+                          </div>
                         ));
                       })}
                     </div>

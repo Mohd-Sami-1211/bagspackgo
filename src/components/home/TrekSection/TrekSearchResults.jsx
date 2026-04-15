@@ -197,11 +197,11 @@ const TrekSearchResults = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen w-full bg-slate-50 -mt-12 flex flex-col items-center justify-center">
         <motion.div 
           key="loader"
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-          className="flex flex-col items-center justify-center min-h-[60vh] gap-4"
+          className="flex flex-col items-center gap-4"
         >
           <div className="w-10 h-10 border-[3px] border-emerald-100 border-t-emerald-600 rounded-full animate-spin" />
           <p className="text-[13px] font-medium text-gray-400">Finding your perfect treks...</p>
@@ -421,18 +421,15 @@ const TrekSearchResults = () => {
                     </div>
                     <div className="grid gap-6">
                       {otherPackagesList.map((pkg, index) => (
-                        <motion.div
+                        <div
                           key={pkg._id || index}
-                          initial={{ opacity: 0, y: 15 }}
-                          whileInView={{ opacity: 1, y: 0 }}
-                          viewport={{ once: true }}
                         >
                           <TrekCard
                             pkg={pkg}
                             peopleCount={peopleCount}
                             date={date}
                           />
-                        </motion.div>
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -468,19 +465,15 @@ const TrekSearchResults = () => {
                     </div>
                     <div className="grid gap-6">
                       {otherPackagesList.map((pkg, index) => (
-                        <motion.div
+                        <div
                           key={`other-${pkg._id || index}`}
-                          initial={{ opacity: 0, y: 20 }}
-                          whileInView={{ opacity: 1, y: 0 }}
-                          viewport={{ once: true }}
-                          transition={{ delay: index * 0.05 }}
                         >
                           <TrekCard
                             pkg={pkg}
                             peopleCount={peopleCount}
                             date={date}
                           />
-                        </motion.div>
+                        </div>
                       ))}
                     </div>
                   </div>

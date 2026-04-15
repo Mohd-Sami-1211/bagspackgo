@@ -180,26 +180,10 @@ const TrekSearchInput = memo(forwardRef((props, ref) => {
     setPeopleCount(prev => Math.max(prev - 1, 1));
   };
 
-  const containerVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.5, ease: "easeOut", when: "beforeChildren", staggerChildren: 0.1 }
-    }
-  };
-
   const scrollVariants = {
-    offscreen: { y: 50, opacity: 0 },
-    onscreen: { y: 0, opacity: 1, transition: { type: "spring", bounce: 0.4, duration: 0.8 } }
+    offscreen: { opacity: 0, y: 20 },
+    onscreen: { opacity: 1, y: 0, transition: { duration: 0.4, ease: 'easeOut' } }
   };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 10 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.3 } }
-  };
-
-  const buttonVariants = { rest: { scale: 1 }, hover: { scale: 1.02 }, tap: { scale: 0.98 } };
 
   return (
     <motion.div
@@ -212,15 +196,11 @@ const TrekSearchInput = memo(forwardRef((props, ref) => {
       {!isMounted ? (
         <div className="w-full h-[180px] bg-white/50 animate-pulse rounded-2xl" />
       ) : (
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={containerVariants}
+        <div
           className="flex flex-col md:flex-row gap-2 md:gap-3"
         >
           {/* Left Section - Destination and Trek */}
-          <motion.div
-            variants={itemVariants}
+          <div
             className="flex-1 space-y-3 sm:space-y-4 w-full md:w-auto relative z-10"
           >
             <TrekDestinationSelect
@@ -235,26 +215,18 @@ const TrekSearchInput = memo(forwardRef((props, ref) => {
               selectedDestination={selectedDestination}
               error={errors.trek}
             />
-          </motion.div>
+          </div>
 
           {/* Right Section - People, Date and Search */}
-          <motion.div
-            variants={itemVariants}
+          <div
             className="flex-[2] space-y-3 sm:space-y-4 flex flex-col justify-between w-full md:w-auto relative z-20"
           >
             {/* People Counter */}
-            <motion.div
+            <div
               className="flex gap-2 sm:gap-4 w-full"
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true, margin: '-50px' }}
             >
-              <motion.div
+              <div
                 className="flex-1 w-full relative"
-                initial={{ opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-30px' }}
-                transition={{ duration: 0.3 }}
               >
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">No. of People</label>
                 <div className={`flex items-center bg-white border rounded-lg h-[36px] transition-all ${errors.peopleCount ? 'border-red-500 shadow-[0_0_0_1px_#ef4444]' : 'border-gray-300 hover:border-emerald-400'}`}>
@@ -289,17 +261,17 @@ const TrekSearchInput = memo(forwardRef((props, ref) => {
                     </motion.p>
                   )}
                 </AnimatePresence>
-              </motion.div>
-            </motion.div>
+              </div>
+            </div>
 
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-end mt-2 sm:mt-1">
-              <motion.div variants={itemVariants} className="flex-1 relative z-[60] w-full">
+              <div className="flex-1 relative z-[60] w-full">
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">Date</label>
                 <DatePicker
                   selected={startDate}
                   onChange={handleDateChange}
                   customInput={
-                    <motion.div className="relative w-full" whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
+                    <div className="relative w-full">
                       <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                         <CalendarCheck className="h-5 w-5 text-gray-400" />
                       </div>
@@ -310,7 +282,7 @@ const TrekSearchInput = memo(forwardRef((props, ref) => {
                         placeholder="DD/MM/YYYY"
                         className={`w-full pl-9 ${errors.date ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                       />
-                    </motion.div>
+                    </div>
                   }
                   dateFormat="dd/MM/yyyy"
                   minDate={new Date()}
@@ -337,7 +309,7 @@ const TrekSearchInput = memo(forwardRef((props, ref) => {
                     </motion.p>
                   )}
                 </AnimatePresence>
-              </motion.div>
+              </div>
 
               <div className="flex gap-2 sm:gap-3 flex-wrap sm:flex-nowrap justify-end w-full sm:w-auto mt-2">
                 <AnimatePresence mode="wait">
@@ -367,8 +339,8 @@ const TrekSearchInput = memo(forwardRef((props, ref) => {
                 </Button>
               </div>
             </div>
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
       )}
     </motion.div>
   );
@@ -389,12 +361,8 @@ const TrekDestinationSelect = ({ selectedDestination, handleDestinationChange, e
   ];
 
   return (
-    <motion.div
+    <div
       className="relative z-[1000] w-full"
-      initial={{ opacity: 0, x: -10 }}
-      whileInView={{ opacity: 1, x: 0 }}
-      viewport={{ once: true, margin: '-50px' }}
-      transition={{ duration: 0.2, delay: 0.05 }}
     >
       <label className="block text-sm font-semibold text-gray-800 mb-1">Select Destination</label>
       <Select
@@ -429,17 +397,13 @@ const TrekDestinationSelect = ({ selectedDestination, handleDestinationChange, e
           </motion.p>
         )}
       </AnimatePresence>
-    </motion.div>
+    </div>
   );
 };
 
 const TrekNameSelect = ({ trekOptions, selectedTrek, handleTrekChange, selectedDestination, error }) => (
-  <motion.div
+  <div
     className="relative z-[1000] w-full"
-    initial={{ opacity: 0, x: -10 }}
-    whileInView={{ opacity: 1, x: 0 }}
-    viewport={{ once: true, margin: '-50px' }}
-    transition={{ duration: 0.2, delay: 0.1 }}
   >
     <label className="block text-sm font-semibold text-gray-800 mb-1">Choose Trek</label>
     <Select
@@ -475,7 +439,7 @@ const TrekNameSelect = ({ trekOptions, selectedTrek, handleTrekChange, selectedD
         </motion.p>
       )}
     </AnimatePresence>
-  </motion.div>
+  </div>
 );
 
 const selectStyles = {

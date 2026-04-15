@@ -72,28 +72,18 @@ const faqs = [
 
 
 const SectionHeading = ({ pre, accent }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.6 }}
-    viewport={{ once: true }}
+  <div
     className="text-center mb-10"
   >
-    <motion.h2
-      className="text-4xl md:text-5xl font-bold text-gray-800 mb-4"
-      initial={{ scale: 0.9 }}
-      whileInView={{ scale: 1 }}
-      transition={{ duration: 0.5, delay: 0.2, type: "spring", stiffness: 100 }}
+    <h2
+      className="text-4xl md:text-5xl font-bold text-gray-800 mb-4 transition-transform duration-500 hover:scale-105"
     >
       {pre} <span className="text-green-600">{accent}</span>
-    </motion.h2>
-    <motion.div
+    </h2>
+    <div
       className="h-1 bg-gradient-to-r from-amber-400 to-amber-600 mx-auto w-24 rounded-full mb-8"
-      initial={{ width: 0 }}
-      whileInView={{ width: 96 }}
-      transition={{ duration: 0.8, delay: 0.3, type: "spring", stiffness: 50 }}
     />
-  </motion.div>
+  </div>
 );
 
 // ── DESTINATIONS  (tabbed – one category at a time) ─────────
@@ -214,7 +204,9 @@ const AdventureSlider = () => {
   const isVisible = useInView(sectionRef, { once: false, margin: '-80px' });
 
   const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
   const touchEndX = useRef(0);
+  const isHorizontalSwipe = useRef(false);
 
   const startAutoSlide = useCallback(() => {
     clearInterval(intervalRef.current);
@@ -241,14 +233,21 @@ const AdventureSlider = () => {
 
   const handleTouchStart = (e) => {
     touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+    isHorizontalSwipe.current = false;
   };
   const handleTouchMove = (e) => {
     touchEndX.current = e.touches[0].clientX;
+    const diffX = Math.abs(touchStartX.current - touchEndX.current);
+    const diffY = Math.abs(touchStartY.current - e.touches[0].clientY);
+    if (diffX > diffY && diffX > 15) {
+      isHorizontalSwipe.current = true;
+    }
   };
   const handleTouchEnd = () => {
-    if (isFlipped) return;
+    if (isFlipped || !isHorizontalSwipe.current) return;
     const diff = touchStartX.current - touchEndX.current;
-    if (Math.abs(diff) > 40) {
+    if (Math.abs(diff) > 50) {
       if (diff > 0) go(1);
       else go(-1);
     }
@@ -261,7 +260,7 @@ const AdventureSlider = () => {
 
         <div className="relative">
           <div 
-            className="relative h-[240px] sm:h-[380px] md:h-[460px] rounded-2xl sm:rounded-3xl overflow-hidden shadow-xl"
+            className="relative h-[240px] sm:h-[380px] md:h-[460px] rounded-2xl sm:rounded-3xl overflow-hidden shadow-xl touch-pan-y"
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
@@ -351,9 +350,9 @@ const Testimonials = () => {
       {/* Desktop 2×2 grid */}
       <div className="hidden md:grid grid-cols-2 gap-5">
         {data.slice(0, 4).map((t, i) => (
-          <motion.div key={i} className="bg-white rounded-2xl shadow-md p-5 border border-gray-100" initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: i * 0.07 }} viewport={{ once: true }}>
+          <div key={i} className="bg-white rounded-2xl shadow-md p-5 border border-gray-100">
             <TestimonialCard t={t} />
-          </motion.div>
+          </div>
         ))}
       </div>
 
