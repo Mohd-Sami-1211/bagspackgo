@@ -96,11 +96,17 @@ export async function GET(request) {
             }
         });
 
-        // Derive organizers from already-fetched guideDetailsList instead of a separate DB query
+        // Fetch all active companies as organizers, ensuring their application is approved
+        const allCompanies = await GuideDetails.find({ "pausedServices.event": { $ne: true } })
+            .populate("guide", "applicationStatus")
+            .select("companyname guide")
+            .lean();
+            
         const allOrganizers = [...new Set(
-            guideDetailsList
-                .filter(gd => !gd.pausedServices?.event && gd.companyname)
+            allCompanies
+                .filter(gd => gd.guide && gd.guide.applicationStatus === 'approved')
                 .map(gd => gd.companyname)
+                .filter(Boolean)
         )].map(name => ({ id: name, name }));
 
         return NextResponse.json({

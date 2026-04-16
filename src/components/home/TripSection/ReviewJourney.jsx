@@ -117,10 +117,13 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
       tierDiscountPercent = Number(matchingTier?.discount || 0);
     } else {
       perPersonPrice = Number(
+        selectedPkg?.price?.[config.category] ||
         selectedPkg?.price?.individual ||
-          selectedPkg?.price ||
-          guide?.price ||
-          0,
+        selectedPkg?.price ||
+        guide?.price?.[config.category] ||
+        guide?.price?.individual ||
+        guide?.price ||
+        0
       );
     }
 
