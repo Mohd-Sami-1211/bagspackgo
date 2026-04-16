@@ -105,20 +105,23 @@ const TrekSearchResults = () => {
     const [field, order] = option.split('-');
     return [...treks].sort((a, b) => {
       if (field === 'price') {
-        // Extract price from pricingTiers or fallback to pkg.price
         const getPrice = (pkg) => {
           if (pkg.pricingTiers?.length > 0) {
             const tier = pkg.pricingTiers.find(t => peopleCount >= t.minPeople && peopleCount <= t.maxPeople) || pkg.pricingTiers[0];
             return Number(tier?.price || 0);
           }
-          return Number(pkg.price || 0);
+          const p = pkg.price;
+          if (typeof p === 'object' && p !== null) {
+            return Number(p.individual || Object.values(p)[0] || 0);
+          }
+          return Number(p || 0);
         };
         const aPrice = getPrice(a);
         const bPrice = getPrice(b);
         return order === 'desc' ? bPrice - aPrice : aPrice - bPrice;
       }
-      const aVal = Number(a[field] || 0);
-      const bVal = Number(b[field] || 0);
+      const aVal = Number(a[field]) || 0;
+      const bVal = Number(b[field]) || 0;
       return order === 'desc' ? bVal - aVal : aVal - bVal;
     });
   }, [peopleCount]);
@@ -211,7 +214,7 @@ const TrekSearchResults = () => {
   }
 
   return (
-    <div className="min-h-screen w-full bg-slate-50 font-sans pb-12 -mt-12np">
+    <div className="min-h-screen w-full bg-slate-50 font-sans pb-12 -mt-12">
       {/* Refined Header - Single Line Action Bar */}
       <div className="w-full bg-white border-b sticky top-0 z-[30] shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-3">
@@ -249,7 +252,15 @@ const TrekSearchResults = () => {
                   className="font-medium shrink-0"
                 >
                   <Filter size={16} className="mr-2" />
-                  <span className="hidden sm:inline">Sort</span>
+                  <span className="hidden sm:inline">
+                    {activeFilter ? [
+                      { value: 'rating-desc', label: 'Highest Rating' },
+                      { value: 'rating-asc', label: 'Lowest Rating' },
+                      { value: 'price-desc', label: 'Highest Price' },
+                      { value: 'price-asc', label: 'Lowest Price' },
+                      { value: 'reviews-desc', label: 'Most Reviews' },
+                    ].find(opt => opt.value === activeFilter)?.label || 'Sort' : 'Sort'}
+                  </span>
                   <ChevronDown size={14} className={`ml-2 hidden sm:inline transition-transform duration-200 ${showSortDropdown ? 'rotate-180' : ''}`} />
                 </Button>
                 

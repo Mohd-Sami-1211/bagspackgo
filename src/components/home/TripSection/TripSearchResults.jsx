@@ -128,26 +128,44 @@ const SearchResults = () => {
     fetchGuides();
   }, [destination, daysRange, peopleCount, category]);
 
-  const sortGuides = useCallback((guidesList, option) => {
-    const [field, order] = option.split('-');
-    return [...guidesList].sort((a, b) => {
-      if (field === 'price') {
-        const aPrice = a.price[category] || a.price.individual;
-        const bPrice = b.price[category] || b.price.individual;
-        return order === 'desc' ? bPrice - aPrice : aPrice - bPrice;
-      }
-      return order === 'desc' ? b[field] - a[field] : a[field] - b[field];
-    });
-  }, [category]);
-
   const guides = useMemo(() => {
     let results = allGuides;
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       results = results.filter(guide => guide.name.toLowerCase().includes(query));
     }
-    return sortGuides(results, sortOption);
-  }, [allGuides, searchQuery, sortOption, sortGuides]);
+    
+    // Flatten guides into items with their specific packages
+    let flatItems = [];
+    results.forEach(guide => {
+      const packagesInRange = getPackagesInRange(guide, daysRange);
+      if (!daysRange || packagesInRange.length === 0) {
+        flatItems.push({ guide, pkg: null });
+      } else {
+        packagesInRange.forEach(pkg => flatItems.push({ guide, pkg }));
+      }
+    });
+
+    const [field, order] = sortOption.split('-');
+    return flatItems.sort((a, b) => {
+      if (field === 'price') {
+        const getPrice = (item) => {
+          let p = item.pkg ? item.pkg.price : item.guide.price;
+          if (typeof p === 'object' && p !== null) {
+            return Number(p[category] || p.individual || Object.values(p)[0] || 0);
+          }
+          return Number(p || 0);
+        };
+        const aPrice = getPrice(a);
+        const bPrice = getPrice(b);
+        return order === 'desc' ? bPrice - aPrice : aPrice - bPrice;
+      }
+      
+      const valA = Number(a.guide[field]) || 0;
+      const valB = Number(b.guide[field]) || 0;
+      return order === 'desc' ? valB - valA : valA - valB;
+    });
+  }, [allGuides, searchQuery, sortOption, daysRange, category]);
 
   const handleApplyChanges = () => {
     setIsApplying(true);
@@ -239,7 +257,15 @@ const SearchResults = () => {
                   className="font-medium shrink-0"
                 >
                   <Filter size={16} className="mr-2" />
-                  <span className="hidden sm:inline">Sort</span>
+                  <span className="hidden sm:inline">
+                    {activeFilter ? [
+                      { value: 'rating-desc', label: 'Highest Rating' },
+                      { value: 'rating-asc', label: 'Lowest Rating' },
+                      { value: 'price-desc', label: 'Highest Price' },
+                      { value: 'price-asc', label: 'Lowest Price' },
+                      { value: 'reviews-desc', label: 'Most Reviews' },
+                    ].find(opt => opt.value === activeFilter)?.label || 'Sort' : 'Sort'}
+                  </span>
                   <ChevronDown size={14} className={`ml-2 hidden sm:inline transition-transform duration-200 ${showSortDropdown ? 'rotate-180' : ''}`} />
                 </Button>
                 
@@ -426,21 +452,11 @@ const SearchResults = () => {
             ) : (
               /* ──────── HAS RESULTS: Main Results + "More Packages" Bonus ──────── */
               <>
-                {guides.map((guide, index) => {
-                  const packagesInRange = getPackagesInRange(guide, daysRange);
-                  if (!daysRange || packagesInRange.length === 0) {
-                    return (
-                      <motion.div key={guide.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.05 }}>
-                        <GuideCard guide={guide} category={category} daysRange={daysRange} peopleCount={peopleCount} date={date} />
-                      </motion.div>
-                    );
-                  }
-                  return packagesInRange.map((pkg, pIdx) => (
-                    <motion.div key={`${guide.id}-${pkg.id}`} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: (index * 0.05) + (pIdx * 0.02) }}>
-                      <GuideCard guide={guide} category={category} daysRange={daysRange} peopleCount={peopleCount} date={date} selectedPackage={pkg} />
-                    </motion.div>
-                  ));
-                })}
+                {guides.map((item, index) => (
+                  <motion.div key={item.pkg ? `${item.guide.id}-${item.pkg.id}` : item.guide.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.05 }}>
+                    <GuideCard guide={item.guide} category={category} daysRange={daysRange} peopleCount={peopleCount} date={date} selectedPackage={item.pkg} />
+                  </motion.div>
+                ))}
 
                 {/* ── "More Packages" Bonus Section ── */}
                 {otherGuides.length > 0 && (

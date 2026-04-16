@@ -109,7 +109,14 @@ const ReviewTrek = ({ guide, searchParams }) => {
   };
 
   const calculatePayment = () => {
-    let pricePerPerson = Number(guide?.price || 0);
+    const config = trekData?.trekConfig || {};
+    const category = config.category || "individual";
+    let pricePerPerson = Number(
+      guide?.price?.[category] ||
+      guide?.price?.individual || 
+      guide?.price || 
+      0
+    );
     const numPeople = count;
 
     if (guide?.pricingTiers && guide.pricingTiers.length > 0) {

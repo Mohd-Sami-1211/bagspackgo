@@ -211,7 +211,7 @@ const EventMainContent = () => {
     // Organizer filter
     if (filters.organizer.length > 0) {
       results = results.filter(event =>
-        filters.organizer.some(orgId => (event.eventId || '').startsWith(orgId))
+        filters.organizer.includes(event.guideName)
       );
     }
 

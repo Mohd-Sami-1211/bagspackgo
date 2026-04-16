@@ -25,8 +25,10 @@ export function AuthProvider({ children }) {
 
             if (data.success && data.authenticated) {
                 setUser(data.user);
+                localStorage.setItem('has_session', 'true');
             } else {
                 setUser(null);
+                localStorage.removeItem('has_session');
             }
         } catch (error) {
             setUser(null);
@@ -37,6 +39,9 @@ export function AuthProvider({ children }) {
 
     // Check auth on mount
     useEffect(() => {
+        if (!localStorage.getItem('has_session')) {
+            setLoading(false); // First time visitors shouldn't wait for auth response
+        }
         checkAuth();
     }, [checkAuth]);
 
@@ -51,6 +56,7 @@ export function AuthProvider({ children }) {
             // Clear any localStorage data
             localStorage.removeItem('role');
             localStorage.removeItem('user');
+            localStorage.removeItem('has_session');
             window.location.href = '/';
         }
     };
@@ -58,6 +64,7 @@ export function AuthProvider({ children }) {
     // Update user after login (called from sign-in page)
     const onLogin = (userData) => {
         setUser(userData);
+        localStorage.setItem('has_session', 'true');
     };
 
     return (

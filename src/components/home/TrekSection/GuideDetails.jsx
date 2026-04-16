@@ -263,6 +263,8 @@ const TrekGuideDetails = ({ guide }) => {
         name: guide.name,
         destination: guide.destination,
         location: guide.location,
+        price: guide.price,
+        pricingTiers: guide.pricingTiers,
         provider: guide.provider ? {
           _id: guide.provider._id || guide.provider,
           companyname: guide.provider.companyname || guide.provider.companyName || guide.provider.username,

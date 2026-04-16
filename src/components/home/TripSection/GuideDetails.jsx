@@ -536,12 +536,16 @@ const GuideDetails = ({ guide }) => {
         destination: guide.destination,
         providerId: guide.providerId,
         rating: guide.rating,
-        reviews: guide.reviews
+        reviews: guide.reviews,
+        price: guide.price
       },
       selectedPackage: selectedPackage ? {
         _id: selectedPackage._id || selectedPackage.id,
         label: selectedPackage.label,
         destination: selectedPackage.destination,
+        price: selectedPackage.price,
+        pricingTiers: selectedPackage.pricingTiers,
+        days: selectedPackage.days
       } : null,
       tripConfig: {
         category,
