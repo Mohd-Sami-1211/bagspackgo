@@ -3,11 +3,6 @@ import Razorpay from 'razorpay';
 import dbConnect from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
 
-const razorpay = new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID,
-    key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
-
 // GET /api/payments/key defaults to sending public key
 export async function POST(request) {
     try {
@@ -29,6 +24,11 @@ export async function POST(request) {
             console.error('Razorpay keys not configured');
             return NextResponse.json({ success: false, message: 'Payment gateway not configured' }, { status: 500 });
         }
+
+        const razorpay = new Razorpay({
+            key_id: process.env.RAZORPAY_KEY_ID,
+            key_secret: process.env.RAZORPAY_KEY_SECRET,
+        });
 
         await dbConnect();
 
