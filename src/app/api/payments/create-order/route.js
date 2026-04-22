@@ -3,11 +3,6 @@ import Razorpay from 'razorpay';
 import dbConnect from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
 
-const razorpay = new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_mock_key123',
-    key_secret: process.env.RAZORPAY_KEY_SECRET || 'rzp_test_mock_secret123',
-});
-
 // GET /api/payments/key defaults to sending public key
 export async function POST(request) {
     try {
@@ -25,8 +20,17 @@ export async function POST(request) {
             return NextResponse.json({ success: false, message: 'Invalid amount' }, { status: 400 });
         }
 
+        if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+            console.error('Razorpay keys not configured');
+            return NextResponse.json({ success: false, message: 'Payment gateway not configured' }, { status: 500 });
+        }
+
+        const razorpay = new Razorpay({
+            key_id: process.env.RAZORPAY_KEY_ID,
+            key_secret: process.env.RAZORPAY_KEY_SECRET,
+        });
+
         await dbConnect();
-        // In a real app we'd verify the price against Event collection here
 
         const options = {
             amount: Math.round(amount * 100), // amount in paise
@@ -38,32 +42,12 @@ export async function POST(request) {
             }
         };
 
-        let order;
-        if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
-            try {
-                // If real keys are provided, try creating from Razorpay real API
-                order = await razorpay.orders.create(options);
-            } catch (razorpayErr) {
-                console.warn("Real Razorpay API failed, utilizing mock order fallback for dev environment", razorpayErr);
-                order = {
-                    id: `order_mock_${Date.now()}`,
-                    amount: options.amount,
-                    currency: 'INR'
-                };
-            }
-        } else {
-            // Mock order generation for local development testing
-            order = {
-                id: `order_mock_${Date.now()}`,
-                amount: options.amount,
-                currency: 'INR'
-            };
-        }
+        const order = await razorpay.orders.create(options);
 
         return NextResponse.json({
             success: true,
             order,
-            key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_mock_key123'
+            key_id: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID
         });
 
     } catch (error) {

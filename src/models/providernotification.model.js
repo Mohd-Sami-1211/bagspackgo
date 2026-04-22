@@ -5,7 +5,7 @@ const providerNotificationSchema = new mongoose.Schema({
 
   type: {
     type: String,
-    enum: ['trip_booking', 'trek_booking', 'payment', 'event', 'system'],
+    enum: ['trip_booking', 'trek_booking', 'event', 'system'],
     required: true,
   },
 

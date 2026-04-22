@@ -110,7 +110,9 @@ export async function POST(req) {
                 activities: day.activities || [],
                 highlights: (day.highlights || []).filter(h => h && h.trim())
             })),
-            termsAndConditions: (termsAndConditions || []).map(t => typeof t === 'string' ? t : t.text)
+            termsAndConditions: (termsAndConditions || []).map(t => typeof t === 'string' ? t : t.text),
+            aboutPackage: data.aboutPackage || '',
+            packagePhotos: data.packagePhotos || []
         });
 
         await newPackage.save();
@@ -235,7 +237,9 @@ export async function PUT(req) {
                 activities: day.activities || [],
                 highlights: (day.highlights || []).filter(h => h && h.trim())
             })),
-            termsAndConditions: (termsAndConditions || []).map(t => typeof t === 'string' ? t : t.text)
+            termsAndConditions: (termsAndConditions || []).map(t => typeof t === 'string' ? t : t.text),
+            aboutPackage: data.aboutPackage || '',
+            packagePhotos: data.packagePhotos || []
         };
 
         const updatedPackage = await Package.findOneAndUpdate(

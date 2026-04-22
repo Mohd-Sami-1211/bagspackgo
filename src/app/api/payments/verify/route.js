@@ -6,7 +6,7 @@ import { Event } from '@/models/event.model';
 import { getCurrentUser } from '@/lib/auth';
 import { sendEventBookingConfirmation } from '@/lib/otp-service';
 
-const RAZORPAY_SECRET = process.env.RAZORPAY_KEY_SECRET || 'rzp_test_mock_secret123';
+const RAZORPAY_SECRET = process.env.RAZORPAY_KEY_SECRET;
 
 export async function POST(request) {
     try {
@@ -25,78 +25,84 @@ export async function POST(request) {
             bookingDetails
         } = await request.json();
 
+        if (!RAZORPAY_SECRET) {
+            console.error('Razorpay secret not configured');
+            return NextResponse.json({ success: false, message: 'Payment gateway not configured' }, { status: 500 });
+        }
+
+        // Verify Razorpay signature
         const sign = razorpay_order_id + "|" + razorpay_payment_id;
         const expectedSign = crypto
             .createHmac("sha256", RAZORPAY_SECRET)
             .update(sign.toString())
             .digest("hex");
 
-        if (razorpay_signature === expectedSign || RAZORPAY_SECRET === 'rzp_test_mock_secret123') { // Remove fallback in prod
-            // Payment verified
-            await dbConnect();
-
-            // Create Booking record
-            const passes = bookingDetails.participants.map((p, i) => ({
-                ...p,
-                passCode: `BPG-${bookingDetails.eventId}-${Date.now()}-P${i}`,
-                checkedIn: false
-            }));
-
-            const newBooking = new Booking({
-                user: user.userId,
-                event: bookingDetails.eventId,
-                bookingDate: new Date(),
-                amountPaid: bookingDetails.amount,
-                slots: passes.length,
-                paymentId: razorpay_payment_id,
-                orderId: razorpay_order_id,
-                contactDetails: bookingDetails.contactDetails,
-                participants: passes,
-                status: 'confirmed'
-            });
-
-            await newBooking.save();
-
-            // Update Event bookedSlots and get event details for the email
-            const eventInfo = await Event.findByIdAndUpdate(bookingDetails.eventId, {
-                $inc: { bookedSlots: passes.length }
-            });
-
-            // Send Email Asynchronously
-            if (bookingDetails.contactDetails?.email && eventInfo) {
-                const mailDetails = {
-                    title: eventInfo.title,
-                    orderId: razorpay_order_id,
-                    slots: passes.length,
-                    amount: bookingDetails.amount,
-                    formattedDate: new Date(eventInfo.date).toLocaleDateString('en-US', {
-                        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-                    }),
-                    location: eventInfo.location?.city || eventInfo.location || 'TBD'
-                };
-                sendEventBookingConfirmation({
-                    userEmail: bookingDetails.contactDetails.email,
-                    userName: user.username || bookingDetails.contactDetails.name || 'Traveler',
-                    providerEmail: null,
-                    providerName: null,
-                    bookingId: newBooking._id.toString(),
-                    eventName: mailDetails.title,
-                    destination: mailDetails.location,
-                    eventDate: eventInfo.date,
-                    numPeople: mailDetails.slots,
-                    totalAmount: mailDetails.amount
-                }).catch(err => console.error("Failed to send booking pass email:", err));
-            }
-
-            return NextResponse.json({
-                success: true,
-                message: 'Payment verified successfully',
-                bookingId: newBooking._id
-            });
-
-        } else {
-            return NextResponse.json({ success: false, message: 'Invalid signature' }, { status: 400 });
+        if (razorpay_signature !== expectedSign) {
+            return NextResponse.json({ success: false, message: 'Payment verification failed — invalid signature' }, { status: 400 });
         }
+
+        // Payment verified
+        await dbConnect();
+
+        // Create Booking record
+        const passes = bookingDetails.participants.map((p, i) => ({
+            ...p,
+            passCode: `BPG-${bookingDetails.eventId}-${Date.now()}-P${i}`,
+            checkedIn: false
+        }));
+
+        const newBooking = new Booking({
+            user: user.userId,
+            event: bookingDetails.eventId,
+            bookingDate: new Date(),
+            amountPaid: bookingDetails.amount,
+            slots: passes.length,
+            paymentId: razorpay_payment_id,
+            orderId: razorpay_order_id,
+            contactDetails: bookingDetails.contactDetails,
+            participants: passes,
+            status: 'confirmed'
+        });
+
+        await newBooking.save();
+
+        // Update Event bookedSlots and get event details for the email
+        const eventInfo = await Event.findByIdAndUpdate(bookingDetails.eventId, {
+            $inc: { bookedSlots: passes.length }
+        });
+
+        // Send Email Asynchronously
+        if (bookingDetails.contactDetails?.email && eventInfo) {
+            const mailDetails = {
+                title: eventInfo.title,
+                orderId: razorpay_order_id,
+                slots: passes.length,
+                amount: bookingDetails.amount,
+                formattedDate: new Date(eventInfo.date).toLocaleDateString('en-US', {
+                    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+                }),
+                location: eventInfo.location?.city || eventInfo.location || 'TBD'
+            };
+            sendEventBookingConfirmation({
+                userEmail: bookingDetails.contactDetails.email,
+                userName: user.username || bookingDetails.contactDetails.name || 'Traveler',
+                providerEmail: null,
+                providerName: null,
+                bookingId: newBooking._id.toString(),
+                eventName: mailDetails.title,
+                destination: mailDetails.location,
+                eventDate: eventInfo.date,
+                numPeople: mailDetails.slots,
+                totalAmount: mailDetails.amount
+            }).catch(err => console.error("Failed to send booking pass email:", err));
+        }
+
+        return NextResponse.json({
+            success: true,
+            message: 'Payment verified successfully',
+            bookingId: newBooking._id
+        });
+
     } catch (error) {
         console.error("Verify Payment Error:", error);
         return NextResponse.json({ success: false, message: error.message }, { status: 500 });

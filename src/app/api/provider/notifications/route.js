@@ -23,23 +23,22 @@ async function syncNotifications(guide) {
     .lean();
 
   for (const b of tripBookings) {
-    const refId = b._id.toString();
+    // Only notify for confirmed or cancelled bookings
+    if (b.status !== 'confirmed' && b.status !== 'cancelled') continue;
+
+    const refId = `${b._id.toString()}_${b.status}`;
     const exists = await ProviderNotification.exists({ provider: providerId, refId, type: 'trip_booking' });
     if (!exists) {
       const userName = b.user?.name || 'A traveller';
       const pkgName  = b.packageSnapshot?.name || 'a trip package';
-      const amount   = `₹${Number(b.totalAmount || 0).toLocaleString('en-IN')}`;
 
       let title, message;
       if (b.status === 'cancelled') {
         title   = 'Trip booking cancelled';
         message = `${userName} cancelled their booking for ${pkgName}.`;
-      } else if (b.status === 'confirmed') {
-        title   = 'New trip booking confirmed';
-        message = `${userName} booked ${pkgName} for ${amount}. Ref: ${b.bookingRef}`;
       } else {
-        title   = 'New trip booking (pending payment)';
-        message = `${userName} initiated a booking for ${pkgName}. Awaiting payment.`;
+        title   = 'New trip booking received';
+        message = `${userName} booked ${pkgName}. Ref: ${b.bookingRef}`;
       }
 
       await ProviderNotification.create({
@@ -55,23 +54,22 @@ async function syncNotifications(guide) {
     .lean();
 
   for (const b of trekBookings) {
-    const refId = b._id.toString();
+    // Only notify for confirmed or cancelled bookings
+    if (b.status !== 'confirmed' && b.status !== 'cancelled') continue;
+
+    const refId = `${b._id.toString()}_${b.status}`;
     const exists = await ProviderNotification.exists({ provider: providerId, refId, type: 'trek_booking' });
     if (!exists) {
       const userName = b.user?.name || 'A traveller';
       const pkgName  = b.packageSnapshot?.name || 'a trek package';
-      const amount   = `₹${Number(b.totalAmount || 0).toLocaleString('en-IN')}`;
 
       let title, message;
       if (b.status === 'cancelled') {
         title   = 'Trek booking cancelled';
         message = `${userName} cancelled their trek booking for ${pkgName}.`;
-      } else if (b.status === 'confirmed') {
-        title   = 'New trek booking confirmed';
-        message = `${userName} booked ${pkgName} for ${amount}. Ref: ${b.bookingRef}`;
       } else {
-        title   = 'New trek booking (pending payment)';
-        message = `${userName} initiated a booking for ${pkgName}. Awaiting payment.`;
+        title   = 'New trek booking received';
+        message = `${userName} booked ${pkgName}. Ref: ${b.bookingRef}`;
       }
 
       await ProviderNotification.create({
@@ -81,27 +79,6 @@ async function syncNotifications(guide) {
     }
   }
 
-  // ── Payments ──────────────────────────────────────────────
-  // Create a payment notification for every confirmed booking that doesn't have one yet
-  const allConfirmed = [
-    ...tripBookings.filter(b => b.status === 'confirmed').map(b => ({ ...b, _btype: 'trip' })),
-    ...trekBookings.filter(b => b.status === 'confirmed').map(b => ({ ...b, _btype: 'trek' })),
-  ];
-
-  for (const b of allConfirmed) {
-    const refId = `payment_${b._id.toString()}`;
-    const exists = await ProviderNotification.exists({ provider: providerId, refId, type: 'payment' });
-    if (!exists) {
-      const userName = b.user?.name || 'A traveller';
-      const amount   = `₹${Number(b.totalAmount || 0).toLocaleString('en-IN')}`;
-      await ProviderNotification.create({
-        provider: providerId, type: 'payment',
-        title:   'Payment received',
-        message: `${amount} received from ${userName} for a ${b._btype} booking (${b.bookingRef}).`,
-        refId, refType: b._btype === 'trip' ? 'TripBooking' : 'TrekBooking',
-      });
-    }
-  }
 
   // ── Events ────────────────────────────────────────────────
   const events = await Event.find({ guide: providerId }).lean();

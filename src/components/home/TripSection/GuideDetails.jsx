@@ -295,10 +295,10 @@ const GuideDetails = ({ guide }) => {
   const dayCardRefs = useRef([]);
   const dayCardsContainerRef = useRef(null);
 
-  // Scroll to top when viewing day details
+  // Scroll to tabs section when viewing day details so user stays near the content
   useEffect(() => {
-    if (viewingDay && pageTopRef.current) {
-      pageTopRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (viewingDay && tabsRef.current) {
+      tabsRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   }, [viewingDay]);
 
@@ -627,17 +627,17 @@ const GuideDetails = ({ guide }) => {
           <div
             className="relative rounded-xl px-4 sm:px-8 pt-10 pb-4 sm:pt-6 sm:pb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between w-full max-w-5xl mx-auto gap-3 sm:gap-8 lg:gap-6 bg-slate-50/50 border border-gray-200 shadow-sm"
           >
-            {/* Mobile Back Button - Inside Card */}
+            {/* Mobile/Tablet Back Button - Inside Card */}
             <button 
               onClick={() => router.back()} 
-              className="absolute top-4 left-4 flex sm:hidden items-center justify-center p-2 bg-gray-50 hover:bg-gray-100 rounded-full transition-all text-gray-700 border border-gray-200"
+              className="absolute top-4 left-4 flex lg:hidden items-center justify-center p-2 bg-gray-50 hover:bg-gray-100 rounded-full transition-all text-gray-700 border border-gray-200"
             >
               <ArrowLeft className="w-4 h-4" />
             </button>
-            {/* Desktop Back Button */}
+            {/* Desktop Back Button - Only on lg+ where there's space outside the card */}
             <button
               onClick={() => router.back()}
-              className="hidden md:flex absolute md:top-1/2 md:-left-28 lg:-left-36 md:-translate-y-1/2 group items-center justify-center gap-2 transition-all w-fit bg-white hover:bg-gray-50 text-gray-700 font-medium px-4 py-2 rounded-full border border-gray-200 shadow-sm hover:text-emerald-700 z-[30] active:scale-95"
+              className="hidden lg:flex absolute lg:top-1/2 lg:-left-36 lg:-translate-y-1/2 group items-center justify-center gap-2 transition-all w-fit bg-white hover:bg-gray-50 text-gray-700 font-medium px-4 py-2 rounded-full border border-gray-200 shadow-sm hover:text-emerald-700 z-[30] active:scale-95"
             >
               <ArrowLeft className="w-4 h-4" />
               <span className="text-sm ml-1.5">Back</span>
@@ -748,8 +748,41 @@ const GuideDetails = ({ guide }) => {
 
     {/* Full Screen Layout for Detail Panes */}
     <div className="w-full bg-slate-50 py-8 pb-12 overflow-hidden font-sans">
+      {/* About Package Overview & Gallery - Full Width Section Above Layout */}
+      {(selectedPackage?.aboutPackage?.trim() || selectedPackage?.packagePhotos?.length > 0) && (
+        <div className="w-full px-3 sm:px-4 md:px-6 lg:px-8 mb-8 overflow-hidden">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 lg:p-8 overflow-hidden">
+            {selectedPackage?.aboutPackage?.trim() && (
+              <div className="mb-6 sm:mb-8">
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+                  <Mountain className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600 flex-shrink-0" /> <span className="truncate">About This Trip</span>
+                </h2>
+                <div className="bg-slate-50 rounded-xl p-4 sm:p-5 border border-slate-100 overflow-hidden">
+                  <p className="text-sm sm:text-[15px] text-slate-700 leading-relaxed whitespace-pre-wrap break-words">{selectedPackage.aboutPackage}</p>
+                </div>
+              </div>
+            )}
+            
+            {selectedPackage?.packagePhotos?.length > 0 && (
+              <div>
+                <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                  📸 Package Gallery
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {selectedPackage.packagePhotos.map((photo, i) => (
+                    <div key={i} className="aspect-[4/3] rounded-xl overflow-hidden shadow-sm border border-gray-100">
+                      <img src={photo} alt={`Package view ${i + 1}`} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="w-full px-3 sm:px-4 md:px-6 lg:px-8 flex flex-col lg:flex-row gap-4 sm:gap-6 md:gap-8">
-        <div className="w-full lg:w-8/12" ref={tabsRef}>
+        <div className="w-full lg:w-8/12 scroll-mt-24 sm:scroll-mt-32" ref={tabsRef}>
           <div className="flex bg-white rounded-t-xl shadow-sm overflow-hidden border border-gray-200 mb-1.5">
             {[
               { key: "dayByDay", label: "Day by Day" },
@@ -780,6 +813,8 @@ const GuideDetails = ({ guide }) => {
                     {viewingDay ? `Day ${viewingDay}` : "Your Itinerary"}
                   </h3>
                 </div>
+
+
 
                 {viewingDay ? (
                   <div>

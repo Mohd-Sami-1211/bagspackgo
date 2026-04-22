@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Bell, X, CheckCheck, Luggage, Mountain, IndianRupee,
+  Bell, X, CheckCheck, Luggage, Mountain,
   CalendarDays, Info, ChevronRight, Loader2,
 } from 'lucide-react';
 
@@ -33,12 +33,6 @@ const TYPE_CFG = {
     dot:   'bg-emerald-500',
     label: 'Trek',
   },
-  payment: {
-    icon: IndianRupee,
-    color: 'bg-green-50 text-green-600',
-    dot:   'bg-green-500',
-    label: 'Payment',
-  },
   event: {
     icon: CalendarDays,
     color: 'bg-violet-50 text-violet-600',
@@ -53,11 +47,10 @@ const TYPE_CFG = {
   },
 };
 
-const FILTERS = ['All', 'Bookings', 'Payments', 'Events'];
+const FILTERS = ['All', 'Bookings', 'Events'];
 
 function filterMap(f) {
   if (f === 'Bookings') return ['trip_booking', 'trek_booking'];
-  if (f === 'Payments') return ['payment'];
   if (f === 'Events')   return ['event'];
   return null; // All
 }
@@ -257,7 +250,7 @@ export default function NotificationPanel() {
                     <Bell size={20} className="text-gray-300" />
                   </div>
                   <p className="text-[13px] font-medium text-gray-400">No notifications</p>
-                  <p className="text-[11px] text-gray-300">New bookings & payments will appear here</p>
+                  <p className="text-[11px] text-gray-300">New bookings & updates will appear here</p>
                 </div>
               ) : (
                 <AnimatePresence>

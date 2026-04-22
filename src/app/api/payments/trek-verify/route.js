@@ -8,7 +8,7 @@ import { Package } from '@/models/package.model';
 import { getCurrentUser } from '@/lib/auth';
 import { sendTripBookingConfirmation } from '@/lib/otp-service';
 
-const RAZORPAY_SECRET = process.env.RAZORPAY_KEY_SECRET || 'rzp_test_mock_secret123';
+const RAZORPAY_SECRET = process.env.RAZORPAY_KEY_SECRET;
 
 export async function POST(request) {
     try {
@@ -20,24 +20,26 @@ export async function POST(request) {
 
         if (!bookingId) return NextResponse.json({ success: false, message: 'bookingId required' }, { status: 400 });
 
+        if (!RAZORPAY_SECRET) {
+            console.error('Razorpay secret not configured');
+            return NextResponse.json({ success: false, message: 'Payment gateway not configured' }, { status: 500 });
+        }
+
         await dbConnect();
 
         const booking = await TrekBooking.findOne({ _id: bookingId, user: user.userId });
         if (!booking) return NextResponse.json({ success: false, message: 'Booking not found' }, { status: 404 });
 
-        // Verify Razorpay signature (skip for mock in dev)
-        const isMock = razorpay_order_id?.startsWith('mock_order_') || !razorpay_signature;
-        if (!isMock) {
-            const sign = razorpay_order_id + '|' + razorpay_payment_id;
-            const expectedSign = crypto.createHmac('sha256', RAZORPAY_SECRET).update(sign).digest('hex');
-            if (expectedSign !== razorpay_signature) {
-                return NextResponse.json({ success: false, message: 'Payment verification failed — invalid signature' }, { status: 400 });
-            }
+        // Verify Razorpay signature
+        const sign = razorpay_order_id + '|' + razorpay_payment_id;
+        const expectedSign = crypto.createHmac('sha256', RAZORPAY_SECRET).update(sign).digest('hex');
+        if (expectedSign !== razorpay_signature) {
+            return NextResponse.json({ success: false, message: 'Payment verification failed — invalid signature' }, { status: 400 });
         }
 
         // Mark booking confirmed
         booking.status = 'confirmed';
-        booking.paymentId = razorpay_payment_id || 'mock_payment';
+        booking.paymentId = razorpay_payment_id;
         if (razorpay_order_id) booking.orderId = razorpay_order_id;
         await booking.save();
 

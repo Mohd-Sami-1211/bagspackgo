@@ -90,6 +90,8 @@ async function buildFormattedGuides(packages) {
                 itinerary: pkg.itinerary,
                 termsAndConditions: pkg.termsAndConditions,
                 additionalPoints: pkg.additionalPoints || [],
+                aboutPackage: pkg.aboutPackage || '',
+                packagePhotos: pkg.packagePhotos || [],
             };
         });
 

@@ -70,6 +70,12 @@ const packageSchema = new mongoose.Schema({
 
     termsAndConditions: [{ type: String }],
 
+    // About Package — overview text
+    aboutPackage: { type: String, default: '' },
+
+    // Package photos (for trip packages — up to 10)
+    packagePhotos: [{ type: String }],
+
     status: { type: String, enum: ['draft', 'active', 'inactive'], default: 'active' },
 
     // Trek photos (optional up to 5)

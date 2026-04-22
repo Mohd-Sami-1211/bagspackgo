@@ -8,7 +8,7 @@ import { Event } from '@/models/event.model';
 import { getCurrentUser } from '@/lib/auth';
 import { sendEventBookingConfirmation } from '@/lib/otp-service';
 
-const RAZORPAY_SECRET = process.env.RAZORPAY_KEY_SECRET || 'rzp_test_mock_secret123';
+const RAZORPAY_SECRET = process.env.RAZORPAY_KEY_SECRET;
 
 export async function POST(request) {
     try {
@@ -30,9 +30,16 @@ export async function POST(request) {
             return NextResponse.json({ success: true, message: 'Booking already confirmed.', bookingId: booking._id.toString() });
         }
 
-        // Verify Razorpay signature
-        const isMock = razorpay_order_id?.startsWith('mock_order_') || (!razorpay_signature && !process.env.RAZORPAY_KEY_ID);
-        if (!isMock && RAZORPAY_SECRET) {
+        // For free events (price = 0), skip signature verification
+        const isFreeEvent = razorpay_order_id?.startsWith('mock_order_free_');
+
+        if (!isFreeEvent) {
+            if (!RAZORPAY_SECRET) {
+                console.error('Razorpay secret not configured');
+                return NextResponse.json({ success: false, message: 'Payment gateway not configured' }, { status: 500 });
+            }
+
+            // Verify Razorpay signature
             const sign = razorpay_order_id + '|' + razorpay_payment_id;
             const expectedSign = crypto.createHmac('sha256', RAZORPAY_SECRET).update(sign).digest('hex');
             if (expectedSign !== razorpay_signature) {
@@ -56,7 +63,7 @@ export async function POST(request) {
             // Slots ran out — mark booking as sold_out so the user gets a clear message.
             // The payment was captured but slots are gone. Mark for manual refund.
             booking.status = 'cancelled';
-            booking.paymentId = razorpay_payment_id || 'mock_payment';
+            booking.paymentId = razorpay_payment_id || 'free_event';
             if (razorpay_order_id) booking.orderId = razorpay_order_id;
             await booking.save();
 
@@ -70,7 +77,7 @@ export async function POST(request) {
 
         // Slots reserved successfully — now confirm the booking
         booking.status = 'confirmed';
-        booking.paymentId = razorpay_payment_id || 'mock_payment';
+        booking.paymentId = razorpay_payment_id || 'free_event';
         if (razorpay_order_id) booking.orderId = razorpay_order_id;
         
         await booking.save();
