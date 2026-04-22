@@ -74,7 +74,9 @@ const ReviewTrek = ({ guide, searchParams }) => {
     };
     loadData();
 
-    // Load Razorpay script
+    // Load Razorpay script (avoid duplicates)
+    if (document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]')) return;
+    
     const script = document.createElement("script");
     script.src = "https://checkout.razorpay.com/v1/checkout.js";
     script.async = true;
@@ -223,6 +225,10 @@ const ReviewTrek = ({ guide, searchParams }) => {
         throw new Error(orderData.message || "Order creation failed");
 
       const { orderId, key } = orderData;
+
+      if (typeof window.Razorpay !== "function") {
+        throw new Error("Payment gateway is still loading. Please wait a moment and try again.");
+      }
 
       const rzp = new window.Razorpay({
         key,
