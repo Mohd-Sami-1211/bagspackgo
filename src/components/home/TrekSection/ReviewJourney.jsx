@@ -223,32 +223,6 @@ const ReviewTrek = ({ guide, searchParams }) => {
         throw new Error(orderData.message || "Order creation failed");
 
       const { orderId, key } = orderData;
-      const isMock =
-        !process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ||
-        orderId?.startsWith("mock_order_");
-
-      if (isMock) {
-        const verifyRes = await fetch("/api/payments/trek-verify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            razorpay_order_id: orderId,
-            razorpay_payment_id: `mock_pay_${Date.now()}`,
-            bookingId,
-          }),
-        });
-        const verifyData = await verifyRes.json();
-        if (!verifyData.success)
-          throw new Error(verifyData.message || "Verification failed");
-
-        // Clear pending booking data on success
-        localStorage.removeItem("pending_booking");
-
-        router.push(
-          `/user/trek/booking-success?bookingId=${bookingId}&ref=${verifyData.bookingRef}`,
-        );
-        return;
-      }
 
       const rzp = new window.Razorpay({
         key,
@@ -257,6 +231,12 @@ const ReviewTrek = ({ guide, searchParams }) => {
         order_id: orderId,
         name: "bagspackgo",
         description: `Trek: ${guideData?.name || "Package"}`,
+        prefill: {
+          email: personalDetails?.contactDetails?.email || "",
+          contact: personalDetails?.contactDetails?.mobile || "",
+          name: travelers?.[0]?.name || "",
+        },
+        theme: { color: "#059669" },
         handler: async (response) => {
           const verifyRes = await fetch("/api/payments/trek-verify", {
             method: "POST",

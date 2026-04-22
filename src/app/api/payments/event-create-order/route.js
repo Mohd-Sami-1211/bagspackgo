@@ -5,8 +5,8 @@ import { getCurrentUser } from '@/lib/auth';
 import { Booking } from '@/models/booking.model';
 
 const razorpay = new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_mock_key123',
-    key_secret: process.env.RAZORPAY_KEY_SECRET || 'rzp_test_mock_secret123',
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
 export async function POST(request) {
@@ -19,6 +19,11 @@ export async function POST(request) {
 
         if (!amount || !bookingId) {
             return NextResponse.json({ success: false, message: 'Amount and bookingId are required' }, { status: 400 });
+        }
+
+        if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+            console.error('Razorpay keys not configured');
+            return NextResponse.json({ success: false, message: 'Payment gateway not configured' }, { status: 500 });
         }
 
         await dbConnect();
@@ -54,18 +59,7 @@ export async function POST(request) {
             notes: { bookingId, userId: user.userId },
         };
 
-        let order;
-        if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
-            order = await razorpay.orders.create(options);
-        } else {
-            // Mock for dev
-            order = {
-                id: `mock_order_${Date.now()}`,
-                amount: options.amount,
-                currency: 'INR',
-                receipt: options.receipt,
-            };
-        }
+        const order = await razorpay.orders.create(options);
 
         // Store orderId on the booking
         booking.orderId = order.id;
@@ -76,7 +70,7 @@ export async function POST(request) {
             orderId: order.id,
             amount: order.amount,
             currency: order.currency,
-            key: process.env.RAZORPAY_KEY_ID || 'rzp_test_mock_key123',
+            key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID,
             bookingId,
         });
     } catch (error) {

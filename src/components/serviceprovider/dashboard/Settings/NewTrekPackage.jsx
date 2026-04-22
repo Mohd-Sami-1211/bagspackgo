@@ -113,7 +113,7 @@ export default function NewTrekPackage({ initialData = null, isEdit = false }) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [activeTab, setActiveTab] = useState('package-info');
+  const [activeTab, setActiveTab] = useState('about');
   const [validationErrors, setValidationErrors] = useState({});
 
   /* ── State ──────────────────────────────── */
@@ -151,8 +151,12 @@ export default function NewTrekPackage({ initialData = null, isEdit = false }) {
 
   const [termsAndConditions, setTermsAndConditions] = useState([{ id: 1, text: '' }]);
 
+  // About Package state
+  const [aboutPackage, setAboutPackage] = useState('');
+
   /* ── Tabs ───────────────────────────────── */
   const tabs = [
+    { id: 'about', name: 'About Package', icon: <Camera size={16} /> },
     { id: 'package-info', name: 'Trek Info', icon: <MapPin size={16} /> },
     { id: 'inclusives', name: 'Inclusions & Exclusions', icon: <Check size={16} /> },
     { id: 'itinerary', name: 'Itinerary', icon: <Calendar size={16} /> },
@@ -210,6 +214,7 @@ export default function NewTrekPackage({ initialData = null, isEdit = false }) {
           sections: day.highlights?.length > 0 ? day.highlights : (day.agenda ? day.agenda.split(' | ') : [''])
         })));
       }
+      if (initialData.aboutPackage) setAboutPackage(initialData.aboutPackage);
     } else {
       const savedData = localStorage.getItem('newTrekPackageDraft');
       if (savedData) {
@@ -223,6 +228,7 @@ export default function NewTrekPackage({ initialData = null, isEdit = false }) {
           if (parsed.additionalPoints) setAdditionalPoints(parsed.additionalPoints);
           if (parsed.termsAndConditions) setTermsAndConditions(parsed.termsAndConditions);
           if (parsed.itinerary) setItinerary(parsed.itinerary);
+          if (parsed.aboutPackage) setAboutPackage(parsed.aboutPackage);
         } catch (e) { console.error('Error loading draft:', e); }
       }
     }
@@ -234,11 +240,11 @@ export default function NewTrekPackage({ initialData = null, isEdit = false }) {
       const draft = {
         packageInfo, pricingTiers, pickupDropCities,
         inclusivesList, exclusivesList, additionalPoints,
-        termsAndConditions, itinerary
+        termsAndConditions, itinerary, aboutPackage
       };
       localStorage.setItem('newTrekPackageDraft', JSON.stringify(draft));
     }
-  }, [packageInfo, pricingTiers, pickupDropCities, inclusivesList, exclusivesList, additionalPoints, termsAndConditions, itinerary, isEdit]);
+  }, [packageInfo, pricingTiers, pickupDropCities, inclusivesList, exclusivesList, additionalPoints, termsAndConditions, itinerary, aboutPackage, isEdit]);
 
   /* ── Itinerary day sync ─────────────────── */
   useEffect(() => {
@@ -334,7 +340,8 @@ export default function NewTrekPackage({ initialData = null, isEdit = false }) {
         activities: [],
         itinerary: formattedItinerary,
         termsAndConditions: termsAndConditions.filter(t => t.text.trim()),
-        photos
+        photos,
+        aboutPackage: aboutPackage.trim(),
       };
       const endpoint = isEdit ? `/api/provider/packages?id=${initialData._id}` : '/api/provider/packages';
       const res = await fetchWithRetry(endpoint, {
@@ -440,6 +447,29 @@ export default function NewTrekPackage({ initialData = null, isEdit = false }) {
         {/* Content Area */}
         <div className="flex-1 min-w-0">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-7">
+
+            {/* ── 0. About Package ─────────────────────────── */}
+            {activeTab === 'about' && (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-[16px] font-black text-gray-900 mb-0.5">About Package</h2>
+                  <p className="text-[12px] text-gray-400">Provide an overview of your trek package for potential trekkers</p>
+                </div>
+
+                {/* Overview / Description */}
+                <div>
+                  <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Package Overview</label>
+                  <textarea
+                    value={aboutPackage}
+                    onChange={(e) => setAboutPackage(e.target.value)}
+                    rows={5}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all resize-none shadow-sm"
+                    placeholder="Describe your trek package in detail — what makes it unique, what trekkers can expect, key highlights, trail conditions, best season to visit..."
+                  />
+                  <p className="mt-1.5 text-[11px] text-gray-400 font-medium">{aboutPackage.length} characters</p>
+                </div>
+              </div>
+            )}
 
             {/* ── 1. Trek Info ───────────────────────────────── */}
             {activeTab === 'package-info' && (

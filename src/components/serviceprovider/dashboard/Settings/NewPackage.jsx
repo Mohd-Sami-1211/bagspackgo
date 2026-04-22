@@ -29,7 +29,9 @@ import {
   PartyPopper,
   Star,
   Award,
-  Shield
+  Shield,
+  Image as ImageIcon,
+  Camera
 } from 'lucide-react';
 import dataJson from 'src/data/data.json';
 import { compressImage, fetchWithRetry } from '@/lib/imageCompression';
@@ -141,7 +143,7 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [activeTab, setActiveTab] = useState('package-info');
+  const [activeTab, setActiveTab] = useState('about');
   const [showUnsavedAlert, setShowUnsavedAlert] = useState(false);
   const [currentDayEditing, setCurrentDayEditing] = useState(null);
   const [daysCount, setDaysCount] = useState(3);
@@ -174,6 +176,11 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
   const [termsAndConditions, setTermsAndConditions] = useState([
     { id: 1, text: '' },
   ]);
+
+  // About Package State
+  const [aboutPackage, setAboutPackage] = useState('');
+  const [packagePhotos, setPackagePhotos] = useState([]);
+  const packagePhotoInputRef = useRef(null);
 
   // Itinerary State
   const [itinerary, setItinerary] = useState(
@@ -234,6 +241,8 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
       if (initialData.days) {
         setDaysCount(initialData.days);
       }
+      if (initialData.aboutPackage) setAboutPackage(initialData.aboutPackage);
+      if (initialData.packagePhotos?.length > 0) setPackagePhotos(initialData.packagePhotos);
     } else {
       const savedData = localStorage.getItem('newTripPackageDraft');
       if (savedData) {
@@ -248,6 +257,8 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
           if (parsed.termsAndConditions) setTermsAndConditions(parsed.termsAndConditions);
           if (parsed.itinerary) setItinerary(parsed.itinerary);
           if (parsed.daysCount) setDaysCount(parsed.daysCount);
+          if (parsed.aboutPackage) setAboutPackage(parsed.aboutPackage);
+          if (parsed.packagePhotos) setPackagePhotos(parsed.packagePhotos);
         } catch (e) {
           console.error("Failed to parse saved package data", e);
         }
@@ -267,16 +278,20 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
         additionalPoints,
         termsAndConditions,
         itinerary,
-        daysCount
+        daysCount,
+        aboutPackage,
+        packagePhotos
       };
       localStorage.setItem('newTripPackageDraft', JSON.stringify(dataToSave));
     }
-  }, [packageInfo, pricingTiers, pickupDropCities, inclusivesList, exclusivesList, additionalPoints, termsAndConditions, itinerary, daysCount, isEdit]);
+  }, [packageInfo, pricingTiers, pickupDropCities, inclusivesList, exclusivesList, additionalPoints, termsAndConditions, itinerary, daysCount, aboutPackage, packagePhotos, isEdit]);
 
   // Tab configurations
   // Check if a section is complete for tab indicators
   const getSectionComplete = (tabId) => {
     switch (tabId) {
+      case 'about':
+        return !!(aboutPackage.trim());
       case 'package-info':
         return !!(packageInfo.name.trim() && packageInfo.destination &&
           pricingTiers.some(t => t.price && parseInt(t.price) > 0) &&
@@ -292,7 +307,19 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
     }
   };
 
+  // Photo upload handler for package photos
+  const handlePackagePhotoUpload = (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+    if (packagePhotos.length + files.length > 10) { alert('Max 10 photos allowed.'); return; }
+    if (files.some(f => f.size > 5 * 1024 * 1024)) { alert('Each file must be ≤ 5 MB.'); return; }
+    Promise.all(files.map(f => compressImage(f, { maxWidth: 1200, quality: 0.75 })))
+      .then(imgs => setPackagePhotos(prev => [...prev, ...imgs].slice(0, 10)))
+      .catch(err => { console.error('Compression error:', err); alert('Error compressing images. Please try again.'); });
+  };
+
   const tabs = [
+    { id: 'about', name: 'About Package', icon: <Camera size={18} /> },
     { id: 'package-info', name: 'Package Info', icon: <Calendar size={18} /> },
     { id: 'inclusives', name: 'Inclusions & Exclusions', icon: <Check size={18} /> },
     { id: 'itinerary', name: 'Itinerary', icon: <MapPin size={18} /> },
@@ -444,6 +471,8 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
         additionalPoints: additionalPoints.filter(p => p.text.trim()),
         itinerary: itinerary.filter(day => day.location?.trim() || day.agenda?.trim()), // Only save filled-in days
         termsAndConditions: termsAndConditions.filter(t => t.text.trim()),
+        aboutPackage: aboutPackage.trim(),
+        packagePhotos,
       };
 
       console.log('Submitting package:', formData);
@@ -749,6 +778,58 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
   // Render active tab content
   const renderTabContent = () => {
     switch (activeTab) {
+      case 'about':
+        return (
+          <div className="space-y-6">
+            <div className="text-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-800">About Package</h3>
+              <p className="text-gray-600 mt-1">Provide an overview and photographs for your package</p>
+            </div>
+
+            {/* Overview / Description */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-800 mb-2">Package Overview</label>
+              <textarea
+                value={aboutPackage}
+                onChange={(e) => setAboutPackage(e.target.value)}
+                rows={5}
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all resize-none text-sm"
+                placeholder="Describe your package in detail — what makes it special, what travelers can expect, key highlights, and why they should book this experience..."
+              />
+              <p className="mt-1.5 text-[11px] text-gray-400 font-medium">{aboutPackage.length} characters</p>
+            </div>
+
+            {/* Package Photos */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-800 mb-2">Package Photographs</label>
+              <p className="text-[12px] text-gray-400 mb-3">Upload up to 10 photos showcasing the experience · Max 5 MB each</p>
+              <div
+                onClick={() => packagePhotoInputRef.current?.click()}
+                className="border-2 border-dashed border-gray-200 rounded-2xl p-10 flex flex-col items-center justify-center text-gray-500 hover:bg-emerald-50/50 hover:border-emerald-400 transition-all cursor-pointer"
+              >
+                <ImageIcon size={44} className="text-gray-300 mb-3" />
+                <p className="font-semibold text-gray-600 text-sm">Click to upload images</p>
+                <p className="text-xs text-gray-400 mt-1">PNG, JPG, JPEG accepted</p>
+                <input type="file" multiple accept="image/*" className="hidden" ref={packagePhotoInputRef} onChange={handlePackagePhotoUpload} />
+              </div>
+              {packagePhotos.length > 0 && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 mt-4">
+                  {packagePhotos.map((src, i) => (
+                    <div key={i} className="relative aspect-square rounded-xl overflow-hidden group shadow-sm border border-gray-100">
+                      <img src={src} alt={`Package photo ${i + 1}`} className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center">
+                        <button type="button" onClick={(e) => { e.stopPropagation(); setPackagePhotos(packagePhotos.filter((_, j) => j !== i)); }}
+                          className="bg-white text-rose-500 p-2 rounded-full hover:scale-110 transition-all">
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        );
       case 'package-info':
         return (
           <div className="space-y-6">

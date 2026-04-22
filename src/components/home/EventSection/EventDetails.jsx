@@ -194,6 +194,19 @@ const EventDetails = ({ event }) => {
     }
   }, [formData, bookingSlots, selectedPickup, isInitialized, currentView]);
 
+  // Auto-prompt login after 13s on details view (gentle, closable)
+  const loginPromptFiredRef = useRef(false);
+  useEffect(() => {
+    if (currentView === 'details' && !authLoading && !user && !loginPromptFiredRef.current) {
+      const timer = setTimeout(() => {
+        loginPromptFiredRef.current = true;
+        openAuthModal({ closable: true, stayOnPage: true });
+      }, 13000);
+      return () => clearTimeout(timer);
+    }
+  }, [currentView, authLoading, user, openAuthModal]);
+
+  // Force login when entering booking section (mandatory, non-closable)
   useEffect(() => {
     if (currentView === 'booking') {
       if (authLoading) return;
@@ -463,33 +476,6 @@ const EventDetails = ({ event }) => {
       }
 
       const { orderId, key } = orderData;
-      const isMock = !process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || orderId?.startsWith('mock_order_');
-
-      if (isMock) {
-          const verifyRes = await fetch('/api/payments/event-verify', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                  razorpay_order_id: orderId,
-                  razorpay_payment_id: `mock_pay_${Date.now()}`,
-                  bookingId
-              })
-          });
-          const verifyData = await verifyRes.json();
-          if (!verifyData.success) {
-            if (verifyData.soldOut) {
-              router.push(`/user/event/booking-failed?soldOut=true&return=/user/events`);
-            } else {
-              throw new Error(verifyData.message || 'Payment verification failed');
-            }
-            return;
-          }
-          
-          localStorage.removeItem('pending_booking');
-          localStorage.removeItem('temp_event_booking');
-          router.push(`/user/event/booking-success?bookingId=${bookingId}`);
-          return;
-      }
 
       const rzp = new window.Razorpay({
         key,
@@ -498,6 +484,12 @@ const EventDetails = ({ event }) => {
         order_id: orderId,
         name: 'bagspackgo',
         description: `Booking: ${event.title || event.name || 'Event'}`,
+        prefill: {
+          email: formData.contactDetails?.email || "",
+          contact: formData.contactDetails?.phone || "",
+          name: formData.participants?.[0]?.name || "",
+        },
+        theme: { color: "#059669" },
         handler: async (response) => {
           const verifyRes = await fetch('/api/payments/event-verify', {
             method: 'POST',

@@ -278,8 +278,9 @@ function AuthModalContent() {
                 localStorage.removeItem('bgp_auth_state');
                 onLogin(data.user);
 
-                // If stayOnPage is set (e.g. from community section), don't redirect to dashboard
-                if (authModalOptions?.stayOnPage) {
+                // If on the community page, don't redirect — let the provider stay and browse
+                const isOnCommunityPage = window.location.pathname.includes('/community');
+                if (authModalOptions?.stayOnPage || isOnCommunityPage) {
                     closeAuthModal();
                     setLoading(false);
                     return;

@@ -176,6 +176,34 @@ export default function ViewPackage({ pkg }) {
                     {activeTab === 'overview' && (
                         <div className="space-y-8">
                             
+                            {/* About Package Section */}
+                            {pkg.aboutPackage && pkg.aboutPackage.trim() && (
+                                <div>
+                                    <h3 className="text-[15px] font-black text-gray-900 mb-3 flex items-center gap-2">
+                                        <Info size={18} className="text-emerald-500" /> About This Package
+                                    </h3>
+                                    <div className="bg-gray-50 border border-gray-100 rounded-xl p-5">
+                                        <p className="text-[13px] text-gray-700 leading-relaxed whitespace-pre-line">{pkg.aboutPackage}</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Package Photos (for trips) */}
+                            {pkg.packagePhotos?.length > 0 && (
+                                <div>
+                                    <h3 className="text-[15px] font-black text-gray-900 mb-3 flex items-center gap-2">
+                                        <Camera size={18} className="text-emerald-500" /> Package Gallery
+                                    </h3>
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                                        {pkg.packagePhotos.map((src, i) => (
+                                            <div key={i} className="aspect-square rounded-xl overflow-hidden border border-gray-100 bg-gray-50">
+                                                <img src={src} alt={`Package ${i}`} className="w-full h-full object-cover hover:scale-110 transition-transform duration-500" />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
                             {isTrek && (
                                 <div>
                                     <h3 className="text-[15px] font-black text-gray-900 mb-3 flex items-center gap-2">
