@@ -19,7 +19,9 @@ import {
     Building,
     ArrowLeft,
     Calendar,
-    Sparkles
+    Sparkles,
+    Share2,
+    Link2
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -28,6 +30,7 @@ export default function ProviderProfilePage() {
     const router = useRouter();
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [copied, setCopied] = useState(false);
 
     useEffect(() => {
         async function loadProfile() {
@@ -77,6 +80,26 @@ export default function ProviderProfilePage() {
     };
 
     const initials = getInitials(profile.companyname);
+
+    const handleShare = async () => {
+        const guideId = profile?.guideId || profile?._id || '';
+        const url = `${window.location.origin}/user/provider/${guideId}`;
+        try {
+            if (navigator.share) {
+                await navigator.share({
+                    title: `${profile.companyname || profile.name} on bagspackgo`,
+                    text: `Check out ${profile.companyname || profile.name}'s travel packages on bagspackgo!`,
+                    url,
+                });
+            } else {
+                await navigator.clipboard.writeText(url);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2500);
+            }
+        } catch (err) {
+            console.error('Share failed:', err);
+        }
+    };
 
     // Animation variants
     const fadeIn = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
@@ -155,10 +178,26 @@ export default function ProviderProfilePage() {
                         </p>
 
                         <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-sm font-semibold text-gray-600">
-                            <span className="flex items-center gap-1.5 bg-gray-50 px-4 py-2 rounded-xl">
+                            <span className="flex items-center gap-1.5 bg-gray-50 px-4 py-2 rounded-xl border border-gray-100">
                                 <Calendar size={16} className="text-gray-400" /> Member since {memberSince}
                             </span>
-                            <Link href="/serviceprovider/dashboard/settings?edit=true" className="bg-emerald-600 text-white px-5 py-2 rounded-xl shadow-md hover:bg-emerald-700 transition hover:-translate-y-0.5">
+                            
+                            <div className="relative">
+                                <button 
+                                    onClick={handleShare}
+                                    className="flex items-center gap-2 bg-white text-emerald-600 border border-gray-200 px-5 py-2 rounded-xl shadow-sm hover:bg-emerald-50 transition hover:-translate-y-0.5 active:translate-y-0"
+                                >
+                                    {copied ? <Link2 size={16} /> : <Share2 size={16} />}
+                                    {copied ? 'Link Copied!' : 'Share Profile'}
+                                </button>
+                                {copied && (
+                                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg animate-in fade-in slide-in-from-bottom-2 duration-200">
+                                        Profile link copied!
+                                    </div>
+                                )}
+                            </div>
+
+                            <Link href="/serviceprovider/dashboard/settings?edit=true" className="bg-emerald-600 text-white px-5 py-2 rounded-xl shadow-md hover:bg-emerald-700 transition hover:-translate-y-0.5 active:translate-y-0">
                                 Edit Profile
                             </Link>
                         </div>

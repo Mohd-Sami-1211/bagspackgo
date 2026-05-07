@@ -42,7 +42,9 @@ import {
   Clock,
   Filter,
   Loader2,
-  ShieldCheck
+  ShieldCheck,
+  Share2,
+  Link2
 } from 'lucide-react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 
@@ -179,6 +181,7 @@ function ProfileContent({ initialEditMode = false }) {
   const [isHovering, setIsHovering] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [isEditing, setIsEditing] = useState(initialEditMode);
+  const [copied, setCopied] = useState(false);
   const fileInputRef = useRef(null);
 
   // Crop modal state
@@ -281,6 +284,31 @@ function ProfileContent({ initialEditMode = false }) {
       }
     } catch (e) {
       console.error(e);
+    }
+  };
+
+  const handleShare = async () => {
+    // Build the public profile URL using guideId from the profile API
+    // We'll derive it from the window origin + a separate fetch if needed
+    // For now, fetch the guideId from the dashboard profile
+    try {
+      const res = await fetch('/api/provider/profile');
+      const { profile } = await res.json();
+      const guideId = profile?.guideId || profile?._id || '';
+      const url = `${window.location.origin}/user/provider/${guideId}`;
+      if (navigator.share) {
+        await navigator.share({
+          title: `${formData.companyname || formData.name} on bagspackgo`,
+          text: `Check out ${formData.companyname || formData.name}'s travel packages on bagspackgo!`,
+          url,
+        });
+      } else {
+        await navigator.clipboard.writeText(url);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2500);
+      }
+    } catch (err) {
+      console.error('Share failed:', err);
     }
   };
 
@@ -502,14 +530,33 @@ function ProfileContent({ initialEditMode = false }) {
         </div>
 
         {/* Toggle Action Buttons */}
-        <div className="flex items-center gap-3 w-full md:w-auto justify-center md:justify-end mt-4 md:mt-0 z-10 pt-2 lg:pt-0">
+        <div className="flex flex-col items-center gap-3 w-full md:w-auto justify-center md:justify-end mt-4 md:mt-0 z-10 pt-2 lg:pt-0">
           {!isEditing ? (
-            <button
-              onClick={() => setIsEditing(true)}
-              className="flex items-center gap-2.5 rounded-xl bg-gray-900 text-white px-7 py-3.5 font-bold hover:bg-gray-800 transition-all shadow-md hover:-translate-y-0.5 active:translate-y-0"
-            >
-              <Edit2 size={18} /> Edit Profile
-            </button>
+            <div className="flex items-center gap-2.5">
+              {/* Share button */}
+              <div className="relative">
+                <button
+                  onClick={handleShare}
+                  className="flex items-center gap-2 rounded-xl bg-white border border-gray-200 text-emerald-600 px-4 py-3.5 font-bold hover:bg-emerald-50 hover:border-emerald-200 transition-all shadow-sm active:scale-95"
+                  title="Share your public profile"
+                >
+                  {copied ? <Link2 size={18} className="text-emerald-500" /> : <Share2 size={18} />}
+                  <span className="hidden sm:inline">{copied ? 'Link Copied!' : 'Share Profile'}</span>
+                </button>
+                {copied && (
+                  <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg animate-in fade-in slide-in-from-bottom-2 duration-200">
+                    Profile link copied!
+                  </div>
+                )}
+              </div>
+              {/* Edit button */}
+              <button
+                onClick={() => setIsEditing(true)}
+                className="flex items-center gap-2.5 rounded-xl bg-gray-900 text-white px-7 py-3.5 font-bold hover:bg-gray-800 transition-all shadow-md hover:-translate-y-0.5 active:translate-y-0"
+              >
+                <Edit2 size={18} /> Edit Profile
+              </button>
+            </div>
           ) : (
             <div className="flex flex-col sm:flex-row gap-3 w-full">
               <button
@@ -822,6 +869,9 @@ function PaymentsContent() {
 
   const displayedPayments = getFilteredPayments();
 
+  const completedCount = payments.filter(p => p.providerPaymentStatus === 'completed').length;
+  const pendingCount = payments.filter(p => p.providerPaymentStatus !== 'completed').length;
+
   return (
     <div className="max-w-5xl mx-auto space-y-8 pb-12 animate-in fade-in duration-500">
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 md:p-8">
@@ -832,7 +882,7 @@ function PaymentsContent() {
             </div>
             <div>
               <h4 className="text-lg font-bold text-gray-900">Payments & Revenue</h4>
-              <p className="text-xs text-gray-500 font-medium mt-0.5">Track your payout status for each booking.</p>
+              <p className="text-xs text-gray-500 font-medium mt-0.5">Track your earnings, payouts, and pending settlements.</p>
             </div>
           </div>
 
@@ -849,6 +899,22 @@ function PaymentsContent() {
               <option value="1month">Last 1 Month</option>
               <option value="3months">Last 3 Months</option>
             </select>
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-8">
+          <div className="p-5 rounded-2xl border border-gray-100 bg-gray-50 relative overflow-hidden group hover:border-emerald-200 transition-colors">
+            <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity"><CheckCircle2 size={48} /></div>
+            <p className="text-sm text-gray-500 font-medium mb-1">Completed Payouts</p>
+            <p className="text-3xl font-black text-gray-900">{completedCount}</p>
+            <p className="text-xs text-gray-400 mt-1">Bookings deposited to your account</p>
+          </div>
+          <div className="p-5 rounded-2xl border border-amber-100 bg-amber-50 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-3 opacity-10 text-amber-600"><Clock size={48} /></div>
+            <p className="text-sm text-amber-700 font-medium mb-1">Pending Payouts</p>
+            <p className="text-3xl font-black text-amber-900">{pendingCount}</p>
+            <p className="text-xs text-amber-600 mt-1">Awaiting admin deposit</p>
           </div>
         </div>
 
@@ -887,7 +953,7 @@ function PaymentsContent() {
                 <thead>
                   <tr className="bg-gray-50 text-gray-500 text-[11px] uppercase tracking-wider">
                     <th className="p-4 font-bold border-b border-gray-100">Booking / Package</th>
-                    <th className="p-4 font-bold border-b border-gray-100">Admin Payment Status</th>
+                    <th className="p-4 font-bold border-b border-gray-100">Payment Status</th>
                     <th className="p-4 font-bold border-b border-gray-100 min-w-[200px]">Transaction Info</th>
                   </tr>
                 </thead>

@@ -34,6 +34,7 @@ export async function GET() {
             {
                 success: true,
                 profile: {
+                    guideId: user.userId,
                     name: guide.username,
                     email: guide.email,
                     phone: guide.phone,

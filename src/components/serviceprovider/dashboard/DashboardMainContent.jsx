@@ -264,15 +264,14 @@ export default function DashboardMainContent() {
   const inactivePkgs      = (s.totalPackages ?? 0) - (s.activePackages ?? 0);
   const unpublishedEvents = (s.totalEvents ?? 0) - (s.publishedEvents ?? 0);
 
-  // 3 stat cards — no redundant totals
   const statCards = [
     {
       label: 'Revenue · 30 days',
       value: fmt(s.earningsLast30 ?? 0),
-      sub:   (s.earningsLast30 ?? 0) > 0 ? 'Deposited to your account' : 'No deposits this period',
+      sub:   s.earningsLast30 > 0 ? 'Completed deposits this period' : 'No deposits this period',
       change: s.earningsChangePct,
       icon:  IndianRupee,
-      href:  '/serviceprovider/dashboard/settings?tab=payments',   // → Payments & Revenue panel
+      href:  '/serviceprovider/dashboard/settings?tab=payments',
       delay: 0,
     },
     {
@@ -470,7 +469,7 @@ export default function DashboardMainContent() {
           >
             <div className="flex items-center justify-between mb-4">
               <div>
-                <div className="text-[13px] font-semibold text-gray-800">Revenue (Deposited)</div>
+                <div className="text-[13px] font-semibold text-gray-800">Revenue</div>
                 <div className="text-[11px] text-gray-400 mt-0.5">
                   {tab === '1D' ? 'Hourly · last 24h'
                     : tab === '1W' ? 'Daily · last 7 days'

@@ -424,50 +424,7 @@ export default function SingleTripBooking() {
                 </motion.div>
             </div>
 
-            {/* ── Payment Breakdown ── */}
-            {!['cancelled', 'cancellation_requested', 'refund_initiated'].includes(booking.status) ? (
-                <motion.div
-                    initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.35 }}
-                    className="mt-6 bg-white rounded-2xl border border-neutral-100 shadow-sm overflow-hidden"
-                >
-                    <div className="px-5 py-4 border-b border-neutral-50 flex items-center justify-between bg-neutral-50/50">
-                        <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center border border-emerald-200 shadow-sm">
-                                <CreditCard className="w-4 h-4 text-emerald-700" />
-                            </div>
-                            <h3 className="text-base font-black text-gray-800 tracking-tight">Payment Breakdown</h3>
-                        </div>
-                    </div>
-                    <div className="px-6 py-6 space-y-4">
-                        <div className="flex justify-between items-center text-sm font-semibold text-gray-600 p-3 bg-neutral-50/50 rounded-xl border border-neutral-100">
-                            <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-emerald-400"></div>Package Total (Collected from User)</span>
-                            <span className="font-mono">{fmtAmt(booking.totalAmount)}</span>
-                        </div>
-                        <div className="flex justify-between items-center text-sm font-semibold text-gray-600 p-3 bg-neutral-50/50 rounded-xl border border-neutral-100">
-                            <span className="flex items-center gap-2 text-rose-600"><div className="w-1.5 h-1.5 rounded-full bg-rose-500"></div>Platform Charges (10% deducted)</span>
-                            <span className="font-mono text-rose-600">- {fmtAmt(booking.totalAmount * 0.1)}</span>
-                        </div>
-                        <div className="my-2 h-px bg-neutral-100" />
-                        <div className="flex justify-between items-center text-lg p-4 bg-emerald-50 rounded-xl border border-emerald-100 shadow-sm">
-                            <span className="font-black text-emerald-800 tracking-tight">Expected Revenue</span>
-                            <span className="font-black font-mono text-emerald-700 text-xl">{fmtAmt(booking.totalAmount * 0.9)}</span>
-                        </div>
-                    </div>
-                </motion.div>
-            ) : (
-                <motion.div
-                    initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.35 }}
-                    className="mt-6 bg-rose-50 rounded-2xl border border-rose-100 shadow-sm overflow-hidden p-6 text-center"
-                >
-                    <div className="inline-flex w-12 h-12 rounded-full bg-rose-100 items-center justify-center mb-3">
-                        <svg className="w-6 h-6 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                    </div>
-                    <h3 className="text-lg font-black text-rose-900 tracking-tight mb-1">Booking Cancelled</h3>
-                    <p className="text-sm font-medium text-rose-700/80 max-w-sm mx-auto">Payment breakdown is unavailable because this booking has been cancelled, or a refund is being processed.</p>
-                </motion.div>
-            )}
+
         </div>
     );
 }
