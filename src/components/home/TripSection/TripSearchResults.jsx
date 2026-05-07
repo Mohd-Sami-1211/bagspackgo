@@ -150,7 +150,28 @@ const SearchResults = () => {
     return flatItems.sort((a, b) => {
       if (field === 'price') {
         const getPrice = (item) => {
-          let p = item.pkg ? item.pkg.price : item.guide.price;
+          const pkg = item.pkg;
+          if (pkg) {
+            const tiers = pkg.pricingTiers || [];
+            let matchedTier = tiers.find(t => peopleCount >= t.minPeople && peopleCount <= t.maxPeople);
+            if (!matchedTier && tiers.length > 0) {
+              const sortedTiers = [...tiers].sort((a, b) => a.maxPeople - b.maxPeople);
+              matchedTier = peopleCount > sortedTiers[sortedTiers.length - 1].maxPeople 
+                ? sortedTiers[sortedTiers.length - 1] 
+                : sortedTiers[0];
+            }
+            if (matchedTier) {
+              const basePrice = Number(matchedTier.price || 0);
+              const disc = Number(matchedTier.discount || 0);
+              return disc > 0 ? basePrice * (1 - disc / 100) : basePrice;
+            }
+            let p = pkg.price;
+            if (typeof p === 'object' && p !== null) {
+              return Number(p[category] || p.individual || Object.values(p)[0] || 0);
+            }
+            return Number(p || 0);
+          }
+          let p = item.guide.price;
           if (typeof p === 'object' && p !== null) {
             return Number(p[category] || p.individual || Object.values(p)[0] || 0);
           }
@@ -165,7 +186,7 @@ const SearchResults = () => {
       const valB = Number(b.guide[field]) || 0;
       return order === 'desc' ? valB - valA : valA - valB;
     });
-  }, [allGuides, searchQuery, sortOption, daysRange, category]);
+  }, [allGuides, searchQuery, sortOption, daysRange, category, peopleCount]);
 
   const handleApplyChanges = () => {
     setIsApplying(true);

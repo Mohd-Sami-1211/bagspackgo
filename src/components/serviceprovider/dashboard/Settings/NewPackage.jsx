@@ -513,7 +513,7 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
   const handleAddPricingTier = () => {
     const newId = pricingTiers.length > 0 ? Math.max(...pricingTiers.map(t => t.id)) + 1 : 1;
     let nextMin = 1;
-    let nextMax = 2;
+    let nextMax = 3;
     if (pricingTiers.length > 0) {
       const lastTier = pricingTiers[pricingTiers.length - 1];
       nextMin = parseInt(lastTier.maxPeople) + 1 || 1;
@@ -523,17 +523,48 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
   };
 
   const handleRemovePricingTier = (id) => {
-    if (pricingTiers.length > 1) {
-      setPricingTiers(pricingTiers.filter(term => term.id !== id));
+    // Prevent deleting the first tier
+    if (pricingTiers.length <= 1) return;
+    if (pricingTiers[0].id === id) return;
+    
+    const removedIndex = pricingTiers.findIndex(t => t.id === id);
+    const newTiers = pricingTiers.filter(t => t.id !== id);
+    
+    // Recalculate min values for tiers after the removed one
+    for (let i = removedIndex; i < newTiers.length; i++) {
+      if (i === 0) {
+        newTiers[i] = { ...newTiers[i], minPeople: 1 };
+      } else {
+        const prevMax = parseInt(newTiers[i - 1].maxPeople) || 0;
+        newTiers[i] = { ...newTiers[i], minPeople: prevMax + 1 };
+      }
     }
+    
+    setPricingTiers(newTiers);
   };
 
   const handlePricingTierChange = (id, field, value) => {
-    setPricingTiers(pricingTiers.map(tier =>
+    let updatedTiers = pricingTiers.map(tier =>
       tier.id === id
         ? { ...tier, [field]: value }
         : tier
-    ));
+    );
+    
+    // If maxPeople changed, auto-update the next tier's minPeople
+    if (field === 'maxPeople') {
+      const changedIndex = updatedTiers.findIndex(t => t.id === id);
+      if (changedIndex >= 0 && changedIndex < updatedTiers.length - 1) {
+        const nextMin = parseInt(value) + 1 || 1;
+        updatedTiers[changedIndex + 1] = { ...updatedTiers[changedIndex + 1], minPeople: nextMin };
+      }
+    }
+    
+    // Ensure first tier always starts at 1
+    if (updatedTiers.length > 0 && updatedTiers[0].minPeople !== 1) {
+      updatedTiers[0] = { ...updatedTiers[0], minPeople: 1 };
+    }
+    
+    setPricingTiers(updatedTiers);
     if (field === 'price' && validationErrors.price) {
       setValidationErrors(prev => {
         const newErrors = { ...prev };
@@ -1053,7 +1084,7 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
                       </div>
 
                       <div className="md:col-span-1 flex justify-end absolute md:relative top-2 right-2 md:top-auto md:right-auto">
-                        {pricingTiers.length > 1 && (
+                        {pricingTiers.length > 1 && index > 0 && (
                           <button
                             type="button"
                             onClick={() => handleRemovePricingTier(tier.id)}

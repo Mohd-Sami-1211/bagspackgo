@@ -63,7 +63,13 @@ const TrekGuideCard = ({ pkg, peopleCount = 1, peopleRange, date }) => {
   const numPeople = Math.max(1, peopleCount || (peopleRange ? parseInt(peopleRange.split('-')[0]) || 1 : 1));
   
   const tiers = pkg.pricingTiers || [];
-  const matchedTier = tiers.find(t => numPeople >= t.minPeople && numPeople <= t.maxPeople) || (tiers.length > 0 ? [...tiers].sort((a,b)=>a.minPeople-b.minPeople)[0] : null);
+  let matchedTier = tiers.find(t => numPeople >= t.minPeople && numPeople <= t.maxPeople);
+  if (!matchedTier && tiers.length > 0) {
+    const sortedTiers = [...tiers].sort((a, b) => a.maxPeople - b.maxPeople);
+    matchedTier = numPeople > sortedTiers[sortedTiers.length - 1].maxPeople 
+      ? sortedTiers[sortedTiers.length - 1] 
+      : sortedTiers[0];
+  }
   
   const originalPricePerPerson = matchedTier ? Number(matchedTier.price) : Number(pkg.price || 0);
   const discountPercent = matchedTier ? Number(matchedTier.discount || 0) : 0;

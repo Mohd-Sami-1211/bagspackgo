@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { Star, MapPin, Award, CheckCircle, Navigation, ArrowLeft, Calendar, Users, Clock, ChevronRight, Ticket } from 'lucide-react';
+import { Star, MapPin, Award, CheckCircle, Navigation, ArrowLeft, Calendar, Users, Clock, ChevronRight, Ticket, Share2 } from 'lucide-react';
 
 const ProviderProfileContent = ({ providerId }) => {
   const router = useRouter();
@@ -23,6 +23,25 @@ const ProviderProfileContent = ({ providerId }) => {
   const [showAllTrips, setShowAllTrips] = useState(false);
   const [showAllTreks, setShowAllTreks] = useState(false);
   const [showAllEvents, setShowAllEvents] = useState(false);
+
+  const handleShare = async () => {
+    const url = typeof window !== 'undefined' ? window.location.href : '';
+    if (!url) return;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `${data?.provider?.name || 'Provider'} on bagspackgo`,
+          url: url
+        });
+      } catch (err) {
+        console.error("Share failed:", err);
+      }
+    } else {
+      navigator.clipboard.writeText(url);
+      alert("Profile link copied to clipboard!");
+    }
+  };
 
   useEffect(() => {
     async function fetchProvider() {
@@ -130,10 +149,24 @@ const ProviderProfileContent = ({ providerId }) => {
     const isTrek = pkg.category === 'trek';
     const isPrm = pkg.packageCategory === 'premium' || pkg.type === 'premium';
     let lowestPrice = 0;
+    let lowestOriginalPrice = 0;
+    let hasDiscount = false;
     if (pkg.pricingTiers && pkg.pricingTiers.length > 0) {
-        lowestPrice = Math.min(...pkg.pricingTiers.map(t => t.price));
+        const sortedTiers = [...pkg.pricingTiers].sort((a, b) => {
+          const aDisc = Number(a.discount || 0);
+          const bDisc = Number(b.discount || 0);
+          const aEffective = aDisc > 0 ? a.price * (1 - aDisc / 100) : a.price;
+          const bEffective = bDisc > 0 ? b.price * (1 - bDisc / 100) : b.price;
+          return aEffective - bEffective;
+        });
+        const cheapestTier = sortedTiers[0];
+        const disc = Number(cheapestTier.discount || 0);
+        lowestOriginalPrice = Number(cheapestTier.price);
+        lowestPrice = disc > 0 ? lowestOriginalPrice * (1 - disc / 100) : lowestOriginalPrice;
+        hasDiscount = disc > 0;
     } else {
         lowestPrice = pkg.price?.individual || pkg.price?.starting || pkg.price || 0;
+        lowestOriginalPrice = lowestPrice;
     }
     const numDays = pkg.days || 1;
 
@@ -263,7 +296,14 @@ const ProviderProfileContent = ({ providerId }) => {
           <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-100">
             <div>
               <p className="text-[10px] text-slate-400 uppercase font-semibold tracking-wider">Starting From</p>
-              <span className="font-bold text-lg text-slate-900">₹{lowestPrice.toLocaleString('en-IN')}</span>
+              {hasDiscount ? (
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-lg text-slate-900">₹{Math.round(lowestPrice).toLocaleString('en-IN')}</span>
+                  <span className="text-xs text-slate-400 line-through">₹{Math.round(lowestOriginalPrice).toLocaleString('en-IN')}</span>
+                </div>
+              ) : (
+                <span className="font-bold text-lg text-slate-900">₹{lowestPrice.toLocaleString('en-IN')}</span>
+              )}
             </div>
             <button onClick={() => handleConfigurePkg(pkg._id)} className="text-sm font-medium text-white bg-slate-900 hover:bg-slate-800 px-4 py-2 rounded-lg transition-colors">
               Select
@@ -417,18 +457,28 @@ const ProviderProfileContent = ({ providerId }) => {
 
             {/* Provider Info */}
             <div className="flex-grow text-center md:text-left pt-2 md:pt-0">
-               <div className="flex flex-col md:flex-row md:items-center gap-2 mb-2">
-                 <h1 className="text-2xl font-bold text-slate-900">{provider.name}</h1>
-                 {provider.isVerified && (
-                   <span className="inline-flex items-center justify-center bg-blue-50 text-blue-700 text-[11px] font-semibold px-2 py-0.5 rounded w-fit mx-auto md:mx-0">
-                      <CheckCircle className="w-3 h-3 mr-1" /> Verified
-                   </span>
-                 )}
-                 {provider.speciality && (
-                   <span className="inline-flex items-center justify-center bg-slate-100 text-slate-600 text-[11px] font-semibold px-2 py-0.5 rounded w-fit mx-auto md:mx-0">
-                      {provider.speciality}
-                   </span>
-                 )}
+               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
+                 <div className="flex flex-col md:flex-row md:items-center gap-2">
+                   <h1 className="text-2xl font-bold text-slate-900">{provider.name}</h1>
+                   {provider.isVerified && (
+                     <span className="inline-flex items-center justify-center bg-blue-50 text-blue-700 text-[11px] font-semibold px-2 py-0.5 rounded w-fit mx-auto md:mx-0">
+                        <CheckCircle className="w-3 h-3 mr-1" /> Verified
+                     </span>
+                   )}
+                   {provider.speciality && (
+                     <span className="inline-flex items-center justify-center bg-slate-100 text-slate-600 text-[11px] font-semibold px-2 py-0.5 rounded w-fit mx-auto md:mx-0">
+                        {provider.speciality}
+                     </span>
+                   )}
+                 </div>
+                 
+                 <button 
+                   onClick={handleShare}
+                   className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:text-slate-900 transition-colors shadow-sm mx-auto md:mx-0"
+                 >
+                   <Share2 className="w-4 h-4" />
+                   Share Profile
+                 </button>
                </div>
                
                <p className="text-slate-500 font-medium flex items-center justify-center md:justify-start gap-1.5 mb-3 text-sm">

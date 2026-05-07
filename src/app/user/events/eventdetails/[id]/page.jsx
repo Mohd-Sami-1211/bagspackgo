@@ -1,15 +1,18 @@
 'use client';
-import { use, Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import EventDetails from 'src/components/home/EventSection/EventDetails';
-import { notFound } from 'next/navigation';
+import { notFound, useParams } from 'next/navigation';
 
-function EventDetailsContent({ params }) {
-  const { id } = use(params);
+function EventDetailsContent() {
+  const params = useParams();
+  const id = params?.id;
 
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!id) return;
+    
     async function fetchEvent() {
       try {
         const res = await fetch(`/api/events/${id}`);
@@ -55,7 +58,7 @@ function EventDetailsContent({ params }) {
   );
 }
 
-export default function EventDetailsPage({ params }) {
+export default function EventDetailsPage() {
   return (
     <Suspense fallback={
       <div className="flex justify-center items-center min-h-[50vh]">
@@ -66,7 +69,7 @@ export default function EventDetailsPage({ params }) {
         </div>
       </div>
     }>
-      <EventDetailsContent params={params} />
+      <EventDetailsContent />
     </Suspense>
   );
 }

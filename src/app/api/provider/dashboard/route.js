@@ -15,7 +15,7 @@ export const dynamic = 'force-dynamic';
 // Build chart data for a specific time window
 function buildChartData(allBookings, windowKey) {
     const now = new Date();
-    const isCancelled = (status) => ['cancelled', 'cancellation_requested', 'refund_initiated'].includes(status);
+    const isDeposited = (b) => !['cancelled', 'cancellation_requested', 'refund_initiated'].includes(b.status) && b.providerPaymentStatus === 'completed';
 
     if (windowKey === '1D') {
         const data = [];
@@ -31,7 +31,7 @@ function buildChartData(allBookings, windowKey) {
             const amount = allBookings
                 .filter(b => {
                     const d = new Date(b.createdAt);
-                    return !isCancelled(b.status) && d >= start && d < end;
+                    return isDeposited(b) && d >= start && d < end;
                 })
                 .reduce((s, b) => s + (b.totalAmount || 0), 0);
             data.push({ name: label, value: Math.round(amount / 1000) });
@@ -51,7 +51,7 @@ function buildChartData(allBookings, windowKey) {
             const amount = allBookings
                 .filter(b => {
                     const bd = new Date(b.createdAt);
-                    return !isCancelled(b.status) && bd >= start && bd < end;
+                    return isDeposited(b) && bd >= start && bd < end;
                 })
                 .reduce((s, b) => s + (b.totalAmount || 0), 0);
             data.push({ name: label, value: Math.round(amount / 1000) });
@@ -72,7 +72,7 @@ function buildChartData(allBookings, windowKey) {
             const amount = allBookings
                 .filter(b => {
                     const bd = new Date(b.createdAt);
-                    return !isCancelled(b.status) && bd >= start && bd < end;
+                    return isDeposited(b) && bd >= start && bd < end;
                 })
                 .reduce((s, b) => s + (b.totalAmount || 0), 0);
             data.push({ name: label, value: Math.round(amount / 1000) });
@@ -176,8 +176,9 @@ export async function GET() {
             : totalBookings30 > 0 ? 100 : 0;
 
         const isNotCancelled = (b) => !['cancelled', 'cancellation_requested', 'refund_initiated'].includes(b.status);
-        const earningsLast30 = bookingsLast30.filter(isNotCancelled).reduce((s, b) => s + (b.totalAmount || 0), 0);
-        const earningsPrev30 = bookingsPrev30.filter(isNotCancelled).reduce((s, b) => s + (b.totalAmount || 0), 0);
+        const isDeposited = (b) => isNotCancelled(b) && b.providerPaymentStatus === 'completed';
+        const earningsLast30 = bookingsLast30.filter(isDeposited).reduce((s, b) => s + (b.totalAmount || 0), 0);
+        const earningsPrev30 = bookingsPrev30.filter(isDeposited).reduce((s, b) => s + (b.totalAmount || 0), 0);
         const earningsChangePct = earningsPrev30 > 0
             ? Math.round(((earningsLast30 - earningsPrev30) / earningsPrev30) * 100)
             : earningsLast30 > 0 ? 100 : 0;
@@ -222,7 +223,6 @@ export async function GET() {
                     type: isTrek ? 'Trek' : 'Trip',
                     packageName: b.package?.name || b.packageSnapshot?.name || 'Package',
                     destination: b.package?.destination || b.packageSnapshot?.destination || '',
-                    amount: b.totalAmount || 0,
                     status: b.status,
                     numPeople: b.numPeople,
                     startDate: b.startDate,
@@ -252,6 +252,7 @@ export async function GET() {
             success: true,
             data: {
                 profile: {
+                    id: guideId,
                     name: guide?.username || '',
                     companyName: details?.companyname || '',
                     logo: details?.logo || '',
@@ -275,7 +276,7 @@ export async function GET() {
                     confirmedBookings: allBookings.filter(b => b.status === 'confirmed').length,
                     pendingBookings: allBookings.filter(b => b.status === 'pending').length,
                     cancelledBookings: allBookings.filter(b => ['cancelled', 'cancellation_requested', 'refund_initiated'].includes(b.status)).length,
-                    totalRevenue: allBookings.filter(isNotCancelled).reduce((s, b) => s + (b.totalAmount || 0), 0),
+                    totalRevenue: allBookings.filter(isDeposited).reduce((s, b) => s + (b.totalAmount || 0), 0),
                 },
                 charts: {
                     timelines: chartTimelines,

@@ -822,10 +822,6 @@ function PaymentsContent() {
 
   const displayedPayments = getFilteredPayments();
 
-  // Stats calculation based on ALL payments
-  const totalEarnings = payments.filter(p => p.providerPaymentStatus === 'completed').reduce((sum, p) => sum + (p.amount || 0), 0);
-  const pendingClearance = payments.filter(p => p.providerPaymentStatus !== 'completed').reduce((sum, p) => sum + (p.amount || 0), 0);
-
   return (
     <div className="max-w-5xl mx-auto space-y-8 pb-12 animate-in fade-in duration-500">
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 md:p-8">
@@ -836,7 +832,7 @@ function PaymentsContent() {
             </div>
             <div>
               <h4 className="text-lg font-bold text-gray-900">Payments & Revenue</h4>
-              <p className="text-xs text-gray-500 font-medium mt-0.5">Track your earnings, payouts, and pending settlements.</p>
+              <p className="text-xs text-gray-500 font-medium mt-0.5">Track your payout status for each booking.</p>
             </div>
           </div>
 
@@ -853,22 +849,6 @@ function PaymentsContent() {
               <option value="1month">Last 1 Month</option>
               <option value="3months">Last 3 Months</option>
             </select>
-          </div>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-8">
-          <div className="p-5 rounded-2xl border border-gray-100 bg-gray-50 relative overflow-hidden group hover:border-emerald-200 transition-colors">
-            <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity"><Banknote size={48} /></div>
-            <p className="text-sm text-gray-500 font-medium mb-1">Total Received</p>
-            <p className="text-3xl font-black text-gray-900">₹{totalEarnings.toLocaleString()}</p>
-          </div>
-          <div className="p-5 rounded-2xl border border-amber-100 bg-amber-50 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-3 opacity-10 text-amber-600"><Clock size={48} /></div>
-            <p className="text-sm text-amber-700 font-medium mb-1 flex items-center gap-1.5">
-              Payment In Progress
-            </p>
-            <p className="text-3xl font-black text-amber-900">₹{pendingClearance.toLocaleString()}</p>
           </div>
         </div>
 
@@ -907,7 +887,6 @@ function PaymentsContent() {
                 <thead>
                   <tr className="bg-gray-50 text-gray-500 text-[11px] uppercase tracking-wider">
                     <th className="p-4 font-bold border-b border-gray-100">Booking / Package</th>
-                    <th className="p-4 font-bold border-b border-gray-100">Amount</th>
                     <th className="p-4 font-bold border-b border-gray-100">Admin Payment Status</th>
                     <th className="p-4 font-bold border-b border-gray-100 min-w-[200px]">Transaction Info</th>
                   </tr>
@@ -922,9 +901,6 @@ function PaymentsContent() {
                           <span>&bull;</span>
                           <span>{new Date(p.date).toLocaleDateString()}</span>
                         </p>
-                      </td>
-                      <td className="p-4 font-black text-gray-900">
-                        ₹{p.amount?.toLocaleString()}
                       </td>
                       <td className="p-4 align-top">
                         {p.providerPaymentStatus === 'completed' ? (

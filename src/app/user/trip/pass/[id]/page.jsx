@@ -7,17 +7,16 @@ import Link from 'next/link';
 import { MapPin, User, Mail, Phone, Instagram, Facebook, Globe, CheckCircle2, Navigation, X } from 'lucide-react';
 
 const formatTimeWithAMPM = (time) => {
-    if (!time) return "";
-    if (typeof time !== 'string') return String(time);
-    if (time.includes("AM") || time.includes("PM")) return time;
-    const parts = time.split(":");
-    if (parts.length < 2) return time;
-    const hours = parts[0];
-    const minutes = parts[1];
-    const hourNum = parseInt(hours, 10);
+    if (!time || !time.toString().trim()) return "Not specified";
+    const t = time.toString().trim();
+    if (t.includes("AM") || t.includes("PM")) return t;
+    // Only convert if it's a valid HH:MM format
+    const match = t.match(/^(\d{1,2}):(\d{2})$/);
+    if (!match) return t; // Return as-is (could be alphabets or any format)
+    const hourNum = parseInt(match[1], 10);
     const ampm = hourNum >= 12 ? "PM" : "AM";
     const displayHour = hourNum % 12 || 12;
-    return `${displayHour}:${minutes} ${ampm}`;
+    return `${displayHour}:${match[2]} ${ampm}`;
 };
 
 export default function TripPassPage() {
