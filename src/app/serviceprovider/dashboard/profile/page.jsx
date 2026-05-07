@@ -141,21 +141,20 @@ export default function ProviderProfilePage() {
                     initial="hidden" animate="visible" variants={fadeIn} transition={{ duration: 0.5 }}
                     className="bg-white rounded-3xl p-6 md:p-10 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] border border-gray-100 flex flex-col md:flex-row items-center md:items-end gap-6 md:gap-8 mb-8"
                 >
-                    {/* Logo Avatar */}
                     <div className="relative -mt-24 md:-mt-32 shrink-0">
-                        <div className="w-40 h-40 md:w-52 md:h-52 bg-white rounded-full p-2.5 shadow-xl">
+                        <div className="w-40 h-40 md:w-52 md:h-52 bg-white rounded-full p-2.5 shadow-xl relative">
                             <div className="w-full h-full rounded-full overflow-hidden bg-emerald-50 border-2 border-emerald-100 flex items-center justify-center relative">
                                 {profile.logo ? (
                                     <img src={profile.logo} alt={profile.companyname} className="w-full h-full object-cover" />
                                 ) : (
                                     <span className="text-6xl font-black text-emerald-600 tracking-tighter">{initials}</span>
                                 )}
-                                {profile.applicationStatus === 'approved' && (
-                                    <div className="absolute bottom-3 right-3 bg-white rounded-full p-1 shadow-md">
-                                        <ShieldCheck className="w-6 h-6 text-emerald-500" />
-                                    </div>
-                                )}
                             </div>
+                            {profile.applicationStatus === 'approved' && (
+                                <div className="absolute bottom-4 right-4 bg-white rounded-full p-1.5 shadow-md border border-gray-100 z-20">
+                                    <ShieldCheck className="w-7 h-7 text-emerald-500" />
+                                </div>
+                            )}
                         </div>
                     </div>
 
