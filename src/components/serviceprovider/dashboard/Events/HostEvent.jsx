@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -296,7 +296,7 @@ function NumberedSlotInput({ label, slots, onAdd, onRemove, onChange, placeholde
 
 // ── Main component ──
 
-export default function HostEventPage() {
+export default function HostEventPage({ isEdit = false, initialData = null, adminMode = false, providerId = null }) {
   const router = useRouter();
   const [activeSection, setActiveSection] = useState(0);
   const [isPublished, setIsPublished] = useState(false);
@@ -333,6 +333,37 @@ export default function HostEventPage() {
     termsAndConditions: [''],
     poster: null
   });
+
+  useEffect(() => {
+    if (initialData) {
+      const isCustomEventType = !eventTypes.includes(initialData.eventType) && initialData.eventType;
+      
+      setFormData({
+        title: initialData.title || '',
+        eventType: isCustomEventType ? 'Others' : (initialData.eventType || ''),
+        customEventType: isCustomEventType ? initialData.eventType : '',
+        location: initialData.location || '',
+        date: initialData.date ? new Date(initialData.date).toISOString().split('T')[0] : '',
+        duration: initialData.duration || 1,
+        totalSlots: initialData.totalSlots || 20,
+        pricePerSlot: initialData.pricePerSlot || '',
+        destination: initialData.destination || '',
+        destinationLink: initialData.destinationLink || '',
+        about: initialData.about || '',
+        highlights: initialData.highlights?.length ? initialData.highlights : [''],
+        whatsIncluded: initialData.whatsIncluded?.length ? initialData.whatsIncluded : [''],
+        whatsExcluded: initialData.whatsExcluded?.length ? initialData.whatsExcluded : [''],
+        faqs: initialData.faqs?.length ? initialData.faqs : [{ question: '', answer: '' }, { question: '', answer: '' }, { question: '', answer: '' }],
+        whatToBring: initialData.whatToBring?.length ? initialData.whatToBring : [''],
+        restrictions: initialData.restrictions?.length ? initialData.restrictions : [''],
+        pickupPoints: initialData.pickupPoints?.length ? initialData.pickupPoints : [{ location: '', link: '', time: '' }],
+        itinerary: initialData.itinerary?.length ? initialData.itinerary : ['', '', ''],
+        photographs: initialData.photographs || [],
+        termsAndConditions: initialData.termsAndConditions?.length ? initialData.termsAndConditions : [''],
+        poster: initialData.poster || null
+      });
+    }
+  }, [initialData]);
 
   const eventTypes = [
     'Adventure Tour',
@@ -588,7 +619,7 @@ export default function HostEventPage() {
         itinerary: formData.itinerary.filter(s => s.trim()),
         photographs: formData.photographs,
         termsAndConditions: formData.termsAndConditions.filter(t => t.trim()),
-        poster: posterData,
+        poster: posterData || formData.poster, // Keep existing if not changed
       });
 
       // Warn if payload is very large (> 4 MB)
@@ -599,8 +630,14 @@ export default function HostEventPage() {
         return;
       }
 
-      const res = await fetchWithRetry('/api/provider/events', {
-        method: 'POST',
+      const url = adminMode
+          ? `/api/admin/events/${isEdit ? initialData.id || initialData._id : ''}?providerId=${providerId || ''}`
+          : `/api/provider/events${isEdit ? `/${initialData.id || initialData._id}` : ''}`;
+          
+      const method = isEdit ? 'PATCH' : 'POST';
+
+      const res = await fetchWithRetry(url, {
+        method: method,
         headers: { 'Content-Type': 'application/json' },
         body: payload,
       }, { timeoutMs: 90000, maxRetries: 2 });
@@ -626,7 +663,7 @@ export default function HostEventPage() {
   if (isPublished) {
     const isDraft = publishMode === 'draft';
     return (
-      <div className="min-h-screen bg-gradient-to-br from-neutral-50 to-emerald-50/30 py-6 sm:py-8">
+      <div className={`min-h-screen ${adminMode ? 'bg-transparent' : 'bg-gradient-to-br from-neutral-50 to-emerald-50/30'} py-6 sm:py-8`}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
@@ -648,7 +685,7 @@ export default function HostEventPage() {
               transition={{ delay: 0.4 }}
               className="text-2xl sm:text-3xl font-bold text-neutral-900 mb-4"
             >
-              {isDraft ? 'Event Saved Successfully!' : 'Event Published Successfully!'}
+              {isDraft ? 'Event Saved Successfully!' : (isEdit ? 'Event Updated Successfully!' : 'Event Published Successfully!')}
             </motion.h2>
 
             <motion.p
@@ -682,12 +719,13 @@ export default function HostEventPage() {
               className="flex flex-col sm:flex-row gap-4 justify-center mt-6"
             >
               <button
-                onClick={() => router.push('/serviceprovider/dashboard/events')}
+                onClick={() => router.back()}
                 className="px-8 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold rounded-xl hover:opacity-90 transition-all duration-200 shadow-lg hover:shadow-xl"
               >
-                {isDraft ? 'View in Upcoming Events' : 'Manage Events'}
+                {isDraft ? 'View in Upcoming Events' : (isEdit ? 'Back to Events' : 'Manage Events')}
               </button>
-              <button
+              {!isEdit && (
+                <button
                 onClick={() => {
                   setIsPublished(false);
                   setPublishMode('publish');
@@ -707,6 +745,7 @@ export default function HostEventPage() {
               >
                 Create Another Event
               </button>
+              )}
             </motion.div>
           </motion.div>
         </div>
@@ -715,7 +754,7 @@ export default function HostEventPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-neutral-50 to-emerald-50/30 py-6 sm:py-8">
+    <div className={`min-h-screen ${adminMode ? 'bg-transparent' : 'bg-gradient-to-br from-neutral-50 to-emerald-50/30'} py-6 sm:py-8`}>
       <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 -mt-6 sm:-mt-8">
         {/* Header */}
         <motion.div
@@ -733,7 +772,7 @@ export default function HostEventPage() {
             <div className="flex items-center gap-2 mb-1">
               <Sparkles className="w-5 h-5 text-emerald-500 flex-shrink-0" />
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-neutral-900 truncate">
-                Host New Event
+                {isEdit ? 'Edit Event' : 'Host New Event'}
               </h1>
             </div>
             <p className="text-neutral-500 mt-1 text-sm sm:text-base">Create an unforgettable experience for your guests</p>
@@ -1328,7 +1367,7 @@ export default function HostEventPage() {
                           <div className="space-y-4 w-full">
                             <div className="relative inline-block w-full max-w-md mx-auto group">
                               <img 
-                                src={URL.createObjectURL(formData.poster)} 
+                                src={typeof formData.poster === 'string' ? formData.poster : URL.createObjectURL(formData.poster)} 
                                 alt="Poster Preview" 
                                 className="w-full max-h-[300px] object-contain rounded-xl shadow-lg border border-emerald-200 mx-auto"
                               />
@@ -1341,13 +1380,22 @@ export default function HostEventPage() {
                               </button>
                             </div>
                             <div className="flex flex-col items-center">
-                              <p className="text-sm font-semibold text-emerald-800 flex items-center gap-2">
-                                <CheckCircle className="w-4 h-4" />
-                                {formData.poster.name}
-                              </p>
-                              <p className="text-xs text-neutral-500 mt-1">
-                                {(formData.poster.size / 1024 / 1024).toFixed(2)} MB
-                              </p>
+                              {typeof formData.poster !== 'string' ? (
+                                <>
+                                  <p className="text-sm font-semibold text-emerald-800 flex items-center gap-2">
+                                    <CheckCircle className="w-4 h-4" />
+                                    {formData.poster.name}
+                                  </p>
+                                  <p className="text-xs text-neutral-500 mt-1">
+                                    {(formData.poster.size / 1024 / 1024).toFixed(2)} MB
+                                  </p>
+                                </>
+                              ) : (
+                                <p className="text-sm font-semibold text-emerald-800 flex items-center gap-2">
+                                  <CheckCircle className="w-4 h-4" />
+                                  Current Event Poster
+                                </p>
+                              )}
                               <label htmlFor="poster-upload" className="mt-4 text-emerald-600 hover:text-emerald-700 text-sm font-bold cursor-pointer underline">
                                 Change Image
                               </label>

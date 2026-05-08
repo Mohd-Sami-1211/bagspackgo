@@ -3,8 +3,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { UserCheck, Search, Ban, CheckCircle2, Trash2, Loader2, AlertTriangle, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function AdminProvidersPage() {
+    const router = useRouter();
     const [providers, setProviders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
@@ -127,9 +129,9 @@ export default function AdminProvidersPage() {
                                     </td>
                                 </tr>
                             ) : providers.map(provider => (
-                                <motion.tr key={provider._id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="hover:bg-gray-800/20 transition-colors">
+                                <tr key={provider._id} className="hover:bg-gray-800/30 transition-colors cursor-pointer group" onClick={() => router.push(`/admin/providers/${provider._id}`)}>
                                     <td className="px-6 py-4">
-                                        <p className="font-semibold text-white truncate max-w-[150px]">{provider.username}</p>
+                                        <p className="font-semibold text-white truncate max-w-[150px] group-hover:text-emerald-400 transition-colors">{provider.username}</p>
                                         <p className="text-xs text-gray-500 mt-0.5 truncate max-w-[150px]">{provider.email}</p>
                                     </td>
                                     <td className="px-6 py-4">
@@ -163,7 +165,7 @@ export default function AdminProvidersPage() {
                                             </span>
                                         )}
                                     </td>
-                                    <td className="px-6 py-4 text-right">
+                                    <td className="px-6 py-4 text-right" onClick={e => e.stopPropagation()}>
                                         <div className="flex items-center justify-end gap-1">
                                             {provider.applicationStatus === 'pending' && (
                                                 <Link href="/admin/applications" title="Go to application"
@@ -183,7 +185,7 @@ export default function AdminProvidersPage() {
                                             </button>
                                         </div>
                                     </td>
-                                </motion.tr>
+                                </tr>
                             ))}
                         </tbody>
                     </table>

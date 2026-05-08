@@ -65,7 +65,13 @@ const GuideCard = ({ guide, category, daysRange, peopleCount = 1, date, selected
   let pricePerPerson, originalPricePerPerson, discountPercent = 0, totalPrice, numDays, daysLabel, peopleLabel;
   if (matchedPackage) {
     const tiers = matchedPackage.pricingTiers || [];
-    const matchedTier = tiers.find(t => numPeople >= t.minPeople && numPeople <= t.maxPeople) || tiers[0];
+    let matchedTier = tiers.find(t => numPeople >= t.minPeople && numPeople <= t.maxPeople);
+    if (!matchedTier && tiers.length > 0) {
+      const sortedTiers = [...tiers].sort((a, b) => a.maxPeople - b.maxPeople);
+      matchedTier = numPeople > sortedTiers[sortedTiers.length - 1].maxPeople 
+        ? sortedTiers[sortedTiers.length - 1] 
+        : sortedTiers[0];
+    }
     
     originalPricePerPerson = matchedTier ? Number(matchedTier.price) : Number(matchedPackage.price?.[category] || matchedPackage.price?.individual || 0);
     discountPercent = matchedTier ? Number(matchedTier.discount || 0) : 0;

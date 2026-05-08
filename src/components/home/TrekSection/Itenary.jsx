@@ -3,13 +3,16 @@ import React from "react";
 import { Clock, Sparkles, Camera } from "lucide-react";
 
 const formatTimeWithAMPM = (time) => {
-  if (!time) return "";
-  if (time.includes("AM") || time.includes("PM")) return time;
-  const [hours, minutes] = time.split(":");
-  const hourNum = parseInt(hours, 10) || 0;
+  if (!time || !time.toString().trim()) return "Not specified";
+  const t = time.toString().trim();
+  if (t.includes("AM") || t.includes("PM")) return t;
+  // Only convert if it's a valid HH:MM format
+  const match = t.match(/^(\d{1,2}):(\d{2})$/);
+  if (!match) return t; // Return as-is (could be alphabets or any format)
+  const hourNum = parseInt(match[1], 10);
   const ampm = hourNum >= 12 ? "PM" : "AM";
   const displayHour = hourNum % 12 || 12;
-  return `${displayHour}:${minutes || "00"} ${ampm}`;
+  return `${displayHour}:${match[2]} ${ampm}`;
 };
 
 const TrekItenary = ({ day }) => {

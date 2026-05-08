@@ -273,4 +273,191 @@ select option:hover {
   z-index: 9999 !important;
 }
 
+/* ═══════════════════════════════════════════════════════════
+   🌙 Admin Dark Theme — Package Forms
+   Applied via .admin-dark-form wrapper class
+   ═══════════════════════════════════════════════════════════ */
 
+.admin-dark-form {
+  color: #e5e7eb;
+}
+
+/* ── Backgrounds ── */
+.admin-dark-form .bg-white,
+.admin-dark-form .bg-white\/80,
+.admin-dark-form .bg-white\/70,
+.admin-dark-form .bg-white\/50 {
+  background-color: #111827 !important;
+}
+.admin-dark-form .bg-gray-50,
+.admin-dark-form .bg-neutral-50,
+.admin-dark-form .bg-neutral-50\/50,
+.admin-dark-form .bg-neutral-50\/80,
+.admin-dark-form .bg-gray-100,
+.admin-dark-form .bg-neutral-100,
+.admin-dark-form .bg-gray-200,
+.admin-dark-form .bg-neutral-200,
+.admin-dark-form .bg-neutral-300 {
+  background-color: #1f2937 !important;
+}
+
+/* ── Borders ── */
+.admin-dark-form .border-gray-100,
+.admin-dark-form .border-neutral-100,
+.admin-dark-form .border-gray-200,
+.admin-dark-form .border-neutral-200 {
+  border-color: #374151 !important;
+}
+.admin-dark-form .border-gray-300,
+.admin-dark-form .border-neutral-300 {
+  border-color: #4b5563 !important;
+}
+
+/* ── Text ── */
+.admin-dark-form .text-gray-900,
+.admin-dark-form .text-neutral-900,
+.admin-dark-form .text-gray-800,
+.admin-dark-form .text-neutral-800 {
+  color: #f3f4f6 !important;
+}
+.admin-dark-form .text-gray-700,
+.admin-dark-form .text-neutral-700 {
+  color: #d1d5db !important;
+}
+.admin-dark-form .text-gray-600,
+.admin-dark-form .text-neutral-600 {
+  color: #9ca3af !important;
+}
+.admin-dark-form .text-gray-500,
+.admin-dark-form .text-neutral-500 {
+  color: #6b7280 !important;
+}
+.admin-dark-form .text-gray-400,
+.admin-dark-form .text-neutral-400 {
+  color: #9ca3af !important;
+}
+
+/* ── Inputs & Selects ── */
+.admin-dark-form input,
+.admin-dark-form textarea,
+.admin-dark-form select {
+  background-color: #1f2937 !important;
+  color: #f3f4f6 !important;
+  border-color: #374151 !important;
+}
+.admin-dark-form input::placeholder,
+.admin-dark-form textarea::placeholder {
+  color: #6b7280 !important;
+}
+.admin-dark-form input:focus,
+.admin-dark-form textarea:focus,
+.admin-dark-form select:focus {
+  border-color: #10b981 !important;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.15) !important;
+}
+
+/* ── Autofill override for dark mode ── */
+.admin-dark-form input:-webkit-autofill,
+.admin-dark-form input:-webkit-autofill:hover,
+.admin-dark-form input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0px 1000px #1f2937 inset !important;
+  -webkit-text-fill-color: #f3f4f6 !important;
+}
+
+/* ── Emerald tinted backgrounds ── */
+.admin-dark-form .bg-emerald-50,
+.admin-dark-form .bg-emerald-50\/50,
+.admin-dark-form .bg-emerald-50\/40,
+.admin-dark-form .bg-emerald-50\/20,
+.admin-dark-form .bg-emerald-100 {
+  background-color: rgba(16, 185, 129, 0.08) !important;
+}
+.admin-dark-form .border-emerald-100,
+.admin-dark-form .border-emerald-200 {
+  border-color: rgba(16, 185, 129, 0.2) !important;
+}
+
+/* ── Rose tinted backgrounds ── */
+.admin-dark-form .bg-rose-50,
+.admin-dark-form .bg-rose-100 {
+  background-color: rgba(244, 63, 94, 0.08) !important;
+}
+.admin-dark-form .border-rose-100,
+.admin-dark-form .border-rose-200 {
+  border-color: rgba(244, 63, 94, 0.2) !important;
+}
+
+/* ── Blue tinted backgrounds ── */
+.admin-dark-form .bg-blue-50 {
+  background-color: rgba(59, 130, 246, 0.08) !important;
+}
+.admin-dark-form .border-blue-100 {
+  border-color: rgba(59, 130, 246, 0.2) !important;
+}
+
+/* ── Amber tinted backgrounds ── */
+.admin-dark-form .bg-amber-50 {
+  background-color: rgba(245, 158, 11, 0.08) !important;
+}
+.admin-dark-form .border-amber-100 {
+  border-color: rgba(245, 158, 11, 0.2) !important;
+}
+
+/* ── Shadows ── */
+.admin-dark-form .shadow-sm,
+.admin-dark-form .shadow-md,
+.admin-dark-form .shadow-xl {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+}
+.admin-dark-form .shadow-gray-200\/50 {
+  --tw-shadow-color: rgba(0, 0, 0, 0.3) !important;
+}
+
+/* ── Dropdown custom select overlay ── */
+.admin-dark-form [class*="z-[60]"],
+.admin-dark-form [class*="z-50"] {
+  background-color: #1f2937 !important;
+  border-color: #374151 !important;
+}
+
+/* ── Ring focus overrides ── */
+.admin-dark-form .ring-emerald-100 {
+  --tw-ring-color: rgba(16, 185, 129, 0.15) !important;
+}
+
+/* ── Hover states ── */
+.admin-dark-form .hover\:bg-gray-50:hover,
+.admin-dark-form .hover\:bg-neutral-50:hover {
+  background-color: #374151 !important;
+}
+.admin-dark-form .hover\:bg-emerald-50:hover {
+  background-color: rgba(16, 185, 129, 0.12) !important;
+}
+.admin-dark-form .hover\:bg-rose-50:hover {
+  background-color: rgba(244, 63, 94, 0.12) !important;
+}
+.admin-dark-form .hover\:bg-white:hover,
+.admin-dark-form .hover\:bg-neutral-50\/80:hover {
+  background-color: #1f2937 !important;
+}
+
+/* ── Keep images unaffected ── */
+.admin-dark-form img {
+  filter: none !important;
+}
+
+/* ── Gradient overrides ── */
+.admin-dark-form .from-emerald-500 {
+  --tw-gradient-from: #10b981;
+}
+.admin-dark-form .to-teal-600 {
+  --tw-gradient-to: #0d9488;
+}
+.admin-dark-form .from-neutral-50 {
+  --tw-gradient-from: #1f2937 !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+.admin-dark-form .to-emerald-50\/30,
+.admin-dark-form .to-white {
+  --tw-gradient-to: #111827 !important;
+}

@@ -107,8 +107,16 @@ const TrekSearchResults = () => {
       if (field === 'price') {
         const getPrice = (pkg) => {
           if (pkg.pricingTiers?.length > 0) {
-            const tier = pkg.pricingTiers.find(t => peopleCount >= t.minPeople && peopleCount <= t.maxPeople) || pkg.pricingTiers[0];
-            return Number(tier?.price || 0);
+            let tier = pkg.pricingTiers.find(t => peopleCount >= t.minPeople && peopleCount <= t.maxPeople);
+            if (!tier) {
+              const sortedTiers = [...pkg.pricingTiers].sort((a, b) => a.maxPeople - b.maxPeople);
+              tier = peopleCount > sortedTiers[sortedTiers.length - 1].maxPeople 
+                ? sortedTiers[sortedTiers.length - 1] 
+                : sortedTiers[0];
+            }
+            const basePrice = Number(tier?.price || 0);
+            const disc = Number(tier?.discount || 0);
+            return disc > 0 ? basePrice * (1 - disc / 100) : basePrice;
           }
           const p = pkg.price;
           if (typeof p === 'object' && p !== null) {

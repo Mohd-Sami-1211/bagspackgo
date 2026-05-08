@@ -112,10 +112,15 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
     let perPersonPrice = 0;
     let tierDiscountPercent = 0;
     if (selectedPkg?.pricingTiers && selectedPkg.pricingTiers.length > 0) {
-      const matchingTier =
-        selectedPkg.pricingTiers.find(
-          (t) => numPeople >= t.minPeople && numPeople <= t.maxPeople,
-        ) || selectedPkg.pricingTiers[0];
+      let matchingTier = selectedPkg.pricingTiers.find(
+        (t) => numPeople >= t.minPeople && numPeople <= t.maxPeople,
+      );
+      if (!matchingTier && selectedPkg.pricingTiers.length > 0) {
+        const sortedTiers = [...selectedPkg.pricingTiers].sort((a, b) => a.maxPeople - b.maxPeople);
+        matchingTier = numPeople > sortedTiers[sortedTiers.length - 1].maxPeople 
+          ? sortedTiers[sortedTiers.length - 1] 
+          : sortedTiers[0];
+      }
       perPersonPrice = Number(matchingTier?.price || 0);
       tierDiscountPercent = Number(matchingTier?.discount || 0);
     } else {
@@ -748,6 +753,18 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
                     </div>
                   )}
 
+                  {/* Provider T&C */}
+                  {tripData?.guide?.termsAndConditions && tripData.guide.termsAndConditions.length > 0 && (
+                    <div className="mb-4 p-4 rounded-xl border border-gray-200 bg-gray-50/50">
+                      <h4 className="text-xs font-bold text-gray-800 mb-2">Provider Terms & Conditions</h4>
+                      <ul className="list-disc pl-5 text-[11px] text-gray-600 space-y-1">
+                        {tripData.guide.termsAndConditions.map((term, i) => (
+                          <li key={i}>{term}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
                   {/* T&C Consent */}
                   <label className={`flex items-start gap-3 mb-5 p-4 rounded-xl border-2 cursor-pointer transition-all ${agreedToTerms ? 'border-emerald-500 bg-emerald-50/50' : 'border-gray-200 hover:border-gray-300 bg-gray-50/30'}`}>
                     <input type="checkbox" checked={agreedToTerms} onChange={(e) => { setAgreedToTerms(e.target.checked); if (e.target.checked) setPaymentError(''); }}
@@ -756,8 +773,8 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
                       I agree to bagspackgo&apos;s{' '}
                       <Link href="/terms" target="_blank" className="text-emerald-600 font-bold hover:underline">Terms & Conditions</Link>
                       {' '}and{' '}
-                      <Link href="/privacy" target="_blank" className="text-emerald-600 font-bold hover:underline">Privacy Policy</Link>.
-                      I understand that cancellation and refunds are subject to the platform&apos;s refund policy.
+                      <Link href="/privacy" target="_blank" className="text-emerald-600 font-bold hover:underline">Privacy Policy</Link>, 
+                      and acknowledge the Provider's terms listed above. I understand that cancellation and refunds are subject to the platform&apos;s refund policy.
                     </span>
                   </label>
 
@@ -948,8 +965,8 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
               <span className="text-[10px] text-gray-500 leading-relaxed">
                 I agree to the{' '}
                 <Link href="/terms" target="_blank" className="text-emerald-600 font-bold">Terms</Link>{' & '}
-                <Link href="/privacy" target="_blank" className="text-emerald-600 font-bold">Privacy Policy</Link>{' '}
-                including the cancellation & refund policy.
+                <Link href="/privacy" target="_blank" className="text-emerald-600 font-bold">Privacy Policy</Link>{', '}
+                acknowledge Provider terms, and understand the cancellation & refund policy.
               </span>
             </label>
           </div>

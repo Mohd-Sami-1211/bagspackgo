@@ -51,10 +51,19 @@ const Packages = () => {
         if (data.success) {
           const mappedPackages = data.packages.map(p => {
             let minPrice = 0;
+            let minOriginalPrice = 0;
+            let hasDiscount = false;
             if (p.pricingTiers && p.pricingTiers.length > 0) {
-              const prices = p.pricingTiers.map(t => parseInt(t.price)).filter(val => !isNaN(val));
-              if (prices.length > 0) {
-                minPrice = Math.min(...prices);
+              const effectivePrices = p.pricingTiers.map(t => {
+                const price = parseInt(t.price) || 0;
+                const disc = parseInt(t.discount) || 0;
+                return { effective: disc > 0 ? price * (1 - disc / 100) : price, original: price, discount: disc };
+              }).filter(v => v.original > 0);
+              if (effectivePrices.length > 0) {
+                effectivePrices.sort((a, b) => a.effective - b.effective);
+                minPrice = Math.round(effectivePrices[0].effective);
+                minOriginalPrice = effectivePrices[0].original;
+                hasDiscount = effectivePrices[0].discount > 0;
               }
             }
 
@@ -67,6 +76,8 @@ const Packages = () => {
               category: p.category || 'trip',
               type: p.packageCategory, // 'premium' or 'budget'
               price: minPrice,
+              originalPrice: minOriginalPrice,
+              hasDiscount: hasDiscount,
               destination: p.destination,
               duration: `${p.days}d / ${p.nights || p.days - 1}n`,
               status: displayStatus,
@@ -283,6 +294,9 @@ const Packages = () => {
               <p className="text-[9px] text-gray-400 uppercase font-black tracking-wider leading-none mb-1">Starting from</p>
               <div className="flex items-center gap-2">
                  <span className="text-[20px] font-black text-gray-900 leading-none">{fmtAmt(pkg.price)}</span>
+                 {pkg.hasDiscount && (
+                   <span className="text-[12px] font-medium text-gray-400 line-through leading-none">{fmtAmt(pkg.originalPrice)}</span>
+                 )}
                  {pkg.bookings > 0 && (
                    <div className="flex items-center gap-1 text-[10px] text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.5 rounded-md">
                      <TrendingUp size={10} />

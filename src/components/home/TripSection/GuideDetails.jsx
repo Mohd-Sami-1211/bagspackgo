@@ -151,17 +151,18 @@ const GuideDetails = ({ guide }) => {
 
   const { user, loading: authLoading, openAuthModal } = useAuth();
   const isUserAuthenticated = !authLoading && user?.role === "user";
+  const isLoggedIn = !authLoading && !!user;
 
-  // Show auth modal after 4s if not logged in as user
+  // Show auth modal after 4s if not logged in at all
   useEffect(() => {
     if (authLoading) return;
-    if (!isUserAuthenticated) {
+    if (!isLoggedIn) {
       const t = setTimeout(() => {
         openAuthModal({ closable: false, tab: "user", hideTabs: true });
       }, 4000);
       return () => clearTimeout(t);
     }
-  }, [authLoading, isUserAuthenticated, openAuthModal]);
+  }, [authLoading, isLoggedIn, openAuthModal]);
 
   const [activeTab, setActiveTab] = useState("dayByDay");
   const [currentDay, setCurrentDay] = useState(1);
@@ -455,11 +456,19 @@ const GuideDetails = ({ guide }) => {
 
   const handleNextTab = () => {
     if (activeTab === "dayByDay" && !viewingDay) {
+      if (!isLoggedIn) {
+        openAuthModal({ closable: true, tab: "user" });
+        return;
+      }
       setActiveTab("arrivalDeparture");
       setTimeout(() => {
         tabsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 50);
     } else if (activeTab === "arrivalDeparture" && arrDepCompleted) {
+      if (!user || user.role !== "user") {
+        openAuthModal({ closable: true, tab: "user" });
+        return;
+      }
       setActiveTab("personalDetails");
       setTimeout(() => {
         tabsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -479,6 +488,10 @@ const GuideDetails = ({ guide }) => {
   };
 
   const handleArrDepSubmit = (data) => {
+    if (!user || user.role !== "user") {
+      openAuthModal({ closable: true, tab: "user" });
+      return;
+    }
     const newStartDate = new Date(data.startDate);
     setSelectedStartDate(newStartDate);
     setArrivalDepartureData(data);
@@ -490,14 +503,16 @@ const GuideDetails = ({ guide }) => {
   };
 
   const formatTimeWithAMPM = (time) => {
-    if (!time) return "";
-    if (time.includes("AM") || time.includes("PM")) return time;
-
-    const [hours, minutes] = time.split(":");
-    const hourNum = parseInt(hours, 10);
+    if (!time || !time.toString().trim()) return "Not specified";
+    const t = time.toString().trim();
+    if (t.includes("AM") || t.includes("PM")) return t;
+    // Only convert if it's a valid HH:MM format
+    const match = t.match(/^(\d{1,2}):(\d{2})$/);
+    if (!match) return t; // Return as-is (could be alphabets or any format)
+    const hourNum = parseInt(match[1], 10);
     const ampm = hourNum >= 12 ? "PM" : "AM";
     const displayHour = hourNum % 12 || 12;
-    return `${displayHour}:${minutes} ${ampm}`;
+    return `${displayHour}:${match[2]} ${ampm}`;
   };
 
   const isTabDisabled = (tabKey) => {
@@ -535,6 +550,7 @@ const GuideDetails = ({ guide }) => {
         location: guide.location,
         destination: guide.destination,
         providerId: guide.providerId,
+        termsAndConditions: guide.termsAndConditions,
         rating: guide.rating,
         reviews: guide.reviews,
         price: guide.price
@@ -660,9 +676,17 @@ const GuideDetails = ({ guide }) => {
             <div className="flex items-center w-full sm:flex-1 min-w-0 mt-1 sm:mt-0 justify-start gap-4 sm:gap-6">
               <a
                 href={`/user/provider/${guide.providerId || guide._id || guide.id}`}
-                className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 rounded-full flex items-center justify-center bg-emerald-50 border border-emerald-100 flex-shrink-0 hover:border-emerald-200 transition-colors"
+                className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 rounded-full flex items-center justify-center bg-emerald-50 border border-emerald-100 flex-shrink-0 hover:border-emerald-200 transition-colors overflow-hidden"
               >
-                <div className="text-xl sm:text-2xl font-semibold text-emerald-700">
+                {guide.logo ? (
+                  <img
+                    src={guide.logo}
+                    alt={guide.companyName || guide.name}
+                    className="w-full h-full object-cover rounded-full"
+                    onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                  />
+                ) : null}
+                <div className={`text-xl sm:text-2xl font-semibold text-emerald-700 ${guide.logo ? 'hidden' : 'flex'} w-full h-full items-center justify-center`}>
                   {guide.companyName ? guide.companyName.split(" ").map((n) => n[0]).join("") : guide.name.split(" ").map((n) => n[0]).join("")}
                 </div>
               </a>
@@ -791,7 +815,18 @@ const GuideDetails = ({ guide }) => {
             ].map((tab) => (
               <button
                 key={tab.key}
-                onClick={() => !isTabDisabled(tab.key) && setActiveTab(tab.key)}
+                onClick={() => {
+                  if (isTabDisabled(tab.key)) return;
+                  if (tab.key === "arrivalDeparture" && !isLoggedIn) {
+                    openAuthModal({ closable: true, tab: "user" });
+                    return;
+                  }
+                  if (tab.key === "personalDetails" && (!user || user.role !== "user")) {
+                    openAuthModal({ closable: true, tab: "user" });
+                    return;
+                  }
+                  setActiveTab(tab.key);
+                }}
                 className={`flex-1 text-center text-xs sm:text-sm font-semibold py-3 border-b-2 transition-all ${activeTab === tab.key
                     ? "text-slate-900 border-slate-900 bg-white"
                     : isTabDisabled(tab.key)
@@ -902,13 +937,14 @@ const GuideDetails = ({ guide }) => {
                     <div className="block md:hidden mb-4">
                       <div className="flex justify-center">
                         <div
-                          className="relative flex items-center overflow-x-auto scrollbar-hide px-4 py-4 max-w-full"
+                          className="flex items-center overflow-x-auto py-4 max-w-full"
                           ref={scrollContainerRef}
+                          style={{ scrollbarWidth: 'thin', scrollbarColor: '#d1d5db transparent' }}
                         >
-                          {/* Connecting line - positioned at exact center of nodes */}
-                          <div className="absolute top-9 left-0 right-0 h-1 bg-gray-300 z-0"></div>
+                          <div className="relative flex items-center justify-center space-x-8 sm:space-x-12 mx-auto px-6 min-w-max">
+                            {/* Connecting line - spans the full width of the scrollable content */}
+                            <div className="absolute top-[22px] h-1 bg-gray-300 z-0" style={{ left: '2rem', right: '2rem' }}></div>
 
-                          <div className="flex items-center justify-center space-x-8 sm:space-x-12 mx-auto px-4">
                             {itenaries.map((day, index) => {
                               const dayNum = index + 1;
                               const isActive = dayNum <= currentDay;
@@ -950,8 +986,9 @@ const GuideDetails = ({ guide }) => {
 
                     {/* Day Cards Container with auto-scroll */}
                     <div
-                      className="w-full md:w-3/4 space-y-3 sm:space-y-4 day-cards-container pr-1 max-h-[700px] overflow-y-auto scrollbar-hide scroll-smooth"
+                      className="w-full md:w-3/4 space-y-3 sm:space-y-4 day-cards-container pr-1 max-h-[700px] overflow-y-auto scroll-smooth"
                       ref={dayCardsContainerRef}
+                      style={{ scrollbarWidth: 'thin', scrollbarColor: '#d1d5db transparent' }}
                     >
                       {itenaries.map((day, index) => {
                         const dayNum = index + 1;

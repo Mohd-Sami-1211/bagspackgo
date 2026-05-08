@@ -9,7 +9,7 @@ import {
   TrendingUp, TrendingDown, Minus, IndianRupee, Package,
   CalendarDays, Clock, CheckCircle2, XCircle, MapPin, RefreshCw,
   Mountain, Plane, PartyPopper, Zap, ChevronRight,
-  ArrowRight, BarChart2,
+  ArrowRight, BarChart2, Share2,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -228,11 +228,29 @@ export default function DashboardMainContent() {
 
   useEffect(() => { load(); }, []);
 
-  // Re-render every 30 s so the "updated X ago" text stays accurate
   useEffect(() => {
     const id = setInterval(() => setTick(t => t + 1), 30_000);
     return () => clearInterval(id);
   }, []);
+
+  const handleShareProfile = async () => {
+    if (!data?.profile?.id) return;
+    const url = `${window.location.origin}/user/provider/${data.profile.id}`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `${data.profile.companyName || data.profile.name} on bagspackgo`,
+          url: url
+        });
+      } catch (err) {
+        console.error("Share failed:", err);
+      }
+    } else {
+      navigator.clipboard.writeText(url);
+      alert("Profile link copied to clipboard!");
+    }
+  };
 
   const chartData = useMemo(() => data?.charts?.timelines?.[tab] || [], [data, tab]);
 
@@ -245,19 +263,15 @@ export default function DashboardMainContent() {
   // Derived values
   const inactivePkgs      = (s.totalPackages ?? 0) - (s.activePackages ?? 0);
   const unpublishedEvents = (s.totalEvents ?? 0) - (s.publishedEvents ?? 0);
-  const avgPerBooking     = s.totalBookings30 > 0
-    ? fmt(Math.round((s.earningsLast30 ?? 0) / s.totalBookings30))
-    : null;
 
-  // 3 stat cards — no redundant totals
   const statCards = [
     {
       label: 'Revenue · 30 days',
       value: fmt(s.earningsLast30 ?? 0),
-      sub:   avgPerBooking ? `Avg ${avgPerBooking} / booking` : 'No revenue this period',
+      sub:   s.earningsLast30 > 0 ? 'Completed deposits this period' : 'No deposits this period',
       change: s.earningsChangePct,
       icon:  IndianRupee,
-      href:  '/serviceprovider/dashboard/settings?tab=payments',   // → Payments & Revenue panel
+      href:  '/serviceprovider/dashboard/settings?tab=payments',
       delay: 0,
     },
     {
@@ -337,6 +351,23 @@ export default function DashboardMainContent() {
                 Active
               </div>
             )}
+            
+            <button
+              onClick={handleShareProfile}
+              className="hidden sm:flex items-center gap-1.5 bg-white border border-gray-200 text-[11px] font-medium text-emerald-600 px-2.5 py-1.5 rounded-xl hover:bg-emerald-50 transition-all active:scale-95"
+            >
+              <Share2 size={11} />
+              Share Profile
+            </button>
+            
+            {/* Mobile share icon only */}
+            <button
+              onClick={handleShareProfile}
+              className="sm:hidden flex items-center justify-center bg-white border border-gray-200 text-emerald-600 w-8 h-8 rounded-xl hover:bg-emerald-50 transition-all active:scale-95"
+            >
+              <Share2 size={13} />
+            </button>
+
             <button
               onClick={() => load(true)}
               disabled={refreshing}
@@ -571,7 +602,6 @@ export default function DashboardMainContent() {
                       </p>
                     </div>
                     <div className="flex flex-col items-end gap-1 shrink-0">
-                      <span className="text-[13px] font-bold text-gray-900">{fmt(b.amount)}</span>
                       <StatusBadge status={b.status} />
                     </div>
                   </motion.div>

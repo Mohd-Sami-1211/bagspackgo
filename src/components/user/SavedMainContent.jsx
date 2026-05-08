@@ -234,19 +234,35 @@ const SavedMainContent = () => {
                       <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between mt-auto">
                         <div>
                            <p className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold mb-0.5">Starting from</p>
-                           <p className="flex items-baseline gap-1">
-                             <span className="text-base font-bold text-gray-900 tabular-nums">
-                               ₹{Number(
-                                  record.config?.computedPrice || 
-                                  (pkg.pricingTiers?.length > 0 ? [...pkg.pricingTiers].sort((a,b)=>a.minPeople - b.minPeople)[0].price : 0) || 
-                                  pkg.price?.individual || 
-                                  pkg.price?.starting || 
-                                  pkg.pricePerSlot || 
-                                  pkg.price || 
-                                  0
-                               ).toLocaleString('en-IN')}
-                             </span>
-                           </p>
+                           {(() => {
+                             const tiers = pkg.pricingTiers?.length > 0 ? [...pkg.pricingTiers].sort((a,b) => a.minPeople - b.minPeople) : [];
+                             const baseTier = tiers[0];
+                             const rawPrice = Number(
+                               record.config?.computedPrice || 
+                               (baseTier ? baseTier.price : 0) || 
+                               pkg.price?.individual || 
+                               pkg.price?.starting || 
+                               pkg.pricePerSlot || 
+                               pkg.price || 
+                               0
+                             );
+                             const discount = baseTier ? Number(baseTier.discount || 0) : 0;
+                             const effectivePrice = discount > 0 ? rawPrice * (1 - discount / 100) : rawPrice;
+                             const hasDiscount = discount > 0 && !record.config?.computedPrice;
+
+                             return (
+                               <p className="flex items-baseline gap-1.5">
+                                 <span className="text-base font-bold text-gray-900 tabular-nums">
+                                   ₹{Math.round(effectivePrice).toLocaleString('en-IN')}
+                                 </span>
+                                 {hasDiscount && (
+                                   <span className="text-xs text-gray-400 line-through tabular-nums">
+                                     ₹{Math.round(rawPrice).toLocaleString('en-IN')}
+                                   </span>
+                                 )}
+                               </p>
+                             );
+                           })()}
                         </div>
                         <Button variant="ghost" size="icon" className="w-8 h-8 rounded-full text-emerald-600 hover:bg-emerald-100 hover:text-emerald-700">
                            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />

@@ -176,8 +176,9 @@ export async function GET() {
             : totalBookings30 > 0 ? 100 : 0;
 
         const isNotCancelled = (b) => !['cancelled', 'cancellation_requested', 'refund_initiated'].includes(b.status);
-        const earningsLast30 = bookingsLast30.filter(isNotCancelled).reduce((s, b) => s + (b.totalAmount || 0), 0);
-        const earningsPrev30 = bookingsPrev30.filter(isNotCancelled).reduce((s, b) => s + (b.totalAmount || 0), 0);
+        const isDeposited = (b) => b.providerPaymentStatus === 'completed';
+        const earningsLast30 = bookingsLast30.filter(isNotCancelled).filter(isDeposited).reduce((s, b) => s + (b.totalAmount || 0), 0);
+        const earningsPrev30 = bookingsPrev30.filter(isNotCancelled).filter(isDeposited).reduce((s, b) => s + (b.totalAmount || 0), 0);
         const earningsChangePct = earningsPrev30 > 0
             ? Math.round(((earningsLast30 - earningsPrev30) / earningsPrev30) * 100)
             : earningsLast30 > 0 ? 100 : 0;
@@ -252,6 +253,7 @@ export async function GET() {
             success: true,
             data: {
                 profile: {
+                    id: guideId,
                     name: guide?.username || '',
                     companyName: details?.companyname || '',
                     logo: details?.logo || '',
@@ -275,7 +277,7 @@ export async function GET() {
                     confirmedBookings: allBookings.filter(b => b.status === 'confirmed').length,
                     pendingBookings: allBookings.filter(b => b.status === 'pending').length,
                     cancelledBookings: allBookings.filter(b => ['cancelled', 'cancellation_requested', 'refund_initiated'].includes(b.status)).length,
-                    totalRevenue: allBookings.filter(isNotCancelled).reduce((s, b) => s + (b.totalAmount || 0), 0),
+                    totalRevenue: allBookings.filter(isNotCancelled).filter(isDeposited).reduce((s, b) => s + (b.totalAmount || 0), 0),
                 },
                 charts: {
                     timelines: chartTimelines,

@@ -33,6 +33,7 @@ const TrekGuideDetails = ({ guide }) => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user, loading: authLoading, openAuthModal } = useAuth();
+  const isLoggedIn = !authLoading && !!user;
   const isUserAuthenticated = !authLoading && user?.role === 'user';
 
   /* URL params */
@@ -95,11 +96,11 @@ const TrekGuideDetails = ({ guide }) => {
   /* Auth gate after 4 s */
   useEffect(() => {
     if (authLoading) return;
-    if (!isUserAuthenticated) {
+    if (!isLoggedIn) {
       const t = setTimeout(() => openAuthModal({ closable: false, tab: 'user', hideTabs: true }), 4000);
       return () => clearTimeout(t);
     }
-  }, [authLoading, isUserAuthenticated, openAuthModal]);
+  }, [authLoading, isLoggedIn, openAuthModal]);
 
   /* Saved status */
   useEffect(() => {
@@ -225,10 +226,18 @@ const TrekGuideDetails = ({ guide }) => {
 
   const handleNextTab = () => {
     if (activeTab === 'itinerary') {
+       if (!isLoggedIn) {
+         openAuthModal({ closable: true, tab: 'user' });
+         return;
+       }
        setActiveTab('pickupDropoff');
        setTimeout(() => tabsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
     }
     else if (activeTab === 'pickupDropoff' && pickupDropoffCompleted) {
+       if (!isUserAuthenticated) {
+         openAuthModal({ closable: true, tab: 'user' });
+         return;
+       }
        setActiveTab('personalDetails');
        setTimeout(() => tabsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
     }
@@ -240,6 +249,10 @@ const TrekGuideDetails = ({ guide }) => {
   };
 
   const handlePickupDropoffSubmit = data => {
+    if (!isUserAuthenticated) {
+      openAuthModal({ closable: true, tab: 'user' });
+      return;
+    }
     setSelectedStartDate(new Date(data.startDate));
     setPickupDropoffData(data);
     setPickupDropoffCompleted(true);
@@ -263,6 +276,7 @@ const TrekGuideDetails = ({ guide }) => {
         location: guide.location,
         price: guide.price,
         pricingTiers: guide.pricingTiers,
+        termsAndConditions: guide.termsAndConditions,
         provider: guide.provider ? {
           _id: guide.provider._id || guide.provider,
           companyname: guide.provider.companyname || guide.provider.companyName || guide.provider.username,
@@ -357,9 +371,17 @@ const TrekGuideDetails = ({ guide }) => {
               <div className="flex items-center w-full sm:flex-1 min-w-0 mt-1 sm:mt-0 justify-start gap-4 sm:gap-6">
                 <a
                   href={`/user/provider/${providerId}`}
-                  className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 rounded-full flex items-center justify-center bg-emerald-50 border border-emerald-100 flex-shrink-0 hover:border-emerald-200 transition-colors"
+                  className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 rounded-full flex items-center justify-center bg-emerald-50 border border-emerald-100 flex-shrink-0 hover:border-emerald-200 transition-colors overflow-hidden"
                 >
-                  <div className="text-xl sm:text-2xl font-semibold text-emerald-700">
+                  {guide?.provider?.logo ? (
+                    <img
+                      src={guide.provider.logo}
+                      alt={companyName}
+                      className="w-full h-full object-cover rounded-full"
+                      onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                    />
+                  ) : null}
+                  <div className={`text-xl sm:text-2xl font-semibold text-emerald-700 ${guide?.provider?.logo ? 'hidden' : 'flex'} w-full h-full items-center justify-center`}>
                     {initials}
                   </div>
                 </a>
@@ -484,7 +506,18 @@ const TrekGuideDetails = ({ guide }) => {
               ].map(tab => (
                 <button
                   key={tab.key}
-                  onClick={() => !isTabDisabled(tab.key) && setActiveTab(tab.key)}
+                  onClick={() => {
+                    if (isTabDisabled(tab.key)) return;
+                    if (tab.key === 'pickupDropoff' && !isLoggedIn) {
+                      openAuthModal({ closable: true, tab: 'user' });
+                      return;
+                    }
+                    if (tab.key === 'personalDetails' && (!user || user.role !== 'user')) {
+                      openAuthModal({ closable: true, tab: 'user' });
+                      return;
+                    }
+                    setActiveTab(tab.key);
+                  }}
                   className={`flex-1 text-center text-xs sm:text-sm font-medium py-3 transition-all border-b-2 ${activeTab === tab.key
                     ? 'text-emerald-700 border-emerald-600 bg-white'
                     : isTabDisabled(tab.key)
@@ -536,7 +569,10 @@ const TrekGuideDetails = ({ guide }) => {
 
 
                     {/* All days stacked beautifully */}
-                    <div className="space-y-6">
+                    <div 
+                      className="space-y-6 max-h-[700px] overflow-y-auto scroll-smooth pr-1"
+                      style={{ scrollbarWidth: 'thin', scrollbarColor: '#d1d5db transparent' }}
+                    >
                       {itenaries.map((day, index) => (
                         <div key={day.dayNumber} ref={(el) => (dayCardRefs.current[index] = el)}>
                           <TrekItenary day={day} difficulty={difficulty} maxAltitude={trekPackage?.altitude} />

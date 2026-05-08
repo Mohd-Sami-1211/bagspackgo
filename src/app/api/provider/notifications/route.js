@@ -103,7 +103,7 @@ export async function GET(req) {
     const user  = await getCurrentUser(req);
     if (!user) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
 
-    const guide = await Guide.findOne({ user: user._id }).lean();
+    const guide = await Guide.findById(user.userId).lean();
     if (!guide) return NextResponse.json({ success: false, message: 'Provider not found' }, { status: 404 });
 
     // Sync latest bookings / events into the notifications store
@@ -144,7 +144,7 @@ export async function PATCH(req) {
     const user = await getCurrentUser(req);
     if (!user) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
 
-    const guide = await Guide.findOne({ user: user._id }).lean();
+    const guide = await Guide.findById(user.userId).lean();
     if (!guide) return NextResponse.json({ success: false, message: 'Provider not found' }, { status: 404 });
 
     const body = await req.json().catch(() => ({}));

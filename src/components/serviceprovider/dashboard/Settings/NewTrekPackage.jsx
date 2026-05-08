@@ -109,7 +109,7 @@ const CustomSelect = ({ value, onChange, options, placeholder, disabled = false,
 };
 
 /* ─── Main Component ─────────────────────────────────────── */
-export default function NewTrekPackage({ initialData = null, isEdit = false }) {
+export default function NewTrekPackage({ initialData = null, isEdit = false, adminMode = false, providerId = null }) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -166,7 +166,7 @@ export default function NewTrekPackage({ initialData = null, isEdit = false }) {
 
   /* ── Load Initial Data (if editing) ─────── */
   useEffect(() => {
-    if (isEdit && initialData) {
+    if (initialData) {
       setPackageInfo({
         name: initialData.name || '',
         category: 'trek',
@@ -215,7 +215,7 @@ export default function NewTrekPackage({ initialData = null, isEdit = false }) {
         })));
       }
       if (initialData.aboutPackage) setAboutPackage(initialData.aboutPackage);
-    } else {
+    } else if (!isEdit) {
       const savedData = localStorage.getItem('newTrekPackageDraft');
       if (savedData) {
         try {
@@ -343,11 +343,13 @@ export default function NewTrekPackage({ initialData = null, isEdit = false }) {
         photos,
         aboutPackage: aboutPackage.trim(),
       };
-      const endpoint = isEdit ? `/api/provider/packages?id=${initialData._id}` : '/api/provider/packages';
+      const endpoint = adminMode
+        ? (isEdit ? `/api/admin/packages?id=${initialData._id}` : '/api/admin/packages')
+        : (isEdit ? `/api/provider/packages?id=${initialData._id}` : '/api/provider/packages');
       const res = await fetchWithRetry(endpoint, {
         method: isEdit ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(adminMode ? { ...formData, providerId } : formData)
       }, { timeoutMs: 60000, maxRetries: 2 });
       const result = await res.json();
       if (!res.ok) throw new Error(result.message || 'Failed to create package');
@@ -355,7 +357,7 @@ export default function NewTrekPackage({ initialData = null, isEdit = false }) {
       setShowSuccess(true);
       setTimeout(() => {
         setShowSuccess(false);
-        router.push('/serviceprovider/dashboard/settings/packages');
+        router.push(adminMode ? `/admin/providers/${providerId}` : '/serviceprovider/dashboard/settings/packages');
       }, 2500);
     } catch (err) {
       console.error(err);
@@ -391,7 +393,7 @@ export default function NewTrekPackage({ initialData = null, isEdit = false }) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <button
-            onClick={() => router.push('/serviceprovider/dashboard/settings/packages')}
+            onClick={() => router.push(adminMode ? `/admin/providers/${providerId}` : '/serviceprovider/dashboard/settings/packages')}
             className="w-10 h-10 rounded-xl bg-white border border-gray-100 flex items-center justify-center text-gray-400 hover:text-emerald-600 hover:border-emerald-100 shadow-sm transition-all active:scale-95"
           >
             <ArrowLeft size={18} />
@@ -676,10 +678,20 @@ export default function NewTrekPackage({ initialData = null, isEdit = false }) {
                     {pricingTiers.map((tier, idx) => (
                       <div key={tier.id} className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 bg-white p-3 rounded-xl border border-emerald-100 shadow-sm">
                         <div className="flex items-center gap-2 shrink-0">
-                          <input type="number" value={tier.minPeople} onChange={e => { const t = [...pricingTiers]; t[idx].minPeople = e.target.value; setPricingTiers(t); }}
-                            className="w-14 border border-gray-200 rounded-lg px-2 py-1.5 text-center text-sm focus:outline-none focus:border-emerald-500" />
+                          <input type="number" value={tier.minPeople} readOnly={idx === 0} onChange={e => {
+                            if (idx === 0) return;
+                            const t = [...pricingTiers]; t[idx].minPeople = e.target.value; setPricingTiers(t);
+                          }}
+                            className={`w-14 border border-gray-200 rounded-lg px-2 py-1.5 text-center text-sm focus:outline-none focus:border-emerald-500 ${idx === 0 ? 'bg-gray-100 cursor-not-allowed' : ''}`} />
                           <span className="text-gray-400 text-sm">–</span>
-                          <input type="number" value={tier.maxPeople} onChange={e => { const t = [...pricingTiers]; t[idx].maxPeople = e.target.value; setPricingTiers(t); }}
+                          <input type="number" value={tier.maxPeople} onChange={e => {
+                            const t = [...pricingTiers]; t[idx].maxPeople = e.target.value;
+                            // Auto-update next tier's min
+                            if (idx < t.length - 1) {
+                              t[idx + 1] = { ...t[idx + 1], minPeople: (parseInt(e.target.value) || 0) + 1 };
+                            }
+                            setPricingTiers(t);
+                          }}
                             className="w-14 border border-gray-200 rounded-lg px-2 py-1.5 text-center text-sm focus:outline-none focus:border-emerald-500" />
                           <span className="text-[11px] text-gray-500">pax</span>
                         </div>
@@ -695,8 +707,21 @@ export default function NewTrekPackage({ initialData = null, isEdit = false }) {
                             className="w-full border border-gray-200 rounded-lg pl-3 pr-7 py-1.5 text-sm focus:outline-none focus:border-emerald-500" />
                           <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">%</span>
                         </div>
-                        {pricingTiers.length > 1 && (
-                          <button type="button" onClick={() => setPricingTiers(pricingTiers.filter(t => t.id !== tier.id))}
+                        {pricingTiers.length > 1 && idx > 0 && (
+                          <button type="button" onClick={() => {
+                            const removedIndex = pricingTiers.findIndex(t => t.id === tier.id);
+                            const newTiers = pricingTiers.filter(t => t.id !== tier.id);
+                            // Recalculate min values for tiers after the removed one
+                            for (let i = removedIndex; i < newTiers.length; i++) {
+                              if (i === 0) {
+                                newTiers[i] = { ...newTiers[i], minPeople: 1 };
+                              } else {
+                                const prevMax = parseInt(newTiers[i - 1].maxPeople) || 0;
+                                newTiers[i] = { ...newTiers[i], minPeople: prevMax + 1 };
+                              }
+                            }
+                            setPricingTiers(newTiers);
+                          }}
                             className="text-rose-400 hover:text-rose-600 bg-rose-50 hover:bg-rose-100 p-1.5 rounded-lg transition-all shrink-0">
                             <Trash2 size={15} />
                           </button>
