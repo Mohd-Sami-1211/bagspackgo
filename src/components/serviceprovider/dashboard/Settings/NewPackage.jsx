@@ -139,7 +139,7 @@ const CustomSelect = ({ value, onChange, options, placeholder, icon: Icon, iconC
   );
 };
 
-const NewPackage = ({ initialData = null, isEdit = false }) => {
+const NewPackage = ({ initialData = null, isEdit = false, adminMode = false, providerId = null }) => {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -205,7 +205,7 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
 
   // Load from local storage on mount
   useEffect(() => {
-    if (isEdit && initialData) {
+    if (initialData) {
       setPackageInfo({
         name: initialData.name || '',
         packageType: initialData.packageType || 'individual',
@@ -243,7 +243,7 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
       }
       if (initialData.aboutPackage) setAboutPackage(initialData.aboutPackage);
       if (initialData.packagePhotos?.length > 0) setPackagePhotos(initialData.packagePhotos);
-    } else {
+    } else if (!isEdit) {
       const savedData = localStorage.getItem('newTripPackageDraft');
       if (savedData) {
         try {
@@ -477,11 +477,13 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
 
       console.log('Submitting package:', formData);
 
-      const endpoint = isEdit ? `/api/provider/packages?id=${initialData._id}` : '/api/provider/packages';
+      const endpoint = adminMode
+        ? (isEdit ? `/api/admin/packages?id=${initialData._id}` : '/api/admin/packages')
+        : (isEdit ? `/api/provider/packages?id=${initialData._id}` : '/api/provider/packages');
       const res = await fetchWithRetry(endpoint, {
         method: isEdit ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(adminMode ? { ...formData, providerId } : formData)
       }, { timeoutMs: 60000, maxRetries: 2 });
 
       const result = await res.json();
@@ -495,7 +497,7 @@ const NewPackage = ({ initialData = null, isEdit = false }) => {
       localStorage.removeItem('newTripPackageDraft');
       setTimeout(() => {
         setShowSuccess(false);
-        router.push('/serviceprovider/dashboard/settings/packages');
+        router.push(adminMode ? `/admin/providers/${providerId}` : '/serviceprovider/dashboard/settings/packages');
       }, 2500);
     } catch (error) {
       console.error('Error creating package:', error);

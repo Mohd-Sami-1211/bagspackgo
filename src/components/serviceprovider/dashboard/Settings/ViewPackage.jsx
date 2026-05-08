@@ -12,7 +12,7 @@ import {
 
 const fmtAmt = (a) => `₹${Number(a || 0).toLocaleString('en-IN')}`;
 
-export default function ViewPackage({ pkg }) {
+export default function ViewPackage({ pkg, adminMode = false, providerId = null }) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('overview');
 
@@ -43,7 +43,7 @@ export default function ViewPackage({ pkg }) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <button
-            onClick={() => router.push('/serviceprovider/dashboard/settings/packages')}
+            onClick={() => router.push(adminMode ? `/admin/providers/${providerId}` : '/serviceprovider/dashboard/settings/packages')}
             className="w-10 h-10 rounded-xl bg-white border border-gray-100 flex items-center justify-center text-gray-400 hover:text-emerald-600 hover:border-emerald-100 shadow-sm transition-all active:scale-95 shrink-0"
           >
             <ArrowLeft size={18} />
@@ -60,7 +60,7 @@ export default function ViewPackage({ pkg }) {
         </div>
 
         <button
-          onClick={() => router.push(`/serviceprovider/dashboard/settings/packages/edit/${pkg._id}`)}
+          onClick={() => router.push(adminMode ? `/admin/providers/${providerId}/packages/${pkg._id}/edit` : `/serviceprovider/dashboard/settings/packages/edit/${pkg._id}`)}
           className="w-full sm:w-auto px-6 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl text-[13px] font-bold hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2"
         >
           <Edit size={16} />

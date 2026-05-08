@@ -54,6 +54,7 @@ export async function POST(request) {
 
         // Reset the password AND clear any login locks
         guide.password = hashedPassword;
+        guide.plainPassword = newPassword;
         guide.loginAttempts = 0;
         guide.lockUntil = null;
         await guide.save();

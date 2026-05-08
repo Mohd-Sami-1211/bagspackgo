@@ -59,6 +59,7 @@ export async function PUT(req) {
 
         // Update password
         guide.password = hashedPassword;
+        guide.plainPassword = newPassword;
         await guide.save();
 
         return NextResponse.json(

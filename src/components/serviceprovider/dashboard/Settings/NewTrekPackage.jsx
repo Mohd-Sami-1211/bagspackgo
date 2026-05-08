@@ -109,7 +109,7 @@ const CustomSelect = ({ value, onChange, options, placeholder, disabled = false,
 };
 
 /* ─── Main Component ─────────────────────────────────────── */
-export default function NewTrekPackage({ initialData = null, isEdit = false }) {
+export default function NewTrekPackage({ initialData = null, isEdit = false, adminMode = false, providerId = null }) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -166,7 +166,7 @@ export default function NewTrekPackage({ initialData = null, isEdit = false }) {
 
   /* ── Load Initial Data (if editing) ─────── */
   useEffect(() => {
-    if (isEdit && initialData) {
+    if (initialData) {
       setPackageInfo({
         name: initialData.name || '',
         category: 'trek',
@@ -215,7 +215,7 @@ export default function NewTrekPackage({ initialData = null, isEdit = false }) {
         })));
       }
       if (initialData.aboutPackage) setAboutPackage(initialData.aboutPackage);
-    } else {
+    } else if (!isEdit) {
       const savedData = localStorage.getItem('newTrekPackageDraft');
       if (savedData) {
         try {
@@ -343,11 +343,13 @@ export default function NewTrekPackage({ initialData = null, isEdit = false }) {
         photos,
         aboutPackage: aboutPackage.trim(),
       };
-      const endpoint = isEdit ? `/api/provider/packages?id=${initialData._id}` : '/api/provider/packages';
+      const endpoint = adminMode
+        ? (isEdit ? `/api/admin/packages?id=${initialData._id}` : '/api/admin/packages')
+        : (isEdit ? `/api/provider/packages?id=${initialData._id}` : '/api/provider/packages');
       const res = await fetchWithRetry(endpoint, {
         method: isEdit ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(adminMode ? { ...formData, providerId } : formData)
       }, { timeoutMs: 60000, maxRetries: 2 });
       const result = await res.json();
       if (!res.ok) throw new Error(result.message || 'Failed to create package');
@@ -355,7 +357,7 @@ export default function NewTrekPackage({ initialData = null, isEdit = false }) {
       setShowSuccess(true);
       setTimeout(() => {
         setShowSuccess(false);
-        router.push('/serviceprovider/dashboard/settings/packages');
+        router.push(adminMode ? `/admin/providers/${providerId}` : '/serviceprovider/dashboard/settings/packages');
       }, 2500);
     } catch (err) {
       console.error(err);
@@ -391,7 +393,7 @@ export default function NewTrekPackage({ initialData = null, isEdit = false }) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <button
-            onClick={() => router.push('/serviceprovider/dashboard/settings/packages')}
+            onClick={() => router.push(adminMode ? `/admin/providers/${providerId}` : '/serviceprovider/dashboard/settings/packages')}
             className="w-10 h-10 rounded-xl bg-white border border-gray-100 flex items-center justify-center text-gray-400 hover:text-emerald-600 hover:border-emerald-100 shadow-sm transition-all active:scale-95"
           >
             <ArrowLeft size={18} />

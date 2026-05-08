@@ -142,6 +142,7 @@ export async function POST(request) {
             email: finalEmail,
             phone: finalPhone,
             password: hashedPassword,
+            plainPassword: password,
             isPhoneVerified: identifierType === "phone",
             isEmailVerified: identifierType === "email",
         };

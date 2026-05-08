@@ -314,7 +314,7 @@ function ShareModal({ eventId, title, onClose }) {
 // ── MAIN COMPONENT ──
 // ═══════════════════════════════════════════════════
 
-export default function EventDetailView({ eventId }) {
+export default function EventDetailView({ eventId, adminMode = false, providerId = null }) {
     const router = useRouter();
     const [event, setEvent] = useState(null);
     const [guests, setGuests] = useState([]);
@@ -397,7 +397,8 @@ export default function EventDetailView({ eventId }) {
         setLoading(true);
         setError('');
         try {
-            const res = await fetch(`/api/provider/events/${eventId}`);
+            const url = adminMode ? `/api/admin/events/${eventId}` : `/api/provider/events/${eventId}`;
+            const res = await fetch(url);
             const data = await res.json();
             if (data.success) {
                 setEvent(data.event);
@@ -417,7 +418,8 @@ export default function EventDetailView({ eventId }) {
         setSaving(true);
         setSaveMsg('');
         try {
-            const res = await fetch(`/api/provider/events/${eventId}`, {
+            const url = adminMode ? `/api/admin/events/${eventId}` : `/api/provider/events/${eventId}`;
+            const res = await fetch(url, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(editData),
@@ -441,7 +443,8 @@ export default function EventDetailView({ eventId }) {
         if (!confirm('Publish this event? Once published, it will be visible to users.')) return;
         setSaving(true);
         try {
-            const res = await fetch(`/api/provider/events/${eventId}`, {
+            const url = adminMode ? `/api/admin/events/${eventId}` : `/api/provider/events/${eventId}`;
+            const res = await fetch(url, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'publish' }),
@@ -460,7 +463,8 @@ export default function EventDetailView({ eventId }) {
         setSaving(true);
         setSaveMsg('');
         try {
-            const res = await fetch(`/api/provider/events/${eventId}`, {
+            const url = adminMode ? `/api/admin/events/${eventId}` : `/api/provider/events/${eventId}`;
+            const res = await fetch(url, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ totalSlots: Number(newTotalSlots) }),
@@ -588,7 +592,7 @@ export default function EventDetailView({ eventId }) {
                     <h2 className="text-xl font-bold text-neutral-900 mb-2">Event Not Found</h2>
                     <p className="text-neutral-500 text-sm mb-6">{error || 'This event does not exist or you do not have permission.'}</p>
                     <button
-                        onClick={() => router.push('/serviceprovider/dashboard/events')}
+                        onClick={() => router.push(adminMode ? `/admin/providers/${providerId}` : '/serviceprovider/dashboard/events')}
                         className="px-6 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 transition"
                     >
                         Back to Events
@@ -634,7 +638,7 @@ export default function EventDetailView({ eventId }) {
                 <div className="relative p-4 md:p-8 flex flex-col md:flex-row md:items-end gap-4 min-h-[220px]">
                         {/* Back */}
                         <button
-                            onClick={() => router.push('/serviceprovider/dashboard/events')}
+                            onClick={() => router.push(adminMode ? `/admin/providers/${providerId}` : '/serviceprovider/dashboard/events')}
                             className="absolute top-5 left-5 p-2 rounded-xl bg-white/20 backdrop-blur-md border border-white/30 hover:bg-white/30 transition text-white"
                         >
                             <ArrowLeft className="w-5 h-5" />
