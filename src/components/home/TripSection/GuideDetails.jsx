@@ -561,7 +561,8 @@ const GuideDetails = ({ guide }) => {
         destination: selectedPackage.destination,
         price: selectedPackage.price,
         pricingTiers: selectedPackage.pricingTiers,
-        days: selectedPackage.days
+        days: selectedPackage.days,
+        termsAndConditions: selectedPackage.termsAndConditions
       } : null,
       tripConfig: {
         category,

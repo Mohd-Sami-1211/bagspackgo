@@ -724,11 +724,11 @@ const ReviewTrek = ({ guide, searchParams }) => {
                   )}
 
                   {/* Provider T&C */}
-                  {trekData?.guide?.termsAndConditions && trekData.guide.termsAndConditions.length > 0 && (
+                  {((trekData?.selectedPackage?.termsAndConditions && trekData.selectedPackage.termsAndConditions.length > 0) || (trekData?.guide?.termsAndConditions && trekData.guide.termsAndConditions.length > 0)) && (
                     <div className="mb-4 p-4 rounded-xl border border-gray-200 bg-gray-50/50">
                       <h4 className="text-xs font-bold text-gray-800 mb-2">Provider Terms & Conditions</h4>
                       <ul className="list-disc pl-5 text-[11px] text-gray-600 space-y-1">
-                        {trekData.guide.termsAndConditions.map((term, i) => (
+                        {(trekData?.selectedPackage?.termsAndConditions || trekData?.guide?.termsAndConditions).map((term, i) => (
                           <li key={i}>{term}</li>
                         ))}
                       </ul>
