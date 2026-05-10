@@ -28,6 +28,7 @@ export async function GET() {
                 { package: { $in: packageIds } },
                 { provider: user.userId },
             ],
+            status: { $ne: 'pending' }
         })
             .populate('user', 'username email phone')
             .populate('package', 'name destination days pricingTiers')

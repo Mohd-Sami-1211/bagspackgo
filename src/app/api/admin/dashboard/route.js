@@ -31,8 +31,8 @@ export async function GET() {
             pendingApplications, unresolvedSupport, unreadNotifications] = await Promise.all([
             User.countDocuments({}),
             Guide.countDocuments({}),
-            TripBooking.countDocuments({}),
-            TrekBooking.countDocuments({}),
+            TripBooking.countDocuments({ status: { $ne: 'pending' } }),
+            TrekBooking.countDocuments({ status: { $ne: 'pending' } }),
             GuideDetails.countDocuments({ status: 'pending' }),
             Support.countDocuments({ status: { $in: ['pending', 'in-progress'] } }),
             AdminNotification.countDocuments({ isRead: false }),
@@ -85,7 +85,7 @@ export async function GET() {
         const [recentApplications, recentSupport, recentTripBookings] = await Promise.all([
             GuideDetails.find({ status: 'pending' }).sort({ createdAt: -1 }).limit(5).lean(),
             Support.find({ status: 'pending' }).sort({ createdAt: -1 }).limit(5).lean(),
-            TripBooking.find({}).sort({ createdAt: -1 }).limit(5).populate('user', 'username email').populate('package', 'name').lean(),
+            TripBooking.find({ status: { $ne: 'pending' } }).sort({ createdAt: -1 }).limit(5).populate('user', 'username email').populate('package', 'name').lean(),
         ]);
 
         return NextResponse.json({

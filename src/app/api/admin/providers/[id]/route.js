@@ -29,8 +29,8 @@ export async function GET(req, context) {
 
         // Fetch booking stats
         const [tripBookings, trekBookings] = await Promise.all([
-            TripBooking.find({ provider: params.id }).select('status totalAmount providerPaymentStatus createdAt').lean(),
-            TrekBooking.find({ provider: params.id }).select('status totalAmount providerPaymentStatus createdAt').lean(),
+            TripBooking.find({ provider: params.id, status: { $ne: 'pending' } }).select('status totalAmount providerPaymentStatus createdAt').lean(),
+            TrekBooking.find({ provider: params.id, status: { $ne: 'pending' } }).select('status totalAmount providerPaymentStatus createdAt').lean(),
         ]);
 
         const allBookings = [...tripBookings, ...trekBookings];
