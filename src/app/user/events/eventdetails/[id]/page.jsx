@@ -14,20 +14,38 @@ function EventDetailsContent() {
     if (!id) return;
     
     async function fetchEvent() {
-      try {
-        const res = await fetch(`/api/events/${id}`);
-        const data = await res.json();
-        if (data.success && data.event) {
-          setEvent(data.event);
-        } else {
-          setEvent(false); // Indicates not found
+      let retries = 2;
+      while (retries >= 0) {
+        try {
+          const res = await fetch(`/api/events/${id}`);
+          if (res.status === 404) {
+            setEvent(false);
+            break;
+          }
+          if (!res.ok) {
+            throw new Error(`HTTP error ${res.status}`);
+          }
+          
+          const text = await res.text();
+          const data = JSON.parse(text);
+          
+          if (data.success && data.event) {
+            setEvent(data.event);
+          } else {
+            setEvent(false); // Not found
+          }
+          break; // Success, exit loop
+        } catch (err) {
+          console.error(`Fetch attempt failed (${retries} retries left):`, err);
+          if (retries === 0) {
+            setEvent(false);
+          } else {
+            await new Promise(resolve => setTimeout(resolve, 1500));
+          }
         }
-      } catch (err) {
-        console.error(err);
-        setEvent(false);
-      } finally {
-        setLoading(false);
+        retries--;
       }
+      setLoading(false);
     }
     fetchEvent();
   }, [id]);

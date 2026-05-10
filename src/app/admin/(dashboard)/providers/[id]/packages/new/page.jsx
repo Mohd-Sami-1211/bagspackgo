@@ -27,6 +27,11 @@ export default function AdminNewPackagePage() {
                         pkg.name = `Copy of ${pkg.name}`;
                         pkg.status = 'active';
                         setPrefillData(pkg);
+                        
+                        // Remove 'duplicate' from URL so a page reload uses the local storage draft instead
+                        const url = new URL(window.location.href);
+                        url.searchParams.delete('duplicate');
+                        window.history.replaceState({}, '', url.toString());
                     }
                 } catch (err) {
                     console.error('Failed to fetch package for duplication:', err);

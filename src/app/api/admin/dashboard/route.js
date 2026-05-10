@@ -9,6 +9,7 @@ import { Event } from '@/models/event.model';
 import { GuideDetails } from '@/models/guidedetails.model';
 import { Support } from '@/models/support.model';
 import { AdminNotification } from '@/models/adminnotification.model';
+import { Package } from '@/models/package.model';
 
 /**
  * GET /api/admin/dashboard

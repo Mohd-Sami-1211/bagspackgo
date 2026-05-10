@@ -269,20 +269,32 @@ const NewPackage = ({ initialData = null, isEdit = false, adminMode = false, pro
   // Save to local storage on changes
   useEffect(() => {
     if (!isEdit) {
-      const dataToSave = {
-        packageInfo,
-        pricingTiers,
-        pickupDropCities,
-        inclusivesList,
-        exclusivesList,
-        additionalPoints,
-        termsAndConditions,
-        itinerary,
-        daysCount,
-        aboutPackage,
-        packagePhotos
-      };
-      localStorage.setItem('newTripPackageDraft', JSON.stringify(dataToSave));
+      try {
+        // Remove base64 image data to prevent QuotaExceededError in localStorage
+        const cleanItinerary = itinerary.map(day => {
+          const cleanDay = { ...day };
+          delete cleanDay.hotelPhotos;
+          delete cleanDay.destinationPhotos;
+          return cleanDay;
+        });
+
+        const dataToSave = {
+          packageInfo,
+          pricingTiers,
+          pickupDropCities,
+          inclusivesList,
+          exclusivesList,
+          additionalPoints,
+          termsAndConditions,
+          itinerary: cleanItinerary,
+          daysCount,
+          aboutPackage
+          // Exclude packagePhotos completely as they take up too much space
+        };
+        localStorage.setItem('newTripPackageDraft', JSON.stringify(dataToSave));
+      } catch (e) {
+        console.warn("Failed to save draft due to storage limits:", e);
+      }
     }
   }, [packageInfo, pricingTiers, pickupDropCities, inclusivesList, exclusivesList, additionalPoints, termsAndConditions, itinerary, daysCount, aboutPackage, packagePhotos, isEdit]);
 
@@ -745,6 +757,13 @@ const NewPackage = ({ initialData = null, isEdit = false, adminMode = false, pro
   const handleDayPhotoUpload = (dayIndex, field, files) => {
     if (currentDayEditing === dayIndex && files.length > 0) {
       const fileArray = Array.from(files);
+      const existingPhotos = itinerary[dayIndex][field] || [];
+      
+      if (existingPhotos.length + fileArray.length > 5) {
+        alert('Max 5 photos allowed per section.');
+        return;
+      }
+      
       const validFiles = fileArray.filter(f => f.size <= 5 * 1024 * 1024);
       if (validFiles.length < fileArray.length) {
         alert('Some files exceed the 5MB limit and were skipped.');
@@ -754,12 +773,15 @@ const NewPackage = ({ initialData = null, isEdit = false, adminMode = false, pro
 
       Promise.all(promises).then(compressedImages => {
         const updatedItinerary = [...itinerary];
-        const existingPhotos = updatedItinerary[dayIndex][field] || [];
+        const currentPhotos = updatedItinerary[dayIndex][field] || [];
         updatedItinerary[dayIndex] = {
           ...updatedItinerary[dayIndex],
-          [field]: [...existingPhotos, ...compressedImages]
+          [field]: [...currentPhotos, ...compressedImages].slice(0, 5)
         };
         setItinerary(updatedItinerary);
+      }).catch(err => {
+        console.error('Compression error:', err);
+        alert('Error compressing images. Please try again.');
       });
     }
   };
@@ -777,7 +799,7 @@ const NewPackage = ({ initialData = null, isEdit = false, adminMode = false, pro
     if (currentDayEditing === dayIndex) {
       const updatedItinerary = [...itinerary];
       const newHighlights = [...updatedItinerary[dayIndex].highlights];
-      newHighlights[highlightIndex] = value.slice(0, 100); // Word limit
+      newHighlights[highlightIndex] = value;
       updatedItinerary[dayIndex].highlights = newHighlights;
       setItinerary(updatedItinerary);
     }
