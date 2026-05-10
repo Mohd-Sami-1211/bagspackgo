@@ -315,17 +315,21 @@ const ProviderProfileContent = ({ providerId }) => {
                 <p className="text-[10px] text-slate-400 uppercase font-semibold tracking-wider">Starting From</p>
                 {minPeopleRequired && (
                    <span className="text-[9px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-medium tracking-wide">
-                     Min. {minPeopleRequired} pax
+                     Min. {minPeopleRequired} {pkg.packageType === 'couple' && !isTrek ? 'couple' : 'pax'}
                    </span>
                 )}
               </div>
               {hasDiscount ? (
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-lg text-slate-900">₹{Math.round(lowestPrice).toLocaleString('en-IN')}</span>
-                  <span className="text-xs text-slate-400 line-through">₹{Math.round(lowestOriginalPrice).toLocaleString('en-IN')}</span>
+                <div className="flex items-end gap-1.5">
+                  <span className="font-bold text-lg text-slate-900 leading-none">₹{Math.round(lowestPrice).toLocaleString('en-IN')}</span>
+                  <span className="text-xs text-slate-400 line-through mb-[2px]">₹{Math.round(lowestOriginalPrice).toLocaleString('en-IN')}</span>
+                  <span className="text-[10px] text-slate-500 mb-[2px]">/ {pkg.packageType === 'couple' && !isTrek ? 'couple' : 'person'}</span>
                 </div>
               ) : (
-                <span className="font-bold text-lg text-slate-900">₹{lowestPrice.toLocaleString('en-IN')}</span>
+                <div className="flex items-end gap-1.5">
+                  <span className="font-bold text-lg text-slate-900 leading-none">₹{lowestPrice.toLocaleString('en-IN')}</span>
+                  <span className="text-[10px] text-slate-500 mb-[2px]">/ {pkg.packageType === 'couple' && !isTrek ? 'couple' : 'person'}</span>
+                </div>
               )}
             </div>
             <button onClick={() => handleConfigurePkg(pkg._id)} className="text-sm font-medium text-white bg-slate-900 hover:bg-slate-800 px-4 py-2 rounded-lg transition-colors">
