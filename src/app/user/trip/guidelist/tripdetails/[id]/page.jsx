@@ -16,23 +16,32 @@ function TripDetailsContent() {
 
   useEffect(() => {
     async function fetchGuide() {
-      try {
-        const res = await fetch('/api/public/trips');
-        const json = await res.json();
-        if (json.success && json.data) {
-          const found = json.data.find(g => g.id === params.id);
-          if (found) {
-            setGuide(found);
-          } else {
+      let retries = 2;
+      while (retries >= 0) {
+        try {
+          const res = await fetch('/api/public/trips');
+          if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+          const json = await res.json();
+          if (json.success && json.data) {
+            const found = json.data.find(g => g.id === params.id);
+            if (found) {
+              setGuide(found);
+            } else {
+              setGuide('not_found');
+            }
+          }
+          break; // Success, exit loop
+        } catch (err) {
+          console.error(`Fetch attempt failed (${retries} retries left):`, err);
+          if (retries === 0) {
             setGuide('not_found');
+          } else {
+            await new Promise(resolve => setTimeout(resolve, 1500));
           }
         }
-      } catch (err) {
-        console.error(err);
-        setGuide('not_found');
-      } finally {
-        setLoading(false);
+        retries--;
       }
+      setLoading(false);
     }
     fetchGuide();
   }, [params.id]);

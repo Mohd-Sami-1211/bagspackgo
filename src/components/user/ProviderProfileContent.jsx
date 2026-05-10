@@ -125,7 +125,7 @@ const ProviderProfileContent = ({ providerId }) => {
       const isTrek = pkg.category === 'trek';
       
       const params = new URLSearchParams();
-      if (!isTrek) params.set('category', pkgConfig.category);
+      if (!isTrek) params.set('category', pkg.packageType || 'individual');
       if (pkgConfig.date) params.set('date', pkgConfig.date.toISOString());
       
       if (isTrek) {
@@ -151,22 +151,46 @@ const ProviderProfileContent = ({ providerId }) => {
     let lowestPrice = 0;
     let lowestOriginalPrice = 0;
     let hasDiscount = false;
-    if (pkg.pricingTiers && pkg.pricingTiers.length > 0) {
-        const sortedTiers = [...pkg.pricingTiers].sort((a, b) => {
-          const aDisc = Number(a.discount || 0);
-          const bDisc = Number(b.discount || 0);
-          const aEffective = aDisc > 0 ? a.price * (1 - aDisc / 100) : a.price;
-          const bEffective = bDisc > 0 ? b.price * (1 - bDisc / 100) : b.price;
-          return aEffective - bEffective;
-        });
-        const cheapestTier = sortedTiers[0];
-        const disc = Number(cheapestTier.discount || 0);
-        lowestOriginalPrice = Number(cheapestTier.price);
-        lowestPrice = disc > 0 ? lowestOriginalPrice * (1 - disc / 100) : lowestOriginalPrice;
-        hasDiscount = disc > 0;
+    let minPeopleRequired = null;
+
+    if (activePackageId === pkg._id) {
+        // Dynamic pricing based on selected count
+        if (pkg.pricingTiers && pkg.pricingTiers.length > 0) {
+            let matchedTier = pkg.pricingTiers.find(t => pkgConfig.count >= t.minPeople && pkgConfig.count <= t.maxPeople);
+            if (!matchedTier) {
+                const sortedTiers = [...pkg.pricingTiers].sort((a, b) => a.maxPeople - b.maxPeople);
+                matchedTier = pkgConfig.count > sortedTiers[sortedTiers.length - 1].maxPeople 
+                  ? sortedTiers[sortedTiers.length - 1] 
+                  : sortedTiers[0];
+            }
+            const disc = Number(matchedTier.discount || 0);
+            lowestOriginalPrice = Number(matchedTier.price);
+            lowestPrice = disc > 0 ? lowestOriginalPrice * (1 - disc / 100) : lowestOriginalPrice;
+            hasDiscount = disc > 0;
+        } else {
+            lowestPrice = pkg.price?.individual || pkg.price?.starting || pkg.price || 0;
+            lowestOriginalPrice = lowestPrice;
+        }
     } else {
-        lowestPrice = pkg.price?.individual || pkg.price?.starting || pkg.price || 0;
-        lowestOriginalPrice = lowestPrice;
+        // Static "Starting from" pricing for the card view
+        if (pkg.pricingTiers && pkg.pricingTiers.length > 0) {
+            const sortedTiers = [...pkg.pricingTiers].sort((a, b) => {
+              const aDisc = Number(a.discount || 0);
+              const bDisc = Number(b.discount || 0);
+              const aEffective = aDisc > 0 ? a.price * (1 - aDisc / 100) : a.price;
+              const bEffective = bDisc > 0 ? b.price * (1 - bDisc / 100) : b.price;
+              return aEffective - bEffective;
+            });
+            const cheapestTier = sortedTiers[0];
+            const disc = Number(cheapestTier.discount || 0);
+            lowestOriginalPrice = Number(cheapestTier.price);
+            lowestPrice = disc > 0 ? lowestOriginalPrice * (1 - disc / 100) : lowestOriginalPrice;
+            hasDiscount = disc > 0;
+            minPeopleRequired = cheapestTier.minPeople;
+        } else {
+            lowestPrice = pkg.price?.individual || pkg.price?.starting || pkg.price || 0;
+            lowestOriginalPrice = lowestPrice;
+        }
     }
     const numDays = pkg.days || 1;
 
@@ -183,30 +207,9 @@ const ProviderProfileContent = ({ providerId }) => {
               </span>
             </div>
             <div className="space-y-4 flex-grow">
-              {!isTrek && (
-                <div>
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Category</label>
-                  <div className="flex gap-2">
-                    {[{value: 'individual', label: 'Individual'}, {value: 'couple', label: 'Couple'}].map(opt => (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        onClick={() => setPkgConfig({...pkgConfig, category: opt.value})}
-                        className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium border transition-all ${
-                          pkgConfig.category === opt.value
-                            ? 'bg-slate-900 border-slate-900 text-white'
-                            : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
-                        }`}
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
               <div>
                 <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                  {pkgConfig.category === 'couple' && !isTrek ? 'No. of Couples' : 'No. of People'}
+                  {pkg.packageType === 'couple' && !isTrek ? 'No. of Couples' : 'No. of People'}
                 </label>
                 <div className="flex items-center bg-white border border-slate-200 rounded-lg h-[40px] hover:border-slate-300 transition-colors">
                   <button
@@ -229,6 +232,19 @@ const ProviderProfileContent = ({ providerId }) => {
                   </button>
                 </div>
               </div>
+              
+              <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 flex items-center justify-between">
+                 <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Per {pkg.packageType === 'couple' && !isTrek ? 'Couple' : 'Person'}</span>
+                 {hasDiscount ? (
+                   <div className="flex items-center gap-2">
+                     <span className="text-xs text-slate-400 line-through">₹{Math.round(lowestOriginalPrice).toLocaleString('en-IN')}</span>
+                     <span className="font-bold text-lg text-slate-900">₹{Math.round(lowestPrice).toLocaleString('en-IN')}</span>
+                   </div>
+                 ) : (
+                   <span className="font-bold text-lg text-slate-900">₹{lowestPrice.toLocaleString('en-IN')}</span>
+                 )}
+              </div>
+              
               <div className="relative" style={{zIndex: 100}}>
                 <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Expected Travel Date</label>
                 <DatePicker
@@ -295,7 +311,14 @@ const ProviderProfileContent = ({ providerId }) => {
           </p>
           <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-100">
             <div>
-              <p className="text-[10px] text-slate-400 uppercase font-semibold tracking-wider">Starting From</p>
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <p className="text-[10px] text-slate-400 uppercase font-semibold tracking-wider">Starting From</p>
+                {minPeopleRequired && (
+                   <span className="text-[9px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-medium tracking-wide">
+                     Min. {minPeopleRequired} pax
+                   </span>
+                )}
+              </div>
               {hasDiscount ? (
                 <div className="flex items-center gap-2">
                   <span className="font-bold text-lg text-slate-900">₹{Math.round(lowestPrice).toLocaleString('en-IN')}</span>

@@ -92,16 +92,8 @@ const ReviewTrek = ({ guide, searchParams }) => {
     const code = couponCode.trim().toUpperCase();
     if (!code) return;
 
-    if (code === "WELCOME10") {
-      setAppliedCoupon({ code, type: "percent", value: 10 });
-      setCouponMessage("🎉 10% discount applied successfully!");
-    } else if (code === "FLAT500") {
-      setAppliedCoupon({ code, type: "flat", value: 500 });
-      setCouponMessage("🎉 ₹500 discount applied successfully!");
-    } else {
-      setAppliedCoupon(null);
-      setCouponMessage("Invalid or expired coupon code.");
-    }
+    setAppliedCoupon(null);
+    setCouponMessage("Invalid or expired coupon code.");
   };
 
   const removeCoupon = () => {

@@ -18,20 +18,29 @@ function TrekDetailsContent() {
 
   useEffect(() => {
     async function fetchPackage() {
-      try {
-        // Fetch package by trekId (which is actually the package _id)
-        const res = await fetch(`/api/public/treks`); // We can just fetch all or make a new API
-        if (res.ok) {
+      let retries = 2;
+      while (retries >= 0) {
+        try {
+          // Fetch package by trekId (which is actually the package _id)
+          const res = await fetch(`/api/public/treks`); // We can just fetch all or make a new API
+          if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+          
           const json = await res.json();
           const packages = json.data || [];
           const foundPackage = packages.find(p => p._id === trekId);
           setPkg(foundPackage);
+          break; // Success, exit loop
+        } catch (error) {
+          console.error(`Fetch attempt failed (${retries} retries left):`, error);
+          if (retries === 0) {
+            // Already handled by notFound if pkg is null
+          } else {
+            await new Promise(resolve => setTimeout(resolve, 1500));
+          }
         }
-      } catch (error) {
-        console.error("Failed to fetch package", error);
-      } finally {
-        setLoading(false);
+        retries--;
       }
+      setLoading(false);
     }
     fetchPackage();
   }, [trekId]);
