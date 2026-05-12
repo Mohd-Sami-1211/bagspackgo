@@ -7,7 +7,7 @@ import {
     Package, Calendar, IndianRupee, Loader2, AlertTriangle, ExternalLink,
     Ban, CheckCircle2, Trash2, Eye, Star, Mountain, Car, Tent, Clock,
     Instagram, Facebook, Twitter, Youtube, CreditCard, FileText, Key,
-    Plus, Copy, Edit2, ChevronDown
+    Plus, Copy, Edit2, ChevronDown, Download
 } from 'lucide-react';
 
 export default function AdminProviderDetailPage() {
@@ -62,6 +62,36 @@ export default function AdminProviderDetailPage() {
             <p className="text-gray-500 text-sm">Loading provider details...</p>
         </div>
     );
+
+    const handleViewDocument = (base64Data) => {
+        if (!base64Data.startsWith('data:')) {
+            window.open(base64Data, '_blank');
+            return;
+        }
+        try {
+            const arr = base64Data.split(',');
+            const mime = arr[0].match(/:(.*?);/)[1];
+            const bstr = atob(arr[1]);
+            let n = bstr.length;
+            const u8arr = new Uint8Array(n);
+            while (n--) {
+                u8arr[n] = bstr.charCodeAt(n);
+            }
+            const blob = new Blob([u8arr], { type: mime });
+            const url = URL.createObjectURL(blob);
+            window.open(url, '_blank');
+        } catch (e) {
+            console.error('Error viewing document:', e);
+            alert('Could not open document.');
+        }
+    };
+
+    const handleDownloadDocument = (base64Data, filename) => {
+        const a = document.createElement("a");
+        a.href = base64Data;
+        a.download = filename;
+        a.click();
+    };
 
     if (error || !provider) return (
         <div className="min-h-[70vh] flex flex-col items-center justify-center gap-4">
@@ -229,24 +259,36 @@ export default function AdminProviderDetailPage() {
                             <Card title="Uploaded Documents" icon={FileText} className="lg:col-span-2">
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     {d.licenseFile && (
-                                        <a href={d.licenseFile} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 bg-gray-800/50 rounded-xl border border-gray-700/50 hover:border-emerald-500/30 transition-colors group">
+                                        <div className="flex items-center gap-3 p-4 bg-gray-800/50 rounded-xl border border-gray-700/50 group">
                                             <FileText size={20} className="text-emerald-500 shrink-0" />
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-bold text-white group-hover:text-emerald-400 transition-colors">Business License</p>
-                                                <p className="text-xs text-gray-500 truncate">Click to view document</p>
+                                                <p className="text-sm font-bold text-white">Business License</p>
+                                                <div className="flex gap-3 mt-1.5">
+                                                    <button onClick={() => handleViewDocument(d.licenseFile)} className="text-xs text-emerald-400 hover:text-emerald-300 font-medium flex items-center gap-1">
+                                                        <Eye size={12} /> View
+                                                    </button>
+                                                    <button onClick={() => handleDownloadDocument(d.licenseFile, 'business_license')} className="text-xs text-emerald-400 hover:text-emerald-300 font-medium flex items-center gap-1">
+                                                        <Download size={12} /> Download
+                                                    </button>
+                                                </div>
                                             </div>
-                                            <ExternalLink size={14} className="text-gray-600 group-hover:text-emerald-500 transition-colors" />
-                                        </a>
+                                        </div>
                                     )}
                                     {d.idFile && (
-                                        <a href={d.idFile} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 bg-gray-800/50 rounded-xl border border-gray-700/50 hover:border-emerald-500/30 transition-colors group">
+                                        <div className="flex items-center gap-3 p-4 bg-gray-800/50 rounded-xl border border-gray-700/50 group">
                                             <FileText size={20} className="text-blue-500 shrink-0" />
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-bold text-white group-hover:text-blue-400 transition-colors">ID Document</p>
-                                                <p className="text-xs text-gray-500 truncate">Click to view document</p>
+                                                <p className="text-sm font-bold text-white">ID Document</p>
+                                                <div className="flex gap-3 mt-1.5">
+                                                    <button onClick={() => handleViewDocument(d.idFile)} className="text-xs text-blue-400 hover:text-blue-300 font-medium flex items-center gap-1">
+                                                        <Eye size={12} /> View
+                                                    </button>
+                                                    <button onClick={() => handleDownloadDocument(d.idFile, 'id_document')} className="text-xs text-blue-400 hover:text-blue-300 font-medium flex items-center gap-1">
+                                                        <Download size={12} /> Download
+                                                    </button>
+                                                </div>
                                             </div>
-                                            <ExternalLink size={14} className="text-gray-600 group-hover:text-blue-500 transition-colors" />
-                                        </a>
+                                        </div>
                                     )}
                                 </div>
                             </Card>

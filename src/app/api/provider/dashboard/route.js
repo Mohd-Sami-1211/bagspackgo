@@ -145,14 +145,16 @@ export async function GET() {
         const [tripBookings, trekBookings, events] = await Promise.all([
             packageIds.length > 0
                 ? TripBooking.find({
-                    $or: [{ package: { $in: packageIds } }, { provider: guideId }]
+                    $or: [{ package: { $in: packageIds } }, { provider: guideId }],
+                    status: { $ne: 'pending' }
                 })
                     .populate('user', 'username email phone')
                     .lean()
                 : [],
             packageIds.length > 0
                 ? TrekBooking.find({
-                    $or: [{ package: { $in: packageIds } }, { provider: guideId }]
+                    $or: [{ package: { $in: packageIds } }, { provider: guideId }],
+                    status: { $ne: 'pending' }
                 })
                     .populate('user', 'username email phone')
                     .lean()
@@ -199,8 +201,8 @@ export async function GET() {
 
         // ── Pipeline bar chart ────────────────────────────────
         const pipeline = [
-            { name: 'Trips', scheduled: tripBookings.filter(b => b.status === 'confirmed').length, pending: tripBookings.filter(b => b.status === 'pending').length },
-            { name: 'Treks', scheduled: trekBookings.filter(b => b.status === 'confirmed').length, pending: trekBookings.filter(b => b.status === 'pending').length },
+            { name: 'Trips', scheduled: tripBookings.filter(b => b.status === 'confirmed').length, pending: 0 },
+            { name: 'Treks', scheduled: trekBookings.filter(b => b.status === 'confirmed').length, pending: 0 },
             { name: 'Events', scheduled: events.filter(e => e.bookedSlots > 0).length, pending: 0 },
         ];
 

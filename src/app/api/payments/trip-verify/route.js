@@ -43,6 +43,13 @@ export async function POST(request) {
         if (razorpay_order_id) booking.orderId = razorpay_order_id;
         await booking.save();
 
+        // Increment provider's total trips
+        const { GuideDetails } = await import('@/models/guidedetails.model');
+        await GuideDetails.findOneAndUpdate(
+            { guide: booking.provider },
+            { $inc: { totalTrips: 1 } }
+        ).catch(err => console.error('Failed to increment totalTrips:', err));
+
         // Fetch related data for emails
         const [userDoc, providerDoc, packageDoc] = await Promise.all([
             User.findById(booking.user).select('username email phone').lean(),
