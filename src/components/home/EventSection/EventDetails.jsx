@@ -67,6 +67,143 @@ const CustomSelect = ({ value, onChange, options, placeholder }) => {
   );
 };
 
+/* ——————————— Custom Form Card ——————————— */
+const CustomFormCard = ({ event, formData, formErrors, handleCustomFormChange }) => {
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 shadow-sm">
+      <h2 className="text-xl font-bold text-gray-900 mb-1">Application Form</h2>
+      <p className="text-gray-500 text-sm mb-6 font-medium">Please fill out the required information below.</p>
+      <div className="space-y-5">
+        {event.customFormFields.map((field, fIdx) => {
+          if (field.dependsOn) {
+            const depResp = formData.customFormResponses?.find(r => r.fieldId === field.dependsOn);
+            if (!depResp) return null;
+            const showVals = Array.isArray(field.showIfValue) ? field.showIfValue : [field.showIfValue];
+            const userVals = Array.isArray(depResp.value) ? depResp.value : [depResp.value];
+            const hasMatch = showVals.some(v => userVals.includes(v));
+            if (!hasMatch) return null;
+          }
+          const response = formData.customFormResponses?.find(r => r.fieldId === field.id);
+          const currentValue = response?.value || '';
+          const hasError = formErrors[`cf.${field.id}`];
+
+          return (
+            <div key={field.id} className="relative p-5 sm:p-6 border border-gray-200 rounded-xl bg-white shadow-sm border-l-4 border-l-emerald-500 space-y-3" style={{ zIndex: event.customFormFields.length - fIdx }}>
+              <label className="block text-sm font-bold text-gray-800">
+                {field.title} {field.required && <span className="text-red-500">*</span>}
+              </label>
+
+              {field.type === 'text' && (
+                <input type="text" placeholder={`Your answer`} value={currentValue}
+                  onChange={e => handleCustomFormChange(field, e.target.value)}
+                  className={`w-full p-2.5 border rounded-lg text-sm outline-none transition-all bg-gray-50/50 focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 ${hasError ? 'border-red-500' : 'border-gray-200'} border-b-2 focus:bg-white`} />
+              )}
+
+              {field.type === 'number' && (
+                <input type="number" placeholder={`Your answer`} value={currentValue}
+                  onChange={e => handleCustomFormChange(field, e.target.value)}
+                  className={`w-full p-2.5 border rounded-lg text-sm outline-none transition-all bg-gray-50/50 focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 ${hasError ? 'border-red-500' : 'border-gray-200'} border-b-2 focus:bg-white`} />
+              )}
+
+              {field.type === 'dropdown' && (
+                <div className="relative">
+                  <CustomSelect value={currentValue}
+                    onChange={(val) => {
+                      const opt = field.options?.find(o => o.value === val);
+                      handleCustomFormChange(field, val, opt?.extraCharge || 0);
+                    }}
+                    options={(field.options || []).map(o => ({
+                      value: o.value,
+                      label: o.extraCharge > 0 ? `${o.value} (+₹${o.extraCharge})` : o.value
+                    }))}
+                    placeholder={`Select ${field.title.toLowerCase()}`} />
+                </div>
+              )}
+
+              {field.type === 'multiple_choice' && (
+                <div className="space-y-2.5 mt-2">
+                  {(field.options || []).map((opt, oIdx) => (
+                    <label key={oIdx} className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${currentValue === opt.value ? 'border-emerald-500 bg-emerald-50/50' : 'border-gray-200 hover:border-gray-300'}`}>
+                      <input type="radio" name={`cf-${field.id}`} checked={currentValue === opt.value}
+                        onChange={() => handleCustomFormChange(field, opt.value, opt.extraCharge || 0)}
+                        className="w-4 h-4 text-emerald-600 border-gray-300 focus:ring-emerald-500" />
+                      <span className="text-sm font-medium text-gray-700 flex-1">{opt.value}</span>
+                      {opt.extraCharge > 0 && <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">+₹{opt.extraCharge}</span>}
+                    </label>
+                  ))}
+                </div>
+              )}
+
+              {field.type === 'checkbox' && (
+                <div className="space-y-2.5 mt-2">
+                  {(field.options || []).map((opt, oIdx) => {
+                    const checkedValues = Array.isArray(currentValue) ? currentValue : [];
+                    const isChecked = checkedValues.includes(opt.value);
+                    return (
+                      <label key={oIdx} className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${isChecked ? 'border-emerald-500 bg-emerald-50/50' : 'border-gray-200 hover:border-gray-300'}`}>
+                        <input type="checkbox" checked={isChecked}
+                          onChange={() => {
+                            const newVals = isChecked ? checkedValues.filter(v => v !== opt.value) : [...checkedValues, opt.value];
+                            const totalExtra = newVals.reduce((sum, v) => { const o = field.options.find(x => x.value === v); return sum + (o?.extraCharge || 0); }, 0);
+                            handleCustomFormChange(field, newVals, totalExtra);
+                          }}
+                          className="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500" />
+                        <span className="text-sm font-medium text-gray-700 flex-1">{opt.value}</span>
+                        {opt.extraCharge > 0 && <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">+₹{opt.extraCharge}</span>}
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
+
+              {field.type === 'photo_upload' && (
+                <div className={`relative border-2 border-dashed rounded-xl p-4 transition-all ${currentValue ? 'border-gray-200 bg-gray-50/30' : hasError ? 'border-red-300 bg-red-50/30' : 'border-gray-200 hover:border-gray-300 bg-gray-50'}`}>
+                  {currentValue ? (
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-lg bg-white border border-gray-200 overflow-hidden flex-shrink-0 shadow-sm">
+                          <img src={currentValue} alt="Preview" className="w-full h-full object-cover" />
+                        </div>
+                        <p className="text-xs font-bold text-gray-900">Photo Uploaded</p>
+                      </div>
+                      <button type="button" onClick={() => handleCustomFormChange(field, '', 0)} className="p-2 bg-white rounded-full text-red-500 hover:bg-red-50 transition-colors shadow-sm">
+                        <Upload size={14} className="rotate-180" />
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center cursor-pointer py-2">
+                      <Upload size={18} className="text-gray-400 mb-2" />
+                      <p className="text-xs font-bold text-gray-600">Click to upload</p>
+                      <input type="file" accept="image/*" className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files[0];
+                          if (!file) return;
+                          const img = new Image();
+                          const objectUrl = URL.createObjectURL(file);
+                          img.onload = () => {
+                            const MAX = 800; let w = img.width, h = img.height;
+                            if (w > MAX || h > MAX) { if (w > h) { h = Math.round(h * MAX / w); w = MAX; } else { w = Math.round(w * MAX / h); h = MAX; } }
+                            const c = document.createElement('canvas'); c.width = w; c.height = h;
+                            c.getContext('2d').drawImage(img, 0, 0, w, h);
+                            handleCustomFormChange(field, c.toDataURL('image/jpeg', 0.6));
+                            URL.revokeObjectURL(objectUrl);
+                          };
+                          img.src = objectUrl;
+                        }} />
+                    </label>
+                  )}
+                </div>
+              )}
+
+              {hasError && <p className="text-[10px] text-red-500 font-bold mt-1 uppercase">{"\u26A0"} {formErrors[`cf.${field.id}`]}</p>}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 const EventDetails = ({ event }) => {
   const router = useRouter();
   const { user, loading: authLoading, openAuthModal } = useAuth();
@@ -124,7 +261,9 @@ const EventDetails = ({ event }) => {
   const [formData, setFormData] = useState({
     contactDetails: { email: user?.email || '', phone: user?.phone || '' },
     participants: [createEmptyParticipant()],
+    customFormResponses: []
   });
+  const [extraChargesTotal, setExtraChargesTotal] = useState(0);
 
   useEffect(() => {
     if (user && (!formData.contactDetails.email || !formData.contactDetails.phone)) {
@@ -325,6 +464,29 @@ const EventDetails = ({ event }) => {
     });
   };
 
+  const handleCustomFormChange = (field, value, extraCharge = 0) => {
+    setFormData(prev => {
+      const existing = [...prev.customFormResponses];
+      const index = existing.findIndex(r => r.fieldId === field.id);
+      
+      if (index >= 0) {
+        existing[index] = { ...existing[index], value, extraCharge };
+      } else {
+        existing.push({
+          fieldId: field.id,
+          fieldTitle: field.title,
+          value,
+          extraCharge
+        });
+      }
+      
+      const newTotalExtra = existing.reduce((sum, res) => sum + (res.extraCharge || 0), 0) * bookingSlots;
+      setExtraChargesTotal(newTotalExtra);
+      
+      return { ...prev, customFormResponses: existing };
+    });
+  };
+
   useEffect(() => {
     setFormData(prev => {
       const cur = prev.participants.length;
@@ -337,6 +499,9 @@ const EventDetails = ({ event }) => {
       }
       return prev;
     });
+    // Recalculate extra charges when slots change
+    const newTotalExtra = formData.customFormResponses.reduce((sum, res) => sum + (res.extraCharge || 0), 0) * bookingSlots;
+    setExtraChargesTotal(newTotalExtra);
   }, [bookingSlots]);
 
   const formattedDate = new Date(event.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -365,16 +530,40 @@ const EventDetails = ({ event }) => {
       errors['pickup'] = 'Please select a pickup point';
     }
 
-    for (let i = 0; i < bookingSlots; i++) {
-      const p = formData.participants[i];
-      if (!p.name) errors[`p.${i}.name`] = 'Full name is required';
-      if (!p.age) errors[`p.${i}.age`] = 'Age is required';
-      if (!p.phone) errors[`p.${i}.phone`] = 'Mobile number is required';
-      if (!p.gender) errors[`p.${i}.gender`] = 'Gender is required';
-      if (!p.nationality) errors[`p.${i}.nationality`] = 'Nationality is required';
-      if (!p.idType) errors[`p.${i}.idType`] = 'ID proof type is required';
-      if (!p.idNumber) errors[`p.${i}.idNumber`] = 'ID number is required';
-      if (!p.idProofImage) errors[`p.${i}.idProofImage`] = 'ID proof document is required';
+    if (event.applicationFormType === 'customized') {
+      // Validate Custom Form Fields
+      event.customFormFields?.forEach((field) => {
+        // Check if field depends on another field and if the condition is met
+        if (field.dependsOn) {
+           const dependentResponse = formData.customFormResponses.find(r => r.fieldId === field.dependsOn);
+           if (!dependentResponse) return;
+           const showVals = Array.isArray(field.showIfValue) ? field.showIfValue : [field.showIfValue];
+           const userVals = Array.isArray(dependentResponse.value) ? dependentResponse.value : [dependentResponse.value];
+           const hasMatch = showVals.some(v => userVals.includes(v));
+           if (!hasMatch) {
+              return; // Skip validation if condition not met
+           }
+        }
+        
+        if (field.required) {
+          const response = formData.customFormResponses.find(r => r.fieldId === field.id);
+          if (!response || !response.value || (Array.isArray(response.value) && response.value.length === 0)) {
+            errors[`cf.${field.id}`] = `${field.title} is required`;
+          }
+        }
+      });
+    } else {
+      for (let i = 0; i < bookingSlots; i++) {
+        const p = formData.participants[i];
+        if (!p.name) errors[`p.${i}.name`] = 'Full name is required';
+        if (!p.age) errors[`p.${i}.age`] = 'Age is required';
+        if (!p.phone) errors[`p.${i}.phone`] = 'Mobile number is required';
+        if (!p.gender) errors[`p.${i}.gender`] = 'Gender is required';
+        if (!p.nationality) errors[`p.${i}.nationality`] = 'Nationality is required';
+        if (!p.idType) errors[`p.${i}.idType`] = 'ID proof type is required';
+        if (!p.idNumber) errors[`p.${i}.idNumber`] = 'ID number is required';
+        if (!p.idProofImage) errors[`p.${i}.idProofImage`] = 'ID proof document is required';
+      }
     }
 
     if (Object.keys(errors).length > 0) {
@@ -399,7 +588,7 @@ const EventDetails = ({ event }) => {
   const gatewayFee = Math.round(subtotal * 0.02);
   const gstOnGateway = Math.round(gatewayFee * 0.18);
   const totalFees = platformFee + gatewayFee + gstOnGateway;
-  const totalPayable = subtotal + totalFees;
+  const totalPayable = subtotal + totalFees + extraChargesTotal;
 
   const handleBooking = async (e) => {
     e.preventDefault();
@@ -425,7 +614,9 @@ const EventDetails = ({ event }) => {
           amountPaid: totalPayable,
           contactDetails: formData.contactDetails,
           participants: formData.participants.slice(0, bookingSlots),
-          selectedPickup: pickupObj ? { location: pickupObj.location, link: pickupObj.link || '', time: pickupObj.time || '' } : null
+          selectedPickup: pickupObj ? { location: pickupObj.location, link: pickupObj.link || '', time: pickupObj.time || '' } : null,
+          customFormResponses: event.applicationFormType === 'customized' ? formData.customFormResponses : [],
+          extraChargesTotal: event.applicationFormType === 'customized' ? extraChargesTotal : 0
         })
       });
       const bookData = await bookRes.json();
@@ -728,7 +919,10 @@ const EventDetails = ({ event }) => {
                   </div>
                 </div>
 
-                {/* Card: Travellers */}
+                {/* Card: Custom Form OR Default Travellers */}
+                {event.applicationFormType === 'customized' && event.customFormFields?.length > 0 ? (
+                  <CustomFormCard event={event} formData={formData} formErrors={formErrors} handleCustomFormChange={handleCustomFormChange} />
+                ) : (
                 <div className="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 shadow-sm">
                   <h2 className="text-xl font-bold text-gray-900 mb-1">Traveller Details</h2>
                   <p className="text-gray-500 text-sm mb-6 font-medium">Required by the organizer for verification & permits.</p>
@@ -909,6 +1103,7 @@ const EventDetails = ({ event }) => {
                     })}
                   </div>
                 </div>
+                )}
 
               </div>
 
@@ -1053,6 +1248,13 @@ const EventDetails = ({ event }) => {
                                   <span className="flex-1">Booking Amount ({bookingSlots} {bookingSlots === 1 ? 'slot' : 'slots'})</span>
                                   <span className="text-gray-900 whitespace-nowrap">{"\u20B9"}{subtotal.toLocaleString()}</span>
                                 </div>
+
+                                {extraChargesTotal > 0 && (
+                                  <div className="flex justify-between items-start gap-4 text-gray-700 font-bold text-sm sm:text-base">
+                                    <span className="flex-1">Extra Charges (from selections)</span>
+                                    <span className="text-emerald-700 whitespace-nowrap">+{"\u20B9"}{extraChargesTotal.toLocaleString()}</span>
+                                  </div>
+                                )}
 
                                 {totalPayable > 0 && (
                                 <div className="pt-2 border-t border-gray-200/50">

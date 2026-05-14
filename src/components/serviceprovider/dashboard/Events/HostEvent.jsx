@@ -24,7 +24,8 @@ import {
   PlayCircle,
   XCircle,
   Sparkles,
-  Camera
+  Camera,
+  X
 } from 'lucide-react';
 import { compressImage, fetchWithRetry } from '@/lib/imageCompression';
 
@@ -331,7 +332,10 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
     itinerary: ['', '', ''],
     photographs: [],
     termsAndConditions: [''],
-    poster: null
+    poster: null,
+    visibility: 'public',
+    applicationFormType: 'default',
+    customFormFields: []
   });
 
   useEffect(() => {
@@ -360,7 +364,10 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
         itinerary: initialData.itinerary?.length ? initialData.itinerary : ['', '', ''],
         photographs: initialData.photographs || [],
         termsAndConditions: initialData.termsAndConditions?.length ? initialData.termsAndConditions : [''],
-        poster: initialData.poster || null
+        poster: initialData.poster || null,
+        visibility: initialData.visibility || 'public',
+        applicationFormType: initialData.applicationFormType || 'default',
+        customFormFields: initialData.customFormFields || []
       });
     }
   }, [initialData]);
@@ -407,6 +414,7 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
     'Requirements',
     'Itinerary',
     'Photographs',
+    'Application Form',
     'Terms & Conditions',
     'Poster & Finalize'
   ];
@@ -450,10 +458,18 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
     }
     // Step 6 (Photographs) — optional, no validation
     if (step === 7) {
+      // Application Form step
+      if (formData.applicationFormType === 'customized' && formData.customFormFields.length === 0) {
+        errors.customFormFields = 'Please add at least one form field';
+      }
+    }
+    if (step === 8) {
+      // Terms & Conditions step
       const validTc = formData.termsAndConditions.filter(t => t.trim());
       if (validTc.length === 0) errors.termsAndConditions = 'At least one term or condition is required';
     }
-    if (step === 8) {
+    if (step === 9) {
+      // Poster & Finalize step
       if (!acceptedTerms) errors.terms = 'You must accept the terms';
     }
     setStepErrors(errors);
@@ -586,7 +602,7 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateStep(8)) return;
+    if (!validateStep(9)) return;
     setSubmitting(true);
     setApiError('');
 
@@ -619,7 +635,10 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
         itinerary: formData.itinerary.filter(s => s.trim()),
         photographs: formData.photographs,
         termsAndConditions: formData.termsAndConditions.filter(t => t.trim()),
-        poster: posterData || formData.poster, // Keep existing if not changed
+        poster: posterData || formData.poster,
+        visibility: formData.visibility,
+        applicationFormType: formData.applicationFormType,
+        customFormFields: formData.customFormFields,
       });
 
       // Warn if payload is very large (> 4 MB)
@@ -736,7 +755,7 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
                     faqs: [{ question: '', answer: '' }, { question: '', answer: '' }, { question: '', answer: '' }],
                     whatToBring: [''], restrictions: [''],
                     pickupPoints: [{ location: '', link: '', time: '' }],
-                    itinerary: ['', '', ''], photographs: [], termsAndConditions: [''], poster: null
+                    itinerary: ['', '', ''], photographs: [], termsAndConditions: [''], poster: null, visibility: 'public', applicationFormType: 'default', customFormFields: []
                   });
                   setActiveSection(0);
                   setAcceptedTerms(false);
@@ -881,6 +900,17 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
                         required
                         error={stepErrors.title}
                         placeholder="e.g., Himalayan Trekking Adventure"
+                      />
+
+                      
+                      <SelectField
+                        label="Event Visibility"
+                        name="visibility"
+                        value={formData.visibility}
+                        onChange={handleChange}
+                        options={['public', 'private']}
+                        required
+                        error={stepErrors.visibility}
                       />
 
                       <SelectField
@@ -1283,14 +1313,177 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
                   </div>
                 )}
 
-                {/* Section 8: Terms & Conditions */}
+                
+                {/* Section 8: Application Form */}
                 {activeSection === 7 && (
+                  <div className="space-y-6 sm:space-y-8">
+                    <SectionHeader
+                      title="Application Form"
+                      description="Customize what information guests need to provide when booking"
+                      icon={Users}
+                      number={7}
+                    />
+
+                    <div className="space-y-4 relative z-50">
+                      <SelectField
+                        label="Application Form Type"
+                        name="applicationFormType"
+                        value={formData.applicationFormType}
+                        onChange={handleChange}
+                        options={['default', 'customized']}
+                        required
+                      />
+
+                      {formData.applicationFormType === 'default' && (
+                        <div className="p-4 sm:p-5 bg-emerald-50/60 border border-emerald-200 rounded-2xl">
+                          <div className="flex items-start gap-3">
+                            <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                              <CheckCircle className="w-4 h-4 text-emerald-600" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-bold text-emerald-800">Default Form Active</p>
+                              <p className="text-xs text-emerald-600 mt-0.5">Guests will fill in: Name, Age, Gender, Mobile, Nationality, ID Proof & Photo.</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {formData.applicationFormType === 'customized' && (
+                        <div className="space-y-6 mt-4">
+                          <div className="p-4 bg-blue-50/60 border border-blue-200 rounded-2xl">
+                            <p className="text-xs text-blue-700 font-medium">
+                              <strong>Custom Form Builder</strong> — Create fields for your application form. Add options with extra charges for dropdowns/choices, and set conditional logic.
+                            </p>
+                          </div>
+
+                          <div className="space-y-4">
+                            {formData.customFormFields.map((field, fIndex) => {
+                              const allPriorFields = formData.customFormFields.slice(0, fIndex);
+                              return (
+                                <div key={field.id} className="relative p-6 border border-neutral-200 rounded-2xl bg-white shadow-sm overflow-visible transition-all duration-200 group border-l-4 border-l-emerald-500" style={{ zIndex: formData.customFormFields.length - fIndex }}>
+                                  <div className="flex justify-between items-start mb-4">
+                                    <h4 className="font-bold text-neutral-800 text-sm">Field {fIndex + 1}</h4>
+                                    <button type="button" onClick={() => { const s = [...formData.customFormFields]; s.splice(fIndex, 1); setFormData(prev => ({ ...prev, customFormFields: s })); }}
+                                      className="text-neutral-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors"><Trash2 className="w-4 h-4" /></button>
+                                  </div>
+
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5">
+                                    <InputField label="Field Title" value={field.title || ''}
+                                      onChange={(e) => { const s = [...formData.customFormFields]; s[fIndex].title = e.target.value; setFormData(prev => ({ ...prev, customFormFields: s })); }}
+                                      placeholder="e.g., Blood Group" required />
+                                    
+                                    <div className="relative z-50">
+                                      <SelectField label="Input Type" name={`ft-${fIndex}`} value={field.type || 'text'}
+                                        onChange={(e) => { const s = [...formData.customFormFields]; s[fIndex].type = e.target.value;
+                                          if (['dropdown','multiple_choice','checkbox'].includes(e.target.value) && s[fIndex].options.length === 0) s[fIndex].options = [{ value: '', extraCharge: 0 }];
+                                          setFormData(prev => ({ ...prev, customFormFields: s })); }}
+                                        options={['text', 'number', 'dropdown', 'multiple_choice', 'checkbox', 'photo_upload']} required />
+                                    </div>
+                                  </div>
+                                  
+                                  {['dropdown', 'multiple_choice', 'checkbox'].includes(field.type) && (
+                                    <div className="space-y-3 mb-5 pl-4 border-l-2 border-emerald-100">
+                                      <label className="block text-sm font-semibold text-neutral-700">Options</label>
+                                      {field.options.map((opt, oIdx) => (
+                                        <div key={oIdx} className="flex items-center gap-2 sm:gap-3">
+                                          <input type="text" value={opt.value || ''}
+                                            onChange={(e) => { const s = [...formData.customFormFields]; s[fIndex].options[oIdx].value = e.target.value; setFormData(prev => ({ ...prev, customFormFields: s })); }}
+                                            placeholder="Option text" className="flex-1 px-3 py-2 rounded-xl border border-neutral-200 text-sm focus:ring-1 focus:ring-emerald-500 outline-none min-w-0" required />
+                                          <div className="relative flex-shrink-0">
+                                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400 text-xs">{"\u20B9"}</span>
+                                            <input type="number" value={opt.extraCharge || 0}
+                                              onChange={(e) => { const s = [...formData.customFormFields]; s[fIndex].options[oIdx].extraCharge = parseInt(e.target.value) || 0; setFormData(prev => ({ ...prev, customFormFields: s })); }}
+                                              placeholder="0" className="w-24 sm:w-28 pl-6 pr-2 py-2 rounded-xl border border-neutral-200 text-sm focus:ring-1 focus:ring-emerald-500 outline-none" />
+                                          </div>
+                                          {field.options.length > 1 && (
+                                            <button type="button" onClick={() => { const s = [...formData.customFormFields]; s[fIndex].options.splice(oIdx, 1); setFormData(prev => ({ ...prev, customFormFields: s })); }}
+                                              className="p-1.5 text-neutral-400 hover:text-red-500 hover:bg-red-50 rounded-lg flex-shrink-0 transition-colors"><X className="w-4 h-4" /></button>
+                                          )}
+                                        </div>
+                                      ))}
+                                      <button type="button" onClick={() => { const s = [...formData.customFormFields]; s[fIndex].options.push({ value: '', extraCharge: 0 }); setFormData(prev => ({ ...prev, customFormFields: s })); }}
+                                        className="text-emerald-600 hover:text-emerald-700 text-sm font-semibold flex items-center gap-1.5 mt-2"><Plus className="w-4 h-4" /> Add Option</button>
+                                    </div>
+                                  )}
+
+                                  {(() => {
+                                    const depFields = allPriorFields.filter(f => ['dropdown', 'multiple_choice'].includes(f.type));
+                                    const depField = depFields.find(f => f.id === field.dependsOn);
+                                    return depFields.length > 0 && (
+                                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5 pt-5 border-t border-neutral-100 relative z-40">
+                                        <SelectField label="Depends On (Optional)" name={`dep-${fIndex}`}
+                                          value={depField?.title || ''}
+                                          onChange={(e) => { 
+                                            const dep = depFields.find(f => f.title === e.target.value); 
+                                            const s = [...formData.customFormFields];
+                                            s[fIndex].dependsOn = dep ? dep.id : null; 
+                                            if (!dep) s[fIndex].showIfValue = [];
+                                            setFormData(prev => ({ ...prev, customFormFields: s })); 
+                                          }}
+                                          options={['None', ...depFields.map(f => f.title)]} />
+                                        
+                                        {depField && (
+                                          <div className="space-y-2">
+                                            <label className="block text-sm font-semibold text-neutral-700">Show if value is</label>
+                                            <div className="flex flex-col gap-2 bg-neutral-50 p-3 rounded-xl border border-neutral-200 max-h-32 overflow-y-auto">
+                                              {depField.options.map((opt, oIdx) => {
+                                                if (!opt.value) return null;
+                                                const currentVals = Array.isArray(field.showIfValue) ? field.showIfValue : (field.showIfValue ? [field.showIfValue] : []);
+                                                const isChecked = currentVals.includes(opt.value);
+                                                return (
+                                                  <label key={oIdx} className="flex items-center gap-2 cursor-pointer">
+                                                    <input type="checkbox" checked={isChecked} onChange={(e) => {
+                                                      let arr = [...currentVals];
+                                                      if (e.target.checked) arr.push(opt.value);
+                                                      else arr = arr.filter(v => v !== opt.value);
+                                                      const s = [...formData.customFormFields];
+                                                      s[fIndex].showIfValue = arr;
+                                                      setFormData(prev => ({ ...prev, customFormFields: s }));
+                                                    }} className="w-4 h-4 text-emerald-600 rounded border-neutral-300 focus:ring-emerald-500" />
+                                                    <span className="text-sm text-neutral-700">{opt.value}</span>
+                                                  </label>
+                                                );
+                                              })}
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })()}
+
+                                  <div className="flex items-center justify-end gap-3 pt-4 border-t border-neutral-100">
+                                    <label htmlFor={`req-${fIndex}`} className="text-sm font-semibold text-neutral-700 cursor-pointer">Required</label>
+                                    <label className="relative inline-flex items-center cursor-pointer">
+                                      <input type="checkbox" id={`req-${fIndex}`} className="sr-only peer" checked={!!field.required}
+                                        onChange={(e) => { const s = [...formData.customFormFields]; s[fIndex].required = e.target.checked; setFormData(prev => ({ ...prev, customFormFields: s })); }} />
+                                      <div className="w-9 h-5 bg-neutral-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                                    </label>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                            <button type="button" onClick={() => { const s = [...formData.customFormFields];
+                              s.push({ id: Math.random().toString(36).substr(2, 9), title: '', type: 'text', options: [{ value: '', extraCharge: 0 }], required: false, dependsOn: null, showIfValue: null });
+                              setFormData(prev => ({ ...prev, customFormFields: s })); }}
+                              className="w-full py-4 border-2 border-dashed border-emerald-300 rounded-2xl hover:border-emerald-500 hover:bg-emerald-50 transition-all duration-200 flex items-center justify-center gap-3">
+                              <Plus className="w-5 h-5 text-emerald-600" /><span className="text-emerald-600 font-semibold text-sm">Add New Field</span>
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+
+                {/* Section 8: Terms & Conditions */}
+                {activeSection === 8 && (
                   <div className="space-y-6 sm:space-y-8">
                     <SectionHeader
                       title="Terms & Conditions"
                       description="Add your event-specific terms and conditions that attendees must accept"
                       icon={Tag}
-                      number={7}
+                      number={8}
                     />
 
                     <div className="space-y-4">
@@ -1340,13 +1533,13 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
                 )}
 
                 {/* Section 9: Poster & Finalize */}
-                {activeSection === 8 && (
+                {activeSection === 9 && (
                   <div className="space-y-6 sm:space-y-8">
                     <SectionHeader
                       title="Poster & Finalize"
                       description="Upload event poster and publish"
                       icon={Upload}
-                      number={7}
+                      number={9}
                     />
 
                     <div className="space-y-4">

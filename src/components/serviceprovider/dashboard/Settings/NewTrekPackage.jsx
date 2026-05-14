@@ -216,20 +216,71 @@ export default function NewTrekPackage({ initialData = null, isEdit = false, adm
       }
       if (initialData.aboutPackage) setAboutPackage(initialData.aboutPackage);
     } else if (!isEdit) {
-      const savedData = localStorage.getItem('newTrekPackageDraft');
-      if (savedData) {
+      // ── Check for Smart Import data from AI extraction ──
+      const importRaw = sessionStorage.getItem('smartImportData');
+      if (importRaw) {
         try {
-          const parsed = JSON.parse(savedData);
-          if (parsed.packageInfo) setPackageInfo(prev => ({ ...prev, ...parsed.packageInfo }));
-          if (parsed.pricingTiers) setPricingTiers(parsed.pricingTiers);
-          if (parsed.pickupDropCities) setPickupDropCities(parsed.pickupDropCities);
-          if (parsed.inclusivesList) setInclusivesList(parsed.inclusivesList);
-          if (parsed.exclusivesList) setExclusivesList(parsed.exclusivesList);
-          if (parsed.additionalPoints) setAdditionalPoints(parsed.additionalPoints);
-          if (parsed.termsAndConditions) setTermsAndConditions(parsed.termsAndConditions);
-          if (parsed.itinerary) setItinerary(parsed.itinerary);
-          if (parsed.aboutPackage) setAboutPackage(parsed.aboutPackage);
-        } catch (e) { console.error('Error loading draft:', e); }
+          const imp = JSON.parse(importRaw);
+          sessionStorage.removeItem('smartImportData');
+          sessionStorage.removeItem('smartImportCategory');
+          localStorage.removeItem('newTrekPackageDraft');
+
+          if (imp.packageInfo) {
+            const dest = imp.packageInfo.destination || '';
+            const trekName = imp.packageInfo.trekName || '';
+            const options = trekOptionsMap[dest] || trekOptionsMap['default'];
+            const isKnownTrek = options.includes(trekName);
+
+            setPackageInfo({
+              name: imp.packageInfo.name || '',
+              category: 'trek',
+              destination: dest,
+              days: imp.packageInfo.days || 3,
+              trekName: isKnownTrek ? trekName : (trekName ? 'Other' : ''),
+              customTrekName: isKnownTrek ? '' : trekName,
+              trekLevel: imp.packageInfo.trekLevel || '',
+            });
+          }
+          if (imp.pricingTiers?.length > 0) {
+            setPricingTiers(imp.pricingTiers.map((t, i) => ({ id: i + 1, ...t })));
+          }
+          if (imp.pickupDropCities?.length > 0) {
+            setPickupDropCities(imp.pickupDropCities.map((c, i) => ({
+              id: i + 1,
+              cityName: c.cityName || '',
+              locations: (c.locations || []).map((l, j) => ({ id: parseInt(`${i}${j}${Date.now()}`), name: l.name || '', mapLink: l.mapLink || '', pickupTime: '', dropoffTime: '' }))
+            })));
+          }
+          if (imp.inclusivesList?.length > 0) setInclusivesList(imp.inclusivesList.map((text, i) => ({ id: i + 1, text })));
+          if (imp.exclusivesList?.length > 0) setExclusivesList(imp.exclusivesList.map((text, i) => ({ id: i + 1, text })));
+          if (imp.additionalPoints?.length > 0) setAdditionalPoints(imp.additionalPoints.map((text, i) => ({ id: i + 1, text })));
+          if (imp.termsAndConditions?.length > 0) setTermsAndConditions(imp.termsAndConditions.map((text, i) => ({ id: i + 1, text })));
+          if (imp.itinerary?.length > 0) {
+            setItinerary(imp.itinerary.map((day, i) => ({
+              day: day.day || i + 1,
+              sections: day.highlights?.length > 0 ? day.highlights : (day.agenda ? day.agenda.split(' | ') : [''])
+            })));
+          }
+          if (imp.aboutPackage) setAboutPackage(imp.aboutPackage);
+        } catch (e) {
+          console.error('Failed to load Smart Import data:', e);
+        }
+      } else {
+        const savedData = localStorage.getItem('newTrekPackageDraft');
+        if (savedData) {
+          try {
+            const parsed = JSON.parse(savedData);
+            if (parsed.packageInfo) setPackageInfo(prev => ({ ...prev, ...parsed.packageInfo }));
+            if (parsed.pricingTiers) setPricingTiers(parsed.pricingTiers);
+            if (parsed.pickupDropCities) setPickupDropCities(parsed.pickupDropCities);
+            if (parsed.inclusivesList) setInclusivesList(parsed.inclusivesList);
+            if (parsed.exclusivesList) setExclusivesList(parsed.exclusivesList);
+            if (parsed.additionalPoints) setAdditionalPoints(parsed.additionalPoints);
+            if (parsed.termsAndConditions) setTermsAndConditions(parsed.termsAndConditions);
+            if (parsed.itinerary) setItinerary(parsed.itinerary);
+            if (parsed.aboutPackage) setAboutPackage(parsed.aboutPackage);
+          } catch (e) { console.error('Error loading draft:', e); }
+        }
       }
     }
   }, [initialData, isEdit]);

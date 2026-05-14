@@ -46,7 +46,7 @@ export async function GET(req, context) {
 
         // Fetch events
         const events = await Event.find({ guide: params.id })
-            .select('title date location status totalSlots bookedSlots pricePerSlot createdAt')
+            .select('title date location status totalSlots bookedSlots pricePerSlot visibility createdAt')
             .sort({ createdAt: -1 })
             .lean();
 

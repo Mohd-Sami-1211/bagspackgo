@@ -63,6 +63,8 @@ export async function GET(request, context) {
                         passCode: p.passCode,
                         checkedIn: p.checkedIn || false,
                         selectedPickup: booking.selectedPickup || null,
+                        customFormResponses: booking.customFormResponses || [],
+                        extraChargesTotal: booking.extraChargesTotal || 0,
                     });
                 });
             }
@@ -97,6 +99,10 @@ export async function GET(request, context) {
                 rating: event.rating,
                 reviewCount: event.reviewCount,
                 deleteRequest: event.deleteRequest || null,
+                visibility: event.visibility || 'public',
+                applicationFormType: event.applicationFormType || 'default',
+                customFormFields: event.customFormFields || [],
+                termsAndConditions: event.termsAndConditions || [],
                 createdAt: event.createdAt,
                 updatedAt: event.updatedAt,
             },
@@ -159,22 +165,11 @@ export async function PATCH(request, context) {
             }
         }
 
-        // If publishing a draft
-        if (body.action === "publish") {
-            event.status = "published";
-            await event.save();
-            return NextResponse.json({
-                success: true,
-                message: "Event published successfully!",
-                event: { id: event._id, status: event.status },
-            });
-        }
-
         // Update allowed fields
         const updatableFields = [
             "title", "eventType", "location", "date", "duration",
             "totalSlots", "pricePerSlot", "destination", "destinationLink",
-            "about", "poster",
+            "about", "poster", "visibility", "applicationFormType",
         ];
 
         for (const field of updatableFields) {
@@ -188,13 +183,18 @@ export async function PATCH(request, context) {
         }
 
         // Update array fields
-        const arrayFields = ["highlights", "whatsIncluded", "whatsExcluded", "whatToBring", "restrictions", "itinerary", "photographs"];
+        const arrayFields = ["highlights", "whatsIncluded", "whatsExcluded", "whatToBring", "restrictions", "itinerary", "photographs", "termsAndConditions"];
         for (const field of arrayFields) {
             if (Array.isArray(body[field])) {
                 event[field] = body[field]
                     .filter((item) => typeof item === "string" && item.trim())
                     .map(sanitizeString);
             }
+        }
+
+        // Update custom form fields (stored as-is, complex nested structure)
+        if (Array.isArray(body.customFormFields)) {
+            event.customFormFields = body.customFormFields;
         }
 
         // Update FAQs
@@ -230,11 +230,16 @@ export async function PATCH(request, context) {
             event.date = newDate;
         }
 
+        // If publishing a draft, update the status
+        if (body.action === "publish") {
+            event.status = "published";
+        }
+
         await event.save();
 
         return NextResponse.json({
             success: true,
-            message: "Event updated successfully!",
+            message: body.action === "publish" ? "Event published successfully!" : "Event updated successfully!",
             event: { id: event._id, title: event.title, status: event.status },
         });
     } catch (error) {

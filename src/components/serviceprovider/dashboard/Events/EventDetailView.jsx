@@ -1326,6 +1326,47 @@ export default function EventDetailView({ eventId, adminMode = false, providerId
                                                                                 </div>
                                                                             </div>
                                                                         </div>
+
+                                                                        {/* Custom Form Responses */}
+                                                                        {guest.customFormResponses && guest.customFormResponses.length > 0 && (
+                                                                            <>
+                                                                                <h4 className="flex items-center gap-1.5 text-xs font-bold text-neutral-400 uppercase tracking-wider mt-6">
+                                                                                    <FileText className="w-3.5 h-3.5" /> Additional Application Details
+                                                                                </h4>
+                                                                                <div className="bg-white rounded-xl border border-neutral-200 shadow-sm overflow-hidden">
+                                                                                    {guest.customFormResponses.map((resp, idx) => (
+                                                                                        <div key={idx} className={`p-4 ${idx !== 0 ? 'border-t border-neutral-100' : ''}`}>
+                                                                                            <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">{resp.fieldTitle}</span>
+                                                                                            {typeof resp.value === 'string' && resp.value.startsWith('data:image') ? (
+                                                                                                <div className="mt-2">
+                                                                                                    <div className="relative w-24 h-24 bg-neutral-100 rounded-lg overflow-hidden border border-neutral-200">
+                                                                                                        <img src={resp.value} alt={resp.fieldTitle} className="w-full h-full object-cover" />
+                                                                                                    </div>
+                                                                                                    <a href={resp.value} download={`CustomForm_${resp.fieldTitle}.jpg`} className="inline-flex items-center gap-1 mt-2 text-xs font-bold text-blue-600 hover:text-blue-700">
+                                                                                                        <Download className="w-3 h-3" /> Download
+                                                                                                    </a>
+                                                                                                </div>
+                                                                                            ) : Array.isArray(resp.value) ? (
+                                                                                                <div className="mt-1 flex flex-wrap gap-1.5">
+                                                                                                    {resp.value.map((v, i) => (
+                                                                                                        <span key={i} className="inline-block px-2 py-0.5 bg-neutral-100 text-neutral-700 text-xs rounded border border-neutral-200">
+                                                                                                            {v}
+                                                                                                        </span>
+                                                                                                    ))}
+                                                                                                </div>
+                                                                                            ) : (
+                                                                                                <p className="text-sm font-semibold text-neutral-800 mt-0.5 break-words">{resp.value || 'N/A'}</p>
+                                                                                            )}
+                                                                                            {resp.extraCharge > 0 && (
+                                                                                                <span className="inline-block mt-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">
+                                                                                                    +₹{resp.extraCharge}
+                                                                                                </span>
+                                                                                            )}
+                                                                                        </div>
+                                                                                    ))}
+                                                                                </div>
+                                                                            </>
+                                                                        )}
                                                                     </div>
                                                                 </div>
                                                             </div>

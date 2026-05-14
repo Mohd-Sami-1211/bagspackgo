@@ -7,7 +7,7 @@ import {
     Package, Calendar, IndianRupee, Loader2, AlertTriangle, ExternalLink,
     Ban, CheckCircle2, Trash2, Eye, Star, Mountain, Car, Tent, Clock,
     Instagram, Facebook, Twitter, Youtube, CreditCard, FileText, Key,
-    Plus, Copy, Edit2, ChevronDown, Download
+    Plus, Copy, Edit2, ChevronDown, Download, Sparkles
 } from 'lucide-react';
 
 export default function AdminProviderDetailPage() {
@@ -305,7 +305,18 @@ export default function AdminProviderDetailPage() {
                                 <Plus size={16} /> Add Package <ChevronDown size={14} className={`transition-transform ${showAddMenu ? 'rotate-180' : ''}`} />
                             </button>
                             {showAddMenu && (
-                                <div className="absolute right-0 top-12 z-20 bg-gray-800 border border-gray-700 rounded-xl shadow-xl overflow-hidden min-w-[180px]">
+                                <>
+                                <div className="fixed inset-0 z-10" onClick={() => setShowAddMenu(false)} />
+                                <div className="absolute right-0 top-12 z-20 bg-gray-800 border border-gray-700 rounded-xl shadow-xl overflow-hidden min-w-[220px]">
+                                    <button onClick={() => { setShowAddMenu(false); router.push(`/admin/providers/${id}/packages/smart-import`); }} className="w-full px-4 py-3 text-left text-sm text-gray-300 hover:bg-violet-500/10 hover:text-white flex items-center justify-between transition-colors">
+                                        <span className="flex items-center gap-3"><Sparkles size={16} className="text-violet-400" /> Smart Import</span>
+                                        <span className="text-[8px] font-black uppercase tracking-wider bg-gradient-to-r from-violet-500 to-purple-500 text-white px-1.5 py-0.5 rounded-md">AI</span>
+                                    </button>
+                                    <div className="flex items-center gap-2 px-4 py-1.5 border-t border-gray-700/50">
+                                        <div className="flex-1 h-px bg-gray-700" />
+                                        <span className="text-[9px] font-bold text-gray-600 uppercase tracking-wider shrink-0">Or manually</span>
+                                        <div className="flex-1 h-px bg-gray-700" />
+                                    </div>
                                     <button onClick={() => { setShowAddMenu(false); router.push(`/admin/providers/${id}/packages/new?type=trip`); }} className="w-full px-4 py-3 text-left text-sm text-gray-300 hover:bg-gray-700/50 hover:text-white flex items-center gap-3 transition-colors">
                                         <Car size={16} className="text-purple-400" /> Trip Package
                                     </button>
@@ -313,6 +324,7 @@ export default function AdminProviderDetailPage() {
                                         <Mountain size={16} className="text-blue-400" /> Trek Package
                                     </button>
                                 </div>
+                                </>
                             )}
                         </div>
 

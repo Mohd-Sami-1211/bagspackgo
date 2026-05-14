@@ -238,6 +238,9 @@ export async function POST(request) {
             termsAndConditions: termsAndConditions.map(sanitizeString),
             poster: body.poster || "",
             status: body.status === "draft" ? "draft" : "published",
+            visibility: body.visibility === "private" ? "private" : "public",
+            applicationFormType: body.applicationFormType === "customized" ? "customized" : "default",
+            customFormFields: body.customFormFields || [],
         });
 
         const statusLabel = event.status === "draft" ? "saved as draft" : "published";
@@ -315,6 +318,7 @@ export async function GET() {
                 status: e.status,
                 rating: e.rating,
                 about: e.about,
+                visibility: e.visibility || 'public',
                 createdAt: e.createdAt,
             })),
         });

@@ -23,6 +23,7 @@ import {
   Award,
   Heart,
   User,
+  Sparkles,
 } from 'lucide-react';
 
 /* ─── helpers ─────────────────────────────────────────── */
@@ -377,8 +378,29 @@ const Packages = () => {
                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    className="absolute right-0 mt-2 w-52 bg-white border border-gray-100 rounded-2xl shadow-xl shadow-gray-200/50 z-30 p-1.5 overflow-hidden"
+                    className="absolute right-0 mt-2 w-56 bg-white border border-gray-100 rounded-2xl shadow-xl shadow-gray-200/50 z-30 p-1.5 overflow-hidden"
                   >
+                    {/* Smart Import (AI) */}
+                    <button
+                      onClick={() => router.push('/serviceprovider/dashboard/settings/packages/smart-import')}
+                      className="w-full text-left p-3 hover:bg-violet-50 rounded-xl transition-all group border border-transparent hover:border-violet-100 relative overflow-hidden"
+                    >
+                      <div className="flex items-center justify-between mb-0.5">
+                        <div className="flex items-center gap-1.5">
+                          <Sparkles size={14} className="text-violet-500" />
+                          <p className="text-[13px] font-bold text-gray-800 group-hover:text-violet-700">Smart Import</p>
+                        </div>
+                        <span className="text-[8px] font-black uppercase tracking-wider bg-gradient-to-r from-violet-600 to-purple-600 text-white px-1.5 py-0.5 rounded-md">AI</span>
+                      </div>
+                      <p className="text-[10px] text-gray-400 group-hover:text-violet-500/70">Upload PDF or paste link · AI fills the form</p>
+                    </button>
+
+                    <div className="flex items-center gap-2 my-1 px-3">
+                      <div className="flex-1 h-px bg-gray-100" />
+                      <span className="text-[9px] font-bold text-gray-300 uppercase tracking-wider shrink-0">Or manually</span>
+                      <div className="flex-1 h-px bg-gray-100" />
+                    </div>
+
                     <button
                       onClick={() => router.push('/serviceprovider/dashboard/settings/packages/new')}
                       className="w-full text-left p-3 hover:bg-emerald-50 rounded-xl transition-all group border border-transparent hover:border-emerald-100"

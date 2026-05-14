@@ -73,6 +73,9 @@ export async function GET(request, context) {
                 photographs: event.photographs || [],
                 termsAndConditions: event.termsAndConditions || [],
                 destinationLink: event.destinationLink,
+                visibility: event.visibility || 'public',
+                applicationFormType: event.applicationFormType || 'default',
+                customFormFields: event.customFormFields || [],
                 createdAt: event.createdAt
             },
         });

@@ -258,9 +258,18 @@ function EventCard({ event, onAction }) {
           </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-        {/* Status badge top-right */}
-        <div className="absolute top-3 right-3">
+        {/* Status badge and Visibility badge top-right */}
+        <div className="absolute top-3 right-3 flex flex-col items-end gap-2">
           <StatusBadge status={event.displayStatus} deleteRequest={event.deleteRequest} />
+          {event.visibility === 'private' ? (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-900/80 text-white backdrop-blur-md border border-slate-700">
+              <span className="w-2 h-2 rounded-full bg-violet-400"></span> Private
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-white/80 text-emerald-800 backdrop-blur-md border border-emerald-200 shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-emerald-500"></span> Public
+            </span>
+          )}
         </div>
         {/* Price tag bottom-left */}
         <div className="absolute bottom-3 left-3 flex items-center gap-1 bg-white/90 backdrop-blur-sm rounded-lg px-2.5 py-1">

@@ -65,17 +65,12 @@ export async function PATCH(req, context) {
         await dbConnect();
         const body = await req.json();
 
-        if (body.action === 'publish') {
-            const event = await Event.findByIdAndUpdate(id, { status: 'published' }, { new: true });
-            if (!event) return NextResponse.json({ success: false, message: 'Event not found' }, { status: 404 });
-            return NextResponse.json({ success: true, message: 'Event published', event });
-        }
-
         const allowedFields = [
             'title', 'eventType', 'location', 'date', 'duration', 'totalSlots', 
             'pricePerSlot', 'destination', 'destinationLink', 'about', 'highlights', 
             'whatsIncluded', 'whatsExcluded', 'faqs', 'whatToBring', 'restrictions', 
-            'pickupPoints', 'itinerary', 'termsAndConditions'
+            'pickupPoints', 'itinerary', 'termsAndConditions', 'poster', 'photographs',
+            'visibility', 'applicationFormType', 'customFormFields'
         ];
         
         const updateData = {};
@@ -83,10 +78,18 @@ export async function PATCH(req, context) {
             if (body[key] !== undefined) updateData[key] = body[key];
         }
 
+        if (body.action === 'publish') {
+            updateData.status = 'published';
+        }
+
         const updatedEvent = await Event.findByIdAndUpdate(id, { $set: updateData }, { new: true });
         if (!updatedEvent) return NextResponse.json({ success: false, message: 'Event not found' }, { status: 404 });
 
-        return NextResponse.json({ success: true, message: 'Event updated', event: updatedEvent });
+        return NextResponse.json({ 
+            success: true, 
+            message: body.action === 'publish' ? 'Event published successfully' : 'Event updated successfully', 
+            event: updatedEvent 
+        });
     } catch (err) {
         console.error('Admin PATCH event error:', err);
         return NextResponse.json({ success: false, message: 'Server error' }, { status: 500 });
