@@ -170,11 +170,18 @@ export default function TrekPassPage() {
                         </div>
                         <div className="flex-1 w-full md:text-right border-l-4 border-emerald-500 pl-4 sm:pl-6 bg-emerald-50/30 p-4 rounded-r-2xl shrink-0 flex flex-col justify-center">
                             <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest mb-1.5 md:text-right">{booking?.bookingType === 'trek' ? 'Trek Managed By' : 'Trip Managed By'}</p>
-                            <h2 className="text-lg sm:text-xl font-black text-gray-900 md:text-right">
-                                {booking?.provider ? (
-                                    <Link href={`/user/provider/${booking.provider}`} className="hover:text-emerald-700 hover:underline">{providerName}</Link>
-                                ) : providerName}
-                            </h2>
+                            <div className="flex md:justify-end items-center gap-3">
+                                {booking?.providerLogo && (
+                                    <div className="w-10 h-10 rounded-full border border-gray-200 overflow-hidden bg-white shrink-0">
+                                        <img src={booking.providerLogo} alt={providerName} className="w-full h-full object-cover" />
+                                    </div>
+                                )}
+                                <h2 className="text-lg sm:text-xl font-black text-gray-900 md:text-right">
+                                    {booking?.provider ? (
+                                        <Link href={`/user/provider/${booking.provider}`} className="hover:text-emerald-700 hover:underline">{providerName}</Link>
+                                    ) : providerName}
+                                </h2>
+                            </div>
                             <div className="flex flex-col md:items-end gap-1 mt-3">
                                 {booking?.providerPhone && (
                                     <p className="text-[10px] sm:text-xs font-bold text-gray-600 flex items-center gap-1.5">

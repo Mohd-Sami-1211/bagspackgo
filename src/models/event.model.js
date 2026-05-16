@@ -121,6 +121,10 @@ const eventSchema = new mongoose.Schema(
             type: [pickupPointSchema],
             default: [],
         },
+        includePickup: {
+            type: Boolean,
+            default: true,
+        },
         itinerary: {
             type: [String],
             default: [],
@@ -160,33 +164,7 @@ const eventSchema = new mongoose.Schema(
 
         // Custom form fields — Google Forms-like flat array of fields
         customFormFields: {
-            type: [
-                {
-                    id: { type: String, required: true },
-                    title: { type: String, required: true },
-                    type: {
-                        type: String,
-                        enum: [
-                            "text",
-                            "number",
-                            "dropdown",
-                            "multiple_choice",
-                            "checkbox",
-                            "photo_upload",
-                        ],
-                        default: "text",
-                    },
-                    required: { type: Boolean, default: false },
-                    options: [
-                        {
-                            value: { type: String, default: "" },
-                            extraCharge: { type: Number, default: 0 },
-                        },
-                    ],
-                    dependsOn: { type: String, default: null },
-                    showIfValue: { type: mongoose.Schema.Types.Mixed, default: null },
-                },
-            ],
+            type: [mongoose.Schema.Types.Mixed],
             default: [],
         },
 

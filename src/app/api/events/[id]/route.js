@@ -31,10 +31,12 @@ export async function GET(request, context) {
         }
 
         let guideName = event.guide?.companyName || event.guide?.username || event.guide?.name || "Local Guide";
+        let guideLogo = event.guide?.profileImage || "";
         if (event.guide && event.guide._id) {
-            const gd = await GuideDetails.findOne({ guide: event.guide._id }).select('companyname').lean();
-            if (gd && gd.companyname) {
-                guideName = gd.companyname;
+            const gd = await GuideDetails.findOne({ guide: event.guide._id }).select('companyname logo').lean();
+            if (gd) {
+                if (gd.companyname) guideName = gd.companyname;
+                if (gd.logo) guideLogo = gd.logo;
             }
         }
 
@@ -62,6 +64,7 @@ export async function GET(request, context) {
                 faqs: event.faqs,
                 whatToBring: event.whatToBring,
                 restrictions: event.restrictions,
+                includePickup: event.includePickup !== false, // default to true
                 pickupPoints: event.pickupPoints,
                 itinerary: event.itinerary,
                 image: event.poster, // Map poster to image
@@ -70,6 +73,7 @@ export async function GET(request, context) {
                 reviewCount: event.reviewCount || 0,
                 guide: event.guide,
                 guideName: guideName,
+                guideLogo: guideLogo,
                 photographs: event.photographs || [],
                 termsAndConditions: event.termsAndConditions || [],
                 destinationLink: event.destinationLink,

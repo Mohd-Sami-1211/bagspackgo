@@ -68,138 +68,134 @@ const CustomSelect = ({ value, onChange, options, placeholder }) => {
 };
 
 /* ——————————— Custom Form Card ——————————— */
-const CustomFormCard = ({ event, formData, formErrors, handleCustomFormChange }) => {
+const CustomFormCard = ({ event, formData, formErrors, handleCustomFormChange, slotIndex }) => {
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 shadow-sm">
-      <h2 className="text-xl font-bold text-gray-900 mb-1">Application Form</h2>
-      <p className="text-gray-500 text-sm mb-6 font-medium">Please fill out the required information below.</p>
-      <div className="space-y-5">
-        {event.customFormFields.map((field, fIdx) => {
-          if (field.dependsOn) {
-            const depResp = formData.customFormResponses?.find(r => r.fieldId === field.dependsOn);
-            if (!depResp) return null;
-            const showVals = Array.isArray(field.showIfValue) ? field.showIfValue : [field.showIfValue];
-            const userVals = Array.isArray(depResp.value) ? depResp.value : [depResp.value];
-            const hasMatch = showVals.some(v => userVals.includes(v));
-            if (!hasMatch) return null;
-          }
-          const response = formData.customFormResponses?.find(r => r.fieldId === field.id);
-          const currentValue = response?.value || '';
-          const hasError = formErrors[`cf.${field.id}`];
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+      {event.customFormFields.map((field, fIdx) => {
+        if (field.dependsOn) {
+          const depResp = formData.customFormResponses?.find(r => r.fieldId === field.dependsOn && r.slotIndex === slotIndex);
+          if (!depResp) return null;
+          const showVals = Array.isArray(field.showIfValue) ? field.showIfValue : [field.showIfValue];
+          const userVals = Array.isArray(depResp.value) ? depResp.value : [depResp.value];
+          const hasMatch = showVals.some(v => userVals.includes(v));
+          if (!hasMatch) return null;
+        }
+        const response = formData.customFormResponses?.find(r => r.fieldId === field.id && r.slotIndex === slotIndex);
+        const currentValue = response?.value || '';
+        const hasError = formErrors[`cf.${slotIndex}.${field.id}`];
 
-          return (
-            <div key={field.id} className="relative p-5 sm:p-6 border border-gray-200 rounded-xl bg-white shadow-sm border-l-4 border-l-emerald-500 space-y-3" style={{ zIndex: event.customFormFields.length - fIdx }}>
-              <label className="block text-sm font-bold text-gray-800">
-                {field.title} {field.required && <span className="text-red-500">*</span>}
-              </label>
+        return (
+          <div key={field.id} className="relative space-y-2" style={{ zIndex: event.customFormFields.length - fIdx }}>
+            <label className="block text-sm font-bold text-gray-800">
+              {field.title} {field.required && <span className="text-red-500">*</span>}
+            </label>
 
-              {field.type === 'text' && (
-                <input type="text" placeholder={`Your answer`} value={currentValue}
-                  onChange={e => handleCustomFormChange(field, e.target.value)}
-                  className={`w-full p-2.5 border rounded-lg text-sm outline-none transition-all bg-gray-50/50 focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 ${hasError ? 'border-red-500' : 'border-gray-200'} border-b-2 focus:bg-white`} />
-              )}
+            {field.type === 'text' && (
+              <Input type="text" placeholder={field.placeholder || `Your answer`} value={currentValue}
+                onChange={e => handleCustomFormChange(slotIndex, field, e.target.value)}
+                className={`w-full h-11 bg-gray-50 focus-visible:bg-white transition-all ${hasError ? 'border-red-500 ring-red-500 bg-red-50/30' : 'border-gray-200'}`} />
+            )}
 
-              {field.type === 'number' && (
-                <input type="number" placeholder={`Your answer`} value={currentValue}
-                  onChange={e => handleCustomFormChange(field, e.target.value)}
-                  className={`w-full p-2.5 border rounded-lg text-sm outline-none transition-all bg-gray-50/50 focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 ${hasError ? 'border-red-500' : 'border-gray-200'} border-b-2 focus:bg-white`} />
-              )}
+            {field.type === 'number' && (
+              <Input type="number" placeholder={field.placeholder || `Your answer`} value={currentValue}
+                onChange={e => handleCustomFormChange(slotIndex, field, e.target.value)}
+                className={`w-full h-11 bg-gray-50 focus-visible:bg-white transition-all ${hasError ? 'border-red-500 ring-red-500 bg-red-50/30' : 'border-gray-200'}`} />
+            )}
 
-              {field.type === 'dropdown' && (
-                <div className="relative">
-                  <CustomSelect value={currentValue}
-                    onChange={(val) => {
-                      const opt = field.options?.find(o => o.value === val);
-                      handleCustomFormChange(field, val, opt?.extraCharge || 0);
-                    }}
-                    options={(field.options || []).map(o => ({
-                      value: o.value,
-                      label: o.extraCharge > 0 ? `${o.value} (+₹${o.extraCharge})` : o.value
-                    }))}
-                    placeholder={`Select ${field.title.toLowerCase()}`} />
-                </div>
-              )}
+            {field.type === 'dropdown' && (
+              <div className="relative">
+                <CustomSelect value={currentValue}
+                  onChange={(val) => {
+                    const opt = field.options?.find(o => o.value === val);
+                    handleCustomFormChange(slotIndex, field, val, opt?.extraCharge || 0);
+                  }}
+                  options={(field.options || []).map(o => ({
+                    value: o.value,
+                    label: o.extraCharge > 0 ? `${o.value} (+₹${o.extraCharge})` : o.value
+                  }))}
+                  placeholder={field.placeholder || `Select ${field.title.toLowerCase()}`} />
+              </div>
+            )}
 
-              {field.type === 'multiple_choice' && (
-                <div className="space-y-2.5 mt-2">
-                  {(field.options || []).map((opt, oIdx) => (
-                    <label key={oIdx} className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${currentValue === opt.value ? 'border-emerald-500 bg-emerald-50/50' : 'border-gray-200 hover:border-gray-300'}`}>
-                      <input type="radio" name={`cf-${field.id}`} checked={currentValue === opt.value}
-                        onChange={() => handleCustomFormChange(field, opt.value, opt.extraCharge || 0)}
-                        className="w-4 h-4 text-emerald-600 border-gray-300 focus:ring-emerald-500" />
+            {field.type === 'multiple_choice' && (
+              <div className="space-y-2.5 mt-2">
+                {(field.options || []).map((opt, oIdx) => (
+                  <label key={oIdx} className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${currentValue === opt.value ? 'border-emerald-500 bg-emerald-50/50' : 'border-gray-200 hover:border-gray-300'}`}>
+                    <input type="radio" name={`cf-${slotIndex}-${field.id}`} checked={currentValue === opt.value}
+                      onChange={() => handleCustomFormChange(slotIndex, field, opt.value, opt.extraCharge || 0)}
+                      className="w-4 h-4 text-emerald-600 border-gray-300 focus:ring-emerald-500" />
+                    <span className="text-sm font-medium text-gray-700 flex-1">{opt.value}</span>
+                    {opt.extraCharge > 0 && <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">+₹{opt.extraCharge}</span>}
+                  </label>
+                ))}
+              </div>
+            )}
+
+            {field.type === 'checkbox' && (
+              <div className="space-y-2.5 mt-2">
+                {(field.options || []).map((opt, oIdx) => {
+                  const checkedValues = Array.isArray(currentValue) ? currentValue : [];
+                  const isChecked = checkedValues.includes(opt.value);
+                  return (
+                    <label key={oIdx} className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${isChecked ? 'border-emerald-500 bg-emerald-50/50' : 'border-gray-200 hover:border-gray-300'}`}>
+                      <input type="checkbox" checked={isChecked}
+                        onChange={() => {
+                          const newVals = isChecked ? checkedValues.filter(v => v !== opt.value) : [...checkedValues, opt.value];
+                          const totalExtra = newVals.reduce((sum, v) => { const o = field.options.find(x => x.value === v); return sum + (o?.extraCharge || 0); }, 0);
+                          handleCustomFormChange(slotIndex, field, newVals, totalExtra);
+                        }}
+                        className="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500" />
                       <span className="text-sm font-medium text-gray-700 flex-1">{opt.value}</span>
                       {opt.extraCharge > 0 && <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">+₹{opt.extraCharge}</span>}
                     </label>
-                  ))}
-                </div>
-              )}
+                  );
+                })}
+              </div>
+            )}
 
-              {field.type === 'checkbox' && (
-                <div className="space-y-2.5 mt-2">
-                  {(field.options || []).map((opt, oIdx) => {
-                    const checkedValues = Array.isArray(currentValue) ? currentValue : [];
-                    const isChecked = checkedValues.includes(opt.value);
-                    return (
-                      <label key={oIdx} className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${isChecked ? 'border-emerald-500 bg-emerald-50/50' : 'border-gray-200 hover:border-gray-300'}`}>
-                        <input type="checkbox" checked={isChecked}
-                          onChange={() => {
-                            const newVals = isChecked ? checkedValues.filter(v => v !== opt.value) : [...checkedValues, opt.value];
-                            const totalExtra = newVals.reduce((sum, v) => { const o = field.options.find(x => x.value === v); return sum + (o?.extraCharge || 0); }, 0);
-                            handleCustomFormChange(field, newVals, totalExtra);
-                          }}
-                          className="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500" />
-                        <span className="text-sm font-medium text-gray-700 flex-1">{opt.value}</span>
-                        {opt.extraCharge > 0 && <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">+₹{opt.extraCharge}</span>}
-                      </label>
-                    );
-                  })}
-                </div>
-              )}
-
-              {field.type === 'photo_upload' && (
-                <div className={`relative border-2 border-dashed rounded-xl p-4 transition-all ${currentValue ? 'border-gray-200 bg-gray-50/30' : hasError ? 'border-red-300 bg-red-50/30' : 'border-gray-200 hover:border-gray-300 bg-gray-50'}`}>
-                  {currentValue ? (
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-lg bg-white border border-gray-200 overflow-hidden flex-shrink-0 shadow-sm">
-                          <img src={currentValue} alt="Preview" className="w-full h-full object-cover" />
-                        </div>
-                        <p className="text-xs font-bold text-gray-900">Photo Uploaded</p>
+            {field.type === 'photo_upload' && (
+              <div className={`relative border-2 border-dashed rounded-xl p-4 transition-all ${currentValue ? 'border-gray-200 bg-gray-50/30' : hasError ? 'border-red-300 bg-red-50/30' : 'border-gray-200 hover:border-gray-300 bg-gray-50'}`}>
+                {currentValue ? (
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-lg bg-white border border-gray-200 overflow-hidden flex-shrink-0 shadow-sm">
+                        <img src={currentValue} alt="Preview" className="w-full h-full object-cover" />
                       </div>
-                      <button type="button" onClick={() => handleCustomFormChange(field, '', 0)} className="p-2 bg-white rounded-full text-red-500 hover:bg-red-50 transition-colors shadow-sm">
-                        <Upload size={14} className="rotate-180" />
-                      </button>
+                      <p className="text-xs font-bold text-gray-900">Photo Uploaded</p>
                     </div>
-                  ) : (
-                    <label className="flex flex-col items-center justify-center cursor-pointer py-2">
-                      <Upload size={18} className="text-gray-400 mb-2" />
-                      <p className="text-xs font-bold text-gray-600">Click to upload</p>
-                      <input type="file" accept="image/*" className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files[0];
-                          if (!file) return;
-                          const img = new Image();
-                          const objectUrl = URL.createObjectURL(file);
-                          img.onload = () => {
-                            const MAX = 800; let w = img.width, h = img.height;
-                            if (w > MAX || h > MAX) { if (w > h) { h = Math.round(h * MAX / w); w = MAX; } else { w = Math.round(w * MAX / h); h = MAX; } }
-                            const c = document.createElement('canvas'); c.width = w; c.height = h;
-                            c.getContext('2d').drawImage(img, 0, 0, w, h);
-                            handleCustomFormChange(field, c.toDataURL('image/jpeg', 0.6));
-                            URL.revokeObjectURL(objectUrl);
-                          };
-                          img.src = objectUrl;
-                        }} />
-                    </label>
-                  )}
-                </div>
-              )}
+                    <button type="button" onClick={() => handleCustomFormChange(slotIndex, field, '', 0)} className="p-2 bg-white rounded-full text-red-500 hover:bg-red-50 transition-colors shadow-sm">
+                      <Upload size={14} className="rotate-180" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center cursor-pointer py-2">
+                    <Upload size={18} className="text-gray-400 mb-2" />
+                    <p className="text-xs font-bold text-gray-600">Click to upload</p>
+                    <input type="file" accept="image/*" className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (!file) return;
+                        const img = new Image();
+                        const objectUrl = URL.createObjectURL(file);
+                        img.onload = () => {
+                          const MAX = 800; let w = img.width, h = img.height;
+                          if (w > MAX || h > MAX) { if (w > h) { h = Math.round(h * MAX / w); w = MAX; } else { w = Math.round(w * MAX / h); h = MAX; } }
+                          const c = document.createElement('canvas'); c.width = w; c.height = h;
+                          c.getContext('2d').drawImage(img, 0, 0, w, h);
+                          handleCustomFormChange(slotIndex, field, c.toDataURL('image/jpeg', 0.6));
+                          URL.revokeObjectURL(objectUrl);
+                        };
+                        img.src = objectUrl;
+                      }} />
+                  </label>
+                )}
+              </div>
+            )}
 
-              {hasError && <p className="text-[10px] text-red-500 font-bold mt-1 uppercase">{"\u26A0"} {formErrors[`cf.${field.id}`]}</p>}
-            </div>
-          );
-        })}
-      </div>
+            {hasError && <p className="text-[10px] text-red-500 font-bold mt-1 uppercase">{"\u26A0"} {formErrors[`cf.${slotIndex}.${field.id}`]}</p>}
+          </div>
+        );
+      })}
     </div>
   );
 };
@@ -284,7 +280,9 @@ const EventDetails = ({ event }) => {
          if (saved) {
              const parsed = JSON.parse(saved);
              if (parsed && typeof parsed === 'object') {
-                if (parsed.formData) setFormData(parsed.formData);
+                if (parsed.formData) {
+                  setFormData(prev => ({ ...prev, ...parsed.formData, customFormResponses: parsed.formData.customFormResponses || [] }));
+                }
                 if (parsed.bookingSlots) setBookingSlots(parsed.bookingSlots);
                 if (parsed.selectedPickup) setSelectedPickup(parsed.selectedPickup);
              }
@@ -464,15 +462,16 @@ const EventDetails = ({ event }) => {
     });
   };
 
-  const handleCustomFormChange = (field, value, extraCharge = 0) => {
+  const handleCustomFormChange = (slotIndex, field, value, extraCharge = 0) => {
     setFormData(prev => {
-      const existing = [...prev.customFormResponses];
-      const index = existing.findIndex(r => r.fieldId === field.id);
+      const existing = Array.isArray(prev.customFormResponses) ? [...prev.customFormResponses] : [];
+      const index = existing.findIndex(r => r.fieldId === field.id && r.slotIndex === slotIndex);
       
       if (index >= 0) {
         existing[index] = { ...existing[index], value, extraCharge };
       } else {
         existing.push({
+          slotIndex,
           fieldId: field.id,
           fieldTitle: field.title,
           value,
@@ -480,12 +479,18 @@ const EventDetails = ({ event }) => {
         });
       }
       
-      const newTotalExtra = existing.reduce((sum, res) => sum + (res.extraCharge || 0), 0) * bookingSlots;
-      setExtraChargesTotal(newTotalExtra);
-      
       return { ...prev, customFormResponses: existing };
     });
   };
+
+  useEffect(() => {
+    // Only count responses that belong to a valid slotIndex (in case slots were reduced)
+    const validResponses = Array.isArray(formData.customFormResponses) 
+        ? formData.customFormResponses.filter(r => r.slotIndex < bookingSlots) 
+        : [];
+    const newTotalExtra = validResponses.reduce((sum, res) => sum + (res.extraCharge || 0), 0);
+    setExtraChargesTotal(newTotalExtra);
+  }, [formData.customFormResponses, bookingSlots]);
 
   useEffect(() => {
     setFormData(prev => {
@@ -499,9 +504,7 @@ const EventDetails = ({ event }) => {
       }
       return prev;
     });
-    // Recalculate extra charges when slots change
-    const newTotalExtra = formData.customFormResponses.reduce((sum, res) => sum + (res.extraCharge || 0), 0) * bookingSlots;
-    setExtraChargesTotal(newTotalExtra);
+    // No need to setExtraChargesTotal here as the new useEffect handles it
   }, [bookingSlots]);
 
   const formattedDate = new Date(event.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -530,39 +533,41 @@ const EventDetails = ({ event }) => {
       errors['pickup'] = 'Please select a pickup point';
     }
 
+    for (let i = 0; i < bookingSlots; i++) {
+      const p = formData.participants[i];
+      if (!p.name) errors[`p.${i}.name`] = 'Full name is required';
+      if (!p.age) errors[`p.${i}.age`] = 'Age is required';
+      if (!p.phone) errors[`p.${i}.phone`] = 'Mobile number is required';
+      if (!p.gender) errors[`p.${i}.gender`] = 'Gender is required';
+      if (!p.nationality) errors[`p.${i}.nationality`] = 'Nationality is required';
+      if (!p.idType) errors[`p.${i}.idType`] = 'ID proof type is required';
+      if (!p.idNumber) errors[`p.${i}.idNumber`] = 'ID number is required';
+      if (!p.idProofImage) errors[`p.${i}.idProofImage`] = 'ID proof document is required';
+    }
+
     if (event.applicationFormType === 'customized') {
-      // Validate Custom Form Fields
-      event.customFormFields?.forEach((field) => {
-        // Check if field depends on another field and if the condition is met
-        if (field.dependsOn) {
-           const dependentResponse = formData.customFormResponses.find(r => r.fieldId === field.dependsOn);
-           if (!dependentResponse) return;
-           const showVals = Array.isArray(field.showIfValue) ? field.showIfValue : [field.showIfValue];
-           const userVals = Array.isArray(dependentResponse.value) ? dependentResponse.value : [dependentResponse.value];
-           const hasMatch = showVals.some(v => userVals.includes(v));
-           if (!hasMatch) {
-              return; // Skip validation if condition not met
-           }
-        }
-        
-        if (field.required) {
-          const response = formData.customFormResponses.find(r => r.fieldId === field.id);
-          if (!response || !response.value || (Array.isArray(response.value) && response.value.length === 0)) {
-            errors[`cf.${field.id}`] = `${field.title} is required`;
-          }
-        }
-      });
-    } else {
+      // Validate Custom Form Fields for each slot
       for (let i = 0; i < bookingSlots; i++) {
-        const p = formData.participants[i];
-        if (!p.name) errors[`p.${i}.name`] = 'Full name is required';
-        if (!p.age) errors[`p.${i}.age`] = 'Age is required';
-        if (!p.phone) errors[`p.${i}.phone`] = 'Mobile number is required';
-        if (!p.gender) errors[`p.${i}.gender`] = 'Gender is required';
-        if (!p.nationality) errors[`p.${i}.nationality`] = 'Nationality is required';
-        if (!p.idType) errors[`p.${i}.idType`] = 'ID proof type is required';
-        if (!p.idNumber) errors[`p.${i}.idNumber`] = 'ID number is required';
-        if (!p.idProofImage) errors[`p.${i}.idProofImage`] = 'ID proof document is required';
+        event.customFormFields?.forEach((field) => {
+          // Check if field depends on another field and if the condition is met
+          if (field.dependsOn) {
+             const dependentResponse = formData.customFormResponses.find(r => r.fieldId === field.dependsOn && r.slotIndex === i);
+             if (!dependentResponse) return;
+             const showVals = Array.isArray(field.showIfValue) ? field.showIfValue : [field.showIfValue];
+             const userVals = Array.isArray(dependentResponse.value) ? dependentResponse.value : [dependentResponse.value];
+             const hasMatch = showVals.some(v => userVals.includes(v));
+             if (!hasMatch) {
+                return; // Skip validation if condition not met
+             }
+          }
+          
+          if (field.required) {
+            const response = formData.customFormResponses.find(r => r.fieldId === field.id && r.slotIndex === i);
+            if (!response || !response.value || (Array.isArray(response.value) && response.value.length === 0)) {
+              errors[`cf.${i}.${field.id}`] = `${field.title} is required`;
+            }
+          }
+        });
       }
     }
 
@@ -584,11 +589,12 @@ const EventDetails = ({ event }) => {
 
   // Payment Calculations
   const subtotal = (event.price || 0) * bookingSlots;
-  const platformFee = Math.round(subtotal * 0.03);
-  const gatewayFee = Math.round(subtotal * 0.02);
+  const baseForFees = subtotal + extraChargesTotal;
+  const platformFee = Math.round(baseForFees * 0.03);
+  const gatewayFee = Math.round(baseForFees * 0.02);
   const gstOnGateway = Math.round(gatewayFee * 0.18);
   const totalFees = platformFee + gatewayFee + gstOnGateway;
-  const totalPayable = subtotal + totalFees + extraChargesTotal;
+  const totalPayable = baseForFees + totalFees;
 
   const handleBooking = async (e) => {
     e.preventDefault();
@@ -615,7 +621,9 @@ const EventDetails = ({ event }) => {
           contactDetails: formData.contactDetails,
           participants: formData.participants.slice(0, bookingSlots),
           selectedPickup: pickupObj ? { location: pickupObj.location, link: pickupObj.link || '', time: pickupObj.time || '' } : null,
-          customFormResponses: event.applicationFormType === 'customized' ? formData.customFormResponses : [],
+          customFormResponses: event.applicationFormType === 'customized' 
+              ? formData.customFormResponses.filter(r => r.slotIndex < bookingSlots) 
+              : [],
           extraChargesTotal: event.applicationFormType === 'customized' ? extraChargesTotal : 0
         })
       });
@@ -816,7 +824,7 @@ const EventDetails = ({ event }) => {
                 </div>
 
                 {/* Card: Pickup Point */}
-                {event.pickupPoints?.length > 0 && (
+                {event.includePickup !== false && event.pickupPoints?.length > 0 && (
                   <div className="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 shadow-sm">
                     <h2 className="text-xl font-bold text-gray-900 mb-4">Select Pickup Point</h2>
                     <div className="relative z-50">
@@ -919,10 +927,8 @@ const EventDetails = ({ event }) => {
                   </div>
                 </div>
 
-                {/* Card: Custom Form OR Default Travellers */}
-                {event.applicationFormType === 'customized' && event.customFormFields?.length > 0 ? (
-                  <CustomFormCard event={event} formData={formData} formErrors={formErrors} handleCustomFormChange={handleCustomFormChange} />
-                ) : (
+
+                
                 <div className="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 shadow-sm">
                   <h2 className="text-xl font-bold text-gray-900 mb-1">Traveller Details</h2>
                   <p className="text-gray-500 text-sm mb-6 font-medium">Required by the organizer for verification & permits.</p>
@@ -1094,6 +1100,14 @@ const EventDetails = ({ event }) => {
                                     </div>
                                     {formErrors[`p.${i}.idProofImage`] && <p className="text-[10px] text-red-500 font-bold mt-1.5 uppercase">{"\u26A0"} {formErrors[`p.${i}.idProofImage`]}</p>}
                                   </div>
+
+                                  {/* Custom Form integration inside Traveller Details */}
+                                  {event.applicationFormType === 'customized' && event.customFormFields?.length > 0 && (
+                                    <div className="md:col-span-2 pt-6 border-t border-gray-100 mt-2">
+                                        <h3 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wide">Other Information</h3>
+                                        <CustomFormCard event={event} formData={formData} formErrors={formErrors} handleCustomFormChange={handleCustomFormChange} slotIndex={i} />
+                                    </div>
+                                  )}
                                 </div>
                               </motion.div>
                             )}
@@ -1103,7 +1117,6 @@ const EventDetails = ({ event }) => {
                     })}
                   </div>
                 </div>
-                )}
 
               </div>
 
@@ -1212,23 +1225,25 @@ const EventDetails = ({ event }) => {
                         )}
 
                         <div className="pt-4 border-t border-gray-200">
-                          <p className="text-[10px] font-bold text-gray-900 uppercase tracking-widest mb-3">Travellers ({bookingSlots})</p>
+                          <p className="text-[10px] font-bold text-gray-900 uppercase tracking-widest mb-3">{`Travellers (${bookingSlots})`}</p>
                           <div className="space-y-2.5">
-                            {Array.from({ length: bookingSlots }).map((_, i) => (
-                              <div key={i} className="flex justify-between items-center text-sm">
-                                <span className="font-bold text-gray-900">{formData.participants[i]?.name}</span>
-                                <div className="flex flex-col items-end gap-1">
-                                  <span className="text-gray-500 font-medium capitalize">
-                                    {formData.participants[i]?.gender?.charAt(0)} {"\u00B7"} {formData.participants[i]?.age}
-                                  </span>
-                                  {formData.participants[i]?.idProofImage && (
-                                    <span className="text-[9px] bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded font-bold flex items-center gap-1 border border-emerald-200">
-                                      <CheckCircle size={8} /> ID ATTACHED
+                            {Array.from({ length: bookingSlots }).map((_, i) => {
+                              return (
+                                <div key={i} className="flex justify-between items-center text-sm">
+                                  <span className="font-bold text-gray-900">{formData.participants[i]?.name}</span>
+                                  <div className="flex flex-col items-end gap-1">
+                                    <span className="text-gray-500 font-medium capitalize">
+                                      {formData.participants[i]?.gender?.charAt(0)} {"\u00B7"} {formData.participants[i]?.age}
                                     </span>
-                                  )}
+                                    {formData.participants[i]?.idProofImage && (
+                                      <span className="text-[9px] bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded font-bold flex items-center gap-1 border border-emerald-200">
+                                        <CheckCircle size={8} /> ID ATTACHED
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         </div>
                       </div>
@@ -1403,7 +1418,7 @@ const EventDetails = ({ event }) => {
                    onClick={handleWish}
                    disabled={isWished}
                    variant="outline"
-                   className={`w-full h-14 rounded-xl font-bold flex items-center justify-center gap-2 text-base border-emerald-600 text-emerald-700 hover:bg-emerald-50 focus:ring-emerald-600 ${isWished ? 'opacity-50 cursor-not-allowed' : ''}`}
+                   className={`w-full h-14 rounded-xl font-bold flex items-center justify-center gap-2 text-lg border-emerald-600 text-emerald-700 hover:bg-emerald-50 focus:ring-emerald-600 ${isWished ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                    {isWished ? 'Wished!' : 'Wish for more slots'}
                 </Button>
@@ -1437,10 +1452,14 @@ const EventDetails = ({ event }) => {
               </div>
 
               <div className="flex items-center gap-2 mb-3">
-                <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                  <span className="text-gray-900 font-black text-sm">
-                    {(event.guideName || 'G').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
-                  </span>
+                <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 overflow-hidden border border-gray-200">
+                  {event.guideLogo ? (
+                    <img src={event.guideLogo} alt={event.guideName} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-gray-900 font-black text-sm">
+                      {(event.guideName || 'G').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
+                    </span>
+                  )}
                 </div>
                 <div>
                   <p className="text-xs text-gray-400 uppercase tracking-wider font-bold">Organized by</p>

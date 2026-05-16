@@ -17,31 +17,37 @@ export async function GET(req, context) {
         const event = await Event.findById(id);
         if (!event) return NextResponse.json({ success: false, message: 'Event not found' }, { status: 404 });
 
-        // Get bookings/guests
-        const bookings = await Booking.find({ entityId: id, status: { $in: ['Confirmed', 'Pending'] } })
-            .select('user entityType details status paymentStatus totalAmount passes createdAt checkinStatus checkInDetails')
-            .populate('user', 'name email phone avatar');
+        // Get bookings/guests — use same pattern as provider route
+        const bookings = await Booking.find({ event: id, status: { $in: ['confirmed', 'completed'] } }).lean();
 
         let guestsList = [];
-        bookings.forEach(b => {
-            if (b.passes && b.passes.length > 0) {
-                b.passes.forEach(pass => {
+        bookings.forEach(booking => {
+            if (booking.participants && Array.isArray(booking.participants)) {
+                booking.participants.forEach((p, pIdx) => {
+                    const allResponses = booking.customFormResponses || [];
+                    const participantResponses = allResponses.filter(r => r.slotIndex === pIdx || r.slotIndex === undefined);
+
                     guestsList.push({
-                        id: pass.passId,
-                        bookingId: b._id,
-                        bookingRef: b._id.toString().substring(0, 8).toUpperCase(),
-                        name: pass.guestName,
-                        age: pass.guestAge,
-                        gender: pass.guestGender,
-                        type: pass.passType,
-                        paymentStatus: b.paymentStatus,
-                        bookingDate: b.createdAt,
-                        contact: b.user?.phone || 'N/A',
-                        email: b.user?.email || 'N/A',
-                        checkedIn: pass.checkInStatus === 'Checked-in',
-                        checkedInAt: pass.checkInTime || null,
-                        selectedPickup: b.details?.pickupPoint || null,
-                        bookerName: b.user?.name || 'N/A'
+                        id: p._id?.toString() || Math.random().toString(),
+                        name: p.name,
+                        email: p.email || booking.contactDetails?.email,
+                        mobile: p.phone || booking.contactDetails?.phone,
+                        age: p.age,
+                        gender: p.gender,
+                        nationality: p.country || '',
+                        idProofType: p.idType,
+                        idProofNumber: p.idNumber,
+                        idProofUrl: p.idProofUrl || '',
+                        medicalCondition: p.medicalCondition || '',
+                        address: p.address,
+                        country: p.country,
+                        bookingDate: booking.createdAt,
+                        bookingRef: booking._id.toString().substring(0, 8).toUpperCase(),
+                        passCode: p.passCode,
+                        checkedIn: p.checkedIn || false,
+                        selectedPickup: booking.selectedPickup || null,
+                        customFormResponses: participantResponses,
+                        extraChargesTotal: booking.extraChargesTotal || 0,
                     });
                 });
             }

@@ -311,6 +311,7 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
     eventType: '',
     customEventType: '',
     location: '',
+    customDestination: '',
     date: '',
     duration: 1,
     totalSlots: 20,
@@ -328,6 +329,7 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
     ],
     whatToBring: [''],
     restrictions: [''],
+    includePickup: true,
     pickupPoints: [{ location: '', link: '', time: '' }],
     itinerary: ['', '', ''],
     photographs: [],
@@ -341,12 +343,19 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
   useEffect(() => {
     if (initialData) {
       const isCustomEventType = !eventTypes.includes(initialData.eventType) && initialData.eventType;
+      const isCustomDestination = !destinations.includes(initialData.location) && initialData.location;
       
+      let mappedCustomFields = initialData.customFormFields || [];
+      if (mappedCustomFields.length > 0 && mappedCustomFields[0].fields) {
+          mappedCustomFields = mappedCustomFields.flatMap(section => section.fields || []);
+      }
+
       setFormData({
         title: initialData.title || '',
         eventType: isCustomEventType ? 'Others' : (initialData.eventType || ''),
         customEventType: isCustomEventType ? initialData.eventType : '',
-        location: initialData.location || '',
+        location: isCustomDestination ? 'Others' : (initialData.location || ''),
+        customDestination: isCustomDestination ? initialData.location : '',
         date: initialData.date ? new Date(initialData.date).toISOString().split('T')[0] : '',
         duration: initialData.duration || 1,
         totalSlots: initialData.totalSlots || 20,
@@ -360,6 +369,7 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
         faqs: initialData.faqs?.length ? initialData.faqs : [{ question: '', answer: '' }, { question: '', answer: '' }, { question: '', answer: '' }],
         whatToBring: initialData.whatToBring?.length ? initialData.whatToBring : [''],
         restrictions: initialData.restrictions?.length ? initialData.restrictions : [''],
+        includePickup: initialData.includePickup !== undefined ? initialData.includePickup : true,
         pickupPoints: initialData.pickupPoints?.length ? initialData.pickupPoints : [{ location: '', link: '', time: '' }],
         itinerary: initialData.itinerary?.length ? initialData.itinerary : ['', '', ''],
         photographs: initialData.photographs || [],
@@ -367,7 +377,7 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
         poster: initialData.poster || null,
         visibility: initialData.visibility || 'public',
         applicationFormType: initialData.applicationFormType || 'default',
-        customFormFields: initialData.customFormFields || []
+        customFormFields: mappedCustomFields
       });
     }
   }, [initialData]);
@@ -403,7 +413,8 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
     'Andaman & Nicobar',
     'Madhya Pradesh',
     'Tamil Nadu',
-    'Maharashtra'
+    'Maharashtra',
+    'Others'
   ];
 
   const sectionTitles = [
@@ -429,6 +440,9 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
         errors.customEventType = 'Please name your event type';
       }
       if (!formData.location) errors.location = 'Select a destination';
+      if (formData.location === 'Others' && !formData.customDestination.trim()) {
+        errors.customDestination = 'Please enter a destination name';
+      }
       if (!formData.date) errors.date = 'Pick a date';
       if (!formData.pricePerSlot && formData.pricePerSlot !== 0) errors.pricePerSlot = 'Enter a price';
       if (!formData.destination.trim()) errors.destination = 'Enter a location';
@@ -451,8 +465,10 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
       if (validWtb.length === 0) errors.whatToBring = 'At least one item to bring is required';
     }
     if (step === 5) {
-      const validPickup = formData.pickupPoints.filter(p => p.location.trim() && p.time.trim());
-      if (validPickup.length === 0) errors.pickupPoints = 'At least one pickup point is required';
+      if (formData.includePickup) {
+        const validPickup = formData.pickupPoints.filter(p => p.location.trim() && p.time.trim());
+        if (validPickup.length === 0) errors.pickupPoints = 'At least one pickup point is required';
+      }
       const validItinerary = formData.itinerary.filter(s => s.trim());
       if (validItinerary.length === 0) errors.itinerary = 'At least one itinerary step is required';
     }
@@ -616,7 +632,7 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
       const payload = JSON.stringify({
         title: formData.title,
         eventType: formData.eventType === 'Others' ? formData.customEventType : formData.eventType,
-        location: formData.location,
+        location: formData.location === 'Others' ? formData.customDestination : formData.location,
         date: formData.date,
         duration: formData.duration,
         totalSlots: formData.totalSlots,
@@ -631,7 +647,8 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
         faqs: formData.faqs.filter(f => f.question.trim() && f.answer.trim()),
         whatToBring: formData.whatToBring.filter(w => w.trim()),
         restrictions: formData.restrictions.filter(r => r.trim()),
-        pickupPoints: formData.pickupPoints.filter(p => p.location.trim()),
+        includePickup: formData.includePickup,
+        pickupPoints: formData.includePickup ? formData.pickupPoints.filter(p => p.location.trim()) : [],
         itinerary: formData.itinerary.filter(s => s.trim()),
         photographs: formData.photographs,
         termsAndConditions: formData.termsAndConditions.filter(t => t.trim()),
@@ -749,12 +766,12 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
                   setIsPublished(false);
                   setPublishMode('publish');
                   setFormData({
-                    title: '', eventType: '', location: '', date: '', duration: 1,
+                    title: '', eventType: '', customEventType: '', location: '', customDestination: '', date: '', duration: 1,
                     totalSlots: 20, pricePerSlot: '', destination: '', destinationLink: '',
                     about: '', highlights: [''], whatsIncluded: [''], whatsExcluded: [''],
                     faqs: [{ question: '', answer: '' }, { question: '', answer: '' }, { question: '', answer: '' }],
                     whatToBring: [''], restrictions: [''],
-                    pickupPoints: [{ location: '', link: '', time: '' }],
+                    includePickup: true, pickupPoints: [{ location: '', link: '', time: '' }],
                     itinerary: ['', '', ''], photographs: [], termsAndConditions: [''], poster: null, visibility: 'public', applicationFormType: 'default', customFormFields: []
                   });
                   setActiveSection(0);
@@ -943,15 +960,34 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                      <SelectField
-                        label="Destination"
-                        name="location"
-                        value={formData.location}
-                        onChange={handleChange}
-                        options={destinations}
-                        required
-                        error={stepErrors.location}
-                      />
+                      <div className="space-y-4">
+                        <SelectField
+                          label="Destination"
+                          name="location"
+                          value={formData.location}
+                          onChange={handleChange}
+                          options={destinations}
+                          required
+                          error={stepErrors.location}
+                        />
+                        {formData.location === 'Others' && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                          >
+                            <InputField
+                              label="Custom Destination Name"
+                              name="customDestination"
+                              value={formData.customDestination}
+                              onChange={handleChange}
+                              required
+                              error={stepErrors.customDestination}
+                              placeholder="e.g., Gulmarg"
+                            />
+                          </motion.div>
+                        )}
+                      </div>
 
                       <InputField
                         label="Date"
@@ -1180,18 +1216,31 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
 
                     <div className="space-y-6">
                       <div className="flex items-center justify-between flex-wrap gap-2">
-                        <h4 className="font-semibold text-neutral-900 text-sm">Pickup & Drop-off Points</h4>
-                        <button
-                          type="button"
-                          onClick={addPickupPoint}
-                          className="flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-colors text-sm"
-                        >
-                          <Plus className="w-4 h-4" />
-                          Add Point
-                        </button>
+                        <div className="flex items-center gap-3">
+                          <h4 className="font-semibold text-neutral-900 text-sm">Include Pickup & Drop-off Points</h4>
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              className="sr-only peer"
+                              checked={formData.includePickup}
+                              onChange={(e) => setFormData({ ...formData, includePickup: e.target.checked })}
+                            />
+                            <div className="w-9 h-5 bg-neutral-200 rounded-full peer peer-checked:bg-emerald-600 peer-focus:ring-2 peer-focus:ring-emerald-300 transition-colors after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full"></div>
+                          </label>
+                        </div>
+                        {formData.includePickup && (
+                          <button
+                            type="button"
+                            onClick={addPickupPoint}
+                            className="flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-colors text-sm"
+                          >
+                            <Plus className="w-4 h-4" />
+                            Add Point
+                          </button>
+                        )}
                       </div>
 
-                      {formData.pickupPoints.map((point, index) => (
+                      {formData.includePickup && formData.pickupPoints.map((point, index) => (
                         <div key={index} className="p-4 sm:p-6 border border-neutral-200 rounded-2xl bg-neutral-50/50">
                           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
                             <InputField
@@ -1334,17 +1383,31 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
                         required
                       />
 
-                      {formData.applicationFormType === 'default' && (
-                        <div className="p-4 sm:p-5 bg-emerald-50/60 border border-emerald-200 rounded-2xl">
-                          <div className="flex items-start gap-3">
-                            <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                              <CheckCircle className="w-4 h-4 text-emerald-600" />
-                            </div>
-                            <div>
-                              <p className="text-sm font-bold text-emerald-800">Default Form Active</p>
-                              <p className="text-xs text-emerald-600 mt-0.5">Guests will fill in: Name, Age, Gender, Mobile, Nationality, ID Proof & Photo.</p>
+                      {/* Always-collected fields info box — shown for both form types */}
+                      <div className="p-4 sm:p-5 bg-emerald-50/60 border border-emerald-200 rounded-2xl">
+                        <div className="flex items-start gap-3">
+                          <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <CheckCircle className="w-4 h-4 text-emerald-600" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-emerald-800">Mandatory Fields (Always Collected)</p>
+                            <p className="text-xs text-emerald-600 mt-0.5">The following fields are <strong>always required</strong> from every guest, regardless of form type:</p>
+                            <div className="flex flex-wrap gap-1.5 mt-2">
+                              {['Name', 'Age', 'Gender', 'Mobile', 'Nationality', 'ID Type', 'ID Number', 'ID Proof Upload'].map(f => (
+                                <span key={f} className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded-full border border-emerald-200">
+                                  <CheckCircle className="w-2.5 h-2.5" /> {f}
+                                </span>
+                              ))}
                             </div>
                           </div>
+                        </div>
+                      </div>
+
+                      {formData.applicationFormType === 'default' && (
+                        <div className="p-4 sm:p-5 bg-neutral-50 border border-neutral-200 rounded-2xl">
+                          <p className="text-xs text-neutral-600 font-medium">
+                            With the <strong>default</strong> form, only the mandatory identity fields above will be collected. No additional questions.
+                          </p>
                         </div>
                       )}
 
@@ -1352,37 +1415,67 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
                         <div className="space-y-6 mt-4">
                           <div className="p-4 bg-blue-50/60 border border-blue-200 rounded-2xl">
                             <p className="text-xs text-blue-700 font-medium">
-                              <strong>Custom Form Builder</strong> — Create fields for your application form. Add options with extra charges for dropdowns/choices, and set conditional logic.
+                              <strong>Custom Form Builder</strong> — Add <strong>extra</strong> fields to collect additional information beyond the mandatory identity fields above. You can add options with extra charges for dropdowns/choices, and set conditional logic.
                             </p>
                           </div>
 
                           <div className="space-y-4">
+                            {/* Readonly Permanent Fields */}
+                            {['Full Name', 'Age', 'Gender', 'Mobile Number', 'Nationality', 'ID Type', 'ID Number', 'ID Proof Upload'].map((pf, idx) => (
+                              <div key={`perm-${idx}`} className="relative py-4 border-b border-neutral-200 overflow-visible opacity-70 pointer-events-none cursor-not-allowed">
+                                <div className="flex justify-between items-start mb-3">
+                                  <h4 className="font-bold text-neutral-800 text-sm flex items-center gap-2">
+                                    <CheckCircle size={14} className="text-emerald-600" />
+                                    Permanent Field
+                                  </h4>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-1">
+                                  <div>
+                                    <label className="block text-xs font-bold text-neutral-700 mb-1.5 uppercase tracking-wide">Field Title</label>
+                                    <div className="w-full bg-neutral-100 border border-neutral-200 rounded-xl px-4 py-3 text-sm font-semibold text-neutral-600">
+                                      {pf}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <label className="block text-xs font-bold text-neutral-700 mb-1.5 uppercase tracking-wide">Field Type</label>
+                                    <div className="w-full bg-neutral-100 border border-neutral-200 rounded-xl px-4 py-3 text-sm font-semibold text-neutral-600">
+                                      {pf.includes('Upload') ? 'File Upload' : pf === 'Gender' || pf === 'ID Type' ? 'Dropdown' : pf === 'Age' ? 'Number' : 'Text'}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+
                             {formData.customFormFields.map((field, fIndex) => {
                               const allPriorFields = formData.customFormFields.slice(0, fIndex);
                               return (
-                                <div key={field.id} className="relative p-6 border border-neutral-200 rounded-2xl bg-white shadow-sm overflow-visible transition-all duration-200 group border-l-4 border-l-emerald-500" style={{ zIndex: formData.customFormFields.length - fIndex }}>
+                                <div key={field.id} className="relative py-5 border-b border-neutral-200 overflow-visible transition-all duration-200 group last:border-b-0" style={{ zIndex: formData.customFormFields.length - fIndex }}>
                                   <div className="flex justify-between items-start mb-4">
                                     <h4 className="font-bold text-neutral-800 text-sm">Field {fIndex + 1}</h4>
                                     <button type="button" onClick={() => { const s = [...formData.customFormFields]; s.splice(fIndex, 1); setFormData(prev => ({ ...prev, customFormFields: s })); }}
                                       className="text-neutral-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors"><Trash2 className="w-4 h-4" /></button>
                                   </div>
 
-                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5">
-                                    <InputField label="Field Title" value={field.title || ''}
-                                      onChange={(e) => { const s = [...formData.customFormFields]; s[fIndex].title = e.target.value; setFormData(prev => ({ ...prev, customFormFields: s })); }}
-                                      placeholder="e.g., Blood Group" required />
-                                    
-                                    <div className="relative z-50">
-                                      <SelectField label="Input Type" name={`ft-${fIndex}`} value={field.type || 'text'}
-                                        onChange={(e) => { const s = [...formData.customFormFields]; s[fIndex].type = e.target.value;
-                                          if (['dropdown','multiple_choice','checkbox'].includes(e.target.value) && s[fIndex].options.length === 0) s[fIndex].options = [{ value: '', extraCharge: 0 }];
-                                          setFormData(prev => ({ ...prev, customFormFields: s })); }}
-                                        options={['text', 'number', 'dropdown', 'multiple_choice', 'checkbox', 'photo_upload']} required />
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-5">
+                                      <InputField label="Field Title" value={field.title || ''}
+                                        onChange={(e) => { const s = [...formData.customFormFields]; s[fIndex].title = e.target.value; setFormData(prev => ({ ...prev, customFormFields: s })); }}
+                                        placeholder="e.g., Blood Group" required />
+                                      
+                                      <InputField label="Placeholder (Optional)" value={field.placeholder || ''}
+                                        onChange={(e) => { const s = [...formData.customFormFields]; s[fIndex].placeholder = e.target.value; setFormData(prev => ({ ...prev, customFormFields: s })); }}
+                                        placeholder="e.g., Enter your blood group" />
+
+                                      <div className="relative z-50">
+                                        <SelectField label="Input Type" name={`ft-${fIndex}`} value={field.type || 'text'}
+                                          onChange={(e) => { const s = [...formData.customFormFields]; s[fIndex].type = e.target.value;
+                                            if (['dropdown','multiple_choice','checkbox'].includes(e.target.value) && s[fIndex].options.length === 0) s[fIndex].options = [{ value: '', extraCharge: 0 }];
+                                            setFormData(prev => ({ ...prev, customFormFields: s })); }}
+                                          options={['text', 'number', 'dropdown', 'multiple_choice', 'checkbox', 'photo_upload']} required />
+                                      </div>
                                     </div>
-                                  </div>
                                   
                                   {['dropdown', 'multiple_choice', 'checkbox'].includes(field.type) && (
-                                    <div className="space-y-3 mb-5 pl-4 border-l-2 border-emerald-100">
+                                    <div className="space-y-3 mb-5 mt-4">
                                       <label className="block text-sm font-semibold text-neutral-700">Options</label>
                                       {field.options.map((opt, oIdx) => (
                                         <div key={oIdx} className="flex items-center gap-2 sm:gap-3">
@@ -1463,7 +1556,7 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
                               );
                             })}
                             <button type="button" onClick={() => { const s = [...formData.customFormFields];
-                              s.push({ id: Math.random().toString(36).substr(2, 9), title: '', type: 'text', options: [{ value: '', extraCharge: 0 }], required: false, dependsOn: null, showIfValue: null });
+                              s.push({ id: Math.random().toString(36).substr(2, 9), title: '', placeholder: '', type: 'text', options: [{ value: '', extraCharge: 0 }], required: false, dependsOn: null, showIfValue: null });
                               setFormData(prev => ({ ...prev, customFormFields: s })); }}
                               className="w-full py-4 border-2 border-dashed border-emerald-300 rounded-2xl hover:border-emerald-500 hover:bg-emerald-50 transition-all duration-200 flex items-center justify-center gap-3">
                               <Plus className="w-5 h-5 text-emerald-600" /><span className="text-emerald-600 font-semibold text-sm">Add New Field</span>

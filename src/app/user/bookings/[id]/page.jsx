@@ -714,7 +714,7 @@ export default function BookingDetailPage() {
                                     <p className={`text-sm font-bold ${highlight ? 'text-emerald-600' : 'text-gray-900'}`}>{value || '—'}</p>
                                 </div>
                             ))}
-                            {(booking.selectedPickup?.location || booking.pickupPoints?.length > 0) && (() => {
+                            {(booking.includePickup !== false) && (booking.selectedPickup?.location || booking.pickupPoints?.length > 0) && (() => {
                                 const pp = booking.selectedPickup?.location ? booking.selectedPickup : booking.pickupPoints?.[0];
                                 if (!pp?.location) return null;
                                 return (

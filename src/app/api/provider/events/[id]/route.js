@@ -41,14 +41,43 @@ export async function GET(request, context) {
         let guests = [];
         bookings.forEach(booking => {
             if (booking.participants && Array.isArray(booking.participants)) {
-                booking.participants.forEach(p => {
+                booking.participants.forEach((p, pIdx) => {
+                    // Filter custom form responses for this specific participant (by slotIndex)
+                    const allResponses = booking.customFormResponses || [];
+                    const participantResponses = allResponses.filter(r => r.slotIndex === pIdx);
+                    
+                    let guestName = p.name;
+                    if (!guestName && participantResponses.length > 0) {
+                        const nameField = participantResponses.find(r => r.fieldTitle?.toLowerCase().includes('name'));
+                        if (nameField) guestName = nameField.value;
+                    }
+                    
+                    let guestMobile = p.phone || booking.contactDetails?.phone;
+                    if (!p.phone && participantResponses.length > 0) {
+                        const phoneField = participantResponses.find(r => r.fieldTitle?.toLowerCase().includes('phone') || r.fieldTitle?.toLowerCase().includes('mobile'));
+                        if (phoneField) guestMobile = phoneField.value;
+                    }
+
+                    let guestAge = p.age;
+                    if (!guestAge && participantResponses.length > 0) {
+                        const ageField = participantResponses.find(r => r.fieldTitle?.toLowerCase() === 'age');
+                        if (ageField) guestAge = ageField.value;
+                    }
+
+                    let guestGender = p.gender;
+                    if (!guestGender && participantResponses.length > 0) {
+                        const genderField = participantResponses.find(r => r.fieldTitle?.toLowerCase() === 'gender');
+                        if (genderField) guestGender = genderField.value;
+                    }
+
                     guests.push({
                         id: p._id?.toString() || Math.random().toString(),
-                        name: p.name,
+                        name: guestName || 'Guest',
                         email: p.email || booking.contactDetails?.email,
-                        mobile: p.phone || booking.contactDetails?.phone,
-                        age: p.age,
-                        gender: p.gender,
+                        mobile: guestMobile,
+                        age: guestAge,
+                        gender: guestGender,
+                        nationality: p.country || '',
                         idProofType: p.idType,
                         idProofNumber: p.idNumber,
                         idProofUrl: p.idProofUrl || '',
@@ -63,7 +92,7 @@ export async function GET(request, context) {
                         passCode: p.passCode,
                         checkedIn: p.checkedIn || false,
                         selectedPickup: booking.selectedPickup || null,
-                        customFormResponses: booking.customFormResponses || [],
+                        customFormResponses: participantResponses,
                         extraChargesTotal: booking.extraChargesTotal || 0,
                     });
                 });
@@ -169,7 +198,7 @@ export async function PATCH(request, context) {
         const updatableFields = [
             "title", "eventType", "location", "date", "duration",
             "totalSlots", "pricePerSlot", "destination", "destinationLink",
-            "about", "poster", "visibility", "applicationFormType",
+            "about", "poster", "visibility", "applicationFormType", "includePickup",
         ];
 
         for (const field of updatableFields) {
@@ -194,7 +223,10 @@ export async function PATCH(request, context) {
 
         // Update custom form fields (stored as-is, complex nested structure)
         if (Array.isArray(body.customFormFields)) {
+            console.log("RECEIVED BODY customFormFields:", JSON.stringify(body.customFormFields, null, 2));
             event.customFormFields = body.customFormFields;
+            event.markModified('customFormFields');
+            console.log("EVENT SET TO customFormFields:", JSON.stringify(event.customFormFields, null, 2));
         }
 
         // Update FAQs
