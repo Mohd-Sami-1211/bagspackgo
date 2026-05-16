@@ -16,7 +16,7 @@ export async function GET(req, context) {
         await dbConnect();
 
         const booking = await Booking.findOne({ _id: id, user: user.userId })
-            .populate('event', 'title eventType date duration slots location destination poster pricePerSlot guide')
+            .populate('event', 'title eventType date duration slots location destination poster pricePerSlot guide highlights whatsIncluded whatsExcluded whatToBring restrictions includePickup pickupPoints itinerary termsAndConditions')
             .exec();
 
         if (!booking) {

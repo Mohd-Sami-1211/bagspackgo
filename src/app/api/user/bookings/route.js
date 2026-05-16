@@ -21,7 +21,7 @@ export async function GET(req) {
         const bookings = await Booking.find({ user: user.userId })
             .populate({
                 path: 'event',
-                select: 'title eventType date duration slots location destination destinationLink poster pricePerSlot guide highlights whatsIncluded whatsExcluded whatToBring restrictions pickupPoints itinerary',
+                select: 'title eventType date duration slots location destination destinationLink poster pricePerSlot guide highlights whatsIncluded whatsExcluded whatToBring restrictions includePickup pickupPoints itinerary termsAndConditions',
                 populate: { path: 'guide', select: 'companyName username name' }
             })
             .sort({ createdAt: -1 })
@@ -68,10 +68,38 @@ export async function GET(req) {
                 whatsExcluded: event.whatsExcluded || [],
                 whatToBring: event.whatToBring || [],
                 restrictions: event.restrictions || [],
+                includePickup: event.includePickup !== false,
                 pickupPoints: event.pickupPoints || [],
                 itinerary: event.itinerary || [],
+                termsAndConditions: event.termsAndConditions || [],
                 // Booking-specific
-                participants: b.participants || [],
+                participants: (b.participants || []).map((p, pIdx) => {
+                    let pName = p.name;
+                    let pMobile = p.phone;
+                    let pAge = p.age;
+                    let pGender = p.gender;
+
+                    if (b.customFormResponses && Array.isArray(b.customFormResponses)) {
+                        const slotResponses = b.customFormResponses.filter(r => r.slotIndex === pIdx);
+                        if (!pName) {
+                            const nf = slotResponses.find(r => r.fieldTitle?.toLowerCase().includes('name'));
+                            if (nf) pName = nf.value;
+                        }
+                        if (!pMobile) {
+                            const phf = slotResponses.find(r => r.fieldTitle?.toLowerCase().includes('phone') || r.fieldTitle?.toLowerCase().includes('mobile'));
+                            if (phf) pMobile = phf.value;
+                        }
+                        if (!pAge) {
+                            const ag = slotResponses.find(r => r.fieldTitle?.toLowerCase() === 'age');
+                            if (ag) pAge = ag.value;
+                        }
+                        if (!pGender) {
+                            const gen = slotResponses.find(r => r.fieldTitle?.toLowerCase() === 'gender');
+                            if (gen) pGender = gen.value;
+                        }
+                    }
+                    return { ...p, name: pName || p.name, phone: pMobile || p.phone, age: pAge || p.age, gender: pGender || p.gender };
+                }),
                 contactDetails: b.contactDetails || {},
                 paymentId: b.paymentId || '',
                 orderId: b.orderId || '',
@@ -97,7 +125,7 @@ export async function POST(req) {
         await dbConnect();
 
         const data = await req.json();
-        const { event, slots, amountPaid, contactDetails, participants, selectedPickup } = data;
+        const { event, slots, amountPaid, contactDetails, participants, selectedPickup, customFormResponses, extraChargesTotal } = data;
 
         if (!event || !slots || amountPaid === undefined) {
             return NextResponse.json({ success: false, message: 'Missing required fields' }, { status: 400 });
@@ -138,6 +166,8 @@ export async function POST(req) {
                 passCode: Math.random().toString(36).substring(2, 10).toUpperCase()
             })),
             selectedPickup: selectedPickup || undefined,
+            customFormResponses: Array.isArray(customFormResponses) ? customFormResponses : [],
+            extraChargesTotal: extraChargesTotal || 0,
             status: 'pending',
             paymentId: 'pending',
             orderId: 'pending'

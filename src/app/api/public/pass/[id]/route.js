@@ -36,14 +36,15 @@ export async function GET(req, context) {
             let providerDetails = {};
             if (booking.provider) {
                 const gd = await GuideDetails.findOne({ guide: booking.provider }).lean();
-                const guideUser = await Guide.findById(booking.provider).select('username email phone').lean();
+                const guideUser = await Guide.findById(booking.provider).select('username email phone profileImage').lean();
                 providerDetails = {
                     companyName: gd?.companyname || gd?.agencyName || guideUser?.username || 'Verified Partner',
                     providerPhone: guideUser?.phone || gd?.contactPhone || '',
                     providerEmail: guideUser?.email || gd?.contactEmail || '',
                     instagram: gd?.socialLinks?.instagram || gd?.instagram || '',
                     facebook: gd?.socialLinks?.facebook || gd?.facebook || '',
-                    website: gd?.website || ''
+                    website: gd?.website || '',
+                    providerLogo: gd?.logo || guideUser?.profileImage || ''
                 };
             }
 
@@ -73,7 +74,7 @@ export async function GET(req, context) {
             const eventBooking = await Booking.findOne({ _id: id })
                 .populate({
                     path: 'event',
-                    populate: { path: 'guide', select: 'companyName username name email phone' }
+                    populate: { path: 'guide', select: 'companyName username name email phone profileImage' }
                 })
                 .lean();
 
@@ -81,7 +82,7 @@ export async function GET(req, context) {
                 // Format similarly to the user bookings API
                 const { GuideDetails } = await import('@/models/guidedetails.model');
                 const e = eventBooking.event || {};
-                const gd = e.guide ? await GuideDetails.findOne({ guide: e.guide._id }).select('companyname socialLinks instagram facebook website contactPhone contactEmail').lean() : null;
+                const gd = e.guide ? await GuideDetails.findOne({ guide: e.guide._id }).select('companyname logo socialLinks instagram facebook website contactPhone contactEmail').lean() : null;
                 const gName = gd?.companyname || e.guide?.companyName || e.guide?.username || e.guide?.name || 'Local Organizer';
 
                 const formattedBooking = {
@@ -95,6 +96,7 @@ export async function GET(req, context) {
                     providerId: e.guide?._id?.toString() || '',
                     providerPhone: e.guide?.phone || gd?.contactPhone || '',
                     providerEmail: e.guide?.email || gd?.contactEmail || '',
+                    providerLogo: gd?.logo || e.guide?.profileImage || '',
                     instagram: gd?.socialLinks?.instagram || gd?.instagram || '',
                     facebook: gd?.socialLinks?.facebook || gd?.facebook || '',
                     website: gd?.website || '',
@@ -113,10 +115,37 @@ export async function GET(req, context) {
                     whatsExcluded: e.whatsExcluded || [],
                     whatToBring: e.whatToBring || [],
                     restrictions: e.restrictions || [],
+                    includePickup: e.includePickup !== false,
                     termsAndConditions: e.termsAndConditions || [],
                     pickupPoints: e.pickupPoints || [],
                     itinerary: e.itinerary || [],
-                    participants: eventBooking.participants || [],
+                    participants: (eventBooking.participants || []).map((p, pIdx) => {
+                        let pName = p.name;
+                        let pMobile = p.phone;
+                        let pAge = p.age;
+                        let pGender = p.gender;
+    
+                        if (eventBooking.customFormResponses && Array.isArray(eventBooking.customFormResponses)) {
+                            const slotResponses = eventBooking.customFormResponses.filter(r => r.slotIndex === pIdx);
+                            if (!pName) {
+                                const nf = slotResponses.find(r => r.fieldTitle?.toLowerCase().includes('name'));
+                                if (nf) pName = nf.value;
+                            }
+                            if (!pMobile) {
+                                const phf = slotResponses.find(r => r.fieldTitle?.toLowerCase().includes('phone') || r.fieldTitle?.toLowerCase().includes('mobile'));
+                                if (phf) pMobile = phf.value;
+                            }
+                            if (!pAge) {
+                                const ag = slotResponses.find(r => r.fieldTitle?.toLowerCase() === 'age');
+                                if (ag) pAge = ag.value;
+                            }
+                            if (!pGender) {
+                                const gen = slotResponses.find(r => r.fieldTitle?.toLowerCase() === 'gender');
+                                if (gen) pGender = gen.value;
+                            }
+                        }
+                        return { ...p, name: pName || p.name, phone: pMobile || p.phone, age: pAge || p.age, gender: pGender || p.gender };
+                    }),
                     contactDetails: eventBooking.contactDetails || {},
                     paymentId: eventBooking.paymentId || '',
                     orderId: eventBooking.orderId || '',

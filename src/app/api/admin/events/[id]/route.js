@@ -17,31 +17,37 @@ export async function GET(req, context) {
         const event = await Event.findById(id);
         if (!event) return NextResponse.json({ success: false, message: 'Event not found' }, { status: 404 });
 
-        // Get bookings/guests
-        const bookings = await Booking.find({ entityId: id, status: { $in: ['Confirmed', 'Pending'] } })
-            .select('user entityType details status paymentStatus totalAmount passes createdAt checkinStatus checkInDetails')
-            .populate('user', 'name email phone avatar');
+        // Get bookings/guests — use same pattern as provider route
+        const bookings = await Booking.find({ event: id, status: { $in: ['confirmed', 'completed'] } }).lean();
 
         let guestsList = [];
-        bookings.forEach(b => {
-            if (b.passes && b.passes.length > 0) {
-                b.passes.forEach(pass => {
+        bookings.forEach(booking => {
+            if (booking.participants && Array.isArray(booking.participants)) {
+                booking.participants.forEach((p, pIdx) => {
+                    const allResponses = booking.customFormResponses || [];
+                    const participantResponses = allResponses.filter(r => r.slotIndex === pIdx || r.slotIndex === undefined);
+
                     guestsList.push({
-                        id: pass.passId,
-                        bookingId: b._id,
-                        bookingRef: b._id.toString().substring(0, 8).toUpperCase(),
-                        name: pass.guestName,
-                        age: pass.guestAge,
-                        gender: pass.guestGender,
-                        type: pass.passType,
-                        paymentStatus: b.paymentStatus,
-                        bookingDate: b.createdAt,
-                        contact: b.user?.phone || 'N/A',
-                        email: b.user?.email || 'N/A',
-                        checkedIn: pass.checkInStatus === 'Checked-in',
-                        checkedInAt: pass.checkInTime || null,
-                        selectedPickup: b.details?.pickupPoint || null,
-                        bookerName: b.user?.name || 'N/A'
+                        id: p._id?.toString() || Math.random().toString(),
+                        name: p.name,
+                        email: p.email || booking.contactDetails?.email,
+                        mobile: p.phone || booking.contactDetails?.phone,
+                        age: p.age,
+                        gender: p.gender,
+                        nationality: p.country || '',
+                        idProofType: p.idType,
+                        idProofNumber: p.idNumber,
+                        idProofUrl: p.idProofUrl || '',
+                        medicalCondition: p.medicalCondition || '',
+                        address: p.address,
+                        country: p.country,
+                        bookingDate: booking.createdAt,
+                        bookingRef: booking._id.toString().substring(0, 8).toUpperCase(),
+                        passCode: p.passCode,
+                        checkedIn: p.checkedIn || false,
+                        selectedPickup: booking.selectedPickup || null,
+                        customFormResponses: participantResponses,
+                        extraChargesTotal: booking.extraChargesTotal || 0,
                     });
                 });
             }
@@ -65,17 +71,12 @@ export async function PATCH(req, context) {
         await dbConnect();
         const body = await req.json();
 
-        if (body.action === 'publish') {
-            const event = await Event.findByIdAndUpdate(id, { status: 'published' }, { new: true });
-            if (!event) return NextResponse.json({ success: false, message: 'Event not found' }, { status: 404 });
-            return NextResponse.json({ success: true, message: 'Event published', event });
-        }
-
         const allowedFields = [
             'title', 'eventType', 'location', 'date', 'duration', 'totalSlots', 
             'pricePerSlot', 'destination', 'destinationLink', 'about', 'highlights', 
             'whatsIncluded', 'whatsExcluded', 'faqs', 'whatToBring', 'restrictions', 
-            'pickupPoints', 'itinerary', 'termsAndConditions'
+            'pickupPoints', 'itinerary', 'termsAndConditions', 'poster', 'photographs',
+            'visibility', 'applicationFormType', 'customFormFields'
         ];
         
         const updateData = {};
@@ -83,10 +84,18 @@ export async function PATCH(req, context) {
             if (body[key] !== undefined) updateData[key] = body[key];
         }
 
+        if (body.action === 'publish') {
+            updateData.status = 'published';
+        }
+
         const updatedEvent = await Event.findByIdAndUpdate(id, { $set: updateData }, { new: true });
         if (!updatedEvent) return NextResponse.json({ success: false, message: 'Event not found' }, { status: 404 });
 
-        return NextResponse.json({ success: true, message: 'Event updated', event: updatedEvent });
+        return NextResponse.json({ 
+            success: true, 
+            message: body.action === 'publish' ? 'Event published successfully' : 'Event updated successfully', 
+            event: updatedEvent 
+        });
     } catch (err) {
         console.error('Admin PATCH event error:', err);
         return NextResponse.json({ success: false, message: 'Server error' }, { status: 500 });

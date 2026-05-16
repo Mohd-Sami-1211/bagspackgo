@@ -1204,17 +1204,15 @@ export default function EventDetailView({ eventId, adminMode = false, providerId
                                                             className="overflow-hidden border-t border-neutral-100"
                                                         >
                                                             <div className="p-5 bg-gradient-to-br from-neutral-50 to-white">
-                                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                                                    {/* ── Left Column: Contact & Identity ── */}
-                                                                    <div className="space-y-4">
+                                                                {/* ── 3-Column Grid: Contact, ID Proof, Pickup ── */}
+                                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                                                                    {/* ── Column 1: Contact & Identity ── */}
+                                                                    <div className="space-y-3">
                                                                         <h4 className="flex items-center gap-1.5 text-xs font-bold text-neutral-400 uppercase tracking-wider">
                                                                             <UserCheck className="w-3.5 h-3.5" /> Contact & Identity
                                                                         </h4>
-
-                                                                        {/* Contact Details Card */}
                                                                         <div className="bg-white rounded-xl border border-neutral-200 shadow-sm overflow-hidden">
                                                                             <div className="p-4 space-y-3">
-                                                                                {/* Name & Nationality */}
                                                                                 <div className="grid grid-cols-2 gap-3">
                                                                                     <div>
                                                                                         <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Full Name</span>
@@ -1222,23 +1220,19 @@ export default function EventDetailView({ eventId, adminMode = false, providerId
                                                                                     </div>
                                                                                     <div>
                                                                                         <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Nationality</span>
-                                                                                        <p className="text-sm font-semibold text-neutral-900 mt-0.5">{guest.country || 'N/A'}</p>
+                                                                                        <p className="text-sm font-semibold text-neutral-900 mt-0.5">{guest.nationality || guest.country || 'N/A'}</p>
                                                                                     </div>
                                                                                 </div>
-
-                                                                                {/* Age & Gender */}
                                                                                 <div className="grid grid-cols-2 gap-3 pt-2 border-t border-neutral-100">
                                                                                     <div>
                                                                                         <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Age</span>
-                                                                                        <p className="text-sm font-semibold text-neutral-800 mt-0.5">{guest.age} years</p>
+                                                                                        <p className="text-sm font-semibold text-neutral-800 mt-0.5">{guest.age ? `${guest.age} years` : 'N/A'}</p>
                                                                                     </div>
                                                                                     <div>
                                                                                         <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Gender</span>
-                                                                                        <p className="text-sm font-semibold text-neutral-800 mt-0.5 capitalize">{guest.gender}</p>
+                                                                                        <p className="text-sm font-semibold text-neutral-800 mt-0.5 capitalize">{guest.gender || 'N/A'}</p>
                                                                                     </div>
                                                                                 </div>
-
-                                                                                {/* Mobile — clickable */}
                                                                                 <div className="pt-2 border-t border-neutral-100">
                                                                                     <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Mobile</span>
                                                                                     <a href={`tel:${guest.mobile}`} className="flex items-center gap-2 mt-1 text-sm font-semibold text-emerald-700 hover:text-emerald-800 transition group">
@@ -1248,8 +1242,6 @@ export default function EventDetailView({ eventId, adminMode = false, providerId
                                                                                         {guest.mobile || 'N/A'}
                                                                                     </a>
                                                                                 </div>
-
-                                                                                {/* Email — clickable */}
                                                                                 <div className="pt-2 border-t border-neutral-100">
                                                                                     <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Email</span>
                                                                                     <a href={`mailto:${guest.email}`} className="flex items-center gap-2 mt-1 text-sm font-semibold text-blue-700 hover:text-blue-800 transition group break-all">
@@ -1259,21 +1251,18 @@ export default function EventDetailView({ eventId, adminMode = false, providerId
                                                                                         {guest.email || 'N/A'}
                                                                                     </a>
                                                                                 </div>
-
-                                                                                {/* ID Verification */}
                                                                                 <div className="pt-2 border-t border-neutral-100">
                                                                                     <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">ID Verification</span>
                                                                                     <p className="text-sm font-semibold text-neutral-800 mt-0.5 capitalize">
-                                                                                        {guest.idProofType} <span className="text-neutral-400 font-normal">·</span> <span className="font-mono text-xs text-neutral-600">{guest.idProofNumber}</span>
+                                                                                        {guest.idProofType || 'ID'} <span className="text-neutral-400 font-normal">·</span> <span className="font-mono text-xs text-neutral-600">{guest.idProofNumber || 'N/A'}</span>
                                                                                     </p>
                                                                                 </div>
                                                                             </div>
                                                                         </div>
                                                                     </div>
 
-                                                                    {/* ── Right Column: ID Proof Photo & Pickup ── */}
-                                                                    <div className="space-y-4">
-                                                                        {/* ID Proof Photo */}
+                                                                    {/* ── Column 2: ID Proof Document ── */}
+                                                                    <div className="space-y-3">
                                                                         <h4 className="flex items-center gap-1.5 text-xs font-bold text-neutral-400 uppercase tracking-wider">
                                                                             <ImageIcon className="w-3.5 h-3.5" /> ID Proof Document
                                                                         </h4>
@@ -1306,8 +1295,10 @@ export default function EventDetailView({ eventId, adminMode = false, providerId
                                                                                 <p className="text-sm text-neutral-400 font-medium">No ID proof uploaded</p>
                                                                             </div>
                                                                         )}
+                                                                    </div>
 
-                                                                        {/* Pickup Point */}
+                                                                    {/* ── Column 3: Pickup Details ── */}
+                                                                    <div className="space-y-3">
                                                                         <h4 className="flex items-center gap-1.5 text-xs font-bold text-neutral-400 uppercase tracking-wider">
                                                                             <Route className="w-3.5 h-3.5" /> Pickup Details
                                                                         </h4>
@@ -1328,6 +1319,49 @@ export default function EventDetailView({ eventId, adminMode = false, providerId
                                                                         </div>
                                                                     </div>
                                                                 </div>
+
+                                                                {/* ── Full Width Bottom Section: Custom Form Responses ── */}
+                                                                {guest.customFormResponses && guest.customFormResponses.length > 0 && (
+                                                                    <div className="mt-6 border-t border-neutral-100 pt-6">
+                                                                        <h4 className="flex items-center gap-1.5 text-xs font-bold text-neutral-400 uppercase tracking-wider mb-4">
+                                                                            <FileText className="w-3.5 h-3.5" /> Additional Application Details
+                                                                        </h4>
+                                                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                                            {guest.customFormResponses.map((resp, idx) => (
+                                                                                <div key={idx} className="bg-white p-4 rounded-xl border border-neutral-200 shadow-sm flex flex-col justify-center">
+                                                                                    <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1">{resp.fieldTitle}</span>
+                                                                                    {typeof resp.value === 'string' && resp.value.startsWith('data:image') ? (
+                                                                                        <div className="mt-2">
+                                                                                            <div className="relative w-full aspect-[4/3] max-w-[160px] bg-neutral-100 rounded-lg overflow-hidden border border-neutral-200">
+                                                                                                <img src={resp.value} alt={resp.fieldTitle} className="w-full h-full object-cover" />
+                                                                                            </div>
+                                                                                            <a href={resp.value} download={`CustomForm_${resp.fieldTitle}.jpg`} className="inline-flex items-center gap-1 mt-2 text-xs font-bold text-blue-600 hover:text-blue-700">
+                                                                                                <Download className="w-3 h-3" /> Download
+                                                                                            </a>
+                                                                                        </div>
+                                                                                    ) : Array.isArray(resp.value) ? (
+                                                                                        <div className="mt-1 flex flex-wrap gap-1.5">
+                                                                                            {resp.value.map((v, i) => (
+                                                                                                <span key={i} className="inline-block px-2 py-0.5 bg-neutral-100 text-neutral-700 text-xs rounded border border-neutral-200">
+                                                                                                    {v}
+                                                                                                </span>
+                                                                                            ))}
+                                                                                        </div>
+                                                                                    ) : (
+                                                                                        <p className="text-sm font-semibold text-neutral-800 break-words">{resp.value || 'N/A'}</p>
+                                                                                    )}
+                                                                                    {resp.extraCharge > 0 && (
+                                                                                        <div className="mt-2">
+                                                                                            <span className="inline-block text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">
+                                                                                                +₹{resp.extraCharge}
+                                                                                            </span>
+                                                                                        </div>
+                                                                                    )}
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         </motion.div>
                                                     )}

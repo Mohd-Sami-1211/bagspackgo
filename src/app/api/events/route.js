@@ -23,10 +23,11 @@ export async function GET(request) {
         const page = parseInt(searchParams.get("page")) || 1;
         const limit = parseInt(searchParams.get("limit")) || 50;
 
-        // Build query — only published events with future dates
+        // Build query — only published PUBLIC events with future dates
         const query = {
             status: "published",
             date: { $gte: new Date() },
+            visibility: { $ne: "private" }, // Only show public events in listing
         };
 
         if (location) {
@@ -148,6 +149,12 @@ export async function GET(request) {
                     _source: "db",
                 };
             }),
+        }, {
+            headers: {
+                'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0',
+            }
         });
     } catch (error) {
         console.error("Public Events Error:", error);

@@ -33,6 +33,17 @@ const bookingSchema = new mongoose.Schema({
         link: { type: String, default: '' },
         time: { type: String, default: '' },
     },
+    // Custom form responses — stores answers when event uses customized application form
+    customFormResponses: [{
+        fieldId: String,
+        fieldTitle: String,
+        sectionTitle: String,
+        slotIndex: { type: Number, default: 0 },
+        value: mongoose.Schema.Types.Mixed, // string, number, array, or base64 for photo
+        extraCharge: { type: Number, default: 0 },
+    }],
+    // Total extra charges from custom form option selections
+    extraChargesTotal: { type: Number, default: 0 },
     status: { type: String, enum: ['pending', 'confirmed', 'cancelled', 'completed', 'cancellation_requested', 'refund_initiated'], default: 'pending' },
     // Provider Payment details
     providerPaymentStatus: { type: String, enum: ['pending', 'completed'], default: 'pending' },

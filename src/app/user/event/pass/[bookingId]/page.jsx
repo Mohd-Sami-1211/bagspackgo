@@ -179,11 +179,18 @@ function EventPassContent() {
                         </div>
                         <div className="flex-1 w-full md:text-right border-l-4 border-emerald-500 pl-4 sm:pl-6 bg-emerald-50/30 p-4 rounded-r-2xl shrink-0 flex flex-col justify-center">
                             <p className="text-xs font-semibold text-emerald-600 uppercase tracking-widest mb-1.5 md:text-right" style={fontStyle}>Organized By</p>
-                            <h2 className="text-lg sm:text-xl font-extrabold text-gray-900 md:text-right" style={fontStyle}>
-                                {booking?.providerId ? (
-                                    <Link href={`/user/provider/${booking.providerId}`} className="hover:text-emerald-700 hover:underline">{companyName}</Link>
-                                ) : companyName}
-                            </h2>
+                            <div className="flex md:justify-end items-center gap-3">
+                                {booking?.providerLogo && (
+                                    <div className="w-10 h-10 rounded-full border border-gray-200 overflow-hidden bg-white shrink-0">
+                                        <img src={booking.providerLogo} alt={companyName} className="w-full h-full object-cover" />
+                                    </div>
+                                )}
+                                <h2 className="text-lg sm:text-xl font-extrabold text-gray-900 md:text-right" style={fontStyle}>
+                                    {booking?.providerId ? (
+                                        <Link href={`/user/provider/${booking.providerId}`} className="hover:text-emerald-700 hover:underline">{companyName}</Link>
+                                    ) : companyName}
+                                </h2>
+                            </div>
                             <div className="flex flex-col md:items-end gap-1 mt-3">
                                 {booking?.providerPhone && (
                                     <p className="text-[10px] sm:text-xs font-bold text-gray-600 flex items-center gap-1.5" style={fontStyle}>
@@ -252,7 +259,7 @@ function EventPassContent() {
                     </div>
 
                     {/* ═══════ SELECTED PICKUP/DROPOFF ═══════ */}
-                    {selectedPickup && selectedPickup.location && (
+                    {booking.includePickup !== false && selectedPickup && selectedPickup.location && (
                         <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 sm:p-5 mb-8 print-section">
                             <p className="text-[10px] sm:text-xs font-semibold text-emerald-700 uppercase tracking-widest mb-3 flex items-center gap-2" style={fontStyle}>
                                 <Navigation className="w-3.5 h-3.5" /> Selected Pickup / Drop-off Point
@@ -274,7 +281,7 @@ function EventPassContent() {
                     )}
 
                     {/* Show all available pickup points if no specific one was selected */}
-                    {(!selectedPickup || !selectedPickup.location) && pickupPoints.length > 0 && (
+                    {booking.includePickup !== false && (!selectedPickup || !selectedPickup.location) && pickupPoints.length > 0 && (
                         <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4 sm:p-5 mb-8 print-section">
                             <p className="text-[10px] sm:text-xs font-semibold text-gray-600 uppercase tracking-widest mb-3 flex items-center gap-2" style={fontStyle}>
                                 <Navigation className="w-3.5 h-3.5 text-emerald-500" /> Selected Pickup / Drop-off Points

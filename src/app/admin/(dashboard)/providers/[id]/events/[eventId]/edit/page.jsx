@@ -1,10 +1,11 @@
 'use client';
-import { use, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
 import HostEventPage from '@/components/serviceprovider/dashboard/Events/HostEvent';
 import { Loader2 } from 'lucide-react';
 
-export default function AdminEditEventPage({ params }) {
-    const { id, eventId } = use(params);
+export default function AdminEditEventPage() {
+    const { id, eventId } = useParams();
     const [eventData, setEventData] = useState(null);
     const [loading, setLoading] = useState(true);
 

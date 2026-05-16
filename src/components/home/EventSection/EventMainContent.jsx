@@ -1093,7 +1093,7 @@ const EventMainContent = () => {
       {/* ── Mobile: Search Bar + Filter Toggle ── */}
       <div className="lg:hidden px-2 pt-4 pb-2 space-y-3 -mt-4">
         <div className="flex items-center gap-2">
-          <h2 className="text-xl font-bold text-neutral-800 flex-1">
+          <h2 className="text-2xl font-bold text-neutral-800 flex-1">
             {activeSearch ? 'Search Results' : hasFilters ? 'Your Events' : 'Top Events'}
           </h2>
           <button

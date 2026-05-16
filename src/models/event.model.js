@@ -121,6 +121,10 @@ const eventSchema = new mongoose.Schema(
             type: [pickupPointSchema],
             default: [],
         },
+        includePickup: {
+            type: Boolean,
+            default: true,
+        },
         itinerary: {
             type: [String],
             default: [],
@@ -142,6 +146,26 @@ const eventSchema = new mongoose.Schema(
         poster: {
             type: String,
             default: "",
+        },
+
+        // Event visibility — public events show on platform, private only via link
+        visibility: {
+            type: String,
+            enum: ["public", "private"],
+            default: "public",
+        },
+
+        // Application form type — default uses built-in form, customized uses provider's custom form
+        applicationFormType: {
+            type: String,
+            enum: ["default", "customized"],
+            default: "default",
+        },
+
+        // Custom form fields — Google Forms-like flat array of fields
+        customFormFields: {
+            type: [mongoose.Schema.Types.Mixed],
+            default: [],
         },
 
         // Event lifecycle
