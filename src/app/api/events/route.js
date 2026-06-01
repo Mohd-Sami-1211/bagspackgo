@@ -1,168 +1,235 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db";
 import { Event } from "@/models/event.model";
-import { Guide } from "@/models/guide.model";
 import { GuideDetails } from "@/models/guidedetails.model";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
-/**
- * GET /api/events
- * Public API — returns all published events for the user-facing side.
- * Supports query params: ?location=&type=&sort=&page=&limit=
- */
+// GET /api/events
+// Query params: ?search=&destination=&type=&organizer=&sort=&dateFilter=&dateStart=&dateEnd=&page=&limit=
 export async function GET(request) {
     try {
         await dbConnect();
 
         const { searchParams } = new URL(request.url);
-        const location = searchParams.get("location");
-        const type = searchParams.get("type");
-        const sort = searchParams.get("sort");
-        const search = searchParams.get("search");
-        const page = parseInt(searchParams.get("page")) || 1;
-        const limit = parseInt(searchParams.get("limit")) || 50;
 
-        // Build query — only published PUBLIC events with future dates
-        const query = {
-            status: "published",
-            date: { $gte: new Date() },
-            visibility: { $ne: "private" }, // Only show public events in listing
+        const page  = Math.max(1, parseInt(searchParams.get("page"))  || 1);
+        const limit = Math.min(50, parseInt(searchParams.get("limit")) || 20);
+        const skip  = (page - 1) * limit;
+
+        const search      = searchParams.get("search")?.trim()      || null;
+        const destination = searchParams.get("destination")?.trim() || null;
+        const type        = searchParams.get("type")?.trim()        || null;
+        const organizer   = searchParams.get("organizer")?.trim()   || null;
+        const sort        = searchParams.get("sort")                 || null;
+        const dateFilter  = searchParams.get("dateFilter")           || null;
+        const dateStart   = searchParams.get("dateStart")            || null;
+        const dateEnd     = searchParams.get("dateEnd")              || null;
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const baseMatch = {
+            status:     "published",
+            date:       { $gte: today },
+            visibility: { $ne: "private" },
         };
 
-        if (location) {
-            query.location = { $regex: location, $options: "i" };
-        }
-        if (type) {
-            query.eventType = { $regex: type, $options: "i" };
-        }
         if (search) {
-            query.$or = [
-                { title: { $regex: search, $options: "i" } },
+            baseMatch.$or = [
+                { title:       { $regex: search, $options: "i" } },
                 { destination: { $regex: search, $options: "i" } },
-                { eventType: { $regex: search, $options: "i" } },
-                { location: { $regex: search, $options: "i" } },
+                { eventType:   { $regex: search, $options: "i" } },
+                { location:    { $regex: search, $options: "i" } },
             ];
         }
 
-        // Build sort
-        let sortObj = { date: 1 }; // default: nearest date first
-        if (sort === "price_asc") sortObj = { pricePerSlot: 1 };
-        if (sort === "price_desc") sortObj = { pricePerSlot: -1 };
-        if (sort === "date_asc") sortObj = { date: 1 };
-        if (sort === "date_desc") sortObj = { date: -1 };
-        if (sort === "rating") sortObj = { rating: -1 };
+        if (destination) {
+            const destinations = destination.split(",").map(d => d.trim()).filter(Boolean);
+            const regexes = destinations.map(d => new RegExp(d, "i"));
+            baseMatch.$or = [
+                { location:    { $in: regexes } },
+                { destination: { $in: regexes } },
+            ];
+        }
 
-        const skip = (page - 1) * limit;
+        if (type) {
+            const types = type.split(",").map(t => t.trim()).filter(Boolean);
+            baseMatch.eventType = types.length === 1
+                ? { $regex: types[0], $options: "i" }
+                : { $in: types.map(t => new RegExp(t, "i")) };
+        }
 
-        // Select only needed fields — exclude large text/binary fields like 'about' and 'photographs' for the list view
-        const eventsList = await Event.find(query)
-            .select('title date duration pricePerSlot eventType rating bookedSlots totalSlots location destination poster guide highlights whatsIncluded whatsExcluded faqs whatToBring restrictions pickupPoints itinerary destinationLink createdAt status')
-            .sort(sortObj)
-            .lean();
+        if (dateFilter && !dateStart && !dateEnd) {
+            const now = new Date();
+            switch (dateFilter) {
+                case "Today": {
+                    const end = new Date(now); end.setHours(23, 59, 59, 999);
+                    baseMatch.date = { $gte: now, $lte: end }; break;
+                }
+                case "Tomorrow": {
+                    const start = new Date(now); start.setDate(now.getDate() + 1); start.setHours(0, 0, 0, 0);
+                    const end   = new Date(start); end.setHours(23, 59, 59, 999);
+                    baseMatch.date = { $gte: start, $lte: end }; break;
+                }
+                case "This Week": {
+                    const end = new Date(now); end.setDate(now.getDate() + 7);
+                    baseMatch.date = { $gte: now, $lte: end }; break;
+                }
+                case "This Month": {
+                    const end = new Date(now); end.setMonth(now.getMonth() + 1);
+                    baseMatch.date = { $gte: now, $lte: end }; break;
+                }
+            }
+        }
 
-        // Fetch guide info and details concurrently
-        const guideIds = [...new Set(eventsList.map((e) => e.guide.toString()))];
-        const [guides, guideDetailsList] = await Promise.all([
-            Guide.find({ _id: { $in: guideIds } }).select("username email").lean(),
-            GuideDetails.find({ guide: { $in: guideIds } }).select("guide companyname pausedServices").lean(),
-        ]);
+        if (dateStart || dateEnd) {
+            baseMatch.date = {};
+            if (dateStart) {
+                const start = new Date(dateStart);
+                start.setUTCHours(0, 0, 0, 0);
+                baseMatch.date.$gte = start;
+            }
+            if (dateEnd) {
+                const end = new Date(dateEnd);
+                end.setUTCHours(23, 59, 59, 999);
+                baseMatch.date.$lte = end;
+            }
+        }
 
-        // 🛑 Filter out paused events
-        const pausedEventGuides = new Set(
-            guideDetailsList
-                .filter(gd => gd.pausedServices?.event === true)
-                .map(gd => gd.guide.toString())
+        let sortStage = { slotsLeft: 1, rating: -1 };
+        switch (sort) {
+            case "price_asc":   sortStage = { pricePerSlot: 1  }; break;
+            case "price_desc":  sortStage = { pricePerSlot: -1 }; break;
+            case "date_asc":    sortStage = { date: 1          }; break;
+            case "date_desc":   sortStage = { date: -1         }; break;
+            case "rating":      sortStage = { rating: -1       }; break;
+            case "most_booked": sortStage = { bookedSlots: -1  }; break;
+        }
+
+        // Organizer filter applied after $lookup since companyname lives in guidedetails
+        let organizerMatch = null;
+        if (organizer) {
+            const organizerNames = organizer.split(",").map(o => o.trim());
+            organizerMatch = {
+                $or: organizerNames.map(name => ({
+                    "guideDetails.companyname": { $regex: name, $options: "i" },
+                })),
+            };
+        }
+
+        const pipeline = [
+            { $match: baseMatch },
+            { $addFields: { slotsLeft: { $subtract: ["$totalSlots", "$bookedSlots"] } } },
+            {
+                $lookup: {
+                    from:         "guidedetails",
+                    localField:   "guide",
+                    foreignField: "guide",
+                    as:           "guideDetails",
+                    pipeline: [
+                        { $project: { companyname: 1, "pausedServices.event": 1, guide: 1 } },
+                    ],
+                },
+            },
+            { $unwind: { path: "$guideDetails", preserveNullAndEmptyArrays: false } },
+            { $match: { "guideDetails.pausedServices.event": { $ne: true } } },
+            ...(organizerMatch ? [{ $match: organizerMatch }] : []),
+            {
+                $lookup: {
+                    from:         "guides",
+                    localField:   "guide",
+                    foreignField: "_id",
+                    as:           "guideInfo",
+                    pipeline: [
+                        { $project: { username: 1 } },
+                    ],
+                },
+            },
+            { $unwind: { path: "$guideInfo", preserveNullAndEmptyArrays: true } },
+            {
+                $facet: {
+                    events: [
+                        { $sort: sortStage },
+                        { $skip: skip },
+                        { $limit: limit },
+                        {
+                            $project: {
+                                _id:             1,
+                                title:           1,
+                                date:            1,
+                                duration:        1,
+                                pricePerSlot:    1,
+                                eventType:       1,
+                                rating:          1,
+                                bookedSlots:     1,
+                                totalSlots:      1,
+                                slotsLeft:       1,
+                                location:        1,
+                                destination:     1,
+                                destinationLink: 1,
+                                poster:          1,
+                                highlights:      1,
+                                whatsIncluded:   1,
+                                whatsExcluded:   1,
+                                faqs:            1,
+                                whatToBring:     1,
+                                restrictions:    1,
+                                pickupPoints:    1,
+                                itinerary:       1,
+                                createdAt:       1,
+                                "guideDetails.companyname": 1,
+                                "guideInfo.username":       1,
+                            },
+                        },
+                    ],
+                    totalCount: [{ $count: "count" }],
+                },
+            },
+        ];
+
+        const [aggregationResult] = await Event.aggregate(pipeline);
+
+        const rawEvents = aggregationResult?.events          || [];
+        const total     = aggregationResult?.totalCount?.[0]?.count || 0;
+        const hasMore   = page * limit < total;
+
+        const events = rawEvents.map(e => ({
+            id:              e._id.toString(),
+            name:            e.title,
+            date:            e.date,
+            duration:        `${e.duration} day${e.duration > 1 ? "s" : ""}`,
+            price:           e.pricePerSlot,
+            type:            e.eventType,
+            rating:          e.rating,
+            bookings:        e.bookedSlots,
+            slotsLeft:       e.slotsLeft,
+            totalSlots:      e.totalSlots,
+            destinationId:   e.location,
+            destination:     e.destination,
+            image:           e.poster || null,
+            guideName:       e.guideDetails?.companyname || e.guideInfo?.username || "Local Guide",
+            highlights:      e.highlights,
+            whatsIncluded:   e.whatsIncluded,
+            whatsExcluded:   e.whatsExcluded,
+            faqs:            e.faqs,
+            whatToBring:     e.whatToBring,
+            restrictions:    e.restrictions,
+            pickupPoints:    e.pickupPoints,
+            itinerary:       e.itinerary,
+            destinationLink: e.destinationLink,
+            createdAt:       e.createdAt,
+        }));
+
+        return NextResponse.json(
+            { success: true, total, page, limit, totalPages: Math.ceil(total / limit), hasMore, events },
+            { headers: { "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60" } }
         );
 
-        let finalEvents = eventsList.filter(e => !pausedEventGuides.has(e.guide.toString()));
-        const finalTotal = finalEvents.length;
-
-        // Apply pagination after filtering
-        finalEvents = finalEvents.slice(skip, skip + limit);
-
-
-
-        const guideMap = {};
-        guides.forEach((g) => {
-            guideMap[g._id.toString()] = {
-                name: g.username,
-                email: g.email,
-            };
-        });
-        guideDetailsList.forEach((gd) => {
-            const id = gd.guide.toString();
-            if (guideMap[id]) {
-                guideMap[id].companyName = gd.companyname;
-            }
-        });
-
-        // Fetch all active companies as organizers, ensuring their application is approved
-        const allCompanies = await GuideDetails.find({ "pausedServices.event": { $ne: true } })
-            .populate("guide", "applicationStatus")
-            .select("companyname guide")
-            .lean();
-            
-        const allOrganizers = [...new Set(
-            allCompanies
-                .filter(gd => gd.guide && gd.guide.applicationStatus === 'approved')
-                .map(gd => gd.companyname)
-                .filter(Boolean)
-        )].map(name => ({ id: name, name }));
-
-        return NextResponse.json({
-            success: true,
-            total: finalTotal,
-            page,
-            totalPages: Math.ceil(finalTotal / limit),
-            organizers: allOrganizers,
-            events: finalEvents.map((e) => {
-                const guideInfo = guideMap[e.guide.toString()] || {};
-                return {
-                    // Map to the same shape the frontend EventCard expects
-                    id: e._id.toString(),
-                    name: e.title,
-                    date: e.date,
-                    duration: `${e.duration} day${e.duration > 1 ? "s" : ""}`,
-                    price: e.pricePerSlot,
-                    type: e.eventType,
-                    rating: e.rating,
-                    bookings: e.bookedSlots,
-                    slotsLeft: e.totalSlots - e.bookedSlots,
-                    totalSlots: e.totalSlots,
-                    destinationId: e.location,
-                    destination: e.destination,
-                    image: e.poster || null,
-                    guideName: guideInfo.companyName || guideInfo.name || "Local Guide",
-                    about: e.about,
-                    highlights: e.highlights,
-                    whatsIncluded: e.whatsIncluded,
-                    whatsExcluded: e.whatsExcluded,
-                    faqs: e.faqs,
-                    whatToBring: e.whatToBring,
-                    restrictions: e.restrictions,
-                    pickupPoints: e.pickupPoints,
-                    itinerary: e.itinerary,
-                    destinationLink: e.destinationLink,
-                    createdAt: e.createdAt,
-                    // Source flag so the frontend knows this is from DB
-                    _source: "db",
-                };
-            }),
-        }, {
-            headers: {
-                'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-                'Pragma': 'no-cache',
-                'Expires': '0',
-            }
-        });
     } catch (error) {
         console.error("Public Events Error:", error);
         return NextResponse.json(
-            {
-                success: false,
-                message: error.message || "Something went wrong",
-            },
+            { success: false, message: error.message || "Something went wrong" },
             { status: 500 }
         );
     }
