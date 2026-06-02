@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db";
 import { Event } from "@/models/event.model";
-import { GuideDetails } from "@/models/guidedetails.model";
 
 export const dynamic = "force-dynamic";
 
@@ -155,29 +154,21 @@ export async function GET(request) {
                         { $limit: limit },
                         {
                             $project: {
-                                _id:             1,
-                                title:           1,
-                                date:            1,
-                                duration:        1,
-                                pricePerSlot:    1,
-                                eventType:       1,
-                                rating:          1,
-                                bookedSlots:     1,
-                                totalSlots:      1,
-                                slotsLeft:       1,
-                                location:        1,
-                                destination:     1,
-                                destinationLink: 1,
-                                poster:          1,
-                                highlights:      1,
-                                whatsIncluded:   1,
-                                whatsExcluded:   1,
-                                faqs:            1,
-                                whatToBring:     1,
-                                restrictions:    1,
-                                pickupPoints:    1,
-                                itinerary:       1,
-                                createdAt:       1,
+                                _id:          1,
+                                guide:        1,
+                                title:        1,
+                                date:         1,
+                                duration:     1,
+                                pricePerSlot: 1,
+                                eventType:    1,
+                                rating:       1,
+                                bookedSlots:  1,
+                                totalSlots:   1,
+                                slotsLeft:    1,
+                                location:     1,
+                                destination:  1,
+                                poster:       1,
+                                createdAt:    1,
                                 "guideDetails.companyname": 1,
                                 "guideInfo.username":       1,
                             },
@@ -190,40 +181,44 @@ export async function GET(request) {
 
         const [aggregationResult] = await Event.aggregate(pipeline);
 
-        const rawEvents = aggregationResult?.events          || [];
+        const rawEvents = aggregationResult?.events || [];
         const total     = aggregationResult?.totalCount?.[0]?.count || 0;
         const hasMore   = page * limit < total;
 
         const events = rawEvents.map(e => ({
-            id:              e._id.toString(),
-            name:            e.title,
-            date:            e.date,
-            duration:        `${e.duration} day${e.duration > 1 ? "s" : ""}`,
-            price:           e.pricePerSlot,
-            type:            e.eventType,
-            rating:          e.rating,
-            bookings:        e.bookedSlots,
-            slotsLeft:       e.slotsLeft,
-            totalSlots:      e.totalSlots,
-            destinationId:   e.location,
-            destination:     e.destination,
-            image:           e.poster || null,
-            guideName:       e.guideDetails?.companyname || e.guideInfo?.username || "Local Guide",
-            highlights:      e.highlights,
-            whatsIncluded:   e.whatsIncluded,
-            whatsExcluded:   e.whatsExcluded,
-            faqs:            e.faqs,
-            whatToBring:     e.whatToBring,
-            restrictions:    e.restrictions,
-            pickupPoints:    e.pickupPoints,
-            itinerary:       e.itinerary,
-            destinationLink: e.destinationLink,
-            createdAt:       e.createdAt,
+            id:          e._id.toString(),
+            guideId:     e.guide?.toString() ?? null,
+            name:        e.title,
+            date:        e.date,
+            duration:    `${e.duration} day${e.duration > 1 ? "s" : ""}`,
+            price:       e.pricePerSlot,
+            type:        e.eventType,
+            rating:      e.rating,
+            bookings:    e.bookedSlots,
+            slotsLeft:   e.slotsLeft,
+            totalSlots:  e.totalSlots,
+            destination: e.destination,
+            destinationId: e.location,
+            image:       e.poster || null,
+            createdAt:   e.createdAt,
+            guideName:   e.guideDetails?.companyname || e.guideInfo?.username || "Local Guide",
         }));
 
         return NextResponse.json(
-            { success: true, total, page, limit, totalPages: Math.ceil(total / limit), hasMore, events },
-            { headers: { "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60" } }
+            {
+                success: true,
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit),
+                hasMore,
+                events,
+            },
+            {
+                headers: {
+                    "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60",
+                },
+            }
         );
 
     } catch (error) {

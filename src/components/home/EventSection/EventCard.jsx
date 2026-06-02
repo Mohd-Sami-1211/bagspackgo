@@ -106,7 +106,7 @@ const EventCard = ({ event }) => {
                 <User size={14} className="text-gray-900" />
                 <span className="text-sm font-medium">
                   {(event.guide || event.guideId) ? (
-                      <Link href={`/user/provider/${event.guide?._id || event.guideId || event.guide}`} className="hover:text-emerald-700 hover:underline" onClick={(e) => e.stopPropagation()}>
+                      <Link target="_blank" href={`/user/provider/${event.guide?._id || event.guideId || event.guide}`} className="hover:text-emerald-700 hover:underline" onClick={(e) => e.stopPropagation()}>
                           {event.guideName || "Local Guide"}
                       </Link>
                   ) : (event.guideName || "Local Guide")}
