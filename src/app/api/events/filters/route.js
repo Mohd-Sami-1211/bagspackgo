@@ -72,7 +72,6 @@ export async function GET(request) {
         if (type === "destination") {
             // Static location IDs from data.json — used to exclude from dynamic results
             const staticLocationIds = STATIC_DESTINATIONS.map(d => d.value);
-            console.log(staticLocationIds)
             const pipeline = [
                 {
                     $match: {

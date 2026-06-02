@@ -25,14 +25,15 @@ const buildQueryString = (page, filters, search) => {
   const params = new URLSearchParams();
   params.set('page',  String(page));
   params.set('limit', String(LIMIT));
-  if (search)                        params.set('search',      search);
+  
+  if (search)  params.set('search', search);
   if (filters.destination?.length)   params.set('destination', filters.destination.join(','));
-  if (filters.organizer?.length)     params.set('organizer',   filters.organizer.join(','));
-  if (filters.type?.length)          params.set('type',        filters.type.join(','));
-  if (filters.sort)                  params.set('sort',        filters.sort);
-  if (filters.date)                  params.set('dateFilter',  filters.date);
-  if (filters.dateRange?.start)      params.set('dateStart',   filters.dateRange.start.toISOString());
-  if (filters.dateRange?.end)        params.set('dateEnd',     filters.dateRange.end.toISOString());
+  if (filters.organizer?.length) params.set('organizer', filters.organizer.join(','));
+  if (filters.type?.length)  params.set('type', filters.type.join(','));
+  if (filters.sort)  params.set('sort', filters.sort);
+  if (filters.date) params.set('dateFilter', filters.date);
+  if (filters.dateRange?.start) params.set('dateStart', filters.dateRange.start.toISOString());
+  if (filters.dateRange?.end) params.set('dateEnd', filters.dateRange.end.toISOString());
   return params.toString();
 };
 
@@ -64,7 +65,6 @@ const BottomLoader = () => (
 );
 
 // ─── ActiveFilterTags ─────────────────────────────────────────────────────────
-// Memoized: only re-renders when `filters` or `onClear` changes.
 
 const ActiveFilterTags = memo(({ filters, onClear }) => {
   const labels = filters._labels ?? { destinations: {}, organizers: {} };
@@ -144,14 +144,12 @@ const EventMainContent = () => {
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   // ── Search ───────────────────────────────────────────────────────────────────
-  // searchQuery is driven directly by SearchBar's debounced onSearch callback.
   const [searchQuery, setSearchQuery] = useState('');
 
   // ── Refs ─────────────────────────────────────────────────────────────────────
   const observerRef    = useRef(null);
   const fetchingRef    = useRef(false);
-  // Ref mirror of searchQuery so stable callbacks (handleApply, clearFilter)
-  // always read the latest value without being in their dependency arrays.
+
   const searchQueryRef = useRef('');
   const hasMounted     = useRef(false);
 
@@ -189,16 +187,14 @@ const EventMainContent = () => {
     }
   }, []);
 
-  // Initial fetch on mount.
+
   useEffect(() => { fetchEvents(1, EMPTY_FILTERS, ''); }, [fetchEvents]);
 
-  // Re-fetch when searchQuery changes (SearchBar debounces before calling us).
-  // Skip the first run so we don't double-fetch on mount.
   useEffect(() => {
     if (!hasMounted.current) { hasMounted.current = true; return; }
     setPage(1);
     fetchEvents(1, filters, searchQuery, false, true);
-  }, [searchQuery]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [searchQuery]);
 
   // Infinite scroll
   useEffect(() => {
@@ -216,26 +212,14 @@ const EventMainContent = () => {
     return () => observer.disconnect();
   }, [hasMore, loading, page, filters, searchQuery, fetchEvents]);
 
-  // ─── Stable callbacks passed to FilterPanel & tags ────────────────────────
-  // These MUST NOT include searchQuery in their deps — they read it via ref
-  // so that React.memo on FilterPanel can prevent re-renders while the user
-  // types in the search bar.
-
-  /**
-   * Called by FilterPanel when the user clicks "Apply".
-   * newFilters includes `_labels` for display in ActiveFilterTags.
-   */
   const handleApply = useCallback((newFilters) => {
     setFilters(newFilters);
     setPage(1);
     setMobileFiltersOpen(false);
     fetchEvents(1, newFilters, searchQueryRef.current);
-  }, [fetchEvents]); // searchQuery intentionally via ref
+  }, [fetchEvents]);
 
-  /**
-   * Called by FilterPanel's "Reset All Filters" button.
-   * Also clears the search bar by resetting searchQuery to ''.
-   */
+
   const handleReset = useCallback(() => {
     const empty = { ...EMPTY_FILTERS };
     setFilters(empty);
@@ -246,9 +230,7 @@ const EventMainContent = () => {
     fetchEvents(1, empty, '');
   }, [fetchEvents]);
 
-  /**
-   * Called by ActiveFilterTags when the user clicks the X on an individual tag.
-   */
+
   const clearFilter = useCallback((filterType, value = null) => {
     setFilters(prev => {
       let updated;
@@ -259,17 +241,13 @@ const EventMainContent = () => {
       } else {
         updated = { ...prev, [filterType]: Array.isArray(prev[filterType]) ? [] : null };
       }
-      // _labels preserved via spread
       fetchEvents(1, updated, searchQueryRef.current);
       setPage(1);
       return updated;
     });
   }, [fetchEvents]);
 
-  /**
-   * Passed to SearchBar — called after SearchBar's internal debounce.
-   * Stable: no deps that would change on filter state changes.
-   */
+
   const handleSearch = useCallback((value) => {
     setSearchQuery(value);
   }, []);
@@ -370,16 +348,9 @@ const EventMainContent = () => {
       </AnimatePresence>
 
       <div className="flex flex-col lg:flex-row h-full">
-
-        {/* ── Desktop sidebar filter ──────────────────────────────────────── */}
         <div className="hidden lg:block lg:w-1/4">
           <h2 className="text-2xl p-6 font-bold text-neutral-800">Filters</h2>
-          {/*
-            FilterPanel is memo'd. It will only re-render when:
-            - appliedFilters changes (user applied/cleared a filter)
-            - onApply / onReset change (they never do — stable useCallback w/ no search dep)
-            Typing in the search bar does NOT re-render FilterPanel.
-          */}
+          
           <FilterPanel
             appliedFilters={filters}
             onApply={handleApply}
