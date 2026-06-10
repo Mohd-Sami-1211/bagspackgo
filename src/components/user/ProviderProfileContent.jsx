@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useProviderProfile } from '@/lib/useTripCache';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { Star, MapPin, Award, CheckCircle, Navigation, ArrowLeft, Calendar, Users, Clock, ChevronRight, Ticket, Share2 } from 'lucide-react';
@@ -43,25 +44,16 @@ const ProviderProfileContent = ({ providerId }) => {
     }
   };
 
+  const { data: fetchResult, isLoading: loading } = useProviderProfile(providerId);
+
   useEffect(() => {
-    async function fetchProvider() {
-      try {
-        const res = await fetch(`/api/user/provider/${providerId}`);
-        const json = await res.json();
-        if (json.success) {
-          setData(json);
-          if (json.feedbacks && json.feedbacks.length > 0) {
-             setFeedbacks(json.feedbacks);
-          }
-        }
-      } catch (err) {
-        console.error("Provider fetch error:", err);
-      } finally {
-        setLoading(false);
+    if (fetchResult?.success) {
+      setData(fetchResult);
+      if (fetchResult.feedbacks) {
+         setFeedbacks(fetchResult.feedbacks);
       }
     }
-    fetchProvider();
-  }, [providerId]);
+  }, [fetchResult]);
 
   const handleSubmitFeedback = async (e) => {
     e.preventDefault();
@@ -121,12 +113,26 @@ const ProviderProfileContent = ({ providerId }) => {
       setActivePackageId(pkgId === activePackageId ? null : pkgId);
   };
   
+  // Booking form validation error
+  const [pkgConfigError, setPkgConfigError] = useState('');
+
   const handleProceedBooking = (pkg) => {
+      // Validate all fields are filled
+      if (!pkgConfig.count || pkgConfig.count < 1) {
+        setPkgConfigError('Please select the number of people.');
+        return;
+      }
+      if (!pkgConfig.date) {
+        setPkgConfigError('Please select an expected travel date.');
+        return;
+      }
+      setPkgConfigError('');
+
       const isTrek = pkg.category === 'trek';
       
       const params = new URLSearchParams();
       if (!isTrek) params.set('category', pkg.packageType || 'individual');
-      if (pkgConfig.date) params.set('date', pkgConfig.date.toISOString());
+      params.set('date', pkgConfig.date.toISOString());
       
       if (isTrek) {
          params.set('peopleCount', pkgConfig.count.toString());
@@ -209,7 +215,7 @@ const ProviderProfileContent = ({ providerId }) => {
             <div className="space-y-4 flex-grow">
               <div>
                 <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                  {pkg.packageType === 'couple' && !isTrek ? 'No. of Couples' : 'No. of People'}
+                  {pkg.packageType === 'couple' && !isTrek ? 'No. of Couples' : 'No. of People'} <span className="text-red-500">*</span>
                 </label>
                 <div className="flex items-center bg-white border border-slate-200 rounded-lg h-[40px] hover:border-slate-300 transition-colors">
                   <button
@@ -246,10 +252,12 @@ const ProviderProfileContent = ({ providerId }) => {
               </div>
               
               <div className="relative" style={{zIndex: 100}}>
-                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Expected Travel Date</label>
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+                  Expected Travel Date <span className="text-red-500">*</span>
+                </label>
                 <DatePicker
                   selected={pkgConfig.date}
-                  onChange={(date) => setPkgConfig({...pkgConfig, date})}
+                  onChange={(date) => { setPkgConfig({...pkgConfig, date}); setPkgConfigError(''); }}
                   placeholderText="DD/MM/YYYY"
                   dateFormat="dd/MM/yyyy"
                   minDate={new Date()}
@@ -263,13 +271,16 @@ const ProviderProfileContent = ({ providerId }) => {
                   portalId="datepicker-portal"
                   calendarClassName="border-slate-200 rounded-lg shadow-xl bg-white"
                   wrapperClassName="w-full"
-                  className="w-full text-sm bg-white border border-slate-200 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-slate-900 focus:border-slate-900 hover:border-slate-300 transition-colors"
+                  className={`w-full text-sm bg-white border rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-slate-900 focus:border-slate-900 hover:border-slate-300 transition-colors ${!pkgConfig.date && pkgConfigError ? 'border-red-300' : 'border-slate-200'}`}
                 />
               </div>
             </div>
+            {pkgConfigError && (
+              <p className="text-xs text-red-500 font-medium mt-3 px-1">{pkgConfigError}</p>
+            )}
             <button 
               onClick={() => handleProceedBooking(pkg)}
-              className="w-full mt-5 bg-slate-900 hover:bg-slate-800 text-white font-semibold py-2.5 rounded-lg text-sm transition-colors"
+              className="w-full mt-4 bg-slate-900 hover:bg-slate-800 text-white font-semibold py-2.5 rounded-lg text-sm transition-colors"
             >
               Proceed to Booking →
             </button>

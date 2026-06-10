@@ -2,6 +2,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import GuideDetails from 'src/components/home/TripSection/GuideDetails';
 import { useParams, useSearchParams, notFound } from 'next/navigation';
+import { useTripDetail } from '@/lib/useTripCache';
 
 function TripDetailsContent() {
   const params = useParams();
@@ -14,37 +15,22 @@ function TripDetailsContent() {
   const days = searchParams.get('days') || '1';
   const count = searchParams.get('count') || '1';
 
+  const { data: result, isLoading: loading } = useTripDetail(params.id);
+
   useEffect(() => {
-    async function fetchGuide() {
-      let retries = 2;
-      while (retries >= 0) {
-        try {
-          const res = await fetch('/api/public/trips');
-          if (!res.ok) throw new Error(`HTTP error ${res.status}`);
-          const json = await res.json();
-          if (json.success && json.data) {
-            const found = json.data.find(g => g.id === params.id);
-            if (found) {
-              setGuide(found);
-            } else {
-              setGuide('not_found');
-            }
-          }
-          break; // Success, exit loop
-        } catch (err) {
-          console.error(`Fetch attempt failed (${retries} retries left):`, err);
-          if (retries === 0) {
-            setGuide('not_found');
-          } else {
-            await new Promise(resolve => setTimeout(resolve, 1500));
-          }
+    if (result) {
+      if (result.success && result.data) {
+        const found = result.data.find(g => g.id === params.id);
+        if (found) {
+          setGuide(found);
+        } else {
+          setGuide('not_found');
         }
-        retries--;
+      } else {
+        setGuide('not_found');
       }
-      setLoading(false);
     }
-    fetchGuide();
-  }, [params.id]);
+  }, [result, params.id]);
 
   if (loading) {
     return (

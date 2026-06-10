@@ -123,12 +123,17 @@ export async function GET(req) {
         const daysRange = searchParams.get('daysRange') || '';
         const peopleRange = searchParams.get('peopleRange') || '';
         const category = searchParams.get('category') || '';
+        const providerId = searchParams.get('id') || '';
 
         // Build package query - filter strictly for 'trip' category
         const pkgQuery = { 
             status: { $in: ['active', 'published'] },
             category: 'trip' 
         };
+
+        if (providerId) {
+            pkgQuery.provider = providerId;
+        }
 
         // Filter by destination (case-insensitive)
         if (destination) {
@@ -178,7 +183,7 @@ export async function GET(req) {
 
         // --- Fetch "other packages" for the same destination ---
         let otherGuides = [];
-        if (destination) {
+        if (destination && !providerId) {
             const matchedPkgIds = new Set(packages.map(p => p._id.toString()));
             const otherPkgQuery = {
                 status: { $in: ['active', 'published'] },
@@ -195,7 +200,10 @@ export async function GET(req) {
             otherGuides = await buildFormattedGuides(otherPackages);
         }
 
-        return NextResponse.json({ success: true, data: formattedGuides, otherPackages: otherGuides });
+        return NextResponse.json(
+            { success: true, data: formattedGuides, otherPackages: otherGuides },
+            { headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120' } }
+        );
     } catch (error) {
         console.error('Failed to fetch public trips:', error);
         return NextResponse.json({ success: false, message: 'Server error' }, { status: 500 });

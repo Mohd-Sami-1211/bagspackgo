@@ -582,6 +582,7 @@ const GuideDetails = ({ guide }) => {
     params.set("category", category);
     params.set("daysRange", daysRange || "");
     params.set("count", numPeople);
+    params.set("days", priceDetails.days);
     if (dateParam) params.set("date", dateParam);
     if (packageId) params.set("packageId", packageId);
 

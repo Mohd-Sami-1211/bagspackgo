@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTripPackages } from '@/lib/useTripCache';
 import GuideCard from './TripGuideCard';
 import Select from 'react-select';
 import DatePicker from 'react-datepicker';
@@ -44,8 +45,6 @@ const SearchResults = () => {
   // Filter/sort state
   const [sortOption, setSortOption] = useState('rating-desc');
   const [searchQuery, setSearchQuery] = useState('');
-  const [allGuides, setAllGuides] = useState([]);
-  const [otherGuides, setOtherGuides] = useState([]);
   const [activeFilter, setActiveFilter] = useState(null);
 
   // Parse and validate search parameters
@@ -105,28 +104,19 @@ const SearchResults = () => {
     setSearchQuery(value);
   };
 
-  useEffect(() => {
-    const fetchGuides = async () => {
-      setLoading(true);
-      try {
-        const params = new URLSearchParams();
-        if (destination) params.set('destination', destination);
-        if (daysRange) params.set('daysRange', daysRange);
-        if (peopleCount) params.set('peopleCount', peopleCount.toString());
-        if (category) params.set('category', category);
-
-        const res = await fetch(`/api/public/trips?${params.toString()}`);
-        const json = await res.json();
-        setAllGuides(json.success ? json.data : []);
-        setOtherGuides(json.success ? (json.otherPackages || []) : []);
-      } catch (error) {
-        console.error('Error loading guides:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchGuides();
+  const queryParams = useMemo(() => {
+    const p = {};
+    if (destination) p.destination = destination;
+    if (daysRange) p.daysRange = daysRange;
+    if (peopleCount) p.peopleCount = peopleCount.toString();
+    if (category) p.category = category;
+    return p;
   }, [destination, daysRange, peopleCount, category]);
+
+  const { data: fetchResult, isLoading: loading } = useTripPackages(queryParams);
+
+  const allGuides = fetchResult?.success ? fetchResult.data : [];
+  const otherGuides = fetchResult?.success ? (fetchResult.otherPackages || []) : [];
 
   const guides = useMemo(() => {
     let results = allGuides;
