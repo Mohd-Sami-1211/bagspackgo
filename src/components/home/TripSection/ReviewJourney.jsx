@@ -41,7 +41,7 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
 
   // Extract useful params
   const category = searchParams?.get("category") || "individual";
-  const days = parseInt(searchParams?.get("days")) || 1;
+  const daysFromParams = parseInt(searchParams?.get("days"));
   const count = parseInt(searchParams?.get("count")) || 1;
   const dateParam = searchParams?.get("date");
   const date = dateParam ? new Date(dateParam) : new Date();
@@ -169,6 +169,9 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
       totalAmount,
     };
   };
+
+  // Resolve days from search params first, then from tripData (localStorage), then fallback to 1
+  const days = daysFromParams || parseInt(tripData?.tripConfig?.days) || parseInt(tripData?.selectedPackage?.days) || 1;
 
   const paymentDetails = tripData ? calculatePayment() : null;
 

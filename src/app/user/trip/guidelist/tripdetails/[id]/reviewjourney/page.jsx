@@ -8,7 +8,7 @@ export default function ReviewJourneyPage({ params }) {
   
   // Get guide data from localStorage (stored when navigating from GuideDetails)
   const tripData = typeof window !== 'undefined' 
-    ? JSON.parse(localStorage.getItem('tripData') || {})
+    ? JSON.parse(localStorage.getItem('tripData') || '{}')
     : {};
 
   return (

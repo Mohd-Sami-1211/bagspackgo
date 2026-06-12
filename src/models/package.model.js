@@ -87,4 +87,7 @@ const packageSchema = new mongoose.Schema({
     totalRatings: { type: Number, default: 0 }
 }, { timestamps: true });
 
+packageSchema.index({ status: 1, category: 1, destination: 1 });
+packageSchema.index({ provider: 1 });
+
 export const Package = mongoose.models.Package || mongoose.model('Package', packageSchema);

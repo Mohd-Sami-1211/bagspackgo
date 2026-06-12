@@ -1,5 +1,6 @@
 "use client";
 import { MapPin, Hotel, Clock, Sparkles, Navigation } from "lucide-react";
+import ProgressiveImage from "@/components/common/ProgressiveImage";
 
 const AGENDA_LABELS = {
   'arrival': 'Arrival & Check-in',
@@ -21,7 +22,8 @@ const formatTimeWithAMPM = (time) => {
   return `${displayHour}:${match[2]} ${ampm}`;
 };
 
-const Itenary = ({ day }) => {
+const Itenary = ({ day, photosData, photosLoading, dayIndex }) => {
+  const dayItinPhotos = photosData?.data?.itineraryPhotos?.find(p => p.dayIndex === dayIndex);
   const formData = {
     destination: day.destination || "",
     location: day.location || "",
@@ -33,7 +35,8 @@ const Itenary = ({ day }) => {
     isDayTrip: day.isDayTrip || false,
     hotelStars: day.hotelStars || "3",
     hotel: day.hotel || null,
-    hotelPhotos: day.hotelPhotos || [],
+    hotelPhotos: dayItinPhotos?.hotelPhotos || day.hotelPhotos || [],
+    hotelPhotoThumbnails: dayItinPhotos?.hotelPhotoThumbnails || [],
     destinationPhotos: day.destinationPhotos || [],
     highlights: day.highlights?.filter((h) => h.trim()) || [],
   };
@@ -152,20 +155,31 @@ const Itenary = ({ day }) => {
               : "Accommodation not specified"}
           </p>
 
-          {formData.hotelPhotos?.length > 0 && (
+          {(photosLoading || formData.hotelPhotos?.length > 0) && (
             <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {formData.hotelPhotos.map((photo, idx) => (
-                <div
-                  key={idx}
-                  className="relative aspect-video rounded-lg overflow-hidden border border-gray-200 shadow-sm group"
-                >
-                  <img
-                    src={photo}
-                    alt={`Hotel ${idx + 1}`}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              {photosLoading ? (
+                // While loading, show placeholders with gradient bg + animated ring
+                [...Array(3)].map((_, idx) => (
+                  <ProgressiveImage
+                    key={`skel-${idx}`}
+                    src={null}
+                    thumbnail={null}
+                    alt={`Hotel photo ${idx + 1}`}
+                    className="aspect-video rounded-lg border border-gray-200 shadow-sm"
                   />
-                </div>
-              ))}
+                ))
+              ) : (
+                formData.hotelPhotos.map((photo, idx) => (
+                  <ProgressiveImage
+                    key={idx}
+                    src={photo}
+                    thumbnail={formData.hotelPhotoThumbnails?.[idx] || null}
+                    alt={`Hotel ${idx + 1}`}
+                    className="aspect-video rounded-lg border border-gray-200 shadow-sm group"
+                    imgClassName="group-hover:scale-105 transition-transform duration-300"
+                  />
+                ))
+              )}
             </div>
           )}
         </div>

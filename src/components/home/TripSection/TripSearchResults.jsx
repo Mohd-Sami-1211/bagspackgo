@@ -2,13 +2,17 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTripPackages } from '@/lib/useTripCache';
 import GuideCard from './TripGuideCard';
+import GuideListSkeleton from './GuideListSkeleton';
 import Select from 'react-select';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { X, Calendar as CalendarIcon, Filter, Search as SearchIcon, ChevronDown, ArrowLeft, Plus, Minus, PackageOpen, Sparkles } from 'lucide-react';
 import data from 'src/data/data.json';
 import { Button } from '@/components/ui/button';
+
+
 
 const availableValues = ['kashmir', 'ladakh', 'bhaderwah', 'warwan-marwah-valley'];
 const activeOptions = (data.destinations || []).filter(d => availableValues.includes(d.value));
@@ -38,14 +42,11 @@ const SearchResults = () => {
   // UI state
   const [isEditing, setIsEditing] = useState(false);
   const [isApplying, setIsApplying] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [showSortDropdown, setShowSortDropdown] = useState(false);
 
   // Filter/sort state
   const [sortOption, setSortOption] = useState('rating-desc');
   const [searchQuery, setSearchQuery] = useState('');
-  const [allGuides, setAllGuides] = useState([]);
-  const [otherGuides, setOtherGuides] = useState([]);
   const [activeFilter, setActiveFilter] = useState(null);
 
   // Parse and validate search parameters
@@ -105,28 +106,19 @@ const SearchResults = () => {
     setSearchQuery(value);
   };
 
-  useEffect(() => {
-    const fetchGuides = async () => {
-      setLoading(true);
-      try {
-        const params = new URLSearchParams();
-        if (destination) params.set('destination', destination);
-        if (daysRange) params.set('daysRange', daysRange);
-        if (peopleCount) params.set('peopleCount', peopleCount.toString());
-        if (category) params.set('category', category);
-
-        const res = await fetch(`/api/public/trips?${params.toString()}`);
-        const json = await res.json();
-        setAllGuides(json.success ? json.data : []);
-        setOtherGuides(json.success ? (json.otherPackages || []) : []);
-      } catch (error) {
-        console.error('Error loading guides:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchGuides();
+  const queryParams = useMemo(() => {
+    const p = {};
+    if (destination) p.destination = destination;
+    if (daysRange) p.daysRange = daysRange;
+    if (peopleCount) p.peopleCount = peopleCount.toString();
+    if (category) p.category = category;
+    return p;
   }, [destination, daysRange, peopleCount, category]);
+
+  const { data: fetchResult, isLoading: loading } = useTripPackages(queryParams);
+
+  const allGuides = fetchResult?.success ? fetchResult.data : [];
+  const otherGuides = fetchResult?.success ? (fetchResult.otherPackages || []) : [];
 
   const guides = useMemo(() => {
     let results = allGuides;
@@ -226,15 +218,10 @@ const SearchResults = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen w-full bg-slate-50 -mt-20 flex flex-col items-center justify-center">
-        <motion.div 
-          key="loader"
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-          className="flex flex-col items-center gap-4"
-        >
-          <div className="w-10 h-10 border-[3px] border-emerald-100 border-t-emerald-600 rounded-full animate-spin" />
-          <p className="text-[13px] font-medium text-gray-400">Finding your perfect guides...</p>
-        </motion.div>
+      <div className="min-h-screen w-full bg-slate-50 -mt-20 pt-20">
+        <div className="max-w-7xl mx-auto px-4">
+           <GuideListSkeleton />
+        </div>
       </div>
     );
   }

@@ -88,7 +88,7 @@ export async function GET(request, { params }) {
 
         // Fetch events hosted by this provider
         const { Event } = await import('@/models/event.model');
-        const events = await Event.find({ guide: id, status: 'published' }).lean();
+        const events = await Event.find({ guide: id, status: 'published', visibility: 'public' }).lean();
 
         // Sort latest first
         feedbacks.sort((a, b) => new Date(b.date) - new Date(a.date));
