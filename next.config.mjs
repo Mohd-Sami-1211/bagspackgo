@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    // Prevent sharp (native Node addon) from being bundled for the browser
+    serverExternalPackages: ['sharp'],
     experimental: {
         serverActions: {
             bodySizeLimit: '15mb',

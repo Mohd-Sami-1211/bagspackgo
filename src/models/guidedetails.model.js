@@ -98,4 +98,6 @@ const guidedetailsSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
+guidedetailsSchema.index({ guide: 1 });
+
 export const GuideDetails = mongoose.models.GuideDetails || mongoose.model("GuideDetails", guidedetailsSchema);

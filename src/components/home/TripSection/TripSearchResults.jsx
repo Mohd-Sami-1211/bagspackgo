@@ -4,12 +4,15 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTripPackages } from '@/lib/useTripCache';
 import GuideCard from './TripGuideCard';
+import GuideListSkeleton from './GuideListSkeleton';
 import Select from 'react-select';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { X, Calendar as CalendarIcon, Filter, Search as SearchIcon, ChevronDown, ArrowLeft, Plus, Minus, PackageOpen, Sparkles } from 'lucide-react';
 import data from 'src/data/data.json';
 import { Button } from '@/components/ui/button';
+
+
 
 const availableValues = ['kashmir', 'ladakh', 'bhaderwah', 'warwan-marwah-valley'];
 const activeOptions = (data.destinations || []).filter(d => availableValues.includes(d.value));
@@ -39,7 +42,6 @@ const SearchResults = () => {
   // UI state
   const [isEditing, setIsEditing] = useState(false);
   const [isApplying, setIsApplying] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [showSortDropdown, setShowSortDropdown] = useState(false);
 
   // Filter/sort state
@@ -216,15 +218,10 @@ const SearchResults = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen w-full bg-slate-50 -mt-20 flex flex-col items-center justify-center">
-        <motion.div 
-          key="loader"
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-          className="flex flex-col items-center gap-4"
-        >
-          <div className="w-10 h-10 border-[3px] border-emerald-100 border-t-emerald-600 rounded-full animate-spin" />
-          <p className="text-[13px] font-medium text-gray-400">Finding your perfect guides...</p>
-        </motion.div>
+      <div className="min-h-screen w-full bg-slate-50 -mt-20 pt-20">
+        <div className="max-w-7xl mx-auto px-4">
+           <GuideListSkeleton />
+        </div>
       </div>
     );
   }

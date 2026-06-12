@@ -9,7 +9,6 @@ import { Star, MapPin, Award, CheckCircle, Navigation, ArrowLeft, Calendar, User
 const ProviderProfileContent = ({ providerId }) => {
   const router = useRouter();
   const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [ratingHover, setRatingHover] = useState(0);
   const [ratingSubmit, setRatingSubmit] = useState(0);
   const [feedbackText, setFeedbackText] = useState('');
@@ -19,6 +18,7 @@ const ProviderProfileContent = ({ providerId }) => {
   // Package configuration modal state
   const [activePackageId, setActivePackageId] = useState(null);
   const [pkgConfig, setPkgConfig] = useState({ category: 'individual', count: 1, daysRange: '', date: null });
+  const [pkgConfigError, setPkgConfigError] = useState('');
 
   // View all toggles
   const [showAllTrips, setShowAllTrips] = useState(false);
@@ -113,9 +113,6 @@ const ProviderProfileContent = ({ providerId }) => {
       setActivePackageId(pkgId === activePackageId ? null : pkgId);
   };
   
-  // Booking form validation error
-  const [pkgConfigError, setPkgConfigError] = useState('');
-
   const handleProceedBooking = (pkg) => {
       // Validate all fields are filled
       if (!pkgConfig.count || pkgConfig.count < 1) {

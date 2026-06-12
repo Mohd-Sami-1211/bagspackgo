@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
+import { useBookingPass } from '@/lib/useTripCache';
 import { QRCodeSVG } from 'qrcode.react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -25,26 +26,18 @@ export default function TripPassPage() {
     const [booking, setBooking] = useState(null);
     const [loading, setLoading] = useState(true);
 
+    const { data: passData, isLoading: fetchLoading } = useBookingPass(id);
+
     useEffect(() => {
-        const fetchBooking = async () => {
-            if (!id) return;
-            try {
-                const res = await fetch(`/api/public/pass/${id}`);
-                const data = await res.json();
-                
-                if (data.success && data.data) {
-                    setBooking(data.data);
-                } else {
-                    setBooking(null);
-                }
-            } catch (e) {
-                console.error(e);
-            } finally {
-                setLoading(false);
+        if (!fetchLoading) {
+            if (passData?.success && passData?.data) {
+                setBooking(passData.data);
+            } else {
+                setBooking(null);
             }
-        };
-        fetchBooking();
-    }, [id]);
+            setLoading(false);
+        }
+    }, [passData, fetchLoading]);
 
     // Auto-trigger print dialog when ?print=true is in URL
     useEffect(() => {

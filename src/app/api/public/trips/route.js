@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import mongoose from 'mongoose';
 import dbConnect from '@/lib/db';
 import { Guide } from '@/models/guide.model';
 import { GuideDetails } from '@/models/guidedetails.model';
@@ -12,7 +13,7 @@ async function buildFormattedGuides(packages) {
 
     const guideDetailsList = await GuideDetails.find({
         guide: { $in: providerIds }
-    }).populate('guide').lean();
+    }).select('-idFile -licenseFile -adminNotes').populate('guide', '-password').lean();
 
     // Filter out packages from providers who have paused trips
     const pausedProviderIds = new Set(
@@ -116,7 +117,10 @@ async function buildFormattedGuides(packages) {
 
 export async function GET(req) {
     try {
+        console.time('totalApiTime');
+        console.time('dbConnect');
         await dbConnect();
+        console.timeEnd('dbConnect');
 
         const { searchParams } = new URL(req.url);
         const destination = searchParams.get('destination') || '';
@@ -132,12 +136,20 @@ export async function GET(req) {
         };
 
         if (providerId) {
-            pkgQuery.provider = providerId;
+            // Check if the passed ID is actually a package ID
+            const isPackage = await Package.findById(providerId).select('provider').lean();
+            if (isPackage) {
+                pkgQuery.provider = isPackage.provider;
+            } else if (mongoose.Types.ObjectId.isValid(providerId)) {
+                pkgQuery.provider = new mongoose.Types.ObjectId(providerId);
+            } else {
+                pkgQuery.provider = providerId;
+            }
         }
 
-        // Filter by destination (case-insensitive)
+        // Filter by destination (case-insensitive exact match to allow index usage)
         if (destination) {
-            pkgQuery.destination = { $regex: destination, $options: 'i' };
+            pkgQuery.destination = { $regex: new RegExp(`^${destination}$`, 'i') };
         }
 
         // Filter by days range e.g. "3-5"
@@ -153,8 +165,17 @@ export async function GET(req) {
             pkgQuery.packageType = category;
         }
 
-        // Fetch matching packages
-        let packages = await Package.find(pkgQuery).lean();
+        // Fetch matching packages. Select out heavy base64 photos if this is a general search.
+        console.time('fetchPackages');
+        let packagesQuery = Package.find(pkgQuery);
+        if (!providerId) {
+            packagesQuery = packagesQuery.select('-packagePhotos -photos -itinerary -inclusives -inclusivesList -exclusivesList -activities -termsAndConditions -additionalPoints -aboutPackage -pickupDropCities');
+        } else {
+            // For details view, include the text details but strip the heavy base64 images!
+            packagesQuery = packagesQuery.select('-packagePhotos -photos -itinerary.hotelPhotos');
+        }
+        let packages = await packagesQuery.lean();
+        console.timeEnd('fetchPackages');
 
         // Filter by peopleRange on the pricing tiers
         if (peopleRange) {
@@ -179,7 +200,9 @@ export async function GET(req) {
         }
 
         // Build primary results
+        console.time('buildFormattedGuides1');
         const formattedGuides = await buildFormattedGuides(packages);
+        console.timeEnd('buildFormattedGuides1');
 
         // --- Fetch "other packages" for the same destination ---
         let otherGuides = [];
@@ -188,7 +211,7 @@ export async function GET(req) {
             const otherPkgQuery = {
                 status: { $in: ['active', 'published'] },
                 category: 'trip',
-                destination: { $regex: destination, $options: 'i' },
+                destination: { $regex: new RegExp(`^${destination}$`, 'i') },
                 _id: { $nin: [...matchedPkgIds] }
             };
             // Respect the selected packageType so "More Packages" doesn't
@@ -196,10 +219,17 @@ export async function GET(req) {
             if (category && (category === 'individual' || category === 'couple')) {
                 otherPkgQuery.packageType = category;
             }
-            const otherPackages = await Package.find(otherPkgQuery).lean();
+            console.time('fetchOtherPackages');
+            const otherPackages = await Package.find(otherPkgQuery).select('-packagePhotos -photos -itinerary -inclusives -inclusivesList -exclusivesList -activities -termsAndConditions -additionalPoints -aboutPackage -pickupDropCities').lean();
+            console.timeEnd('fetchOtherPackages');
+            console.time('buildFormattedGuides2');
             otherGuides = await buildFormattedGuides(otherPackages);
+            console.timeEnd('buildFormattedGuides2');
         }
 
+        console.timeEnd('totalApiTime');
+        const finalData = [...formattedGuides, ...otherGuides];
+        console.log(`[TRIP API] Returning ${finalData.length} guides for id:`, providerId);
         return NextResponse.json(
             { success: true, data: formattedGuides, otherPackages: otherGuides },
             { headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120' } }

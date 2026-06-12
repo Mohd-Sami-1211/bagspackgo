@@ -10,6 +10,7 @@ import TrekItenary from 'src/components/home/TrekSection/Itenary';
 import PickupDropoff from 'src/components/home/TrekSection/Pick-Drop';
 import PersonalDetails from 'src/components/home/TrekSection/PersonalDetails';
 import { useAuth } from '@/context/AuthContext';
+import ProgressiveImage from '@/components/common/ProgressiveImage';
 
 /* ── helpers ───────────────────────────────────────── */
 const DIFF_CFG = {
@@ -482,9 +483,14 @@ const TrekGuideDetails = ({ guide }) => {
                   </h3>
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {trekPackage.photos.map((photo, i) => (
-                      <div key={i} className="aspect-[4/3] rounded-xl overflow-hidden shadow-sm border border-emerald-100">
-                        <img src={photo.url || photo} alt={`Trek view ${i + 1}`} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
-                      </div>
+                      <ProgressiveImage
+                        key={i}
+                        src={photo.url || photo}
+                        thumbnail={photo.thumbnail || null}
+                        alt={`Trek view ${i + 1}`}
+                        className="aspect-[4/3] rounded-xl shadow-sm border border-emerald-100 group hover:shadow-md transition-shadow duration-300"
+                        imgClassName="group-hover:scale-105 transition-transform duration-500"
+                      />
                     ))}
                   </div>
                 </div>

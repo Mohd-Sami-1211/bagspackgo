@@ -31,6 +31,8 @@ import Itenary from "src/components/home/TripSection/Itenary";
 import ArrDep from "src/components/home/TripSection/Arr-Dep";
 import PersonalDetails from "src/components/home/TripSection/PersonalDetails";
 import { useAuth } from "@/context/AuthContext";
+import { useSavedItemIds, useTripPhotos } from "@/lib/useTripCache";
+import ProgressiveImage from "@/components/common/ProgressiveImage";
 
 const AGENDA_LABELS = {
   'arrival': 'Arrival & Check-in',
@@ -149,6 +151,10 @@ const GuideDetails = ({ guide }) => {
   const total = basePrice - discount + platformFee + taxes;
   const nights = numDays + 1;
 
+  // Background fetch for Base64 photos
+  const pkgId = packageId || selectedPackage?._id || selectedPackage?.id;
+  const { data: photosData, isLoading: photosLoading } = useTripPhotos(pkgId);
+
   const { user, loading: authLoading, openAuthModal } = useAuth();
   const isUserAuthenticated = !authLoading && user?.role === "user";
   const isLoggedIn = !authLoading && !!user;
@@ -226,25 +232,15 @@ const GuideDetails = ({ guide }) => {
   };
 
   // Initial check for saved status
+  const pkgIdToCheck = packageId || selectedPackage?._id || selectedPackage?.id || guide._id;
+  const { data: savedData } = useSavedItemIds();
+
   useEffect(() => {
-    const checkSaved = async () => {
-      if (!isUserAuthenticated) return;
-      try {
-        const pkgId = packageId || selectedPackage?._id || selectedPackage?.id || guide._id;
-        const res = await fetch('/api/user/saved');
-        const data = await res.json();
-        if (data.success && data.saved) {
-          const isItemSaved = data.saved.some(item =>
-            item.itemId === pkgId
-          );
-          setIsSaved(isItemSaved);
-        }
-      } catch (err) {
-        console.error("Error checking saved status", err);
-      }
-    };
-    checkSaved();
-  }, [isUserAuthenticated, packageId, selectedPackage, guide._id]);
+    if (isUserAuthenticated && savedData?.success && savedData?.saved) {
+      const isItemSaved = savedData.saved.some(item => item.itemId === pkgIdToCheck);
+      setIsSaved(isItemSaved);
+    }
+  }, [isUserAuthenticated, savedData, pkgIdToCheck]);
 
   const defaultPackage = {
     name: selectedPackage?.label || "Basic Package",
@@ -775,7 +771,7 @@ const GuideDetails = ({ guide }) => {
     {/* Full Screen Layout for Detail Panes */}
     <div className="w-full bg-slate-50 py-8 pb-12 overflow-hidden font-sans">
       {/* About Package Overview & Gallery - Full Width Section Above Layout */}
-      {(selectedPackage?.aboutPackage?.trim() || selectedPackage?.packagePhotos?.length > 0) && (
+      {(selectedPackage?.aboutPackage?.trim() || photosLoading || photosData?.data?.packagePhotos?.length > 0) && (
         <div className="w-full px-3 sm:px-4 md:px-6 lg:px-8 mb-8 overflow-hidden">
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 lg:p-8 overflow-hidden">
             {selectedPackage?.aboutPackage?.trim() && (
@@ -789,17 +785,36 @@ const GuideDetails = ({ guide }) => {
               </div>
             )}
             
-            {selectedPackage?.packagePhotos?.length > 0 && (
+            {(photosLoading || photosData?.data?.packagePhotos?.length > 0) && (
               <div>
                 <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
                   📸 Package Gallery
                 </h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {selectedPackage.packagePhotos.map((photo, i) => (
-                    <div key={i} className="aspect-[4/3] rounded-xl overflow-hidden shadow-sm border border-gray-100">
-                      <img src={photo} alt={`Package view ${i + 1}`} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
-                    </div>
-                  ))}
+                  {photosLoading ? (
+                    // While the API is loading, show blurred thumbnails with progress rings
+                    // We show 4 placeholder progressive images (no src yet, no thumbnail yet)
+                    [...Array(4)].map((_, i) => (
+                      <ProgressiveImage
+                        key={i}
+                        src={null}
+                        thumbnail={null}
+                        alt={`Package view ${i + 1}`}
+                        className="aspect-[4/3] rounded-xl shadow-sm border border-gray-100"
+                      />
+                    ))
+                  ) : (
+                    photosData.data.packagePhotos.map((photo, i) => (
+                      <ProgressiveImage
+                        key={i}
+                        src={photo}
+                        thumbnail={photosData.data.packagePhotoThumbnails?.[i] || null}
+                        alt={`Package view ${i + 1}`}
+                        className="aspect-[4/3] rounded-xl shadow-sm border border-gray-100 group hover:shadow-md transition-shadow duration-300"
+                        imgClassName="group-hover:scale-105 transition-transform duration-500"
+                      />
+                    ))
+                  )}
                 </div>
               </div>
             )}
@@ -866,6 +881,10 @@ const GuideDetails = ({ guide }) => {
                     <Itenary
                       day={itenaries[viewingDay - 1]}
                       locations={defaultPackage.locations}
+                      photosData={photosData}
+                      photosLoading={photosLoading}
+                      dayIndex={viewingDay - 1}
+                      thumbnailsReady={!photosLoading && !!photosData?.data?.itineraryPhotos}
                       hotels={
                         guide.hotelsAvailable?.map((name, i) => ({
                           id: `hotel-${i + 1}`,
