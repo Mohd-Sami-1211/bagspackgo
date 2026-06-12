@@ -2,6 +2,7 @@
 import './globals.css';
 import { DM_Sans } from 'next/font/google';
 import ClientLayout from '@/components/common/ClientLayout';
+import ToastProvider from '@/components/ui/ToastProvider';
 
 const dmSans = DM_Sans({
     subsets: ['latin'],
@@ -90,6 +91,7 @@ export default function RootLayout({ children }) {
                 className={`${dmSans.className} bg-white/90 text-gray-800 min-h-screen flex flex-col w-full max-w-[100vw] overflow-x-hidden antialiased`}
             >
                 <ClientLayout>{children}</ClientLayout>
+                <ToastProvider />
             </body>
         </html>
     );
