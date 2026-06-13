@@ -1,6 +1,6 @@
 // components/home/EventSection/EventDetailsContent.jsx
 import { CheckCircle, XCircle, Info, AlertCircle, FileText, Sparkles } from 'lucide-react';
-import FaqAccordion from './FaqAccordian';
+import Faq from './Faq';
 import Tabs from './Tabs';
 
 export default function Content({ event }) {
@@ -175,7 +175,7 @@ export default function Content({ event }) {
       )}
 
       {/* FAQs */}
-      <FaqAccordion faqs={event.faqs} />
+      <Faq faqs={event.faqs} />
     </div>
   );
 

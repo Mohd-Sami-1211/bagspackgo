@@ -20,7 +20,7 @@ const BookingCheckoutFlow = dynamic(() => import('./BookingFlow'), {
   ssr: false 
 });
 
-export default function Main({ event }) {    
+export default function Main({ event }) {  
   const router = useRouter();   
   const { user, openAuthModal } = useAuth();   
   const [currentView, setCurrentView] = useState('details');   
@@ -52,7 +52,9 @@ export default function Main({ event }) {
       price: event.price,         
       date: event.date,         
       location: event.location,         
-      slotsLeft: event.slotsLeft,     
+      slotsLeft: event.slotsLeft, 
+      pickupPoints: event.pickupPoints,
+
     };     
     return (       
       <BookingCheckoutFlow          

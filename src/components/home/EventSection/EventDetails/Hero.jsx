@@ -1,11 +1,9 @@
 import Link from 'next/link';
 import { MapPin, Clock, Calendar, Star, ArrowLeft, Map, ExternalLink } from 'lucide-react';
 import ShareSaveActions from './ShareSaveActions';
+import { formatDate } from '@/lib/utils';
 
 export default function Hero({ event }) {
-  const formattedDate = new Date(event.date).toLocaleDateString('en-US', { 
-    month: 'short', day: 'numeric', year: 'numeric' 
-  });
 
   return (
     <div className="mb-8">
@@ -70,7 +68,7 @@ export default function Hero({ event }) {
             <div className="space-y-3.5 mb-6">
               <div className="flex items-center">
                 <Calendar className="text-blue-500 mr-3 flex-shrink-0" size={20} />
-                <div><p className="text-xs text-gray-400 font-medium">Date</p><p className="font-semibold text-sm text-gray-800">{formattedDate}</p></div>
+                <div><p className="text-xs text-gray-400 font-medium">Date</p><p className="font-semibold text-sm text-gray-800">{formatDate(event.date)}</p></div>
               </div>
               <div className="flex items-center">
                 <Clock className="text-green-500 mr-3 flex-shrink-0" size={20} />
