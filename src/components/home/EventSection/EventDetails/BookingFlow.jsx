@@ -5,8 +5,8 @@ import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { ArrowLeft, ChevronDown, Plus, Minus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import toast from 'react-hot-toast';
-import CustomFormInput from '@/components/ui/custom-form-fields/CustomFormInput';
-import CustomFormSelect from '@/components/ui/custom-form-fields/CustomFormSelect';
+import CustomFormInput from '@/components/common/custom-form-fields/CustomFormInput';
+import CustomFormSelect from '@/components/common/custom-form-fields/CustomFormSelect';
 import ImageUploader from '@/components/ui/ImageUploader';
 import Accordion from '@/components/ui/Accordian';
 import { formatDate } from '@/lib/utils';
@@ -14,7 +14,6 @@ import { formatDate } from '@/lib/utils';
 export default function BookingFlow({ event, user, router, onBackToDetails }) {
   const [isInitialized, setIsInitialized] = useState(false);
   const [bookingStep, setBookingStep] = useState(1);
-  const [expandedSections, setExpandedSections] = useState({ 0: true });
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [termsError, setTermsError] = useState('');
@@ -403,7 +402,7 @@ export default function BookingFlow({ event, user, router, onBackToDetails }) {
             <div className="w-full lg:w-[35%] lg:sticky lg:top-28">
               <div className="bg-white rounded-2xl border border-gray-200 shadow-xl overflow-hidden p-6">
                 <h3 className="font-bold text-gray-900 text-lg mb-6">Event Summary</h3>
-                <img src={event.image} alt="Event" className="w-full h-44 object-cover rounded-xl mb-4" />
+                <img src={event.image || '/images/EventCover.webp'} alt="Event" className="w-full h-44 object-cover rounded-xl mb-4" />
                 <p className="font-bold text-lg mb-4">{event.name}</p>
                 <div className="space-y-3 mb-6 text-sm">
                   <div className="flex justify-between">

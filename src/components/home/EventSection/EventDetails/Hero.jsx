@@ -31,7 +31,7 @@ export default function Hero({ event }) {
         {/* Right: Company Name, Event Info, Map */}
         <div className="w-full md:w-1/2 lg:w-1/3 bg-white rounded-xl shadow-lg p-6 flex flex-col justify-between">
           <div>
-            {/* Inject our tiny Client Component here */}
+            
             <ShareSaveActions eventId={event.id} eventTitle={event.name} />
 
             <div className="flex items-center gap-2 mb-3">

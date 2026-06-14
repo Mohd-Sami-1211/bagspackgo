@@ -11,6 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { formatDate } from '@/lib/utils';
 
 const EventCard = ({ event }) => {
   const router = useRouter();
@@ -49,12 +50,6 @@ const EventCard = ({ event }) => {
       transition: { duration: 0.2, ease: 'easeOut' },
     },
   };
-
-  const formattedDate = new Date(event.date).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
 
   const publishTime = getTimeAgo(event.createdAt);
 
@@ -131,7 +126,7 @@ const EventCard = ({ event }) => {
               </div>
               <div className="min-w-0">
                 <p className="text-[11px] uppercase tracking-wider text-neutral-500 font-semibold mb-0.5">Date</p>
-                <p className="text-sm font-bold text-neutral-800 truncate">{formattedDate}</p>
+                <p className="text-sm font-bold text-neutral-800 truncate">{formatDate(event.date)}</p>
               </div>
             </div>
 

@@ -9,17 +9,14 @@ import { Button } from '@/components/ui/button';
 import EventCard from 'src/components/home/EventSection/EventCard';
 import SearchBar from 'src/components/common/SearchBar';
 import FilterPanel, { EMPTY_FILTERS, SORT_OPTIONS } from 'src/components/home/EventSection/FilterPanel';
+import InfiniteScroll from 'react-infinite-scroll-component';
+import Loader from '@/components/common/components/Loader';
+import { useError } from '@/context/ErrorContext';
+import { formatDate } from '@/lib/utils';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const LIMIT = 20;
-
-const formatDate = (date) => {
-  if (!date) return '';
-  return new Date(date).toLocaleDateString('en-US', {
-    month: 'short', day: 'numeric', year: 'numeric',
-  });
-};
 
 const buildQueryString = (page, filters, search) => {
   const params = new URLSearchParams();
@@ -54,13 +51,6 @@ const EventSkeleton = () => (
         {[1, 2, 3].map(i => <div key={i} className="h-64 bg-gray-50 rounded-2xl animate-pulse border border-gray-100" />)}
       </div>
     </div>
-  </div>
-);
-
-const BottomLoader = () => (
-  <div className="flex justify-center items-center py-8 gap-3">
-    <div className="w-5 h-5 border-[3px] border-green-200 border-t-green-500 rounded-full animate-spin" />
-    <span className="text-sm text-neutral-500 font-medium">Loading more events...</span>
   </div>
 );
 
@@ -134,8 +124,8 @@ const EventMainContent = () => {
   const [page,         setPage]         = useState(1);
   const [hasMore,      setHasMore]      = useState(true);
   const [loading,      setLoading]      = useState(true);
-  const [fetchingMore, setFetchingMore] = useState(false);
   const [totalCount,   setTotalCount]   = useState(0);
+  const { setError, setOnRetry } = useError();
 
   // ── Applied filters (committed state; temp state lives in FilterPanel) ──────
   const [filters, setFilters] = useState({ ...EMPTY_FILTERS });
@@ -147,43 +137,47 @@ const EventMainContent = () => {
   const [searchQuery, setSearchQuery] = useState('');
 
   // ── Refs ─────────────────────────────────────────────────────────────────────
-  const observerRef    = useRef(null);
   const fetchingRef    = useRef(false);
+  const pageRef = useRef(1);
 
   const searchQueryRef = useRef('');
   const hasMounted     = useRef(false);
+  const setPageSync = (p) => { setPage(p); pageRef.current = p; };
+
 
   useEffect(() => { searchQueryRef.current = searchQuery; }, [searchQuery]);
 
   // ─── Event fetching ──────────────────────────────────────────────────────────
 
-  const fetchEvents = useCallback(async (
-    fetchPage, currentFilters, currentSearch, append = false, isSearch = false,
-  ) => {
+  const fetchEvents = useCallback(async ( fetchPage, currentFilters, currentSearch, append = false, isSearch = false,) => {
     if (fetchingRef.current) return;
     fetchingRef.current = true;
 
-    if (append) {
-      setFetchingMore(true);
-    } else if (!isSearch) {
-      setLoading(true);
-      setEvents([]);
+    if (!append && !isSearch) {
+        setLoading(true);
+        setEvents([]);
     }
-
     try {
-      const qs   = buildQueryString(fetchPage, currentFilters, currentSearch);
-      const res  = await fetch(`/api/events?${qs}`);
-      const json = await res.json();
-      if (!json.success) throw new Error(json.message);
-      setEvents(prev => append ? [...prev, ...json.events] : json.events);
-      setHasMore(json.hasMore);
-      setTotalCount(json.total);
+        const qs   = buildQueryString(fetchPage, currentFilters, currentSearch);
+        const res  = await fetch(`/api/events?${qs}`);
+        const json = await res.json();
+        if (!json.success) throw new Error(json.message);
+        setEvents(prev => append ? [...prev, ...json.events] : json.events);
+        setHasMore(json.hasMore);
+        setTotalCount(json.total);
     } catch (err) {
-      console.error('Failed to fetch events:', err);
+        console.error('Failed to fetch events:', err);
+        if (append || isSearch) {
+            setOnRetry(() => () => fetchEvents(fetchPage, currentFilters, currentSearch, append, isSearch));
+            setError(err.message || 'Failed to load events.');
+        } else {
+            setOnRetry(() => () => fetchEvents(1, EMPTY_FILTERS, ''));
+            console.log(err.message)
+            setError(err.message || 'Failed to load events.');
+        }
     } finally {
-      setLoading(false);
-      setFetchingMore(false);
-      fetchingRef.current = false;
+        setLoading(false);
+        fetchingRef.current = false;
     }
   }, []);
 
@@ -194,23 +188,7 @@ const EventMainContent = () => {
     if (!hasMounted.current) { hasMounted.current = true; return; }
     setPage(1);
     fetchEvents(1, filters, searchQuery, false, true);
-  }, [searchQuery]);
-
-  // Infinite scroll
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMore && !fetchingRef.current && !loading) {
-          const next = page + 1;
-          setPage(next);
-          fetchEvents(next, filters, searchQuery, true);
-        }
-      },
-      { threshold: 0.1 },
-    );
-    if (observerRef.current) observer.observe(observerRef.current);
-    return () => observer.disconnect();
-  }, [hasMore, loading, page, filters, searchQuery, fetchEvents]);
+  }, [searchQuery , filters]);
 
   const handleApply = useCallback((newFilters) => {
     setFilters(newFilters);
@@ -380,16 +358,23 @@ const EventMainContent = () => {
           <ActiveFilterTags filters={filters} onClear={clearFilter} />
 
           {events.length > 0 ? (
-            <>
-              <div className="space-y-4 sm:space-y-6">
+            <InfiniteScroll
+                dataLength={events.length}
+                next={() => {
+                    const next = pageRef.current + 1;
+                    setPageSync(next);
+                    fetchEvents(next, filters, searchQuery, true);
+                }}
+                hasMore={hasMore}
+                loader={<Loader text="Loading more events..." />}
+            >
+                <div className="space-y-4 sm:space-y-6">
                 {events.map((event, index) => (
-                  <EventCard key={`event-${event.id || event._id || index}`} event={event} />
+                    <EventCard key={`event-${event.id || event._id || index}`} event={event} />
                 ))}
-              </div>
-              <div ref={observerRef} className="h-4 w-full" />
-              {fetchingMore && <BottomLoader />}
-            </>
-          ) : (
+                </div>
+            </InfiniteScroll>
+          )  : (
             <div className="flex flex-col items-center justify-center py-12">
               <div className="text-neutral-400 mb-4">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">

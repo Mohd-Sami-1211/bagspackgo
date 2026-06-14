@@ -1,6 +1,6 @@
 // components/home/EventSection/EventDetails.jsx 
 'use client'; 
-import { useState } from 'react'; 
+import { useState , useEffect } from 'react'; 
 import dynamic from 'next/dynamic'; 
 import { useRouter } from 'next/navigation'; 
 import { Ticket, AlertCircle } from 'lucide-react'; 
@@ -9,26 +9,44 @@ import { Button } from '@/components/ui/button';
 import Hero from './Hero'; 
 import Content from './Content';
 import toast from 'react-hot-toast';
+import Loader from '@/components/common/components/Loader';
 
-const BookingCheckoutFlow = dynamic(() => import('./BookingFlow'), {   
-  loading: () => (     
-    <div className="min-h-screen flex items-center justify-center text-emerald-600 font-bold">       
-      <div className="w-6 h-6 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin mr-3"></div>       
-      Loading Secure Checkout...     
-    </div>   
-  ),   
-  ssr: false 
+const BookingCheckoutFlow = dynamic(() => import('./BookingFlow'), {
+  loading: () => (
+    <div className="min-h-screen flex items-center justify-center">
+      <Loader size="lg"/>
+    </div>
+  ),
+  ssr: false
 });
 
 export default function Main({ event }) {  
   const router = useRouter();   
   const { user, openAuthModal } = useAuth();   
   const [currentView, setCurrentView] = useState('details');   
+  const [availability, setAvailability] = useState(null);
 
   const handleBookNowClick = () => {     
     setCurrentView('booking');     
     window.scrollTo({ top: 0, behavior: 'smooth' });   
   };   
+
+  useEffect(() => {
+    const fetchAvailability = async () => {
+        try {
+        const res = await fetch(`/api/events/${event.id}/availability`);
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message);
+        setAvailability(data);
+        } catch (err) {
+            console.error('Failed to fetch availability:', err);
+            setAvailability({ slotsLeft: event.slotsLeft, isSoldOut: event.slotsLeft <= 0 });
+        }
+    };
+
+    fetchAvailability();
+  }, [event.id]);
+
 
   const handleWish = async () => {     
     if (!user) {       
@@ -52,8 +70,9 @@ export default function Main({ event }) {
       price: event.price,         
       date: event.date,         
       location: event.location,         
-      slotsLeft: event.slotsLeft, 
+      slotsLeft: availability?.slotsLeft ?? event.slotsLeft,
       pickupPoints: event.pickupPoints,
+      image : event.image,
 
     };     
     return (       
@@ -82,7 +101,9 @@ export default function Main({ event }) {
             <h3 className="font-bold text-gray-900 text-lg mb-4">Reserve Your Spot</h3>               
             <p className="text-gray-500 mb-6 text-sm">Join this amazing experience before it sells out.</p>                              
             
-            {event.slotsLeft > 0 ? (                 
+            {availability === null ? (
+                <div className="w-full h-14 bg-emerald-100 rounded-xl animate-pulse" />
+            ) : (availability?.slotsLeft ?? event.slotsLeft) > 0 ? (                 
               <Button                   
                 onClick={handleBookNowClick}                   
                 className="w-full h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold flex items-center justify-center gap-2 text-lg transition-all shadow-md active:scale-95"                 

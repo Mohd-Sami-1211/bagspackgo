@@ -9,6 +9,7 @@ import { destinations as STATIC_DESTINATIONS } from 'src/data/data.json';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import useAsyncDropdown from 'src/components/hooks/useAsyncDropdown';
+import { formatDate } from '@/lib/utils';
 
 const AVAILABLE_DESTINATIONS = ['kashmir', 'ladakh', 'bhaderwah', 'warwan-marwah-valley'];
 
@@ -37,13 +38,6 @@ export const EMPTY_FILTERS = {
   dateRange:   { start: null, end: null },
   sort:        null,
   _labels:     { destinations: {}, organizers: {} },
-};
-
-const formatDate = (date) => {
-  if (!date) return '';
-  return new Date(date).toLocaleDateString('en-US', {
-    month: 'short', day: 'numeric', year: 'numeric',
-  });
 };
 
 const FilterItem = ({ id, label, checked, disabled = false, onClick }) => (

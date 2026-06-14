@@ -224,7 +224,7 @@ export async function GET(request) {
     } catch (error) {
         console.error("Public Events Error:", error);
         return NextResponse.json(
-            { success: false, message: error.message || "Something went wrong" },
+            { success: false, message: "Something went wrong" },
             { status: 500 }
         );
     }
