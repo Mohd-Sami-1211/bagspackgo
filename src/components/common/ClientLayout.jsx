@@ -8,6 +8,7 @@ import Footer from 'src/components/common/Footer';
 import { AuthProvider } from '@/context/AuthContext';
 import AuthModal from '@/components/auth/AuthModal';
 import PendingBookingNotification from 'src/components/common/PendingBookingNotification';
+import SWRProvider from '@/components/common/SWRProvider';
 
 export default function ClientLayout({ children }) {
     const pathname = usePathname();
@@ -49,31 +50,33 @@ export default function ClientLayout({ children }) {
         pathname?.includes('/serviceprovider');
 
     return (
-        <AuthProvider>
-            <AuthModal />
-            <PendingBookingNotification />
-            {/* Top Navbar (hidden for specific pages) */}
-            {!hideNavbar && <Navbar />}
+        <SWRProvider>
+            <AuthProvider>
+                <AuthModal />
+                <PendingBookingNotification />
+                {/* Top Navbar (hidden for specific pages) */}
+                {!hideNavbar && <Navbar />}
 
-            {/* SecondaryNav — normal on large screens, bottom-fixed on small */}
-            {!hideSecondaryNav && (
-                <div className="secondary-nav-wrapper hidden md:block w-full">
-                    <SecondaryNav />
-                </div>
-            )}
+                {/* SecondaryNav — normal on large screens, bottom-fixed on small */}
+                {!hideSecondaryNav && (
+                    <div className="secondary-nav-wrapper hidden md:block w-full">
+                        <SecondaryNav />
+                    </div>
+                )}
 
-            {/* Main content */}
-            <main className="flex-grow w-full pb-16 md:pb-0">{children}</main>
+                {/* Main content */}
+                <main className="flex-grow w-full pb-16 md:pb-0">{children}</main>
 
-            {/* Footer (hidden on auth/provider pages) */}
-            {!hideFooter && <Footer />}
+                {/* Footer (hidden on auth/provider pages) */}
+                {!hideFooter && <Footer />}
 
-            {/* Mobile bottom navigation */}
-            {!hideSecondaryNav && (
-                <div className="secondary-nav-wrapper block md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 border-t border-gray-200 shadow-lg w-full">
-                    <SecondaryNav />
-                </div>
-            )}
-        </AuthProvider>
+                {/* Mobile bottom navigation */}
+                {!hideSecondaryNav && (
+                    <div className="secondary-nav-wrapper block md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 border-t border-gray-200 shadow-lg w-full">
+                        <SecondaryNav />
+                    </div>
+                )}
+            </AuthProvider>
+        </SWRProvider>
     );
 }

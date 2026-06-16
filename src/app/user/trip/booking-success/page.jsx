@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, Suspense, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useUserBookings } from '@/lib/useTripCache';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2, Home, MapPin, Calendar, Users, CreditCard, ChevronRight, Hash, User, Clock, Navigation, QrCode, Download, Eye, EyeOff, Ticket, Instagram, Facebook, Mail, Phone, Globe } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
@@ -22,25 +23,28 @@ function BookingSuccessContent() {
     const [downloading, setDownloading] = useState(false);
     const passRef = useRef(null);
 
+    const { data: bookingsData, isLoading: fetchLoading } = useUserBookings({
+        isPaused: () => !bookingId
+    });
+
     useEffect(() => {
-        const fetchBooking = async () => {
-            if (!bookingId) { setLoading(false); return; }
-            try {
-                const res = await fetch('/api/user/trip-bookings');
-                const data = await res.json();
-                if (data.success) {
-                    const found = data.data?.find(b => b.id === bookingId || b._id === bookingId);
-                    setBooking(found || null);
-                }
-            } catch (e) {
-                console.error('Fetch booking error:', e);
-            } finally {
-                setLoading(false);
-                setTimeout(() => setShowContent(true), 150);
+        if (!bookingId) {
+            setLoading(false);
+            return;
+        }
+
+        if (!fetchLoading && bookingsData) {
+            if (bookingsData.success) {
+                const found = bookingsData.data?.find(b => b.id === bookingId || b._id === bookingId);
+                setBooking(found || null);
             }
-        };
-        fetchBooking();
-    }, [bookingId]);
+            setLoading(false);
+            setTimeout(() => setShowContent(true), 150);
+        } else if (!fetchLoading && bookingsData === undefined) {
+            setLoading(false);
+            setTimeout(() => setShowContent(true), 150);
+        }
+    }, [bookingsData, fetchLoading, bookingId]);
 
     const handleDownloadPDF = () => {
         if (!bookingId) return;

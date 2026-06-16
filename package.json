@@ -38,6 +38,7 @@
     "pdf-lib": "^1.17.1",
     "pdf-parse": "^1.1.1",
     "pdfkit": "^0.18.0",
+    "posthog-js": "^1.379.1",
     "qrcode": "^1.5.4",
     "qrcode.react": "^4.2.0",
     "razorpay": "^2.9.6",
@@ -51,7 +52,9 @@
     "react-infinite-scroll-component": "^7.2.1",
     "react-select": "^5.10.1",
     "recharts": "^3.1.2",
+    "sharp": "^0.35.1",
     "styled-components": "^6.1.17",
+    "swr": "^2.4.1",
     "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {

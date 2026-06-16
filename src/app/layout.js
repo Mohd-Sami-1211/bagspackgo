@@ -2,6 +2,8 @@
 import './globals.css';
 import { DM_Sans } from 'next/font/google';
 import ClientLayout from '@/components/common/ClientLayout';
+import { Suspense } from 'react';
+import PostHogProvider, { PostHogPageView } from '@/components/analytics/PostHogProvider';
 import ToastProvider from '@/components/ui/ToastProvider';
 import { ErrorProvider } from '@/context/ErrorContext';
 
@@ -91,6 +93,13 @@ export default function RootLayout({ children }) {
             <body
                 className={`${dmSans.className} bg-white/90 text-gray-800 min-h-screen flex flex-col w-full max-w-[100vw] overflow-x-hidden antialiased`}
             >
+                <PostHogProvider>
+                    {/* Tracks page views on every route change (Suspense required by Next.js) */}
+                    <Suspense fallback={null}>
+                        <PostHogPageView />
+                    </Suspense>
+                    <ClientLayout>{children}</ClientLayout>
+                </PostHogProvider>
                 <ErrorProvider>
                     <ClientLayout>{children}</ClientLayout>
                 </ErrorProvider>
