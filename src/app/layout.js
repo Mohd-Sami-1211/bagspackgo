@@ -94,15 +94,13 @@ export default function RootLayout({ children }) {
                 className={`${dmSans.className} bg-white/90 text-gray-800 min-h-screen flex flex-col w-full max-w-[100vw] overflow-x-hidden antialiased`}
             >
                 <PostHogProvider>
-                    {/* Tracks page views on every route change (Suspense required by Next.js) */}
                     <Suspense fallback={null}>
                         <PostHogPageView />
                     </Suspense>
-                    <ClientLayout>{children}</ClientLayout>
+                    <ErrorProvider>
+                        <ClientLayout>{children}</ClientLayout>
+                    </ErrorProvider>
                 </PostHogProvider>
-                <ErrorProvider>
-                    <ClientLayout>{children}</ClientLayout>
-                </ErrorProvider>
                 <ToastProvider />
             </body>
         </html>
