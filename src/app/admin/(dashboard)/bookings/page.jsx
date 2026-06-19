@@ -57,10 +57,47 @@ function DetailDrawer({ booking, type, onClose }) {
                             </span>
                         </div>
                         <div>
-                            <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Total Paid</p>
-                            <p className="text-2xl font-bold text-white tracking-tight">₹{amount?.toLocaleString('en-IN')}</p>
+                            <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Total Amount</p>
+                            <p className="text-2xl font-bold text-white tracking-tight">₹{booking.totalAmount?.toLocaleString('en-IN')}</p>
                         </div>
                     </div>
+
+                    {/* Payment Mode Info */}
+                    {!isEvent && (
+                        <div className={`rounded-2xl p-4 border ${
+                            booking.paymentMode === 'partial'
+                                ? 'bg-amber-500/5 border-amber-500/20'
+                                : 'bg-emerald-500/5 border-emerald-500/20'
+                        }`}>
+                            <div className="flex items-center justify-between mb-3">
+                                <p className="text-xs text-gray-500 uppercase font-semibold">Payment Mode</p>
+                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                                    booking.paymentMode === 'partial'
+                                        ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                                        : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                }`}>
+                                    {booking.paymentMode === 'partial' ? 'Partial (30%)' : 'Full Payment'}
+                                </span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p className="text-[10px] text-gray-500 uppercase font-semibold mb-1">Paid</p>
+                                    <p className="text-lg font-bold text-emerald-400">₹{(booking.amountPaid || booking.totalAmount)?.toLocaleString('en-IN')}</p>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] text-gray-500 uppercase font-semibold mb-1">Remaining</p>
+                                    <p className={`text-lg font-bold ${(booking.remainingAmount || 0) > 0 ? 'text-amber-400' : 'text-gray-600'}`}>
+                                        ₹{(booking.remainingAmount || 0).toLocaleString('en-IN')}
+                                    </p>
+                                </div>
+                            </div>
+                            {booking.paymentMode === 'partial' && (booking.remainingAmount || 0) > 0 && (
+                                <p className="text-[10px] text-amber-400/70 mt-2 font-medium">
+                                    • Remaining amount to be collected on trip day
+                                </p>
+                            )}
+                        </div>
+                    )}
 
                     {/* Booking Reference Info */}
                     <div>
@@ -273,6 +310,9 @@ export default function AdminBookingsPage() {
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <p className="text-gray-400 mb-0.5">{new Date(b.bookingDate || b.createdAt).toLocaleDateString('en-GB')}</p>
                                             <p className="font-bold text-white">₹{amount?.toLocaleString('en-IN')}</p>
+                                            {!isEvent && b.paymentMode === 'partial' && (
+                                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-400 mt-1">30% Paid</span>
+                                            )}
                                         </td>
                                         <td className="px-6 py-4 text-center">
                                             <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${

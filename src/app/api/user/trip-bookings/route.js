@@ -68,6 +68,9 @@ export async function GET(req) {
                 arrivalDeparture: b.arrivalDeparture || {},
                 packageSnapshot: b.packageSnapshot || {},
                 paymentId: b.paymentId || '',
+                paymentMode: b.paymentMode || 'full',
+                amountPaid: b.amountPaid || b.totalAmount,
+                remainingAmount: b.remainingAmount || 0,
                 cancellationDetails: b.cancellationDetails || {},
                 itinerary: b.package?.itinerary || b.packageSnapshot?.itinerary || [],
                 termsAndConditions: b.package?.termsAndConditions || b.packageSnapshot?.termsAndConditions || [],
@@ -96,7 +99,8 @@ export async function POST(req) {
         const {
             packageId, guideId, startDate, numPeople, category,
             baseAmount, discount, platformFee, taxes, totalAmount,
-            arrivalDeparture, personalDetails, packageSnapshot
+            arrivalDeparture, personalDetails, packageSnapshot,
+            paymentMode, amountPaid
         } = await req.json();
 
         console.log('[trip-bookings POST] received:', { packageId, guideId, startDate, numPeople, totalAmount });
@@ -138,6 +142,9 @@ export async function POST(req) {
                 destination: pkg.destination || packageSnapshot?.destination || '',
                 days: pkg.days || packageSnapshot?.days || 1,
             },
+            paymentMode: paymentMode || 'full',
+            amountPaid: Number(amountPaid) || Number(totalAmount),
+            remainingAmount: paymentMode === 'partial' ? Number(totalAmount) - (Number(amountPaid) || 0) : 0,
             status: 'pending',
         };
 

@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Star, MapPin, Users, Calendar, Crown, ArrowRight, Loader2, Briefcase, Clock } from 'lucide-react';
+import { MapPin, Users, Crown, ArrowRight, Clock, Tag } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 const ProviderAvatar = ({ guide, premium }) => {
@@ -95,6 +95,26 @@ const GuideCard = ({ guide, category, daysRange, peopleCount = 1, date, selected
     peopleLabel = `${numPeople} pax`;
   }
 
+  // Compute lowest price tier for this package
+  const lowestTierInfo = (() => {
+    if (!matchedPackage) return null;
+    const tiers = matchedPackage.pricingTiers || [];
+    if (tiers.length === 0) return null;
+    let lowestTier = null;
+    let lowestEffective = Infinity;
+    for (const t of tiers) {
+      const base = Number(t.price || 0);
+      const disc = Number(t.discount || 0);
+      const effective = disc > 0 ? base * (1 - disc / 100) : base;
+      if (effective < lowestEffective) {
+        lowestEffective = effective;
+        lowestTier = t;
+      }
+    }
+    if (!lowestTier || lowestEffective >= pricePerPerson) return null;
+    return { price: Math.round(lowestEffective), minPeople: lowestTier.minPeople };
+  })();
+
   const peopleText = category === 'couple' ? 'couple' : 'person';
   const getCatLabel = () => ({ individual: 'Individual', couple: 'Couple', group: 'Group' }[category] || 'Individual');
 
@@ -155,72 +175,80 @@ const GuideCard = ({ guide, category, daysRange, peopleCount = 1, date, selected
                   <span className="text-slate-400 font-normal"> · {guide.companyName}</span>
                 )}
               </p>
-
-              {/* Star rating */}
-              <div className="mt-1 flex items-center gap-1">
-                {guide.rating ? (
-                  <>
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className={`h-3 w-3 ${
-                        i < Math.round(guide.rating)
-                          ? isPremium ? 'fill-amber-400 text-amber-400' : 'fill-emerald-500 text-emerald-500'
-                          : 'text-gray-200 fill-gray-200'
-                      }`} />
-                    ))}
-                    <span className="text-xs font-bold text-gray-700 ml-0.5">{guide.rating}</span>
-                    <span className="text-xs text-gray-400">({guide.reviews || 0} reviews)</span>
-                  </>
-                ) : (
-                  <span className="text-[11px] font-semibold text-gray-400 italic">No ratings found</span>
-                )}
-              </div>
             </div>
           </div>
 
           {/* Bio */}
           <p className="mt-3 text-sm text-gray-500 line-clamp-2 leading-relaxed">{guide.bio}</p>
 
-          {/* === STAT ROW: location, trips, duration, people === */}
-          <div className="mt-4 pt-3 border-t border-gray-100 grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-3">
+          {/* === STAT ROW: location, duration, people === */}
+          <div className="mt-4 pt-3 border-t border-gray-100 grid grid-cols-3 gap-x-4 gap-y-3">
             <StatBadge icon={MapPin} label="Location" value={guide.location || '—'} color="text-blue-600" />
-            <StatBadge icon={Briefcase} label="Experience" value={`${guide.touristsHandled}+ trips`} color="text-violet-600" />
             <StatBadge icon={Clock} label="Duration" value={daysLabel} color="text-amber-600" />
             <StatBadge icon={Users} label={category === 'couple' ? 'Couples' : 'People'} value={`${numPeople} ${peopleText}${numPeople > 1 ? 's' : ''}`} color="text-emerald-600" />
           </div>
 
-          {/* === MOBILE: Price + CTA at bottom === */}
-          <div className="mt-4 pt-3 border-t border-gray-100 sm:hidden flex items-center justify-between gap-3">
-            <div>
-              <p className="text-[10px] text-gray-400 uppercase tracking-wide font-semibold mb-1">
-                {matchedPackage ? 'Package' : 'From'} · {category === 'couple' ? 'Per Couple' : 'Per Person'}
+          {/* Lowest price callout - desktop (left side, hidden on mobile) */}
+          {lowestTierInfo && (
+            <div className={`hidden sm:flex items-center gap-2.5 mt-4 pt-3 border-t border-gray-100 px-3 py-2.5 rounded-xl border ${
+              isPremium ? 'bg-amber-50/60 border-amber-200/60' : 'bg-emerald-50/60 border-emerald-200/60'
+            }`}>
+              <Tag className={`h-4 w-4 flex-shrink-0 ${isPremium ? 'text-amber-500' : 'text-emerald-500'}`} />
+              <p className="text-sm font-semibold text-slate-700">
+                Get it for <span className={`font-extrabold text-base ${isPremium ? 'text-amber-600' : 'text-emerald-600'}`}>₹{lowestTierInfo.price.toLocaleString('en-IN')}</span>
+                <span className="text-slate-400 font-medium text-xs"> /person</span>
+                <span className="text-slate-400 font-medium text-xs"> · min. {lowestTierInfo.minPeople} persons required</span>
               </p>
-              {discountPercent > 0 ? (
-                <div className="flex items-center gap-1.5 flex-wrap">
+            </div>
+          )}
+
+          {/* === MOBILE: Price + Lowest Price + CTA at bottom === */}
+          <div className="mt-4 pt-3 border-t border-gray-100 sm:hidden">
+            {/* Lowest price callout - mobile */}
+            {lowestTierInfo && (
+              <div className={`flex items-center gap-2 mb-3 px-3 py-2 rounded-lg border ${
+                isPremium ? 'bg-amber-50/60 border-amber-200/60' : 'bg-emerald-50/60 border-emerald-200/60'
+              }`}>
+                <Tag className={`h-3.5 w-3.5 flex-shrink-0 ${isPremium ? 'text-amber-500' : 'text-emerald-500'}`} />
+                <p className="text-xs font-semibold text-slate-700">
+                  Get it for <span className={`font-extrabold ${isPremium ? 'text-amber-600' : 'text-emerald-600'}`}>₹{lowestTierInfo.price.toLocaleString('en-IN')}</span>
+                  <span className="text-slate-400 font-medium"> · min. {lowestTierInfo.minPeople} persons</span>
+                </p>
+              </div>
+            )}
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-[10px] text-gray-400 uppercase tracking-wide font-semibold mb-1">
+                  {matchedPackage ? 'Package' : 'From'} · {category === 'couple' ? 'Per Couple' : 'Per Person'}
+                </p>
+                {discountPercent > 0 ? (
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <p className={`text-2xl font-extrabold leading-none ${isPremium ? 'text-amber-600' : 'text-emerald-600'}`}>
+                      ₹{Math.round(pricePerPerson).toLocaleString('en-IN')}
+                    </p>
+                    <p className="text-xs font-bold text-gray-400 line-through">
+                      ₹{Math.round(originalPricePerPerson).toLocaleString('en-IN')}
+                    </p>
+                  </div>
+                ) : (
                   <p className={`text-2xl font-extrabold leading-none ${isPremium ? 'text-amber-600' : 'text-emerald-600'}`}>
                     ₹{Math.round(pricePerPerson).toLocaleString('en-IN')}
                   </p>
-                  <p className="text-xs font-bold text-gray-400 line-through">
-                    ₹{Math.round(originalPricePerPerson).toLocaleString('en-IN')}
-                  </p>
-                </div>
-              ) : (
-                <p className={`text-2xl font-extrabold leading-none ${isPremium ? 'text-amber-600' : 'text-emerald-600'}`}>
-                  ₹{Math.round(pricePerPerson).toLocaleString('en-IN')}
-                </p>
-              )}
+                )}
+              </div>
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={handleViewDetails}
+                disabled={navigating}
+                className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap ${
+                  isPremium
+                    ? 'bg-gradient-to-r from-amber-400 to-yellow-400 text-white'
+                    : 'bg-emerald-500 hover:bg-emerald-600 text-white'
+                }`}
+              >
+                <>View <ArrowRight className="h-3.5 w-3.5" /></>
+              </motion.button>
             </div>
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={handleViewDetails}
-              disabled={navigating}
-              className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap ${
-                isPremium
-                  ? 'bg-gradient-to-r from-amber-400 to-yellow-400 text-white'
-                  : 'bg-emerald-500 hover:bg-emerald-600 text-white'
-              }`}
-            >
-              <>View <ArrowRight className="h-3.5 w-3.5" /></>
-            </motion.button>
           </div>
         </div>
 

@@ -23,6 +23,7 @@ import {
   User,
   Mail,
   Phone,
+  Info,
 } from "lucide-react";
 
 const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
@@ -38,6 +39,7 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
   const [isPaymentLoading, setIsPaymentLoading] = useState(false);
   const [paymentError, setPaymentError] = useState("");
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [paymentMode, setPaymentMode] = useState('partial'); // 'partial' or 'full'
 
   // Extract useful params
   const category = searchParams?.get("category") || "individual";
@@ -175,6 +177,18 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
 
   const paymentDetails = tripData ? calculatePayment() : null;
 
+  // Compute amount based on payment mode
+  const getPayableAmount = () => {
+    if (!paymentDetails) return 0;
+    if (paymentMode === 'partial') {
+      return Math.round(paymentDetails.totalAmount * 0.3);
+    }
+    return Math.round(paymentDetails.totalAmount);
+  };
+
+  const payableAmount = getPayableAmount();
+  const remainingAmount = paymentMode === 'partial' ? Math.round(paymentDetails?.totalAmount || 0) - payableAmount : 0;
+
   const handleMakePayment = async () => {
     if (!tripData || !paymentDetails) return;
     if (!agreedToTerms) {
@@ -213,6 +227,8 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
           platformFee: paymentDetails.platformFee,
           taxes: paymentDetails.gstOnGateway,
           totalAmount: Math.round(paymentDetails.totalAmount),
+          paymentMode: paymentMode,
+          amountPaid: payableAmount,
           arrivalDeparture: tripData.arrivalDeparture || {},
           personalDetails: tripData.personalDetails || {},
           packageSnapshot: {
@@ -228,7 +244,7 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
         throw new Error(bookingResult.message || "Failed to create booking");
 
       const { bookingId } = bookingResult;
-      const amountToPay = Math.round(paymentDetails.totalAmount);
+      const amountToPay = payableAmount;
 
       const orderRes = await fetch("/api/payments/trip-create-order", {
         method: "POST",
@@ -687,9 +703,9 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
                           exit={{ height: 0, opacity: 0 }}
                           className="overflow-hidden border-t border-gray-100 bg-white"
                         >
-                          <div className="p-4 flex flex-col gap-3 text-xs font-medium text-gray-500">
+                            <div className="p-4 flex flex-col gap-3 text-xs font-medium text-gray-500">
                             <div className="flex justify-between">
-                              <span>Platform Fee (1%)</span>
+                              <span>Platform Fee</span>
                               <span>
                                 ₹
                                 {paymentDetails.platformFee.toLocaleString(
@@ -699,7 +715,7 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
                               </span>
                             </div>
                             <div className="flex justify-between">
-                              <span>Payment Gateway Charge (2%)</span>
+                              <span>Payment Gateway Charge</span>
                               <span>
                                 ₹
                                 {paymentDetails.gatewayCharges.toLocaleString(
@@ -709,7 +725,7 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
                               </span>
                             </div>
                             <div className="flex justify-between">
-                              <span>GST on Gateway (18%)</span>
+                              <span>GST on Gateway</span>
                               <span>
                                 ₹
                                 {paymentDetails.gstOnGateway.toLocaleString(
@@ -727,17 +743,78 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
 
                 {/* Final Total & Action */}
                 <div className="pt-6 mt-2 border-t border-gray-100">
+                  {/* Payment Mode Toggle */}
+                  <div className="mb-6">
+                    <p className="text-xs font-semibold text-slate-500 tracking-wider uppercase mb-3">Choose Payment Option</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMode('partial')}
+                        className={`relative p-4 rounded-xl border-2 transition-all text-left ${
+                          paymentMode === 'partial'
+                            ? 'border-emerald-500 bg-emerald-50/50 shadow-sm'
+                            : 'border-gray-200 hover:border-gray-300 bg-white'
+                        }`}
+                      >
+                        <div className={`absolute top-3 right-3 w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                          paymentMode === 'partial' ? 'border-emerald-500' : 'border-gray-300'
+                        }`}>
+                          {paymentMode === 'partial' && <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />}
+                        </div>
+                        <p className="text-sm font-bold text-gray-900 mb-0.5">Pay 30% Now</p>
+                        <p className="text-xl font-extrabold text-emerald-600 tracking-tight">
+                          ₹{Math.round(paymentDetails.totalAmount * 0.3).toLocaleString('en-IN')}
+                        </p>
+                        <p className="text-[10px] text-gray-400 mt-1 font-medium leading-snug">
+                          Remaining ₹{Math.round(paymentDetails.totalAmount * 0.7).toLocaleString('en-IN')} on trip day
+                        </p>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMode('full')}
+                        className={`relative p-4 rounded-xl border-2 transition-all text-left ${
+                          paymentMode === 'full'
+                            ? 'border-emerald-500 bg-emerald-50/50 shadow-sm'
+                            : 'border-gray-200 hover:border-gray-300 bg-white'
+                        }`}
+                      >
+                        <div className={`absolute top-3 right-3 w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                          paymentMode === 'full' ? 'border-emerald-500' : 'border-gray-300'
+                        }`}>
+                          {paymentMode === 'full' && <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />}
+                        </div>
+                        <p className="text-sm font-bold text-gray-900 mb-0.5">Pay Full Amount</p>
+                        <p className="text-xl font-extrabold text-gray-900 tracking-tight">
+                          ₹{Math.round(paymentDetails.totalAmount).toLocaleString('en-IN')}
+                        </p>
+                        <p className="text-[10px] text-gray-400 mt-1 font-medium leading-snug">
+                          Complete payment — no dues
+                        </p>
+                      </button>
+                    </div>
+                    {paymentMode === 'partial' && (
+                      <div className="flex items-start gap-2 mt-3 px-3 py-2.5 bg-amber-50 border border-amber-200 rounded-lg">
+                        <Info className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                        <p className="text-[11px] text-amber-700 font-medium leading-relaxed">
+                          You&apos;ll need to pay the remaining <span className="font-bold">₹{Math.round(paymentDetails.totalAmount * 0.7).toLocaleString('en-IN')}</span> directly on the trip day. This booking will be confirmed after the initial 30% payment.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
                   <div className="flex justify-between items-end mb-6">
                     <div className="flex flex-col">
                       <span className="text-xs font-semibold text-slate-500 tracking-wider uppercase mb-1">
-                        Total Payable
+                        {paymentMode === 'partial' ? 'Paying Now (30%)' : 'Total Payable'}
                       </span>
                       <span className="font-bold text-gray-900 text-3xl leading-none tracking-tight">
-                        ₹
-                        {Math.round(paymentDetails.totalAmount).toLocaleString(
-                          "en-IN",
-                        )}
+                        ₹{payableAmount.toLocaleString('en-IN')}
                       </span>
+                      {paymentMode === 'partial' && (
+                        <span className="text-xs text-gray-400 mt-1 font-medium">
+                          of ₹{Math.round(paymentDetails.totalAmount).toLocaleString('en-IN')} total
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -782,7 +859,7 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
                       <div className="w-5 h-5 border-[3px] border-white/30 border-t-white rounded-full animate-spin" />
                     ) : (
                       <>
-                        Confirm & Pay Securely
+                        {paymentMode === 'partial' ? `Pay \u20b9${payableAmount.toLocaleString('en-IN')} Now` : 'Confirm & Pay Securely'}
                         <ChevronRight className="w-5 h-5 opacity-70 group-hover:translate-x-1 transition-transform" />
                       </>
                     )}
@@ -834,7 +911,7 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
                     Service & Gateway Fees (Incl GST)
                   </p>
                   <div className="flex justify-between items-center text-xs font-semibold text-gray-500 pl-2">
-                    <span>Platform Fee (1%)</span>
+                    <span>Platform Fee</span>
                     <span className="text-gray-900">
                       ₹
                       {paymentDetails.platformFee.toLocaleString("en-IN", {
@@ -843,7 +920,7 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-xs font-semibold text-gray-500 pl-2">
-                    <span>Payment Gateway Charge (2%)</span>
+                    <span>Payment Gateway Charge</span>
                     <span className="text-gray-900">
                       ₹
                       {paymentDetails.gatewayCharges.toLocaleString("en-IN", {
@@ -852,7 +929,7 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-xs font-semibold text-gray-500 pl-2">
-                    <span>GST on Gateway (18%)</span>
+                    <span>GST on Gateway</span>
                     <span className="text-gray-900">
                       ₹
                       {paymentDetails.gstOnGateway.toLocaleString("en-IN", {
@@ -860,6 +937,65 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
                       })}
                     </span>
                   </div>
+                </div>
+
+                {/* Payment Mode Toggle - Mobile */}
+                <div className="pt-3 border-t border-gray-200">
+                  <p className="text-xs font-semibold text-slate-500 tracking-wider uppercase mb-3">Payment Option</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMode('partial')}
+                      className={`relative p-3 rounded-xl border-2 transition-all text-left ${
+                        paymentMode === 'partial'
+                          ? 'border-emerald-500 bg-emerald-50/50'
+                          : 'border-gray-200 bg-white'
+                      }`}
+                    >
+                      <div className={`absolute top-2.5 right-2.5 w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                        paymentMode === 'partial' ? 'border-emerald-500' : 'border-gray-300'
+                      }`}>
+                        {paymentMode === 'partial' && <div className="w-2 h-2 rounded-full bg-emerald-500" />}
+                      </div>
+                      <p className="text-xs font-bold text-gray-900 mb-0.5">Pay 30%</p>
+                      <p className="text-base font-extrabold text-emerald-600">
+                        ₹{Math.round(paymentDetails.totalAmount * 0.3).toLocaleString('en-IN')}
+                      </p>
+                      <p className="text-[9px] text-gray-400 mt-0.5 font-medium">
+                        Rest on trip day
+                      </p>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMode('full')}
+                      className={`relative p-3 rounded-xl border-2 transition-all text-left ${
+                        paymentMode === 'full'
+                          ? 'border-emerald-500 bg-emerald-50/50'
+                          : 'border-gray-200 bg-white'
+                      }`}
+                    >
+                      <div className={`absolute top-2.5 right-2.5 w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                        paymentMode === 'full' ? 'border-emerald-500' : 'border-gray-300'
+                      }`}>
+                        {paymentMode === 'full' && <div className="w-2 h-2 rounded-full bg-emerald-500" />}
+                      </div>
+                      <p className="text-xs font-bold text-gray-900 mb-0.5">Pay Full</p>
+                      <p className="text-base font-extrabold text-gray-900">
+                        ₹{Math.round(paymentDetails.totalAmount).toLocaleString('en-IN')}
+                      </p>
+                      <p className="text-[9px] text-gray-400 mt-0.5 font-medium">
+                        No dues
+                      </p>
+                    </button>
+                  </div>
+                  {paymentMode === 'partial' && (
+                    <div className="flex items-start gap-2 mt-2 px-2.5 py-2 bg-amber-50 border border-amber-200 rounded-lg">
+                      <Info className="w-3.5 h-3.5 text-amber-500 flex-shrink-0 mt-0.5" />
+                      <p className="text-[10px] text-amber-700 font-medium leading-relaxed">
+                        Pay remaining <span className="font-bold">₹{Math.round(paymentDetails.totalAmount * 0.7).toLocaleString('en-IN')}</span> on the trip day.
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Coupon Input Mobile */}
@@ -928,14 +1064,16 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
             </button>
             <div className="flex flex-col">
               <p className="text-xs font-semibold text-slate-500 tracking-wider uppercase mb-0.5 leading-none">
-                Total Payable
+                {paymentMode === 'partial' ? 'Paying Now (30%)' : 'Total Payable'}
               </p>
               <p className="font-bold text-gray-900 text-xl tracking-tight leading-tight mt-0.5">
-                ₹
-                {Math.round(paymentDetails?.totalAmount || 0).toLocaleString(
-                  "en-IN",
-                )}
+                ₹{payableAmount.toLocaleString('en-IN')}
               </p>
+              {paymentMode === 'partial' && (
+                <p className="text-[10px] text-gray-400 font-medium mt-0.5">
+                  of ₹{Math.round(paymentDetails?.totalAmount || 0).toLocaleString('en-IN')} total
+                </p>
+              )}
             </div>
           </div>
           <button
@@ -946,7 +1084,7 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
             {isPaymentLoading ? (
               <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             ) : (
-              <>Pay Now</>
+              <>{paymentMode === 'partial' ? `Pay \u20b9${payableAmount.toLocaleString('en-IN')}` : 'Pay Now'}</>
             )}
           </button>
         </div>
