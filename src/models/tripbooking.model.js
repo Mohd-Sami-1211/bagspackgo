@@ -51,6 +51,11 @@ const tripBookingSchema = new mongoose.Schema({
     paymentId: { type: String, default: '' },
     orderId: { type: String, default: '' },
 
+    // Payment mode tracking
+    paymentMode: { type: String, enum: ['full', 'partial'], default: 'full' },
+    amountPaid: { type: Number, default: 0 },
+    remainingAmount: { type: Number, default: 0 },
+
     // Traveller details
     arrivalDeparture: { type: mongoose.Schema.Types.Mixed, default: {} },
     personalDetails: { type: mongoose.Schema.Types.Mixed, default: {} },
