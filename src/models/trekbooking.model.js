@@ -60,5 +60,13 @@ const trekBookingSchema = new mongoose.Schema({
 
 }, { timestamps: true });
 
+trekBookingSchema.index({ provider: 1, providerPaymentStatus: 1 });
+trekBookingSchema.index({ provider: 1, status: 1, createdAt: -1 });
+trekBookingSchema.index({ package: 1, status: 1, createdAt: -1 });
+trekBookingSchema.index(
+  { provider: 1, createdAt: -1 },
+  { partialFilterExpression: { status: { $ne: 'pending' } } }
+); 
+ 
 delete mongoose.models.TrekBooking;
 export const TrekBooking = mongoose.models.TrekBooking || mongoose.model('TrekBooking', trekBookingSchema);
