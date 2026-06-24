@@ -60,5 +60,12 @@ const tripBookingSchema = new mongoose.Schema({
 
 }, { timestamps: true });
 
+tripBookingSchema.index({ provider: 1, status: 1, createdAt: -1 });
+tripBookingSchema.index({ package: 1, status: 1 });
+tripBookingSchema.index(
+  { provider: 1, createdAt: -1 },
+  { partialFilterExpression: { status: { $ne: 'pending' } } }
+);
+
 delete mongoose.models.TripBooking;
 export const TripBooking = mongoose.models.TripBooking || mongoose.model('TripBooking', tripBookingSchema);
