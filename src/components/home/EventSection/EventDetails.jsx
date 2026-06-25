@@ -361,11 +361,24 @@ const EventDetails = ({ event }) => {
   useEffect(() => {
     if (isUserAuthenticated && event && (event._id || event.id)) {
       const eventId = event._id || event.id;
-      fetch('/api/activity/track', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ eventId }),
-      }).catch(() => {}); // Silently ignore errors
+      
+      const trackVisit = (heartbeat = false) => {
+        fetch('/api/activity/track', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ eventId, heartbeat }),
+        }).catch(() => {}); // Silently ignore errors
+      };
+
+      // Initial track
+      trackVisit(false);
+
+      // Heartbeat every 15 seconds
+      const interval = setInterval(() => {
+        trackVisit(true);
+      }, 15000);
+
+      return () => clearInterval(interval);
     }
   }, [isUserAuthenticated, event]);
 

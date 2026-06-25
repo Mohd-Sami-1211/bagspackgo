@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 
 
 
-const availableValues = ['kashmir', 'ladakh', 'bhaderwah', 'warwan-marwah-valley'];
+const availableValues = ['kashmir'];
 const activeOptions = (data.destinations || []).filter(d => availableValues.includes(d.value));
 const otherOptions = (data.destinations || []).filter(d => !availableValues.includes(d.value)).map(dest => ({
   ...dest,

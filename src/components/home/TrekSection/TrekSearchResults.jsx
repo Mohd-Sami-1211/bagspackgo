@@ -10,7 +10,7 @@ import { X, Calendar as CalendarIcon, Filter, Search as SearchIcon, ChevronDown,
 import data from 'src/data/data.json';
 import { Button } from '@/components/ui/button';
 
-const availableValues = ['kashmir', 'ladakh', 'bhaderwah', 'warwan-marwah-valley'];
+const availableValues = ['kashmir'];
 const activeOptions = (data.destinations || []).filter(d => availableValues.includes(d.value));
 const otherOptions = (data.destinations || []).filter(d => !availableValues.includes(d.value)).map(dest => ({
   ...dest,

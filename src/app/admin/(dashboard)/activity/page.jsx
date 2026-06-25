@@ -20,6 +20,7 @@ function timeAgo(date) {
 
 function VisitRow({ visit, index }) {
     const [expanded, setExpanded] = useState(false);
+    const isLive = Date.now() - new Date(visit.lastVisitedAt).getTime() <= 45000;
 
     return (
         <motion.div
@@ -48,6 +49,12 @@ function VisitRow({ visit, index }) {
                         <span className="text-sm font-semibold text-white truncate">
                             {visit.userSnapshot?.username || 'Unknown User'}
                         </span>
+                        {isLive && (
+                            <span className="flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 whitespace-nowrap">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                LIVE
+                            </span>
+                        )}
                         {visit.visitCount > 1 && (
                             <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 whitespace-nowrap">
                                 {visit.visitCount}× revisit
@@ -185,6 +192,7 @@ export default function ActivityPage() {
     const totalVisits = visits.reduce((sum, v) => sum + v.visitCount, 0);
     const uniqueUsers = visits.length;
     const revisitors = visits.filter(v => v.visitCount > 1).length;
+    const liveUsers = visits.filter(v => Date.now() - new Date(v.lastVisitedAt).getTime() <= 45000).length;
 
     return (
         <div className="max-w-4xl mx-auto space-y-6">
@@ -219,8 +227,9 @@ export default function ActivityPage() {
             </div>
 
             {/* Stat Cards */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {[
+                    { label: 'Live Now', value: liveUsers, icon: Activity, color: 'rose' },
                     { label: 'Unique Visitors', value: uniqueUsers, icon: User, color: 'emerald' },
                     { label: 'Total Page Views', value: totalVisits, icon: Eye, color: 'blue' },
                     { label: 'Revisitors', value: revisitors, icon: TrendingUp, color: 'amber' },
