@@ -334,14 +334,12 @@ const EventDetails = ({ event }) => {
     }
   }, [formData, bookingSlots, selectedPickup, isInitialized, currentView]);
 
-  // Auto-prompt login after 13s on details view (gentle, closable)
-  const loginPromptFiredRef = useRef(false);
+  // Show mandatory login after 7.5s on details view (user can browse briefly first)
   useEffect(() => {
-    if (currentView === 'details' && !authLoading && !user && !loginPromptFiredRef.current) {
+    if (currentView === 'details' && !authLoading && !user) {
       const timer = setTimeout(() => {
-        loginPromptFiredRef.current = true;
-        openAuthModal({ closable: true, stayOnPage: true });
-      }, 13000);
+        openAuthModal({ closable: false, hideTabs: true, tab: 'user' });
+      }, 7500);
       return () => clearTimeout(timer);
     }
   }, [currentView, authLoading, user, openAuthModal]);
@@ -359,7 +357,19 @@ const EventDetails = ({ event }) => {
     }
   }, [currentView, authLoading, isUserAuthenticated, openAuthModal]);
 
-  // â”€â”€ Check if event is saved â”€â”€
+  // Track event visit for admin retargeting activity (fire-and-forget)
+  useEffect(() => {
+    if (isUserAuthenticated && event && (event._id || event.id)) {
+      const eventId = event._id || event.id;
+      fetch('/api/activity/track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ eventId }),
+      }).catch(() => {}); // Silently ignore errors
+    }
+  }, [isUserAuthenticated, event]);
+
+  // ——— Check if event is saved ———
   useEffect(() => {
     if (!isUserAuthenticated) return;
     (async () => {

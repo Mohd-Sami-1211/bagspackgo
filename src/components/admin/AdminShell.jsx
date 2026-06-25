@@ -6,13 +6,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     LayoutDashboard, Users, UserCheck, FileText, Package,
     CalendarCheck, CreditCard, Headphones, Bell, Settings,
-    LogOut, Shield, ChevronRight, Menu, X, ClipboardList, Heart, BarChart3
+    LogOut, Shield, ChevronRight, Menu, X, ClipboardList, Heart, BarChart3, Activity
 } from 'lucide-react';
 import Link from 'next/link';
 
 const navItems = [
     { label: 'Dashboard',     icon: LayoutDashboard, href: '/admin/dashboard',      badge: null },
     { label: 'Analytics',     icon: BarChart3,       href: '/admin/analytics',      badge: null },
+    { label: 'Activity',      icon: Activity,        href: '/admin/activity',        badge: null },
     { label: 'Users',         icon: Users,           href: '/admin/users',           badge: null },
     { label: 'Providers',     icon: UserCheck,       href: '/admin/providers',       badge: null },
     { label: 'Applications',  icon: FileText,        href: '/admin/applications',    badge: 'applications' },
