@@ -19,7 +19,7 @@ export async function POST(req) {
             return NextResponse.json({ success: false, message: 'Not authenticated' }, { status: 401 });
         }
 
-        const { eventId } = await req.json();
+        const { eventId, heartbeat } = await req.json();
         if (!eventId) {
             return NextResponse.json({ success: false, message: 'eventId required' }, { status: 400 });
         }
@@ -36,21 +36,35 @@ export async function POST(req) {
         const event = await Event.findById(eventId).select('title name').lean();
         const eventTitle = event?.title || event?.name || 'Unknown Event';
 
-        // Upsert: increment visitCount, update lastVisitedAt and userSnapshot
+        const updateDoc = heartbeat 
+            ? {
+                  $set: {
+                      lastVisitedAt: new Date(),
+                      eventTitle,
+                      userSnapshot: {
+                          username: user.username || '',
+                          email: user.email || '',
+                          phone: user.phone || '',
+                      },
+                  }
+              }
+            : {
+                  $inc: { visitCount: 1 },
+                  $set: {
+                      lastVisitedAt: new Date(),
+                      eventTitle,
+                      userSnapshot: {
+                          username: user.username || '',
+                          email: user.email || '',
+                          phone: user.phone || '',
+                      },
+                  },
+              };
+
+        // Upsert: increment visitCount (if not heartbeat), update lastVisitedAt and userSnapshot
         await EventVisit.findOneAndUpdate(
             { user: currentUser.userId, event: eventId },
-            {
-                $inc: { visitCount: 1 },
-                $set: {
-                    lastVisitedAt: new Date(),
-                    eventTitle,
-                    userSnapshot: {
-                        username: user.username || '',
-                        email: user.email || '',
-                        phone: user.phone || '',
-                    },
-                },
-            },
+            updateDoc,
             { upsert: true, new: true }
         );
 
