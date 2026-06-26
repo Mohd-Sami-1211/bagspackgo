@@ -297,6 +297,8 @@ function NumberedSlotInput({ label, slots, onAdd, onRemove, onChange, placeholde
 
 // ── Main component ──
 
+const DRAFT_KEY = 'hostEvent_draft';
+
 export default function HostEventPage({ isEdit = false, initialData = null, adminMode = false, providerId = null }) {
   const router = useRouter();
   const [activeSection, setActiveSection] = useState(0);
@@ -306,6 +308,8 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
   const [apiError, setApiError] = useState('');
   const [stepErrors, setStepErrors] = useState({});
   const [publishMode, setPublishMode] = useState('publish');
+  const [showRestoreBanner, setShowRestoreBanner] = useState(false);
+  const [photoUploadErrors, setPhotoUploadErrors] = useState([]);
   const [formData, setFormData] = useState({
     title: '',
     eventType: '',
@@ -381,6 +385,48 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
       });
     }
   }, [initialData]);
+
+  // Check for a saved draft on mount (new events only)
+  useEffect(() => {
+    if (isEdit || adminMode) return;
+    try {
+      const saved = localStorage.getItem(DRAFT_KEY);
+      if (saved) {
+        const { formData: savedData } = JSON.parse(saved);
+        if (savedData?.title?.trim() || savedData?.about?.trim()) {
+          setShowRestoreBanner(true);
+        }
+      }
+    } catch {}
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Persist draft to localStorage on every change (new events only, excludes photos/poster)
+  useEffect(() => {
+    if (isEdit || adminMode) return;
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({
+        formData: { ...formData, photographs: [], poster: null },
+        activeSection,
+      }));
+    } catch {}
+  }, [formData, activeSection, isEdit, adminMode]);
+
+  const restoreDraft = () => {
+    try {
+      const saved = localStorage.getItem(DRAFT_KEY);
+      if (saved) {
+        const { formData: savedData, activeSection: savedSection } = JSON.parse(saved);
+        setFormData(prev => ({ ...prev, ...savedData }));
+        setActiveSection(savedSection || 0);
+      }
+    } catch {}
+    setShowRestoreBanner(false);
+  };
+
+  const discardDraft = () => {
+    localStorage.removeItem(DRAFT_KEY);
+    setShowRestoreBanner(false);
+  };
 
   const eventTypes = [
     'Adventure Tour',
@@ -587,28 +633,44 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
   };
 
   const handlePhotographUpload = async (e) => {
+    setPhotoUploadErrors([]);
     const files = Array.from(e.target.files);
-    if (formData.photographs.length + files.length > 10) {
-      alert('You can upload a maximum of 10 photographs.');
-      return;
-    }
-    const validFiles = files.filter(file => {
-      if (file.size > 5 * 1024 * 1024) {
-        alert(`${file.name} is too large. Max 5MB per image.`);
-        return false;
+    const errors = [];
+    const remaining = 10 - formData.photographs.length;
+    const validFiles = [];
+    let skippedForCount = 0;
+
+    for (const file of files) {
+      if (!file.type.startsWith('image/')) {
+        errors.push(`"${file.name}" is not an image. Only JPG, PNG, and other image formats are accepted.`);
+        continue;
       }
-      return true;
-    });
+      if (file.size > 5 * 1024 * 1024) {
+        const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+        errors.push(`"${file.name}" is ${sizeMB}MB — exceeds the 5MB limit. Please resize it before uploading.`);
+        continue;
+      }
+      if (validFiles.length >= remaining) {
+        skippedForCount++;
+        continue;
+      }
+      validFiles.push(file);
+    }
+
+    if (skippedForCount > 0) {
+      errors.push(`${skippedForCount} photo(s) skipped — only ${remaining} slot(s) remaining (max 10 total).`);
+    }
+    if (errors.length > 0) setPhotoUploadErrors(errors);
+    if (validFiles.length === 0) return;
 
     try {
-      // Compress gallery photos to keep payload small while preserving quality
       const compressedImages = await Promise.all(
         validFiles.map(f => compressImage(f, { maxWidth: 1200, quality: 0.75 }))
       );
       setFormData(prev => ({ ...prev, photographs: [...prev.photographs, ...compressedImages] }));
     } catch (err) {
       console.error("Compression error:", err);
-      alert('Error compressing images. Please try again.');
+      setPhotoUploadErrors(prev => [...prev, 'Error processing images. Please try again with different files.']);
     }
   };
 
@@ -680,6 +742,7 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
 
       const data = await res.json();
       if (data.success) {
+        if (!isEdit && !adminMode) localStorage.removeItem(DRAFT_KEY);
         setIsPublished(true);
       } else {
         setApiError(data.message || 'Failed to publish event. Please try again.');
@@ -763,6 +826,7 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
               {!isEdit && (
                 <button
                 onClick={() => {
+                  localStorage.removeItem(DRAFT_KEY);
                   setIsPublished(false);
                   setPublishMode('publish');
                   setFormData({
@@ -861,6 +925,36 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
             />
           </div>
         </motion.div>
+
+        {/* Draft Restore Banner */}
+        {showRestoreBanner && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4"
+          >
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-amber-800">You have an unsaved draft</p>
+              <p className="text-xs text-amber-600 mt-0.5">We found a previous draft. Continue where you left off? Photos will need to be re-uploaded.</p>
+            </div>
+            <div className="flex gap-2 flex-shrink-0">
+              <button
+                type="button"
+                onClick={restoreDraft}
+                className="px-4 py-2 bg-amber-500 text-white text-sm font-semibold rounded-xl hover:bg-amber-600 transition-colors"
+              >
+                Continue Draft
+              </button>
+              <button
+                type="button"
+                onClick={discardDraft}
+                className="px-4 py-2 border border-amber-300 text-amber-700 text-sm font-semibold rounded-xl hover:bg-amber-100 transition-colors"
+              >
+                Start Fresh
+              </button>
+            </div>
+          </motion.div>
+        )}
 
         {/* Main Form */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8">
@@ -1332,6 +1426,18 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
                           </p>
                         </label>
                       </div>
+
+                      {/* Upload Errors */}
+                      {photoUploadErrors.length > 0 && (
+                        <div className="p-4 bg-red-50 border border-red-200 rounded-2xl space-y-1.5">
+                          {photoUploadErrors.map((err, i) => (
+                            <p key={i} className="text-sm text-red-600 flex items-start gap-2">
+                              <XCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                              <span>{err}</span>
+                            </p>
+                          ))}
+                        </div>
+                      )}
 
                       {/* Preview Grid */}
                       {formData.photographs.length > 0 && (
