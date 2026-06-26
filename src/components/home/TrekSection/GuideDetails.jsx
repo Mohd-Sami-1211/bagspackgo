@@ -103,6 +103,23 @@ const TrekGuideDetails = ({ guide }) => {
     }
   }, [authLoading, isLoggedIn, openAuthModal]);
 
+  /* Track package visit for admin retargeting activity (fire-and-forget) */
+  useEffect(() => {
+    const pkgId = guide?._id;
+    if (isUserAuthenticated && pkgId) {
+      const trackVisit = (heartbeat = false) => {
+        fetch('/api/activity/track-package', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ packageId: pkgId, heartbeat }),
+        }).catch(() => {});
+      };
+      trackVisit(false);
+      const interval = setInterval(() => trackVisit(true), 15000);
+      return () => clearInterval(interval);
+    }
+  }, [isUserAuthenticated, guide?._id]);
+
   /* Saved status */
   useEffect(() => {
     if (!isUserAuthenticated) return;

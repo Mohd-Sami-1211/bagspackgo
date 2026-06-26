@@ -25,6 +25,12 @@ export function useTripPhotos(packageId, options = {}) {
     return useSWR(url, { ...options, dedupingInterval: 300000 }); // Cache photos for 5 mins
 }
 
+// 2.6 Event Photos Cache (Background fetch for Base64 gallery images)
+export function useEventPhotos(eventId, options = {}) {
+    const url = eventId ? `/api/events/${eventId}/photos` : null;
+    return useSWR(url, { ...options, dedupingInterval: 300000 }); // Cache photos for 5 mins
+}
+
 // 3. Saved items IDs cache
 // Useful to prevent fetching full saved items just to check if saved
 export function useSavedItemIds(options = {}) {

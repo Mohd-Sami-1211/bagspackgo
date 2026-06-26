@@ -170,6 +170,26 @@ const GuideDetails = ({ guide }) => {
     }
   }, [authLoading, isLoggedIn, openAuthModal]);
 
+  // Track package visit for admin retargeting activity (fire-and-forget)
+  useEffect(() => {
+    if (isUserAuthenticated && pkgId) {
+      const trackVisit = (heartbeat = false) => {
+        fetch('/api/activity/track-package', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ packageId: pkgId, heartbeat }),
+        }).catch(() => {}); // Silently ignore errors
+      };
+
+      // Initial track
+      trackVisit(false);
+
+      // Heartbeat every 15 seconds keeps the visitor marked "live"
+      const interval = setInterval(() => trackVisit(true), 15000);
+      return () => clearInterval(interval);
+    }
+  }, [isUserAuthenticated, pkgId]);
+
   const [activeTab, setActiveTab] = useState("dayByDay");
   const [currentDay, setCurrentDay] = useState(1);
   const [acceptTerms, setAcceptTerms] = useState(false);
