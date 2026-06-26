@@ -9,6 +9,7 @@ import { AuthProvider } from '@/context/AuthContext';
 import AuthModal from '@/components/auth/AuthModal';
 import PendingBookingNotification from 'src/components/common/PendingBookingNotification';
 import SWRProvider from '@/components/common/SWRProvider';
+import PresenceHeartbeat from '@/components/common/PresenceHeartbeat';
 
 export default function ClientLayout({ children }) {
     const pathname = usePathname();
@@ -54,6 +55,7 @@ export default function ClientLayout({ children }) {
             <AuthProvider>
                 <AuthModal />
                 <PendingBookingNotification />
+                <PresenceHeartbeat />
                 {/* Top Navbar (hidden for specific pages) */}
                 {!hideNavbar && <Navbar />}
 

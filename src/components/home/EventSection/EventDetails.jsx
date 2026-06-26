@@ -13,6 +13,8 @@ import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
+import ProgressiveImage from '@/components/common/ProgressiveImage';
+import { useEventPhotos } from '@/lib/useTripCache';
 
 /* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Custom Dropdown â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const CustomSelect = ({ value, onChange, options, placeholder }) => {
@@ -231,6 +233,13 @@ const EventDetails = ({ event }) => {
 
   // â”€â”€ Photo lightbox â”€â”€
   const [lightboxPhoto, setLightboxPhoto] = useState(null);
+
+  // â”€â”€ Gallery photos: fetched separately so the page renders without waiting on heavy images â”€â”€
+  const { data: photosData, isLoading: photosLoading } = useEventPhotos(event?.id || event?._id);
+  const galleryPhotos = photosData?.data?.photographs || [];
+  const galleryThumbnails = photosData?.data?.photographThumbnails || [];
+  // How many skeleton tiles to show while photos load (from the lightweight detail response)
+  const photoCount = event?.photoCount || 0;
 
   // â”€â”€ Booking state â”€â”€
   const [bookingSlots, setBookingSlots] = useState(1);
@@ -1576,22 +1585,38 @@ const EventDetails = ({ event }) => {
               </div>
 
               {/* Photographs Gallery */}
-              {event.photographs?.length > 0 && (
+              {photoCount > 0 && (
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                     <Sparkles className="text-gray-900" size={20} /> Gallery
                   </h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                    {event.photographs.map((photo, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setLightboxPhoto(photo)}
-                        className="relative aspect-[4/3] rounded-xl overflow-hidden shadow-sm border border-gray-100 group cursor-pointer"
-                      >
-                        <img src={photo} alt={`Event photo ${i + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all duration-300" />
-                      </button>
-                    ))}
+                    {photosLoading
+                      ? // While photos load, show progress-ring placeholders matching the photo count
+                        [...Array(photoCount)].map((_, i) => (
+                          <div
+                            key={i}
+                            className="relative aspect-[4/3] rounded-xl overflow-hidden shadow-sm border border-gray-100"
+                          >
+                            <ProgressiveImage src={null} thumbnail={null} alt={`Event photo ${i + 1}`} className="w-full h-full" />
+                          </div>
+                        ))
+                      : galleryPhotos.map((photo, i) => (
+                          <button
+                            key={i}
+                            onClick={() => setLightboxPhoto(photo)}
+                            className="relative aspect-[4/3] rounded-xl overflow-hidden shadow-sm border border-gray-100 group cursor-pointer"
+                          >
+                            <ProgressiveImage
+                              src={photo}
+                              thumbnail={galleryThumbnails[i] || null}
+                              alt={`Event photo ${i + 1}`}
+                              className="w-full h-full"
+                              imgClassName="group-hover:scale-105 transition-transform duration-300"
+                            />
+                            <div className="absolute inset-0 z-10 bg-black/0 group-hover:bg-black/10 transition-all duration-300" />
+                          </button>
+                        ))}
                   </div>
                 </div>
               )}

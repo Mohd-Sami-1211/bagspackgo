@@ -74,7 +74,10 @@ export async function GET(request, context) {
                 guide: event.guide,
                 guideName: guideName,
                 guideLogo: guideLogo,
-                photographs: event.photographs || [],
+                // Photographs are intentionally excluded here to keep this response light.
+                // They are fetched separately (with thumbnails) via /api/events/[id]/photos.
+                // photoCount lets the gallery render the right number of skeleton placeholders.
+                photoCount: event.photographs?.length || 0,
                 termsAndConditions: event.termsAndConditions || [],
                 destinationLink: event.destinationLink,
                 visibility: event.visibility || 'public',
