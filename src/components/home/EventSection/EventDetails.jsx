@@ -1527,7 +1527,7 @@ const EventDetails = ({ event, loading = false }) => {
               <img
                 src={event.image || '/images/EventCover.webp'}
                 alt={event.name}
-                className="relative z-10 w-full h-64 md:h-96 object-cover md:object-contain"
+                className="relative z-10 w-full max-h-64 md:max-h-96 object-contain"
               />
             </div>
 
