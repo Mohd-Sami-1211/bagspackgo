@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db";
-import { Event } from "@/models/event.model";
+import { Event } from "@/models/event.model"; 
 import { GuideDetails } from "@/models/guidedetails.model";
 import mongoose from "mongoose";
 
@@ -21,7 +21,10 @@ export async function GET(request, context) {
             );
         }
 
-        const event = await Event.findById(id).populate('guide', 'name username email profileImage').lean();
+        const event = await Event.findById(id)
+            .select('-photographs') // exclude heavy base64 data; photos fetched separately via /api/events/[id]/photos
+            .populate('guide', 'name username email profileImage')
+            .lean();
 
         if (!event) {
             return NextResponse.json(
