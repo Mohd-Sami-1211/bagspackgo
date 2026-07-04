@@ -23,10 +23,18 @@ export async function GET(request, context) {
             );
         }
 
-        const event = await Event.findById(id)
-            .select('-photographs') // exclude heavy base64 data; photos fetched separately via /api/events/[id]/photos
-            .populate('guide', 'name username email profileImage')
-            .lean();
+
+        const [event, photoCountResult] = await Promise.all([
+            Event.findById(id)
+                .select('-photographs') // exclude heavy base64 data; photos fetched separately via /api/events/[id]/photos
+                .populate('guide', 'name username email profileImage')
+                .lean(),
+            // Get only the photo count without loading base64 data
+            Event.aggregate([
+                { $match: { _id: new mongoose.Types.ObjectId(id) } },
+                { $project: { photoCount: { $size: { $ifNull: ['$photographs', []] } } } }
+            ])
+        ]);
 
         if (!event) {
             return NextResponse.json(
@@ -34,6 +42,8 @@ export async function GET(request, context) {
                 { status: 404 }
             );
         }
+
+        const photoCount = photoCountResult?.[0]?.photoCount || 0;
 
         let guideName = event.guide?.companyName || event.guide?.username || event.guide?.name || "Local Guide";
         let guideLogo = event.guide?.profileImage || "";
@@ -44,6 +54,7 @@ export async function GET(request, context) {
                 if (gd.logo) guideLogo = gd.logo;
             }
         }
+
 
         // Map DB fields to the format EventDetails expects, if needed, or just return as is.
         return NextResponse.json({
@@ -82,7 +93,7 @@ export async function GET(request, context) {
                 // Photographs are intentionally excluded here to keep this response light.
                 // They are fetched separately (with thumbnails) via /api/events/[id]/photos.
                 // photoCount lets the gallery render the right number of skeleton placeholders.
-                photoCount: event.photographs?.length || 0,
+                photoCount: photoCount,
                 termsAndConditions: event.termsAndConditions || [],
                 destinationLink: event.destinationLink,
                 visibility: event.visibility || 'public',

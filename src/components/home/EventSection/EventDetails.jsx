@@ -202,16 +202,113 @@ const CustomFormCard = ({ event, formData, formErrors, handleCustomFormChange, s
   );
 };
 
-const EventDetails = ({ event }) => {
+const Sk = ({ className = '' }) => (
+  <div className={`bg-gray-200 rounded animate-pulse ${className}`} />
+);
+
+const EventDetailsSkeleton = () => (
+  <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 py-8 -mt-20 mb-16">
+    <div className="flex flex-col md:flex-row gap-6 mb-8">
+      <div className="w-full md:w-1/2 lg:w-2/3 flex flex-col gap-4">
+        <Sk className="w-full h-64 md:h-96 rounded-xl" />
+        <Sk className="w-full h-14 rounded-xl" />
+      </div>
+      <div className="w-full md:w-1/2 lg:w-1/3 bg-white rounded-xl shadow-lg p-6 flex flex-col gap-5">
+        <div className="flex justify-end gap-2">
+          <Sk className="w-20 h-9 rounded-xl" />
+          <Sk className="w-20 h-9 rounded-xl" />
+        </div>
+        <div className="flex items-center gap-3">
+          <Sk className="w-10 h-10 rounded-full flex-shrink-0" />
+          <div className="flex flex-col gap-1.5 flex-1">
+            <Sk className="h-2.5 w-16 rounded" />
+            <Sk className="h-3.5 w-32 rounded" />
+          </div>
+        </div>
+        <div className="border-b border-gray-100" />
+        <div className="flex justify-between items-start gap-3">
+          <Sk className="h-7 w-48 rounded" />
+          <Sk className="h-7 w-16 rounded-full" />
+        </div>
+        <div className="space-y-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="flex items-center gap-3">
+              <Sk className="w-5 h-5 rounded flex-shrink-0" />
+              <div className="flex flex-col gap-1 flex-1">
+                <Sk className="h-2 w-10 rounded" />
+                <Sk className="h-3.5 w-28 rounded" />
+              </div>
+            </div>
+          ))}
+        </div>
+        <Sk className="w-full h-12 rounded-xl mt-auto" />
+      </div>
+    </div>
+    <div className="bg-white/90 backdrop-blur-sm px-4 sm:px-6 py-4 shadow-lg rounded-2xl overflow-hidden">
+      <div className="flex gap-6 border-b border-gray-200 pb-0 mb-6">
+        {[...Array(3)].map((_, i) => (
+          <Sk key={i} className={`h-4 rounded ${i === 0 ? 'w-24' : i === 1 ? 'w-16' : 'w-28'} mb-3`} />
+        ))}
+      </div>
+      <div className="space-y-8">
+        <div>
+          <Sk className="h-5 w-40 rounded mb-4" />
+          <div className="space-y-2">
+            <Sk className="h-3.5 w-full rounded" />
+            <Sk className="h-3.5 w-5/6 rounded" />
+            <Sk className="h-3.5 w-4/5 rounded" />
+            <Sk className="h-3.5 w-full rounded" />
+            <Sk className="h-3.5 w-3/4 rounded" />
+          </div>
+        </div>
+        <div>
+          <Sk className="h-5 w-24 rounded mb-4" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {[...Array(4)].map((_, i) => (
+              <Sk key={i} className="aspect-[4/3] rounded-xl" />
+            ))}
+          </div>
+        </div>
+        <div>
+          <Sk className="h-5 w-28 rounded mb-4" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {[...Array(4)].map((_, i) => (
+              <Sk key={i} className="h-10 rounded-lg" />
+            ))}
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <Sk className="h-5 w-32 rounded mb-4" />
+            <div className="space-y-2">
+              {[...Array(3)].map((_, i) => <Sk key={i} className="h-10 rounded-lg" />)}
+            </div>
+          </div>
+          <div>
+            <Sk className="h-5 w-32 rounded mb-4" />
+            <div className="space-y-2">
+              {[...Array(3)].map((_, i) => <Sk key={i} className="h-10 rounded-lg" />)}
+            </div>
+          </div>
+        </div>
+        <div className="flex justify-end pt-4 border-t border-gray-100">
+          <Sk className="h-12 w-44 rounded-xl" />
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+const EventDetails = ({ event, loading = false }) => {
   const router = useRouter();
   const { user, loading: authLoading, openAuthModal } = useAuth();
   const isUserAuthenticated = !authLoading && user?.role === "user";
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // â”€â”€ View state: 'details' or 'booking' â”€â”€
+  // ── View state: 'details' or 'booking' ──
   const [currentView, setCurrentView] = useState('details');
 
-  // â”€â”€ Tabs for the details view â”€â”€
+  // ── Tabs for the details view ──
   const [activeTab, setActiveTab] = useState('eventDetails');
   const tabsRef = useRef(null);
   const tabs = [
@@ -393,19 +490,19 @@ const EventDetails = ({ event }) => {
 
   // ——— Check if event is saved ———
   useEffect(() => {
-    if (!isUserAuthenticated) return;
+    if (!isUserAuthenticated || !event) return;
+    const eventId = event._id || event.id;
+    if (!eventId) return;
     (async () => {
       try {
         const res = await fetch('/api/user/saved');
         const data = await res.json();
         if (data.success && data.saved) {
-          const eventId = event._id || event.id;
           setIsSaved(data.saved.some(item => item.itemId === eventId));
         }
       } catch {}
 
       try {
-        const eventId = event._id || event.id;
         const res = await fetch(`/api/user/events/${eventId}/wish/status`);
         if (res.ok) {
             const data = await res.json();
@@ -413,7 +510,7 @@ const EventDetails = ({ event }) => {
         }
       } catch {}
     })();
-  }, [isUserAuthenticated, event._id, event.id]);
+  }, [isUserAuthenticated, event]);
 
   const handleSaveEvent = async () => {
     if (!isUserAuthenticated) {
@@ -538,6 +635,9 @@ const EventDetails = ({ event }) => {
     });
     // No need to setExtraChargesTotal here as the new useEffect handles it
   }, [bookingSlots]);
+
+  // ── Early return: show skeleton while event data is loading ──
+  if (loading || !event) return <EventDetailsSkeleton />;
 
   const formattedDate = new Date(event.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
