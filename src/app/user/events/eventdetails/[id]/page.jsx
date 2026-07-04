@@ -9,37 +9,29 @@ function EventDetailsContent() {
   const id = params?.id;
 
   const [event, setEvent] = useState(null);
-  const [loading, setLoading] = useState(true);
-  // 'idle' | 'loading' | 'not_found' | 'error'
+  // 'loading' | 'idle' | 'not_found' | 'error'
   const [fetchState, setFetchState] = useState('loading');
 
   const fetchEvent = useCallback(async () => {
     if (!id) return;
-    setLoading(true);
     setFetchState('loading');
 
     let retries = 2;
     while (retries >= 0) {
-      // Per-attempt 8-second timeout using AbortController
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000);
 
       try {
-        const res = await fetch(`/api/events/${id}`, {
-          signal: controller.signal,
-        });
+        const res = await fetch(`/api/events/${id}`, { signal: controller.signal });
         clearTimeout(timeoutId);
 
-        // True 404 — event doesn't exist, no point retrying
         if (res.status === 404) {
           setFetchState('not_found');
-          setEvent(false);
+          setEvent(null);
           break;
         }
 
-        if (!res.ok) {
-          throw new Error(`HTTP error ${res.status}`);
-        }
+        if (!res.ok) throw new Error(`HTTP error ${res.status}`);
 
         const data = await res.json();
 
@@ -47,11 +39,10 @@ function EventDetailsContent() {
           setEvent(data.event);
           setFetchState('idle');
         } else {
-          // API returned 200 but said not found
           setFetchState('not_found');
-          setEvent(false);
+          setEvent(null);
         }
-        break; // success — exit loop
+        break;
 
       } catch (err) {
         clearTimeout(timeoutId);
@@ -60,46 +51,27 @@ function EventDetailsContent() {
           `Event fetch attempt failed (${retries} retries left)${isAbort ? ' — timed out' : ''}:`,
           err
         );
-
         if (retries === 0) {
-          // All retries exhausted — show retryable error UI
           setFetchState('error');
           setEvent(null);
         } else {
-          // Wait 800ms before next retry
           await new Promise((resolve) => setTimeout(resolve, 800));
         }
       }
       retries--;
     }
-
-    setLoading(false);
   }, [id]);
 
   useEffect(() => {
     fetchEvent();
   }, [fetchEvent]);
 
-  /* ── Loading skeleton ── */
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-[70vh]">
-        <div className="animate-pulse flex flex-col items-center gap-4 w-full max-w-md px-6">
-          <div className="w-16 h-16 bg-gray-200 rounded-full" />
-          <div className="h-4 bg-gray-200 rounded w-3/4" />
-          <div className="h-4 bg-gray-200 rounded w-1/2" />
-          <div className="h-4 bg-gray-200 rounded w-2/3" />
-        </div>
-      </div>
-    );
-  }
-
   /* ── True 404 — event doesn't exist ── */
   if (fetchState === 'not_found') {
     notFound();
   }
 
-  /* ── Transient server error / timeout — let the user retry ── */
+  /* ── Transient server error — retryable ── */
   if (fetchState === 'error') {
     return (
       <div className="flex flex-col justify-center items-center min-h-[70vh] gap-6 px-6 text-center">
@@ -123,24 +95,13 @@ function EventDetailsContent() {
     );
   }
 
-  /* ── Event loaded successfully ── */
-  return <EventDetails event={event} />;
+  /* ── Render immediately: skeleton while loading, real content once ready ── */
+  return <EventDetails event={event} loading={fetchState === 'loading'} onRetry={fetchEvent} />;
 }
-
-const LoadingSkeleton = () => (
-  <div className="flex justify-center items-center min-h-[70vh]">
-    <div className="animate-pulse flex flex-col items-center gap-4 w-full max-w-md px-6">
-      <div className="w-16 h-16 bg-gray-200 rounded-full" />
-      <div className="h-4 bg-gray-200 rounded w-3/4" />
-      <div className="h-4 bg-gray-200 rounded w-1/2" />
-      <div className="h-4 bg-gray-200 rounded w-2/3" />
-    </div>
-  </div>
-);
 
 export default function EventDetailsPage() {
   return (
-    <Suspense fallback={<LoadingSkeleton />}>
+    <Suspense>
       <EventDetailsContent />
     </Suspense>
   );
