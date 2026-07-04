@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db";
-import { Event } from "@/models/event.model"; 
+import { Event } from "@/models/event.model";
 import { GuideDetails } from "@/models/guidedetails.model";
 import mongoose from "mongoose";
+
+export const dynamic = 'force-dynamic';
 
 /**
  * GET /api/events/[id]
@@ -12,7 +14,7 @@ export async function GET(request, context) {
     const params = await context.params;
     try {
         await dbConnect();
-        const { id } = await params;
+        const { id } = params;
 
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return NextResponse.json(

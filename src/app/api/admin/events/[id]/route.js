@@ -12,7 +12,7 @@ export async function GET(req, context) {
         const admin = await getCurrentAdmin();
         if (!admin) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
 
-
+        await dbConnect();
 
         const event = await Event.findById(id);
         if (!event) return NextResponse.json({ success: false, message: 'Event not found' }, { status: 404 });
