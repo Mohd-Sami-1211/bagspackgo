@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db";
-import { Event } from "@/models/event.model";
+import { Event } from "@/models/event.model"; 
 import { GuideDetails } from "@/models/guidedetails.model";
 import mongoose from "mongoose";
 
@@ -26,13 +26,16 @@ export async function GET(request, context) {
 
         const [event, photoCountResult] = await Promise.all([
             Event.findById(id)
-                .select('-photographs') // exclude heavy base64 data; photos fetched separately via /api/events/[id]/photos
+                .select('-photographs -sponsors') // exclude heavy base64 data; photos and sponsors fetched separately
                 .populate('guide', 'name username email profileImage')
                 .lean(),
             // Get only the photo count without loading base64 data
             Event.aggregate([
                 { $match: { _id: new mongoose.Types.ObjectId(id) } },
-                { $project: { photoCount: { $size: { $ifNull: ['$photographs', []] } } } }
+                { $project: { 
+                    photoCount: { $size: { $ifNull: ['$photographs', []] } },
+                    sponsorCount: { $size: { $ifNull: ['$sponsors', []] } }
+                } }
             ])
         ]);
 
@@ -44,6 +47,7 @@ export async function GET(request, context) {
         }
 
         const photoCount = photoCountResult?.[0]?.photoCount || 0;
+        const sponsorCount = photoCountResult?.[0]?.sponsorCount || 0;
 
         let guideName = event.guide?.companyName || event.guide?.username || event.guide?.name || "Local Guide";
         let guideLogo = event.guide?.profileImage || "";
@@ -90,10 +94,10 @@ export async function GET(request, context) {
                 guide: event.guide,
                 guideName: guideName,
                 guideLogo: guideLogo,
-                // Photographs are intentionally excluded here to keep this response light.
-                // They are fetched separately (with thumbnails) via /api/events/[id]/photos.
-                // photoCount lets the gallery render the right number of skeleton placeholders.
+                // Photographs and Sponsors are intentionally excluded here to keep this response light.
+                // They are fetched separately via /api/events/[id]/photos and /api/events/[id]/sponsors.
                 photoCount: photoCount,
+                sponsorCount: sponsorCount,
                 termsAndConditions: event.termsAndConditions || [],
                 destinationLink: event.destinationLink,
                 visibility: event.visibility || 'public',

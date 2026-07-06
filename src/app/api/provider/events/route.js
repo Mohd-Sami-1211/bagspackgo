@@ -110,33 +110,15 @@ export async function POST(request) {
             );
         }
 
-        // Validate highlights (at least 1 non-empty)
+        // Filter highlights (optional — sanitize but don't require)
         const highlights = (body.highlights || []).filter(
             (h) => typeof h === "string" && h.trim()
         );
-        if (highlights.length === 0) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    message: "At least one highlight is required",
-                },
-                { status: 400 }
-            );
-        }
 
-        // Validate whatsIncluded (at least 1 non-empty)
+        // Filter whatsIncluded (optional — sanitize but don't require)
         const whatsIncluded = (body.whatsIncluded || []).filter(
             (w) => typeof w === "string" && w.trim()
         );
-        if (whatsIncluded.length === 0) {
-            return NextResponse.json(
-                {
-                    success: false,
-                    message: "At least one inclusion item is required",
-                },
-                { status: 400 }
-            );
-        }
 
         // Validate FAQs (at least 1 complete FAQ)
         const faqs = (body.faqs || []).filter(
@@ -172,7 +154,8 @@ export async function POST(request) {
             );
         }
 
-        // Validate pickup points (at least 1 with location and time)
+        // Validate pickup points only when pickup is enabled
+        const includePickup = body.includePickup !== false;
         const pickupPoints = (body.pickupPoints || []).filter(
             (p) =>
                 p &&
@@ -181,12 +164,12 @@ export async function POST(request) {
                 typeof p.time === "string" &&
                 p.time.trim()
         );
-        if (pickupPoints.length === 0) {
+        if (includePickup && pickupPoints.length === 0) {
             return NextResponse.json(
                 {
                     success: false,
                     message:
-                        "At least one pickup point with location and time is required",
+                        "At least one pickup point with location and time is required, or disable pickup/drop-off",
                 },
                 { status: 400 }
             );
@@ -205,6 +188,29 @@ export async function POST(request) {
         const termsAndConditions = (body.termsAndConditions || []).filter(
             (t) => typeof t === "string" && t.trim()
         );
+
+        // Sanitize sponsors (optional)
+        const sponsors = (body.sponsors || [])
+            .filter((s) => s && typeof s.name === "string" && s.name.trim())
+            .map((s) => ({
+                name: sanitizeString(s.name),
+                image: s.image || "",
+                description: sanitizeString(s.description || ""),
+                website: sanitizeString(s.website || ""),
+                socialMedia: {
+                    instagram: sanitizeString(s.socialMedia?.instagram || ""),
+                    facebook: sanitizeString(s.socialMedia?.facebook || ""),
+                    twitter: sanitizeString(s.socialMedia?.twitter || ""),
+                    youtube: sanitizeString(s.socialMedia?.youtube || ""),
+                    linkedin: sanitizeString(s.socialMedia?.linkedin || ""),
+                },
+                links: (s.links || [])
+                    .filter((l) => l && l.label?.trim() && l.url?.trim())
+                    .map((l) => ({
+                        label: sanitizeString(l.label),
+                        url: sanitizeString(l.url),
+                    })),
+            }));
 
         // Create the event
         const event = await Event.create({
@@ -228,14 +234,16 @@ export async function POST(request) {
             })),
             whatToBring: whatToBring.map(sanitizeString),
             restrictions: restrictions.map(sanitizeString),
-            pickupPoints: pickupPoints.map((p) => ({
+            includePickup,
+            pickupPoints: includePickup ? pickupPoints.map((p) => ({
                 location: sanitizeString(p.location),
                 link: sanitizeString(p.link || ""),
                 time: p.time,
-            })),
+            })) : [],
             itinerary: itinerary.map(sanitizeString),
             photographs: body.photographs || [],
             termsAndConditions: termsAndConditions.map(sanitizeString),
+            sponsors,
             poster: body.poster || "",
             status: body.status === "draft" ? "draft" : "published",
             visibility: body.visibility === "private" ? "private" : "public",

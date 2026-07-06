@@ -4,7 +4,8 @@ import {
   MapPin, Clock, Calendar, Star, User, Ticket, ChevronRight, Info,
   AlertCircle, Map, CheckCircle, CreditCard, ShieldCheck, ArrowLeft,
   Mail, Phone, Upload, XCircle, ChevronDown, ExternalLink, HelpCircle,
-  Minus, Plus, Navigation, Users, Sparkles, Bookmark, Share2, FileText
+  Minus, Plus, Navigation, Users, Sparkles, Bookmark, Share2, FileText,
+  X, Instagram, Facebook, Twitter, Linkedin
 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -14,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import ProgressiveImage from '@/components/common/ProgressiveImage';
-import { useEventPhotos } from '@/lib/useTripCache';
+import { useEventPhotos, useEventSponsors } from '@/lib/useTripCache';
 
 /* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Custom Dropdown â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const CustomSelect = ({ value, onChange, options, placeholder }) => {
@@ -313,7 +314,7 @@ const EventDetails = ({ event, loading = false }) => {
   const tabsRef = useRef(null);
   const tabs = [
     { key: 'eventDetails', label: 'Event Details' },
-    { key: 'itinerary', label: 'Itinerary' },
+    { key: 'itinerary', label: 'Schedule' },
     { key: 'info', label: 'Important Info' },
   ];
   const currentTabIndex = tabs.findIndex(t => t.key === activeTab);
@@ -330,11 +331,16 @@ const EventDetails = ({ event, loading = false }) => {
 
   // â”€â”€ Photo lightbox â”€â”€
   const [lightboxPhoto, setLightboxPhoto] = useState(null);
+  const [selectedSponsor, setSelectedSponsor] = useState(null);
 
   // â”€â”€ Gallery photos: fetched separately so the page renders without waiting on heavy images â”€â”€
   const { data: photosData, isLoading: photosLoading } = useEventPhotos(event?.id || event?._id);
   const galleryPhotos = photosData?.data?.photographs || [];
   const galleryThumbnails = photosData?.data?.photographThumbnails || [];
+  
+  // ── Sponsors: fetched separately to avoid heavy base64 data blocking render ──
+  const { data: sponsorsData, isLoading: sponsorsLoading } = useEventSponsors(event?.id || event?._id);
+  const sponsors = sponsorsData?.data?.sponsors || [];
   // How many skeleton tiles to show while photos load (from the lightweight detail response)
   const photoCount = event?.photoCount || 0;
 
@@ -640,6 +646,16 @@ const EventDetails = ({ event, loading = false }) => {
   if (loading || !event) return <EventDetailsSkeleton />;
 
   const formattedDate = new Date(event.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+  // Safe checks for arrays that might contain empty strings (e.g. [''])
+  const validHighlights = event.highlights?.filter(i => i && typeof i === 'string' && i.trim().length > 0) || [];
+  const validWhatsIncluded = event.whatsIncluded?.filter(i => i && typeof i === 'string' && i.trim().length > 0) || [];
+  const validWhatsExcluded = event.whatsExcluded?.filter(i => i && typeof i === 'string' && i.trim().length > 0) || [];
+  const validWhatToBring = event.whatToBring?.filter(i => i && typeof i === 'string' && i.trim().length > 0) || [];
+  const validRestrictions = event.restrictions?.filter(i => i && typeof i === 'string' && i.trim().length > 0) || [];
+  const validTerms = event.termsAndConditions?.filter(i => i && typeof i === 'string' && i.trim().length > 0) || [];
+  const validItinerary = event.itinerary?.filter(i => i && typeof i === 'string' && i.trim().length > 0) || [];
+  const validFaqs = event.faqs?.filter(f => f?.question?.trim() && f?.answer?.trim()) || [];
 
   const selectedPickupObj = event.pickupPoints?.find(p => p.location === selectedPickup);
 
@@ -1062,7 +1078,7 @@ const EventDetails = ({ event, loading = false }) => {
 
                 
                 <div className="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 shadow-sm">
-                  <h2 className="text-xl font-bold text-gray-900 mb-1">Traveller Details</h2>
+                  <h2 className="text-xl font-bold text-gray-900 mb-1">Participant Details</h2>
                   <p className="text-gray-500 text-sm mb-6 font-medium">Required by the organizer for verification & permits.</p>
                   <div className="space-y-4">
                     {Array.from({ length: bookingSlots }).map((_, i) => {
@@ -1081,7 +1097,7 @@ const EventDetails = ({ event, loading = false }) => {
                                 {isFilled ? <CheckCircle className="w-4 h-4" /> : (i + 1)}
                               </div>
                               <div className="text-left">
-                                <p className="text-sm font-bold text-gray-900">Traveller {i + 1}</p>
+                                <p className="text-sm font-bold text-gray-900">Participant {i + 1}</p>
                                 {!isExpanded && isFilled && (
                                   <p className="text-xs text-gray-500 truncate mt-0.5 font-medium">
                                     {p.name} {"\u00B7"} Age {p.age} {"\u00B7"} {p.gender?.charAt(0).toUpperCase() + p.gender?.slice(1)}
@@ -1233,7 +1249,7 @@ const EventDetails = ({ event, loading = false }) => {
                                     {formErrors[`p.${i}.idProofImage`] && <p className="text-[10px] text-red-500 font-bold mt-1.5 uppercase">{"\u26A0"} {formErrors[`p.${i}.idProofImage`]}</p>}
                                   </div>
 
-                                  {/* Custom Form integration inside Traveller Details */}
+                                  {/* Custom Form integration inside Participant Details */}
                                   {event.applicationFormType === 'customized' && event.customFormFields?.length > 0 && (
                                     <div className="md:col-span-2 pt-6 border-t border-gray-100 mt-2">
                                         <h3 className="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wide">Other Information</h3>
@@ -1357,7 +1373,7 @@ const EventDetails = ({ event, loading = false }) => {
                         )}
 
                         <div className="pt-4 border-t border-gray-200">
-                          <p className="text-[10px] font-bold text-gray-900 uppercase tracking-widest mb-3">{`Travellers (${bookingSlots})`}</p>
+                          <p className="text-[10px] font-bold text-gray-900 uppercase tracking-widest mb-3">{`Participants (${bookingSlots})`}</p>
                           <div className="space-y-2.5">
                             {Array.from({ length: bookingSlots }).map((_, i) => {
                               return (
@@ -1722,13 +1738,13 @@ const EventDetails = ({ event, loading = false }) => {
               )}
 
               {/* Highlights */}
-              {event.highlights?.length > 0 && (
+              {validHighlights.length > 0 && (
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                     <Sparkles className="text-amber-500" size={20} /> Highlights
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {event.highlights.map((h, i) => h && (
+                    {validHighlights.map((h, i) => (
                       <div key={i} className="flex items-center gap-2.5 text-gray-700 bg-amber-50/60 p-3 rounded-lg border border-amber-100 max-w-full overflow-hidden">
                         <CheckCircle className="text-amber-500 flex-shrink-0" size={16} />
                         <span className="break-words w-full text-sm">{h}</span>
@@ -1739,13 +1755,13 @@ const EventDetails = ({ event, loading = false }) => {
               )}
 
               {/* What's Included */}
-              {event.whatsIncluded?.length > 0 && (
+              {validWhatsIncluded.length > 0 && (
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                     <CheckCircle className="text-gray-900" size={20} /> What&apos;s Included
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {event.whatsIncluded.map((item, i) => item && (
+                    {validWhatsIncluded.map((item, i) => (
                       <div key={i} className="flex items-center gap-2.5 text-gray-700 bg-gray-50/60 p-3 rounded-lg border border-gray-200 max-w-full overflow-hidden">
                         <CheckCircle className="text-gray-900 flex-shrink-0" size={16} />
                         <span className="break-words w-full text-sm">{item}</span>
@@ -1756,13 +1772,13 @@ const EventDetails = ({ event, loading = false }) => {
               )}
 
               {/* What's Excluded */}
-              {event.whatsExcluded?.length > 0 && (
+              {validWhatsExcluded.length > 0 && (
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                     <XCircle className="text-red-500" size={20} /> What&apos;s Excluded
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {event.whatsExcluded.map((item, i) => item && (
+                    {validWhatsExcluded.map((item, i) => (
                       <div key={i} className="flex items-center gap-2.5 text-gray-700 bg-red-50/60 p-3 rounded-lg border border-red-100 max-w-full overflow-hidden">
                         <XCircle className="text-red-400 flex-shrink-0" size={16} />
                         <span className="break-words w-full text-sm">{item}</span>
@@ -1772,11 +1788,128 @@ const EventDetails = ({ event, loading = false }) => {
                 </div>
               )}
 
+              {/* Event Sponsors */}
+              {(event?.sponsorCount > 0 || sponsors?.length > 0) && (
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <Star className="text-emerald-500 fill-emerald-500" size={20} /> Event Sponsors
+                  </h3>
+                  <div className="flex flex-wrap gap-4">
+                    {sponsorsLoading ? (
+                      Array.from({ length: event?.sponsorCount || 1 }).map((_, idx) => (
+                        <div key={`sponsor-skel-${idx}`} className="flex items-center gap-3 bg-white p-3 pr-4 rounded-xl shadow-sm border border-gray-100 w-48 animate-pulse">
+                          <div className="w-12 h-12 rounded-lg bg-gray-200" />
+                          <div className="h-4 bg-gray-200 rounded w-24" />
+                        </div>
+                      ))
+                    ) : (
+                      sponsors.map((sponsor, index) => (
+                        <button
+                          key={index}
+                          onClick={() => setSelectedSponsor(sponsor)}
+                          title={sponsor.name}
+                          className="flex items-center justify-center p-3 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md hover:border-emerald-200 transition-all cursor-pointer"
+                        >
+                          {sponsor.image ? (
+                            <img src={sponsor.image} alt={sponsor.name} className="w-24 h-24 rounded-lg object-contain" />
+                          ) : (
+                            <div className="w-24 h-24 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 font-bold text-3xl">
+                              {sponsor.name.charAt(0)}
+                            </div>
+                          )}
+                        </button>
+                      ))
+                    )}
+                  </div>
+                  
+                  {/* Sponsor Modal */}
+                  <AnimatePresence>
+                    {selectedSponsor && (
+                      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+                        <motion.div 
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.95 }}
+                          className="bg-white rounded-2xl max-w-md w-full p-6 relative shadow-xl max-h-[90vh] overflow-y-auto"
+                        >
+                          <button 
+                            onClick={() => setSelectedSponsor(null)}
+                            className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 bg-gray-50 p-2 rounded-full transition-colors"
+                          >
+                            <X size={20} />
+                          </button>
+                          
+                          <div className="flex flex-col items-center mb-6 mt-2">
+                            {selectedSponsor.image ? (
+                              <img src={selectedSponsor.image} alt={selectedSponsor.name} className="w-56 h-56 object-contain rounded-xl border border-gray-100 mb-4 bg-white" />
+                            ) : (
+                              <div className="w-56 h-56 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 font-bold text-7xl mb-4">
+                                {selectedSponsor.name.charAt(0)}
+                              </div>
+                            )}
+                            <h3 className="text-2xl font-bold text-gray-900 text-center">{selectedSponsor.name}</h3>
+                            {selectedSponsor.website && (
+                              <a href={selectedSponsor.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-emerald-600 hover:text-emerald-700 hover:underline mt-2 font-medium">
+                                <ExternalLink size={16} /> Visit Website
+                              </a>
+                            )}
+                          </div>
+                          
+                          {selectedSponsor.description && (
+                            <div className="mb-6 bg-gray-50 p-4 rounded-xl">
+                              <h4 className="text-sm font-semibold text-gray-900 mb-2">About Sponsor</h4>
+                              <p className="text-gray-700 text-sm whitespace-pre-wrap leading-relaxed">{selectedSponsor.description}</p>
+                            </div>
+                          )}
+                          
+                          {selectedSponsor.socialMedia && Object.entries(selectedSponsor.socialMedia).some(([_, url]) => url) && (
+                            <div className="flex justify-center gap-4 mt-6 pt-6 border-t border-gray-100">
+                              {selectedSponsor.socialMedia.instagram && (
+                                <a href={selectedSponsor.socialMedia.instagram} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-pink-600 transition-colors p-2 hover:bg-pink-50 rounded-full">
+                                  <Instagram size={22} />
+                                </a>
+                              )}
+                              {selectedSponsor.socialMedia.facebook && (
+                                <a href={selectedSponsor.socialMedia.facebook} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-600 transition-colors p-2 hover:bg-blue-50 rounded-full">
+                                  <Facebook size={22} />
+                                </a>
+                              )}
+                              {selectedSponsor.socialMedia.twitter && (
+                                <a href={selectedSponsor.socialMedia.twitter} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-400 transition-colors p-2 hover:bg-blue-50 rounded-full">
+                                  <Twitter size={22} />
+                                </a>
+                              )}
+                              {selectedSponsor.socialMedia.linkedin && (
+                                <a href={selectedSponsor.socialMedia.linkedin} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-700 transition-colors p-2 hover:bg-blue-50 rounded-full">
+                                  <Linkedin size={22} />
+                                </a>
+                              )}
+                            </div>
+                          )}
+                          
+                          {selectedSponsor.links && selectedSponsor.links.length > 0 && (
+                            <div className="mt-6 flex flex-col gap-2">
+                              <h4 className="text-sm font-semibold text-gray-900 mb-1">Additional Links</h4>
+                              {selectedSponsor.links.map((link, i) => link.url && link.label ? (
+                                <a key={i} href={link.url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-3 bg-gray-50 border border-gray-100 rounded-xl hover:bg-emerald-50 hover:border-emerald-200 hover:text-emerald-700 transition-colors group">
+                                  <span className="font-medium text-sm text-gray-700 group-hover:text-emerald-700">{link.label}</span>
+                                  <ExternalLink size={16} className="text-gray-400 group-hover:text-emerald-600" />
+                                </a>
+                              ) : null)}
+                            </div>
+                          )}
+                        </motion.div>
+                      </div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )}
+
               {/* Next Button */}
               <div className="flex justify-end pt-4 border-t border-gray-100">
                 <Button onClick={goToNextTab}
                   className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold h-12 px-6">
-                  Next: Itinerary
+                  Next: Schedule
                   <ChevronRight className="w-5 h-5 ml-1" />
                 </Button>
               </div>
@@ -1786,11 +1919,11 @@ const EventDetails = ({ event, loading = false }) => {
           {/* â•â•â• TAB 2: Itinerary â•â•â• */}
           {activeTab === 'itinerary' && (
             <div className="space-y-6">
-              <h2 className="text-lg sm:text-xl font-bold text-emerald-600 mb-2 border-b-2 border-gray-50 pb-2">Event Itinerary</h2>
+              <h2 className="text-lg sm:text-xl font-bold text-emerald-600 mb-2 border-b-2 border-gray-50 pb-2">Event Schedule</h2>
 
-              {event.itinerary?.length > 0 ? (
+              {validItinerary.length > 0 ? (
                 <div className="relative pl-6 border-l-2 border-gray-200 space-y-6 py-4">
-                  {event.itinerary.map((step, i) => (
+                  {validItinerary.map((step, i) => (
                     <div key={i} className="relative">
                       <div className="absolute -left-[31px] top-1 w-4 h-4 rounded-full bg-emerald-600 border-4 border-white shadow-sm" />
                       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-50 hover:shadow-md transition-shadow">
@@ -1805,7 +1938,7 @@ const EventDetails = ({ event, loading = false }) => {
               ) : (
                 <div className="text-center py-12 text-gray-400">
                   <Info size={40} className="mx-auto mb-3 opacity-50" />
-                  <p className="font-medium">Itinerary details will be updated soon.</p>
+                  <p className="font-medium">Schedule details will be updated soon.</p>
                 </div>
               )}
 
@@ -1823,51 +1956,47 @@ const EventDetails = ({ event, loading = false }) => {
           {activeTab === 'info' && (
             <div className="space-y-8">
               {/* What to Bring */}
-              <div className="bg-blue-50 p-5 sm:p-6 rounded-2xl border border-blue-100 shadow-sm">
-                <h3 className="text-gray-900 font-bold mb-4 flex items-center gap-2 text-base sm:text-lg">
-                  <Info size={20} /> What to Bring
-                </h3>
-                {event.whatToBring?.length > 0 ? (
+              {validWhatToBring.length > 0 && (
+                <div className="bg-blue-50 p-5 sm:p-6 rounded-2xl border border-blue-100 shadow-sm">
+                  <h3 className="text-gray-900 font-bold mb-4 flex items-center gap-2 text-base sm:text-lg">
+                    <Info size={20} /> What to Bring
+                  </h3>
                   <ul className="space-y-2">
-                    {event.whatToBring.map((item, i) => item && (
+                    {validWhatToBring.map((item, i) => (
                       <li key={i} className="flex items-start gap-2.5 text-blue-700 text-sm leading-relaxed">
                         <CheckCircle className="text-blue-400 flex-shrink-0 mt-0.5" size={16} />
                         <span>{item}</span>
                       </li>
                     ))}
                   </ul>
-                ) : (
-                  <p className="text-blue-600 text-sm">Nothing specific mentioned.</p>
-                )}
-              </div>
+                </div>
+              )}
 
               {/* Restrictions */}
-              <div className="bg-rose-50 p-5 sm:p-6 rounded-2xl border border-rose-100 shadow-sm">
-                <h3 className="text-gray-900 font-bold mb-4 flex items-center gap-2 text-base sm:text-lg">
-                  <AlertCircle size={20} /> Essential Restrictions
-                </h3>
-                {event.restrictions?.length > 0 ? (
+              {validRestrictions.length > 0 && (
+                <div className="bg-rose-50 p-5 sm:p-6 rounded-2xl border border-rose-100 shadow-sm">
+                  <h3 className="text-gray-900 font-bold mb-4 flex items-center gap-2 text-base sm:text-lg">
+                    <AlertCircle size={20} /> Essential Restrictions
+                  </h3>
                   <ul className="space-y-2">
-                    {event.restrictions.map((item, i) => item && (
+                    {validRestrictions.map((item, i) => (
                       <li key={i} className="flex items-start gap-2.5 text-rose-700 text-sm leading-relaxed">
                         <AlertCircle className="text-rose-400 flex-shrink-0 mt-0.5" size={16} />
                         <span>{item}</span>
                       </li>
                     ))}
                   </ul>
-                ) : (
-                  <p className="text-rose-600 text-sm">No specific restrictions mentioned.</p>
-                )}
-              </div>
+                </div>
+              )}
 
               {/* Terms & Conditions */}
-              {event.termsAndConditions?.length > 0 && (
+              {validTerms.length > 0 && (
                 <div className="bg-amber-50 p-5 sm:p-6 rounded-2xl border border-amber-100 shadow-sm">
                   <h3 className="text-gray-900 font-bold mb-4 flex items-center gap-2 text-base sm:text-lg">
                     <FileText size={20} className="text-amber-600" /> Terms & Conditions
                   </h3>
                   <ol className="space-y-2.5">
-                    {event.termsAndConditions.map((tc, i) => (
+                    {validTerms.map((tc, i) => (
                       <li key={i} className="flex items-start gap-2.5 text-amber-800 text-sm leading-relaxed">
                         <span className="w-5 h-5 bg-amber-200 text-amber-800 rounded-full text-[10px] flex items-center justify-center font-bold flex-shrink-0 mt-0.5">
                           {i + 1}
@@ -1880,13 +2009,13 @@ const EventDetails = ({ event, loading = false }) => {
               )}
 
               {/* FAQs */}
-              {event.faqs?.length > 0 && (
+              {validFaqs.length > 0 && (
                 <div>
                   <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                     <HelpCircle size={20} className="text-amber-500" /> Frequently Asked Questions
                   </h3>
                   <div className="space-y-3">
-                    {event.faqs.map((faq, i) => (
+                    {validFaqs.map((faq, i) => (
                       <div key={i} className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm">
                         <button
                           onClick={() => toggleFaq(i)}

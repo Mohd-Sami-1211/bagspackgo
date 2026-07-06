@@ -31,6 +31,12 @@ export function useEventPhotos(eventId, options = {}) {
     return useSWR(url, { ...options, dedupingInterval: 300000 }); // Cache photos for 5 mins
 }
 
+// 2.7 Event Sponsors Cache (Background fetch for Base64 logo images)
+export function useEventSponsors(eventId, options = {}) {
+    const url = eventId ? `/api/events/${eventId}/sponsors` : null;
+    return useSWR(url, { ...options, dedupingInterval: 300000 }); // Cache sponsors for 5 mins
+}
+
 // 3. Saved items IDs cache
 // Useful to prevent fetching full saved items just to check if saved
 export function useSavedItemIds(options = {}) {

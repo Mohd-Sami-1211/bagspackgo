@@ -12,6 +12,7 @@ import {
     CheckCircle2, Image as ImageIcon, Copy, Send, Check, X,
     Sparkles, TrendingUp, Camera, FlipHorizontal, Keyboard, Search
 } from 'lucide-react';
+import EventSponsorsTab from './EventSponsorsTab';
 
 const selectStyles = {
     control: (provided, state) => ({
@@ -546,14 +547,17 @@ export default function EventDetailView({ eventId, adminMode = false, providerId
             { key: 'details', label: 'Details', icon: FileText },
             { key: 'guests', label: 'Guests', icon: Users },
             { key: 'scanner', label: 'Scanner', icon: ScanLine },
+            { key: 'sponsors', label: 'Sponsors', icon: Star },
         ],
         upcoming: [
             { key: 'details', label: 'Details', icon: FileText },
+            { key: 'sponsors', label: 'Sponsors', icon: Star },
         ],
         past: [
             { key: 'details', label: 'Details', icon: FileText },
             { key: 'guests', label: 'Guests', icon: Users },
             { key: 'reviews', label: 'Reviews', icon: MessageSquare },
+            { key: 'sponsors', label: 'Sponsors', icon: Star },
         ],
     };
     const tabs = tabsConfig[viewMode] || tabsConfig.live;
@@ -1712,6 +1716,11 @@ export default function EventDetailView({ eventId, adminMode = false, providerId
                                 ))}
                             </div>
                         </motion.div>
+                    )}
+
+                    {/* ─────────── SPONSORS TAB ─────────── */}
+                    {activeTab === 'sponsors' && (
+                        <EventSponsorsTab eventId={eventId} initialSponsors={event?.sponsors || []} />
                     )}
                 </AnimatePresence>
             </div>
