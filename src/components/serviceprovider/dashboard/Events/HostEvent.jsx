@@ -338,6 +338,7 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
     itinerary: ['', '', ''],
     photographs: [],
     termsAndConditions: [''],
+    sponsors: [],
     poster: null,
     visibility: 'public',
     applicationFormType: 'default',
@@ -378,6 +379,7 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
         itinerary: initialData.itinerary?.length ? initialData.itinerary : ['', '', ''],
         photographs: initialData.photographs || [],
         termsAndConditions: initialData.termsAndConditions?.length ? initialData.termsAndConditions : [''],
+        sponsors: initialData.sponsors || [],
         poster: initialData.poster || null,
         visibility: initialData.visibility || 'public',
         applicationFormType: initialData.applicationFormType || 'default',
@@ -469,10 +471,11 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
     'Highlights & Inclusions',
     'FAQs',
     'Requirements',
-    'Itinerary',
+    'Schedule',
     'Photographs',
     'Application Form',
     'Terms & Conditions',
+    'Sponsors',
     'Poster & Finalize'
   ];
 
@@ -485,9 +488,9 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
       if (formData.eventType === 'Others' && !formData.customEventType.trim()) {
         errors.customEventType = 'Please name your event type';
       }
-      if (!formData.location) errors.location = 'Select a destination';
+      if (!formData.location) errors.location = 'Select a region/location';
       if (formData.location === 'Others' && !formData.customDestination.trim()) {
-        errors.customDestination = 'Please enter a destination name';
+        errors.customDestination = 'Please enter a location name';
       }
       if (!formData.date) errors.date = 'Pick a date';
       if (!formData.pricePerSlot && formData.pricePerSlot !== 0) errors.pricePerSlot = 'Enter a price';
@@ -497,26 +500,22 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
       if (!formData.about.trim()) errors.about = 'Event description is required';
     }
     if (step === 2) {
-      const validHighlights = formData.highlights.filter(h => h.trim());
-      if (validHighlights.length === 0) errors.highlights = 'At least one highlight is required';
-      const validInclusions = formData.whatsIncluded.filter(w => w.trim());
-      if (validInclusions.length === 0) errors.whatsIncluded = 'At least one inclusion is required';
+      // Highlights & Inclusions are optional — no validation required
     }
     if (step === 3) {
-      const validFaqs = formData.faqs.filter(f => f.question.trim() && f.answer.trim());
-      if (validFaqs.length === 0) errors.faqs = 'At least one complete FAQ is required';
+      // FAQs are optional — no validation required
     }
     if (step === 4) {
-      const validWtb = formData.whatToBring.filter(w => w.trim());
-      if (validWtb.length === 0) errors.whatToBring = 'At least one item to bring is required';
+      // Requirements are optional — no validation required
     }
     if (step === 5) {
       if (formData.includePickup) {
         const validPickup = formData.pickupPoints.filter(p => p.location.trim() && p.time.trim());
         if (validPickup.length === 0) errors.pickupPoints = 'At least one pickup point is required';
       }
-      const validItinerary = formData.itinerary.filter(s => s.trim());
-      if (validItinerary.length === 0) errors.itinerary = 'At least one itinerary step is required';
+      // Schedule is optional
+      // const validItinerary = formData.itinerary.filter(s => s.trim());
+      // if (validItinerary.length === 0) errors.itinerary = 'At least one schedule step is required';
     }
     // Step 6 (Photographs) — optional, no validation
     if (step === 7) {
@@ -526,11 +525,12 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
       }
     }
     if (step === 8) {
-      // Terms & Conditions step
-      const validTc = formData.termsAndConditions.filter(t => t.trim());
-      if (validTc.length === 0) errors.termsAndConditions = 'At least one term or condition is required';
+      // Terms & Conditions step - optional
+      // const validTc = formData.termsAndConditions.filter(t => t.trim());
+      // if (validTc.length === 0) errors.termsAndConditions = 'At least one term or condition is required';
     }
-    if (step === 9) {
+    // Step 9 (Sponsors) — optional, no validation
+    if (step === 10) {
       // Poster & Finalize step
       if (!acceptedTerms) errors.terms = 'You must accept the terms';
     }
@@ -577,6 +577,91 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
       [field]: prev[field].filter((_, i) => i !== index)
     }));
   };
+
+  const addSponsor = () => {
+    setFormData(prev => ({
+      ...prev,
+      sponsors: [
+        ...prev.sponsors,
+        {
+          name: '',
+          image: '',
+          description: '',
+          website: '',
+          socialMedia: {
+            instagram: '',
+            facebook: '',
+            twitter: '',
+            youtube: '',
+            linkedin: ''
+          },
+          links: []
+        }
+      ]
+    }));
+  };
+
+  const removeSponsor = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      sponsors: prev.sponsors.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleSponsorChange = (index, field, value) => {
+    setFormData(prev => {
+      const updatedSponsors = [...prev.sponsors];
+      
+      if (field.includes('.')) {
+        const [parent, child] = field.split('.');
+        updatedSponsors[index] = {
+          ...updatedSponsors[index],
+          [parent]: {
+            ...updatedSponsors[index][parent],
+            [child]: value
+          }
+        };
+      } else {
+        updatedSponsors[index] = {
+          ...updatedSponsors[index],
+          [field]: value
+        };
+      }
+      
+      return { ...prev, sponsors: updatedSponsors };
+    });
+  };
+
+  const addSponsorLink = (sponsorIndex) => {
+    setFormData(prev => {
+      const updatedSponsors = [...prev.sponsors];
+      updatedSponsors[sponsorIndex] = {
+        ...updatedSponsors[sponsorIndex],
+        links: [...(updatedSponsors[sponsorIndex].links || []), { label: '', url: '' }]
+      };
+      return { ...prev, sponsors: updatedSponsors };
+    });
+  };
+
+  const updateSponsorLink = (sponsorIndex, linkIndex, field, value) => {
+    setFormData(prev => {
+      const updatedSponsors = [...prev.sponsors];
+      const updatedLinks = [...updatedSponsors[sponsorIndex].links];
+      updatedLinks[linkIndex] = { ...updatedLinks[linkIndex], [field]: value };
+      updatedSponsors[sponsorIndex] = { ...updatedSponsors[sponsorIndex], links: updatedLinks };
+      return { ...prev, sponsors: updatedSponsors };
+    });
+  };
+
+  const removeSponsorLink = (sponsorIndex, linkIndex) => {
+    setFormData(prev => {
+      const updatedSponsors = [...prev.sponsors];
+      const updatedLinks = updatedSponsors[sponsorIndex].links.filter((_, i) => i !== linkIndex);
+      updatedSponsors[sponsorIndex] = { ...updatedSponsors[sponsorIndex], links: updatedLinks };
+      return { ...prev, sponsors: updatedSponsors };
+    });
+  };
+
 
   const handleFAQChange = (index, field, value) => {
     setFormData(prev => ({
@@ -714,6 +799,7 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
         itinerary: formData.itinerary.filter(s => s.trim()),
         photographs: formData.photographs,
         termsAndConditions: formData.termsAndConditions.filter(t => t.trim()),
+        sponsors: formData.sponsors,
         poster: posterData || formData.poster,
         visibility: formData.visibility,
         applicationFormType: formData.applicationFormType,
@@ -836,7 +922,7 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
                     faqs: [{ question: '', answer: '' }, { question: '', answer: '' }, { question: '', answer: '' }],
                     whatToBring: [''], restrictions: [''],
                     includePickup: true, pickupPoints: [{ location: '', link: '', time: '' }],
-                    itinerary: ['', '', ''], photographs: [], termsAndConditions: [''], poster: null, visibility: 'public', applicationFormType: 'default', customFormFields: []
+                    itinerary: ['', '', ''], photographs: [], termsAndConditions: [''], sponsors: [], poster: null, visibility: 'public', applicationFormType: 'default', customFormFields: []
                   });
                   setActiveSection(0);
                   setAcceptedTerms(false);
@@ -1056,7 +1142,7 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                       <div className="space-y-4">
                         <SelectField
-                          label="Destination"
+                          label="Region"
                           name="location"
                           value={formData.location}
                           onChange={handleChange}
@@ -1130,10 +1216,10 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
                         value={formData.destination}
                         onChange={handleChange}
                         required
-                        placeholder="e.g., Tarsar Marsar Trek"
+                        placeholder="e.g., Central Park, NY"
                       />
                       <InputField
-                        label="Destination Link"
+                        label="Location Link (Map URL)"
                         name="destinationLink"
                         value={formData.destinationLink}
                         onChange={handleChange}
@@ -1189,7 +1275,6 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
                       onRemove={(index) => removeArrayField('highlights', index)}
                       onChange={(index, value) => handleArrayField('highlights', index, value)}
                       placeholder="Enter one highlight per line (e.g., Scenic mountain views)"
-                      required
                     />
 
                     {/* Divider */}
@@ -1203,7 +1288,6 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
                       onRemove={(index) => removeArrayField('whatsIncluded', index)}
                       onChange={(index, value) => handleArrayField('whatsIncluded', index, value)}
                       placeholder="Enter one item per line (e.g., All meals included)"
-                      required
                     />
 
                     {/* Divider */}
@@ -1239,14 +1323,12 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
                               label={`Question ${index + 1}`}
                               value={faq.question}
                               onChange={(e) => handleFAQChange(index, 'question', e.target.value)}
-                              required
                               placeholder="Enter a common question..."
                             />
                             <InputField
                               label="Answer"
                               value={faq.answer}
                               onChange={(e) => handleFAQChange(index, 'answer', e.target.value)}
-                              required
                               placeholder="Provide a clear answer..."
                             />
                           </div>
@@ -1282,7 +1364,6 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
                       onRemove={(index) => removeArrayField('whatToBring', index)}
                       onChange={(index, value) => handleArrayField('whatToBring', index, value)}
                       placeholder="Enter one item per line (e.g., Warm clothing)"
-                      required
                     />
 
                     <div className="border-t border-neutral-100" />
@@ -1298,11 +1379,11 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
                   </div>
                 )}
 
-                {/* Section 6: Itinerary */}
+                {/* Section 6: Schedule */}
                 {activeSection === 5 && (
                   <div className="space-y-6 sm:space-y-8">
                     <SectionHeader
-                      title="Event Itinerary"
+                      title="Event Schedule"
                       description="Plan the event schedule step by step"
                       icon={Route}
                       number={5}
@@ -1374,13 +1455,12 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
                     </div>
 
                     <NumberedSlotInput
-                      label="Event Itinerary (Step by Step)"
+                      label="Event Schedule (Step by Step)"
                       slots={formData.itinerary}
                       onAdd={() => addArrayField('itinerary')}
                       onRemove={(index) => removeArrayField('itinerary', index)}
                       onChange={(index, value) => handleArrayField('itinerary', index, value)}
-                      placeholder="Describe this step of the itinerary..."
-                      required
+                      placeholder="Describe this step of the schedule..."
                     />
                   </div>
                 )}
@@ -1537,7 +1617,7 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-1">
                                   <div>
-                                    <label className="block text-xs font-bold text-neutral-700 mb-1.5 uppercase tracking-wide">Field Title</label>
+                                    <label className="block text-[13px] font-bold text-gray-700 uppercase tracking-wide mb-2">Field Title</label>
                                     <div className="w-full bg-neutral-100 border border-neutral-200 rounded-xl px-4 py-3 text-sm font-semibold text-neutral-600">
                                       {pf}
                                     </div>
@@ -1687,9 +1767,9 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
 
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
-                        <label className="block text-sm font-semibold text-neutral-700">
-                          Event Terms & Conditions <span className="text-red-500">*</span>
-                        </label>
+                        <h4 className="text-[13px] font-bold text-gray-700 uppercase tracking-wide mb-3">
+                          Event Terms & Conditions
+                        </h4>
                         <button
                           type="button"
                           onClick={() => setFormData(prev => ({ ...prev, termsAndConditions: [...prev.termsAndConditions, ''] }))}
@@ -1731,8 +1811,196 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
                   </div>
                 )}
 
-                {/* Section 9: Poster & Finalize */}
+                {/* Section 9: Sponsors */}
                 {activeSection === 9 && (
+                  <div className="space-y-6 sm:space-y-8">
+                    <SectionHeader
+                      title="Sponsors"
+                      description="Add sponsors for your event (Optional)"
+                      icon={Star}
+                      number={9}
+                    />
+
+                    <div className="space-y-6">
+                      {formData.sponsors.map((sponsor, index) => (
+                        <div key={index} className="p-4 sm:p-6 bg-white border border-neutral-200 rounded-2xl shadow-sm relative">
+                          <button
+                            type="button"
+                            onClick={() => removeSponsor(index)}
+                            className="absolute top-4 right-4 p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                          >
+                            <Trash2 className="w-5 h-5" />
+                          </button>
+                          
+                          <div className="flex items-center gap-3 mb-6 pr-12">
+                            <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold">
+                              {index + 1}
+                            </div>
+                            <h3 className="text-lg font-bold text-neutral-900">Sponsor Details</h3>
+                          </div>
+
+                          <div className="grid grid-cols-1 gap-6">
+                            <InputField
+                              label="Sponsor Name"
+                              value={sponsor.name}
+                              onChange={(e) => handleSponsorChange(index, 'name', e.target.value)}
+                              placeholder="Enter sponsor name"
+                            />
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-semibold text-neutral-700">Sponsor Image</label>
+                                {sponsor.image ? (
+                                    <div className="flex items-center gap-4">
+                                        <img src={sponsor.image} alt="Image" className="w-16 h-16 rounded-xl object-cover border border-neutral-200 bg-neutral-50" />
+                                        <button
+                                            type="button"
+                                            onClick={() => handleSponsorChange(index, 'image', '')}
+                                            className="text-sm text-red-600 font-semibold hover:underline"
+                                        >
+                                            Remove Image
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="relative">
+                                        <input 
+                                            type="file" 
+                                            accept="image/*"
+                                            id={`sponsor-logo-upload-${index}`}
+                                            onChange={async (e) => {
+                                                const file = e.target.files[0];
+                                                if (file) {
+                                                    try {
+                                                        const base64 = await compressImage(file, { maxWidth: 800, quality: 0.8 });
+                                                        handleSponsorChange(index, 'image', base64);
+                                                    } catch (err) {
+                                                        console.error('Failed to compress image:', err);
+                                                        alert('Failed to process image');
+                                                    }
+                                                }
+                                            }}
+                                            className="hidden" 
+                                        />
+                                        <label
+                                            htmlFor={`sponsor-logo-upload-${index}`}
+                                            className="flex items-center justify-center gap-2 w-full h-[50px] px-4 rounded-xl border border-neutral-200 border-dashed hover:bg-neutral-50 cursor-pointer transition-colors text-sm font-semibold text-neutral-600"
+                                        >
+                                            <Upload className="w-4 h-4" />
+                                            Upload Logo
+                                        </label>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="space-y-2">
+                              <label className="block text-sm font-semibold text-neutral-700">  
+                                Description
+                              </label>
+                              <textarea
+                                value={sponsor.description}
+                                onChange={(e) => handleSponsorChange(index, 'description', e.target.value)}
+                                placeholder="Tell us about the sponsor"
+                                className="w-full px-4 py-3 rounded-xl border border-neutral-200 focus:ring-emerald-500 focus:ring-2 focus:border-transparent transition-all duration-200 resize-none min-h-[100px] text-sm"
+                              />
+                            </div>
+                            
+                            <InputField
+                              label="Website"
+                              value={sponsor.website}
+                              onChange={(e) => handleSponsorChange(index, 'website', e.target.value)}
+                              placeholder="https://example.com"
+                            />
+
+                            <div>
+                              <h4 className="text-sm font-semibold text-neutral-700 mb-3 border-b pb-2">Social Media</h4>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <InputField
+                                  label="Instagram URL"
+                                  value={sponsor.socialMedia.instagram}
+                                  onChange={(e) => handleSponsorChange(index, 'socialMedia.instagram', e.target.value)}
+                                  placeholder="https://instagram.com/..."
+                                />
+                                <InputField
+                                  label="Facebook URL"
+                                  value={sponsor.socialMedia.facebook}
+                                  onChange={(e) => handleSponsorChange(index, 'socialMedia.facebook', e.target.value)}
+                                  placeholder="https://facebook.com/..."
+                                />
+                                <InputField
+                                  label="Twitter URL"
+                                  value={sponsor.socialMedia.twitter}
+                                  onChange={(e) => handleSponsorChange(index, 'socialMedia.twitter', e.target.value)}
+                                  placeholder="https://twitter.com/..."
+                                />
+                                <InputField
+                                  label="LinkedIn URL"
+                                  value={sponsor.socialMedia.linkedin}
+                                  onChange={(e) => handleSponsorChange(index, 'socialMedia.linkedin', e.target.value)}
+                                  placeholder="https://linkedin.com/in/..."
+                                />
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <div className="flex items-center justify-between mb-3 border-b pb-2">
+                                <h4 className="text-sm font-semibold text-neutral-700">Custom Links</h4>
+                                <button
+                                  type="button"
+                                  onClick={() => addSponsorLink(index)}
+                                  className="text-emerald-600 text-sm font-medium hover:text-emerald-700 flex items-center gap-1"
+                                >
+                                  <Plus className="w-4 h-4" /> Add Link
+                                </button>
+                              </div>
+                              <div className="space-y-3">
+                                {sponsor.links?.map((link, linkIndex) => (
+                                  <div key={linkIndex} className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+                                    <input
+                                      type="text"
+                                      placeholder="Link Label (e.g. Booking)"
+                                      value={link.label}
+                                      onChange={(e) => updateSponsorLink(index, linkIndex, 'label', e.target.value)}
+                                      className="flex-1 px-3 py-2 text-sm border border-neutral-200 rounded-lg focus:ring-2 focus:ring-emerald-500 w-full"
+                                    />
+                                    <input
+                                      type="text"
+                                      placeholder="URL"
+                                      value={link.url}
+                                      onChange={(e) => updateSponsorLink(index, linkIndex, 'url', e.target.value)}
+                                      className="flex-1 px-3 py-2 text-sm border border-neutral-200 rounded-lg focus:ring-2 focus:ring-emerald-500 w-full"
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => removeSponsorLink(index, linkIndex)}
+                                      className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                ))}
+                                {(!sponsor.links || sponsor.links.length === 0) && (
+                                  <p className="text-sm text-neutral-500 italic">No custom links added.</p>
+                                )}
+                              </div>
+                            </div>
+
+                          </div>
+                        </div>
+                      ))}
+
+                      <button
+                        type="button"
+                        onClick={addSponsor}
+                        className="w-full py-4 border-2 border-dashed border-emerald-300 text-emerald-600 rounded-2xl hover:bg-emerald-50 transition-colors flex items-center justify-center gap-2 font-semibold"
+                      >
+                        <Plus className="w-5 h-5" />
+                        Add Sponsor
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Section 10: Poster & Finalize */}
+                {activeSection === 10 && (
                   <div className="space-y-6 sm:space-y-8">
                     <SectionHeader
                       title="Poster & Finalize"

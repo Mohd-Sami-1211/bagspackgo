@@ -221,6 +221,32 @@ export async function PATCH(request, context) {
             }
         }
 
+        // Update sponsors
+        if (Array.isArray(body.sponsors)) {
+            event.sponsors = body.sponsors
+                .filter((s) => s && typeof s.name === "string" && s.name.trim())
+                .map((s) => ({
+                    name: sanitizeString(s.name),
+                    image: s.image || "",
+                    description: sanitizeString(s.description || ""),
+                    website: sanitizeString(s.website || ""),
+                    socialMedia: {
+                        instagram: sanitizeString(s.socialMedia?.instagram || ""),
+                        facebook: sanitizeString(s.socialMedia?.facebook || ""),
+                        twitter: sanitizeString(s.socialMedia?.twitter || ""),
+                        youtube: sanitizeString(s.socialMedia?.youtube || ""),
+                        linkedin: sanitizeString(s.socialMedia?.linkedin || ""),
+                    },
+                    links: (s.links || [])
+                        .filter((l) => l && l.label?.trim() && l.url?.trim())
+                        .map((l) => ({
+                            label: sanitizeString(l.label),
+                            url: sanitizeString(l.url),
+                        })),
+                }));
+            event.markModified('sponsors');
+        }
+
         // Update custom form fields (stored as-is, complex nested structure)
         if (Array.isArray(body.customFormFields)) {
             console.log("RECEIVED BODY customFormFields:", JSON.stringify(body.customFormFields, null, 2));

@@ -9,6 +9,35 @@ const pickupPointSchema = new mongoose.Schema(
     { _id: false }
 );
 
+const sponsorLinkSchema = new mongoose.Schema(
+    {
+        label: { type: String, default: "", trim: true },
+        url: { type: String, default: "", trim: true },
+    },
+    { _id: false }
+);
+
+const sponsorSchema = new mongoose.Schema(
+    {
+        name: { type: String, required: true, trim: true },
+        image: { type: String, default: "" }, // Base64 or URL
+        description: { type: String, default: "", maxlength: 1000 },
+        website: { type: String, default: "" },
+        socialMedia: {
+            instagram: { type: String, default: "" },
+            facebook: { type: String, default: "" },
+            twitter: { type: String, default: "" },
+            youtube: { type: String, default: "" },
+            linkedin: { type: String, default: "" },
+        },
+        links: {
+            type: [sponsorLinkSchema],
+            default: [],
+        },
+    },
+    { _id: true }
+);
+
 const faqSchema = new mongoose.Schema(
     {
         question: { type: String, required: true, trim: true },
@@ -139,6 +168,12 @@ const eventSchema = new mongoose.Schema(
         // Terms and Conditions — provider-specified policies
         termsAndConditions: {
             type: [String],
+            default: [],
+        },
+
+        // Sponsors — optional list of event sponsors
+        sponsors: {
+            type: [sponsorSchema],
             default: [],
         },
 
