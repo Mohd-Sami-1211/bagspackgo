@@ -1285,7 +1285,7 @@ export default function EventDetailView({ eventId, adminMode = false, providerId
                                                                                         <Eye className="w-3.5 h-3.5" /> View Full Size
                                                                                     </a>
                                                                                     <a 
-                                                                                        href={guest.idProofUrl} 
+                                                                                        href={guest.idProofUrl?.includes('cloudinary.com') ? guest.idProofUrl.replace('/upload/', '/upload/fl_attachment/') : guest.idProofUrl} 
                                                                                         download={`IDProof_${guest.name || 'Guest'}.png`} 
                                                                                         className="flex-1 flex items-center justify-center gap-1.5 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-3 py-2 rounded-lg transition"
                                                                                     >

@@ -16,10 +16,10 @@ function EventDetailsContent() {
     if (!id) return;
     setFetchState('loading');
 
-    let retries = 2;
+    let retries = 3;
     while (retries >= 0) {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000);
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
 
       try {
         const res = await fetch(`/api/events/${id}`, { signal: controller.signal });

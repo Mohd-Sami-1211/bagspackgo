@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     ChevronLeft, MapPin, Calendar, Users, Clock, Tag,
     Printer, CheckCircle2, XCircle, AlertCircle, RotateCcw,
-    RefreshCcw, AlertTriangle, Phone, Mail, Download, Globe,
+    Star, RefreshCcw, AlertTriangle, Phone, Mail, Download, Globe,
     Instagram, Facebook, QrCode, Navigation
 } from 'lucide-react';
 import Link from 'next/link';
@@ -552,14 +552,20 @@ export default function BookingDetailPage() {
     const pSnapshot = booking?.packageSnapshot || booking?.packageId || booking?.package || {};
     const getList = (key) => booking?.[key] || pSnapshot?.[key] || [];
     
-    const inclusivesList = getList('inclusivesList');
-    const exclusivesList = getList('exclusivesList');
+    const filterItems = (items) => items.filter(item => {
+        const text = item?.text || item;
+        return text && text !== 'Not specified' && (typeof text !== 'string' || text.trim() !== '');
+    });
+    
+    const inclusivesList = filterItems(getList('inclusivesList'));
+    const exclusivesList = filterItems(getList('exclusivesList'));
     const additionalPoints = getList('additionalPoints').filter(p => (p?.text || p)?.trim?.());
     const termsAndConditionsList = getList('termsAndConditions');
     const itineraryList = getList('itinerary');
     const highlights = getList('highlights');
     const whatToBring = getList('whatToBring');
     const restrictions = getList('restrictions');
+    const sponsors = booking?.sponsors || pSnapshot?.sponsors || [];
 
     /* ─── Loading ─── */
     if (loading) {
@@ -926,55 +932,53 @@ export default function BookingDetailPage() {
                 )}
 
                 {/* Inclusions and Exclusions Section */}
-                <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.11 }}
-                    className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden p-6">
-                    <div className="flex items-center gap-2 mb-4">
-                        <Tag className="w-5 h-5 text-emerald-600" />
-                        <h3 className="text-base font-black text-gray-700">What's Included & Excluded</h3>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <h4 className="font-bold text-gray-800 uppercase tracking-widest mb-3 text-[11px] flex items-center gap-2">
-                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> What's Included
-                            </h4>
-                            {inclusivesList.length > 0 ? (
+                {(inclusivesList.length > 0 || exclusivesList.length > 0 || (additionalPoints.length > 0 && booking?.type?.toLowerCase() === 'trek')) && (
+                    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.11 }}
+                        className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden p-6">
+                        <div className="flex items-center gap-2 mb-4">
+                            <Tag className="w-5 h-5 text-emerald-600" />
+                            <h3 className="text-base font-black text-gray-700">What's Included & Excluded</h3>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {inclusivesList.length > 0 && (
+                                <div>
+                                    <h4 className="font-bold text-gray-800 uppercase tracking-widest mb-3 text-[11px] flex items-center gap-2">
+                                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> What's Included
+                                    </h4>
+                                    <ul className="list-disc pl-5 space-y-1.5 text-sm text-gray-600">
+                                        {inclusivesList.map((item, i) => (
+                                            <li key={i}>{item?.text || item}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+                            {exclusivesList.length > 0 && (
+                                <div>
+                                    <h4 className="font-bold text-gray-800 uppercase tracking-widest mb-3 text-[11px] flex items-center gap-2">
+                                        <XCircle className="w-3.5 h-3.5 text-red-500" /> What's Excluded
+                                    </h4>
+                                    <ul className="list-disc pl-5 space-y-1.5 text-sm text-gray-600">
+                                        {exclusivesList.map((item, i) => (
+                                            <li key={i}>{item?.text || item}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+                        </div>
+                        {additionalPoints.length > 0 && booking?.type?.toLowerCase() === 'trek' && (
+                            <div className="mt-6 pt-6 border-t border-gray-100">
+                                <h4 className="font-bold text-gray-800 uppercase tracking-widest mb-3 text-[11px] flex items-center gap-2">
+                                    <Navigation className="w-3.5 h-3.5 text-amber-500" /> Additional Points
+                                </h4>
                                 <ul className="list-disc pl-5 space-y-1.5 text-sm text-gray-600">
-                                    {inclusivesList.map((item, i) => (
+                                    {additionalPoints.map((item, i) => (
                                         <li key={i}>{item?.text || item}</li>
                                     ))}
                                 </ul>
-                            ) : (
-                                <p className="italic text-sm text-gray-400">Not specified.</p>
-                            )}
-                        </div>
-                        <div>
-                            <h4 className="font-bold text-gray-800 uppercase tracking-widest mb-3 text-[11px] flex items-center gap-2">
-                                <XCircle className="w-3.5 h-3.5 text-red-500" /> What's Excluded
-                            </h4>
-                            {exclusivesList.length > 0 ? (
-                                <ul className="list-disc pl-5 space-y-1.5 text-sm text-gray-600">
-                                    {exclusivesList.map((item, i) => (
-                                        <li key={i}>{item?.text || item}</li>
-                                    ))}
-                                </ul>
-                            ) : (
-                                <p className="italic text-sm text-gray-400">Not specified.</p>
-                            )}
-                        </div>
-                    </div>
-                    {additionalPoints.length > 0 && booking?.type?.toLowerCase() === 'trek' && (
-                        <div className="mt-6 pt-6 border-t border-gray-100">
-                            <h4 className="font-bold text-gray-800 uppercase tracking-widest mb-3 text-[11px] flex items-center gap-2">
-                                <Navigation className="w-3.5 h-3.5 text-amber-500" /> Additional Points
-                            </h4>
-                            <ul className="list-disc pl-5 space-y-1.5 text-sm text-gray-600">
-                                {additionalPoints.map((item, i) => (
-                                    <li key={i}>{item?.text || item}</li>
-                                ))}
-                            </ul>
-                        </div>
-                    )}
-                </motion.div>
+                            </div>
+                        )}
+                    </motion.div>
+                )}
 
                 {/* What to Bring and Restrictions (for events usually) */}
                 {(whatToBring.length > 0 || restrictions.length > 0) && (
@@ -1009,6 +1013,31 @@ export default function BookingDetailPage() {
                                     </ul>
                                 </div>
                             )}
+                        </div>
+                    </motion.div>
+                )}
+
+                {/* Event Sponsors */}
+                {sponsors.length > 0 && (
+                    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }}
+                        className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden p-6">
+                        <div className="flex items-center gap-2 mb-4">
+                            <Star className="w-5 h-5 text-amber-500" />
+                            <h3 className="text-base font-black text-gray-700">Event Sponsors</h3>
+                        </div>
+                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
+                            {sponsors.map((sponsor, i) => (
+                                <div key={i} className="flex flex-col items-center gap-2">
+                                    {sponsor.image || sponsor.logo ? (
+                                        <img src={sponsor.image || sponsor.logo} alt={sponsor.name} className="w-12 h-12 object-contain" />
+                                    ) : (
+                                        <div className="w-12 h-12 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 font-bold text-xl">
+                                            {sponsor.name.charAt(0)}
+                                        </div>
+                                    )}
+                                    <p className="text-xs font-semibold text-gray-700 text-center">{sponsor.name}</p>
+                                </div>
+                            ))}
                         </div>
                     </motion.div>
                 )}

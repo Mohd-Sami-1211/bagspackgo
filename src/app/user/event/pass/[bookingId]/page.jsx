@@ -4,7 +4,7 @@ import { useParams, useSearchParams } from 'next/navigation';
 import { QRCodeSVG } from 'qrcode.react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { MapPin, User, CheckCircle2, Ticket, Calendar, Users, Clock, ExternalLink, X, Sparkles, AlertTriangle, ShieldCheck, Navigation, List, Mail, Phone, Instagram, Facebook } from 'lucide-react';
+import { MapPin, User, CheckCircle2, Ticket, Calendar, Users, Clock, ExternalLink, X, Sparkles, AlertTriangle, ShieldCheck, Navigation, List, Mail, Phone, Instagram, Facebook, Star } from 'lucide-react';
 
 function EventPassContent() {
     const { bookingId } = useParams();
@@ -15,31 +15,35 @@ function EventPassContent() {
     useEffect(() => {
         const fetchBooking = async () => {
             if (!bookingId) { setLoading(false); return; }
-            try {
-                const res = await fetch(`/api/public/pass/${bookingId}`, { cache: 'no-store' });
-                const data = await res.json();
-                if (data.success && data.data) {
-                    setBooking(data.data);
-                } else {
-                    console.warn('Pass API returned:', data.message);
-                    setBooking(null);
-                }
-            } catch (e) {
-                console.error('Pass fetch error:', e);
-                // Retry once after a short delay (handles race with DB write)
+            let retries = 3;
+            let delay = 1000;
+            
+            while (retries >= 0) {
                 try {
-                    await new Promise(r => setTimeout(r, 1500));
-                    const retryRes = await fetch(`/api/public/pass/${bookingId}`, { cache: 'no-store' });
-                    const retryData = await retryRes.json();
-                    if (retryData.success && retryData.data) {
-                        setBooking(retryData.data);
+                    const res = await fetch(`/api/public/pass/${bookingId}`, { cache: 'no-store' });
+                    const data = await res.json();
+                    if (data.success && data.data) {
+                        setBooking(data.data);
+                        setLoading(false);
+                        return;
+                    } else if (retries === 0) {
+                        console.warn('Pass API returned:', data.message);
+                        setBooking(null);
                     }
-                } catch (retryErr) {
-                    console.error('Pass retry failed:', retryErr);
+                } catch (e) {
+                    console.error('Pass fetch error:', e);
+                    if (retries === 0) {
+                        setBooking(null);
+                    }
                 }
-            } finally {
-                setLoading(false);
+                
+                if (retries > 0) {
+                    await new Promise(r => setTimeout(r, delay));
+                    delay *= 2; // 1s, 2s, 4s
+                }
+                retries--;
             }
+            setLoading(false);
         };
         fetchBooking();
     }, [bookingId]);
@@ -64,7 +68,12 @@ function EventPassContent() {
 
     if (loading) return <div className="min-h-screen flex items-center justify-center p-8 bg-[#F0FDF4]"><div className="w-12 h-12 border-4 border-emerald-100 border-t-emerald-600 rounded-full animate-spin"></div></div>;
     
-    if (!booking) return <div className="min-h-screen flex items-center justify-center p-8 bg-[#F0FDF4]"><p className="text-xl font-bold text-gray-500">Booking Pass Not Found</p></div>;
+    if (!booking) return (
+        <div className="min-h-screen flex flex-col items-center justify-center p-8 bg-[#F0FDF4] gap-4">
+            <p className="text-xl font-bold text-gray-500">Booking Pass Not Found</p>
+            <button onClick={() => window.location.reload()} className="px-6 py-2 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition">Try Again</button>
+        </div>
+    );
 
     const eventName = booking.name || '';
     const companyName = booking.guideName || booking.companyName || booking.guide || 'Organizer';
@@ -76,11 +85,13 @@ function EventPassContent() {
     const travelers = booking.participants || [];
     const selectedPickup = booking.selectedPickup || null;
     const highlights = booking.highlights || [];
-    const whatsIncluded = booking.whatsIncluded || [];
-    const whatsExcluded = booking.whatsExcluded || [];
+    const filterItems = (items) => (items || []).filter(item => item && item !== 'Not specified' && (typeof item !== 'string' || item.trim() !== ''));
+    const whatsIncluded = filterItems(booking.whatsIncluded);
+    const whatsExcluded = filterItems(booking.whatsExcluded);
     const whatToBring = booking.whatToBring || [];
     const restrictions = booking.restrictions || [];
     const itinerary = booking.itinerary || [];
+    const sponsors = booking.sponsors || [];
     const poster = booking.poster || booking.image || '';
     const pickupPoints = booking.pickupPoints || [];
 
@@ -365,16 +376,22 @@ function EventPassContent() {
                     )}
 
                     {/* Inclusions & Exclusions side by side */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 mb-6 print-section">
-                        <div>
-                            <SectionHeader icon={CheckCircle2} title="What's Included" />
-                            <ListSection items={whatsIncluded} />
+                    {(whatsIncluded.length > 0 || whatsExcluded.length > 0) && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 mb-6 print-section">
+                            {whatsIncluded.length > 0 && (
+                                <div>
+                                    <SectionHeader icon={CheckCircle2} title="What's Included" />
+                                    <ListSection items={whatsIncluded} />
+                                </div>
+                            )}
+                            {whatsExcluded.length > 0 && (
+                                <div>
+                                    <SectionHeader icon={X} title="What's Excluded" iconColor="text-rose-500" />
+                                    <ListSection items={whatsExcluded} />
+                                </div>
+                            )}
                         </div>
-                        <div>
-                            <SectionHeader icon={X} title="What's Excluded" iconColor="text-rose-500" />
-                            <ListSection items={whatsExcluded} />
-                        </div>
-                    </div>
+                    )}
 
                     {/* Itinerary */}
                     {itinerary.length > 0 && (
@@ -406,6 +423,27 @@ function EventPassContent() {
                         </div>
                     )}
                 </div>
+
+                {/* ═══════ EVENT SPONSORS ═══════ */}
+                {sponsors && sponsors.length > 0 && (
+                    <div className="p-5 sm:p-8 sm:pt-6 bg-white border-t border-emerald-100 shrink-0 print-section">
+                        <SectionHeader icon={Star} title="Event Sponsors" />
+                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 mt-4">
+                            {sponsors.map((sponsor, i) => (
+                                <div key={i} className="flex flex-col items-center gap-2">
+                                    {sponsor.image || sponsor.logo ? (
+                                        <img src={sponsor.image || sponsor.logo} alt={sponsor.name} className="w-12 h-12 object-contain" />
+                                    ) : (
+                                        <div className="w-12 h-12 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 font-bold text-xl">
+                                            {sponsor.name.charAt(0)}
+                                        </div>
+                                    )}
+                                    <p className="text-[10px] font-semibold text-gray-700 text-center">{sponsor.name}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 {/* ═══════ POLICIES & TERMS ═══════ */}
                 <div className="p-5 sm:p-8 sm:pt-6 bg-gray-50 border-t border-emerald-100 text-[9px] sm:text-[10px] text-gray-600 leading-relaxed pb-8 shrink-0 rounded-b-[1.7rem] print-section">

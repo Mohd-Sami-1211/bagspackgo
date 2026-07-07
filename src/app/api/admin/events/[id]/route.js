@@ -76,7 +76,7 @@ export async function PATCH(req, context) {
             'pricePerSlot', 'destination', 'destinationLink', 'about', 'highlights', 
             'whatsIncluded', 'whatsExcluded', 'faqs', 'whatToBring', 'restrictions', 
             'pickupPoints', 'itinerary', 'termsAndConditions', 'poster', 'photographs',
-            'visibility', 'applicationFormType', 'customFormFields'
+            'visibility', 'applicationFormType', 'customFormFields', 'sponsors'
         ];
         
         const updateData = {};

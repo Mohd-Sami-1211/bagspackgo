@@ -1849,7 +1849,7 @@ const EventDetails = ({ event, loading = false }) => {
                             )}
                             <h3 className="text-2xl font-bold text-gray-900 text-center">{selectedSponsor.name}</h3>
                             {selectedSponsor.website && (
-                              <a href={selectedSponsor.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-emerald-600 hover:text-emerald-700 hover:underline mt-2 font-medium">
+                              <a href={selectedSponsor.website.startsWith('http') ? selectedSponsor.website : `https://${selectedSponsor.website}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-emerald-600 hover:text-emerald-700 hover:underline mt-2 font-medium">
                                 <ExternalLink size={16} /> Visit Website
                               </a>
                             )}
@@ -1865,22 +1865,22 @@ const EventDetails = ({ event, loading = false }) => {
                           {selectedSponsor.socialMedia && Object.entries(selectedSponsor.socialMedia).some(([_, url]) => url) && (
                             <div className="flex justify-center gap-4 mt-6 pt-6 border-t border-gray-100">
                               {selectedSponsor.socialMedia.instagram && (
-                                <a href={selectedSponsor.socialMedia.instagram} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-pink-600 transition-colors p-2 hover:bg-pink-50 rounded-full">
+                                <a href={selectedSponsor.socialMedia.instagram.startsWith('http') ? selectedSponsor.socialMedia.instagram : `https://${selectedSponsor.socialMedia.instagram}`} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-pink-600 transition-colors p-2 hover:bg-pink-50 rounded-full">
                                   <Instagram size={22} />
                                 </a>
                               )}
                               {selectedSponsor.socialMedia.facebook && (
-                                <a href={selectedSponsor.socialMedia.facebook} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-600 transition-colors p-2 hover:bg-blue-50 rounded-full">
+                                <a href={selectedSponsor.socialMedia.facebook.startsWith('http') ? selectedSponsor.socialMedia.facebook : `https://${selectedSponsor.socialMedia.facebook}`} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-600 transition-colors p-2 hover:bg-blue-50 rounded-full">
                                   <Facebook size={22} />
                                 </a>
                               )}
                               {selectedSponsor.socialMedia.twitter && (
-                                <a href={selectedSponsor.socialMedia.twitter} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-400 transition-colors p-2 hover:bg-blue-50 rounded-full">
+                                <a href={selectedSponsor.socialMedia.twitter.startsWith('http') ? selectedSponsor.socialMedia.twitter : `https://${selectedSponsor.socialMedia.twitter}`} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-400 transition-colors p-2 hover:bg-blue-50 rounded-full">
                                   <Twitter size={22} />
                                 </a>
                               )}
                               {selectedSponsor.socialMedia.linkedin && (
-                                <a href={selectedSponsor.socialMedia.linkedin} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-700 transition-colors p-2 hover:bg-blue-50 rounded-full">
+                                <a href={selectedSponsor.socialMedia.linkedin.startsWith('http') ? selectedSponsor.socialMedia.linkedin : `https://${selectedSponsor.socialMedia.linkedin}`} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-700 transition-colors p-2 hover:bg-blue-50 rounded-full">
                                   <Linkedin size={22} />
                                 </a>
                               )}
@@ -1891,7 +1891,7 @@ const EventDetails = ({ event, loading = false }) => {
                             <div className="mt-6 flex flex-col gap-2">
                               <h4 className="text-sm font-semibold text-gray-900 mb-1">Additional Links</h4>
                               {selectedSponsor.links.map((link, i) => link.url && link.label ? (
-                                <a key={i} href={link.url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-3 bg-gray-50 border border-gray-100 rounded-xl hover:bg-emerald-50 hover:border-emerald-200 hover:text-emerald-700 transition-colors group">
+                                <a key={i} href={link.url.startsWith('http') ? link.url : `https://${link.url}`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-3 bg-gray-50 border border-gray-100 rounded-xl hover:bg-emerald-50 hover:border-emerald-200 hover:text-emerald-700 transition-colors group">
                                   <span className="font-medium text-sm text-gray-700 group-hover:text-emerald-700">{link.label}</span>
                                   <ExternalLink size={16} className="text-gray-400 group-hover:text-emerald-600" />
                                 </a>

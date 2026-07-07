@@ -45,6 +45,17 @@ export function AuthProvider({ children }) {
         checkAuth();
     }, [checkAuth]);
 
+    // Cross-tab login synchronization
+    useEffect(() => {
+        const handleStorageChange = (e) => {
+            if (e.key === 'has_session') {
+                checkAuth();
+            }
+        };
+        window.addEventListener('storage', handleStorageChange);
+        return () => window.removeEventListener('storage', handleStorageChange);
+    }, [checkAuth]);
+
     // Logout function
     const logout = async () => {
         try {
