@@ -113,6 +113,7 @@ export async function GET(req, context) {
                     highlights: e.highlights || [],
                     whatsIncluded: e.whatsIncluded || [],
                     whatsExcluded: e.whatsExcluded || [],
+                    sponsors: e.sponsors || [],
                     whatToBring: e.whatToBring || [],
                     restrictions: e.restrictions || [],
                     includePickup: e.includePickup !== false,

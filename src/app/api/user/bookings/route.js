@@ -21,7 +21,7 @@ export async function GET(req) {
         const bookings = await Booking.find({ user: user.userId })
             .populate({
                 path: 'event',
-                select: 'title eventType date duration slots location destination destinationLink poster pricePerSlot guide highlights whatsIncluded whatsExcluded whatToBring restrictions includePickup pickupPoints itinerary termsAndConditions',
+                select: 'title eventType date duration slots location destination destinationLink poster pricePerSlot guide highlights whatsIncluded whatsExcluded whatToBring restrictions includePickup pickupPoints itinerary termsAndConditions sponsors',
                 populate: { path: 'guide', select: 'companyName username name' }
             })
             .sort({ createdAt: -1 })
@@ -66,6 +66,7 @@ export async function GET(req) {
                 highlights: event.highlights || [],
                 whatsIncluded: event.whatsIncluded || [],
                 whatsExcluded: event.whatsExcluded || [],
+                sponsors: event.sponsors || [],
                 whatToBring: event.whatToBring || [],
                 restrictions: event.restrictions || [],
                 includePickup: event.includePickup !== false,

@@ -20,13 +20,19 @@ const BookingMainContent = () => {
   useEffect(() => {
     async function fetchBookings() {
       try {
-        // Fetch event, trip, and trek bookings in parallel
+        const safeFetch = (url) => fetch(url).catch(() => ({ json: async () => ({ success: false, data: [] }) }));
+        const safeJson = (res) => res.json().catch(() => ({ success: false, data: [] }));
+        
         const [eventsRes, tripsRes, treksRes] = await Promise.all([
-          fetch('/api/user/bookings'),
-          fetch('/api/user/trip-bookings'),
-          fetch('/api/user/trek-bookings'),
+          safeFetch('/api/user/bookings'),
+          safeFetch('/api/user/trip-bookings'),
+          safeFetch('/api/user/trek-bookings'),
         ]);
-        const [eventsData, tripsData, treksData] = await Promise.all([eventsRes.json(), tripsRes.json(), treksRes.json()]);
+        const [eventsData, tripsData, treksData] = await Promise.all([
+          safeJson(eventsRes), 
+          safeJson(tripsRes), 
+          safeJson(treksRes)
+        ]);
 
         const now = new Date();
         const allFetched = [];
