@@ -24,6 +24,7 @@ export default function ClientLayout({ children }) {
         pathname?.includes('/tripdetails') ||
         pathname?.includes('/trekdetails') ||
         pathname?.includes('/eventdetails') ||
+        pathname?.includes('/offbeats/') ||
         pathname?.includes('/bookings') ||
         pathname?.includes('/saved') ||
         pathname?.includes('/help') ||

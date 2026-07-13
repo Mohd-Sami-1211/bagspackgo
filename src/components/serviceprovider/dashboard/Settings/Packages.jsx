@@ -34,7 +34,7 @@ const Packages = () => {
   const searchParams = useSearchParams();
   const tabFromUrl = searchParams.get('tab');
   const [activeTab, setActiveTab] = useState('active');
-  const [viewCategory, setViewCategory] = useState(tabFromUrl === 'trek' ? 'trek' : 'trip');
+  const [viewCategory, setViewCategory] = useState('trip');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
   const [showAddMenu, setShowAddMenu] = useState(false);
 
@@ -411,16 +411,7 @@ const Packages = () => {
                       </div>
                       <p className="text-[10px] text-gray-400 group-hover:text-emerald-500/70">For sightseeing & group tours</p>
                     </button>
-                    <button
-                      onClick={() => router.push('/serviceprovider/dashboard/settings/packages/new-trek')}
-                      className="w-full text-left p-3 hover:bg-emerald-50 rounded-xl transition-all group border border-transparent hover:border-emerald-100 mt-0.5"
-                    >
-                      <div className="flex items-center justify-between mb-0.5">
-                        <p className="text-[13px] font-bold text-gray-800 group-hover:text-emerald-700">Trek Package</p>
-                        <ChevronRight size={14} className="text-gray-300 group-hover:text-emerald-400 transform group-hover:translate-x-0.5 transition-transform" />
-                      </div>
-                      <p className="text-[10px] text-gray-400 group-hover:text-emerald-500/70">For hiking & mountain tours</p>
-                    </button>
+
                   </motion.div>
                 </>
               )}
@@ -461,17 +452,7 @@ const Packages = () => {
               {packages.filter(p => p.category === 'trip').length}
             </span>
           </button>
-          <button
-            onClick={() => setViewCategory('trek')}
-            className={`flex items-center gap-1.5 py-1.5 px-4 rounded-xl text-[11px] font-bold transition-all duration-200 ${
-              viewCategory === 'trek' ? 'bg-white text-emerald-700 shadow-sm' : 'text-gray-400 hover:text-gray-600'
-            }`}
-          >
-            Treks
-            <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${viewCategory === 'trek' ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-200'}`}>
-              {packages.filter(p => p.category === 'trek').length}
-            </span>
-          </button>
+
         </div>
 
         <div className="h-4 w-px bg-gray-200 hidden sm:block" />

@@ -29,8 +29,8 @@ const SavedMainContent = () => {
     
     if (record.itemType === 'event') {
       path = `/user/events/eventdetails/${record.itemId}`;
-    } else if (record.itemType === 'trek') {
-      path = `/user/trek/guidelist/trekdetails/${actualProviderId}?trekId=${pkg._id}${dateQuery}&count=${count}&category=${cat}&days=${days}`;
+    } else if (record.itemType === 'offbeat') {
+      path = `/user/offbeats/${record.itemId}`;
     } else {
       path = `/user/trip/guidelist/tripdetails/${actualProviderId}?packageId=${pkg._id}${dateQuery}&count=${count}&category=${cat}&days=${days}`;
     }
@@ -72,8 +72,8 @@ const SavedMainContent = () => {
 
   const TYPE_CONFIG = {
     trip: { label: 'Trip', icon: Compass, color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200' },
-    trek: { label: 'Trek', icon: Mountain, color: 'text-sky-700', bg: 'bg-sky-50', border: 'border-sky-200' },
     event: { label: 'Event', icon: Ticket, color: 'text-violet-700', bg: 'bg-violet-50', border: 'border-violet-200' },
+    offbeat: { label: 'Offbeat', icon: Mountain, color: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-200' },
   };
 
   if (loading) {
@@ -110,7 +110,7 @@ const SavedMainContent = () => {
         
         {/* Category Filters */}
         <div className="flex bg-gray-50 border border-gray-200 p-1 rounded-lg self-start sm:self-auto w-full sm:w-auto overflow-x-auto">
-          {['all', 'trip', 'trek', 'event'].map((cat) => (
+          {['all', 'trip', 'event', 'offbeat'].map((cat) => (
             <button
               key={cat}
               onClick={() => setCategoryFilter(cat)}
@@ -233,36 +233,45 @@ const SavedMainContent = () => {
                       {/* Footer */}
                       <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between mt-auto">
                         <div>
-                           <p className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold mb-0.5">Starting from</p>
-                           {(() => {
-                             const tiers = pkg.pricingTiers?.length > 0 ? [...pkg.pricingTiers].sort((a,b) => a.minPeople - b.minPeople) : [];
-                             const baseTier = tiers[0];
-                             const rawPrice = Number(
-                               record.config?.computedPrice || 
-                               (baseTier ? baseTier.price : 0) || 
-                               pkg.price?.individual || 
-                               pkg.price?.starting || 
-                               pkg.pricePerSlot || 
-                               pkg.price || 
-                               0
-                             );
-                             const discount = baseTier ? Number(baseTier.discount || 0) : 0;
-                             const effectivePrice = discount > 0 ? rawPrice * (1 - discount / 100) : rawPrice;
-                             const hasDiscount = discount > 0 && !record.config?.computedPrice;
+                           {record.itemType === 'offbeat' ? (
+                             <>
+                               <p className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold mb-0.5">Booking</p>
+                               <p className="text-sm font-bold text-gray-900">Inquiry Based</p>
+                             </>
+                           ) : (
+                             <>
+                               <p className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold mb-0.5">Starting from</p>
+                               {(() => {
+                                 const tiers = pkg.pricingTiers?.length > 0 ? [...pkg.pricingTiers].sort((a,b) => a.minPeople - b.minPeople) : [];
+                                 const baseTier = tiers[0];
+                                 const rawPrice = Number(
+                                   record.config?.computedPrice || 
+                                   (baseTier ? baseTier.price : 0) || 
+                                   pkg.price?.individual || 
+                                   pkg.price?.starting || 
+                                   pkg.pricePerSlot || 
+                                   pkg.price || 
+                                   0
+                                 );
+                                 const discount = baseTier ? Number(baseTier.discount || 0) : 0;
+                                 const effectivePrice = discount > 0 ? rawPrice * (1 - discount / 100) : rawPrice;
+                                 const hasDiscount = discount > 0 && !record.config?.computedPrice;
 
-                             return (
-                               <p className="flex items-baseline gap-1.5">
-                                 <span className="text-base font-bold text-gray-900 tabular-nums">
-                                   ₹{Math.round(effectivePrice).toLocaleString('en-IN')}
-                                 </span>
-                                 {hasDiscount && (
-                                   <span className="text-xs text-gray-400 line-through tabular-nums">
-                                     ₹{Math.round(rawPrice).toLocaleString('en-IN')}
-                                   </span>
-                                 )}
-                               </p>
-                             );
-                           })()}
+                                 return (
+                                   <p className="flex items-baseline gap-1.5">
+                                     <span className="text-base font-bold text-gray-900 tabular-nums">
+                                       ₹{Math.round(effectivePrice).toLocaleString('en-IN')}
+                                     </span>
+                                     {hasDiscount && (
+                                       <span className="text-xs text-gray-400 line-through tabular-nums">
+                                         ₹{Math.round(rawPrice).toLocaleString('en-IN')}
+                                       </span>
+                                     )}
+                                   </p>
+                                 );
+                               })()}
+                             </>
+                           )}
                         </div>
                         <Button variant="ghost" size="icon" className="w-8 h-8 rounded-full text-emerald-600 hover:bg-emerald-100 hover:text-emerald-700">
                            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
@@ -283,8 +292,12 @@ const SavedMainContent = () => {
               </div>
               <h3 className="text-base font-semibold text-gray-700 mb-1">No saved items yet</h3>
               <p className="text-sm text-gray-400 max-w-sm mb-6">Discover amazing trips and add them to your collection by clicking the save icon.</p>
-              <Button onClick={() => router.push('/')}>
-                 Explore Packages
+              <Button onClick={() => {
+                  if (categoryFilter === 'offbeat') router.push('/user/offbeats');
+                  else if (categoryFilter === 'event') router.push('/user/events');
+                  else router.push('/');
+              }}>
+                 {categoryFilter === 'offbeat' ? 'Explore Offbeats' : categoryFilter === 'event' ? 'Explore Events' : 'Explore Packages'}
               </Button>
             </motion.div>
           )}

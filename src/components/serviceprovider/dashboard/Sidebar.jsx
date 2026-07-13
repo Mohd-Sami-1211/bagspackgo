@@ -109,7 +109,6 @@ export default function Sidebar({ isCollapsed, onClose, isMobile }) {
   const items = [
     { name: "Dashboard", icon: LayoutDashboard, href: "/serviceprovider/dashboard" },
     { name: "Trips", icon: BarChart3, href: "/serviceprovider/dashboard/trips" },
-    { name: "Treks", icon: Mountain, href: "/serviceprovider/dashboard/treks" },
     { name: "Events", icon: CalendarDays, href: "/serviceprovider/dashboard/events" },
     { name: "Settings", icon: Settings, href: "/serviceprovider/dashboard/settings" },
   ];

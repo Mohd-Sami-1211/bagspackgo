@@ -23,15 +23,13 @@ const BookingMainContent = () => {
         const safeFetch = (url) => fetch(url).catch(() => ({ json: async () => ({ success: false, data: [] }) }));
         const safeJson = (res) => res.json().catch(() => ({ success: false, data: [] }));
         
-        const [eventsRes, tripsRes, treksRes] = await Promise.all([
+        const [eventsRes, tripsRes] = await Promise.all([
           safeFetch('/api/user/bookings'),
           safeFetch('/api/user/trip-bookings'),
-          safeFetch('/api/user/trek-bookings'),
         ]);
-        const [eventsData, tripsData, treksData] = await Promise.all([
+        const [eventsData, tripsData] = await Promise.all([
           safeJson(eventsRes), 
-          safeJson(tripsRes), 
-          safeJson(treksRes)
+          safeJson(tripsRes)
         ]);
 
         const now = new Date();
@@ -92,29 +90,7 @@ const BookingMainContent = () => {
           });
         }
 
-        if (treksData.success && treksData.data) {
-          treksData.data.forEach(b => {
-            const bId = b.id || b._id;
-            allFetched.push({
-              id: bId,
-              type: 'Trek',
-              name: ensureString(b.packageName),
-              date: b.startDate,
-              endDate: b.endDate,
-              destination: ensureString(b.destination),
-              guide: ensureString(b.guideName),
-              category: ensureString(b.category || 'Trek'),
-              status: b.status,
-              price: b.totalAmount,
-              people: b.numPeople,
-              bookingRef: b.bookingRef,
-              duration: `${b.days} Days`,
-              image: b.packageSnapshot?.poster || '/images/hero.svg',
-              passUrl: `/user/trek/pass/${bId}`,
-              createdAt: b.createdAt || b.bookingDate,
-            });
-          });
-        }
+
 
         // Sort by newest bookings first using creation date (createdAt)
         allFetched.sort((a, b) => {
@@ -159,7 +135,6 @@ const BookingMainContent = () => {
   const categoryFilters = [
     { key: 'all', label: 'All Types' },
     { key: 'Trip', label: 'Trips', icon: Compass },
-    { key: 'Trek', label: 'Treks', icon: Mountain },
     { key: 'Event', label: 'Events', icon: Ticket },
   ];
 
