@@ -208,7 +208,7 @@ export default function OffBeatDetailsPage({ params }) {
                 </div>
                 
                 {/* Top Nav Overlay */}
-                <div className="absolute top-24 left-4 sm:left-8 z-30 flex items-center justify-between w-[calc(100%-2rem)] sm:w-[calc(100%-4rem)] pointer-events-none">
+                <div className="absolute top-6 left-4 sm:left-8 z-30 flex items-center justify-between w-[calc(100%-2rem)] sm:w-[calc(100%-4rem)] pointer-events-none">
                     <button 
                         onClick={() => router.back()}
                         className="pointer-events-auto flex items-center justify-center w-10 h-10 rounded-full bg-slate-800/40 text-white hover:bg-slate-800/60 transition border border-white/20"

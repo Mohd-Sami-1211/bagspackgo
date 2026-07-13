@@ -292,8 +292,12 @@ const SavedMainContent = () => {
               </div>
               <h3 className="text-base font-semibold text-gray-700 mb-1">No saved items yet</h3>
               <p className="text-sm text-gray-400 max-w-sm mb-6">Discover amazing trips and add them to your collection by clicking the save icon.</p>
-              <Button onClick={() => router.push('/')}>
-                 Explore Packages
+              <Button onClick={() => {
+                  if (categoryFilter === 'offbeat') router.push('/user/offbeats');
+                  else if (categoryFilter === 'event') router.push('/user/events');
+                  else router.push('/');
+              }}>
+                 {categoryFilter === 'offbeat' ? 'Explore Offbeats' : categoryFilter === 'event' ? 'Explore Events' : 'Explore Packages'}
               </Button>
             </motion.div>
           )}

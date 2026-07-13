@@ -17,4 +17,5 @@ const savedSchema = new mongoose.Schema(
 
 savedSchema.index({ userId: 1, itemId: 1 }, { unique: true });
 
-export const Saved = mongoose.models.Saved || mongoose.model("Saved", savedSchema);
+delete mongoose.models.Saved;
+export const Saved = mongoose.model("Saved", savedSchema);

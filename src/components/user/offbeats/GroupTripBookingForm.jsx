@@ -4,6 +4,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Loader2, CheckCircle, CalendarDays, CalendarRange } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 
 export default function GroupTripBookingForm({ isOpen, onClose, offbeatId, offbeatTitle, user }) {
     const [loading, setLoading] = useState(false);
@@ -88,102 +91,103 @@ export default function GroupTripBookingForm({ isOpen, onClose, offbeatId, offbe
                     initial={{ opacity: 0, scale: 0.95, y: 20 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                    className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden relative flex flex-col max-h-[90vh]"
+                    className="bg-white rounded-xl border border-slate-200 w-full max-w-md shadow-lg overflow-hidden relative flex flex-col max-h-[90vh]"
                 >
-                    <button onClick={onClose} className="absolute top-4 right-4 p-2 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-500 transition-colors z-20">
-                        <X size={20} />
+                    <button onClick={onClose} className="absolute top-4 right-4 p-1 rounded-sm opacity-70 ring-offset-white transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2 z-20">
+                        <X className="h-4 w-4" />
+                        <span className="sr-only">Close</span>
                     </button>
 
-                    <div className="bg-blue-50 p-8 sm:p-6 md:p-8 border-b border-blue-100 text-center relative overflow-hidden shrink-0">
-                        <div className="absolute -top-10 -right-10 w-32 h-32 bg-blue-200/50 rounded-full blur-3xl" />
-                        <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-emerald-200/50 rounded-full blur-3xl" />
-                        
-                        <h2 className="text-2xl font-bold text-slate-800 relative z-10">Group Trip Interest</h2>
-                        <p className="text-blue-700 text-sm mt-1 relative z-10 font-medium">To: {offbeatTitle}</p>
+                    <div className="flex flex-col space-y-1.5 p-6 pb-0 shrink-0">
+                        <h2 className="text-lg font-semibold leading-none tracking-tight text-slate-900">Group Trip Interest</h2>
+                        <p className="text-sm text-slate-500">Register your interest for: {offbeatTitle}</p>
                     </div>
 
-                    <div className="p-8 sm:p-6 md:p-8 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+                    <div className="p-6 pt-4 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
                         {success ? (
                             <motion.div 
                                 initial={{ opacity: 0, scale: 0.8 }} 
                                 animate={{ opacity: 1, scale: 1 }} 
-                                className="text-center py-8 flex flex-col items-center gap-4"
+                                className="text-center py-6 flex flex-col items-center gap-3"
                             >
-                                <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center">
-                                    <CheckCircle size={32} />
+                                <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center">
+                                    <CheckCircle size={24} />
                                 </div>
                                 <div>
-                                    <h3 className="text-xl font-bold text-slate-800">Interest Registered!</h3>
-                                    <p className="text-slate-500 mt-2 text-sm leading-relaxed">
+                                    <h3 className="text-lg font-semibold text-slate-900">Interest Registered!</h3>
+                                    <p className="text-slate-500 mt-1 text-sm">
                                         Thank you! We have recorded your interest in a group trip. We will notify you when enough travelers join for your selected dates.
                                     </p>
                                 </div>
                             </motion.div>
                         ) : (
-                            <form onSubmit={handleSubmit} className="space-y-6">
-                                <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">Group Size (Your Party)</label>
-                                    <div className="flex items-center">
-                                        <button 
+                            <form onSubmit={handleSubmit} className="space-y-4">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-slate-900">Group Size (Your Party)</label>
+                                    <div className="flex items-center space-x-2">
+                                        <Button 
                                             type="button" 
+                                            variant="outline"
+                                            size="icon"
                                             onClick={() => setNumberOfPersons(Math.max(1, numberOfPersons - 1))}
-                                            className="w-12 h-12 flex items-center justify-center bg-slate-100 border border-slate-200 rounded-l-xl text-slate-600 hover:bg-slate-200 transition"
+                                            className="h-9 w-9 shrink-0"
                                         >
                                             -
-                                        </button>
-                                        <input 
+                                        </Button>
+                                        <Input 
                                             type="number" 
                                             min="1" 
                                             required
                                             value={numberOfPersons}
                                             onChange={e => setNumberOfPersons(parseInt(e.target.value) || 1)}
-                                            className="w-full h-12 text-center bg-white border-y border-slate-200 font-bold text-lg focus:outline-none"
+                                            className="h-9 text-center"
                                         />
-                                        <button 
+                                        <Button 
                                             type="button" 
+                                            variant="outline"
+                                            size="icon"
                                             onClick={() => setNumberOfPersons(numberOfPersons + 1)}
-                                            className="w-12 h-12 flex items-center justify-center bg-slate-100 border border-slate-200 rounded-r-xl text-slate-600 hover:bg-slate-200 transition"
+                                            className="h-9 w-9 shrink-0"
                                         >
                                             +
-                                        </button>
+                                        </Button>
                                     </div>
                                 </div>
 
-                                <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">Contact Number</label>
-                                    <input 
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-slate-900">Contact Number</label>
+                                    <Input 
                                         type="tel" 
                                         required
                                         value={contactNumber}
                                         onChange={e => setContactNumber(e.target.value)}
-                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:ring-2 focus:ring-blue-500 outline-none"
                                         placeholder="Enter your phone number"
                                     />
                                 </div>
 
-                                <div>
-                                    <div className="flex items-center justify-between mb-3">
-                                        <label className="block text-sm font-semibold text-slate-700">Preferred Dates</label>
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-slate-900">Preferred Dates</label>
                                     </div>
                                     
-                                    <div className="flex p-1 bg-slate-100 rounded-lg mb-4">
+                                    <div className="flex p-1 bg-slate-100 rounded-md">
                                         <button 
                                             type="button"
                                             onClick={() => setDateMode('multiple')}
-                                            className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-md transition-all ${
-                                                dateMode === 'multiple' ? 'bg-white shadow text-blue-600' : 'text-slate-500 hover:text-slate-700'
+                                            className={`flex-1 flex items-center justify-center gap-2 py-1.5 text-xs font-medium rounded-sm transition-all ${
+                                                dateMode === 'multiple' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'
                                             }`}
                                         >
-                                            <CalendarDays size={16} /> Multiple Dates
+                                            <CalendarDays size={14} /> Multiple Dates
                                         </button>
                                         <button 
                                             type="button"
                                             onClick={() => setDateMode('range')}
-                                            className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-md transition-all ${
-                                                dateMode === 'range' ? 'bg-white shadow text-blue-600' : 'text-slate-500 hover:text-slate-700'
+                                            className={`flex-1 flex items-center justify-center gap-2 py-1.5 text-xs font-medium rounded-sm transition-all ${
+                                                dateMode === 'range' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'
                                             }`}
                                         >
-                                            <CalendarRange size={16} /> Date Range
+                                            <CalendarRange size={14} /> Date Range
                                         </button>
                                     </div>
 
@@ -222,30 +226,31 @@ export default function GroupTripBookingForm({ isOpen, onClose, offbeatId, offbe
                                     </p>
                                 </div>
 
-                                <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">Special Requirements (Optional)</label>
-                                    <textarea 
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-slate-900">Special Requirements (Optional)</label>
+                                    <Textarea 
                                         value={specialRequirements}
                                         onChange={e => setSpecialRequirements(e.target.value)}
-                                        rows="2"
-                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+                                        rows={2}
+                                        className="resize-none"
                                         placeholder="Any specific requests?"
-                                    ></textarea>
+                                    />
                                 </div>
 
                                 {error && (
-                                    <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100">
+                                    <div className="p-3 bg-red-50 text-red-600 text-sm rounded-md border border-red-100">
                                         {error}
                                     </div>
                                 )}
 
-                                <button 
+                                <Button 
                                     type="submit" 
                                     disabled={loading}
-                                    className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl py-4 font-bold transition flex items-center justify-center gap-2 shadow-lg shadow-blue-600/30 disabled:opacity-70 disabled:cursor-not-allowed"
+                                    className="w-full"
                                 >
-                                    {loading ? <Loader2 className="animate-spin" size={20} /> : 'Register Interest'}
-                                </button>
+                                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                    Register Interest
+                                </Button>
                             </form>
                         )}
                     </div>
@@ -273,13 +278,13 @@ export default function GroupTripBookingForm({ isOpen, onClose, offbeatId, offbe
                 .group-trip-datepicker .react-datepicker__day--selected,
                 .group-trip-datepicker .react-datepicker__day--in-range,
                 .group-trip-datepicker .react-datepicker__day--in-selecting-range {
-                    background-color: #2563eb !important;
+                    background-color: #0f172a !important;
                     color: white !important;
                     border-radius: 9999px !important;
                 }
                 .group-trip-datepicker .react-datepicker__day--keyboard-selected {
-                    background-color: #bfdbfe !important;
-                    color: #1e3a8a !important;
+                    background-color: #f1f5f9 !important;
+                    color: #0f172a !important;
                     border-radius: 9999px !important;
                 }
             `}</style>

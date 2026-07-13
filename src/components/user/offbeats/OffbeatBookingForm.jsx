@@ -4,6 +4,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Loader2, CheckCircle, ArrowRight, CalendarCheck } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 
 export default function OffbeatBookingForm({ isOpen, onClose, offbeatId, offbeatTitle, user }) {
     const [loading, setLoading] = useState(false);
@@ -91,97 +94,98 @@ export default function OffbeatBookingForm({ isOpen, onClose, offbeatId, offbeat
                     initial={{ opacity: 0, scale: 0.95, y: 20 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                    className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden relative flex flex-col max-h-[90vh]"
+                    className="bg-white rounded-xl border border-slate-200 w-full max-w-md shadow-lg overflow-hidden relative flex flex-col max-h-[90vh]"
                 >
-                    <button onClick={onClose} className="absolute top-4 right-4 p-2 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-500 transition-colors z-20">
-                        <X size={20} />
+                    <button onClick={onClose} className="absolute top-4 right-4 p-1 rounded-sm opacity-70 ring-offset-white transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2 z-20">
+                        <X className="h-4 w-4" />
+                        <span className="sr-only">Close</span>
                     </button>
 
-                    <div className="bg-emerald-50 p-8 sm:p-6 md:p-8 border-b border-emerald-100 text-center relative overflow-hidden shrink-0">
-                        <div className="absolute -top-10 -right-10 w-32 h-32 bg-emerald-200/50 rounded-full blur-3xl" />
-                        <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-blue-200/50 rounded-full blur-3xl" />
-                        
-                        <h2 className="text-2xl font-bold text-slate-800 relative z-10">Plan Your Adventure</h2>
-                        <p className="text-emerald-700 text-sm mt-1 relative z-10 font-medium">To: {offbeatTitle}</p>
+                    <div className="flex flex-col space-y-1.5 p-6 pb-0 shrink-0">
+                        <h2 className="text-lg font-semibold leading-none tracking-tight text-slate-900">Plan Your Adventure</h2>
+                        <p className="text-sm text-slate-500">To: {offbeatTitle}</p>
                     </div>
 
-                    <div className="p-8 sm:p-6 md:p-8 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+                    <div className="p-6 pt-4 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
                         {success ? (
                             <motion.div 
                                 initial={{ opacity: 0, scale: 0.8 }} 
                                 animate={{ opacity: 1, scale: 1 }} 
-                                className="text-center py-8 flex flex-col items-center gap-4"
+                                className="text-center py-6 flex flex-col items-center gap-3"
                             >
-                                <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center">
-                                    <CheckCircle size={32} />
+                                <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center">
+                                    <CheckCircle size={24} />
                                 </div>
                                 <div>
-                                    <h3 className="text-xl font-bold text-slate-800">Inquiry Sent!</h3>
-                                    <p className="text-slate-500 mt-2 text-sm leading-relaxed">
+                                    <h3 className="text-lg font-semibold text-slate-900">Inquiry Sent!</h3>
+                                    <p className="text-slate-500 mt-1 text-sm">
                                         Our travel experts will review your request and get back to you shortly with pricing and details.
                                     </p>
                                 </div>
                             </motion.div>
                         ) : (
-                            <form onSubmit={handleSubmit} className="space-y-6">
-                                <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">Number of Persons</label>
-                                    <div className="flex items-center">
-                                        <button 
+                            <form onSubmit={handleSubmit} className="space-y-4">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-slate-900">Number of Persons</label>
+                                    <div className="flex items-center space-x-2">
+                                        <Button 
                                             type="button" 
+                                            variant="outline"
+                                            size="icon"
                                             onClick={() => setFormData(p => ({ ...p, numberOfPersons: Math.max(1, p.numberOfPersons - 1) }))}
-                                            className="w-12 h-12 flex items-center justify-center bg-slate-100 border border-slate-200 rounded-l-xl text-slate-600 hover:bg-slate-200 transition"
+                                            className="h-9 w-9 shrink-0"
                                         >
                                             -
-                                        </button>
-                                        <input 
+                                        </Button>
+                                        <Input 
                                             type="number" 
                                             min="1" 
                                             required
                                             value={formData.numberOfPersons}
                                             onChange={e => setFormData(p => ({ ...p, numberOfPersons: parseInt(e.target.value) || 1 }))}
-                                            className="w-full h-12 text-center bg-white border-y border-slate-200 font-bold text-lg focus:outline-none"
+                                            className="h-9 text-center"
                                         />
-                                        <button 
+                                        <Button 
                                             type="button" 
+                                            variant="outline"
+                                            size="icon"
                                             onClick={() => setFormData(p => ({ ...p, numberOfPersons: p.numberOfPersons + 1 }))}
-                                            className="w-12 h-12 flex items-center justify-center bg-slate-100 border border-slate-200 rounded-r-xl text-slate-600 hover:bg-slate-200 transition"
+                                            className="h-9 w-9 shrink-0"
                                         >
                                             +
-                                        </button>
+                                        </Button>
                                     </div>
                                 </div>
 
-                                <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">Contact Number</label>
-                                    <input 
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-slate-900">Contact Number</label>
+                                    <Input 
                                         type="tel" 
                                         required
                                         placeholder="+91 9876543210"
                                         value={formData.contactNumber}
                                         onChange={e => setFormData(p => ({ ...p, contactNumber: e.target.value }))}
-                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition"
                                     />
                                 </div>
 
-                                <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">Tentative Date</label>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-slate-900">Tentative Date</label>
                                     <div className="relative w-full z-[1000]">
                                         <DatePicker
                                             selected={startDate}
                                             onChange={handleDateChange}
                                             customInput={
                                                 <div className="relative w-full">
-                                                    <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
-                                                        <CalendarCheck className="h-5 w-5 text-slate-400" />
+                                                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                                        <CalendarCheck className="h-4 w-4 text-slate-400" />
                                                     </div>
-                                                    <input
+                                                    <Input
                                                         type="text"
                                                         required
                                                         value={dateInput}
                                                         onChange={handleDateInputChange}
                                                         placeholder="DD/MM/YYYY"
-                                                        className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition text-slate-700"
+                                                        className="pl-9"
                                                     />
                                                 </div>
                                             }
@@ -195,49 +199,50 @@ export default function OffbeatBookingForm({ isOpen, onClose, offbeatId, offbeat
                                             placeholderText="DD/MM/YYYY"
                                             popperClassName="z-[1050]"
                                             popperPlacement="bottom-start"
-                                            calendarClassName="border-emerald-200 rounded-xl shadow-xl bg-white font-sans"
+                                            calendarClassName="border-slate-200 rounded-md shadow-md bg-white font-sans text-sm"
                                             wrapperClassName="w-full"
                                         />
                                     </div>
                                 </div>
 
-                                <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">Special Requirements (Optional)</label>
-                                    <textarea 
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-slate-900">Special Requirements (Optional)</label>
+                                    <Textarea 
                                         rows={3}
                                         placeholder="Any dietary restrictions, medical conditions, or specific requests?"
                                         value={formData.specialRequirements}
                                         onChange={e => setFormData(p => ({ ...p, specialRequirements: e.target.value }))}
-                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition resize-none"
+                                        className="resize-none"
                                     />
                                 </div>
 
                                 {error && (
-                                    <div className="p-3 bg-red-50 text-red-600 text-sm rounded-xl text-center border border-red-100">
+                                    <div className="p-3 bg-red-50 text-red-600 text-sm rounded-md border border-red-100">
                                         {error}
                                     </div>
                                 )}
 
-                                <div className="flex gap-4">
-                                    <button 
+                                <div className="flex gap-3 pt-2">
+                                    <Button 
                                         type="button"
+                                        variant="outline"
                                         onClick={onClose}
                                         disabled={loading}
-                                        className="w-1/3 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition disabled:opacity-70"
+                                        className="w-1/3"
                                     >
                                         Cancel
-                                    </button>
-                                    <button 
+                                    </Button>
+                                    <Button 
                                         type="submit" 
                                         disabled={loading}
-                                        className="flex-1 py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition disabled:opacity-70 group"
+                                        className="flex-1 group"
                                     >
-                                        {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
-                                            <>Submit Inquiry <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" /></>
-                                        )}
-                                    </button>
+                                        {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                        Submit Inquiry
+                                        {!loading && <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />}
+                                    </Button>
                                 </div>
-                                <p className="text-center text-xs text-slate-400 mt-4">
+                                <p className="text-center text-xs text-slate-500 mt-2">
                                     No payment required at this step. We'll contact you to confirm details.
                                 </p>
                             </form>
