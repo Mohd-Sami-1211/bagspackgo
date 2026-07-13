@@ -20,7 +20,6 @@ const navItems = [
     { label: 'Bookings',      icon: CalendarCheck,   href: '/admin/bookings',        badge: null },
     { label: 'Packages',      icon: Package,         href: '/admin/packages',        badge: null },
     { label: 'OffBeats',      icon: Map,             href: '/admin/offbeats',        badge: null },
-    { label: 'OffBeat Inquiries', icon: MessageSquare, href: '/admin/offbeat-bookings', badge: 'offbeatInquiries' },
     { label: 'Requests',      icon: ClipboardList,   href: '/admin/requests',        badge: 'requests' },
     { label: 'Event Wishes',  icon: Heart,           href: '/admin/wishes',          badge: null },
     { label: 'Payments',      icon: CreditCard,      href: '/admin/payments',        badge: null },

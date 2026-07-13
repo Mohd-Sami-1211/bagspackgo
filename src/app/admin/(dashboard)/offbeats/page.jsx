@@ -51,11 +51,18 @@ export default function AdminOffBeatsPage() {
                     </h1>
                     <p className="text-gray-400 text-sm">Create and manage offbeat destinations</p>
                 </div>
-                <Link href="/admin/offbeats/new">
-                    <button className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition">
-                        <Plus size={18} /> Add OffBeat
-                    </button>
-                </Link>
+                <div className="flex gap-3">
+                    <Link href="/admin/offbeats/inquiries">
+                        <button className="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition border border-gray-700">
+                            View Inquiries
+                        </button>
+                    </Link>
+                    <Link href="/admin/offbeats/new">
+                        <button className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition">
+                            <Plus size={18} /> Add OffBeat
+                        </button>
+                    </Link>
+                </div>
             </div>
 
             <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">

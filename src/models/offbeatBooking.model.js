@@ -22,7 +22,16 @@ const offbeatBookingSchema = new mongoose.Schema({
   },
   date: {
     type: String,
-    required: true,
+    // Optional for group trips if they use dateOptions
+  },
+  dateOptions: {
+    type: [String],
+    default: [],
+  },
+  inquiryType: {
+    type: String,
+    enum: ['private', 'group'],
+    default: 'private',
   },
   specialRequirements: {
     type: String,

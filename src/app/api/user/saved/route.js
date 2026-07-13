@@ -5,6 +5,7 @@ import { Saved } from '@/models/saved.model';
 import { Package } from '@/models/package.model';
 import { Event } from '@/models/event.model';
 import { Guide } from '@/models/guide.model';
+import { OffBeat } from '@/models/offbeat.model';
 
 export async function GET(request) {
     try {
@@ -42,6 +43,14 @@ export async function GET(request) {
                     
                     itemData.organizer = companyName || itemData.guide?.username || 'Premium Host';
                     itemData.slotsRemaining = Math.max(0, (itemData.totalSlots || 0) - (itemData.bookedSlots || 0));
+                }
+            } else if (record.itemType === 'offbeat') {
+                itemData = await OffBeat.findById(record.itemId)
+                    .select('title destination shortDescription photographs region status')
+                    .lean();
+                if (itemData) {
+                    itemData.name = itemData.title;
+                    itemData.coverImage = itemData.photographs && itemData.photographs.length > 0 ? itemData.photographs[0] : '';
                 }
             }
             

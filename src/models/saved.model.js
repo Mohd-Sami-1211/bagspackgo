@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 const savedSchema = new mongoose.Schema(
   {
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    itemType: { type: String, enum: ['trip', 'trek', 'event'], required: true },
+    itemType: { type: String, enum: ['trip', 'trek', 'event', 'offbeat'], required: true },
     itemId: { type: mongoose.Schema.Types.ObjectId, required: true },
     config: {
        date: { type: String },

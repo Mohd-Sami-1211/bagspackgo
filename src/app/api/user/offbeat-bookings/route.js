@@ -11,7 +11,7 @@ export async function POST(req) {
         }
 
         await dbConnect();
-        const { offbeatId, numberOfPersons, contactNumber, date, specialRequirements } = await req.json();
+        const { offbeatId, numberOfPersons, contactNumber, date, specialRequirements, inquiryType, dateOptions } = await req.json();
 
         const booking = new OffBeatBooking({
             offbeat: offbeatId,
@@ -20,6 +20,8 @@ export async function POST(req) {
             contactNumber,
             date,
             specialRequirements,
+            inquiryType: inquiryType || 'private',
+            dateOptions: dateOptions || [],
             status: 'pending'
         });
 

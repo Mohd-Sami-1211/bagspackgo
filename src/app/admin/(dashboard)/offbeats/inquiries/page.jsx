@@ -1,19 +1,22 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { MessageSquare, Loader2, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { MessageSquare, Loader2, CheckCircle, XCircle, Clock, Users, ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 
 export default function AdminOffBeatBookingsPage() {
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState('private'); // 'private' | 'group'
 
     useEffect(() => {
         fetchBookings();
-    }, []);
+    }, [activeTab]);
 
     const fetchBookings = async () => {
+        setLoading(true);
         try {
-            const res = await fetch('/api/admin/offbeat-bookings');
+            const res = await fetch(`/api/admin/offbeats/inquiries?type=${activeTab}`);
             const data = await res.json();
             if (data.success) {
                 setBookings(data.data);
@@ -27,7 +30,7 @@ export default function AdminOffBeatBookingsPage() {
 
     const updateStatus = async (id, status) => {
         try {
-            const res = await fetch(`/api/admin/offbeat-bookings/${id}`, {
+            const res = await fetch(`/api/admin/offbeats/inquiries/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status })
@@ -40,11 +43,37 @@ export default function AdminOffBeatBookingsPage() {
 
     return (
         <div className="space-y-6">
-            <div>
-                <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-                    <MessageSquare className="text-emerald-400" /> OffBeat Inquiries
-                </h1>
-                <p className="text-gray-400 text-sm">Manage user booking inquiries for OffBeat destinations.</p>
+            <div className="flex items-center gap-4">
+                <Link href="/admin/offbeats" className="text-gray-400 hover:text-white transition">
+                    <ArrowLeft size={24} />
+                </Link>
+                <div>
+                    <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+                        <MessageSquare className="text-emerald-400" /> OffBeat Inquiries
+                    </h1>
+                    <p className="text-gray-400 text-sm">Manage user booking inquiries for OffBeat destinations.</p>
+                </div>
+            </div>
+
+            {/* Tab Switcher */}
+            <div className="flex items-center gap-1 p-1 bg-gray-800/50 border border-gray-700/60 rounded-xl w-fit">
+                {[
+                    { key: 'private', label: 'Private Inquiries', icon: MessageSquare },
+                    { key: 'group', label: 'Group Trip Inquiries', icon: Users },
+                ].map(t => (
+                    <button
+                        key={t.key}
+                        onClick={() => setActiveTab(t.key)}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                            activeTab === t.key
+                                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                                : 'text-gray-400 hover:text-white border border-transparent'
+                        }`}
+                    >
+                        <t.icon className="w-4 h-4" />
+                        {t.label}
+                    </button>
+                ))}
             </div>
 
             <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
@@ -55,8 +84,10 @@ export default function AdminOffBeatBookingsPage() {
                                 <th className="px-6 py-4 font-semibold">User Details</th>
                                 <th className="px-6 py-4 font-semibold">Destination</th>
                                 <th className="px-6 py-4 font-semibold">Persons</th>
-                                <th className="px-6 py-4 font-semibold">Date</th>
-                                <th className="px-6 py-4 font-semibold">Requirements</th>
+                                <th className="px-6 py-4 font-semibold">Date(s)</th>
+                                {activeTab === 'private' && (
+                                    <th className="px-6 py-4 font-semibold">Requirements</th>
+                                )}
                                 <th className="px-6 py-4 font-semibold">Status</th>
                                 <th className="px-6 py-4 font-semibold text-right">Actions</th>
                             </tr>
@@ -72,7 +103,7 @@ export default function AdminOffBeatBookingsPage() {
                             ) : bookings.length === 0 ? (
                                 <tr>
                                     <td colSpan="7" className="px-6 py-8 text-center text-gray-500">
-                                        No inquiries found.
+                                        No {activeTab} inquiries found.
                                     </td>
                                 </tr>
                             ) : (
@@ -92,12 +123,26 @@ export default function AdminOffBeatBookingsPage() {
                                             {booking.offbeat?.title || 'Deleted OffBeat'}
                                         </td>
                                         <td className="px-6 py-4">{booking.numberOfPersons}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            {booking.date ? new Date(booking.date).toLocaleDateString() : '-'}
+                                        <td className="px-6 py-4">
+                                            {booking.inquiryType === 'group' && booking.dateOptions?.length > 0 ? (
+                                                <div className="space-y-1">
+                                                    {booking.dateOptions.map((opt, i) => (
+                                                        <span key={i} className="block text-xs bg-gray-800 px-2 py-1 rounded w-max border border-gray-700">
+                                                            {opt}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            ) : booking.date ? (
+                                                <span className="whitespace-nowrap">{new Date(booking.date).toLocaleDateString()}</span>
+                                            ) : (
+                                                '-'
+                                            )}
                                         </td>
-                                        <td className="px-6 py-4 max-w-[200px] truncate" title={booking.specialRequirements}>
-                                            {booking.specialRequirements || '-'}
-                                        </td>
+                                        {activeTab === 'private' && (
+                                            <td className="px-6 py-4 max-w-[200px] truncate" title={booking.specialRequirements}>
+                                                {booking.specialRequirements || '-'}
+                                            </td>
+                                        )}
                                         <td className="px-6 py-4">
                                             <span className={`px-2.5 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 w-max ${
                                                 booking.status === 'pending' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :

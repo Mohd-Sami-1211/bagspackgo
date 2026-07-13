@@ -1,11 +1,12 @@
 'use client';
 import { useState, useEffect, use } from 'react';
 import { motion } from 'framer-motion';
-import { MapPin, Check, X, Calendar, Camera, Info, Loader2, ArrowLeft } from 'lucide-react';
+import { MapPin, Check, X, Calendar, Camera, Info, Loader2, ArrowLeft, Bookmark, Share2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import OffbeatBookingForm from '@/components/user/offbeats/OffbeatBookingForm';
+import GroupTripBookingForm from '@/components/user/offbeats/GroupTripBookingForm';
 
 const OffbeatDetailsSkeleton = () => (
     <div className="min-h-screen bg-slate-50 animate-pulse pb-20">
@@ -64,15 +65,74 @@ export default function OffBeatDetailsPage({ params }) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
     const [isBookingOpen, setIsBookingOpen] = useState(false);
+    const [isGroupBookingOpen, setIsGroupBookingOpen] = useState(false);
+    const [isSaved, setIsSaved] = useState(false);
+    const [saving, setSaving] = useState(false);
+
+    // Fetch Saved Status
+    useEffect(() => {
+        if (isAuthenticated && id) {
+            fetch('/api/user/saved')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success && data.saved) {
+                        const saved = data.saved.some(s => s.itemType === 'offbeat' && s.itemId === id);
+                        setIsSaved(saved);
+                    }
+                });
+        }
+    }, [isAuthenticated, id]);
+
+    const handleSaveToggle = async () => {
+        if (!isAuthenticated && openAuthModal) {
+            openAuthModal({ closable: true, hideTabs: false, tab: 'user' });
+            return;
+        }
+        setSaving(true);
+        try {
+            if (isSaved) {
+                await fetch(`/api/user/saved?itemId=${id}`, { method: 'DELETE' });
+                setIsSaved(false);
+            } else {
+                await fetch('/api/user/saved', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ itemId: id, itemType: 'offbeat' })
+                });
+                setIsSaved(true);
+            }
+        } catch (e) {
+            console.error('Failed to toggle save', e);
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleShare = async () => {
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: offbeat.title,
+                    text: offbeat.shortDescription,
+                    url: window.location.href,
+                });
+            } catch (err) {
+                console.log('Share canceled or failed', err);
+            }
+        } else {
+            navigator.clipboard.writeText(window.location.href);
+            alert("Link copied to clipboard!");
+        }
+    };
 
     // Fetch Details
     useEffect(() => {
         const cacheKey = `offbeat_data_${id}`;
         const cachedData = sessionStorage.getItem(cacheKey);
+        
         if (cachedData) {
             setOffbeat(JSON.parse(cachedData));
             setLoading(false);
-            return;
         }
 
         fetch(`/api/public/offbeats/${id}`)
@@ -81,11 +141,13 @@ export default function OffBeatDetailsPage({ params }) {
                 if (data.success) {
                     setOffbeat(data.data);
                     sessionStorage.setItem(cacheKey, JSON.stringify(data.data));
-                } else {
+                } else if (!cachedData) {
                     setError(true);
                 }
             })
-            .catch(() => setError(true))
+            .catch(() => {
+                if (!cachedData) setError(true);
+            })
             .finally(() => setLoading(false));
     }, [id]);
 
@@ -146,13 +208,31 @@ export default function OffBeatDetailsPage({ params }) {
                 </div>
                 
                 {/* Top Nav Overlay */}
-                <div className="absolute top-24 left-4 sm:left-8 z-30">
+                <div className="absolute top-24 left-4 sm:left-8 z-30 flex items-center justify-between w-[calc(100%-2rem)] sm:w-[calc(100%-4rem)] pointer-events-none">
                     <button 
                         onClick={() => router.back()}
-                        className="flex items-center justify-center w-10 h-10 rounded-full bg-slate-800/40 text-white hover:bg-slate-800/60 transition border border-white/20"
+                        className="pointer-events-auto flex items-center justify-center w-10 h-10 rounded-full bg-slate-800/40 text-white hover:bg-slate-800/60 transition border border-white/20"
                     >
                         <ArrowLeft size={20} />
                     </button>
+
+                    <div className="flex items-center gap-3 pointer-events-auto">
+                        <button 
+                            onClick={handleShare}
+                            className="flex items-center justify-center w-10 h-10 rounded-full bg-slate-800/40 text-white hover:bg-slate-800/60 transition border border-white/20"
+                            title="Share Destination"
+                        >
+                            <Share2 size={18} />
+                        </button>
+                        <button 
+                            onClick={handleSaveToggle}
+                            disabled={saving}
+                            className="flex items-center justify-center w-10 h-10 rounded-full bg-slate-800/40 text-white hover:bg-slate-800/60 transition border border-white/20 disabled:opacity-50"
+                            title={isSaved ? "Unsave Destination" : "Save Destination"}
+                        >
+                            <Bookmark size={18} className={isSaved ? "fill-white" : ""} />
+                        </button>
+                    </div>
                 </div>
 
                 <div className="absolute bottom-0 left-0 w-full px-4 sm:px-8 pb-12 z-30">
@@ -197,6 +277,22 @@ export default function OffBeatDetailsPage({ params }) {
                         </div>
                     </section>
 
+                    {/* Gallery */}
+                    {offbeat.photographs?.length > 1 && (
+                        <section>
+                            <h2 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+                                <Camera className="text-emerald-600" /> Gallery
+                            </h2>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                                {offbeat.photographs.slice(1).map((photo, idx) => (
+                                    <div key={idx} className="aspect-square rounded-xl overflow-hidden shadow-sm relative bg-slate-100">
+                                        <ImageWithLoader src={photo} alt={`Gallery ${idx + 1}`} className="w-full h-full object-cover hover:scale-110 transition-transform duration-500 cursor-pointer" />
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+                    )}
+
                     {/* Highlights */}
                     {offbeat.highlights?.length > 0 && (
                         <section>
@@ -233,23 +329,6 @@ export default function OffBeatDetailsPage({ params }) {
                             </div>
                         </section>
                     )}
-
-                    {/* Gallery */}
-                    {offbeat.photographs?.length > 1 && (
-                        <section>
-                            <h2 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">
-                                <Camera className="text-emerald-600" /> Gallery
-                            </h2>
-                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                                {offbeat.photographs.slice(1).map((photo, idx) => (
-                                    <div key={idx} className="aspect-square rounded-xl overflow-hidden shadow-sm relative bg-slate-100">
-                                        <ImageWithLoader src={photo} alt={`Gallery ${idx + 1}`} className="w-full h-full object-cover hover:scale-110 transition-transform duration-500 cursor-pointer" />
-                                    </div>
-                                ))}
-                            </div>
-                        </section>
-                    )}
-
                 </div>
 
                 {/* Sticky Sidebar */}
@@ -291,11 +370,47 @@ export default function OffBeatDetailsPage({ params }) {
                             </div>
                         )}
 
+                        {/* What to Bring & Restrictions */}
+                        {(offbeat.whatToBring?.length > 0 || offbeat.restrictions?.length > 0) && (
+                            <div className="bg-slate-50 p-6 rounded-3xl border border-slate-200">
+                                {offbeat.whatToBring?.length > 0 && (
+                                    <div className="mb-6">
+                                        <h3 className="text-lg font-bold text-slate-800 mb-3 flex items-center gap-2">
+                                            <span className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center"><Check size={16} /></span>
+                                            What to Bring
+                                        </h3>
+                                        <ul className="space-y-2">
+                                            {offbeat.whatToBring.map((item, idx) => (
+                                                <li key={idx} className="text-slate-600 flex items-start gap-2 text-sm">
+                                                    <span className="text-blue-400 mt-1">•</span> {item}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+                                {offbeat.restrictions?.length > 0 && (
+                                    <div>
+                                        <h3 className="text-lg font-bold text-slate-800 mb-3 flex items-center gap-2">
+                                            <span className="w-8 h-8 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center"><Info size={16} /></span>
+                                            Restrictions
+                                        </h3>
+                                        <ul className="space-y-2">
+                                            {offbeat.restrictions.map((item, idx) => (
+                                                <li key={idx} className="text-slate-600 flex items-start gap-2 text-sm">
+                                                    <span className="text-orange-400 mt-1">•</span> {item}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
                         {/* Booking CTA */}
                         <div className="bg-emerald-600 p-8 rounded-3xl shadow-xl shadow-emerald-600/20 text-center relative overflow-hidden">
                             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-16 -mt-16"></div>
                             <h3 className="text-xl font-bold text-white mb-2 relative z-10">Ready for an Adventure?</h3>
-                            <p className="text-emerald-100 text-sm mb-6 relative z-10">Submit an inquiry and our experts will craft the perfect plan.</p>
+                            <p className="text-emerald-100 text-sm mb-6 relative z-10">Book your spot and our experts will craft the perfect plan.</p>
                             <button 
                                 onClick={() => {
                                     if (!isAuthenticated && openAuthModal) {
@@ -306,7 +421,27 @@ export default function OffBeatDetailsPage({ params }) {
                                 }}
                                 className="w-full py-4 bg-white text-emerald-700 hover:bg-slate-50 rounded-xl font-bold transition shadow-md relative z-10"
                             >
-                                Send Inquiry
+                                Book Now
+                            </button>
+                        </div>
+
+                        {/* Secondary Group Trip CTA */}
+                        <div className="bg-white p-6 rounded-3xl border border-slate-200 text-center shadow-sm">
+                            <h3 className="text-lg font-bold text-slate-800 mb-2">Looking for a Group?</h3>
+                            <p className="text-slate-500 text-xs mb-4">
+                                We quite often host group trips to these destinations. Register your interest and we'll notify you when a group is forming!
+                            </p>
+                            <button 
+                                onClick={() => {
+                                    if (!isAuthenticated && openAuthModal) {
+                                        openAuthModal({ closable: true, hideTabs: false, tab: 'user' });
+                                    } else {
+                                        setIsGroupBookingOpen(true);
+                                    }
+                                }}
+                                className="w-full py-3 bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100 rounded-xl font-bold transition flex items-center justify-center gap-2"
+                            >
+                                <Calendar size={18} /> Register Group Interest
                             </button>
                         </div>
                     </div>
@@ -317,6 +452,14 @@ export default function OffBeatDetailsPage({ params }) {
             <OffbeatBookingForm 
                 isOpen={isBookingOpen}
                 onClose={() => setIsBookingOpen(false)}
+                offbeatId={offbeat._id}
+                offbeatTitle={offbeat.title}
+                user={user}
+            />
+
+            <GroupTripBookingForm 
+                isOpen={isGroupBookingOpen}
+                onClose={() => setIsGroupBookingOpen(false)}
                 offbeatId={offbeat._id}
                 offbeatTitle={offbeat.title}
                 user={user}
