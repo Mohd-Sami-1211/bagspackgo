@@ -63,7 +63,7 @@ function VisitRow({ visit, index }) {
                     </div>
                     <p className="text-xs text-gray-400 truncate mt-0.5">
                         <MapPin className="w-3 h-3 inline mr-1 opacity-60" />
-                        {visit.eventTitle || visit.packageTitle || 'Unknown'}
+                        {visit.offbeatTitle || visit.packageTitle || visit.eventTitle || 'Unknown'}
                     </p>
                 </div>
 
@@ -116,8 +116,8 @@ function VisitRow({ visit, index }) {
                             <div className="flex items-center gap-2 text-sm">
                                 <MapPin className="w-4 h-4 text-amber-400 flex-shrink-0" />
                                 <div>
-                                    <p className="text-[10px] text-gray-500 uppercase font-bold">{visit.packageTitle ? 'Package' : 'Event'}</p>
-                                    <p className="text-gray-200 font-medium">{visit.eventTitle || visit.packageTitle || '—'}</p>
+                                    <p className="text-[10px] text-gray-500 uppercase font-bold">{visit.offbeatTitle ? 'Offbeat' : visit.packageTitle ? 'Package' : 'Event'}</p>
+                                    <p className="text-gray-200 font-medium">{visit.offbeatTitle || visit.packageTitle || visit.eventTitle || '—'}</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-2 text-sm">
@@ -160,7 +160,7 @@ export default function ActivityPage() {
     const fetchActivity = useCallback(async (isManual = false) => {
         try {
             if (isManual) setRefreshing(true);
-            const base = tab === 'packages' ? '/api/admin/activity/packages' : '/api/admin/activity';
+            const base = tab === 'packages' ? '/api/admin/activity/packages' : tab === 'offbeats' ? '/api/admin/activity/offbeats' : '/api/admin/activity';
             const params = search ? `?search=${encodeURIComponent(search)}` : '';
             const res = await fetch(`${base}${params}`);
             const data = await res.json();
@@ -250,11 +250,12 @@ export default function ActivityPage() {
                 </div>
             </div>
 
-            {/* Events / Packages tab switcher */}
-            <div className="flex items-center gap-1 p-1 bg-gray-800/50 border border-gray-700/60 rounded-xl w-fit">
+            {/* Events / Packages / Offbeats tab switcher */}
+            <div className="flex items-center gap-1 p-1 bg-gray-800/50 border border-gray-700/60 rounded-xl w-fit flex-wrap">
                 {[
                     { key: 'events', label: 'Events' },
                     { key: 'packages', label: 'Trip Packages' },
+                    { key: 'offbeats', label: 'Offbeat Destinations' },
                 ].map(t => (
                     <button
                         key={t.key}
@@ -295,7 +296,7 @@ export default function ActivityPage() {
                 <Search className="w-4 h-4 text-gray-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                     type="text"
-                    placeholder={`Search by name, email, phone or ${tab === 'packages' ? 'package' : 'event'}…`}
+                    placeholder={`Search by name, email, phone or ${tab === 'packages' ? 'package' : tab === 'offbeats' ? 'offbeat' : 'event'}…`}
                     value={search}
                     onChange={e => setSearch(e.target.value)}
                     className="w-full pl-10 pr-4 py-2.5 bg-gray-800/60 border border-gray-700 rounded-xl text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 transition-all"
@@ -356,7 +357,7 @@ export default function ActivityPage() {
                     <div className="space-y-2">
                         {visits.map((visit, index) => (
                             <VisitRow
-                                key={`${visit.user}-${visit.event || visit.package}`}
+                                key={`${visit.user}-${visit.event || visit.package || visit.offbeat || index}`}
                                 visit={visit}
                                 index={index}
                             />
