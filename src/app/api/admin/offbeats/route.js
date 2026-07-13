@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import { OffBeat } from '@/models/offbeat.model';
 
+export const maxDuration = 60; // Allow more time for large uploads
+
 export async function GET(req) {
     try {
         await dbConnect();

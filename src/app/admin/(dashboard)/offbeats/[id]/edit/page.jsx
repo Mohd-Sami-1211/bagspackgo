@@ -1,5 +1,5 @@
 'use client';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Save, Loader2, Plus, Trash2, Image as ImageIcon, Video as VideoIcon } from 'lucide-react';
 import Link from 'next/link';
@@ -55,9 +55,14 @@ function DynamicListInput({ label, items, onChange, placeholder }) {
     );
 }
 
-export default function NewOffBeatPage() {
+export default function EditOffBeatPage({ params }) {
+    // Unwrap params in Next.js 15
+    const resolvedParams = use(params);
+    const { id } = resolvedParams;
     const router = useRouter();
+    
     const [loading, setLoading] = useState(false);
+    const [fetching, setFetching] = useState(true);
     
     const [formData, setFormData] = useState({
         title: '',
@@ -79,11 +84,47 @@ export default function NewOffBeatPage() {
     const photoInputRef = useRef(null);
     const videoInputRef = useRef(null);
 
+    useEffect(() => {
+        const fetchOffbeat = async () => {
+            try {
+                const res = await fetch(`/api/admin/offbeats/${id}`);
+                const data = await res.json();
+                if (data.success) {
+                    const ob = data.data;
+                    setFormData({
+                        title: ob.title || '',
+                        destination: ob.destination || '',
+                        region: ob.region || 'Kashmir',
+                        shortDescription: ob.shortDescription || '',
+                        description: ob.description || '',
+                        status: ob.status || 'draft',
+                        highlights: ob.highlights?.length ? ob.highlights : [''],
+                        whatsIncluded: ob.whatsIncluded?.length ? ob.whatsIncluded : [''],
+                        whatsExcluded: ob.whatsExcluded?.length ? ob.whatsExcluded : [''],
+                        whatToBring: ob.whatToBring?.length ? ob.whatToBring : [''],
+                        itinerary: ob.itinerary?.length ? ob.itinerary : [''],
+                        restrictions: ob.restrictions?.length ? ob.restrictions : ['']
+                    });
+                    setPhotos(ob.photographs || []);
+                    setVideos(ob.videos || []);
+                } else {
+                    alert('Failed to load offbeat data');
+                    router.push('/admin/offbeats');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Error loading offbeat');
+            } finally {
+                setFetching(false);
+            }
+        };
+        fetchOffbeat();
+    }, [id, router]);
+
     const handlePhotoUpload = async (e) => {
         const files = Array.from(e.target.files);
         if (files.length === 0) return;
         
-        // Convert and compress photos to base64
         const processedPhotos = await Promise.all(
             files.map(file => compressImage(file, { maxWidth: 1200, quality: 0.8 }))
         );
@@ -94,7 +135,6 @@ export default function NewOffBeatPage() {
         const files = Array.from(e.target.files);
         if (files.length === 0) return;
         
-        // Convert video to base64 (Note: can hit payload limits if large)
         const processedVideos = await Promise.all(
             files.map(file => {
                 return new Promise((resolve, reject) => {
@@ -115,7 +155,6 @@ export default function NewOffBeatPage() {
         e.preventDefault();
         setLoading(true);
         try {
-            // Clean up empty array fields
             const cleanArray = (arr) => arr.filter(item => item.trim() !== '');
             
             const payload = { 
@@ -130,8 +169,8 @@ export default function NewOffBeatPage() {
                 videos: videos
             };
 
-            const res = await fetch('/api/admin/offbeats', {
-                method: 'POST',
+            const res = await fetch(`/api/admin/offbeats/${id}`, {
+                method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
@@ -139,11 +178,11 @@ export default function NewOffBeatPage() {
                 router.push('/admin/offbeats');
             } else {
                 const data = await res.json();
-                alert(data.message || 'Failed to create offbeat');
+                alert(data.message || 'Failed to update offbeat');
             }
         } catch (error) {
             console.error(error);
-            alert('Error creating offbeat');
+            alert('Error updating offbeat');
         } finally {
             setLoading(false);
         }
@@ -151,13 +190,21 @@ export default function NewOffBeatPage() {
 
     const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
+    if (fetching) {
+        return (
+            <div className="flex justify-center items-center h-64">
+                <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
+            </div>
+        );
+    }
+
     return (
         <div className="max-w-5xl mx-auto space-y-6 pb-20">
             <div className="flex items-center gap-4">
                 <Link href="/admin/offbeats" className="text-gray-400 hover:text-white transition">
                     <ArrowLeft size={24} />
                 </Link>
-                <h1 className="text-2xl font-bold text-white">Add New OffBeat</h1>
+                <h1 className="text-2xl font-bold text-white">Edit OffBeat Destination</h1>
             </div>
 
             <form onSubmit={handleSubmit} className="bg-gray-900 border border-gray-800 rounded-2xl p-6 md:p-8 space-y-8 shadow-xl">
@@ -261,7 +308,7 @@ export default function NewOffBeatPage() {
                 <div className="pt-8 border-t border-gray-800 flex justify-end sticky bottom-0 bg-gray-900 py-4 z-10">
                     <button type="submit" disabled={loading} className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 transition disabled:opacity-50 shadow-lg shadow-emerald-900/20">
                         {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save size={20} />}
-                        Save OffBeat Destination
+                        Save Changes
                     </button>
                 </div>
             </form>
