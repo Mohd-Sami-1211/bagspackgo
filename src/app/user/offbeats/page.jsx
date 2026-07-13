@@ -86,11 +86,19 @@ export default function OffBeatsListingPage() {
     const [activeRegion, setActiveRegion] = useState(regionOptions[0]);
 
     useEffect(() => {
+        const cachedData = sessionStorage.getItem('offbeats_data');
+        if (cachedData) {
+            setOffbeats(JSON.parse(cachedData));
+            setLoading(false);
+            return;
+        }
+
         fetch('/api/public/offbeats')
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
                     setOffbeats(data.data);
+                    sessionStorage.setItem('offbeats_data', JSON.stringify(data.data));
                 }
             })
             .catch(err => console.error(err))
@@ -230,7 +238,7 @@ export default function OffBeatsListingPage() {
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, scale: 0.95 }}
                                     transition={{ duration: 0.4, ease: "easeOut" }}
-                                    className="group bg-white/80 backdrop-blur-sm rounded-[2rem] overflow-hidden shadow-[0_8px_30px_-12px_rgba(0,0,0,0.1)] hover:shadow-[0_20px_40px_-10px_rgba(16,185,129,0.15)] hover:-translate-y-1 transition-all duration-500 border border-white flex flex-col h-full relative"
+                                    className="group bg-white rounded-[2rem] overflow-hidden shadow-[0_8px_30px_-12px_rgba(0,0,0,0.1)] hover:shadow-[0_20px_40px_-10px_rgba(16,185,129,0.15)] hover:-translate-y-1 transition-all duration-500 border border-slate-100 flex flex-col h-full relative"
                                 >
                                     <div className="relative h-64 overflow-hidden">
                                         <img 
@@ -238,7 +246,7 @@ export default function OffBeatsListingPage() {
                                             alt={offbeat.title}
                                             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                                         />
-                                        <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-md px-4 py-1.5 rounded-full text-xs font-black tracking-wide text-emerald-700 shadow-[0_4px_12px_rgba(0,0,0,0.1)] z-10 border border-white/50">
+                                        <div className="absolute top-4 left-4 bg-white px-4 py-1.5 rounded-full text-xs font-black tracking-wide text-emerald-700 shadow-[0_4px_12px_rgba(0,0,0,0.1)] z-10 border border-white/50">
                                             {offbeat.region || 'Unknown Region'}
                                         </div>
                                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-40 group-hover:opacity-70 transition-opacity duration-500" />

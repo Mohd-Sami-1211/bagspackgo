@@ -36,6 +36,25 @@ const OffbeatDetailsSkeleton = () => (
     </div>
 );
 
+const ImageWithLoader = ({ src, alt, className }) => {
+    const [loaded, setLoaded] = useState(false);
+    return (
+        <>
+            {!loaded && (
+                <div className="absolute inset-0 bg-slate-200 animate-pulse flex items-center justify-center z-0">
+                    <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />
+                </div>
+            )}
+            <img 
+                src={src} 
+                alt={alt} 
+                onLoad={() => setLoaded(true)} 
+                className={`${className} transition-opacity duration-500 relative z-10 ${loaded ? '' : 'opacity-0'}`} 
+            />
+        </>
+    );
+};
+
 export default function OffBeatDetailsPage({ params }) {
     const { id } = use(params);
     const router = useRouter();
@@ -48,11 +67,20 @@ export default function OffBeatDetailsPage({ params }) {
 
     // Fetch Details
     useEffect(() => {
+        const cacheKey = `offbeat_data_${id}`;
+        const cachedData = sessionStorage.getItem(cacheKey);
+        if (cachedData) {
+            setOffbeat(JSON.parse(cachedData));
+            setLoading(false);
+            return;
+        }
+
         fetch(`/api/public/offbeats/${id}`)
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
                     setOffbeat(data.data);
+                    sessionStorage.setItem(cacheKey, JSON.stringify(data.data));
                 } else {
                     setError(true);
                 }
@@ -112,22 +140,22 @@ export default function OffBeatDetailsPage({ params }) {
         <div className="min-h-screen bg-slate-50 pb-20">
             {/* Hero Image Section */}
             <div className="relative h-[60vh] min-h-[400px] max-h-[600px] w-full">
-                <div className="absolute inset-0 bg-slate-900">
-                    <img src={mainImage} alt={offbeat.title} className="w-full h-full object-cover opacity-80" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent" />
+                <div className="absolute inset-0 bg-slate-900 overflow-hidden">
+                    <ImageWithLoader src={mainImage} alt={offbeat.title} className="w-full h-full object-cover opacity-80" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent z-20 pointer-events-none" />
                 </div>
                 
                 {/* Top Nav Overlay */}
-                <div className="absolute top-24 left-4 sm:left-8 z-10">
+                <div className="absolute top-24 left-4 sm:left-8 z-30">
                     <button 
                         onClick={() => router.back()}
-                        className="flex items-center justify-center w-10 h-10 rounded-full bg-white/10 backdrop-blur-md text-white hover:bg-white/20 transition border border-white/20"
+                        className="flex items-center justify-center w-10 h-10 rounded-full bg-slate-800/40 text-white hover:bg-slate-800/60 transition border border-white/20"
                     >
                         <ArrowLeft size={20} />
                     </button>
                 </div>
 
-                <div className="absolute bottom-0 left-0 w-full px-4 sm:px-8 pb-12">
+                <div className="absolute bottom-0 left-0 w-full px-4 sm:px-8 pb-12 z-30">
                     <div className="max-w-6xl mx-auto">
                         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
                             <div className="flex items-center gap-2 text-emerald-400 font-semibold mb-4 text-sm sm:text-base">
@@ -214,8 +242,8 @@ export default function OffBeatDetailsPage({ params }) {
                             </h2>
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                                 {offbeat.photographs.slice(1).map((photo, idx) => (
-                                    <div key={idx} className="aspect-square rounded-xl overflow-hidden shadow-sm">
-                                        <img src={photo} alt={`Gallery ${idx + 1}`} className="w-full h-full object-cover hover:scale-110 transition-transform duration-500 cursor-pointer" />
+                                    <div key={idx} className="aspect-square rounded-xl overflow-hidden shadow-sm relative bg-slate-100">
+                                        <ImageWithLoader src={photo} alt={`Gallery ${idx + 1}`} className="w-full h-full object-cover hover:scale-110 transition-transform duration-500 cursor-pointer" />
                                     </div>
                                 ))}
                             </div>
