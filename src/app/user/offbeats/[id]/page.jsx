@@ -7,6 +7,35 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import OffbeatBookingForm from '@/components/user/offbeats/OffbeatBookingForm';
 
+const OffbeatDetailsSkeleton = () => (
+    <div className="min-h-screen bg-slate-50 animate-pulse pb-20">
+        <div className="h-[60vh] min-h-[400px] w-full bg-slate-200" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-24 relative z-20">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2 space-y-8">
+                    <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-slate-100">
+                        <div className="h-10 bg-slate-200 rounded-lg w-3/4 mb-4" />
+                        <div className="h-6 bg-slate-200 rounded-md w-1/3 mb-8" />
+                        <div className="space-y-3">
+                            <div className="h-4 bg-slate-200 rounded-md w-full" />
+                            <div className="h-4 bg-slate-200 rounded-md w-full" />
+                            <div className="h-4 bg-slate-200 rounded-md w-5/6" />
+                        </div>
+                    </div>
+                </div>
+                <div className="lg:col-span-1">
+                    <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 h-96" />
+                </div>
+            </div>
+            
+            <div className="flex flex-col items-center justify-center mt-16 mb-8 gap-3">
+                <Loader2 className="w-10 h-10 text-emerald-600 animate-spin" />
+                <p className="text-emerald-600 text-sm font-medium">Loading...</p>
+            </div>
+        </div>
+    </div>
+);
+
 export default function OffBeatDetailsPage({ params }) {
     const { id } = use(params);
     const router = useRouter();
@@ -61,13 +90,7 @@ export default function OffBeatDetailsPage({ params }) {
         }
     }, [isAuthenticated, offbeat]);
 
-    if (loading) {
-        return (
-            <div className="min-h-screen pt-20 flex items-center justify-center bg-slate-50">
-                <Loader2 className="w-12 h-12 text-emerald-600 animate-spin" />
-            </div>
-        );
-    }
+    if (loading) return <OffbeatDetailsSkeleton />;
 
     if (error || !offbeat) {
         return (

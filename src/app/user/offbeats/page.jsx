@@ -58,6 +58,25 @@ const regionOptions = [
     { value: 'Chenab Valley', label: 'Chenab Valley' }
 ];
 
+const OffbeatsSkeleton = () => (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="bg-white/80 rounded-[2rem] border border-white shadow-sm flex flex-col h-[460px] animate-pulse overflow-hidden">
+                <div className="h-64 bg-slate-200 shrink-0" />
+                <div className="p-6 flex flex-col flex-grow">
+                    <div className="h-4 bg-slate-200 rounded-md w-1/3 mb-4" />
+                    <div className="h-7 bg-slate-200 rounded-md w-3/4 mb-4" />
+                    <div className="space-y-2 mb-6 flex-grow">
+                        <div className="h-4 bg-slate-200 rounded-md w-full" />
+                        <div className="h-4 bg-slate-200 rounded-md w-5/6" />
+                    </div>
+                    <div className="mt-auto h-12 bg-slate-200 rounded-2xl w-full" />
+                </div>
+            </div>
+        ))}
+    </div>
+);
+
 export default function OffBeatsListingPage() {
     const [offbeats, setOffbeats] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -189,10 +208,7 @@ export default function OffBeatsListingPage() {
             {/* Listing Section */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                 {loading ? (
-                    <div className="flex flex-col items-center justify-center h-64 gap-4">
-                        <Loader2 className="w-10 h-10 text-emerald-600 animate-spin" />
-                        <p className="text-slate-500 font-medium animate-pulse">Unveiling hidden gems...</p>
-                    </div>
+                    <OffbeatsSkeleton />
                 ) : filteredOffbeats.length === 0 ? (
                     <motion.div 
                         initial={{ opacity: 0, scale: 0.9 }}
