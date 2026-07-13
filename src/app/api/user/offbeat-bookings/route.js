@@ -31,3 +31,23 @@ export async function POST(req) {
         return NextResponse.json({ success: false, message: 'Server error' }, { status: 500 });
     }
 }
+
+export async function GET(req) {
+    try {
+        const currentUser = await getCurrentUser();
+        if (!currentUser) {
+            return NextResponse.json({ success: false, message: 'Must be logged in' }, { status: 401 });
+        }
+
+        await dbConnect();
+        
+        const bookings = await OffBeatBooking.find({ user: currentUser.userId })
+            .populate('offbeat')
+            .sort({ createdAt: -1 });
+
+        return NextResponse.json({ success: true, data: bookings });
+    } catch (error) {
+        console.error('Failed to fetch offbeat bookings:', error);
+        return NextResponse.json({ success: false, message: 'Server error' }, { status: 500 });
+    }
+}

@@ -29,8 +29,6 @@ const SavedMainContent = () => {
     
     if (record.itemType === 'event') {
       path = `/user/events/eventdetails/${record.itemId}`;
-    } else if (record.itemType === 'trek') {
-      path = `/user/trek/guidelist/trekdetails/${actualProviderId}?trekId=${pkg._id}${dateQuery}&count=${count}&category=${cat}&days=${days}`;
     } else {
       path = `/user/trip/guidelist/tripdetails/${actualProviderId}?packageId=${pkg._id}${dateQuery}&count=${count}&category=${cat}&days=${days}`;
     }
@@ -72,7 +70,6 @@ const SavedMainContent = () => {
 
   const TYPE_CONFIG = {
     trip: { label: 'Trip', icon: Compass, color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200' },
-    trek: { label: 'Trek', icon: Mountain, color: 'text-sky-700', bg: 'bg-sky-50', border: 'border-sky-200' },
     event: { label: 'Event', icon: Ticket, color: 'text-violet-700', bg: 'bg-violet-50', border: 'border-violet-200' },
   };
 
@@ -110,7 +107,7 @@ const SavedMainContent = () => {
         
         {/* Category Filters */}
         <div className="flex bg-gray-50 border border-gray-200 p-1 rounded-lg self-start sm:self-auto w-full sm:w-auto overflow-x-auto">
-          {['all', 'trip', 'trek', 'event'].map((cat) => (
+          {['all', 'trip', 'event'].map((cat) => (
             <button
               key={cat}
               onClick={() => setCategoryFilter(cat)}
