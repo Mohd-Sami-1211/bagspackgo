@@ -55,6 +55,105 @@ function DynamicListInput({ label, items, onChange, placeholder }) {
     );
 }
 
+function ItineraryInput({ items, onChange }) {
+    return (
+        <div className="space-y-4 md:col-span-2">
+            <div className="flex items-center justify-between border-b border-gray-800 pb-2">
+                <label className="block text-sm font-medium text-gray-400">Itinerary (Day by Day)</label>
+                <button
+                    type="button"
+                    onClick={() => onChange([...items, { title: '', points: [''] }])}
+                    className="flex items-center gap-1 text-emerald-400 hover:text-emerald-300 text-sm transition font-medium"
+                >
+                    <Plus size={16} /> Add Day
+                </button>
+            </div>
+            
+            {items.map((day, dayIndex) => (
+                <div key={dayIndex} className="bg-gray-800/50 p-4 rounded-xl border border-gray-700/50 space-y-4 relative group">
+                    {items.length > 1 && (
+                        <button
+                            type="button"
+                            onClick={() => onChange(items.filter((_, i) => i !== dayIndex))}
+                            className="absolute top-4 right-4 p-1.5 text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-lg transition opacity-0 group-hover:opacity-100"
+                        >
+                            <Trash2 size={16} />
+                        </button>
+                    )}
+                    
+                    <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Day {dayIndex + 1} Title</label>
+                        <input
+                            type="text"
+                            value={day.title}
+                            onChange={(e) => {
+                                const newItems = [...items];
+                                newItems[dayIndex].title = e.target.value;
+                                onChange(newItems);
+                            }}
+                            placeholder="e.g. Arrival & Acclimatization"
+                            className="w-full bg-gray-900 border border-gray-700 text-white rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500 outline-none"
+                        />
+                    </div>
+                    
+                    <div className="space-y-2">
+                        <label className="block text-xs font-medium text-gray-500">Day Details / Points</label>
+                        {day.points.map((point, pointIndex) => (
+                            <div key={pointIndex} className="flex items-center gap-2">
+                                <span className="text-emerald-500 text-sm">•</span>
+                                <input
+                                    type="text"
+                                    value={point}
+                                    onChange={(e) => {
+                                        const newItems = [...items];
+                                        newItems[dayIndex].points[pointIndex] = e.target.value;
+                                        onChange(newItems);
+                                    }}
+                                    placeholder="e.g. Check-in to the hotel"
+                                    className="flex-1 bg-gray-900 border border-gray-700 text-white rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
+                                />
+                                {day.points.length > 1 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const newItems = [...items];
+                                            newItems[dayIndex].points = day.points.filter((_, i) => i !== pointIndex);
+                                            onChange(newItems);
+                                        }}
+                                        className="p-1.5 text-red-400 hover:text-red-300 rounded-lg transition"
+                                    >
+                                        <Trash2 size={14} />
+                                    </button>
+                                )}
+                            </div>
+                        ))}
+                        <button
+                            type="button"
+                            onClick={() => {
+                                const newItems = [...items];
+                                newItems[dayIndex].points.push('');
+                                onChange(newItems);
+                            }}
+                            className="text-emerald-400 hover:text-emerald-300 text-xs transition mt-2 ml-4"
+                        >
+                            + Add Point
+                        </button>
+                    </div>
+                </div>
+            ))}
+            {items.length === 0 && (
+                <button
+                    type="button"
+                    onClick={() => onChange([{ title: '', points: [''] }])}
+                    className="text-emerald-400 hover:text-emerald-300 text-sm transition"
+                >
+                    + Add Day 1
+                </button>
+            )}
+        </div>
+    );
+}
+
 export default function NewOffBeatPage() {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
@@ -70,14 +169,16 @@ export default function NewOffBeatPage() {
         whatsIncluded: [''],
         whatsExcluded: [''],
         whatToBring: [''],
-        itinerary: [''],
+        itinerary: [{ title: '', points: [''] }],
         restrictions: ['']
     });
 
     const [photos, setPhotos] = useState([]);
     const [videos, setVideos] = useState([]);
+    const [coverPhoto, setCoverPhoto] = useState(null);
     const photoInputRef = useRef(null);
     const videoInputRef = useRef(null);
+    const coverPhotoInputRef = useRef(null);
 
     const handlePhotoUpload = async (e) => {
         const files = Array.from(e.target.files);
@@ -90,22 +191,41 @@ export default function NewOffBeatPage() {
         setPhotos(prev => [...prev, ...processedPhotos]);
     };
 
+    const handleCoverPhotoUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const processedPhoto = await compressImage(file, { maxWidth: 1200, quality: 0.8 });
+        setCoverPhoto(processedPhoto);
+    };
+
     const handleVideoUpload = async (e) => {
         const files = Array.from(e.target.files);
         if (files.length === 0) return;
         
-        // Convert video to base64 (Note: can hit payload limits if large)
-        const processedVideos = await Promise.all(
-            files.map(file => {
-                return new Promise((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.readAsDataURL(file);
-                    reader.onload = () => resolve(reader.result);
-                    reader.onerror = error => reject(error);
-                });
-            })
-        );
-        setVideos(prev => [...prev, ...processedVideos]);
+        setLoading(true);
+        try {
+            const uploadedVideos = await Promise.all(
+                files.map(async (file) => {
+                    const fd = new FormData();
+                    fd.append('file', file);
+                    const res = await fetch('/api/upload', {
+                        method: 'POST',
+                        body: fd
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        return data.url;
+                    }
+                    throw new Error(data.message || 'Video upload failed');
+                })
+            );
+            setVideos(prev => [...prev, ...uploadedVideos]);
+        } catch (error) {
+            console.error(error);
+            alert('Error uploading videos. They might be too large.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const removePhoto = (index) => setPhotos(photos.filter((_, i) => i !== index));
@@ -124,8 +244,14 @@ export default function NewOffBeatPage() {
                 whatsIncluded: cleanArray(formData.whatsIncluded),
                 whatsExcluded: cleanArray(formData.whatsExcluded),
                 whatToBring: cleanArray(formData.whatToBring),
-                itinerary: cleanArray(formData.itinerary),
+                itinerary: formData.itinerary
+                    .filter(day => day.title.trim() !== '' || day.points.some(p => p.trim() !== ''))
+                    .map(day => ({
+                        title: day.title.trim(),
+                        points: day.points.filter(p => p.trim() !== '')
+                    })),
                 restrictions: cleanArray(formData.restrictions),
+                coverPhoto: coverPhoto,
                 photographs: photos,
                 videos: videos
             };
@@ -138,12 +264,16 @@ export default function NewOffBeatPage() {
             if (res.ok) {
                 router.push('/admin/offbeats');
             } else {
-                const data = await res.json();
+                if (res.status === 413) {
+                    alert('Error: Video or image size is too large. Please upload smaller files (Max 20MB total).');
+                    return;
+                }
+                const data = await res.json().catch(() => ({ message: 'Server error' }));
                 alert(data.message || 'Failed to create offbeat');
             }
         } catch (error) {
             console.error(error);
-            alert('Error creating offbeat');
+            alert('Error creating offbeat. If you are uploading videos, they might be too large.');
         } finally {
             setLoading(false);
         }
@@ -203,9 +333,30 @@ export default function NewOffBeatPage() {
                 <div>
                     <h2 className="text-lg font-semibold text-white mb-4 border-b border-gray-800 pb-2">Media Uploads</h2>
                     <div className="space-y-6">
+                        {/* Cover Photo */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-400 mb-2">Cover Photo *</label>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                                {coverPhoto ? (
+                                    <div className="relative aspect-video bg-gray-800 rounded-xl overflow-hidden group">
+                                        <img src={coverPhoto} alt="Cover" className="w-full h-full object-cover" />
+                                        <button type="button" onClick={() => setCoverPhoto(null)} className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <button type="button" onClick={() => coverPhotoInputRef.current?.click()} className="aspect-video bg-gray-800/50 hover:bg-gray-800 border-2 border-dashed border-gray-700 hover:border-emerald-500 rounded-xl flex flex-col items-center justify-center gap-2 text-gray-400 hover:text-emerald-400 transition">
+                                        <ImageIcon size={24} />
+                                        <span className="text-sm font-medium">Add Cover Photo</span>
+                                    </button>
+                                )}
+                            </div>
+                            <input type="file" accept="image/*" className="hidden" ref={coverPhotoInputRef} onChange={handleCoverPhotoUpload} />
+                        </div>
+
                         {/* Photographs */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-400 mb-2">Photographs</label>
+                            <label className="block text-sm font-medium text-gray-400 mb-2">Additional Photographs</label>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
                                 {photos.map((photo, idx) => (
                                     <div key={idx} className="relative aspect-video bg-gray-800 rounded-xl overflow-hidden group">
@@ -250,7 +401,7 @@ export default function NewOffBeatPage() {
                     <h2 className="text-lg font-semibold text-white mb-4 border-b border-gray-800 pb-2">Experience Details</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <DynamicListInput label="Highlights" items={formData.highlights} onChange={(val) => setFormData({ ...formData, highlights: val })} placeholder="e.g. Scenic mountain views" />
-                        <DynamicListInput label="Itinerary (Day by Day)" items={formData.itinerary} onChange={(val) => setFormData({ ...formData, itinerary: val })} placeholder="e.g. Day 1: Arrival and acclimatization" />
+                        <ItineraryInput items={formData.itinerary} onChange={(val) => setFormData({ ...formData, itinerary: val })} />
                         <DynamicListInput label="What's Included" items={formData.whatsIncluded} onChange={(val) => setFormData({ ...formData, whatsIncluded: val })} placeholder="e.g. Local guide, Meals" />
                         <DynamicListInput label="What's Excluded" items={formData.whatsExcluded} onChange={(val) => setFormData({ ...formData, whatsExcluded: val })} placeholder="e.g. Personal expenses, Flights" />
                         <DynamicListInput label="What to Bring" items={formData.whatToBring} onChange={(val) => setFormData({ ...formData, whatToBring: val })} placeholder="e.g. Warm jacket, Trekking shoes" />

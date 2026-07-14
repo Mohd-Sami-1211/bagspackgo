@@ -38,6 +38,10 @@ const offbeatSchema = new mongoose.Schema(
         },
         
         // Media
+        coverPhoto: {
+            type: String,
+            default: null,
+        },
         photographs: {
             type: [String],
             default: [],
@@ -85,7 +89,10 @@ const offbeatSchema = new mongoose.Schema(
             default: [],
         },
         itinerary: {
-            type: [String],
+            type: [{
+                title: String,
+                points: [String]
+            }],
             default: [],
         },
 
@@ -112,4 +119,7 @@ const offbeatSchema = new mongoose.Schema(
 offbeatSchema.index({ status: 1 });
 offbeatSchema.index({ destination: 1 });
 
-export const OffBeat = mongoose.models.OffBeat || mongoose.model("OffBeat", offbeatSchema);
+if (mongoose.models.OffBeat) {
+    delete mongoose.models.OffBeat;
+}
+export const OffBeat = mongoose.model("OffBeat", offbeatSchema);

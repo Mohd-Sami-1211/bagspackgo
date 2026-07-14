@@ -26,7 +26,8 @@ export async function PUT(req, { params }) {
         const offbeat = await OffBeat.findByIdAndUpdate(id, body, { new: true });
         return NextResponse.json({ success: true, data: offbeat });
     } catch (error) {
-        return NextResponse.json({ success: false, message: 'Server error' }, { status: 500 });
+        console.error('Update Offbeat Error:', error);
+        return NextResponse.json({ success: false, message: error.message || 'Server error' }, { status: 500 });
     }
 }
 
