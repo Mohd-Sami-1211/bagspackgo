@@ -68,6 +68,7 @@ export default function OffBeatDetailsPage({ params }) {
     const [isGroupBookingOpen, setIsGroupBookingOpen] = useState(false);
     const [isSaved, setIsSaved] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [selectedMedia, setSelectedMedia] = useState(null);
 
     // Fetch Saved Status
     useEffect(() => {
@@ -196,7 +197,7 @@ export default function OffBeatDetailsPage({ params }) {
         );
     }
 
-    const mainImage = offbeat.photographs?.[0] || 'https://images.unsplash.com/photo-1621245799986-e3d1c9ccfc65?auto=format&fit=crop&q=80';
+    const mainImage = offbeat.coverPhoto || offbeat.photographs?.[0] || 'https://images.unsplash.com/photo-1621245799986-e3d1c9ccfc65?auto=format&fit=crop&q=80';
 
     return (
         <div className="min-h-screen bg-slate-50 pb-20">
@@ -278,15 +279,36 @@ export default function OffBeatDetailsPage({ params }) {
                     </section>
 
                     {/* Gallery */}
-                    {offbeat.photographs?.length > 1 && (
+                    {(offbeat.photographs?.length > 0 || offbeat.videos?.length > 0) && (
                         <section>
                             <h2 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">
                                 <Camera className="text-emerald-600" /> Gallery
                             </h2>
-                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                                {offbeat.photographs.slice(1).map((photo, idx) => (
-                                    <div key={idx} className="aspect-square rounded-xl overflow-hidden shadow-sm relative bg-slate-100">
-                                        <ImageWithLoader src={photo} alt={`Gallery ${idx + 1}`} className="w-full h-full object-cover hover:scale-110 transition-transform duration-500 cursor-pointer" />
+                            <div className="columns-1 sm:columns-2 md:columns-3 gap-4 space-y-4">
+                                {offbeat.photographs?.map((photo, idx) => (
+                                    <div 
+                                        key={`photo-${idx}`} 
+                                        className="break-inside-avoid rounded-xl overflow-hidden shadow-sm relative bg-slate-100 cursor-pointer group"
+                                        onClick={() => setSelectedMedia({ type: 'image', url: photo })}
+                                    >
+                                        <ImageWithLoader src={photo} alt={`Gallery ${idx + 1}`} className="w-full h-auto object-cover group-hover:scale-[1.02] transition-transform duration-500" />
+                                    </div>
+                                ))}
+                                
+                                {offbeat.videos?.map((video, idx) => (
+                                    <div 
+                                        key={`video-${idx}`} 
+                                        className="break-inside-avoid rounded-xl overflow-hidden shadow-sm bg-slate-100 flex items-center justify-center cursor-pointer group"
+                                        onClick={() => setSelectedMedia({ type: 'video', url: video })}
+                                    >
+                                        <video 
+                                            src={video} 
+                                            autoPlay
+                                            loop
+                                            muted
+                                            playsInline
+                                            className="w-full h-auto object-cover group-hover:scale-[1.02] transition-transform duration-500" 
+                                        />
                                     </div>
                                 ))}
                             </div>
@@ -321,8 +343,21 @@ export default function OffBeatDetailsPage({ params }) {
                                             {idx + 1}
                                         </div>
                                         <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                                            <h3 className="font-bold text-slate-800 text-lg mb-2">Day {idx + 1}</h3>
-                                            <p className="text-slate-600">{day}</p>
+                                            <h3 className="font-bold text-slate-800 text-lg mb-2">
+                                                Day {idx + 1}{typeof day === 'object' && day.title ? ` - ${day.title}` : ''}
+                                            </h3>
+                                            {typeof day === 'string' ? (
+                                                <p className="text-slate-600">{day}</p>
+                                            ) : (
+                                                <ul className="space-y-2 mt-3">
+                                                    {day.points?.map((point, pIdx) => (
+                                                        <li key={pIdx} className="text-slate-600 flex items-start gap-2 text-sm">
+                                                            <span className="text-emerald-500 mt-1 flex-shrink-0">•</span>
+                                                            <span>{point}</span>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            )}
                                         </div>
                                     </div>
                                 ))}
@@ -464,6 +499,36 @@ export default function OffBeatDetailsPage({ params }) {
                 offbeatTitle={offbeat.title}
                 user={user}
             />
+
+            {/* Media Modal */}
+            {selectedMedia && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4" onClick={() => setSelectedMedia(null)}>
+                    <button 
+                        className="absolute top-6 right-6 text-white hover:text-emerald-400 transition"
+                        onClick={() => setSelectedMedia(null)}
+                    >
+                        <X size={32} />
+                    </button>
+                    {selectedMedia.type === 'image' ? (
+                        <img 
+                            src={selectedMedia.url} 
+                            alt="Gallery full view" 
+                            className="max-w-full max-h-[90vh] object-contain rounded-lg"
+                            onClick={(e) => e.stopPropagation()} 
+                        />
+                    ) : (
+                        <video 
+                            src={selectedMedia.url} 
+                            autoPlay
+                            loop
+                            muted
+                            playsInline
+                            className="max-w-full max-h-[90vh] object-contain rounded-lg"
+                            onClick={(e) => e.stopPropagation()} 
+                        />
+                    )}
+                </div>
+            )}
         </div>
     );
 }
