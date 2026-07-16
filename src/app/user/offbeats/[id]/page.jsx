@@ -342,7 +342,15 @@ export default function OffBeatDetailsPage({ params }) {
                                     {offbeat.itinerary.map((day, idx) => (
                                         <button
                                             key={idx}
-                                            onClick={() => setActiveItineraryDay(idx)}
+                                            onClick={(e) => {
+                                                setActiveItineraryDay(idx);
+                                                // Automatically scroll the clicked day into view (centered)
+                                                e.currentTarget.scrollIntoView({
+                                                    behavior: 'smooth',
+                                                    block: 'nearest',
+                                                    inline: 'center'
+                                                });
+                                            }}
                                             className={`text-left px-5 py-4 rounded-2xl transition-all duration-300 flex items-center gap-4 shrink-0 snap-center min-w-[200px] lg:min-w-0 border ${
                                                 activeItineraryDay === idx
                                                     ? 'bg-emerald-50 border-emerald-200 shadow-sm'
