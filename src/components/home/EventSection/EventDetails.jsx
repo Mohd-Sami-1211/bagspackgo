@@ -501,10 +501,10 @@ const EventDetails = ({ event, loading = false }) => {
     if (!eventId) return;
     (async () => {
       try {
-        const res = await fetch('/api/user/saved');
+        const res = await fetch(`/api/user/saved/check?itemId=${eventId}`);
         const data = await res.json();
-        if (data.success && data.saved) {
-          setIsSaved(data.saved.some(item => item.itemId === eventId));
+        if (data.success) {
+          setIsSaved(data.isSaved);
         }
       } catch {}
 

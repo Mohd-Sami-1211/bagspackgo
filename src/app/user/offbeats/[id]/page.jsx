@@ -3,6 +3,7 @@ import { useState, use } from 'react';
 import { motion } from 'framer-motion';
 import { MapPin, Check, X, Calendar, Camera, Info, Loader2, ArrowLeft, Bookmark, Share2 } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import OffbeatBookingForm from '@/components/user/offbeats/OffbeatBookingForm';
@@ -54,12 +55,14 @@ const ImageWithLoader = ({ src, alt, className, eager = false }) => {
                     <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />
                 </div>
             )}
-            <img 
+            <Image 
                 src={src} 
                 alt={alt} 
-                loading={eager ? 'eager' : 'lazy'}
+                fill
+                sizes={eager ? "100vw" : "(max-width: 768px) 100vw, 50vw"}
+                priority={eager}
                 onLoad={() => setLoaded(true)} 
-                className={`${className} transition-opacity duration-500 relative z-10 ${loaded ? '' : 'opacity-0'}`} 
+                className={`${className} object-cover transition-opacity duration-500 relative z-10 ${loaded ? '' : 'opacity-0'}`} 
             />
         </>
     );
@@ -75,6 +78,7 @@ export default function OffBeatDetailsPage({ params }) {
     const [isSaved, setIsSaved] = useState(false);
     const [saving, setSaving] = useState(false);
     const [selectedMedia, setSelectedMedia] = useState(null);
+    const [activeItineraryDay, setActiveItineraryDay] = useState(0);
 
     // SWR-cached fetch for offbeat detail (2 min dedupe, stale-while-revalidate)
     const { data, isLoading, error } = useOffbeatDetail(id, {
@@ -321,31 +325,81 @@ export default function OffBeatDetailsPage({ params }) {
                             <h2 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">
                                 <Calendar className="text-emerald-600" /> Itinerary
                             </h2>
-                            <div className="space-y-6 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-300 before:to-transparent">
-                                {offbeat.itinerary.map((day, idx) => (
-                                    <div key={idx} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
-                                        <div className="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-emerald-50 text-emerald-600 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10 font-bold">
-                                            {idx + 1}
+                            {/* Desktop: Split-Pane View / Mobile: Interactive Stack */}
+                            <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                                {/* Left Side: Day Selector */}
+                                <div className="w-full lg:w-1/3 flex flex-row lg:flex-col gap-3 overflow-x-auto lg:overflow-y-auto lg:max-h-[500px] pb-2 lg:pb-0 scrollbar-hide shrink-0 snap-x">
+                                    {offbeat.itinerary.map((day, idx) => (
+                                        <button
+                                            key={idx}
+                                            onClick={() => setActiveItineraryDay(idx)}
+                                            className={`text-left px-5 py-4 rounded-2xl transition-all duration-300 flex items-center gap-4 shrink-0 snap-center min-w-[200px] lg:min-w-0 border ${
+                                                activeItineraryDay === idx
+                                                    ? 'bg-emerald-50 border-emerald-200 shadow-sm'
+                                                    : 'bg-slate-50 border-transparent hover:bg-slate-100'
+                                            }`}
+                                        >
+                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0 transition-colors ${
+                                                activeItineraryDay === idx 
+                                                    ? 'bg-emerald-600 text-white shadow-md' 
+                                                    : 'bg-white text-slate-500 border border-slate-200'
+                                            }`}>
+                                                {idx + 1}
+                                            </div>
+                                            <div className="min-w-0">
+                                                <h4 className={`font-bold text-sm truncate ${activeItineraryDay === idx ? 'text-emerald-800' : 'text-slate-700'}`}>
+                                                    Day {idx + 1}
+                                                </h4>
+                                                {typeof day === 'object' && day.title && (
+                                                    <p className={`text-xs truncate mt-0.5 ${activeItineraryDay === idx ? 'text-emerald-600' : 'text-slate-500'}`}>
+                                                        {day.title}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                                
+                                {/* Right Side: Day Details */}
+                                <div className="w-full lg:w-2/3 bg-slate-50 rounded-2xl p-6 lg:p-8 border border-slate-100 min-h-[300px]">
+                                    <motion.div
+                                        key={activeItineraryDay}
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ duration: 0.3 }}
+                                    >
+                                        <div className="flex items-center gap-3 mb-6 border-b border-slate-200 pb-4">
+                                            <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-black text-lg">
+                                                {activeItineraryDay + 1}
+                                            </div>
+                                            <div>
+                                                <h3 className="font-bold text-xl text-slate-800">
+                                                    Day {activeItineraryDay + 1}
+                                                </h3>
+                                                {typeof offbeat.itinerary[activeItineraryDay] === 'object' && offbeat.itinerary[activeItineraryDay].title && (
+                                                    <p className="text-emerald-600 font-medium text-sm mt-0.5">
+                                                        {offbeat.itinerary[activeItineraryDay].title}
+                                                    </p>
+                                                )}
+                                            </div>
                                         </div>
-                                        <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                                            <h3 className="font-bold text-slate-800 text-lg mb-2">
-                                                Day {idx + 1}{typeof day === 'object' && day.title ? ` - ${day.title}` : ''}
-                                            </h3>
-                                            {typeof day === 'string' ? (
-                                                <p className="text-slate-600">{day}</p>
-                                            ) : (
-                                                <ul className="space-y-2 mt-3">
-                                                    {day.points?.map((point, pIdx) => (
-                                                        <li key={pIdx} className="text-slate-600 flex items-start gap-2 text-sm">
-                                                            <span className="text-emerald-500 mt-1 flex-shrink-0">•</span>
-                                                            <span>{point}</span>
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))}
+
+                                        {typeof offbeat.itinerary[activeItineraryDay] === 'string' ? (
+                                            <p className="text-slate-600 leading-relaxed text-lg">
+                                                {offbeat.itinerary[activeItineraryDay]}
+                                            </p>
+                                        ) : (
+                                            <ul className="space-y-4">
+                                                {offbeat.itinerary[activeItineraryDay].points?.map((point, pIdx) => (
+                                                    <li key={pIdx} className="text-slate-600 flex items-start gap-3 bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+                                                        <Check className="text-emerald-500 mt-1 shrink-0 w-5 h-5" />
+                                                        <span className="leading-relaxed">{point}</span>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        )}
+                                    </motion.div>
+                                </div>
                             </div>
                         </section>
                     )}
