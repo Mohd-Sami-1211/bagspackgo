@@ -2,6 +2,14 @@
 const nextConfig = {
     // Prevent sharp (native Node addon) from being bundled for the browser
     serverExternalPackages: ['sharp'],
+    images: {
+        remotePatterns: [
+            {
+                protocol: 'https',
+                hostname: '**',
+            },
+        ],
+    },
     experimental: {
         serverActions: {
             bodySizeLimit: '15mb',

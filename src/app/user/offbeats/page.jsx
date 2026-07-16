@@ -2,6 +2,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Compass, MapPin, ArrowRight, Loader2, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import Select from 'react-select';
 import { useOffbeatList } from '@/lib/useTripCache';
@@ -269,11 +270,12 @@ export default function OffBeatsListingPage() {
                                     >
                                         {/* Card Image — uses coverPhoto as the "face" of the destination */}
                                         <div className="relative h-64 overflow-hidden bg-slate-200">
-                                            <img 
+                                            <Image 
                                                 src={offbeat.coverPhoto || FALLBACK_IMAGE}
                                                 alt={offbeat.title}
-                                                loading="lazy"
-                                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                                fill
+                                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                                className="object-cover transition-transform duration-700 group-hover:scale-110"
                                             />
                                             <div className="absolute top-4 left-4 bg-white px-4 py-1.5 rounded-full text-xs font-black tracking-wide text-emerald-700 shadow-[0_4px_12px_rgba(0,0,0,0.1)] z-10 border border-white/50">
                                                 {offbeat.region || 'Unknown Region'}
