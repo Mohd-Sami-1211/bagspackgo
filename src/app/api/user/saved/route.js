@@ -22,10 +22,12 @@ export async function GET(request) {
         const populatedItems = await Promise.all(savedRecords.map(async (record) => {
             let itemData = null;
             if (record.itemType === 'trip' || record.itemType === 'trek') {
-                itemData = await Package.findById(record.itemId).select('title name destination label days packageCategory pricingTiers photos coverImage images provider providerId').lean();
+                itemData = await Package.findById(record.itemId)
+                    .select({ title: 1, name: 1, destination: 1, label: 1, days: 1, packageCategory: 1, pricingTiers: 1, coverImage: 1, provider: 1, providerId: 1, photos: { $slice: 1 }, images: { $slice: 1 } })
+                    .lean();
             } else if (record.itemType === 'event') {
                 itemData = await Event.findById(record.itemId)
-                    .select('title eventType destination date duration pricePerSlot poster photographs location totalSlots bookedSlots guide')
+                    .select({ title: 1, eventType: 1, destination: 1, date: 1, duration: 1, pricePerSlot: 1, poster: 1, location: 1, totalSlots: 1, bookedSlots: 1, guide: 1, photographs: { $slice: 1 } })
                     .populate({ path: 'guide', select: 'username' })
                     .lean();
                 if (itemData) {
@@ -46,7 +48,7 @@ export async function GET(request) {
                 }
             } else if (record.itemType === 'offbeat') {
                 itemData = await OffBeat.findById(record.itemId)
-                    .select('title destination shortDescription photographs region status')
+                    .select({ title: 1, destination: 1, shortDescription: 1, region: 1, status: 1, photographs: { $slice: 1 } })
                     .lean();
                 if (itemData) {
                     itemData.name = itemData.title;
