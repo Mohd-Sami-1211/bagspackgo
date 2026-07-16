@@ -76,3 +76,9 @@ export function useOffbeatDetail(id, options = {}) {
     const url = id ? `/api/public/offbeats/${id}` : null;
     return useSWR(url, { ...options, dedupingInterval: 120000 }); // Cache detail for 2 mins
 }
+
+// 8.5 Offbeat Photos Cache (Background fetch for Base64 gallery images)
+export function useOffbeatPhotos(id, options = {}) {
+    const url = id ? `/api/public/offbeats/${id}/photos` : null;
+    return useSWR(url, { ...options, dedupingInterval: 300000 }); // Cache photos for 5 mins
+}

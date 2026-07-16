@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import OffbeatBookingForm from '@/components/user/offbeats/OffbeatBookingForm';
 import GroupTripBookingForm from '@/components/user/offbeats/GroupTripBookingForm';
-import { useOffbeatDetail } from '@/lib/useTripCache';
+import { useOffbeatDetail, useOffbeatPhotos } from '@/lib/useTripCache';
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1621245799986-e3d1c9ccfc65?auto=format&fit=crop&q=80';
 
@@ -55,14 +55,12 @@ const ImageWithLoader = ({ src, alt, className, eager = false }) => {
                     <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />
                 </div>
             )}
-            <Image 
+            <img 
                 src={src} 
                 alt={alt} 
-                fill
-                sizes={eager ? "100vw" : "(max-width: 768px) 100vw, 50vw"}
-                priority={eager}
+                loading={eager ? 'eager' : 'lazy'}
                 onLoad={() => setLoaded(true)} 
-                className={`${className} object-cover transition-opacity duration-500 relative z-10 ${loaded ? '' : 'opacity-0'}`} 
+                className={`${className} transition-opacity duration-500 relative z-10 ${loaded ? '' : 'opacity-0'}`} 
             />
         </>
     );
@@ -82,7 +80,16 @@ export default function OffBeatDetailsPage({ params }) {
 
     // SWR-cached fetch for offbeat detail (2 min dedupe, stale-while-revalidate)
     const { data, isLoading, error } = useOffbeatDetail(id, {
-        onSuccess: (data) => {
+        revalidateOnFocus: false,
+    });
+    
+    // Background fetch for heavy base64 gallery photos
+    const { data: photosData, isLoading: photosLoading } = useOffbeatPhotos(data?.success ? id : null, {
+        revalidateOnFocus: false,
+    });
+
+    // Helper to trigger side effects once data is loaded
+    const initSideEffects = () => {
             // Check saved status once data is loaded and user is authenticated
             if (isAuthenticated && data?.data?._id) {
                 fetch('/api/user/saved')
@@ -176,9 +183,9 @@ export default function OffBeatDetailsPage({ params }) {
     // Hero image: always use coverPhoto — this is the "face" of the destination
     const heroImage = offbeat.coverPhoto || FALLBACK_IMAGE;
 
-    // Gallery photos: only the additional photographs uploaded separately from the cover.
-    // We explicitly exclude the cover photo if it somehow appears in the photographs array.
-    const galleryPhotos = (offbeat.photographs || []).filter(
+    // Gallery photos: fetch asynchronously to prevent blocking the main page load
+    const rawPhotos = photosData?.data?.photographs || offbeat.photographs || [];
+    const galleryPhotos = rawPhotos.filter(
         (photo) => photo !== offbeat.coverPhoto
     );
 
@@ -268,6 +275,11 @@ export default function OffBeatDetailsPage({ params }) {
                             <h2 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">
                                 <Camera className="text-emerald-600" /> Gallery
                             </h2>
+                            {photosLoading ? (
+                                <div className="flex items-center gap-2 text-slate-400">
+                                    <Loader2 className="w-5 h-5 animate-spin" /> Loading gallery photos...
+                                </div>
+                            ) : (
                             <div className="columns-1 sm:columns-2 md:columns-3 gap-4 space-y-4">
                                 {galleryPhotos.map((photo, idx) => (
                                     <div 
@@ -301,6 +313,7 @@ export default function OffBeatDetailsPage({ params }) {
                                     </div>
                                 ))}
                             </div>
+                            )}
                         </section>
                     )}
 
