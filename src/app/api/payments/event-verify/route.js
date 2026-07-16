@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
+import Razorpay from 'razorpay';
 import dbConnect from '@/lib/db';
 import { Booking } from '@/models/booking.model';
 import { User } from '@/models/user.model';
@@ -22,12 +23,29 @@ export async function POST(request) {
 
         await dbConnect();
 
-        const booking = await Booking.findOne({ _id: bookingId, user: user.userId });
-        if (!booking) return NextResponse.json({ success: false, message: 'Booking not found' }, { status: 404 });
+        // ═══════ ATOMIC BOOKING CLAIM ═══════
+        // Update the booking status to confirmed atomically. If it returns null, 
+        // it means another process (like the webhook) already verified it.
+        const booking = await Booking.findOneAndUpdate(
+            { _id: bookingId, user: user.userId, status: 'pending' },
+            { 
+                $set: { 
+                    status: 'confirmed', 
+                    paymentId: razorpay_payment_id || 'free_event',
+                    orderId: razorpay_order_id || 'free_event' 
+                } 
+            },
+            { new: true }
+        );
 
-        // Prevent double-verification
-        if (booking.status === 'confirmed') {
-            return NextResponse.json({ success: true, message: 'Booking already confirmed.', bookingId: booking._id.toString() });
+        if (!booking) {
+            // Check if it already exists but is no longer pending
+            const existing = await Booking.findOne({ _id: bookingId, user: user.userId });
+            if (!existing) return NextResponse.json({ success: false, message: 'Booking not found' }, { status: 404 });
+            if (existing.status === 'confirmed') {
+                return NextResponse.json({ success: true, message: 'Booking already confirmed.', bookingId: existing._id.toString() });
+            }
+            return NextResponse.json({ success: false, message: 'Booking is no longer pending.' }, { status: 400 });
         }
 
         // For free events (price = 0), skip signature verification
@@ -36,6 +54,9 @@ export async function POST(request) {
         if (!isFreeEvent) {
             if (!RAZORPAY_SECRET) {
                 console.error('Razorpay secret not configured');
+                // Revert booking claim if gateway fails
+                booking.status = 'pending';
+                await booking.save();
                 return NextResponse.json({ success: false, message: 'Payment gateway not configured' }, { status: 500 });
             }
 
@@ -43,13 +64,14 @@ export async function POST(request) {
             const sign = razorpay_order_id + '|' + razorpay_payment_id;
             const expectedSign = crypto.createHmac('sha256', RAZORPAY_SECRET).update(sign).digest('hex');
             if (expectedSign !== razorpay_signature) {
+                // Revert booking claim on invalid signature
+                booking.status = 'pending';
+                await booking.save();
                 return NextResponse.json({ success: false, message: 'Payment verification failed — invalid signature' }, { status: 400 });
             }
         }
 
-        // ═══════ ATOMIC SLOT RESERVATION (do this BEFORE confirming booking) ═══════
-        // This is the critical race-condition guard. Only one concurrent request
-        // can successfully increment bookedSlots if it would stay <= totalSlots.
+        // ═══════ ATOMIC SLOT RESERVATION ═══════
         const slotUpdate = await Event.findOneAndUpdate(
             { 
                 _id: booking.event, 
@@ -60,27 +82,43 @@ export async function POST(request) {
         );
 
         if (!slotUpdate) {
-            // Slots ran out — mark booking as sold_out so the user gets a clear message.
-            // The payment was captured but slots are gone. Mark for manual refund.
-            booking.status = 'cancelled';
-            booking.paymentId = razorpay_payment_id || 'free_event';
-            if (razorpay_order_id) booking.orderId = razorpay_order_id;
+            // Slots ran out — trigger automated Razorpay refund
+            let refundSuccess = false;
+            if (!isFreeEvent && razorpay_payment_id) {
+                try {
+                    const razorpay = new Razorpay({ 
+                        key_id: process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID, 
+                        key_secret: process.env.RAZORPAY_KEY_SECRET 
+                    });
+                    await razorpay.payments.refund(razorpay_payment_id, {
+                        amount: Math.round(booking.amountPaid * 100),
+                        notes: { reason: "Slots sold out during checkout" }
+                    });
+                    refundSuccess = true;
+                } catch (refundErr) {
+                    console.error('Auto-refund failed:', refundErr);
+                }
+            }
+
+            booking.status = refundSuccess ? 'refund_initiated' : 'cancelled';
+            if (refundSuccess) {
+                booking.cancellationDetails = {
+                    reason: 'Event sold out during payment',
+                    refundAmount: booking.amountPaid,
+                    refundInitiatedAt: new Date()
+                };
+            }
             await booking.save();
 
             return NextResponse.json({ 
                 success: false, 
                 soldOut: true,
-                message: 'This event is now sold out. Your payment will be refunded within 5-7 business days.',
+                message: refundSuccess 
+                    ? 'This event sold out while you were paying. A full refund has been initiated automatically.' 
+                    : 'This event sold out while you were paying. Your payment will be refunded within 5-7 business days.',
                 bookingId: booking._id.toString()
             }, { status: 409 });
         }
-
-        // Slots reserved successfully — now confirm the booking
-        booking.status = 'confirmed';
-        booking.paymentId = razorpay_payment_id || 'free_event';
-        if (razorpay_order_id) booking.orderId = razorpay_order_id;
-        
-        await booking.save();
 
         // Fetch related data for emails
         const [userDoc, eventDoc] = await Promise.all([
