@@ -61,3 +61,18 @@ export function useBookingPass(id, options = {}) {
     const url = id ? `/api/public/pass/${id}` : null;
     return useSWR(url, { ...options, dedupingInterval: 600000 }); // 10 minutes cache for pass
 }
+
+// 7. Offbeat destinations listing cache (paginated, lightweight — no photos[] or heavy fields)
+export function useOffbeatList(queryParams = {}, options = {}) {
+    const queryString = new URLSearchParams(
+        Object.fromEntries(Object.entries(queryParams).filter(([, v]) => v !== undefined && v !== null))
+    ).toString();
+    const url = `/api/public/offbeats${queryString ? `?${queryString}` : ''}`;
+    return useSWR(url, { ...options, dedupingInterval: 60000 }); // Cache list for 60s
+}
+
+// 8. Offbeat destination detail cache (full document with all photos/videos)
+export function useOffbeatDetail(id, options = {}) {
+    const url = id ? `/api/public/offbeats/${id}` : null;
+    return useSWR(url, { ...options, dedupingInterval: 120000 }); // Cache detail for 2 mins
+}

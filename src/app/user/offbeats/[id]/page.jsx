@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, use } from 'react';
+import { useState, use } from 'react';
 import { motion } from 'framer-motion';
 import { MapPin, Check, X, Calendar, Camera, Info, Loader2, ArrowLeft, Bookmark, Share2 } from 'lucide-react';
 import Link from 'next/link';
@@ -7,6 +7,9 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import OffbeatBookingForm from '@/components/user/offbeats/OffbeatBookingForm';
 import GroupTripBookingForm from '@/components/user/offbeats/GroupTripBookingForm';
+import { useOffbeatDetail } from '@/lib/useTripCache';
+
+const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1621245799986-e3d1c9ccfc65?auto=format&fit=crop&q=80';
 
 const OffbeatDetailsSkeleton = () => (
     <div className="min-h-screen bg-slate-50 animate-pulse pb-20">
@@ -37,7 +40,12 @@ const OffbeatDetailsSkeleton = () => (
     </div>
 );
 
-const ImageWithLoader = ({ src, alt, className }) => {
+/**
+ * Lazy-loading image with a blurred placeholder.
+ * Uses loading="lazy" so the browser defers off-screen images.
+ * Shows a spinner until the image fires its onLoad event.
+ */
+const ImageWithLoader = ({ src, alt, className, eager = false }) => {
     const [loaded, setLoaded] = useState(false);
     return (
         <>
@@ -49,6 +57,7 @@ const ImageWithLoader = ({ src, alt, className }) => {
             <img 
                 src={src} 
                 alt={alt} 
+                loading={eager ? 'eager' : 'lazy'}
                 onLoad={() => setLoaded(true)} 
                 className={`${className} transition-opacity duration-500 relative z-10 ${loaded ? '' : 'opacity-0'}`} 
             />
@@ -61,28 +70,46 @@ export default function OffBeatDetailsPage({ params }) {
     const router = useRouter();
     const { user, isAuthenticated, openAuthModal, authLoading } = useAuth();
     
-    const [offbeat, setOffbeat] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(false);
     const [isBookingOpen, setIsBookingOpen] = useState(false);
     const [isGroupBookingOpen, setIsGroupBookingOpen] = useState(false);
     const [isSaved, setIsSaved] = useState(false);
     const [saving, setSaving] = useState(false);
     const [selectedMedia, setSelectedMedia] = useState(null);
 
-    // Fetch Saved Status
-    useEffect(() => {
-        if (isAuthenticated && id) {
-            fetch('/api/user/saved')
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success && data.saved) {
-                        const saved = data.saved.some(s => s.itemType === 'offbeat' && s.itemId === id);
-                        setIsSaved(saved);
+    // SWR-cached fetch for offbeat detail (2 min dedupe, stale-while-revalidate)
+    const { data, isLoading, error } = useOffbeatDetail(id, {
+        onSuccess: (data) => {
+            // Check saved status once data is loaded and user is authenticated
+            if (isAuthenticated && data?.data?._id) {
+                fetch('/api/user/saved')
+                    .then(res => res.json())
+                    .then(d => {
+                        if (d.success && d.saved) {
+                            setIsSaved(d.saved.some(s => s.itemType === 'offbeat' && s.itemId === id));
+                        }
+                    })
+                    .catch(() => {});
+            }
+            // Track activity visit
+            if (isAuthenticated && data?.data?._id) {
+                fetch('/api/activity/track-offbeat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ offbeatId: data.data._id, heartbeat: false })
+                }).catch(() => {});
+            }
+            // Force login if not authenticated after 7s
+            if (!authLoading && !isAuthenticated) {
+                setTimeout(() => {
+                    if (openAuthModal) {
+                        openAuthModal({ closable: false, hideTabs: true, tab: 'user' });
                     }
-                });
+                }, 7000);
+            }
         }
-    }, [isAuthenticated, id]);
+    });
+
+    const offbeat = data?.data || null;
 
     const handleSaveToggle = async () => {
         if (!isAuthenticated && openAuthModal) {
@@ -126,64 +153,9 @@ export default function OffBeatDetailsPage({ params }) {
         }
     };
 
-    // Fetch Details
-    useEffect(() => {
-        const cacheKey = `offbeat_data_${id}`;
-        const cachedData = sessionStorage.getItem(cacheKey);
-        
-        if (cachedData) {
-            setOffbeat(JSON.parse(cachedData));
-            setLoading(false);
-        }
+    if (isLoading) return <OffbeatDetailsSkeleton />;
 
-        fetch(`/api/public/offbeats/${id}`)
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    setOffbeat(data.data);
-                    sessionStorage.setItem(cacheKey, JSON.stringify(data.data));
-                } else if (!cachedData) {
-                    setError(true);
-                }
-            })
-            .catch(() => {
-                if (!cachedData) setError(true);
-            })
-            .finally(() => setLoading(false));
-    }, [id]);
-
-    // Force Login after 6-8s if not authenticated
-    useEffect(() => {
-        if (!authLoading && !isAuthenticated && offbeat) {
-            const timer = setTimeout(() => {
-                if (openAuthModal) {
-                    openAuthModal({ closable: false, hideTabs: true, tab: 'user' });
-                }
-            }, 7000); // 7 seconds
-            return () => clearTimeout(timer);
-        }
-    }, [authLoading, isAuthenticated, offbeat, openAuthModal]);
-
-    // Track Activity heartbeat
-    useEffect(() => {
-        if (isAuthenticated && offbeat) {
-            const trackVisit = (heartbeat = false) => {
-                fetch('/api/activity/track-offbeat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ offbeatId: offbeat._id, heartbeat })
-                }).catch(() => {});
-            };
-
-            trackVisit(false);
-            const interval = setInterval(() => trackVisit(true), 15000);
-            return () => clearInterval(interval);
-        }
-    }, [isAuthenticated, offbeat]);
-
-    if (loading) return <OffbeatDetailsSkeleton />;
-
-    if (error || !offbeat) {
+    if (error || !offbeat || !data?.success) {
         return (
             <div className="min-h-screen pt-20 flex flex-col items-center justify-center bg-slate-50 text-center px-4">
                 <h1 className="text-3xl font-bold text-slate-800 mb-4">Destination Not Found</h1>
@@ -197,14 +169,22 @@ export default function OffBeatDetailsPage({ params }) {
         );
     }
 
-    const mainImage = offbeat.coverPhoto || offbeat.photographs?.[0] || 'https://images.unsplash.com/photo-1621245799986-e3d1c9ccfc65?auto=format&fit=crop&q=80';
+    // Hero image: always use coverPhoto — this is the "face" of the destination
+    const heroImage = offbeat.coverPhoto || FALLBACK_IMAGE;
+
+    // Gallery photos: only the additional photographs uploaded separately from the cover.
+    // We explicitly exclude the cover photo if it somehow appears in the photographs array.
+    const galleryPhotos = (offbeat.photographs || []).filter(
+        (photo) => photo !== offbeat.coverPhoto
+    );
 
     return (
         <div className="min-h-screen bg-slate-50 pb-20">
             {/* Hero Image Section */}
             <div className="relative h-[60vh] min-h-[400px] max-h-[600px] w-full">
                 <div className="absolute inset-0 bg-slate-900 overflow-hidden">
-                    <ImageWithLoader src={mainImage} alt={offbeat.title} className="w-full h-full object-cover opacity-80" />
+                    {/* Hero is eager-loaded — it's above the fold */}
+                    <ImageWithLoader src={heroImage} alt={offbeat.title} className="w-full h-full object-cover opacity-80" eager />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent z-20 pointer-events-none" />
                 </div>
                 
@@ -278,20 +258,25 @@ export default function OffBeatDetailsPage({ params }) {
                         </div>
                     </section>
 
-                    {/* Gallery */}
-                    {(offbeat.photographs?.length > 0 || offbeat.videos?.length > 0) && (
+                    {/* Gallery — shows additional photos and videos only (NOT the cover photo) */}
+                    {(galleryPhotos.length > 0 || offbeat.videos?.length > 0) && (
                         <section>
                             <h2 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">
                                 <Camera className="text-emerald-600" /> Gallery
                             </h2>
                             <div className="columns-1 sm:columns-2 md:columns-3 gap-4 space-y-4">
-                                {offbeat.photographs?.map((photo, idx) => (
+                                {galleryPhotos.map((photo, idx) => (
                                     <div 
                                         key={`photo-${idx}`} 
                                         className="break-inside-avoid rounded-xl overflow-hidden shadow-sm relative bg-slate-100 cursor-pointer group"
                                         onClick={() => setSelectedMedia({ type: 'image', url: photo })}
                                     >
-                                        <ImageWithLoader src={photo} alt={`Gallery ${idx + 1}`} className="w-full h-auto object-cover group-hover:scale-[1.02] transition-transform duration-500" />
+                                        {/* Gallery images are lazy-loaded — they're below the fold */}
+                                        <ImageWithLoader
+                                            src={photo}
+                                            alt={`Gallery photo ${idx + 1}`}
+                                            className="w-full h-auto object-cover group-hover:scale-[1.02] transition-transform duration-500"
+                                        />
                                     </div>
                                 ))}
                                 
@@ -500,7 +485,7 @@ export default function OffBeatDetailsPage({ params }) {
                 user={user}
             />
 
-            {/* Media Modal */}
+            {/* Media Modal — full-screen overlay for viewing gallery items */}
             {selectedMedia && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4" onClick={() => setSelectedMedia(null)}>
                     <button 
