@@ -81,15 +81,7 @@ export default function OffBeatDetailsPage({ params }) {
     // SWR-cached fetch for offbeat detail (2 min dedupe, stale-while-revalidate)
     const { data, isLoading, error } = useOffbeatDetail(id, {
         revalidateOnFocus: false,
-    });
-    
-    // Background fetch for heavy base64 gallery photos
-    const { data: photosData, isLoading: photosLoading } = useOffbeatPhotos(data?.success ? id : null, {
-        revalidateOnFocus: false,
-    });
-
-    // Helper to trigger side effects once data is loaded
-    const initSideEffects = () => {
+        onSuccess: (data) => {
             // Check saved status once data is loaded and user is authenticated
             if (isAuthenticated && data?.data?._id) {
                 fetch('/api/user/saved')
@@ -118,6 +110,11 @@ export default function OffBeatDetailsPage({ params }) {
                 }, 7000);
             }
         }
+    });
+
+    // Background fetch for heavy base64 gallery photos
+    const { data: photosData, isLoading: photosLoading } = useOffbeatPhotos(data?.success ? id : null, {
+        revalidateOnFocus: false,
     });
 
     const offbeat = data?.data || null;
