@@ -180,6 +180,7 @@ function getInitials(name) {
 function ProfileContent({ initialEditMode = false }) {
   const [isHovering, setIsHovering] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(initialEditMode);
   const [copied, setCopied] = useState(false);
   const fileInputRef = useRef(null);
@@ -265,6 +266,7 @@ function ProfileContent({ initialEditMode = false }) {
 
 
   const handleSave = async () => {
+    setIsSaving(true);
     try {
       const res = await fetch('/api/provider/profile', {
         method: 'PUT',
@@ -284,6 +286,8 @@ function ProfileContent({ initialEditMode = false }) {
       }
     } catch (e) {
       console.error(e);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -509,9 +513,11 @@ function ProfileContent({ initialEditMode = false }) {
 
         {/* Profile Info & Helper Text */}
         <div className="flex-1 text-center md:text-left flex flex-col justify-center min-h-[8rem] md:min-h-[10rem] z-10 w-full">
-          <h3 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight mb-2">{formData.name || 'Mohd Sami'}</h3>
+          <h3 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight mb-2">
+            {isLoading ? <span className="inline-block w-48 h-9 bg-gray-200 animate-pulse rounded-lg align-middle"></span> : formData.name || 'Your Name'}
+          </h3>
           <p className="text-gray-500 font-medium flex items-center justify-center md:justify-start gap-2 text-lg mb-5">
-            <Building2 size={20} className="text-emerald-600" /> {formData.companyname || 'bagspackgo Travels'}
+            <Building2 size={20} className="text-emerald-600" /> {isLoading ? <span className="inline-block w-56 h-5 bg-gray-200 animate-pulse rounded-md align-middle"></span> : formData.companyname || 'Your Company'}
           </p>
 
           {!isEditing ? (
@@ -567,10 +573,17 @@ function ProfileContent({ initialEditMode = false }) {
               </button>
               <button
                 onClick={handleSave}
-                className="flex items-center justify-center gap-2 rounded-xl bg-emerald-600 text-white px-8 py-3 font-bold hover:bg-emerald-700 transition-all shadow-lg flex-1 sm:flex-none hover:-translate-y-0.5 active:translate-y-0"
+                disabled={isSaving}
+                className="flex items-center justify-center gap-2 rounded-xl bg-emerald-600 text-white px-8 py-3 font-bold hover:bg-emerald-700 transition-all shadow-lg flex-1 sm:flex-none hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-70 disabled:hover:-translate-y-0"
               >
-                {isSaved ? <CheckCircle2 size={18} className="text-white" /> : <Save size={18} />}
-                {isSaved ? 'Saved!' : 'Save Changes'}
+                {isSaving ? (
+                  <Loader2 size={18} className="animate-spin text-white" />
+                ) : isSaved ? (
+                  <CheckCircle2 size={18} className="text-white" />
+                ) : (
+                  <Save size={18} />
+                )}
+                {isSaving ? 'Saving...' : isSaved ? 'Saved!' : 'Save Changes'}
               </button>
             </div>
           )}
@@ -603,7 +616,7 @@ function ProfileContent({ initialEditMode = false }) {
                 <label className={labelClasses}>Full Name</label>
                 <div className="relative">
                   <div className={iconWrapperClasses}><User size={18} /></div>
-                  <input type="text" className={inputClasses} placeholder="e.g. Mohd Sami" name="name" value={formData.name} onChange={handleChange} readOnly={!isEditing} />
+                  <input type="text" className={inputClasses} placeholder="e.g. John Doe" name="name" value={formData.name} onChange={handleChange} readOnly={!isEditing} />
                 </div>
               </div>
 
@@ -611,7 +624,7 @@ function ProfileContent({ initialEditMode = false }) {
                 <label className={labelClasses}>Company Name</label>
                 <div className="relative">
                   <div className={iconWrapperClasses}><Building2 size={18} /></div>
-                  <input type="text" className={inputClasses} placeholder="e.g. bagspackgo Travels" name="companyname" value={formData.companyname} onChange={handleChange} readOnly={!isEditing} />
+                  <input type="text" className={inputClasses} placeholder="e.g. Acme Travels" name="companyname" value={formData.companyname} onChange={handleChange} readOnly={!isEditing} />
                 </div>
               </div>
 
