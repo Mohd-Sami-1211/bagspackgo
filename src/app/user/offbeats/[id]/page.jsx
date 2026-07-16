@@ -360,11 +360,6 @@ export default function OffBeatDetailsPage({ params }) {
                                                 <h4 className={`font-bold text-sm truncate ${activeItineraryDay === idx ? 'text-emerald-800' : 'text-slate-700'}`}>
                                                     Day {idx + 1}
                                                 </h4>
-                                                {typeof day === 'object' && day.title && (
-                                                    <p className={`text-xs truncate mt-0.5 ${activeItineraryDay === idx ? 'text-emerald-600' : 'text-slate-500'}`}>
-                                                        {day.title}
-                                                    </p>
-                                                )}
                                             </div>
                                         </button>
                                     ))}
