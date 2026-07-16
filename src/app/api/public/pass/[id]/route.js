@@ -58,6 +58,9 @@ export async function GET(req, context) {
         // Check Trip Bookings
         const trip = await TripBooking.findOne(query).lean();
         if (trip) {
+            if (trip.status !== 'confirmed') {
+                return NextResponse.json({ success: false, message: 'Pass is only available for confirmed bookings' }, { status: 403 });
+            }
             const augmentedTrip = await augmentBooking(trip);
             return NextResponse.json({ success: true, type: 'trip', data: { ...augmentedTrip, bookingType: 'trip' } });
         }
@@ -65,6 +68,9 @@ export async function GET(req, context) {
         // Check Trek Bookings
         const trek = await TrekBooking.findOne(query).lean();
         if (trek) {
+            if (trek.status !== 'confirmed') {
+                return NextResponse.json({ success: false, message: 'Pass is only available for confirmed bookings' }, { status: 403 });
+            }
             const augmentedTrek = await augmentBooking(trek);
             return NextResponse.json({ success: true, type: 'trek', data: { ...augmentedTrek, bookingType: 'trek' } });
         }
@@ -79,6 +85,9 @@ export async function GET(req, context) {
                 .lean();
 
             if (eventBooking) {
+                if (eventBooking.status !== 'confirmed') {
+                    return NextResponse.json({ success: false, message: 'Pass is only available for confirmed bookings' }, { status: 403 });
+                }
                 // Format similarly to the user bookings API
                 const { GuideDetails } = await import('@/models/guidedetails.model');
                 const e = eventBooking.event || {};

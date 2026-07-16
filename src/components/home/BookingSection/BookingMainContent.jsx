@@ -52,7 +52,7 @@ const BookingMainContent = () => {
               destination: ensureString(b.destination),
               category: ensureString(b.category),
               guide: ensureString(b.guide),
-              passUrl: b.passUrl || `/user/event/pass/${bId}`,
+              passUrl: b.status === 'confirmed' ? (b.passUrl || `/user/event/pass/${bId}`) : null,
               createdAt: b.createdAt || b.bookingDate,
             });
           });
@@ -76,7 +76,7 @@ const BookingMainContent = () => {
               bookingRef: b.bookingRef,
               duration: `${b.days} Days`,
               image: b.packageSnapshot?.poster || '/images/hero.svg',
-              passUrl: `/user/trip/pass/${bId}`,
+              passUrl: b.status === 'confirmed' ? `/user/trip/pass/${bId}` : null,
               cancellationDetails: b.cancellationDetails || {},
               personalDetails: b.personalDetails || {},
               arrivalDeparture: b.arrivalDeparture || {},

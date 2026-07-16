@@ -1,9 +1,12 @@
 'use client';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
-import { Compass, MapPin, ArrowRight, Loader2, Search } from 'lucide-react';
+import { Compass, MapPin, ArrowRight, Loader2, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import Select from 'react-select';
+import { useOffbeatList } from '@/lib/useTripCache';
+
+const ITEMS_PER_PAGE = 9;
 
 const selectStyles = {
   control: (provided, state) => ({
@@ -58,6 +61,8 @@ const regionOptions = [
     { value: 'Chenab Valley', label: 'Chenab Valley' }
 ];
 
+const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1621245799986-e3d1c9ccfc65?auto=format&fit=crop&q=80';
+
 const OffbeatsSkeleton = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -78,43 +83,32 @@ const OffbeatsSkeleton = () => (
 );
 
 export default function OffBeatsListingPage() {
-    const [offbeats, setOffbeats] = useState([]);
-    const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [showSuggestions, setShowSuggestions] = useState(false);
     const searchRef = useRef(null);
     const [activeRegion, setActiveRegion] = useState(regionOptions[0]);
+    const [page, setPage] = useState(1);
 
-    useEffect(() => {
-        const cachedData = sessionStorage.getItem('offbeats_data');
-        if (cachedData) {
-            setOffbeats(JSON.parse(cachedData));
-            setLoading(false);
-            return;
-        }
+    // SWR-cached fetch — changes when page or region changes
+    const { data, isLoading, error } = useOffbeatList({
+        page,
+        limit: ITEMS_PER_PAGE,
+        region: activeRegion.value,
+    });
 
-        fetch('/api/public/offbeats')
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    setOffbeats(data.data);
-                    sessionStorage.setItem('offbeats_data', JSON.stringify(data.data));
-                }
-            })
-            .catch(err => console.error(err))
-            .finally(() => setLoading(false));
-    }, []);
+    const offbeats     = data?.data        || [];
+    const pagination   = data?.pagination  || {};
+    const totalPages   = pagination.totalPages || 1;
 
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (searchRef.current && !searchRef.current.contains(event.target)) {
-                setShowSuggestions(false);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
+    // Client-side search filter on the current page of results (fast, no extra API call)
+    const filteredOffbeats = searchTerm.trim()
+        ? offbeats.filter(ob =>
+            ob.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            ob.destination.toLowerCase().includes(searchTerm.toLowerCase())
+          )
+        : offbeats;
 
+    // Suggestions from current page data
     const suggestions = offbeats.reduce((acc, ob) => {
         if (!searchTerm.trim()) return acc;
         if (ob.title.toLowerCase().includes(searchTerm.toLowerCase()) && !acc.includes(ob.title)) acc.push(ob.title);
@@ -122,12 +116,28 @@ export default function OffBeatsListingPage() {
         return acc;
     }, []).slice(0, 5);
 
-    const filteredOffbeats = offbeats.filter(ob => {
-        const matchesSearch = ob.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                              ob.destination.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesRegion = activeRegion.value === 'All' || ob.region === activeRegion.value;
-        return matchesSearch && matchesRegion;
-    });
+    const handleRegionChange = useCallback((option) => {
+        setActiveRegion(option);
+        setPage(1); // Reset to first page when region changes
+        setSearchTerm('');
+    }, []);
+
+    const handleClickOutside = useCallback((event) => {
+        if (searchRef.current && !searchRef.current.contains(event.target)) {
+            setShowSuggestions(false);
+        }
+    }, []);
+
+    // Attach click-outside listener via ref callback (no useEffect needed)
+    const searchRefCallback = useCallback((node) => {
+        if (searchRef.current) {
+            document.removeEventListener('mousedown', handleClickOutside);
+        }
+        searchRef.current = node;
+        if (node) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+    }, [handleClickOutside]);
 
     return (
         <div className="w-full min-h-screen bg-slate-50 relative">
@@ -139,7 +149,7 @@ export default function OffBeatsListingPage() {
                 <div className="max-w-7xl mx-auto">
                     {/* Search & Filters */}
                     <div className="flex flex-row items-center gap-2 sm:gap-4 w-full">
-                        <div className="relative flex-1" ref={searchRef}>
+                        <div className="relative flex-1" ref={searchRefCallback}>
                             <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 sm:w-5 sm:h-5" />
                             <input 
                                 type="text"
@@ -184,7 +194,7 @@ export default function OffBeatsListingPage() {
                                 instanceId="region-filter-select"
                                 options={regionOptions}
                                 value={activeRegion}
-                                onChange={setActiveRegion}
+                                onChange={handleRegionChange}
                                 isSearchable={false}
                                 classNamePrefix="react-select"
                                 styles={selectStyles}
@@ -215,8 +225,18 @@ export default function OffBeatsListingPage() {
 
             {/* Listing Section */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                {loading ? (
+                {isLoading ? (
                     <OffbeatsSkeleton />
+                ) : error ? (
+                    <motion.div 
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="text-center py-20 bg-white rounded-3xl border border-slate-100 shadow-sm"
+                    >
+                        <Compass className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+                        <h3 className="text-2xl font-bold text-slate-700">Failed to load destinations</h3>
+                        <p className="text-slate-500 mt-2 max-w-md mx-auto">Please refresh the page to try again.</p>
+                    </motion.div>
                 ) : filteredOffbeats.length === 0 ? (
                     <motion.div 
                         initial={{ opacity: 0, scale: 0.9 }}
@@ -224,55 +244,115 @@ export default function OffBeatsListingPage() {
                         className="text-center py-20 bg-white rounded-3xl border border-slate-100 shadow-sm"
                     >
                         <Compass className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-                        <h3 className="text-2xl font-bold text-slate-700">More destinations coming soon!</h3>
-                        <p className="text-slate-500 mt-2 max-w-md mx-auto">We are working to bring more destinations for this location.</p>
+                        <h3 className="text-2xl font-bold text-slate-700">
+                            {searchTerm ? 'No results found' : 'More destinations coming soon!'}
+                        </h3>
+                        <p className="text-slate-500 mt-2 max-w-md mx-auto">
+                            {searchTerm
+                                ? `No destinations match "${searchTerm}". Try a different search term.`
+                                : 'We are working to bring more destinations for this location.'}
+                        </p>
                     </motion.div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        <AnimatePresence>
-                            {filteredOffbeats.map((offbeat, index) => (
-                                <motion.div
-                                    key={offbeat._id}
-                                    layout
-                                    initial={{ opacity: 0, y: 30 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, scale: 0.95 }}
-                                    transition={{ duration: 0.4, ease: "easeOut" }}
-                                    className="group bg-white rounded-[2rem] overflow-hidden shadow-[0_8px_30px_-12px_rgba(0,0,0,0.1)] hover:shadow-[0_20px_40px_-10px_rgba(16,185,129,0.15)] hover:-translate-y-1 transition-all duration-500 border border-slate-100 flex flex-col h-full relative"
+                    <>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            <AnimatePresence>
+                                {filteredOffbeats.map((offbeat, index) => (
+                                    <motion.div
+                                        key={offbeat._id}
+                                        layout
+                                        initial={{ opacity: 0, y: 30 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, scale: 0.95 }}
+                                        transition={{ duration: 0.4, ease: "easeOut", delay: index * 0.04 }}
+                                        className="group bg-white rounded-[2rem] overflow-hidden shadow-[0_8px_30px_-12px_rgba(0,0,0,0.1)] hover:shadow-[0_20px_40px_-10px_rgba(16,185,129,0.15)] hover:-translate-y-1 transition-all duration-500 border border-slate-100 flex flex-col h-full relative"
+                                    >
+                                        {/* Card Image — uses coverPhoto as the "face" of the destination */}
+                                        <div className="relative h-64 overflow-hidden bg-slate-200">
+                                            <img 
+                                                src={offbeat.coverPhoto || FALLBACK_IMAGE}
+                                                alt={offbeat.title}
+                                                loading="lazy"
+                                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                            />
+                                            <div className="absolute top-4 left-4 bg-white px-4 py-1.5 rounded-full text-xs font-black tracking-wide text-emerald-700 shadow-[0_4px_12px_rgba(0,0,0,0.1)] z-10 border border-white/50">
+                                                {offbeat.region || 'Unknown Region'}
+                                            </div>
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-40 group-hover:opacity-70 transition-opacity duration-500" />
+                                        </div>
+                                        <div className="p-6 flex flex-col flex-grow relative">
+                                            <div className="flex items-center gap-2 text-emerald-600 font-semibold text-sm mb-3">
+                                                <MapPin className="w-4 h-4" />
+                                                {offbeat.destination}
+                                            </div>
+                                            <h3 className="text-2xl font-bold text-slate-800 mb-3 group-hover:text-emerald-700 transition-colors">
+                                                {offbeat.title}
+                                            </h3>
+                                            <p className="text-slate-600 line-clamp-3 mb-6 flex-grow">
+                                                {offbeat.shortDescription}
+                                            </p>
+                                            <Link href={`/user/offbeats/${offbeat._id}`} className="mt-auto block">
+                                                <button className="w-full py-3.5 px-4 bg-gradient-to-r from-emerald-600 to-teal-500 text-white rounded-2xl font-bold transition-all duration-300 flex items-center justify-center gap-2 group/btn shadow-[0_8px_20px_-8px_rgba(16,185,129,0.5)] hover:shadow-[0_12px_25px_-8px_rgba(16,185,129,0.6)] opacity-95 hover:opacity-100">
+                                                    View Details
+                                                    <ArrowRight className="w-4 h-4 transition-transform group-hover/btn:translate-x-1" />
+                                                </button>
+                                            </Link>
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </AnimatePresence>
+                        </div>
+
+                        {/* Pagination Controls — only shown when more than one page and no active search */}
+                        {totalPages > 1 && !searchTerm && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.2 }}
+                                className="flex items-center justify-center gap-3 mt-14"
+                            >
+                                <button
+                                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                                    disabled={page === 1}
+                                    className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white border border-slate-200 text-slate-700 font-semibold shadow-sm hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700 transition disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-slate-200 disabled:hover:text-slate-700"
                                 >
-                                    <div className="relative h-64 overflow-hidden">
-                                        <img 
-                                            src={offbeat.photographs?.[0] || 'https://images.unsplash.com/photo-1621245799986-e3d1c9ccfc65?auto=format&fit=crop&q=80'} 
-                                            alt={offbeat.title}
-                                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                                        />
-                                        <div className="absolute top-4 left-4 bg-white px-4 py-1.5 rounded-full text-xs font-black tracking-wide text-emerald-700 shadow-[0_4px_12px_rgba(0,0,0,0.1)] z-10 border border-white/50">
-                                            {offbeat.region || 'Unknown Region'}
-                                        </div>
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-40 group-hover:opacity-70 transition-opacity duration-500" />
-                                    </div>
-                                    <div className="p-6 flex flex-col flex-grow relative">
-                                        <div className="flex items-center gap-2 text-emerald-600 font-semibold text-sm mb-3">
-                                            <MapPin className="w-4 h-4" />
-                                            {offbeat.destination}
-                                        </div>
-                                        <h3 className="text-2xl font-bold text-slate-800 mb-3 group-hover:text-emerald-700 transition-colors">
-                                            {offbeat.title}
-                                        </h3>
-                                        <p className="text-slate-600 line-clamp-3 mb-6 flex-grow">
-                                            {offbeat.shortDescription}
-                                        </p>
-                                        <Link href={`/user/offbeats/${offbeat._id}`} className="mt-auto block">
-                                            <button className="w-full py-3.5 px-4 bg-gradient-to-r from-emerald-600 to-teal-500 text-white rounded-2xl font-bold transition-all duration-300 flex items-center justify-center gap-2 group/btn shadow-[0_8px_20px_-8px_rgba(16,185,129,0.5)] hover:shadow-[0_12px_25px_-8px_rgba(16,185,129,0.6)] opacity-95 hover:opacity-100">
-                                                View Details
-                                                <ArrowRight className="w-4 h-4 transition-transform group-hover/btn:translate-x-1" />
-                                            </button>
-                                        </Link>
-                                    </div>
-                                </motion.div>
-                            ))}
-                        </AnimatePresence>
-                    </div>
+                                    <ChevronLeft className="w-4 h-4" /> Previous
+                                </button>
+
+                                {/* Page number pills */}
+                                <div className="flex items-center gap-1.5">
+                                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                                        <button
+                                            key={p}
+                                            onClick={() => setPage(p)}
+                                            className={`w-9 h-9 rounded-xl font-bold text-sm transition ${
+                                                p === page
+                                                    ? 'bg-emerald-600 text-white shadow-[0_4px_12px_rgba(16,185,129,0.4)]'
+                                                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700'
+                                            }`}
+                                        >
+                                            {p}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                <button
+                                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                                    disabled={page === totalPages}
+                                    className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white border border-slate-200 text-slate-700 font-semibold shadow-sm hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700 transition disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-slate-200 disabled:hover:text-slate-700"
+                                >
+                                    Next <ChevronRight className="w-4 h-4" />
+                                </button>
+                            </motion.div>
+                        )}
+
+                        {/* Page info */}
+                        {totalPages > 1 && !searchTerm && (
+                            <p className="text-center text-slate-400 text-sm mt-4">
+                                Page {page} of {totalPages} · {pagination.total} destinations
+                            </p>
+                        )}
+                    </>
                 )}
             </div>
         </div>
