@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, memo } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -8,9 +8,22 @@ import {
   Sparkles, TrendingUp, ArrowRight, X, Send, Copy, Check
 } from 'lucide-react';
 
-/* ──────────────────────────────────────────────
-   Status Badge
-────────────────────────────────────────────── */
+function categorizeEvent(event, now) {
+  const eventDate = new Date(event.date);
+  if (event.status === 'cancelled' || event.status === 'completed') return 'Past';
+  if (event.status === 'draft') return 'Upcoming';
+  if (eventDate < now) return 'Past';
+  return 'Live';
+}
+
+function ensureString(val) {
+  if (!val) return '';
+  if (typeof val === 'object') return val.label || val.value || 'N/A';
+  return String(val);
+}
+
+//Status badge
+
 function StatusBadge({ status, deleteRequest }) {
   if (deleteRequest?.requested && deleteRequest?.adminStatus === 'pending') {
     return (
@@ -42,9 +55,8 @@ function StatusBadge({ status, deleteRequest }) {
   );
 }
 
-/* ──────────────────────────────────────────────
-   Share Modal
-────────────────────────────────────────────── */
+//Share Modal
+
 function ShareModal({ event, onClose }) {
   const [copied, setCopied] = useState(false);
   const shareUrl = typeof window !== 'undefined'
@@ -132,9 +144,8 @@ function ShareModal({ event, onClose }) {
   );
 }
 
-/* ──────────────────────────────────────────────
-   Delete Request Modal
-────────────────────────────────────────────── */
+//Delete Request Modal
+
 function DeleteRequestModal({ event, onClose, onSubmit, submitting }) {
   const [reason, setReason] = useState('');
 
@@ -211,16 +222,8 @@ function DeleteRequestModal({ event, onClose, onSubmit, submitting }) {
   );
 }
 
-/* ──────────────────────────────────────────────
-   Event Card
-────────────────────────────────────────────── */
-function EventCard({ event, onAction }) {
-  const ensureString = (val) => {
-    if (!val) return '';
-    if (typeof val === 'object') return val.label || val.value || 'N/A';
-    return String(val);
-  };
-
+//Event Card
+const EventCard = memo(function EventCard({ event, onAction }) {
   const title = ensureString(event.title);
   const type = ensureString(event.eventType);
   const loc = ensureString(event.location);
@@ -237,6 +240,11 @@ function EventCard({ event, onAction }) {
 
   const hasPendingDelete = event.deleteRequest?.requested && event.deleteRequest?.adminStatus === 'pending';
 
+  const handleView    = useCallback(() => onAction('view',    event), [onAction, event]);
+  const handlePublish = useCallback(() => onAction('publish', event), [onAction, event]);
+  const handleShare   = useCallback(() => onAction('share',   event), [onAction, event]);
+  const handleDelete  = useCallback(() => onAction('delete',  event), [onAction, event]);
+
   return (
     <motion.article
       layout
@@ -246,7 +254,7 @@ function EventCard({ event, onAction }) {
       whileHover={{ y: -3 }}
       transition={{ duration: 0.2 }}
       className={`relative rounded-2xl border bg-white shadow-sm hover:shadow-lg transition-all overflow-hidden cursor-pointer group ${hasPendingDelete ? 'border-orange-200 bg-orange-50/40' : 'border-neutral-200'}`}
-      onClick={() => onAction('view', event)}
+      onClick={handleView}
     >
       {/* Poster strip */}
       <div className="relative h-36 overflow-hidden bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-700">
@@ -280,7 +288,7 @@ function EventCard({ event, onAction }) {
       </div>
 
       {/* Content */}
-      <div className="p-5" onClick={(e) => { /* card body click handled by article */ }}>
+      <div className="p-5">
         <h3 className="font-bold text-neutral-900 text-base mb-0.5 line-clamp-1">{title}</h3>
         <p className="text-xs text-neutral-500 mb-3">{type}</p>
 
@@ -328,7 +336,7 @@ function EventCard({ event, onAction }) {
         <div className="flex items-center gap-2 pt-4 border-t border-neutral-100" onClick={(e) => e.stopPropagation()}>
           {/* View button (all statuses) */}
           <button
-            onClick={() => onAction('view', event)}
+            onClick={handleView}
             className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg border border-neutral-200 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 hover:border-neutral-300 transition"
           >
             <Eye className="w-3.5 h-3.5" /> View Details
@@ -337,7 +345,7 @@ function EventCard({ event, onAction }) {
           {/* Publish (draft/upcoming only) */}
           {event.displayStatus === 'Upcoming' && (
             <button
-              onClick={() => onAction('publish', event)}
+              onClick={handlePublish}
               className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-xs font-semibold hover:opacity-90 transition"
             >
               <PlayCircle className="w-3.5 h-3.5" /> Publish
@@ -347,7 +355,7 @@ function EventCard({ event, onAction }) {
           {/* Share (live events) */}
           {event.displayStatus === 'Live' && (
             <button
-              onClick={() => onAction('share', event)}
+              onClick={handleShare}
               className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg border border-emerald-200 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 transition"
             >
               <Share2 className="w-3.5 h-3.5" /> Share
@@ -357,7 +365,7 @@ function EventCard({ event, onAction }) {
           {/* Delete request (not already pending) */}
           {!hasPendingDelete ? (
             <button
-              onClick={() => onAction('delete', event)}
+              onClick={handleDelete}
               title="Request deletion"
               className="p-2 rounded-lg border border-neutral-200 text-neutral-400 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition"
             >
@@ -375,22 +383,28 @@ function EventCard({ event, onAction }) {
       </div>
     </motion.article>
   );
-}
+});
 
-/* ──────────────────────────────────────────────
-   Stats Card
-────────────────────────────────────────────── */
-function StatsBar({ events }) {
-  const live = events.filter(e => e.displayStatus === 'Live').length;
-  const upcoming = events.filter(e => e.displayStatus === 'Upcoming').length;
-  const totalBooked = events.reduce((s, e) => s + (e.bookedSlots || 0), 0);
-  const totalRevenue = events.reduce((s, e) => s + ((e.bookedSlots || 0) * (e.pricePerSlot || 0)), 0);
+//   Stats Bar
+const StatsBar = memo(function StatsBar({ events }) {
+  const { live, upcoming, totalBooked, totalRevenue } = useMemo(() => {
+    return events.reduce(
+      (acc, e) => {
+        if (e.displayStatus === 'Live')     acc.live++;
+        if (e.displayStatus === 'Upcoming') acc.upcoming++;
+        acc.totalBooked  += e.bookedSlots  || 0;
+        acc.totalRevenue += (e.bookedSlots || 0) * (e.pricePerSlot || 0);
+        return acc;
+      },
+      { live: 0, upcoming: 0, totalBooked: 0, totalRevenue: 0 }
+    );
+  }, [events]);
 
   const stats = [
-    { label: 'Live Events', value: live, icon: PlayCircle, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-    { label: 'Upcoming', value: upcoming, icon: Calendar, color: 'text-blue-600', bg: 'bg-blue-50' },
-    { label: 'Total Bookings', value: totalBooked, icon: Users, color: 'text-violet-600', bg: 'bg-violet-50' },
-    { label: 'Est. Revenue', value: `₹${(totalRevenue / 1000).toFixed(1)}K`, icon: TrendingUp, color: 'text-amber-600', bg: 'bg-amber-50' },
+    { label: 'Live Events',    value: live,                                    icon: PlayCircle, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+    { label: 'Upcoming',       value: upcoming,                                icon: Calendar,   color: 'text-blue-600',    bg: 'bg-blue-50'    },
+    { label: 'Total Bookings', value: totalBooked,                             icon: Users,      color: 'text-violet-600',  bg: 'bg-violet-50'  },
+    { label: 'Est. Revenue',   value: `₹${(totalRevenue / 1000).toFixed(1)}K`, icon: TrendingUp, color: 'text-amber-600',   bg: 'bg-amber-50'   },
   ];
 
   return (
@@ -408,79 +422,72 @@ function StatsBar({ events }) {
       ))}
     </div>
   );
-}
+});
 
-/* ──────────────────────────────────────────────
-   Main Component
-────────────────────────────────────────────── */
+//   Main Component
+
 export default function EventMainContent() {
-  const [activeTab, setActiveTab] = useState('live');
-  const [events, setEvents] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [shareEvent, setShareEvent] = useState(null);
+  const [activeTab, setActiveTab]     = useState('live');
+  const [events, setEvents]           = useState([]);
+  const [loading, setLoading]         = useState(true);
+  const [error, setError]             = useState('');
+  const [shareEvent, setShareEvent]   = useState(null);
   const [deleteEvent, setDeleteEvent] = useState(null);
-  const [deleting, setDeleting] = useState(false);
-  const [toast, setToast] = useState(null);
+  const [deleting, setDeleting]       = useState(false);
+  const [toast, setToast]             = useState(null);
+  const toastTimerRef = useRef(null);
+
   const router = useRouter();
 
-  useEffect(() => {
-    fetchEvents();
+  const showToast = useCallback((message, type = 'success') => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    setToast({ message, type });
+    toastTimerRef.current = setTimeout(() => {
+      setToast(null);
+      toastTimerRef.current = null;
+    }, 3500);
   }, []);
 
-  const showToast = (message, type = 'success') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 3500);
-  };
-
-  const fetchEvents = async () => {
+  const fetchEvents = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('/api/provider/events');
+      const res  = await fetch('/api/provider/events');
       const data = await res.json();
       if (data.success) {
         setEvents(data.events || []);
       } else {
         setError(data.message || 'Failed to load events');
       }
-    } catch (err) {
+    } catch {
       setError('Failed to connect. Please check your connection.');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const categorizeEvent = (event) => {
+  useEffect(() => {
+    fetchEvents();
+  }, [fetchEvents]);
+
+  const categorizedEvents = useMemo(() => {
     const now = new Date();
-    const eventDate = new Date(event.date);
-    if (event.status === 'cancelled' || event.status === 'completed') return 'Past';
-    if (event.status === 'draft') return 'Upcoming';
-    if (eventDate < now) return 'Past';
-    return 'Live';
-  };
+    return events.map(e => ({ ...e, displayStatus: categorizeEvent(e, now) }));
+  }, [events]);
 
-  const categorizedEvents = events.map(e => ({
-    ...e,
-    displayStatus: categorizeEvent(e),
-  }));
-
-  const tabs = [
-    { key: 'live', label: 'Live', count: categorizedEvents.filter(e => e.displayStatus === 'Live').length },
+  const tabs = useMemo(() => [
+    { key: 'live',     label: 'Live',     count: categorizedEvents.filter(e => e.displayStatus === 'Live').length     },
     { key: 'upcoming', label: 'Upcoming', count: categorizedEvents.filter(e => e.displayStatus === 'Upcoming').length },
-    { key: 'past', label: 'Past', count: categorizedEvents.filter(e => e.displayStatus === 'Past').length },
-  ];
+    { key: 'past',     label: 'Past',     count: categorizedEvents.filter(e => e.displayStatus === 'Past').length     },
+  ], [categorizedEvents]);
 
-  const filteredEvents = categorizedEvents.filter(e => {
-    switch (activeTab) {
-      case 'live': return e.displayStatus === 'Live';
-      case 'upcoming': return e.displayStatus === 'Upcoming';
-      case 'past': return e.displayStatus === 'Past';
-      default: return true;
-    }
-  });
+  const filteredEvents = useMemo(() => (
+    categorizedEvents.filter(e => e.displayStatus === {
+      live: 'Live', upcoming: 'Upcoming', past: 'Past',
+    }[activeTab] ?? true)
+  ), [categorizedEvents, activeTab]);
 
-  async function handleAction(type, event) {
+  const handleAction = useCallback(async (type, event) => {
     switch (type) {
       case 'view':
         router.push(`/serviceprovider/dashboard/events/${event.id}`);
@@ -488,7 +495,7 @@ export default function EventMainContent() {
       case 'publish':
         if (confirm(`Publish "${event.title}"? It will be visible to users immediately.`)) {
           try {
-            const res = await fetch(`/api/provider/events/${event.id}`, {
+            const res  = await fetch(`/api/provider/events/${event.id}`, {
               method: 'PATCH',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ action: 'publish' }),
@@ -514,13 +521,13 @@ export default function EventMainContent() {
       default:
         break;
     }
-  }
+  }, [router, showToast, fetchEvents]);
 
-  async function handleDeleteRequest(reason) {
+  const handleDeleteRequest = useCallback(async (reason) => {
     if (!deleteEvent) return;
     setDeleting(true);
     try {
-      const res = await fetch(`/api/provider/events/${deleteEvent.id}`, {
+      const res  = await fetch(`/api/provider/events/${deleteEvent.id}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ reason }),
@@ -538,7 +545,7 @@ export default function EventMainContent() {
     } finally {
       setDeleting(false);
     }
-  }
+  }, [deleteEvent, showToast, fetchEvents]);
 
   if (loading) {
     return (
