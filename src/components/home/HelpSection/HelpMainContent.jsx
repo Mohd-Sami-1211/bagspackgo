@@ -14,7 +14,7 @@ import { Separator } from '@/components/ui/separator';
 
 export default function HelpMainContent() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, openAuthModal } = useAuth();
   const [activeTab, setActiveTab] = useState('callback'); // 'callback', 'email', 'history'
   const [loading, setLoading] = useState(false);
   const [queries, setQueries] = useState([]);
@@ -45,6 +45,10 @@ export default function HelpMainContent() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!user) {
+        openAuthModal({ closable: true, tab: 'user' });
+        return;
+    }
     setLoading(true);
     try {
       const payload = activeTab === 'callback' 

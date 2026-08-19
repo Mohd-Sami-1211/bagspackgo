@@ -1,10 +1,11 @@
 'use client';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import Select from 'react-select';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { motion, useInView, AnimatePresence } from 'framer-motion';
+import posthog from '@/lib/posthog';
 import {
   MapPin, Phone, Users, Shield,
   CheckCircle, Loader2, CalendarCheck,
@@ -13,6 +14,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useAuth } from '@/context/AuthContext';
 
 /* ─────────────────────────────────────────────
    Reusable Animation Helpers
@@ -148,12 +150,15 @@ const selectStyles = {
     cursor: state.isDisabled ? 'not-allowed' : 'pointer',
     opacity: state.isDisabled ? 0.6 : 1,
   }),
+  menuPortal: (provided) => ({ ...provided, zIndex: 9999 }),
+  menu: (provided) => ({ ...provided, zIndex: 9999 }),
 };
 
 /* ─────────────────────────────────────────────
    Callback Form
 ───────────────────────────────────────────── */
 function CallbackForm() {
+  const { user, openAuthModal } = useAuth();
   const [form, setForm] = useState({
     name: '', phone: '', message: '',
   });
@@ -169,6 +174,10 @@ function CallbackForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!user) {
+      openAuthModal({ closable: true, tab: 'user' });
+      return;
+    }
     setError('');
     if (!form.name || !form.phone || !selectedDestination) {
       setError('Please fill in your name, phone, and destination.');
@@ -273,6 +282,8 @@ function CallbackForm() {
             onChange={setSelectedDestination}
             placeholder="Select destination"
             styles={selectStyles}
+            menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
+            menuPosition="fixed"
           />
         </div>
 
@@ -301,42 +312,42 @@ function CallbackForm() {
         </div>
       </div>
 
-      <div className="space-y-1.5 relative z-40">
+      <div className="space-y-1.5 relative z-[60]">
         <label className="text-sm font-medium text-gray-700">Travel Date (approx.)</label>
-        <DatePicker
-          selected={startDate}
-          onChange={(date) => setStartDate(date)}
-          customInput={
-            <div className="relative w-full">
-              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                <CalendarCheck className="h-4 w-4 text-gray-400" />
-              </div>
+        <div className="relative w-full">
+          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none z-10">
+            <CalendarCheck className="h-4 w-4 text-gray-400" />
+          </div>
+          <DatePicker
+            selected={startDate}
+            onChange={(date) => setStartDate(date)}
+            customInput={
               <Input
                 type="text"
                 placeholder="Select Date"
                 className="w-full pl-9 bg-gray-50 cursor-pointer"
                 readOnly
               />
-            </div>
-          }
-          dateFormat="dd/MM/yyyy"
-          minDate={new Date()}
-          showMonthDropdown
-          showYearDropdown
-          dropdownMode="scroll"
-          popperClassName="z-[1000]"
-          wrapperClassName="w-full"
-        />
+            }
+            dateFormat="dd/MM/yyyy"
+            minDate={new Date()}
+            showMonthDropdown
+            showYearDropdown
+            dropdownMode="scroll"
+            popperClassName="z-[1000]"
+            wrapperClassName="w-full"
+          />
+        </div>
       </div>
 
       <div className="space-y-1.5">
-        <label className="text-sm font-medium text-gray-700">How can we help you?</label>
+        <label className="text-sm font-medium text-gray-700">Anything specific you want to mention?</label>
         <textarea
           name="message"
           value={form.message}
           onChange={handleChange}
           rows={3}
-          placeholder="e.g. Need help with itinerary and budget stays..."
+          placeholder="e.g. Any specific places you want to visit, etc..."
           className="w-full rounded-xl border border-gray-200 bg-gray-50 text-gray-900 placeholder:text-gray-400 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all resize-none"
         />
       </div>
@@ -361,6 +372,28 @@ function CallbackForm() {
    Main Component
 ───────────────────────────────────────────── */
 export default function CompanionLandingPage() {
+  const { user, openAuthModal } = useAuth();
+  
+  useEffect(() => {
+    if (!user) {
+      const timer = setTimeout(() => {
+        openAuthModal({ closable: true, tab: 'user' });
+      }, 20000);
+      return () => clearTimeout(timer);
+    }
+  }, [user, openAuthModal]);
+
+  useEffect(() => {
+    if (user) {
+      posthog.capture('companion_page_view', {
+        user_id: user._id || user.id,
+        username: user.username,
+        email: user.email,
+        phone: user.phone
+      });
+    }
+  }, [user]);
+
   const scrollToForm = () => {
     document.getElementById('callback-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
@@ -387,7 +420,7 @@ export default function CompanionLandingPage() {
             <FadeUp delay={0.2}>
               <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
                 <Button size="lg" onClick={scrollToForm} className="shadow-md group">
-                  Get a Free Consultation
+                  Request a Callback
                   <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                 </Button>
                 <div className="flex items-center gap-2 text-sm font-medium text-gray-500 px-2">

@@ -2,6 +2,15 @@ import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import dbConnect from '@/lib/db';
 import { Support } from '@/models/support.model';
+import nodemailer from 'nodemailer';
+
+const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_APP_PASSWORD,
+    },
+});
 
 export async function GET(request) {
     try {
@@ -46,6 +55,29 @@ export async function POST(request) {
             message: message || '',
             status: 'pending'
         });
+
+        if (user.email && process.env.GMAIL_USER) {
+            const mailOptions = {
+                from: `"bagspackgo Support" <${process.env.GMAIL_USER}>`,
+                to: user.email,
+                subject: `Request Received: ${query.subject}`,
+                html: `
+                    <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+                        <h2 style="color: #22c55e;">We have received your request</h2>
+                        <p>Hi ${user.username || 'there'},</p>
+                        <p>We have received your request and will get back to you shortly.</p>
+                        <hr style="border: none; border-top: 1px solid #ccc; margin: 20px 0;" />
+                        <p><strong>Ticket ID:</strong> ${query.ticketNumber || query._id}</p>
+                        <p><strong>Subject:</strong> ${query.subject}</p>
+                        <p><strong>Message:</strong></p>
+                        <p style="white-space: pre-wrap;">${query.message || 'Callback requested'}</p>
+                        <hr style="border: none; border-top: 1px solid #ccc; margin: 20px 0;" />
+                        <p>Best regards,<br/>bagspackgo Support Team</p>
+                    </div>
+                `
+            };
+            transporter.sendMail(mailOptions).catch(console.error);
+        }
 
         return NextResponse.json({ success: true, query });
     } catch (error) {
