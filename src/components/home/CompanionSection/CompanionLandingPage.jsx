@@ -1,9 +1,10 @@
 'use client';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Image from 'next/image';
 import Select from 'react-select';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import { motion, useInView, AnimatePresence } from 'framer-motion';
 import {
   MapPin, Phone, Users, Shield,
   CheckCircle, Loader2, CalendarCheck,
@@ -12,6 +13,41 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+
+/* ─────────────────────────────────────────────
+   Reusable Animation Helpers
+───────────────────────────────────────────── */
+function FadeUp({ children, delay = 0, className = '' }) {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: '-80px 0px' });
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 40 }}
+      animate={inView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+function FadeIn({ children, delay = 0, className = '' }) {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: '-60px 0px' });
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={inView ? { opacity: 1, scale: 1 } : {}}
+      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
 
 /* ─────────────────────────────────────────────
    Data
@@ -80,7 +116,7 @@ const destinationOptions = [
   {
     label: 'Available Now',
     options: [
-      { value: 'kashmir', label: 'Kashmir (Srinagar & beyond)' }
+      { value: 'kashmir', label: 'Kashmir' }
     ]
   },
   {
@@ -144,7 +180,7 @@ function CallbackForm() {
         ...form,
         destination: selectedDestination.label,
         travelDates: startDate ? startDate.toISOString() : '',
-        groupSize: peopleCount.toString(),
+        groupSize: peopleCount.toString(), // Still named groupSize in API for compatibility
       };
       const res = await fetch('/api/user/companion', {
         method: 'POST',
@@ -170,7 +206,11 @@ function CallbackForm() {
 
   if (success) {
     return (
-      <div className="flex flex-col items-center justify-center text-center py-16 bg-white border border-gray-100 rounded-xl shadow-sm">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="flex flex-col items-center justify-center text-center py-16 bg-white border border-gray-100 rounded-xl shadow-sm"
+      >
         <CheckCircle className="w-12 h-12 text-emerald-500 mb-4" />
         <h3 className="text-xl font-bold text-gray-900 mb-2">Request Received!</h3>
         <p className="text-gray-500 text-sm max-w-sm">
@@ -183,12 +223,17 @@ function CallbackForm() {
         >
           Submit another request
         </Button>
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white border border-gray-100 rounded-xl shadow-sm p-6 sm:p-8 space-y-6">
+    <motion.form 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      onSubmit={handleSubmit} 
+      className="bg-white border border-gray-100 rounded-xl shadow-sm p-6 sm:p-8 space-y-6"
+    >
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
         <div className="space-y-1.5">
           <label className="text-sm font-medium text-gray-700">Your Name *</label>
@@ -232,7 +277,7 @@ function CallbackForm() {
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-gray-700">Group Size</label>
+          <label className="text-sm font-medium text-gray-700">No. of People</label>
           <div className="flex items-center bg-gray-50 border border-gray-200 rounded-lg h-10 transition-all hover:border-emerald-400">
             <button
               type="button"
@@ -308,7 +353,7 @@ function CallbackForm() {
         {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Phone className="w-4 h-4 mr-2" />}
         {loading ? 'Submitting...' : 'Request a Callback'}
       </Button>
-    </form>
+    </motion.form>
   );
 }
 
@@ -321,7 +366,7 @@ export default function CompanionLandingPage() {
   };
 
   return (
-    <div className="bg-slate-50 min-h-screen text-gray-900 font-sans pb-20">
+    <div className="bg-slate-50 min-h-screen text-gray-900 font-sans pb-20 overflow-x-hidden">
       
       {/* ══════════════════════════════════════════
           HERO SECTION
@@ -329,25 +374,36 @@ export default function CompanionLandingPage() {
       <section className="relative pt-12 pb-16 md:pt-20 md:pb-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div className="order-2 lg:order-1">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-gray-900 mb-6">
-              Travel Free. <span className="text-emerald-600">Never Alone.</span>
-            </h1>
-            <p className="text-lg text-gray-600 mb-8 max-w-lg">
-              Explore on your own terms with a verified local expert by your side. 24/7 support, honest prices, hidden gems, and perfect stays.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-              <Button size="lg" onClick={scrollToForm} className="shadow-md">
-                Get a Free Consultation
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-              <div className="flex items-center gap-2 text-sm font-medium text-gray-500 px-2">
-                <Shield className="w-4 h-4 text-emerald-600" />
-                Verified Locals Only
+            <FadeUp>
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-gray-900 mb-6">
+                Travel Free. <span className="text-emerald-600">Never Alone.</span>
+              </h1>
+            </FadeUp>
+            <FadeUp delay={0.1}>
+              <p className="text-lg text-gray-600 mb-8 max-w-lg">
+                Explore on your own terms with a verified local expert by your side. 24/7 support, honest prices, hidden gems, and perfect stays.
+              </p>
+            </FadeUp>
+            <FadeUp delay={0.2}>
+              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                <Button size="lg" onClick={scrollToForm} className="shadow-md group">
+                  Get a Free Consultation
+                  <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                </Button>
+                <div className="flex items-center gap-2 text-sm font-medium text-gray-500 px-2">
+                  <Shield className="w-4 h-4 text-emerald-600" />
+                  Verified Locals Only
+                </div>
               </div>
-            </div>
+            </FadeUp>
           </div>
 
-          <div className="order-1 lg:order-2 relative w-full max-w-md mx-auto lg:max-w-none">
+          <motion.div 
+            initial={{ opacity: 0, x: 40 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
+            className="order-1 lg:order-2 relative w-full max-w-md mx-auto lg:max-w-none"
+          >
             <div className="aspect-[4/3] sm:aspect-square lg:aspect-[4/3] rounded-2xl overflow-hidden shadow-lg relative">
               <Image
                 src="/images/companion-consultant.jpg"
@@ -357,17 +413,7 @@ export default function CompanionLandingPage() {
                 priority
               />
             </div>
-            {/* Small floating badge */}
-            <div className="absolute -bottom-4 -left-4 sm:bottom-4 sm:-left-6 bg-white rounded-xl shadow-lg p-4 flex items-center gap-3 border border-gray-100">
-              <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center shrink-0">
-                <Headphones className="w-5 h-5 text-emerald-600" />
-              </div>
-              <div>
-                <p className="text-sm font-bold text-gray-900">24/7 Support</p>
-                <p className="text-xs text-gray-500">Always one call away</p>
-              </div>
-            </div>
-          </div>
+          </motion.div>
         </div>
       </section>
 
@@ -376,21 +422,23 @@ export default function CompanionLandingPage() {
       ══════════════════════════════════════════ */}
       <section className="py-16 md:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
+          <FadeUp className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Common Travel Problems</h2>
             <p className="text-gray-500 max-w-2xl mx-auto">
               Independent travel shouldn't mean figuring everything out the hard way.
             </p>
-          </div>
+          </FadeUp>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {painPoints.map((item, i) => (
-              <div key={i} className="bg-gray-50 rounded-xl p-6 border border-gray-100">
-                <div className="w-10 h-10 bg-white rounded-lg shadow-sm border border-gray-200 flex items-center justify-center mb-4">
-                  <item.icon className="w-5 h-5 text-emerald-600" />
+              <FadeUp key={i} delay={i * 0.1}>
+                <div className="bg-gray-50 rounded-xl p-6 border border-gray-100 h-full hover:shadow-md transition-shadow">
+                  <div className="w-10 h-10 bg-white rounded-lg shadow-sm border border-gray-200 flex items-center justify-center mb-4">
+                    <item.icon className="w-5 h-5 text-emerald-600" />
+                  </div>
+                  <h3 className="font-semibold text-gray-900 mb-2">{item.title}</h3>
+                  <p className="text-sm text-gray-600">{item.desc}</p>
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-2">{item.title}</h3>
-                <p className="text-sm text-gray-600">{item.desc}</p>
-              </div>
+              </FadeUp>
             ))}
           </div>
         </div>
@@ -404,39 +452,47 @@ export default function CompanionLandingPage() {
           
           {/* Left: How it works */}
           <div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-8">How it Works</h2>
+            <FadeUp>
+              <h2 className="text-3xl font-bold text-gray-900 mb-8">How it Works</h2>
+            </FadeUp>
             <div className="space-y-8">
               {steps.map((step, i) => (
-                <div key={i} className="flex gap-4 relative">
-                  {i !== steps.length - 1 && (
-                    <div className="absolute left-6 top-14 bottom-[-2rem] w-px bg-gray-200" />
-                  )}
-                  <div className="w-12 h-12 bg-emerald-50 border border-emerald-100 rounded-full flex items-center justify-center shrink-0 relative z-10">
-                    <step.icon className="w-5 h-5 text-emerald-600" />
+                <FadeUp key={i} delay={i * 0.1}>
+                  <div className="flex gap-4 relative">
+                    {i !== steps.length - 1 && (
+                      <div className="absolute left-6 top-14 bottom-[-2rem] w-px bg-gray-200" />
+                    )}
+                    <div className="w-12 h-12 bg-emerald-50 border border-emerald-100 rounded-full flex items-center justify-center shrink-0 relative z-10">
+                      <step.icon className="w-5 h-5 text-emerald-600" />
+                    </div>
+                    <div className="pt-2">
+                      <h3 className="font-semibold text-gray-900">{step.title}</h3>
+                      <p className="text-sm text-gray-600 mt-1">{step.desc}</p>
+                    </div>
                   </div>
-                  <div className="pt-2">
-                    <h3 className="font-semibold text-gray-900">{step.title}</h3>
-                    <p className="text-sm text-gray-600 mt-1">{step.desc}</p>
-                  </div>
-                </div>
+                </FadeUp>
               ))}
             </div>
           </div>
 
           {/* Right: What you get */}
           <div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-8">What You Get</h2>
+            <FadeUp>
+              <h2 className="text-3xl font-bold text-gray-900 mb-8">What You Get</h2>
+            </FadeUp>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {features.map((f, i) => (
-                <div key={i} className="flex gap-3 bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                  <div className="shrink-0 mt-0.5">
-                    <f.icon className="w-5 h-5 text-emerald-600" />
+                <FadeIn key={i} delay={i * 0.05}>
+                  <div className="flex gap-3 bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:border-emerald-200 hover:shadow-md transition-all h-full">
+                    <div className="shrink-0 mt-0.5">
+                      <f.icon className="w-5 h-5 text-emerald-600" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-semibold text-gray-900">{f.label}</h4>
+                      <p className="text-xs text-gray-500 mt-1">{f.desc}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="text-sm font-semibold text-gray-900">{f.label}</h4>
-                    <p className="text-xs text-gray-500 mt-1">{f.desc}</p>
-                  </div>
-                </div>
+                </FadeIn>
               ))}
             </div>
           </div>
@@ -448,16 +504,16 @@ export default function CompanionLandingPage() {
       ══════════════════════════════════════════ */}
       <section id="callback-form" className="py-16 md:py-20 bg-gray-50 border-t border-gray-100">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-10">
+          <FadeUp className="text-center mb-10">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Request Your Companion</h2>
             <p className="text-gray-500 max-w-xl mx-auto">
               Fill in your details and our team will assign a verified local expert to call you back within 24 hours.
             </p>
-          </div>
+          </FadeUp>
           
-          <div className="text-gray-900">
+          <FadeUp delay={0.2} className="text-gray-900">
             <CallbackForm />
-          </div>
+          </FadeUp>
         </div>
       </section>
     </div>

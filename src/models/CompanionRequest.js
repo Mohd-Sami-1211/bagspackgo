@@ -32,7 +32,7 @@ const CompanionRequestSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['pending', 'contacted', 'resolved'],
+      enum: ['pending', 'contacted', 'successful', 'unsuccessful', 'closed'],
       default: 'pending',
     },
     adminNotes: {
