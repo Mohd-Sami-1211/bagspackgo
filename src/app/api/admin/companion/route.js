@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import CompanionRequest from '@/models/CompanionRequest';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentAdmin } from '@/lib/adminAuth';
 
 export async function GET(req) {
     try {
-        const user = await getCurrentUser();
-        if (!user || user.role !== 'admin') {
+        const admin = await getCurrentAdmin();
+        if (!admin) {
             return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 403 });
         }
 

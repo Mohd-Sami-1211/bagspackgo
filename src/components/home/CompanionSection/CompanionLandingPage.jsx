@@ -391,6 +391,24 @@ export default function CompanionLandingPage() {
         email: user.email,
         phone: user.phone
       });
+      
+      // Track page visit for admin activity
+      fetch('/api/activity/track-companion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ heartbeat: false }),
+      }).catch(console.error);
+
+      // Setup heartbeat every 30 seconds
+      const heartbeatInterval = setInterval(() => {
+        fetch('/api/activity/track-companion', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ heartbeat: true }),
+        }).catch(console.error);
+      }, 30000);
+
+      return () => clearInterval(heartbeatInterval);
     }
   }, [user]);
 
@@ -404,17 +422,17 @@ export default function CompanionLandingPage() {
       {/* ══════════════════════════════════════════
           HERO SECTION
       ══════════════════════════════════════════ */}
-      <section className="relative pt-12 pb-16 md:pt-20 md:pb-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+      <section className="relative pt-6 pb-12 md:pt-10 md:pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div className="order-2 lg:order-1">
             <FadeUp>
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-gray-900 mb-6">
-                Travel Free. <span className="text-emerald-600">Never Alone.</span>
+                Your Personal Guide to <span className="text-emerald-600">Explore Freely</span>
               </h1>
             </FadeUp>
             <FadeUp delay={0.1}>
               <p className="text-lg text-gray-600 mb-8 max-w-lg">
-                Explore on your own terms with a verified local expert by your side. 24/7 support, honest prices, hidden gems, and perfect stays.
+                Don't want to be tied down to a package? We will assist you throughout your entire journey to prevent overpricing, design your perfect itinerary, and handle all the logistics while you explore on your own terms.
               </p>
             </FadeUp>
             <FadeUp delay={0.2}>

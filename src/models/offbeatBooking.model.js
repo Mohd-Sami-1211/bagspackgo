@@ -42,19 +42,6 @@ const offbeatBookingSchema = new mongoose.Schema({
     enum: ['pending', 'contacted', 'converted', 'cancelled'],
     default: 'pending',
   },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now,
-  },
-});
-
-offbeatBookingSchema.pre('save', function (next) {
-  this.updatedAt = Date.now();
-  next();
-});
+}, { timestamps: true });
 
 export const OffBeatBooking = mongoose.models.OffBeatBooking || mongoose.model('OffBeatBooking', offbeatBookingSchema);
