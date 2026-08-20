@@ -278,9 +278,9 @@ function AuthModalContent() {
                 localStorage.removeItem('bgp_auth_state');
                 onLogin(data.user);
 
-                // If on the community page, don't redirect — let the provider stay and browse
-                const isOnCommunityPage = window.location.pathname.includes('/community');
-                if (authModalOptions?.stayOnPage || isOnCommunityPage) {
+                // If on the companion page, don't redirect — let the user stay and browse
+                const isOnCompanionPage = window.location.pathname.includes('/companion');
+                if (authModalOptions?.stayOnPage || isOnCompanionPage) {
                     closeAuthModal();
                     setLoading(false);
                     return;

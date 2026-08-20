@@ -22,6 +22,10 @@ function VisitRow({ visit, index }) {
     const [expanded, setExpanded] = useState(false);
     const isLive = Date.now() - new Date(visit.lastVisitedAt).getTime() <= 45000;
 
+    const itemTitle = visit.companionTitle || visit.offbeatTitle || visit.packageTitle || visit.eventTitle || 'Unknown';
+    const itemType = visit.companionTitle ? 'Companion' : visit.offbeatTitle ? 'Offbeat' : visit.packageTitle ? 'Package' : 'Event';
+    const isCompanion = !!visit.companionTitle;
+
     return (
         <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -34,13 +38,14 @@ function VisitRow({ visit, index }) {
                 onClick={() => setExpanded(v => !v)}
                 className="w-full flex items-center gap-3 px-4 py-3.5 bg-gray-800/40 hover:bg-gray-800/70 transition-colors text-left"
             >
-                {/* Visit count badge */}
+                {/* Visit count badge / companion badge */}
                 <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 font-black text-sm
-                    ${visit.visitCount >= 5 ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
+                    ${isCompanion ? 'bg-violet-500/20 text-violet-300 border border-violet-500/30' :
+                      visit.visitCount >= 5 ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
                       visit.visitCount >= 3 ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
                       'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20'}`}
                 >
-                    {visit.visitCount}
+                    {isCompanion ? '🧭' : visit.visitCount}
                 </div>
 
                 {/* User Info */}
@@ -63,7 +68,8 @@ function VisitRow({ visit, index }) {
                     </div>
                     <p className="text-xs text-gray-400 truncate mt-0.5">
                         <MapPin className="w-3 h-3 inline mr-1 opacity-60" />
-                        {visit.offbeatTitle || visit.packageTitle || visit.eventTitle || 'Unknown'}
+                        <span className="text-gray-600 mr-1">[{itemType}]</span>
+                        {itemTitle}
                     </p>
                 </div>
 
@@ -99,13 +105,15 @@ function VisitRow({ visit, index }) {
                                     <p className="text-gray-200 font-medium">{visit.userSnapshot?.username || '—'}</p>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-2 text-sm">
-                                <Mail className="w-4 h-4 text-blue-400 flex-shrink-0" />
-                                <div>
-                                    <p className="text-[10px] text-gray-500 uppercase font-bold">Email</p>
-                                    <p className="text-gray-200 font-medium break-all">{visit.userSnapshot?.email || '—'}</p>
+                            {visit.userSnapshot?.email && (
+                                <div className="flex items-center gap-2 text-sm">
+                                    <Mail className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                                    <div>
+                                        <p className="text-[10px] text-gray-500 uppercase font-bold">Email</p>
+                                        <p className="text-gray-200 font-medium break-all">{visit.userSnapshot.email}</p>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                             <div className="flex items-center gap-2 text-sm">
                                 <Phone className="w-4 h-4 text-purple-400 flex-shrink-0" />
                                 <div>
@@ -116,8 +124,8 @@ function VisitRow({ visit, index }) {
                             <div className="flex items-center gap-2 text-sm">
                                 <MapPin className="w-4 h-4 text-amber-400 flex-shrink-0" />
                                 <div>
-                                    <p className="text-[10px] text-gray-500 uppercase font-bold">{visit.offbeatTitle ? 'Offbeat' : visit.packageTitle ? 'Package' : 'Event'}</p>
-                                    <p className="text-gray-200 font-medium">{visit.offbeatTitle || visit.packageTitle || visit.eventTitle || '—'}</p>
+                                    <p className="text-[10px] text-gray-500 uppercase font-bold">{itemType}</p>
+                                    <p className="text-gray-200 font-medium">{itemTitle}</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-2 text-sm">
@@ -148,7 +156,7 @@ function VisitRow({ visit, index }) {
 }
 
 export default function ActivityPage() {
-    const [tab, setTab] = useState('events'); // 'events' | 'packages'
+    const [tab, setTab] = useState('events'); // 'events' | 'packages' | 'offbeats' | 'companion'
     const [visits, setVisits] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -160,7 +168,13 @@ export default function ActivityPage() {
     const fetchActivity = useCallback(async (isManual = false) => {
         try {
             if (isManual) setRefreshing(true);
-            const base = tab === 'packages' ? '/api/admin/activity/packages' : tab === 'offbeats' ? '/api/admin/activity/offbeats' : '/api/admin/activity';
+            const base = tab === 'packages'
+                ? '/api/admin/activity/packages'
+                : tab === 'offbeats'
+                ? '/api/admin/activity/offbeats'
+                : tab === 'companion'
+                ? '/api/admin/activity/companion'
+                : '/api/admin/activity';
             const params = search ? `?search=${encodeURIComponent(search)}` : '';
             const res = await fetch(`${base}${params}`);
             const data = await res.json();
@@ -250,12 +264,13 @@ export default function ActivityPage() {
                 </div>
             </div>
 
-            {/* Events / Packages / Offbeats tab switcher */}
+            {/* Events / Packages / Offbeats / Companion tab switcher */}
             <div className="flex items-center gap-1 p-1 bg-gray-800/50 border border-gray-700/60 rounded-xl w-fit flex-wrap">
                 {[
                     { key: 'events', label: 'Events' },
                     { key: 'packages', label: 'Trip Packages' },
                     { key: 'offbeats', label: 'Offbeat Destinations' },
+                    { key: 'companion', label: '🧭 Companion' },
                 ].map(t => (
                     <button
                         key={t.key}
@@ -296,7 +311,7 @@ export default function ActivityPage() {
                 <Search className="w-4 h-4 text-gray-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                     type="text"
-                    placeholder={`Search by name, email, phone or ${tab === 'packages' ? 'package' : tab === 'offbeats' ? 'offbeat' : 'event'}…`}
+                    placeholder={`Search by name, phone${tab !== 'companion' ? ', email' : ''} or ${tab === 'packages' ? 'package' : tab === 'offbeats' ? 'offbeat' : tab === 'companion' ? 'destination' : 'event'}…`}
                     value={search}
                     onChange={e => setSearch(e.target.value)}
                     className="w-full pl-10 pr-4 py-2.5 bg-gray-800/60 border border-gray-700 rounded-xl text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 transition-all"

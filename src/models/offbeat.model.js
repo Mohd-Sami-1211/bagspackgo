@@ -119,7 +119,4 @@ const offbeatSchema = new mongoose.Schema(
 offbeatSchema.index({ status: 1 });
 offbeatSchema.index({ destination: 1 });
 
-if (mongoose.models.OffBeat) {
-    delete mongoose.models.OffBeat;
-}
-export const OffBeat = mongoose.model("OffBeat", offbeatSchema);
+export const OffBeat = mongoose.models.OffBeat || mongoose.model("OffBeat", offbeatSchema);

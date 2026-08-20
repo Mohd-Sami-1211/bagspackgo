@@ -15,7 +15,7 @@ export default function PageTransition({ children, keyProp }) {
         router.prefetch('/user/trek'),
         router.prefetch('/user/merger'),
         router.prefetch('/user/events'),
-        router.prefetch('/user/community')
+        router.prefetch('/user/companion')
       ]);
     };
     prefetchRoutes();

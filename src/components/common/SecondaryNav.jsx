@@ -1,6 +1,6 @@
 // components/common/SecondaryNav.jsx
 'use client';
-import { Mountain, Users, Plane, Globe2, CalendarDays, Compass } from 'lucide-react';
+import { Plane, CalendarDays, Compass, UserCheck } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -10,7 +10,7 @@ const tabs = [
   { label: 'Trip', icon: <Plane size={18} />, path: '/user/trip' },
   { label: 'OffBeats', icon: <Compass size={18} />, path: '/user/offbeats' },
   { label: 'Events', icon: <CalendarDays size={18} />, path: '/user/events' },
-  { label: 'Community', icon: <Globe2 size={18} />, path: '/user/community' },
+  { label: 'Companion', icon: <UserCheck size={18} />, path: '/user/companion' },
 ];
 
 export default function SecondaryNav() {

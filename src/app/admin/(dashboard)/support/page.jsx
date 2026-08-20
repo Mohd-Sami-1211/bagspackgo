@@ -42,7 +42,7 @@ function TicketModal({ ticket, onClose, onReply }) {
                     <div>
                         <h4 className="text-white font-semibold mb-2">{ticket.subject}</h4>
                         <div className="bg-gray-800/20 border border-gray-800 p-4 rounded-xl">
-                            <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap">{ticket.description}</p>
+                            <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap">{ticket.message}</p>
                         </div>
                     </div>
 
@@ -214,7 +214,7 @@ export default function AdminSupportPage() {
                             </div>
 
                             <p className="text-sm text-gray-400 line-clamp-2 leading-relaxed mb-4 flex-1">
-                                {t.description}
+                                {t.message}
                             </p>
 
                             <div className="pt-4 border-t border-gray-800 flex items-center justify-between text-xs">
@@ -231,7 +231,7 @@ export default function AdminSupportPage() {
             </div>
 
             <AnimatePresence>
-                {activeTicket && <TicketModal ticket={activeTicket} onClose={() => setActiveTicket(null)} onReply={handleConfirm} onReply={handleReply} />}
+                {activeTicket && <TicketModal ticket={activeTicket} onClose={() => setActiveTicket(null)} onReply={handleReply} />}
             </AnimatePresence>
         </div>
     );

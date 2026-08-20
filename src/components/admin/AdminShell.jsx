@@ -22,6 +22,7 @@ const navItems = [
     { label: 'OffBeats',      icon: Map,             href: '/admin/offbeats',        badge: null },
     { label: 'Requests',      icon: ClipboardList,   href: '/admin/requests',        badge: 'requests' },
     { label: 'Event Wishes',  icon: Heart,           href: '/admin/wishes',          badge: null },
+    { label: 'Companion',     icon: MessageSquare,   href: '/admin/companion',       badge: null },
     { label: 'Payments',      icon: CreditCard,      href: '/admin/payments',        badge: null },
     { label: 'Support',       icon: Headphones,      href: '/admin/support',         badge: 'support' },
     { label: 'Notifications', icon: Bell,            href: '/admin/notifications',   badge: 'notifications' },
