@@ -43,6 +43,7 @@ const BookingMainContent = () => {
 
         if (eventsData.success && eventsData.data) {
           eventsData.data.forEach(b => {
+            if (b.status === 'pending') return;
             const bId = b.id || b._id;
             allFetched.push({
               ...b,
@@ -60,6 +61,7 @@ const BookingMainContent = () => {
 
         if (tripsData.success && tripsData.data) {
           tripsData.data.forEach(b => {
+            if (b.status === 'pending') return;
             const bId = b.id || b._id;
             allFetched.push({
               id: bId,

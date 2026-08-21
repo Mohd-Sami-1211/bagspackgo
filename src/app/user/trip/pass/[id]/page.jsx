@@ -6,6 +6,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { MapPin, User, Mail, Phone, Instagram, Facebook, Globe, CheckCircle2, Navigation, X } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 const formatTimeWithAMPM = (time) => {
     if (!time || !time.toString().trim()) return "Not specified";
@@ -23,10 +24,10 @@ const formatTimeWithAMPM = (time) => {
 export default function TripPassPage() {
     const { id } = useParams();
     const searchParams = useSearchParams();
+    const { openAuthModal, isAuthenticated } = useAuth();
+    const { data: passData, isLoading: fetchLoading, mutate } = useBookingPass(id);
     const [booking, setBooking] = useState(null);
     const [loading, setLoading] = useState(true);
-
-    const { data: passData, isLoading: fetchLoading } = useBookingPass(id);
 
     useEffect(() => {
         if (!fetchLoading) {
@@ -34,24 +35,35 @@ export default function TripPassPage() {
                 setBooking(passData.data);
             } else {
                 setBooking(null);
+                if (passData?.message === 'Please login to your account to access pass' && !isAuthenticated) {
+                    openAuthModal();
+                }
             }
             setLoading(false);
         }
-    }, [passData, fetchLoading]);
+    }, [passData, fetchLoading, isAuthenticated, openAuthModal]);
 
-    // Auto-trigger print dialog when ?print=true is in URL
+    // Whenever authentication status changes (like after login), we can optionally re-fetch
+    useEffect(() => {
+        if (isAuthenticated && passData?.message === 'Please login to your account to access pass') {
+            mutate();
+        }
+    }, [isAuthenticated, passData, mutate]);
+
     useEffect(() => {
         if (!loading && booking) {
-            const ref = booking.bookingRef || id.substring(0, 8).toUpperCase();
+            const ref = booking.bookingRef || (booking._id ? booking._id.substring(0, 8).toUpperCase() : '');
             document.title = `BPG_Trip_Pass_${ref}`;
             
+            // Print dialog if ?print=true
             if (searchParams.get('print') === 'true') {
-                // Small delay to ensure the page renders fully before printing
-                const timer = setTimeout(() => window.print(), 800);
+                const timer = setTimeout(() => {
+                    window.print();
+                }, 800);
                 return () => clearTimeout(timer);
             }
         }
-    }, [loading, booking, searchParams, id]);
+    }, [loading, booking, searchParams]);
 
     const formatDate = (d) => {
         if (!d) return 'TBD';
@@ -62,7 +74,21 @@ export default function TripPassPage() {
 
     if (loading) return <div className="min-h-screen flex items-center justify-center p-8 bg-[#F0FDF4]"><div className="w-12 h-12 border-4 border-emerald-100 border-t-emerald-600 rounded-full animate-spin"></div></div>;
     
-    if (!booking) return <div className="min-h-screen flex items-center justify-center p-8 bg-[#F0FDF4]"><p className="text-xl font-bold text-gray-500">Booking Pass Not Found</p></div>;
+    if (!booking) return (
+        <div className="min-h-screen flex flex-col items-center justify-center p-8 bg-[#F0FDF4] gap-4">
+            <p className="text-xl font-bold text-gray-700 text-center">
+                {passData?.message || "Booking Pass Not Found"}
+            </p>
+            {passData?.message === 'Please login to your account to access pass' && (
+                <button 
+                    onClick={() => openAuthModal()} 
+                    className="px-6 py-2.5 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition"
+                >
+                    Log In
+                </button>
+            )}
+        </div>
+    );
 
     const {
         packageSnapshot = {},

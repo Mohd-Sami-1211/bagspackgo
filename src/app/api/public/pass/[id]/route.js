@@ -17,6 +17,9 @@ export async function GET(req, context) {
     }
 
     try {
+        const { getCurrentUser } = await import('@/lib/auth');
+        const user = await getCurrentUser(req);
+
         await dbConnect();
 
         // Use valid ObjectId for find queries if needed
@@ -58,6 +61,12 @@ export async function GET(req, context) {
         // Check Trip Bookings
         const trip = await TripBooking.findOne(query).lean();
         if (trip) {
+            if (!user) {
+                return NextResponse.json({ success: false, message: 'Please login to your account to access pass' }, { status: 401 });
+            }
+            if (trip.user.toString() !== user.userId) {
+                return NextResponse.json({ success: false, message: 'Seems like booking wasn\'t made from this account' }, { status: 403 });
+            }
             if (trip.status !== 'confirmed') {
                 return NextResponse.json({ success: false, message: 'Pass is only available for confirmed bookings' }, { status: 403 });
             }
@@ -68,6 +77,12 @@ export async function GET(req, context) {
         // Check Trek Bookings
         const trek = await TrekBooking.findOne(query).lean();
         if (trek) {
+            if (!user) {
+                return NextResponse.json({ success: false, message: 'Please login to your account to access pass' }, { status: 401 });
+            }
+            if (trek.user.toString() !== user.userId) {
+                return NextResponse.json({ success: false, message: 'Seems like booking wasn\'t made from this account' }, { status: 403 });
+            }
             if (trek.status !== 'confirmed') {
                 return NextResponse.json({ success: false, message: 'Pass is only available for confirmed bookings' }, { status: 403 });
             }
@@ -85,6 +100,12 @@ export async function GET(req, context) {
                 .lean();
 
             if (eventBooking) {
+                if (!user) {
+                    return NextResponse.json({ success: false, message: 'Please login to your account to access pass' }, { status: 401 });
+                }
+                if (eventBooking.user.toString() !== user.userId) {
+                    return NextResponse.json({ success: false, message: 'Seems like booking wasn\'t made from this account' }, { status: 403 });
+                }
                 if (eventBooking.status !== 'confirmed') {
                     return NextResponse.json({ success: false, message: 'Pass is only available for confirmed bookings' }, { status: 403 });
                 }

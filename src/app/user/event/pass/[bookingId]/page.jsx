@@ -5,48 +5,68 @@ import { QRCodeSVG } from 'qrcode.react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { MapPin, User, CheckCircle2, Ticket, Calendar, Users, Clock, ExternalLink, X, Sparkles, AlertTriangle, ShieldCheck, Navigation, List, Mail, Phone, Instagram, Facebook, Star } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 function EventPassContent() {
     const { bookingId } = useParams();
     const searchParams = useSearchParams();
+    const { openAuthModal, isAuthenticated } = useAuth();
     const [booking, setBooking] = useState(null);
+    const [errorMsg, setErrorMsg] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const fetchBooking = async () => {
-            if (!bookingId) { setLoading(false); return; }
-            let retries = 3;
-            let delay = 1000;
-            
-            while (retries >= 0) {
-                try {
-                    const res = await fetch(`/api/public/pass/${bookingId}`, { cache: 'no-store' });
-                    const data = await res.json();
-                    if (data.success && data.data) {
-                        setBooking(data.data);
-                        setLoading(false);
-                        return;
-                    } else if (retries === 0) {
-                        console.warn('Pass API returned:', data.message);
-                        setBooking(null);
-                    }
-                } catch (e) {
-                    console.error('Pass fetch error:', e);
-                    if (retries === 0) {
-                        setBooking(null);
+    const fetchBooking = async () => {
+        if (!bookingId) { setLoading(false); return; }
+        let retries = 3;
+        let delay = 1000;
+        
+        while (retries >= 0) {
+            try {
+                const res = await fetch(`/api/public/pass/${bookingId}`, { cache: 'no-store' });
+                const data = await res.json();
+                if (data.success && data.data) {
+                    setBooking(data.data);
+                    setErrorMsg(null);
+                    setLoading(false);
+                    return;
+                } else if (retries === 0) {
+                    console.warn('Pass API returned:', data.message);
+                    setBooking(null);
+                    setErrorMsg(data.message);
+                    if (data.message === 'Please login to your account to access pass' && !isAuthenticated) {
+                        openAuthModal();
                     }
                 }
-                
-                if (retries > 0) {
-                    await new Promise(r => setTimeout(r, delay));
-                    delay *= 2; // 1s, 2s, 4s
+            } catch (e) {
+                console.error('Pass fetch error:', e);
+                if (retries === 0) {
+                    setBooking(null);
+                    setErrorMsg('Something went wrong. Please try again.');
                 }
-                retries--;
             }
-            setLoading(false);
-        };
+            
+            if (retries > 0) {
+                await new Promise(r => setTimeout(r, delay));
+                delay *= 2;
+            }
+            retries--;
+        }
+        setLoading(false);
+    };
+
+    useEffect(() => {
         fetchBooking();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [bookingId]);
+
+    // Refetch when authentication state changes
+    useEffect(() => {
+        if (isAuthenticated && errorMsg === 'Please login to your account to access pass') {
+            setLoading(true);
+            fetchBooking();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isAuthenticated, errorMsg]);
 
     useEffect(() => {
         if (!loading && booking) {
@@ -69,8 +89,18 @@ function EventPassContent() {
     if (loading) return <div className="min-h-screen flex items-center justify-center p-8 bg-[#F0FDF4]"><div className="w-12 h-12 border-4 border-emerald-100 border-t-emerald-600 rounded-full animate-spin"></div></div>;
     
     if (!booking) return (
-        <div className="min-h-screen flex flex-col items-center justify-center p-8 bg-[#F0FDF4] gap-4">
-            <p className="text-xl font-bold text-gray-500">Booking Pass Not Found</p>
+        <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 p-8 bg-[#F0FDF4]">
+            <p className="text-xl font-bold text-gray-700 text-center">
+                {errorMsg || "Booking Pass Not Found"}
+            </p>
+            {errorMsg === 'Please login to your account to access pass' && (
+                <button 
+                    onClick={() => openAuthModal()} 
+                    className="px-6 py-2.5 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition"
+                >
+                    Log In
+                </button>
+            )}
             <button onClick={() => window.location.reload()} className="px-6 py-2 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition">Try Again</button>
         </div>
     );
