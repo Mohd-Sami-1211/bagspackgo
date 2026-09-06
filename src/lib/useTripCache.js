@@ -1,5 +1,35 @@
 import useSWR from 'swr';
 
+// ── Default SWR fetcher ─────────────────────────────────────────────────────
+const fetcher = (url) => fetch(url).then((r) => r.json());
+
+// ── Events listing cache (server-side filtered + paginated) ─────────────────
+// Caches per unique query string. keepPreviousData keeps old data visible
+// while the next page/filter loads — no blank white screen.
+export function useEventsList(queryParams = {}, options = {}) {
+    const cleaned = Object.fromEntries(
+        Object.entries(queryParams).filter(([, v]) => v !== undefined && v !== null && v !== '')
+    );
+    const queryString = new URLSearchParams(cleaned).toString();
+    const url = `/api/events${queryString ? `?${queryString}` : ''}`;
+    return useSWR(url, fetcher, {
+        dedupingInterval: 30000,   // 30s — matches CDN s-maxage
+        keepPreviousData: true,      // show stale data while revalidating (smooth pagination)
+        revalidateOnFocus: false,    // don't refetch just because user switched tabs
+        ...options,
+    });
+}
+
+// ── Single event detail cache ───────────────────────────────────────────────
+export function useEventDetail(id, options = {}) {
+    const url = id ? `/api/events/${id}` : null;
+    return useSWR(url, fetcher, {
+        dedupingInterval: 120000,  // 2 min
+        revalidateOnFocus: false,
+        ...options,
+    });
+}
+
 // Helper hook for general fetch
 export function useFetchData(url, options = {}) {
     return useSWR(url, { ...options });
