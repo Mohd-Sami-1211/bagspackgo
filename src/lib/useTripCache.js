@@ -6,7 +6,12 @@ const fetcher = (url) => fetch(url).then((r) => r.json());
 // ── Events listing cache (server-side filtered + paginated) ─────────────────
 // Caches per unique query string. keepPreviousData keeps old data visible
 // while the next page/filter loads — no blank white screen.
+// Pass null to skip fetching entirely (deferred loading).
 export function useEventsList(queryParams = {}, options = {}) {
+    if (queryParams === null) {
+        // Conditional fetch: pass null key to SWR to skip
+        return useSWR(null, fetcher, { revalidateOnFocus: false, ...options });
+    }
     const cleaned = Object.fromEntries(
         Object.entries(queryParams).filter(([, v]) => v !== undefined && v !== null && v !== '')
     );

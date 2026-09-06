@@ -48,8 +48,18 @@ export default function EventMainContent() {
     return { tab: 'past', limit: CARDS_PER_SECTION };
   }, [viewMode, expandedPage, searchQuery, sortBy]);
 
+  // ── Priority Loading: Live events load FIRST, recent events deferred ──
   const { data: liveData, isLoading: liveLoading, isValidating: liveValidating } = useEventsList(liveQueryParams);
-  const { data: recentData, isLoading: recentLoading, isValidating: recentValidating } = useEventsList(recentQueryParams);
+
+  // Only start fetching recent events after live data has arrived (or if we're in the 'all-recent' expanded view)
+  const [recentReady, setRecentReady] = useState(false);
+  useEffect(() => {
+    if (liveData || viewMode === 'all-recent') setRecentReady(true);
+  }, [liveData, viewMode]);
+
+  const { data: recentData, isLoading: recentLoading, isValidating: recentValidating } = useEventsList(
+    recentReady ? recentQueryParams : null  // null key = SWR skips the fetch entirely
+  );
 
   const liveEvents = liveData?.events || [];
   const recentEvents = recentData?.events || [];

@@ -98,11 +98,18 @@ const EventCard = ({ event }) => {
         
         {/* Organizer Row with Logo */}
         <div className="flex items-center gap-2 mb-3">
-          <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center overflow-hidden border border-emerald-200">
-            {/* Fallback avatar icon, can be replaced with an actual <img> tag if event.guideLogo exists */}
-            <Users className="w-3.5 h-3.5 text-emerald-600" />
+          <div className="w-6 h-6 rounded-full bg-emerald-50 flex items-center justify-center overflow-hidden border border-emerald-100 flex-shrink-0">
+            {(event.guideLogo || event.logo || event.companyLogo) ? (
+              <img 
+                src={event.guideLogo || event.logo || event.companyLogo} 
+                alt={event.guideName || 'Organizer'} 
+                className="w-full h-full object-cover"
+                onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block'; }}
+              />
+            ) : null}
+            <Users className="w-3.5 h-3.5 text-emerald-600" style={{ display: (event.guideLogo || event.logo || event.companyLogo) ? 'none' : 'block' }} />
           </div>
-          <span className="text-xs font-semibold text-neutral-500 uppercase tracking-wide truncate">
+          <span className="text-xs font-semibold text-neutral-600 truncate">
             {event.guideName || 'Local Organizer'}
           </span>
         </div>
@@ -148,7 +155,7 @@ const EventCard = ({ event }) => {
           </div>
           
           <button 
-            className="flex items-center gap-1.5 px-4 py-2 bg-neutral-900 text-white hover:bg-emerald-600 text-xs font-bold rounded-xl transition-all duration-300 group-hover:shadow-md"
+            className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white hover:bg-emerald-700 text-xs font-bold rounded-xl transition-all duration-300 group-hover:shadow-md"
             aria-label={`View details for ${event.name}`}
           >
             View Details

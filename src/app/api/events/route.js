@@ -87,7 +87,7 @@ export async function GET(request) {
         const guideIds = [...new Set(eventsList.map((e) => e.guide.toString()))];
         const [guides, guideDetailsList] = await Promise.all([
             Guide.find({ _id: { $in: guideIds } }).select("username email applicationStatus").lean(),
-            GuideDetails.find({ guide: { $in: guideIds } }).select("guide companyname pausedServices").lean(),
+            GuideDetails.find({ guide: { $in: guideIds } }).select("guide companyname logo pausedServices").lean(),
         ]);
 
         const pausedEventGuides = new Set(
@@ -110,7 +110,10 @@ export async function GET(request) {
         });
         guideDetailsList.forEach((gd) => {
             const id = gd.guide.toString();
-            if (guideMap[id]) guideMap[id].companyName = gd.companyname;
+            if (guideMap[id]) {
+                guideMap[id].companyName = gd.companyname;
+                guideMap[id].logo = gd.logo;
+            }
         });
 
         // ── Fetch all organizers for filter panel ─────────────────────────────
@@ -146,6 +149,7 @@ export async function GET(request) {
                 destination: e.destination,
                 image: e.poster || null,
                 guideName: guideInfo.companyName || guideInfo.name || "Local Guide",
+                guideLogo: guideInfo.logo || null,
                 guideId: e.guide.toString(),
                 destinationLink: e.destinationLink,
                 createdAt: e.createdAt,

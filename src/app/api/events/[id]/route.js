@@ -105,6 +105,11 @@ export async function GET(request, context) {
                 customFormFields: event.customFormFields || [],
                 createdAt: event.createdAt
             },
+        }, {
+            headers: {
+                // Cache event details at the edge for 60s, serve stale for 2min while revalidating
+                "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
+            },
         });
     } catch (error) {
         console.error("Get Public Event Error:", error);
