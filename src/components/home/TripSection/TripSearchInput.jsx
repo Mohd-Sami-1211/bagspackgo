@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
-const TripSearchInput = memo(forwardRef(({ compactMode = false, onSearch }, ref) => {
+const TripSearchInput = memo(forwardRef(({ compactMode = false, onSearch, heroMode = false }, ref) => {
   const router = useRouter();
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => {
@@ -119,17 +119,17 @@ const TripSearchInput = memo(forwardRef(({ compactMode = false, onSearch }, ref)
       whileInView="onscreen"
       viewport={{ once: true, amount: 0.2 }}
       variants={scrollVariants}
-      className={`bg-white border shadow-sm rounded-xl p-3 sm:p-5 w-full max-w-full ${compactMode ? 'md:max-w-4xl' : 'md:max-w-5xl min-h-[160px]'} transition-all`}
+      className={`w-full max-w-full rounded-xl border bg-white shadow-sm transition-all ${heroMode ? 'min-h-[280px] p-2.5 [&_label]:mb-0.5 [&_label]:text-xs [&_button]:h-9' : `p-3 sm:p-5 ${compactMode ? 'md:max-w-4xl' : 'min-h-[160px] md:max-w-5xl'}`}`}
     >
       {!isMounted ? (
         <div className="w-full h-[180px] bg-white/50 animate-pulse rounded-2xl" />
       ) : (
         <div
-          className="flex flex-col md:flex-row gap-2 md:gap-3"
+          className={`flex flex-col ${heroMode ? 'gap-2' : 'gap-3 md:flex-row md:gap-3'}`}
         >
           {/* Left Section - Destination and Category */}
           <div 
-            className="flex-1 space-y-3 sm:space-y-4 w-full md:w-auto relative z-10"
+            className={`relative z-10 w-full flex-1 md:w-auto ${heroMode ? 'space-y-2' : 'space-y-3 sm:space-y-4'}`}
           >
             <DestinationSelect
               selectedDestination={selectedDestination}
@@ -145,7 +145,7 @@ const TripSearchInput = memo(forwardRef(({ compactMode = false, onSearch }, ref)
 
           {/* Right Section - Counters, Date and Search */}
           <div 
-            className="flex-[2] space-y-3 sm:space-y-4 flex flex-col justify-between w-full md:w-auto relative z-20"
+            className={`relative z-20 flex w-full flex-[2] flex-col justify-between md:w-auto ${heroMode ? 'space-y-2' : 'space-y-3 sm:space-y-4'}`}
           >
             <CountersSection 
               daysRange={daysRange} 
@@ -157,7 +157,7 @@ const TripSearchInput = memo(forwardRef(({ compactMode = false, onSearch }, ref)
               clearError={clearError}
             />
 
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-end mt-2 sm:mt-1">
+            <div className={`flex flex-col sm:flex-row sm:items-end ${heroMode ? 'gap-2 sm:mt-0' : 'mt-2 gap-3 sm:mt-1 sm:gap-4'}`}>
               <div className="flex-1 relative z-[60] w-full">
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">Date</label>
                 <DatePicker
@@ -204,7 +204,7 @@ const TripSearchInput = memo(forwardRef(({ compactMode = false, onSearch }, ref)
                 </AnimatePresence>
               </div>
 
-              <div className="flex gap-2 sm:gap-3 flex-wrap sm:flex-nowrap justify-end w-full sm:w-auto mt-2">
+              <div className={`flex w-full flex-wrap justify-end gap-2 sm:w-auto sm:flex-nowrap sm:gap-3 ${heroMode ? 'mt-0' : 'mt-2'}`}>
                 <AnimatePresence mode="wait">
                   {isSearching ? (
                     <motion.div key="searching" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="w-full sm:w-32 flex justify-center py-2">
@@ -225,7 +225,7 @@ const TripSearchInput = memo(forwardRef(({ compactMode = false, onSearch }, ref)
                 <Button
                   variant="outline"
                   onClick={handleReset}
-                  className="w-full sm:w-[100px]"
+                  className="w-full sm:w-[100px] text-slate-700"
                 >
                   <RefreshCcw className="mr-2 h-4 w-4" />
                   Reset

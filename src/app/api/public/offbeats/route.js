@@ -43,17 +43,24 @@ export async function GET(req) {
 
         const totalPages = Math.ceil(total / limit);
 
-        return NextResponse.json({
-            success: true,
-            data: offbeats,
-            pagination: {
-                page,
-                limit,
-                total,
-                totalPages,
-                hasMore: page < totalPages,
+        return NextResponse.json(
+            {
+                success: true,
+                data: offbeats,
+                pagination: {
+                    page,
+                    limit,
+                    total,
+                    totalPages,
+                    hasMore: page < totalPages,
+                },
             },
-        });
+            {
+                headers: {
+                    'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+                },
+            }
+        );
     } catch (error) {
         console.error('Failed to fetch public offbeats:', error);
         return NextResponse.json({ success: false, message: 'Server error' }, { status: 500 });

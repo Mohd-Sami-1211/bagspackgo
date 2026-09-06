@@ -1,245 +1,257 @@
-// components/common/Navbar.jsx
 'use client';
+
 import Image from 'next/image';
-import { CalendarCheck, Headphones, LogIn, UserPlus, LogOut, ChevronDown, LayoutDashboard, Bookmark, Bell } from 'lucide-react';
-import { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import {
+  Bell,
+  Bookmark,
+  CalendarCheck,
+  CalendarDays,
+  ChevronDown,
+  Compass,
+  Headphones,
+  LayoutDashboard,
+  LogIn,
+  LogOut,
+  Plane,
+  UserCheck,
+} from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 
-// Get initials from name: "Mohd Samiullah" → "MS"
+const primaryLinks = [
+  { label: 'Trips', href: '/user/trip', icon: Plane },
+  { label: 'Offbeats', href: '/user/offbeats', icon: Compass },
+  { label: 'Events', href: '/user/events', icon: CalendarDays },
+  { label: 'Companion', href: '/user/companion', icon: UserCheck },
+];
+
 function getInitials(name) {
   if (!name) return '?';
   const words = name.trim().split(/\s+/);
-  if (words.length >= 2) return (words[0][0] + words[1][0]).toUpperCase();
-  return words[0][0].toUpperCase();
+  return words.length >= 2
+    ? `${words[0][0]}${words[1][0]}`.toUpperCase()
+    : words[0][0].toUpperCase();
+}
+
+function PrimaryLinks({ pathname, mobile = false, overlay = false }) {
+  return (
+    <div className={mobile ? 'grid grid-cols-4' : 'flex items-center gap-1'}>
+      {primaryLinks.map((item) => {
+        const Icon = item.icon;
+        const isActive = pathname?.startsWith(item.href);
+
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            aria-current={isActive ? 'page' : undefined}
+            className={
+              mobile
+                ? `flex min-w-0 flex-col items-center gap-1 border-b-2 px-1 py-2.5 text-[11px] font-bold transition-colors ${
+                    isActive
+                      ? overlay
+                        ? 'border-[#ffd45c] bg-white/10 text-white'
+                        : 'border-emerald-600 bg-emerald-50/70 text-emerald-800'
+                      : overlay
+                        ? 'border-transparent text-white/70 hover:text-white'
+                        : 'border-transparent text-slate-500 hover:text-emerald-700'
+                  }`
+                : `inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition-colors ${
+                    isActive
+                      ? overlay
+                        ? 'bg-white/15 text-white backdrop-blur-md'
+                        : 'bg-emerald-50 text-emerald-800'
+                      : overlay
+                        ? 'text-white/75 hover:bg-white/10 hover:text-white'
+                        : 'text-slate-600 hover:bg-slate-50 hover:text-emerald-700'
+                  }`
+            }
+          >
+            <Icon size={mobile ? 17 : 16} />
+            <span>{item.label}</span>
+          </Link>
+        );
+      })}
+    </div>
+  );
 }
 
 export default function Navbar() {
-  const [showSignIn, setShowSignIn] = useState(true);
+  const pathname = usePathname();
   const [showDropdown, setShowDropdown] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const { user, isAuthenticated, loading, logout, openAuthModal } = useAuth();
   const dropdownRef = useRef(null);
 
-  // Only treat as "user authenticated" if the role is 'user' (not provider/admin)
   const isUserAccount = isAuthenticated && user?.role === 'user';
   const isProviderAccount = isAuthenticated && user?.role === 'provider';
+  const isLanding = pathname === '/' || pathname === '/user/trip';
 
-  // Animate Sign In / Sign Up toggle (only when not logged in as user)
   useEffect(() => {
-    if (isUserAccount) return;
-    const interval = setInterval(() => {
-      setShowSignIn((prev) => !prev);
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [isUserAccount]);
+    setShowDropdown(false);
+  }, [pathname]);
 
-  // Close dropdown on outside click
   useEffect(() => {
-    function handleClickOutside(e) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setShowDropdown(false);
       }
     }
+
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   return (
-    <nav className="w-full bg-green-300 shadow-md px-3 sm:px-6 py-3 flex items-center justify-between relative z-[100]">
-
-      {/* Logo Section */}
-      <a
-        href="/"
-        className="inline-block w-[110px] sm:w-[150px] h-[35px] sm:h-[40px] overflow-hidden relative rounded-full bg-white shadow-sm flex-shrink-0"
-      >
-        <Image
-          src="/images/logo.svg"
-          alt="Logo"
-          fill
-          priority
-          className="object-contain"
-        />
-      </a>
-
-      {/* Right Side */}
-      <div className="flex items-center space-x-3 sm:space-x-4 text-white/90 text-[14px] sm:text-[15px] font-semibold relative">
-
-        {/* ─── Auth Section ─── */}
-        {loading ? (
-          // Loading skeleton
-          <div className="w-24 h-8 bg-white/30 rounded animate-pulse" />
-        ) : isProviderAccount ? (
-          // 🟡 Logged in as PROVIDER — show provider pill, not a user account
-          <div className="relative" ref={dropdownRef}>
-            <button
-              onClick={() => setShowDropdown(!showDropdown)}
-              className="flex items-center gap-2 bg-white text-amber-600 rounded-full px-3 py-1 hover:bg-amber-50 transition-colors text-sm font-semibold border border-amber-200"
+    <>
+      <nav className={`z-[100] w-full ${isLanding ? 'absolute left-0 top-0 border-b border-white/15 bg-transparent text-white' : 'sticky top-0 border-b border-slate-200/80 bg-white/95 shadow-sm backdrop-blur-xl'}`}>
+        <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
+          <div className="flex h-16 items-center justify-between gap-4">
+            <Link
+              href="/"
+              className="relative h-10 w-[128px] shrink-0 overflow-hidden rounded-full bg-white sm:w-[150px]"
+              aria-label="bagspackgo home"
             >
-              <LayoutDashboard size={14} />
-              <span className="hidden sm:inline">Provider</span>
-              <ChevronDown size={12} className={`transition-transform duration-200 ${showDropdown ? 'rotate-180' : ''}`} />
-            </button>
+              <Image src="/images/logo.svg" alt="bagspackgo" fill priority className="object-contain" />
+            </Link>
 
-            {showDropdown && (
-              <div className="absolute right-0 top-full mt-2 bg-white rounded-xl shadow-lg border border-gray-100 py-2 w-52 z-50 overflow-hidden">
-                <div className="px-4 py-2 border-b border-gray-100">
-                  <p className="text-xs text-amber-600 font-semibold uppercase tracking-wide">Provider Account</p>
-                  <p className="text-sm font-semibold text-gray-800 truncate mt-0.5">{user.username}</p>
-                  <p className="text-xs text-gray-500 truncate">{user.email || user.phone}</p>
-                </div>
-                {/* Go to Dashboard / Application */}
-                <a
-                  href={user?.applicationStatus === 'approved' ? "/serviceprovider/dashboard" : "/serviceprovider"}
-                  className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-amber-600 hover:bg-amber-50 transition-colors"
-                  onClick={() => setShowDropdown(false)}
-                >
-                  <LayoutDashboard size={16} />
-                  {user?.applicationStatus === 'approved' ? 'Go to Dashboard' : 'Complete Application'}
-                </a>
-                {/* Logout */}
-                <button
-                  onClick={() => {
-                    setShowDropdown(false);
-                    logout();
-                  }}
-                  className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                >
-                  <LogOut size={16} />
-                  Logout
-                </button>
-              </div>
-            )}
-          </div>
-        ) : isUserAccount ? (
-          // ✅ Logged in as USER — show initials + name + dropdown
-          <div className="relative" ref={dropdownRef}>
-            <button
-              onClick={() => setShowDropdown(!showDropdown)}
-              className="flex items-center gap-1 bg-white text-green-700 rounded-full p-1 hover:bg-green-50 transition-colors"
-            >
-              {/* Initials Circle */}
-              <div className="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-xs font-bold">
-                {getInitials(user.username)}
-              </div>
-              <ChevronDown size={14} className={`mr-1 transition-transform duration-200 ${showDropdown ? 'rotate-180' : ''}`} />
-            </button>
+            <div className="hidden md:block">
+              <PrimaryLinks pathname={pathname} overlay={isLanding} />
+            </div>
 
-            {/* Dropdown */}
-            {showDropdown && (
-              <div className="absolute right-0 top-full mt-2 bg-white rounded-xl shadow-lg border border-gray-100 py-2 w-48 z-50 overflow-hidden">
-                {/* User info */}
-                <div className="px-4 py-2 border-b border-gray-100">
-                  <p className="text-sm font-semibold text-gray-800 truncate">{user.username}</p>
-                  <p className="text-xs text-gray-500 truncate">{user.email || user.phone}</p>
-                </div>
-                {/* All Screens Extra Links */}
-                <div className="border-b border-gray-100 py-1">
-                  <a href="/user/bookings" className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                     <CalendarCheck size={16} /> Bookings
-                  </a>
-                  <a href="/user/saved" className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                     <Bookmark size={16} /> Saved
-                  </a>
-                  <a href="/user/notifications" className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                     <Bell size={16} /> Notifications
-                  </a>
-                  <a href="/user/help" className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                     <Headphones size={16} /> Help
-                  </a>
-                </div>
-                {/* Logout */}
+            <div className="relative flex shrink-0 items-center" ref={dropdownRef}>
+              {loading ? (
+                <div className="h-9 w-24 animate-pulse rounded-full bg-slate-100" />
+              ) : isProviderAccount ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setShowDropdown((open) => !open)}
+                    className="flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-bold text-amber-700 transition-colors hover:bg-amber-100"
+                  >
+                    <LayoutDashboard size={15} />
+                    <span className="hidden sm:inline">Provider</span>
+                    <ChevronDown size={13} className={showDropdown ? 'rotate-180 transition-transform' : 'transition-transform'} />
+                  </button>
+                  {showDropdown && (
+                    <div className="absolute right-0 top-full mt-3 w-56 overflow-hidden rounded-2xl border border-slate-100 bg-white py-2 shadow-2xl">
+                      <div className="border-b border-slate-100 px-4 py-3">
+                        <p className="text-[10px] font-extrabold uppercase tracking-wider text-amber-600">Provider account</p>
+                        <p className="mt-1 truncate text-sm font-bold text-slate-900">{user.username}</p>
+                        <p className="truncate text-xs text-slate-500">{user.email || user.phone}</p>
+                      </div>
+                      <Link
+                        href={user?.applicationStatus === 'approved' ? '/serviceprovider/dashboard' : '/serviceprovider'}
+                        className="flex items-center gap-2 px-4 py-3 text-sm font-semibold text-amber-700 hover:bg-amber-50"
+                      >
+                        <LayoutDashboard size={16} />
+                        {user?.applicationStatus === 'approved' ? 'Go to dashboard' : 'Complete application'}
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={logout}
+                        className="flex w-full items-center gap-2 px-4 py-3 text-sm font-semibold text-red-600 hover:bg-red-50"
+                      >
+                        <LogOut size={16} /> Log out
+                      </button>
+                    </div>
+                  )}
+                </>
+              ) : isUserAccount ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setShowDropdown((open) => !open)}
+                    className="flex items-center gap-1 rounded-full border border-emerald-100 bg-emerald-50 p-1 text-emerald-800 transition-colors hover:bg-emerald-100"
+                    aria-label="Open account menu"
+                  >
+                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-green-600 text-xs font-extrabold text-white">
+                      {getInitials(user.username)}
+                    </span>
+                    <ChevronDown size={14} className={`mr-1 transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
+                  </button>
+                  {showDropdown && (
+                    <div className="absolute right-0 top-full mt-3 w-56 overflow-hidden rounded-2xl border border-slate-100 bg-white py-2 shadow-2xl">
+                      <div className="border-b border-slate-100 px-4 py-3">
+                        <p className="truncate text-sm font-bold text-slate-900">{user.username}</p>
+                        <p className="truncate text-xs text-slate-500">{user.email || user.phone}</p>
+                      </div>
+                      <div className="border-b border-slate-100 py-1">
+                        <AccountLink href="/user/bookings" icon={CalendarCheck}>Bookings</AccountLink>
+                        <AccountLink href="/user/saved" icon={Bookmark}>Saved</AccountLink>
+                        <AccountLink href="/user/notifications" icon={Bell}>Notifications</AccountLink>
+                        <AccountLink href="/user/help" icon={Headphones}>Help</AccountLink>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowDropdown(false);
+                          setShowLogoutConfirm(true);
+                        }}
+                        className="flex w-full items-center gap-2 px-4 py-3 text-sm font-semibold text-red-600 hover:bg-red-50"
+                      >
+                        <LogOut size={16} /> Log out
+                      </button>
+                    </div>
+                  )}
+                </>
+              ) : (
                 <button
-                  onClick={() => {
-                    setShowDropdown(false);
-                    setShowLogoutConfirm(true);
-                  }}
-                  className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                  type="button"
+                  onClick={openAuthModal}
+                  className={`inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-sm font-bold shadow-sm transition-all sm:px-5 ${isLanding ? 'bg-white text-[#173e35] hover:-translate-y-0.5 hover:bg-white/90' : 'bg-emerald-700 text-white hover:bg-emerald-800'}`}
                 >
-                  <LogOut size={16} />
-                  Logout
+                  <LogIn size={16} />
+                  <span>Sign in</span>
                 </button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        ) : (
-          // ❌ Not logged in — show Sign In / Sign Up toggle (Dropdown on Mobile)
-          <div className="relative" ref={dropdownRef}>
-            {/* Unified Button - Toggles Menu */}
-            <button
-              onClick={() => setShowDropdown(!showDropdown)}
-              className="relative h-8 w-24 sm:w-28 overflow-hidden bg-white text-green-600 rounded hover:bg-green-100 transition-all duration-700 ease-in-out text-sm font-semibold flex-shrink-0"
-            >
-              <div
-                className="absolute top-0 left-0 w-full transition-transform duration-700"
-                style={{ transform: `translateY(${showSignIn ? '0%' : '-50%'})` }}
-              >
-                <div className="flex items-center justify-center gap-1 h-8">
-                  <LogIn size={14} />
-                  <span>Sign In</span>
-                </div>
-                <div className="flex items-center justify-center gap-1 h-8">
-                  <UserPlus size={14} />
-                  <span>Sign Up</span>
-                </div>
-              </div>
-            </button>
 
-            {/* Dropdown Options */}
-            {showDropdown && (
-              <div className="absolute right-0 top-full mt-2 bg-white rounded-xl shadow-lg border border-gray-100 py-2 w-48 z-50 overflow-hidden">
-                <button
-                  onClick={() => {
-                    setShowDropdown(false);
-                    openAuthModal();
-                  }}
-                  className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-green-700 hover:bg-green-50 transition-colors font-semibold border-b border-gray-100"
-                >
-                  <LogIn size={16} /> Sign In / Sign Up
-                </button>
-                <a href="/user/bookings" className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                  <CalendarCheck size={16} /> Bookings
-                </a>
-                <a href="/user/saved" className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                  <Bookmark size={16} /> Saved
-                </a>
-                <a href="/user/notifications" className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                  <Bell size={16} /> Notifications
-                </a>
-                <a href="/user/help" className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                  <Headphones size={16} /> Help
-                </a>
-              </div>
-            )}
-          </div>
-        )}
+        </div>
+      </nav>
+
+      <div className="fixed bottom-3 left-3 right-3 z-[110] overflow-hidden rounded-2xl border border-white/20 bg-[#17372f]/80 px-1 shadow-[0_10px_35px_rgba(10,33,28,0.28)] backdrop-blur-xl md:hidden">
+        <PrimaryLinks pathname={pathname} mobile overlay />
       </div>
 
-      {/* Logout Confirmation Modal */}
       {showLogoutConfirm && (
-        <div className="fixed inset-0 z-[1000] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl border border-gray-100 flex flex-col pointer-events-auto">
-            <h3 className="text-xl font-bold text-gray-900 mb-2 tracking-tight">Confirm Logout</h3>
-            <p className="text-gray-500 text-sm font-medium mb-6">Are you sure you want to log out of your account?</p>
-            <div className="flex items-center gap-3 w-full">
-              <button 
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-3xl border border-slate-100 bg-white p-6 shadow-2xl">
+            <h3 className="text-xl font-bold text-slate-950">Log out?</h3>
+            <p className="mt-2 text-sm leading-6 text-slate-500">You can sign back in whenever you are ready to plan again.</p>
+            <div className="mt-6 flex gap-3">
+              <button
+                type="button"
                 onClick={() => setShowLogoutConfirm(false)}
-                className="flex-1 py-2.5 rounded-lg border border-gray-200 text-gray-600 font-semibold hover:bg-gray-50 transition-colors"
+                className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50"
               >
                 Cancel
               </button>
-              <button 
+              <button
+                type="button"
                 onClick={() => {
                   setShowLogoutConfirm(false);
                   logout();
                 }}
-                className="flex-1 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold transition-colors flex items-center justify-center gap-2"
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-red-600 py-2.5 text-sm font-bold text-white hover:bg-red-700"
               >
-                <LogOut size={16} /> Logout
+                <LogOut size={16} /> Log out
               </button>
             </div>
           </div>
         </div>
       )}
-    </nav>
+    </>
+  );
+}
+
+function AccountLink({ href, icon: Icon, children }) {
+  return (
+    <Link href={href} className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-emerald-700">
+      <Icon size={16} /> {children}
+    </Link>
   );
 }
