@@ -29,7 +29,8 @@ const Footer = () => {
           </h3>
           <ul className="space-y-2.5">
             <li><Link href="/" className="text-sm text-slate-600 hover:text-emerald-600 hover:translate-x-1 inline-block transition-all font-medium">Home</Link></li>
-            <li><Link href="#about" className="text-sm text-slate-600 hover:text-emerald-600 hover:translate-x-1 inline-block transition-all font-medium">About Us</Link></li>
+            <li><Link href="/user/trip#about" className="text-sm text-slate-600 hover:text-emerald-600 hover:translate-x-1 inline-block transition-all font-medium">How It Works</Link></li>
+            <li><Link href="/user/offbeats" className="text-sm text-slate-600 hover:text-emerald-600 hover:translate-x-1 inline-block transition-all font-medium">Offbeats</Link></li>
             <li><Link href="/user/events" className="text-sm text-slate-600 hover:text-emerald-600 hover:translate-x-1 inline-block transition-all font-medium">Events</Link></li>
           </ul>
         </div>
@@ -40,30 +41,21 @@ const Footer = () => {
             <span className="w-3 h-1 bg-emerald-600 rounded-full"></span> Support
           </h3>
           <ul className="space-y-2.5">
-            <li><Link href="#faq" className="text-sm text-slate-600 hover:text-emerald-600 hover:translate-x-1 inline-block transition-all font-medium">FAQ</Link></li>
             <li><Link href="/user/help" className="text-sm text-slate-600 hover:text-emerald-600 hover:translate-x-1 inline-block transition-all font-medium">Customer Support</Link></li>
             <li><Link href="/privacy" className="text-sm text-slate-600 hover:text-emerald-600 hover:translate-x-1 inline-block transition-all font-medium">Privacy Policy</Link></li>
             <li><Link href="/terms" className="text-sm text-slate-600 hover:text-emerald-600 hover:translate-x-1 inline-block transition-all font-medium">Terms & Conditions</Link></li>
           </ul>
         </div>
 
-        {/* Contact / Newsletter */}
+        {/* Local company onboarding */}
         <div>
           <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-            <span className="w-3 h-1 bg-emerald-600 rounded-full"></span> Connect
+            <span className="w-3 h-1 bg-emerald-600 rounded-full"></span> For Local Companies
           </h3>
-          <p className="text-sm text-slate-600 mb-4 font-medium">Join our newsletter to stay updated on offers and travel tips.</p>
-          <form className="flex rounded-md overflow-hidden border border-slate-200 shadow-sm" onSubmit={(e) => e.preventDefault()}>
-            <input
-              type="email"
-              placeholder="Email address"
-              className="w-full px-3 py-2 bg-white text-slate-800 outline-none text-sm placeholder:text-slate-400"
-              required
-            />
-            <button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-4 py-2 text-sm transition-colors whitespace-nowrap">
-              Subscribe
-            </button>
-          </form>
+          <p className="text-sm text-slate-600 mb-4 font-medium leading-relaxed">List your packages and host events for travellers looking for trusted local experiences.</p>
+          <Link href="/serviceprovider" className="inline-flex rounded-full bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-emerald-800">
+            Become a provider
+          </Link>
         </div>
       </div>
 

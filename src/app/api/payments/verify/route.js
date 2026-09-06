@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
+import Razorpay from 'razorpay';
 import dbConnect from '@/lib/db';
 import { Booking } from '@/models/booking.model';
 import { Event } from '@/models/event.model';
@@ -41,16 +42,56 @@ export async function POST(request) {
             return NextResponse.json({ success: false, message: 'Payment verification failed — invalid signature' }, { status: 400 });
         }
 
-        // Payment verified
+        // Payment verified — connect DB
         await dbConnect();
 
-        // Create Booking record
         const passes = bookingDetails.participants.map((p, i) => ({
             ...p,
             passCode: `BPG-${bookingDetails.eventId}-${Date.now()}-P${i}`,
             checkedIn: false
         }));
 
+        // ═══════ ATOMIC SLOT RESERVATION ═══════
+        // Guard against overselling: only increment if capacity allows.
+        // This is a single atomic MongoDB operation — safe under concurrent requests.
+        const slotUpdate = await Event.findOneAndUpdate(
+            {
+                _id: bookingDetails.eventId,
+                $expr: { $lte: [{ $add: ['$bookedSlots', passes.length] }, '$totalSlots'] }
+            },
+            { $inc: { bookedSlots: passes.length } },
+            { new: true }
+        );
+
+        if (!slotUpdate) {
+            // Slots ran out — trigger automated Razorpay refund
+            let refundSuccess = false;
+            if (razorpay_payment_id) {
+                try {
+                    const razorpay = new Razorpay({
+                        key_id: process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+                        key_secret: process.env.RAZORPAY_KEY_SECRET
+                    });
+                    await razorpay.payments.refund(razorpay_payment_id, {
+                        amount: Math.round(bookingDetails.amount * 100),
+                        notes: { reason: 'Slots sold out during checkout' }
+                    });
+                    refundSuccess = true;
+                } catch (refundErr) {
+                    console.error('[verify] Auto-refund failed:', refundErr);
+                }
+            }
+
+            return NextResponse.json({
+                success: false,
+                soldOut: true,
+                message: refundSuccess
+                    ? 'This event sold out while you were paying. A full refund has been initiated automatically.'
+                    : 'This event sold out while you were paying. Your payment will be refunded within 5-7 business days.',
+            }, { status: 409 });
+        }
+
+        // Create Booking record after slot was atomically reserved
         const newBooking = new Booking({
             user: user.userId,
             event: bookingDetails.eventId,
@@ -66,34 +107,19 @@ export async function POST(request) {
 
         await newBooking.save();
 
-        // Update Event bookedSlots and get event details for the email
-        const eventInfo = await Event.findByIdAndUpdate(bookingDetails.eventId, {
-            $inc: { bookedSlots: passes.length }
-        });
-
-        // Send Email Asynchronously
-        if (bookingDetails.contactDetails?.email && eventInfo) {
-            const mailDetails = {
-                title: eventInfo.title,
-                orderId: razorpay_order_id,
-                slots: passes.length,
-                amount: bookingDetails.amount,
-                formattedDate: new Date(eventInfo.date).toLocaleDateString('en-US', {
-                    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-                }),
-                location: eventInfo.location?.city || eventInfo.location || 'TBD'
-            };
+        // Send Email Asynchronously (non-blocking)
+        if (bookingDetails.contactDetails?.email && slotUpdate) {
             sendEventBookingConfirmation({
                 userEmail: bookingDetails.contactDetails.email,
                 userName: user.username || bookingDetails.contactDetails.name || 'Traveler',
                 providerEmail: null,
                 providerName: null,
                 bookingId: newBooking._id.toString(),
-                eventName: mailDetails.title,
-                destination: mailDetails.location,
-                eventDate: eventInfo.date,
-                numPeople: mailDetails.slots,
-                totalAmount: mailDetails.amount
+                eventName: slotUpdate.title,
+                destination: slotUpdate.location || '',
+                eventDate: slotUpdate.date,
+                numPeople: passes.length,
+                totalAmount: bookingDetails.amount
             }).catch(err => console.error("Failed to send booking pass email:", err));
         }
 

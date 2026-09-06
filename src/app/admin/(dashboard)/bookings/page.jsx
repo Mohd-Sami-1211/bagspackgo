@@ -82,16 +82,16 @@ function DetailDrawer({ booking, type, onClose }) {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <p className="text-[10px] text-gray-500 uppercase font-semibold mb-1">Paid</p>
-                                    <p className="text-lg font-bold text-emerald-400">₹{(booking.amountPaid || booking.totalAmount)?.toLocaleString('en-IN')}</p>
+                                    <p className="text-lg font-bold text-emerald-400">₹{(booking.status === 'confirmed' ? (booking.amountPaid || booking.totalAmount) : 0)?.toLocaleString('en-IN')}</p>
                                 </div>
                                 <div>
                                     <p className="text-[10px] text-gray-500 uppercase font-semibold mb-1">Remaining</p>
                                     <p className={`text-lg font-bold ${(booking.remainingAmount || 0) > 0 ? 'text-amber-400' : 'text-gray-600'}`}>
-                                        ₹{(booking.remainingAmount || 0).toLocaleString('en-IN')}
+                                        ₹{(booking.status === 'confirmed' ? (booking.remainingAmount || 0) : (booking.totalAmount || 0)).toLocaleString('en-IN')}
                                     </p>
                                 </div>
                             </div>
-                            {booking.paymentMode === 'partial' && (booking.remainingAmount || 0) > 0 && (
+                            {booking.paymentMode === 'partial' && booking.status === 'confirmed' && (booking.remainingAmount || 0) > 0 && (
                                 <p className="text-[10px] text-amber-400/70 mt-2 font-medium">
                                     • Remaining amount to be collected on trip day
                                 </p>
@@ -310,7 +310,7 @@ export default function AdminBookingsPage() {
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <p className="text-gray-400 mb-0.5">{new Date(b.bookingDate || b.createdAt).toLocaleDateString('en-GB')}</p>
                                             <p className="font-bold text-white">₹{amount?.toLocaleString('en-IN')}</p>
-                                            {!isEvent && b.paymentMode === 'partial' && (
+                                            {!isEvent && b.paymentMode === 'partial' && b.status === 'confirmed' && (
                                                 <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-400 mt-1">30% Paid</span>
                                             )}
                                         </td>

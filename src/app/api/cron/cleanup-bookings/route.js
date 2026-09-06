@@ -16,13 +16,13 @@ export async function GET(request) {
 
         await dbConnect();
 
-        // Calculate the timestamp for 60 minutes ago
-        const sixtyMinutesAgo = new Date(Date.now() - 60 * 60 * 1000);
+        // Calculate the timestamp for 5 minutes ago
+        const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
 
-        // Delete pending bookings older than 60 minutes
+        // Delete pending bookings older than 5 minutes
         const filter = {
             status: 'pending',
-            createdAt: { $lt: sixtyMinutesAgo }
+            createdAt: { $lt: fiveMinutesAgo }
         };
 
         const [eventResult, tripResult, trekResult] = await Promise.all([
@@ -33,7 +33,7 @@ export async function GET(request) {
 
         return NextResponse.json({
             success: true,
-            message: 'Abandoned pending bookings cleaned up',
+            message: 'Abandoned pending bookings cleaned up (5-minute window)',
             deleted: {
                 events: eventResult.deletedCount,
                 trips: tripResult.deletedCount,
