@@ -6,6 +6,8 @@ import { GuideDetails } from "@/models/guidedetails.model";
 
 export const dynamic = 'force-dynamic';
 
+const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 /**
  * GET /api/events
  * Public API — returns published events for the user-facing side.
@@ -32,13 +34,19 @@ export async function GET(request) {
         const page = Math.max(1, parseInt(searchParams.get("page")) || 1);
         const limit = Math.min(50, Math.max(1, parseInt(searchParams.get("limit")) || 12));
         const skip = (page - 1) * limit;
+        const includeFacets = searchParams.get("includeFacets") === "true";
 
         const now = new Date();
 
         // ── Build base query ──────────────────────────────────────────────────
+        const pausedGuideIds = await GuideDetails.distinct("guide", {
+            "pausedServices.event": true,
+        });
+
         const query = {
             status: "published",
             visibility: { $ne: "private" },
+            ...(pausedGuideIds.length ? { guide: { $nin: pausedGuideIds } } : {}),
         };
 
         // Upcoming vs Past
@@ -49,59 +57,53 @@ export async function GET(request) {
         }
 
         if (location) {
-            query.location = { $regex: location, $options: "i" };
+            query.location = { $regex: escapeRegExp(location.trim()), $options: "i" };
         }
         if (type) {
-            query.eventType = { $regex: type, $options: "i" };
+            query.eventType = { $regex: escapeRegExp(type.trim()), $options: "i" };
         }
         if (search) {
+            const safeSearch = escapeRegExp(search.trim());
             query.$or = [
-                { title: { $regex: search, $options: "i" } },
-                { destination: { $regex: search, $options: "i" } },
-                { eventType: { $regex: search, $options: "i" } },
-                { location: { $regex: search, $options: "i" } },
+                { title: { $regex: safeSearch, $options: "i" } },
+                { destination: { $regex: safeSearch, $options: "i" } },
+                { eventType: { $regex: safeSearch, $options: "i" } },
+                { location: { $regex: safeSearch, $options: "i" } },
             ];
         }
 
         // ── Build sort ────────────────────────────────────────────────────────
-        let sortObj = tab === "past" ? { date: -1 } : { date: 1 }; // default: nearest upcoming / most recent past
-        if (sort === "price_asc") sortObj = { pricePerSlot: 1 };
-        if (sort === "price_desc") sortObj = { pricePerSlot: -1 };
-        if (sort === "date_asc") sortObj = { date: 1 };
-        if (sort === "date_desc") sortObj = { date: -1 };
-        if (sort === "rating") sortObj = { rating: -1 };
+        let sortObj = tab === "past" ? { date: -1, _id: -1 } : { date: 1, _id: 1 };
+        if (sort === "price_asc") sortObj = { pricePerSlot: 1, date: 1, _id: 1 };
+        if (sort === "price_desc") sortObj = { pricePerSlot: -1, date: 1, _id: 1 };
+        if (sort === "date_asc") sortObj = { date: 1, _id: 1 };
+        if (sort === "date_desc") sortObj = { date: -1, _id: -1 };
+        if (sort === "rating") sortObj = { rating: -1, date: 1, _id: 1 };
 
         // ── Fetch events — lightweight fields only (detail fields excluded) ───
         // 'about', 'photographs', 'faqs', 'highlights', 'whatsIncluded/Excluded',
         // 'whatToBring', 'restrictions', 'pickupPoints', 'itinerary' are NOT
         // fetched here — they are only loaded on the detail page.
-        const eventsList = await Event.find(query)
-            .select(
-                "title date duration pricePerSlot eventType rating bookedSlots totalSlots " +
-                "location destination poster guide destinationLink createdAt status"
-            )
-            .sort(sortObj)
-            .lean();
+        const projection =
+            "title date duration pricePerSlot eventType rating bookedSlots totalSlots " +
+            "location destination poster guide destinationLink createdAt status";
 
-        // ── Filter out events from paused guides ──────────────────────────────
-        const guideIds = [...new Set(eventsList.map((e) => e.guide.toString()))];
-        const [guides, guideDetailsList] = await Promise.all([
-            Guide.find({ _id: { $in: guideIds } }).select("username email applicationStatus").lean(),
-            GuideDetails.find({ guide: { $in: guideIds } }).select("guide companyname logo pausedServices").lean(),
+        const [eventsList, total] = await Promise.all([
+            Event.find(query)
+                .select(projection)
+                .sort(sortObj)
+                .skip(skip)
+                .limit(limit)
+                .lean(),
+            Event.countDocuments(query),
         ]);
 
-        const pausedEventGuides = new Set(
-            guideDetailsList
-                .filter((gd) => gd.pausedServices?.event === true)
-                .map((gd) => gd.guide.toString())
-        );
-
-        let finalEvents = eventsList.filter((e) => !pausedEventGuides.has(e.guide.toString()));
-        const total = finalEvents.length;
+        const guideIds = [...new Set(eventsList.map((event) => event.guide.toString()))];
+        const [guides, guideDetailsList] = await Promise.all([
+            Guide.find({ _id: { $in: guideIds } }).select("username email applicationStatus").lean(),
+            GuideDetails.find({ guide: { $in: guideIds } }).select("guide companyname logo").lean(),
+        ]);
         const totalPages = Math.ceil(total / limit);
-
-        // Apply pagination after paused-guide filtering
-        finalEvents = finalEvents.slice(skip, skip + limit);
 
         // ── Build guide/company name map ──────────────────────────────────────
         const guideMap = {};
@@ -116,23 +118,25 @@ export async function GET(request) {
             }
         });
 
-        // ── Fetch all organizers for filter panel ─────────────────────────────
-        const allCompanies = await GuideDetails.find({ "pausedServices.event": { $ne: true } })
-            .populate("guide", "applicationStatus")
-            .select("companyname guide")
-            .lean();
+        let allOrganizers = [];
+        if (includeFacets) {
+            const allCompanies = await GuideDetails.find({ "pausedServices.event": { $ne: true } })
+                .populate("guide", "applicationStatus")
+                .select("companyname guide")
+                .lean();
 
-        const allOrganizers = [
-            ...new Set(
-                allCompanies
-                    .filter((gd) => gd.guide && gd.guide.applicationStatus === "approved")
-                    .map((gd) => gd.companyname)
-                    .filter(Boolean)
-            ),
-        ].map((name) => ({ id: name, name }));
+            allOrganizers = [
+                ...new Set(
+                    allCompanies
+                        .filter((details) => details.guide?.applicationStatus === "approved")
+                        .map((details) => details.companyname)
+                        .filter(Boolean)
+                ),
+            ].map((name) => ({ id: name, name }));
+        }
 
         // ── Shape response ────────────────────────────────────────────────────
-        const events = finalEvents.map((e) => {
+        const events = eventsList.map((e) => {
             const guideInfo = guideMap[e.guide.toString()] || {};
             return {
                 id: e._id.toString(),
@@ -172,8 +176,9 @@ export async function GET(request) {
             },
             {
                 headers: {
-                    // Edge / CDN can serve stale for up to 30s, then revalidate in background
-                    "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60",
+                    "Cache-Control": "public, max-age=0, must-revalidate",
+                    "CDN-Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+                    "Vercel-CDN-Cache-Control": "public, max-age=60, stale-while-revalidate=300",
                 },
             }
         );

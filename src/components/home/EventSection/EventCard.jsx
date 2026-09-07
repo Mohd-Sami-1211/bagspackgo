@@ -115,7 +115,7 @@ const EventCard = ({ event }) => {
         </div>
 
         {/* Title */}
-        <h3 className="text-lg font-bold text-neutral-900 leading-snug line-clamp-2 mb-4 group-hover:text-emerald-700 transition-colors">
+        <h3 className="mb-4 line-clamp-2 font-serif text-2xl font-normal leading-[1.08] tracking-[-0.025em] text-[#17372f] transition-colors group-hover:text-[#1d6b55]">
           {event.name}
         </h3>
 
@@ -149,13 +149,13 @@ const EventCard = ({ event }) => {
         <div className="mt-auto pt-4 border-t border-neutral-100 flex items-center justify-between">
           <div className="flex flex-col">
             <span className="text-[10px] uppercase tracking-wider font-bold text-neutral-400 mb-0.5">Starting from</span>
-            <span className="text-xl font-black text-neutral-900">
+            <span className="font-serif text-2xl text-[#17372f]">
               ₹{event.price?.toLocaleString('en-IN') || '0'}
             </span>
           </div>
           
           <button 
-            className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white hover:bg-emerald-700 text-xs font-bold rounded-xl transition-all duration-300 group-hover:shadow-md"
+            className="flex items-center gap-1.5 rounded-xl bg-[#1d6b55] px-4 py-2 text-xs font-semibold text-white transition-all duration-300 hover:bg-[#155240] group-hover:shadow-md"
             aria-label={`View details for ${event.name}`}
           >
             View Details

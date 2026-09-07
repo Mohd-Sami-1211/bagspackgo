@@ -242,6 +242,7 @@ const eventSchema = new mongoose.Schema(
 // Indexes for efficient querying
 eventSchema.index({ guide: 1 });
 eventSchema.index({ status: 1, date: 1 });
+eventSchema.index({ status: 1, visibility: 1, date: 1, guide: 1 });
 eventSchema.index({ location: 1 });
 eventSchema.index({ eventType: 1 });
 

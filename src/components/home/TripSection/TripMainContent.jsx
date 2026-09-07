@@ -406,9 +406,9 @@ export default function TripMainContent() {
         <div className="absolute inset-0 bg-gradient-to-r from-[#0a211c]/88 via-[#0a211c]/38 to-[#0a211c]/48" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#0a211c]/68 via-transparent to-[#0a211c]/28" />
 
-        <div className="relative mx-auto grid max-w-7xl gap-8 sm:gap-10 lg:min-h-[590px] lg:grid-cols-[1.05fr_0.95fr] lg:items-start lg:gap-16">
+        <div className="relative mx-auto grid max-w-7xl gap-8 sm:gap-10 lg:min-h-[590px] lg:grid-cols-[1.05fr_0.95fr] lg:items-start lg:gap-16 2xl:max-w-[1600px] 2xl:grid-cols-[1fr_0.82fr] 2xl:gap-24">
           <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }} className="relative isolate w-full max-w-[310px] py-2 sm:max-w-none lg:-translate-y-2 lg:py-5">
-            <div className="pointer-events-none absolute -inset-x-10 -inset-y-16 z-0 bg-[#0a211c]/55 blur-3xl backdrop-blur-md" style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%), linear-gradient(to right, black 0%, rgba(0,0,0,0.86) 52%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%), linear-gradient(to right, black 0%, rgba(0,0,0,0.86) 52%, transparent 100%)', maskComposite: 'intersect', WebkitMaskComposite: 'source-in' }} />
+            <div className="pointer-events-none absolute -inset-x-10 -inset-y-16 z-0 bg-[#0a211c]/55 blur-3xl backdrop-blur-md" style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%), linear-gradient(to right, transparent 0%, black 10%, rgba(0,0,0,0.86) 52%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%), linear-gradient(to right, transparent 0%, black 10%, rgba(0,0,0,0.86) 52%, transparent 100%)', maskComposite: 'intersect', WebkitMaskComposite: 'source-in' }} />
             <div className="relative z-10">
               <h1 className="max-w-2xl font-serif text-[2.45rem] leading-[0.98] tracking-[-0.04em] sm:text-7xl lg:max-w-[590px] lg:leading-[0.88] lg:text-[5.6rem]">The trip you imagine, made easier to find.</h1>
               <p className="mt-5 max-w-xl text-sm leading-6 text-white/78 sm:mt-7 sm:text-base sm:leading-7">Compare local packages, discover quieter places, join upcoming adventures or take expert support along for the journey.</p>
@@ -416,7 +416,7 @@ export default function TripMainContent() {
             </div>
           </motion.div>
 
-          <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8, delay: 0.12, ease: [0.22, 1, 0.36, 1] }} className="w-full rounded-[1.5rem] border border-white/25 bg-white/12 p-2.5 shadow-2xl shadow-black/25 backdrop-blur-md sm:p-3 lg:mt-24 lg:w-[94%] lg:justify-self-end">
+          <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8, delay: 0.12, ease: [0.22, 1, 0.36, 1] }} className="w-full rounded-[1.5rem] border border-white/25 bg-white/12 p-2.5 shadow-2xl shadow-black/25 backdrop-blur-md sm:p-3 lg:mt-24 lg:w-[94%] lg:justify-self-end 2xl:mt-28 2xl:w-[92%]">
             <div className="mb-2 px-2 pt-1"><p className="font-serif text-xl sm:text-2xl">Where should we take you?</p><p className="mt-0.5 text-[11px] text-white/65 sm:text-xs">Start with a few details. We will show you the options.</p></div>
             <TripSearchInput heroMode />
           </motion.div>

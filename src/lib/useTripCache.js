@@ -1,7 +1,18 @@
 import useSWR from 'swr';
 
 // ── Default SWR fetcher ─────────────────────────────────────────────────────
-const fetcher = (url) => fetch(url).then((r) => r.json());
+const fetcher = async (url) => {
+    const response = await fetch(url, { headers: { Accept: 'application/json' } });
+    const payload = await response.json();
+
+    if (!response.ok || payload?.success === false) {
+        const error = new Error(payload?.message || 'Unable to load data');
+        error.status = response.status;
+        throw error;
+    }
+
+    return payload;
+};
 
 // ── Events listing cache (server-side filtered + paginated) ─────────────────
 // Caches per unique query string. keepPreviousData keeps old data visible
@@ -13,14 +24,17 @@ export function useEventsList(queryParams = {}, options = {}) {
         return useSWR(null, fetcher, { revalidateOnFocus: false, ...options });
     }
     const cleaned = Object.fromEntries(
-        Object.entries(queryParams).filter(([, v]) => v !== undefined && v !== null && v !== '')
+        Object.entries(queryParams)
+            .filter(([, v]) => v !== undefined && v !== null && v !== '')
+            .sort(([firstKey], [secondKey]) => firstKey.localeCompare(secondKey))
     );
     const queryString = new URLSearchParams(cleaned).toString();
     const url = `/api/events${queryString ? `?${queryString}` : ''}`;
     return useSWR(url, fetcher, {
-        dedupingInterval: 30000,   // 30s — matches CDN s-maxage
-        keepPreviousData: true,      // show stale data while revalidating (smooth pagination)
-        revalidateOnFocus: false,    // don't refetch just because user switched tabs
+        dedupingInterval: 60000,     // one request per query per minute in the browser
+        keepPreviousData: true,      // keep the current page visible while the next page loads
+        revalidateOnFocus: false,
+        revalidateOnReconnect: false,
         ...options,
     });
 }

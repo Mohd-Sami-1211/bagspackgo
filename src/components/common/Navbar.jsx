@@ -87,7 +87,7 @@ export default function Navbar() {
 
   const isUserAccount = isAuthenticated && user?.role === 'user';
   const isProviderAccount = isAuthenticated && user?.role === 'provider';
-  const isLanding = pathname === '/' || pathname === '/user/trip';
+  const isLanding = pathname === '/' || pathname === '/user/trip' || pathname === '/user/events';
 
   useEffect(() => {
     setShowDropdown(false);
