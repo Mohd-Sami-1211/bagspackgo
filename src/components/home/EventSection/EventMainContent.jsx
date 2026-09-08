@@ -220,11 +220,11 @@ export default function EventMainContent() {
           className="pointer-events-none absolute inset-x-0 top-0 z-20 h-36 bg-gradient-to-b from-[#0f1014] via-[#0f1014]/95 to-transparent md:hidden"
         />
         {liveLoading && carouselEvents.length === 0 ? (
-          <div className="w-full h-[450px] md:h-[500px] lg:h-[600px] bg-[#0f1014] animate-pulse flex items-center justify-center">
+          <div className="w-full h-[450px] md:h-[460px] lg:h-[500px] bg-[#0f1014] animate-pulse flex items-center justify-center">
             <div className="w-12 h-12 rounded-full bg-neutral-800" />
           </div>
         ) : carouselEvents.length === 0 ? (
-          <div className="w-full h-[450px] md:h-[500px] lg:h-[600px] bg-[#0f1014] flex flex-col items-center justify-center text-white">
+          <div className="w-full h-[450px] md:h-[460px] lg:h-[500px] bg-[#0f1014] flex flex-col items-center justify-center text-white">
             <Sparkles className="w-10 h-10 mb-4 text-emerald-300" />
             <h2 className="text-2xl font-bold mb-2">Stay Tuned</h2>
             <p className="text-emerald-200 text-sm">New events are coming soon.</p>
@@ -320,20 +320,20 @@ function CarouselSlide({ event }) {
   });
 
   return (
-    <div className="relative w-full h-[450px] md:h-[500px] lg:h-[600px] bg-[#0f1014] overflow-hidden flex items-center group">
+    <div className="relative w-full h-[450px] md:h-[460px] lg:h-[500px] bg-[#0f1014] overflow-hidden flex items-center group">
       
       {/* ── Layer 1: Ambient Blurred Background ── */}
       {/* This fills the wide screen with the poster's colors without cropping the main focal image */}
       <img
         src={event.image || '/images/EventCover.webp'}
         alt=""
-        className="absolute inset-0 w-full h-full object-cover opacity-30 blur-[40px] scale-110"
+        className="absolute inset-0 w-full h-full object-cover opacity-20 blur-[40px] scale-110"
         draggable={false}
       />
       
       {/* ── Layer 2: The Full Uncropped Poster ── */}
       {/* Using object-contain ensures the entire poster is visible. Aligned to the right on desktop, top on mobile. */}
-      <div className="absolute inset-0 flex justify-end">
+      <div className="absolute inset-x-0 top-0 bottom-0 flex justify-end md:top-14">
         <img
           src={event.image || '/images/EventCover.webp'}
           alt={event.name}
@@ -345,14 +345,18 @@ function CarouselSlide({ event }) {
 
       {/* ── Layer 3: Hotstar-style Seamless Gradients ── */}
       {/* Fades from dark left/bottom into the image on the right/top */}
-      <div className="absolute inset-0 bg-gradient-to-t from-[#0f1014] via-[#0f1014]/90 to-transparent md:bg-gradient-to-r md:from-[#0f1014] md:via-[#0f1014]/90 md:to-transparent" />
-      <div className="absolute inset-y-0 left-0 w-full md:w-3/4 bg-gradient-to-r from-[#0f1014] via-[#0f1014]/80 to-transparent hidden md:block" />
+      <div className="absolute inset-0 bg-gradient-to-t from-[#0f1014]/80 via-[#0f1014]/38 to-transparent md:bg-gradient-to-r md:from-[#0f1014]/68 md:via-[#0f1014]/22 md:to-transparent" />
+      <div
+        className="absolute inset-y-0 left-0 hidden w-[68%] md:block"
+        style={{ background: 'linear-gradient(90deg, rgba(15,16,20,0.72) 0%, rgba(15,16,20,0.52) 48%, rgba(15,16,20,0.18) 68%, transparent 100%)' }}
+      />
+      <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-[#0f1014]/34 to-transparent md:h-16 md:from-[#0f1014]/24" />
 
       {/* ── Layer 4: Floating Content ── */}
-      <div className="absolute bottom-8 md:bottom-auto md:top-1/2 md:-translate-y-1/2 left-4 md:left-12 lg:left-20 z-20 max-w-[90%] md:max-w-[55%] lg:max-w-[45%] flex flex-col gap-4 lg:gap-5">
+      <div className="absolute bottom-8 md:bottom-auto md:top-[66%] md:-translate-y-1/2 left-4 md:left-12 lg:left-20 z-20 max-w-[90%] md:max-w-[50%] lg:max-w-[40%] flex flex-col gap-3 md:gap-3.5 lg:gap-4">
         
         {/* Title */}
-        <h2 className="font-serif text-4xl font-normal leading-[0.98] tracking-[-0.045em] text-white drop-shadow-2xl md:text-6xl lg:text-7xl">
+        <h2 className="font-serif text-3xl font-normal leading-[0.98] tracking-[-0.045em] text-white drop-shadow-2xl md:text-5xl lg:text-6xl">
           {event.name}
         </h2>
 
@@ -379,7 +383,7 @@ function CarouselSlide({ event }) {
         </div>
 
         {/* Description / Extra Info */}
-        <p className="text-white/70 text-sm md:text-base leading-relaxed line-clamp-2 md:line-clamp-3 font-medium">
+        <p className="text-white/70 text-xs md:text-sm lg:text-base leading-relaxed line-clamp-2 md:line-clamp-3 font-medium">
           Located in <strong className="text-white">{event.destination || event.destinationId}</strong>. 
           Organized by <strong className="text-white">{event.guideName || 'Local Organizer'}</strong>. 
           Book your tickets now to secure your spot for this amazing experience!
@@ -390,18 +394,11 @@ function CarouselSlide({ event }) {
           {/* Primary Watch/View Button (Hotstar Play Button style) */}
           <Link
             href={`/user/events/eventdetails/${event.id}`}
-            className="flex items-center gap-2 rounded-xl bg-white px-8 py-3.5 text-sm font-semibold tracking-[-0.01em] text-[#17372f] shadow-[0_0_30px_rgba(255,255,255,0.2)] transition-all hover:bg-neutral-200 active:scale-95 lg:py-4 lg:text-base"
+            className="flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-semibold tracking-[-0.01em] text-[#17372f] shadow-[0_0_30px_rgba(255,255,255,0.2)] transition-all hover:bg-neutral-200 active:scale-95 lg:px-7 lg:py-3.5 lg:text-sm"
           >
             <Eye className="w-5 h-5 lg:w-6 lg:h-6" /> View Details
           </Link>
 
-          {/* Price Indicator */}
-          <div className="hidden md:flex flex-col justify-center ml-2 border-l border-white/20 pl-6">
-            <span className="text-[10px] uppercase tracking-widest text-white/50 font-bold mb-0.5">Price</span>
-            <span className="font-serif text-2xl leading-none text-white lg:text-3xl">
-              ₹{event.price?.toLocaleString('en-IN') || '0'}
-            </span>
-          </div>
         </div>
       </div>
     </div>
