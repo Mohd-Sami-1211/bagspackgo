@@ -227,7 +227,10 @@ export default function EventMainContent() {
           <div className="w-full h-[450px] md:h-[500px] lg:h-[600px] bg-[#0f1014] flex flex-col items-center justify-center text-white">
             <Sparkles className="w-10 h-10 mb-4 text-emerald-300" />
             <h2 className="text-2xl font-bold mb-2">Stay Tuned</h2>
-            <p className="text-emerald-200 text-sm">New events are coming soon!</p>
+            <p className="text-emerald-200 text-sm">New events are coming soon.</p>
+            <Link href="/user/offbeats" className="mt-6 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-[#17372f] transition hover:bg-white/90">
+              Explore offbeats meanwhile <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
         ) : (
           <div

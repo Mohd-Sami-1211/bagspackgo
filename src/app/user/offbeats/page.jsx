@@ -1,361 +1,147 @@
 'use client';
-import { useState, useRef, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+
+import { Suspense, useEffect, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import Link from 'next/link';
-import Image from 'next/image';
-import { Compass, MapPin, ArrowRight, Loader2, Search, ChevronLeft, ChevronRight } from 'lucide-react';
-import Select from 'react-select';
+import { ArrowRight, Compass, MapPin } from 'lucide-react';
 import { useOffbeatList } from '@/lib/useTripCache';
+import OffbeatSearchControls from '@/components/home/OffbeatSection/OffbeatSearchControls';
+import { OffbeatDestinationCard, OffbeatEmptyState, OffbeatGridSkeleton } from '@/components/home/OffbeatSection/OffbeatDestinationCard';
 
-const ITEMS_PER_PAGE = 9;
+const SLIDE_INTERVAL = 5000;
+const FALLBACK_IMAGE = '/images/hero-kashmir-v3.webp';
 
-const selectStyles = {
-  control: (provided, state) => ({
-    ...provided,
-    minHeight: '48px',
-    fontSize: '0.95rem',
-    borderColor: state.isFocused ? '#10b981' : 'rgba(226, 232, 240, 0.6)',
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
-    boxShadow: state.isFocused ? '0 0 0 1px #10b981' : null,
-    '&:hover': { borderColor: state.isFocused ? '#10b981' : '#d1d5db', backgroundColor: '#fff' },
-    borderRadius: '1rem',
-    cursor: 'pointer'
-  }),
-  valueContainer: (provided) => ({
-    ...provided,
-    padding: '0 8px',
-    '@media (max-width: 640px)': {
-      padding: '0',
-      justifyContent: 'center'
-    }
-  }),
-  menu: (provided) => ({
-    ...provided,
-    zIndex: 9999,
-    marginTop: '4px',
-    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-    borderRadius: '0.75rem',
-    overflow: 'hidden',
-    minWidth: '200px',
-    left: 'auto',
-    right: 0
-  }),
-  menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-  menuList: (provided) => ({ ...provided, padding: '4px', fontSize: '0.95rem' }),
-  option: (provided, state) => ({
-    ...provided,
-    borderRadius: '0.5rem',
-    backgroundColor: state.isSelected ? '#a7f3d0' : state.isFocused ? '#d1fae5' : 'white',
-    color: state.isSelected ? '#065f46' : '#1e293b',
-    margin: '2px 0',
-    padding: '10px 12px',
-    transition: 'all 0.15s ease-out',
-    '&:active': { backgroundColor: '#6ee7b7', color: '#064e3b' },
-    '&:hover:not(:active)': { backgroundColor: '#d1fae5', boxShadow: 'inset 0 0 0 1px #a7f3d0' },
-  }),
-};
+export default function OffbeatsLandingPage() {
+    const [currentSlide, setCurrentSlide] = useState(0);
+    const [region, setRegion] = useState('All');
+    const pointerStart = useRef(0);
+    const { data: featuredData, isLoading: featuredLoading } = useOffbeatList(
+        { featured: true, region, page: 1, limit: 24, sort: 'popular' },
+        { dedupingInterval: 0, keepPreviousData: false, revalidateIfStale: true }
+    );
+    const { data: latestData, isLoading: latestLoading, error } = useOffbeatList(
+        { region, page: 1, limit: 24, sort: 'newest' },
+        { keepPreviousData: false }
+    );
+    const selectedFeatured = featuredData?.data || [];
+    const destinations = latestData?.data || [];
+    const featuredIds = new Set(selectedFeatured.map((destination) => destination._id));
+    const allSelectedFeatured = [
+        ...selectedFeatured,
+        ...destinations.filter((destination) => destination.featured && !featuredIds.has(destination._id)),
+    ];
+    const featured = allSelectedFeatured.length > 0
+        ? allSelectedFeatured
+        : region !== 'All'
+            ? destinations.slice(0, 1)
+            : [];
+    const heroLoading = featuredLoading || (region !== 'All' && selectedFeatured.length === 0 && latestLoading);
+    const noDestinationsForRegion = region !== 'All' && !latestLoading && !error && destinations.length === 0;
+    const activeFeatured = featured[currentSlide];
 
-const regionOptions = [
-    { value: 'All', label: 'All Locations' },
-    { value: 'Kashmir', label: 'Kashmir' },
-    { value: 'Jammu', label: 'Jammu' },
-    { value: 'Chenab Valley', label: 'Chenab Valley' }
-];
+    useEffect(() => setCurrentSlide(0), [region]);
 
-const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1621245799986-e3d1c9ccfc65?auto=format&fit=crop&q=80';
+    useEffect(() => {
+        if (currentSlide >= featured.length) setCurrentSlide(0);
+    }, [currentSlide, featured.length]);
 
-const OffbeatsSkeleton = () => (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="bg-white/80 rounded-[2rem] border border-white shadow-sm flex flex-col h-[460px] animate-pulse overflow-hidden">
-                <div className="h-64 bg-slate-200 shrink-0" />
-                <div className="p-6 flex flex-col flex-grow">
-                    <div className="h-4 bg-slate-200 rounded-md w-1/3 mb-4" />
-                    <div className="h-7 bg-slate-200 rounded-md w-3/4 mb-4" />
-                    <div className="space-y-2 mb-6 flex-grow">
-                        <div className="h-4 bg-slate-200 rounded-md w-full" />
-                        <div className="h-4 bg-slate-200 rounded-md w-5/6" />
-                    </div>
-                    <div className="mt-auto h-12 bg-slate-200 rounded-2xl w-full" />
-                </div>
-            </div>
-        ))}
-    </div>
-);
+    useEffect(() => {
+        if (featured.length <= 1) return undefined;
+        const timer = window.setInterval(() => {
+            setCurrentSlide((current) => (current + 1) % featured.length);
+        }, SLIDE_INTERVAL);
+        return () => window.clearInterval(timer);
+    }, [featured.length]);
 
-export default function OffBeatsListingPage() {
-    const [searchTerm, setSearchTerm] = useState('');
-    const [showSuggestions, setShowSuggestions] = useState(false);
-    const searchRef = useRef(null);
-    const [activeRegion, setActiveRegion] = useState(regionOptions[0]);
-    const [page, setPage] = useState(1);
-
-    // SWR-cached fetch — changes when page or region changes
-    const { data, isLoading, error } = useOffbeatList({
-        page,
-        limit: ITEMS_PER_PAGE,
-        region: activeRegion.value,
-    });
-
-    const offbeats     = data?.data        || [];
-    const pagination   = data?.pagination  || {};
-    const totalPages   = pagination.totalPages || 1;
-
-    // Client-side search filter on the current page of results (fast, no extra API call)
-    const filteredOffbeats = searchTerm.trim()
-        ? offbeats.filter(ob =>
-            ob.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            ob.destination.toLowerCase().includes(searchTerm.toLowerCase())
-          )
-        : offbeats;
-
-    // Suggestions from current page data
-    const suggestions = offbeats.reduce((acc, ob) => {
-        if (!searchTerm.trim()) return acc;
-        if (ob.title.toLowerCase().includes(searchTerm.toLowerCase()) && !acc.includes(ob.title)) acc.push(ob.title);
-        if (ob.destination.toLowerCase().includes(searchTerm.toLowerCase()) && !acc.includes(ob.destination)) acc.push(ob.destination);
-        return acc;
-    }, []).slice(0, 5);
-
-    const handleRegionChange = useCallback((option) => {
-        setActiveRegion(option);
-        setPage(1); // Reset to first page when region changes
-        setSearchTerm('');
-    }, []);
-
-    const handleClickOutside = useCallback((event) => {
-        if (searchRef.current && !searchRef.current.contains(event.target)) {
-            setShowSuggestions(false);
-        }
-    }, []);
-
-    // Attach click-outside listener via ref callback (no useEffect needed)
-    const searchRefCallback = useCallback((node) => {
-        if (searchRef.current) {
-            document.removeEventListener('mousedown', handleClickOutside);
-        }
-        searchRef.current = node;
-        if (node) {
-            document.addEventListener('mousedown', handleClickOutside);
-        }
-    }, [handleClickOutside]);
+    const finishSwipe = (event) => {
+        if (featured.length <= 1) return;
+        const end = event.clientX ?? event.changedTouches?.[0]?.clientX ?? pointerStart.current;
+        const distance = end - pointerStart.current;
+        if (Math.abs(distance) < 45) return;
+        setCurrentSlide((current) => distance < 0
+            ? (current + 1) % featured.length
+            : (current - 1 + featured.length) % featured.length);
+    };
 
     return (
-        <div className="w-full min-h-screen bg-slate-50 relative">
-            {/* Background pattern */}
-            <div className="absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-emerald-100/40 via-slate-50 to-slate-50"></div>
-            
-            {/* Header Section */}
-            <div className="sticky top-0 z-50 bg-white/70 backdrop-blur-xl border-b border-white/50 py-4 px-4 shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)] transition-all">
-                <div className="max-w-7xl mx-auto">
-                    {/* Search & Filters */}
-                    <div className="flex flex-row items-center gap-2 sm:gap-4 w-full">
-                        <div className="relative flex-1" ref={searchRefCallback}>
-                            <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 sm:w-5 sm:h-5" />
-                            <input 
-                                type="text"
-                                placeholder="Search destinations..."
-                                value={searchTerm}
-                                onChange={(e) => {
-                                    setSearchTerm(e.target.value);
-                                    setShowSuggestions(true);
-                                }}
-                                onFocus={() => setShowSuggestions(true)}
-                                className="w-full pl-9 sm:pl-12 pr-3 sm:pr-4 py-2.5 sm:py-3 rounded-2xl border border-slate-200/60 bg-white/50 focus:bg-white focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition shadow-sm text-slate-700 text-sm sm:text-base font-medium placeholder:text-slate-400"
-                            />
-                            
-                            {/* Suggestions Dropdown */}
-                            <AnimatePresence>
-                                {showSuggestions && suggestions.length > 0 && (
-                                    <motion.div 
-                                        initial={{ opacity: 0, y: -10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, y: -10 }}
-                                        className="absolute top-full left-0 w-full mt-2 bg-white rounded-xl shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1)] border border-slate-100 overflow-hidden z-[1050]"
-                                    >
-                                        {suggestions.map((suggestion, idx) => (
-                                            <div 
-                                                key={idx}
-                                                onClick={() => {
-                                                    setSearchTerm(suggestion);
-                                                    setShowSuggestions(false);
-                                                }}
-                                                className="px-4 py-3 hover:bg-emerald-50 text-slate-600 hover:text-emerald-700 cursor-pointer text-sm sm:text-base transition-colors flex items-center gap-3 border-b border-slate-50 last:border-0"
-                                            >
-                                                <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                                                <span className="truncate">{suggestion}</span>
-                                            </div>
-                                        ))}
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
-                        </div>
-                        <div className="w-[48px] sm:flex-[4] sm:max-w-[250px] shrink-0 relative z-[1000]">
-                            <Select 
-                                instanceId="region-filter-select"
-                                options={regionOptions}
-                                value={activeRegion}
-                                onChange={handleRegionChange}
-                                isSearchable={false}
-                                classNamePrefix="react-select"
-                                styles={selectStyles}
-                                menuPosition="absolute"
-                                components={{
-                                    IndicatorSeparator: () => null,
-                                    DropdownIndicator: () => (
-                                        <div className="hidden sm:flex items-center pr-2 text-slate-400">
-                                            <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
-                                        </div>
-                                    )
-                                }}
-                                formatOptionLabel={({ label }, { context }) => (
-                                    context === 'value' ? (
-                                        <div className="flex items-center justify-center w-full">
-                                            <MapPin className="w-[18px] h-[18px] sm:hidden text-slate-600" strokeWidth={2.5} />
-                                            <span className="hidden sm:inline truncate">{label}</span>
-                                        </div>
-                                    ) : (
-                                        <span>{label}</span>
-                                    )
-                                )}
-                            />
-                        </div>
+        <div className="min-h-screen overflow-x-hidden bg-[#f8f6f0] text-[#17372f]">
+            {noDestinationsForRegion ? (
+                <section className="relative min-h-[520px] bg-[#f8f6f0] px-4 pb-14 pt-[5.1rem] sm:px-6 lg:px-8">
+                    <Suspense fallback={null}>
+                        <OffbeatSearchControls light region={region} onRegionChange={setRegion} className="mx-auto max-w-7xl" />
+                    </Suspense>
+                    <div className="mx-auto mt-16 max-w-7xl">
+                        <OffbeatEmptyState title="More destinations are coming" text={`Our next hidden gems from ${region} will appear here soon.`} />
                     </div>
-                </div>
-            </div>
+                </section>
+            ) : (
+            <section
+                className="relative isolate min-h-[610px] overflow-hidden bg-[#0f1014] text-white lg:min-h-[680px]"
+                onMouseDown={(event) => { pointerStart.current = event.clientX; }}
+                onMouseUp={finishSwipe}
+                onTouchStart={(event) => { pointerStart.current = event.touches[0].clientX; }}
+                onTouchEnd={finishSwipe}
+            >
+                {heroLoading && !activeFeatured && <div className="absolute inset-0 animate-pulse bg-[#17191d]" />}
 
-            {/* Listing Section */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                {isLoading ? (
-                    <OffbeatsSkeleton />
-                ) : error ? (
-                    <motion.div 
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="text-center py-20 bg-white rounded-3xl border border-slate-100 shadow-sm"
-                    >
-                        <Compass className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-                        <h3 className="text-2xl font-bold text-slate-700">Failed to load destinations</h3>
-                        <p className="text-slate-500 mt-2 max-w-md mx-auto">Please refresh the page to try again.</p>
-                    </motion.div>
-                ) : filteredOffbeats.length === 0 ? (
-                    <motion.div 
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="text-center py-20 bg-white rounded-3xl border border-slate-100 shadow-sm"
-                    >
-                        <Compass className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-                        <h3 className="text-2xl font-bold text-slate-700">
-                            {searchTerm ? 'No results found' : 'More destinations coming soon!'}
-                        </h3>
-                        <p className="text-slate-500 mt-2 max-w-md mx-auto">
-                            {searchTerm
-                                ? `No destinations match "${searchTerm}". Try a different search term.`
-                                : 'We are working to bring more destinations for this location.'}
-                        </p>
-                    </motion.div>
-                ) : (
-                    <>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                            <AnimatePresence>
-                                {filteredOffbeats.map((offbeat, index) => (
-                                    <motion.div
-                                        key={offbeat._id}
-                                        layout
-                                        initial={{ opacity: 0, y: 30 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, scale: 0.95 }}
-                                        transition={{ duration: 0.4, ease: "easeOut", delay: index * 0.04 }}
-                                        className="group bg-white rounded-[2rem] overflow-hidden shadow-[0_8px_30px_-12px_rgba(0,0,0,0.1)] hover:shadow-[0_20px_40px_-10px_rgba(16,185,129,0.15)] hover:-translate-y-1 transition-all duration-500 border border-slate-100 flex flex-col h-full relative"
-                                    >
-                                        {/* Card Image — uses coverPhoto as the "face" of the destination */}
-                                        <div className="relative h-64 overflow-hidden bg-slate-200">
-                                            <img 
-                                                src={offbeat.coverPhoto || FALLBACK_IMAGE}
-                                                alt={offbeat.title}
-                                                loading="lazy"
-                                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                                            />
-                                            <div className="absolute top-4 left-4 bg-white px-4 py-1.5 rounded-full text-xs font-black tracking-wide text-emerald-700 shadow-[0_4px_12px_rgba(0,0,0,0.1)] z-10 border border-white/50">
-                                                {offbeat.region || 'Unknown Region'}
-                                            </div>
-                                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-40 group-hover:opacity-70 transition-opacity duration-500" />
-                                        </div>
-                                        <div className="p-6 flex flex-col flex-grow relative">
-                                            <div className="flex items-center gap-2 text-emerald-600 font-semibold text-sm mb-3">
-                                                <MapPin className="w-4 h-4" />
-                                                {offbeat.destination}
-                                            </div>
-                                            <h3 className="text-2xl font-bold text-slate-800 mb-3 group-hover:text-emerald-700 transition-colors">
-                                                {offbeat.title}
-                                            </h3>
-                                            <p className="text-slate-600 line-clamp-3 mb-6 flex-grow">
-                                                {offbeat.shortDescription}
-                                            </p>
-                                            <Link href={`/user/offbeats/${offbeat._id}`} className="mt-auto block">
-                                                <button className="w-full py-3.5 px-4 bg-gradient-to-r from-emerald-600 to-teal-500 text-white rounded-2xl font-bold transition-all duration-300 flex items-center justify-center gap-2 group/btn shadow-[0_8px_20px_-8px_rgba(16,185,129,0.5)] hover:shadow-[0_12px_25px_-8px_rgba(16,185,129,0.6)] opacity-95 hover:opacity-100">
-                                                    View Details
-                                                    <ArrowRight className="w-4 h-4 transition-transform group-hover/btn:translate-x-1" />
-                                                </button>
-                                            </Link>
-                                        </div>
-                                    </motion.div>
-                                ))}
-                            </AnimatePresence>
-                        </div>
-
-                        {/* Pagination Controls — only shown when more than one page and no active search */}
-                        {totalPages > 1 && !searchTerm && (
-                            <motion.div
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.2 }}
-                                className="flex items-center justify-center gap-3 mt-14"
-                            >
-                                <button
-                                    onClick={() => setPage(p => Math.max(1, p - 1))}
-                                    disabled={page === 1}
-                                    className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white border border-slate-200 text-slate-700 font-semibold shadow-sm hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700 transition disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-slate-200 disabled:hover:text-slate-700"
-                                >
-                                    <ChevronLeft className="w-4 h-4" /> Previous
-                                </button>
-
-                                {/* Page number pills */}
-                                <div className="flex items-center gap-1.5">
-                                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                                        <button
-                                            key={p}
-                                            onClick={() => setPage(p)}
-                                            className={`w-9 h-9 rounded-xl font-bold text-sm transition ${
-                                                p === page
-                                                    ? 'bg-emerald-600 text-white shadow-[0_4px_12px_rgba(16,185,129,0.4)]'
-                                                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700'
-                                            }`}
-                                        >
-                                            {p}
-                                        </button>
-                                    ))}
-                                </div>
-
-                                <button
-                                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                                    disabled={page === totalPages}
-                                    className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white border border-slate-200 text-slate-700 font-semibold shadow-sm hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700 transition disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-slate-200 disabled:hover:text-slate-700"
-                                >
-                                    Next <ChevronRight className="w-4 h-4" />
-                                </button>
-                            </motion.div>
-                        )}
-
-                        {/* Page info */}
-                        {totalPages > 1 && !searchTerm && (
-                            <p className="text-center text-slate-400 text-sm mt-4">
-                                Page {page} of {totalPages} · {pagination.total} destinations
-                            </p>
-                        )}
-                    </>
+                {activeFeatured && (
+                    <AnimatePresence mode="wait">
+                        <motion.div key={activeFeatured._id} initial={{ opacity: 0, scale: 1.025 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }} className="absolute inset-0">
+                            <img src={activeFeatured.coverPhoto || FALLBACK_IMAGE} alt="" className="h-full w-full object-cover" draggable={false} onError={(event) => { event.currentTarget.src = FALLBACK_IMAGE; }} />
+                        </motion.div>
+                    </AnimatePresence>
                 )}
-            </div>
+
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0f1014] via-[#0f1014]/60 to-[#0f1014]/35 md:hidden" />
+                <div
+                    className="absolute inset-0 hidden md:block"
+                    style={{ background: 'linear-gradient(90deg, rgba(15,16,20,0.78) 0%, rgba(15,16,20,0.48) 27%, rgba(15,16,20,0.14) 48%, transparent 66%)' }}
+                />
+                <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/35 via-black/10 to-transparent" />
+
+                <Suspense fallback={null}>
+                    <OffbeatSearchControls region={region} onRegionChange={setRegion} className="absolute right-4 top-[5.1rem] z-40 sm:right-6 lg:right-10" />
+                </Suspense>
+
+                {activeFeatured ? (
+                    <div className="relative z-20 mx-auto flex min-h-[610px] max-w-7xl items-end px-4 pb-20 pt-44 sm:px-6 md:items-center md:pb-8 lg:min-h-[680px] lg:px-8">
+                        <AnimatePresence mode="wait">
+                            <motion.div key={`copy-${activeFeatured._id}`} initial={{ opacity: 0, x: -18 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 12 }} transition={{ duration: 0.45 }} className="max-w-xl">
+                                <p className="mb-4 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.24em] text-[#d9bd86]"><Compass className="h-4 w-4" /> Featured offbeat</p>
+                                <h1 className="font-serif text-5xl leading-[0.94] tracking-[-0.045em] sm:text-6xl lg:text-7xl">{activeFeatured.title}</h1>
+                                <p className="mt-4 flex items-center gap-2 text-sm font-semibold text-white/80"><MapPin className="h-4 w-4 text-[#d9bd86]" /> {activeFeatured.destination}, {activeFeatured.region}</p>
+                                <p className="mt-5 max-w-lg text-sm leading-6 text-white/75 sm:text-base">{activeFeatured.shortDescription}</p>
+                                <Link href={`/user/offbeats/${activeFeatured._id}`} className="mt-7 inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-[#17372f] shadow-xl transition hover:-translate-y-0.5 hover:bg-white/90">Explore & book <ArrowRight className="h-4 w-4" /></Link>
+                            </motion.div>
+                        </AnimatePresence>
+                    </div>
+                ) : !heroLoading && (
+                    <div className="relative z-20 mx-auto flex min-h-[610px] max-w-7xl items-end px-4 pb-20 pt-44 sm:px-6 md:items-center lg:min-h-[680px] lg:px-8">
+                        <div className="max-w-xl"><p className="mb-3 text-[11px] font-bold uppercase tracking-[0.24em] text-[#d9bd86]">Offbeats</p><h1 className="font-serif text-5xl leading-[0.96] tracking-[-0.04em] sm:text-6xl">Find the places maps rarely mention.</h1><p className="mt-5 text-white/70">Select featured destinations from the admin dashboard to present them here.</p></div>
+                    </div>
+                )}
+
+                {featured.length > 1 && (
+                    <div className="absolute bottom-6 right-5 z-30 flex gap-2 sm:right-8">
+                        {featured.map((item, index) => <button key={item._id} type="button" onClick={() => setCurrentSlide(index)} aria-label={`Show ${item.title}`} className={`h-1.5 rounded-full transition-all ${index === currentSlide ? 'w-8 bg-white' : 'w-2 bg-white/45 hover:bg-white/75'}`} />)}
+                    </div>
+                )}
+            </section>
+            )}
+
+            {!noDestinationsForRegion && <section className="px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
+                <div className="mx-auto max-w-7xl">
+                    <div className="mb-8 border-b border-[#17372f]/10 pb-7">
+                        <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.22em] text-[#9b7440]">Explore quietly extraordinary places</p>
+                        <h2 className="font-serif text-4xl leading-none tracking-[-0.035em] sm:text-5xl">{region === 'All' ? 'More offbeat destinations' : `${region} destinations`}</h2>
+                    </div>
+                    {latestLoading ? <OffbeatGridSkeleton /> : error ? <OffbeatEmptyState title="Destinations could not be loaded" text="Please refresh the page and try again." /> : destinations.length === 0 ? <OffbeatEmptyState title="More destinations are coming" text="Our next hidden gems will appear here soon." /> : (
+                        <motion.div initial="hidden" animate="show" variants={{ hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.06 } } }} className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                            {destinations.map((destination) => <OffbeatDestinationCard key={destination._id} destination={destination} />)}
+                        </motion.div>
+                    )}
+                </div>
+            </section>}
         </div>
     );
 }

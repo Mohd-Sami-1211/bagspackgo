@@ -108,6 +108,11 @@ const offbeatSchema = new mongoose.Schema(
             default: "draft",
         },
 
+        featured: {
+            type: Boolean,
+            default: false,
+        },
+
         visitCount: {
             type: Number,
             default: 0,
@@ -118,5 +123,6 @@ const offbeatSchema = new mongoose.Schema(
 
 offbeatSchema.index({ status: 1 });
 offbeatSchema.index({ destination: 1 });
+offbeatSchema.index({ status: 1, featured: 1, createdAt: -1 });
 
 export const OffBeat = mongoose.models.OffBeat || mongoose.model("OffBeat", offbeatSchema);

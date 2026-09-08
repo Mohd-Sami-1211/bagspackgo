@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import mongoose from 'mongoose';
 import dbConnect from '@/lib/db';
 import { OffBeat } from '@/models/offbeat.model';
 
@@ -23,6 +24,27 @@ export async function PUT(req, { params }) {
         const { id } = await params;
         await dbConnect();
         const body = await req.json();
+
+        // Use the native collection for the lightweight featured toggle so the
+        // newly added field also works immediately during Next.js hot reloads.
+        if (Object.keys(body).length === 1 && typeof body.featured === 'boolean') {
+            if (!mongoose.isValidObjectId(id)) {
+                return NextResponse.json({ success: false, message: 'Invalid id' }, { status: 400 });
+            }
+            const offbeat = await OffBeat.collection.findOneAndUpdate(
+                { _id: new mongoose.Types.ObjectId(id) },
+                { $set: { featured: body.featured, updatedAt: new Date() } },
+                { returnDocument: 'after' }
+            );
+            if (!offbeat) {
+                return NextResponse.json({ success: false, message: 'Not found' }, { status: 404 });
+            }
+            return NextResponse.json(
+                { success: true, data: offbeat },
+                { headers: { 'Cache-Control': 'no-store' } }
+            );
+        }
+
         const offbeat = await OffBeat.findByIdAndUpdate(id, body, { new: true });
         return NextResponse.json({ success: true, data: offbeat });
     } catch (error) {

@@ -3,11 +3,13 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Plus, Edit, Trash2, Map, Loader2, Search } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { mutate } from 'swr';
 
 export default function AdminOffBeatsPage() {
     const [offbeats, setOffbeats] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [updatingFeatured, setUpdatingFeatured] = useState(null);
 
     useEffect(() => {
         fetchOffbeats();
@@ -34,6 +36,37 @@ export default function AdminOffBeatsPage() {
             if (res.ok) fetchOffbeats();
         } catch (error) {
             console.error('Error deleting:', error);
+        }
+    };
+
+    const handleFeaturedChange = async (offbeat) => {
+        const nextFeatured = !offbeat.featured;
+        setUpdatingFeatured(offbeat._id);
+        setOffbeats((current) => current.map((item) =>
+            item._id === offbeat._id ? { ...item, featured: nextFeatured } : item
+        ));
+
+        try {
+            const response = await fetch(`/api/admin/offbeats/${offbeat._id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ featured: nextFeatured }),
+            });
+
+            if (!response.ok) throw new Error('Unable to update featured status');
+
+            await mutate(
+                (key) => typeof key === 'string' && key.startsWith('/api/public/offbeats'),
+                undefined,
+                { revalidate: false }
+            );
+        } catch (error) {
+            console.error('Error updating featured status:', error);
+            setOffbeats((current) => current.map((item) =>
+                item._id === offbeat._id ? { ...item, featured: offbeat.featured } : item
+            ));
+        } finally {
+            setUpdatingFeatured(null);
         }
     };
 
@@ -86,6 +119,7 @@ export default function AdminOffBeatsPage() {
                                 <th className="px-6 py-4 font-semibold">Destination</th>
                                 <th className="px-6 py-4 font-semibold">Title</th>
                                 <th className="px-6 py-4 font-semibold">Status</th>
+                                <th className="px-6 py-4 font-semibold">Featured</th>
                                 <th className="px-6 py-4 font-semibold">Visits</th>
                                 <th className="px-6 py-4 font-semibold text-right">Actions</th>
                             </tr>
@@ -93,14 +127,14 @@ export default function AdminOffBeatsPage() {
                         <tbody className="divide-y divide-gray-800">
                             {loading ? (
                                 <tr>
-                                    <td colSpan="5" className="px-6 py-8 text-center text-gray-500">
+                                    <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
                                         <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
                                         Loading offbeats...
                                     </td>
                                 </tr>
                             ) : filteredOffbeats.length === 0 ? (
                                 <tr>
-                                    <td colSpan="5" className="px-6 py-8 text-center text-gray-500">
+                                    <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
                                         No offbeats found.
                                     </td>
                                 </tr>
@@ -121,6 +155,18 @@ export default function AdminOffBeatsPage() {
                                             }`}>
                                                 {offbeat.status.charAt(0).toUpperCase() + offbeat.status.slice(1)}
                                             </span>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <label className="inline-flex cursor-pointer items-center gap-2 text-xs text-gray-300">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={Boolean(offbeat.featured)}
+                                                    disabled={updatingFeatured === offbeat._id}
+                                                    onChange={() => handleFeaturedChange(offbeat)}
+                                                    className="h-4 w-4 rounded border-gray-600 bg-gray-800 accent-emerald-500"
+                                                />
+                                                {updatingFeatured === offbeat._id ? 'Saving…' : 'Show'}
+                                            </label>
                                         </td>
                                         <td className="px-6 py-4">{offbeat.visitCount || 0}</td>
                                         <td className="px-6 py-4 text-right space-x-3">

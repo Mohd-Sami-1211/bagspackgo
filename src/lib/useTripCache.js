@@ -113,11 +113,41 @@ export function useBookingPass(id, options = {}) {
 
 // 7. Offbeat destinations listing cache (paginated, lightweight — no photos[] or heavy fields)
 export function useOffbeatList(queryParams = {}, options = {}) {
-    const queryString = new URLSearchParams(
-        Object.fromEntries(Object.entries(queryParams).filter(([, v]) => v !== undefined && v !== null))
-    ).toString();
+    if (queryParams === null) {
+        return useSWR(null, fetcher, { revalidateOnFocus: false, ...options });
+    }
+
+    const queryString = new URLSearchParams(Object.fromEntries(
+        Object.entries(queryParams)
+            .filter(([, v]) => v !== undefined && v !== null && v !== '')
+            .sort(([firstKey], [secondKey]) => firstKey.localeCompare(secondKey))
+    )).toString();
     const url = `/api/public/offbeats${queryString ? `?${queryString}` : ''}`;
-    return useSWR(url, { ...options, dedupingInterval: 60000 }); // Cache list for 60s
+    return useSWR(url, fetcher, {
+        dedupingInterval: 60000,
+        keepPreviousData: true,
+        revalidateOnFocus: false,
+        revalidateOnReconnect: false,
+        ...options,
+    });
+}
+
+export function useOffbeatSuggestions(query, queryParams = {}, options = {}) {
+    const normalizedQuery = query?.trim();
+    const suggestionParams = new URLSearchParams({
+        suggest: normalizedQuery || '',
+        limit: '5',
+        ...Object.fromEntries(Object.entries(queryParams).filter(([, value]) => value && value !== 'All')),
+    });
+    const url = normalizedQuery?.length >= 2 ? `/api/public/offbeats?${suggestionParams.toString()}` : null;
+
+    return useSWR(url, fetcher, {
+        dedupingInterval: 60000,
+        keepPreviousData: false,
+        revalidateOnFocus: false,
+        revalidateOnReconnect: false,
+        ...options,
+    });
 }
 
 // 8. Offbeat destination detail cache (full document with all photos/videos)
