@@ -88,7 +88,7 @@ export default function Navbar() {
   const isUserAccount = isAuthenticated && user?.role === 'user';
   const isProviderAccount = isAuthenticated && user?.role === 'provider';
   const isOffbeatsLanding = pathname === '/user/offbeats' || pathname === '/user/offbeats/results';
-  const isLanding = pathname === '/' || pathname === '/user/trip' || pathname === '/user/events' || isOffbeatsLanding;
+  const isLanding = pathname === '/' || pathname === '/user/trip' || pathname === '/user/events' || pathname === '/user/companion' || isOffbeatsLanding;
 
   useEffect(() => {
     setShowDropdown(false);

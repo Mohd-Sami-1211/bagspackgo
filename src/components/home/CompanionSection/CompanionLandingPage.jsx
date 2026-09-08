@@ -4,17 +4,18 @@ import Image from 'next/image';
 import Select from 'react-select';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { motion, useInView, AnimatePresence } from 'framer-motion';
+import { motion, useInView } from 'framer-motion';
 import posthog from '@/lib/posthog';
 import {
   MapPin, Phone, Users, Shield,
   CheckCircle, Loader2, CalendarCheck,
-  Home, CreditCard, Compass, Heart, Calendar,
+  CreditCard, Compass,
   MessageCircle, Headphones, Plus, Minus, ArrowRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/context/AuthContext';
+import destinationsData from '@/data/data.json';
 
 /* ─────────────────────────────────────────────
    Reusable Animation Helpers
@@ -35,117 +36,85 @@ function FadeUp({ children, delay = 0, className = '' }) {
   );
 }
 
-function FadeIn({ children, delay = 0, className = '' }) {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: '-60px 0px' });
-  return (
-    <motion.div
-      ref={ref}
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={inView ? { opacity: 1, scale: 1 } : {}}
-      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay }}
-      className={className}
-    >
-      {children}
-    </motion.div>
-  );
-}
-
 /* ─────────────────────────────────────────────
    Data
 ───────────────────────────────────────────── */
-const painPoints = [
-  {
-    icon: CreditCard,
-    title: 'Getting Overcharged',
-    desc: 'Vendors see a tourist and double the price. Pay local prices instead.',
-  },
-  {
-    icon: Home,
-    title: 'No Idea Where to Stay',
-    desc: 'Avoid fake reviews. Get honest hotel recommendations from locals.',
-  },
+const supportMoments = [
   {
     icon: Compass,
-    title: 'Confused Itinerary',
-    desc: 'Stop rushing. See the must-visits and skip the tourist traps.',
+    eyebrow: 'Before you leave',
+    title: 'Turn ideas into a route that works',
+    desc: 'We help shape a realistic itinerary around your pace, interests and available days.',
+    points: ['Day-by-day route review', 'Stay and transport guidance'],
   },
   {
-    icon: Heart,
-    title: 'Missing Hidden Gems',
-    desc: 'Discover secret spots and local cafes that only residents know.',
+    icon: CreditCard,
+    eyebrow: 'While you plan',
+    title: 'Avoid inflated tourist prices',
+    desc: 'Before confirming a stay, ride or activity, ask what a fair local rate looks like and reduce the risk of being overcharged.',
+    points: ['Price and quote checks', 'Trusted local alternatives'],
+  },
+  {
+    icon: Headphones,
+    eyebrow: 'During the journey',
+    title: 'Get help the moment plans change',
+    desc: 'Call your Companion whenever you are confused, delayed or simply need a local opinion.',
+    points: ['24/7 call assistance', 'Real-time route suggestions'],
   },
 ];
 
 const steps = [
   {
     num: '01',
-    title: 'Request a Callback',
-    desc: 'Fill in a quick form with your destination and dates.',
+    title: 'Tell us about the trip',
+    desc: 'Share your destination, approximate date and group size.',
     icon: Phone,
   },
   {
     num: '02',
-    title: 'Meet Your Expert',
-    desc: 'We assign a verified local expert who knows the area.',
+    title: 'Meet your local Companion',
+    desc: 'We connect you with a verified expert who knows the destination.',
     icon: Users,
   },
   {
     num: '03',
-    title: 'Plan Together',
-    desc: 'Curate a custom itinerary and finalize your budget.',
-    icon: Calendar,
+    title: 'Review the plan together',
+    desc: 'Discuss the route, stays, transport and likely costs before leaving.',
+    icon: Compass,
   },
   {
     num: '04',
-    title: '24/7 Support',
-    desc: 'Your Companion stays one call away during your trip.',
+    title: 'Travel with a safety net',
+    desc: 'Keep one familiar local contact available throughout the journey.',
     icon: Headphones,
   },
 ];
 
-const features = [
-  { icon: MapPin, label: 'Custom Itinerary', desc: 'Day-by-day plan crafted for your style' },
-  { icon: Home, label: 'Hotel Guidance', desc: 'Honest picks for your budget' },
-  { icon: CreditCard, label: 'Fair Price Check', desc: 'Know what locals pay' },
-  { icon: Compass, label: 'Hidden Gems', desc: 'Secret spots and off-beat trails' },
-  { icon: Shield, label: 'Verified Experts', desc: 'Background-checked locals' },
-  { icon: Headphones, label: '24/7 Support', desc: 'Reachable via WhatsApp & call' },
-  { icon: MessageCircle, label: 'Local Connects', desc: 'Direct referrals to trusted vendors' },
-];
-
 const destinationOptions = [
-  {
-    label: 'Available Now',
-    options: [
-      { value: 'kashmir', label: 'Kashmir' }
-    ]
-  },
+  ...(destinationsData.destinations || []).filter((destination) => destination.value === 'kashmir'),
   {
     label: 'Available Soon',
-    options: [
-      { value: 'ladakh', label: 'Ladakh', isDisabled: true },
-      { value: 'bhaderwah', label: 'Bhaderwah', isDisabled: true },
-      { value: 'warwan', label: 'Warwan Valley', isDisabled: true },
-      { value: 'marwah', label: 'Marwah Valley', isDisabled: true },
-    ]
-  }
+    options: (destinationsData.destinations || [])
+      .filter((destination) => destination.value !== 'kashmir')
+      .map((destination) => ({ ...destination, isDisabled: true })),
+  },
 ];
 
 const selectStyles = {
   control: (provided, state) => ({
     ...provided,
-    minHeight: '40px',
+    minHeight: '44px',
     fontSize: '0.875rem',
-    borderRadius: '0.5rem',
-    borderColor: state.isFocused ? '#10b981' : '#e5e7eb',
-    boxShadow: state.isFocused ? '0 0 0 2px rgba(16, 185, 129, 0.2)' : null,
-    '&:hover': { borderColor: state.isFocused ? '#10b981' : '#d1d5db' },
+    borderRadius: '0.75rem',
+    backgroundColor: '#fafaf7',
+    borderColor: state.isFocused ? '#1d6b55' : 'rgba(23, 55, 47, 0.14)',
+    boxShadow: state.isFocused ? '0 0 0 3px rgba(29, 107, 85, 0.12)' : 'none',
+    '&:hover': { borderColor: state.isFocused ? '#1d6b55' : 'rgba(23, 55, 47, 0.28)' },
   }),
   option: (provided, state) => ({
     ...provided,
     fontSize: '0.875rem',
-    backgroundColor: state.isSelected ? '#10b981' : state.isFocused ? '#ecfdf5' : 'white',
+    backgroundColor: state.isSelected ? '#1d6b55' : state.isFocused ? '#edf3ee' : 'white',
     color: state.isSelected ? 'white' : state.isDisabled ? '#9ca3af' : '#1f2937',
     cursor: state.isDisabled ? 'not-allowed' : 'pointer',
     opacity: state.isDisabled ? 0.6 : 1,
@@ -218,16 +187,16 @@ function CallbackForm() {
       <motion.div 
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="flex flex-col items-center justify-center text-center py-16 bg-white border border-gray-100 rounded-xl shadow-sm"
+        className="flex min-h-[440px] flex-col items-center justify-center rounded-[1.5rem] bg-white px-6 py-16 text-center"
       >
-        <CheckCircle className="w-12 h-12 text-emerald-500 mb-4" />
-        <h3 className="text-xl font-bold text-gray-900 mb-2">Request Received!</h3>
-        <p className="text-gray-500 text-sm max-w-sm">
-          Your dedicated Companion will reach out within 24 hours.
+        <CheckCircle className="mb-5 h-12 w-12 text-[#1d6b55]" />
+        <h3 className="font-serif text-3xl tracking-[-0.03em] text-[#17372f]">Your request is with us.</h3>
+        <p className="mt-3 max-w-sm text-sm leading-6 text-[#60716c]">
+          A member of our team will call you within 24 hours to understand your journey.
         </p>
         <Button
           variant="outline"
-          className="mt-6"
+          className="mt-7 rounded-full border-[#17372f]/15 text-[#17372f]"
           onClick={() => setSuccess(false)}
         >
           Submit another request
@@ -241,25 +210,25 @@ function CallbackForm() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       onSubmit={handleSubmit} 
-      className="bg-white border border-gray-100 rounded-xl shadow-sm p-6 sm:p-8 space-y-6"
+      className="space-y-6 rounded-[1.5rem] bg-white p-5 sm:p-7 lg:p-8"
     >
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-gray-700">Your Name *</label>
+          <label className="text-sm font-semibold text-[#405b54]">Your name *</label>
           <Input
             name="name"
             value={form.name}
             onChange={handleChange}
             placeholder="e.g. Arjun Sharma"
             required
-            className="bg-gray-50"
+            className="h-11 rounded-xl border-[#17372f]/15 bg-[#fafaf7] focus-visible:ring-[#1d6b55]/20"
           />
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-gray-700">Phone Number *</label>
-          <div className="flex h-10 rounded-xl border border-gray-200 bg-gray-50 overflow-hidden focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/20 transition-all">
-            <span className="flex items-center px-3 text-gray-500 text-sm font-medium border-r border-gray-200 bg-gray-100">
+          <label className="text-sm font-semibold text-[#405b54]">Phone number *</label>
+          <div className="flex h-11 overflow-hidden rounded-xl border border-[#17372f]/15 bg-[#fafaf7] transition-all focus-within:border-[#1d6b55] focus-within:ring-2 focus-within:ring-[#1d6b55]/15">
+            <span className="flex items-center border-r border-[#17372f]/10 bg-[#f0f2ed] px-3 text-sm font-medium text-[#60716c]">
               +91
             </span>
             <input
@@ -275,7 +244,7 @@ function CallbackForm() {
         </div>
 
         <div className="space-y-1.5 relative z-50">
-          <label className="text-sm font-medium text-gray-700">Destination *</label>
+          <label className="text-sm font-semibold text-[#405b54]">Destination *</label>
           <Select
             options={destinationOptions}
             value={selectedDestination}
@@ -288,13 +257,13 @@ function CallbackForm() {
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-gray-700">No. of People</label>
-          <div className="flex items-center bg-gray-50 border border-gray-200 rounded-lg h-10 transition-all hover:border-emerald-400">
+          <label className="text-sm font-semibold text-[#405b54]">Number of travellers</label>
+          <div className="flex h-11 items-center rounded-xl border border-[#17372f]/15 bg-[#fafaf7] transition-all hover:border-[#17372f]/30">
             <button
               type="button"
               onClick={() => setPeopleCount(prev => Math.max(prev - 1, 1))}
               disabled={peopleCount <= 1}
-              className="flex items-center justify-center w-10 h-full text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-l-lg transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
+              className="flex h-full w-11 items-center justify-center rounded-l-xl text-[#60716c] transition-colors hover:bg-[#edf3ee] hover:text-[#1d6b55] disabled:opacity-30 disabled:hover:bg-transparent"
             >
               <Minus size={16} />
             </button>
@@ -304,7 +273,7 @@ function CallbackForm() {
             <button
               type="button"
               onClick={() => setPeopleCount(prev => Math.min(prev + 1, 50))}
-              className="flex items-center justify-center w-10 h-full text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-r-lg transition-colors"
+              className="flex h-full w-11 items-center justify-center rounded-r-xl text-[#60716c] transition-colors hover:bg-[#edf3ee] hover:text-[#1d6b55]"
             >
               <Plus size={16} />
             </button>
@@ -313,7 +282,7 @@ function CallbackForm() {
       </div>
 
       <div className="space-y-1.5 relative z-[60]">
-        <label className="text-sm font-medium text-gray-700">Travel Date (approx.)</label>
+        <label className="text-sm font-semibold text-[#405b54]">Approximate travel date</label>
         <div className="relative w-full">
           <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none z-10">
             <CalendarCheck className="h-4 w-4 text-gray-400" />
@@ -325,7 +294,7 @@ function CallbackForm() {
               <Input
                 type="text"
                 placeholder="Select Date"
-                className="w-full pl-9 bg-gray-50 cursor-pointer"
+                className="h-11 w-full cursor-pointer rounded-xl border-[#17372f]/15 bg-[#fafaf7] pl-9 focus-visible:ring-[#1d6b55]/20"
                 readOnly
               />
             }
@@ -341,14 +310,14 @@ function CallbackForm() {
       </div>
 
       <div className="space-y-1.5">
-        <label className="text-sm font-medium text-gray-700">Anything specific you want to mention?</label>
+        <label className="text-sm font-semibold text-[#405b54]">What would you like help with?</label>
         <textarea
           name="message"
           value={form.message}
           onChange={handleChange}
           rows={3}
-          placeholder="e.g. Any specific places you want to visit, etc..."
-          className="w-full rounded-xl border border-gray-200 bg-gray-50 text-gray-900 placeholder:text-gray-400 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all resize-none"
+          placeholder="Tell us about your route, concerns or places you want to visit."
+          className="w-full resize-none rounded-xl border border-[#17372f]/15 bg-[#fafaf7] px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 transition-all focus:border-[#1d6b55] focus:outline-none focus:ring-2 focus:ring-[#1d6b55]/15"
         />
       </div>
 
@@ -359,7 +328,7 @@ function CallbackForm() {
       <Button
         type="submit"
         disabled={loading}
-        className="w-full sm:w-auto min-w-[200px]"
+        className="h-12 w-full min-w-[200px] rounded-full bg-[#17372f] px-6 font-semibold text-white hover:bg-[#214b40] sm:w-auto"
       >
         {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Phone className="w-4 h-4 mr-2" />}
         {loading ? 'Submitting...' : 'Request a Callback'}
@@ -417,77 +386,109 @@ export default function CompanionLandingPage() {
   };
 
   return (
-    <div className="bg-slate-50 min-h-screen text-gray-900 font-sans pb-20 overflow-x-hidden">
-      
-      {/* ══════════════════════════════════════════
-          HERO SECTION
-      ══════════════════════════════════════════ */}
-      <section className="relative pt-6 pb-12 md:pt-10 md:pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div className="order-2 lg:order-1">
-            <FadeUp>
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-gray-900 mb-6">
-                Your Personal Guide to <span className="text-emerald-600">Explore Freely</span>
-              </h1>
-            </FadeUp>
-            <FadeUp delay={0.1}>
-              <p className="text-lg text-gray-600 mb-8 max-w-lg">
-                Don't want to be tied down to a package? We will assist you throughout your entire journey to prevent overpricing, design your perfect itinerary, and handle all the logistics while you explore on your own terms.
-              </p>
-            </FadeUp>
-            <FadeUp delay={0.2}>
-              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-                <Button size="lg" onClick={scrollToForm} className="shadow-md group">
-                  Request a Callback
-                  <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                </Button>
-                <div className="flex items-center gap-2 text-sm font-medium text-gray-500 px-2">
-                  <Shield className="w-4 h-4 text-emerald-600" />
-                  Verified Locals Only
-                </div>
-              </div>
-            </FadeUp>
-          </div>
+    <div className="min-h-screen overflow-x-hidden bg-[#f8f6f0] font-sans text-[#17372f]">
+      <section className="relative isolate flex min-h-[650px] items-end overflow-hidden bg-[#0f1014] text-white md:min-h-[690px] md:items-center">
+        <Image
+          src="/images/companion-consultant.jpg"
+          alt="A local travel Companion planning a Kashmir journey"
+          fill
+          priority
+          className="object-cover object-[61%_center] md:object-center"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0f1014] via-[#0f1014]/72 to-[#0f1014]/22 md:bg-[linear-gradient(90deg,rgba(15,16,20,0.88)_0%,rgba(15,16,20,0.68)_36%,rgba(15,16,20,0.16)_66%,transparent_82%)]" />
+        <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-[#0f1014]/52 to-transparent" />
 
-          <motion.div 
-            initial={{ opacity: 0, x: 40 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
-            className="order-1 lg:order-2 relative w-full max-w-md mx-auto lg:max-w-none"
+        <div className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-10 pt-32 sm:px-6 sm:pb-11 md:pb-8 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+            className="max-w-2xl"
           >
-            <div className="aspect-[4/3] sm:aspect-square lg:aspect-[4/3] rounded-2xl overflow-hidden shadow-lg relative">
-              <Image
-                src="/images/companion-consultant.jpg"
-                alt="Travel Companion"
-                fill
-                className="object-cover"
-                priority
-              />
+            <p className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-[#e0c28b]">
+              <Headphones className="h-4 w-4" /> 24/7 travel assistance
+            </p>
+            <h1 className="max-w-xl font-serif text-5xl leading-[0.94] tracking-[-0.045em] sm:text-6xl lg:text-7xl">
+              Travel your way. Keep a local expert close.
+            </h1>
+            <p className="mt-5 max-w-xl text-sm leading-6 text-white/80 sm:text-base sm:leading-7">
+              For travellers who prefer shaping their own journey but still want a trusted local to help with confusing routes, fair prices, stays and unexpected changes along the way.
+            </p>
+            <div className="mt-7 flex flex-wrap items-center gap-3">
+              <button onClick={scrollToForm} className="group inline-flex h-12 items-center gap-2 rounded-full bg-white px-6 text-sm font-bold text-[#17372f] shadow-xl transition hover:-translate-y-0.5 hover:bg-white/90">
+                Request a callback <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </button>
+              <span className="inline-flex h-12 items-center gap-2 rounded-full border border-white/20 bg-black/20 px-4 text-sm font-semibold text-white/85 backdrop-blur-md">
+                <Shield className="h-4 w-4 text-[#e0c28b]" /> Verified local experts
+              </span>
             </div>
           </motion.div>
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════
-          PAIN POINTS SECTION
-      ══════════════════════════════════════════ */}
-      <section className="py-16 md:py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <FadeUp className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Common Travel Problems</h2>
-            <p className="text-gray-500 max-w-2xl mx-auto">
-              Independent travel shouldn't mean figuring everything out the hard way.
-            </p>
+      <section className="border-b border-[#17372f]/10 bg-white/75">
+        <div className="mx-auto grid max-w-7xl grid-cols-1 divide-y divide-[#17372f]/10 px-4 sm:grid-cols-3 sm:divide-x sm:divide-y-0 sm:px-6 lg:px-8">
+          {[
+            ['01', 'Independent by choice', 'No fixed package or group itinerary.'],
+            ['02', 'Local knowledge on call', 'Practical answers when you need them.'],
+            ['03', 'Support through the trip', 'One familiar contact from plan to return.'],
+          ].map(([number, title, text]) => (
+            <div key={number} className="flex gap-4 py-5 sm:px-5 sm:first:pl-0 sm:last:pr-0">
+              <span className="font-serif text-xl text-[#9b7440]">{number}</span>
+              <div><p className="font-semibold">{title}</p><p className="mt-1 text-sm text-[#60716c]">{text}</p></div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="px-4 py-16 sm:px-6 md:py-24 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <FadeUp className="mb-10 max-w-3xl">
+            <p className="mb-3 text-xs font-bold uppercase tracking-[0.22em] text-[#9b7440]">Support that follows you</p>
+            <h2 className="font-serif text-4xl leading-[1.02] tracking-[-0.04em] sm:text-5xl">Help for the decisions that make or break a trip.</h2>
+            <p className="mt-5 max-w-2xl text-base leading-7 text-[#60716c]">Your Companion advises you; you stay in control of every booking and every choice.</p>
           </FadeUp>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {painPoints.map((item, i) => (
-              <FadeUp key={i} delay={i * 0.1}>
-                <div className="bg-gray-50 rounded-xl p-6 border border-gray-100 h-full hover:shadow-md transition-shadow">
-                  <div className="w-10 h-10 bg-white rounded-lg shadow-sm border border-gray-200 flex items-center justify-center mb-4">
-                    <item.icon className="w-5 h-5 text-emerald-600" />
+
+          <div className="grid gap-5 lg:grid-cols-3">
+            {supportMoments.map((item, index) => (
+              <FadeUp key={item.title} delay={index * 0.08}>
+                <article className="group flex h-full flex-col rounded-[1.75rem] border border-[#17372f]/10 bg-white p-6 shadow-[0_18px_50px_-38px_rgba(23,55,47,0.6)] transition duration-500 hover:-translate-y-1 hover:shadow-[0_24px_60px_-35px_rgba(23,55,47,0.5)] sm:p-7">
+                  <div className="flex items-center justify-between">
+                    <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#e8efe9] text-[#1d6b55]"><item.icon className="h-5 w-5" /></span>
+                    <span className="text-xs font-bold uppercase tracking-[0.18em] text-[#9b7440]">{item.eyebrow}</span>
                   </div>
-                  <h3 className="font-semibold text-gray-900 mb-2">{item.title}</h3>
-                  <p className="text-sm text-gray-600">{item.desc}</p>
+                  <h3 className="mt-8 font-serif text-3xl leading-[1.05] tracking-[-0.03em]">{item.title}</h3>
+                  <p className="mt-4 text-base leading-7 text-[#60716c]">{item.desc}</p>
+                  <ul className="mt-7 space-y-3 border-t border-[#17372f]/10 pt-5">
+                    {item.points.map((point) => <li key={point} className="flex items-center gap-2.5 text-sm font-semibold"><CheckCircle className="h-4 w-4 text-[#1d6b55]" /> {point}</li>)}
+                  </ul>
+                </article>
+              </FadeUp>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-[#17201e] px-4 py-16 text-white sm:px-6 md:py-20 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <FadeUp className="grid gap-5 border-b border-white/10 pb-9 md:grid-cols-[0.8fr_1.2fr] md:items-end">
+            <div>
+              <p className="mb-3 text-xs font-bold uppercase tracking-[0.22em] text-[#e0c28b]">How Companion works</p>
+              <h2 className="font-serif text-4xl leading-none tracking-[-0.04em] sm:text-5xl">One conversation to get started.</h2>
+            </div>
+            <p className="max-w-2xl text-base leading-7 text-white/65 md:justify-self-end">Tell us where you are heading. We will understand the trip first, then match you with someone who can genuinely help.</p>
+          </FadeUp>
+
+          <div className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+            {steps.map((step, index) => (
+              <FadeUp key={step.num} delay={index * 0.07}>
+                <div className="relative border-l border-white/15 pl-5">
+                  <div className="flex items-center justify-between">
+                    <span className="font-serif text-2xl text-[#e0c28b]">{step.num}</span>
+                    <step.icon className="h-5 w-5 text-white/45" />
+                  </div>
+                  <h3 className="mt-6 text-base font-semibold">{step.title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-white/60">{step.desc}</p>
                 </div>
               </FadeUp>
             ))}
@@ -495,74 +496,21 @@ export default function CompanionLandingPage() {
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════
-          HOW IT WORKS & FEATURES
-      ══════════════════════════════════════════ */}
-      <section className="py-16 md:py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
-          
-          {/* Left: How it works */}
-          <div>
-            <FadeUp>
-              <h2 className="text-3xl font-bold text-gray-900 mb-8">How it Works</h2>
-            </FadeUp>
-            <div className="space-y-8">
-              {steps.map((step, i) => (
-                <FadeUp key={i} delay={i * 0.1}>
-                  <div className="flex gap-4 relative">
-                    {i !== steps.length - 1 && (
-                      <div className="absolute left-6 top-14 bottom-[-2rem] w-px bg-gray-200" />
-                    )}
-                    <div className="w-12 h-12 bg-emerald-50 border border-emerald-100 rounded-full flex items-center justify-center shrink-0 relative z-10">
-                      <step.icon className="w-5 h-5 text-emerald-600" />
-                    </div>
-                    <div className="pt-2">
-                      <h3 className="font-semibold text-gray-900">{step.title}</h3>
-                      <p className="text-sm text-gray-600 mt-1">{step.desc}</p>
-                    </div>
-                  </div>
-                </FadeUp>
-              ))}
+      <section id="callback-form" className="scroll-mt-20 px-4 py-16 sm:px-6 md:py-24 lg:px-8">
+        <div className="mx-auto grid max-w-7xl overflow-hidden rounded-[2rem] border border-[#17372f]/10 bg-white shadow-[0_30px_80px_-55px_rgba(23,55,47,0.6)] lg:grid-cols-[0.72fr_1.28fr]">
+          <FadeUp className="relative overflow-hidden bg-[#dfe8e1] p-7 sm:p-9 lg:p-10">
+            <div className="relative z-10">
+              <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#9b7440]">Request your Companion</p>
+              <h2 className="mt-4 font-serif text-4xl leading-[1.02] tracking-[-0.04em] sm:text-5xl">Start with a quick callback.</h2>
+              <p className="mt-5 text-base leading-7 text-[#526761]">Share the basics. Our team will call within 24 hours to understand how you want to travel and where you need support.</p>
+              <div className="mt-9 space-y-4 border-t border-[#17372f]/10 pt-7">
+                <p className="flex items-center gap-3 text-sm font-semibold"><Phone className="h-4 w-4 text-[#1d6b55]" /> A real conversation, not a sales script</p>
+                <p className="flex items-center gap-3 text-sm font-semibold"><MessageCircle className="h-4 w-4 text-[#1d6b55]" /> Ask questions before deciding</p>
+                <p className="flex items-center gap-3 text-sm font-semibold"><MapPin className="h-4 w-4 text-[#1d6b55]" /> Currently available for Kashmir</p>
+              </div>
             </div>
-          </div>
-
-          {/* Right: What you get */}
-          <div>
-            <FadeUp>
-              <h2 className="text-3xl font-bold text-gray-900 mb-8">What You Get</h2>
-            </FadeUp>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {features.map((f, i) => (
-                <FadeIn key={i} delay={i * 0.05}>
-                  <div className="flex gap-3 bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:border-emerald-200 hover:shadow-md transition-all h-full">
-                    <div className="shrink-0 mt-0.5">
-                      <f.icon className="w-5 h-5 text-emerald-600" />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-semibold text-gray-900">{f.label}</h4>
-                      <p className="text-xs text-gray-500 mt-1">{f.desc}</p>
-                    </div>
-                  </div>
-                </FadeIn>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════════
-          CALLBACK FORM
-      ══════════════════════════════════════════ */}
-      <section id="callback-form" className="py-16 md:py-20 bg-gray-50 border-t border-gray-100">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <FadeUp className="text-center mb-10">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Request Your Companion</h2>
-            <p className="text-gray-500 max-w-xl mx-auto">
-              Fill in your details and our team will assign a verified local expert to call you back within 24 hours.
-            </p>
           </FadeUp>
-          
-          <FadeUp delay={0.2} className="text-gray-900">
+          <FadeUp delay={0.08} className="p-1 text-gray-900 sm:p-3 lg:p-4">
             <CallbackForm />
           </FadeUp>
         </div>
