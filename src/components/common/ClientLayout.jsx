@@ -37,7 +37,7 @@ export default function ClientLayout({ children }) {
                 <PresenceHeartbeat />
                 {!hideNavbar && <Navbar />}
 
-                <main className="flex-grow w-full pb-20 md:pb-0">{children}</main>
+                <main className="flex-grow w-full">{children}</main>
 
                 {!hideFooter && <Footer />}
             </AuthProvider>

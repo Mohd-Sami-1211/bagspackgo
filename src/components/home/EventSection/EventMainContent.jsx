@@ -1,10 +1,9 @@
 'use client';
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
-  MapPin, Calendar, Star, Ticket, Search,
-  ChevronDown, ArrowLeft, Clock, RefreshCcw,
-  Sparkles, Eye, X, Users, ArrowRight, Filter
+  Star, Search, ChevronDown, ArrowLeft, RefreshCcw,
+  Sparkles, Eye, ArrowRight
 } from 'lucide-react';
 import EventCard from 'src/components/home/EventSection/EventCard';
 import { useEventsList } from '@/lib/useTripCache';
@@ -35,17 +34,19 @@ export default function EventMainContent() {
 
   // Data Fetching
   const liveQueryParams = useMemo(() => {
+    if (viewMode === 'all-recent') return null;
     if (viewMode === 'all-live') {
       return { tab: 'upcoming', page: expandedPage, limit: CARDS_PER_PAGE, search: searchQuery, sort: sortBy };
     }
-    return { tab: 'upcoming', limit: 20 };
+    return { tab: 'upcoming', page: 1, limit: CARDS_PER_SECTION };
   }, [viewMode, expandedPage, searchQuery, sortBy]);
 
   const recentQueryParams = useMemo(() => {
+    if (viewMode === 'all-live') return null;
     if (viewMode === 'all-recent') {
       return { tab: 'past', page: expandedPage, limit: CARDS_PER_PAGE, search: searchQuery, sort: sortBy };
     }
-    return { tab: 'past', limit: CARDS_PER_SECTION };
+    return { tab: 'past', page: 1, limit: CARDS_PER_SECTION };
   }, [viewMode, expandedPage, searchQuery, sortBy]);
 
   // ── Priority Loading: Live events load FIRST, recent events deferred ──
@@ -58,7 +59,7 @@ export default function EventMainContent() {
   }, [liveData, viewMode]);
 
   const { data: recentData, isLoading: recentLoading, isValidating: recentValidating } = useEventsList(
-    recentReady ? recentQueryParams : null  // null key = SWR skips the fetch entirely
+    recentQueryParams && recentReady ? recentQueryParams : null
   );
 
   const liveEvents = liveData?.events || [];
@@ -159,7 +160,7 @@ export default function EventMainContent() {
               <ArrowLeft className="w-4 h-4" /> Back
             </button>
             <div className="h-5 w-px bg-neutral-200" />
-            <h1 className="text-lg font-bold text-neutral-800">{title}</h1>
+            <h1 className="font-serif text-2xl font-normal tracking-[-0.025em] text-[#17372f]">{title}</h1>
           </div>
         </div>
 
@@ -213,16 +214,23 @@ export default function EventMainContent() {
       {/* ────────────────────────────────────────────────────────────────────
           SECTION 1 — LIVE EVENTS CAROUSEL (Full Background Poster)
           ──────────────────────────────────────────────────────────────────── */}
-      <section className="relative w-full mb-12">
+      <section className="relative mb-12 w-full bg-[#0f1014] pt-[4.75rem] md:bg-transparent md:pt-0">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 top-0 z-20 h-36 bg-gradient-to-b from-[#0f1014] via-[#0f1014]/95 to-transparent md:hidden"
+        />
         {liveLoading && carouselEvents.length === 0 ? (
-          <div className="w-full h-[450px] md:h-[500px] lg:h-[600px] bg-[#0f1014] animate-pulse flex items-center justify-center">
+          <div className="w-full h-[450px] md:h-[460px] lg:h-[500px] bg-[#0f1014] animate-pulse flex items-center justify-center">
             <div className="w-12 h-12 rounded-full bg-neutral-800" />
           </div>
         ) : carouselEvents.length === 0 ? (
-          <div className="w-full h-[450px] md:h-[500px] lg:h-[600px] bg-[#0f1014] flex flex-col items-center justify-center text-white">
+          <div className="w-full h-[450px] md:h-[460px] lg:h-[500px] bg-[#0f1014] flex flex-col items-center justify-center text-white">
             <Sparkles className="w-10 h-10 mb-4 text-emerald-300" />
             <h2 className="text-2xl font-bold mb-2">Stay Tuned</h2>
-            <p className="text-emerald-200 text-sm">New events are coming soon!</p>
+            <p className="text-emerald-200 text-sm">New events are coming soon.</p>
+            <Link href="/user/offbeats" className="mt-6 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-[#17372f] transition hover:bg-white/90">
+              Explore offbeats meanwhile <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
         ) : (
           <div
@@ -233,10 +241,6 @@ export default function EventMainContent() {
             onTouchStart={handlePointerDown}
             onTouchEnd={handlePointerUp}
           >
-            <div className="absolute top-0 left-0 right-0 h-[3px] bg-white/20 z-30">
-              <motion.div className="h-full bg-emerald-400" initial={{ width: '0%' }} animate={{ width: '100%' }} transition={{ duration: CAROUSEL_INTERVAL / 1000, ease: 'linear' }} key={`progress-${currentSlide}`} />
-            </div>
-
             <div className="flex transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)]" style={{ transform: `translateX(-${currentSlide * 100}%)` }}>
               {carouselEvents.map((event) => (
                 <div key={event.id} className="w-full flex-shrink-0">
@@ -246,7 +250,7 @@ export default function EventMainContent() {
             </div>
 
             {carouselEvents.length > 1 && (
-              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+              <div className="absolute bottom-4 right-4 z-30 flex gap-2 md:bottom-6 md:left-1/2 md:right-auto md:z-20 md:-translate-x-1/2">
                 {carouselEvents.map((_, i) => (
                   <button key={i} onClick={(e) => { e.stopPropagation(); setCurrentSlide(i); }} className={`h-1.5 rounded-full transition-all duration-400 ${i === currentSlide ? 'bg-white w-8' : 'bg-white/40 w-2 hover:bg-white/60'}`} aria-label={`Slide ${i + 1}`} />
                 ))}
@@ -261,9 +265,9 @@ export default function EventMainContent() {
           ──────────────────────────────────────────────────────────────────── */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
         <div className="flex items-center justify-between mb-8">
-          <h2 className="text-2xl sm:text-3xl font-bold text-neutral-900 tracking-tight">Live Events</h2>
+          <h2 className="font-serif text-3xl font-normal tracking-[-0.035em] text-[#17372f] sm:text-4xl">Live Events</h2>
           {hasMoreLive && (
-            <button onClick={() => openViewAll('all-live')} className="flex items-center gap-1.5 text-emerald-600 hover:text-emerald-700 text-sm font-bold transition-colors group">
+            <button onClick={() => openViewAll('all-live')} className="group flex items-center gap-1.5 text-sm font-semibold text-[#1d6b55] transition-colors hover:text-[#124838]">
               View All <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
             </button>
           )}
@@ -285,9 +289,9 @@ export default function EventMainContent() {
           ──────────────────────────────────────────────────────────────────── */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
         <div className="flex items-center justify-between mb-8">
-          <h2 className="text-2xl sm:text-3xl font-bold text-neutral-900 tracking-tight">Recent Events</h2>
+          <h2 className="font-serif text-3xl font-normal tracking-[-0.035em] text-[#17372f] sm:text-4xl">Recent Events</h2>
           {hasMoreRecent && (
-            <button onClick={() => openViewAll('all-recent')} className="flex items-center gap-1.5 text-emerald-600 hover:text-emerald-700 text-sm font-bold transition-colors group">
+            <button onClick={() => openViewAll('all-recent')} className="group flex items-center gap-1.5 text-sm font-semibold text-[#1d6b55] transition-colors hover:text-[#124838]">
               View All <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
             </button>
           )}
@@ -316,20 +320,20 @@ function CarouselSlide({ event }) {
   });
 
   return (
-    <div className="relative w-full h-[450px] md:h-[500px] lg:h-[600px] bg-[#0f1014] overflow-hidden flex items-center group">
+    <div className="relative w-full h-[450px] md:h-[460px] lg:h-[500px] bg-[#0f1014] overflow-hidden flex items-center group">
       
       {/* ── Layer 1: Ambient Blurred Background ── */}
       {/* This fills the wide screen with the poster's colors without cropping the main focal image */}
       <img
         src={event.image || '/images/EventCover.webp'}
         alt=""
-        className="absolute inset-0 w-full h-full object-cover opacity-30 blur-[40px] scale-110"
+        className="absolute inset-0 w-full h-full object-cover opacity-20 blur-[40px] scale-110"
         draggable={false}
       />
       
       {/* ── Layer 2: The Full Uncropped Poster ── */}
       {/* Using object-contain ensures the entire poster is visible. Aligned to the right on desktop, top on mobile. */}
-      <div className="absolute inset-0 flex justify-end">
+      <div className="absolute inset-x-0 top-0 bottom-0 flex justify-end md:top-14">
         <img
           src={event.image || '/images/EventCover.webp'}
           alt={event.name}
@@ -341,19 +345,23 @@ function CarouselSlide({ event }) {
 
       {/* ── Layer 3: Hotstar-style Seamless Gradients ── */}
       {/* Fades from dark left/bottom into the image on the right/top */}
-      <div className="absolute inset-0 bg-gradient-to-t from-[#0f1014] via-[#0f1014]/90 to-transparent md:bg-gradient-to-r md:from-[#0f1014] md:via-[#0f1014]/90 md:to-transparent" />
-      <div className="absolute inset-y-0 left-0 w-full md:w-3/4 bg-gradient-to-r from-[#0f1014] via-[#0f1014]/80 to-transparent hidden md:block" />
+      <div className="absolute inset-0 bg-gradient-to-t from-[#0f1014]/80 via-[#0f1014]/38 to-transparent md:bg-gradient-to-r md:from-[#0f1014]/68 md:via-[#0f1014]/22 md:to-transparent" />
+      <div
+        className="absolute inset-y-0 left-0 hidden w-[68%] md:block"
+        style={{ background: 'linear-gradient(90deg, rgba(15,16,20,0.72) 0%, rgba(15,16,20,0.52) 48%, rgba(15,16,20,0.18) 68%, transparent 100%)' }}
+      />
+      <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-[#0f1014]/34 to-transparent md:h-16 md:from-[#0f1014]/24" />
 
       {/* ── Layer 4: Floating Content ── */}
-      <div className="absolute bottom-8 md:bottom-auto md:top-1/2 md:-translate-y-1/2 left-4 md:left-12 lg:left-20 z-20 max-w-[90%] md:max-w-[55%] lg:max-w-[45%] flex flex-col gap-4 lg:gap-5">
+      <div className="absolute bottom-8 md:bottom-auto md:top-[66%] md:-translate-y-1/2 left-4 md:left-12 lg:left-20 z-20 max-w-[90%] md:max-w-[50%] lg:max-w-[40%] flex flex-col gap-3 md:gap-3.5 lg:gap-4">
         
         {/* Title */}
-        <h2 className="text-3xl md:text-5xl lg:text-6xl font-black leading-tight text-white drop-shadow-2xl tracking-tight">
+        <h2 className="font-serif text-3xl font-normal leading-[0.98] tracking-[-0.045em] text-white drop-shadow-2xl md:text-5xl lg:text-6xl">
           {event.name}
         </h2>
 
         {/* Hotstar-style Meta Tags */}
-        <div className="flex flex-wrap items-center gap-2 md:gap-3 text-xs md:text-sm font-bold text-white/80">
+        <div className="flex flex-wrap items-center gap-2 text-xs font-semibold tracking-[0.01em] text-white/80 md:gap-3 md:text-sm">
           <span className="text-emerald-400">{formattedDate}</span>
           <span className="w-1 h-1 rounded-full bg-white/40" />
           <span>{event.duration || '1 day'}</span>
@@ -375,7 +383,7 @@ function CarouselSlide({ event }) {
         </div>
 
         {/* Description / Extra Info */}
-        <p className="text-white/70 text-sm md:text-base leading-relaxed line-clamp-2 md:line-clamp-3 font-medium">
+        <p className="text-white/70 text-xs md:text-sm lg:text-base leading-relaxed line-clamp-2 md:line-clamp-3 font-medium">
           Located in <strong className="text-white">{event.destination || event.destinationId}</strong>. 
           Organized by <strong className="text-white">{event.guideName || 'Local Organizer'}</strong>. 
           Book your tickets now to secure your spot for this amazing experience!
@@ -386,18 +394,11 @@ function CarouselSlide({ event }) {
           {/* Primary Watch/View Button (Hotstar Play Button style) */}
           <Link
             href={`/user/events/eventdetails/${event.id}`}
-            className="flex items-center gap-2 px-8 py-3.5 lg:py-4 bg-white hover:bg-neutral-200 text-black text-sm lg:text-base font-extrabold rounded-xl transition-all shadow-[0_0_30px_rgba(255,255,255,0.2)] active:scale-95"
+            className="flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-semibold tracking-[-0.01em] text-[#17372f] shadow-[0_0_30px_rgba(255,255,255,0.2)] transition-all hover:bg-neutral-200 active:scale-95 lg:px-7 lg:py-3.5 lg:text-sm"
           >
             <Eye className="w-5 h-5 lg:w-6 lg:h-6" /> View Details
           </Link>
 
-          {/* Price Indicator */}
-          <div className="hidden md:flex flex-col justify-center ml-2 border-l border-white/20 pl-6">
-            <span className="text-[10px] uppercase tracking-widest text-white/50 font-bold mb-0.5">Price</span>
-            <span className="text-xl lg:text-2xl font-black text-white leading-none">
-              ₹{event.price?.toLocaleString('en-IN') || '0'}
-            </span>
-          </div>
         </div>
       </div>
     </div>
@@ -436,7 +437,7 @@ function EmptyState({ onReset }) {
       <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mb-6">
         <Search className="w-8 h-8 text-emerald-400" />
       </div>
-      <h3 className="text-xl font-bold text-neutral-800 mb-2">No Events Found</h3>
+      <h3 className="mb-2 font-serif text-2xl font-normal tracking-[-0.025em] text-[#17372f]">No Events Found</h3>
       <p className="text-neutral-500 max-w-md mx-auto mb-6 text-sm">
         We couldn't find any events matching your search.
       </p>

@@ -1,7 +1,18 @@
 import useSWR from 'swr';
 
 // ── Default SWR fetcher ─────────────────────────────────────────────────────
-const fetcher = (url) => fetch(url).then((r) => r.json());
+const fetcher = async (url) => {
+    const response = await fetch(url, { headers: { Accept: 'application/json' } });
+    const payload = await response.json();
+
+    if (!response.ok || payload?.success === false) {
+        const error = new Error(payload?.message || 'Unable to load data');
+        error.status = response.status;
+        throw error;
+    }
+
+    return payload;
+};
 
 // ── Events listing cache (server-side filtered + paginated) ─────────────────
 // Caches per unique query string. keepPreviousData keeps old data visible
@@ -13,14 +24,17 @@ export function useEventsList(queryParams = {}, options = {}) {
         return useSWR(null, fetcher, { revalidateOnFocus: false, ...options });
     }
     const cleaned = Object.fromEntries(
-        Object.entries(queryParams).filter(([, v]) => v !== undefined && v !== null && v !== '')
+        Object.entries(queryParams)
+            .filter(([, v]) => v !== undefined && v !== null && v !== '')
+            .sort(([firstKey], [secondKey]) => firstKey.localeCompare(secondKey))
     );
     const queryString = new URLSearchParams(cleaned).toString();
     const url = `/api/events${queryString ? `?${queryString}` : ''}`;
     return useSWR(url, fetcher, {
-        dedupingInterval: 30000,   // 30s — matches CDN s-maxage
-        keepPreviousData: true,      // show stale data while revalidating (smooth pagination)
-        revalidateOnFocus: false,    // don't refetch just because user switched tabs
+        dedupingInterval: 60000,     // one request per query per minute in the browser
+        keepPreviousData: true,      // keep the current page visible while the next page loads
+        revalidateOnFocus: false,
+        revalidateOnReconnect: false,
         ...options,
     });
 }
@@ -99,11 +113,41 @@ export function useBookingPass(id, options = {}) {
 
 // 7. Offbeat destinations listing cache (paginated, lightweight — no photos[] or heavy fields)
 export function useOffbeatList(queryParams = {}, options = {}) {
-    const queryString = new URLSearchParams(
-        Object.fromEntries(Object.entries(queryParams).filter(([, v]) => v !== undefined && v !== null))
-    ).toString();
+    if (queryParams === null) {
+        return useSWR(null, fetcher, { revalidateOnFocus: false, ...options });
+    }
+
+    const queryString = new URLSearchParams(Object.fromEntries(
+        Object.entries(queryParams)
+            .filter(([, v]) => v !== undefined && v !== null && v !== '')
+            .sort(([firstKey], [secondKey]) => firstKey.localeCompare(secondKey))
+    )).toString();
     const url = `/api/public/offbeats${queryString ? `?${queryString}` : ''}`;
-    return useSWR(url, { ...options, dedupingInterval: 60000 }); // Cache list for 60s
+    return useSWR(url, fetcher, {
+        dedupingInterval: 60000,
+        keepPreviousData: true,
+        revalidateOnFocus: false,
+        revalidateOnReconnect: false,
+        ...options,
+    });
+}
+
+export function useOffbeatSuggestions(query, queryParams = {}, options = {}) {
+    const normalizedQuery = query?.trim();
+    const suggestionParams = new URLSearchParams({
+        suggest: normalizedQuery || '',
+        limit: '5',
+        ...Object.fromEntries(Object.entries(queryParams).filter(([, value]) => value && value !== 'All')),
+    });
+    const url = normalizedQuery?.length >= 2 ? `/api/public/offbeats?${suggestionParams.toString()}` : null;
+
+    return useSWR(url, fetcher, {
+        dedupingInterval: 60000,
+        keepPreviousData: false,
+        revalidateOnFocus: false,
+        revalidateOnReconnect: false,
+        ...options,
+    });
 }
 
 // 8. Offbeat destination detail cache (full document with all photos/videos)
