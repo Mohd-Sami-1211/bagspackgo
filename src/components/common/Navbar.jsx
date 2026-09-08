@@ -87,7 +87,7 @@ export default function Navbar() {
 
   const isUserAccount = isAuthenticated && user?.role === 'user';
   const isProviderAccount = isAuthenticated && user?.role === 'provider';
-  const isOffbeatsLanding = pathname === '/user/offbeats';
+  const isOffbeatsLanding = pathname === '/user/offbeats' || pathname === '/user/offbeats/results';
   const isLanding = pathname === '/' || pathname === '/user/trip' || pathname === '/user/events' || isOffbeatsLanding;
 
   useEffect(() => {
@@ -165,7 +165,7 @@ export default function Navbar() {
                   <button
                     type="button"
                     onClick={() => setShowDropdown((open) => !open)}
-                    className="flex items-center gap-1 rounded-full border border-emerald-100 bg-emerald-50 p-1 text-emerald-800 transition-colors hover:bg-emerald-100"
+                    className="flex items-center gap-1 rounded-full border border-slate-200 bg-white p-1 text-[#17372f] shadow-sm transition-colors hover:bg-slate-50"
                     aria-label="Open account menu"
                   >
                     <span className="flex h-8 w-8 items-center justify-center rounded-full bg-green-600 text-xs font-extrabold text-white">

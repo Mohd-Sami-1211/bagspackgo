@@ -104,7 +104,7 @@ export default function OffbeatsLandingPage() {
                 </Suspense>
 
                 {activeFeatured ? (
-                    <div className="relative z-20 mx-auto flex min-h-[610px] max-w-7xl items-end px-4 pb-20 pt-44 sm:px-6 md:items-center md:pb-8 lg:min-h-[680px] lg:px-8">
+                    <div className="relative z-20 mx-auto flex min-h-[610px] max-w-7xl items-end px-4 pb-12 pt-44 sm:px-6 sm:pb-16 md:items-center md:pb-8 lg:min-h-[680px] lg:px-8">
                         <AnimatePresence mode="wait">
                             <motion.div key={`copy-${activeFeatured._id}`} initial={{ opacity: 0, x: -18 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 12 }} transition={{ duration: 0.45 }} className="max-w-xl">
                                 <p className="mb-4 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.24em] text-[#d9bd86]"><Compass className="h-4 w-4" /> Featured offbeat</p>

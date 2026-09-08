@@ -163,9 +163,7 @@ export async function GET(request) {
                 .toArray();
             const ranked = rankMatches(candidates, search);
             suggestedQuery = ranked[0]?.item?.title || null;
-            const bestScore = ranked[0]?.score ?? 1;
             const nearest = ranked
-                .filter(({ score }) => score <= Math.min(bestScore + 0.15, 0.75))
                 .slice(0, 6)
                 .map(({ item }) => item);
 
