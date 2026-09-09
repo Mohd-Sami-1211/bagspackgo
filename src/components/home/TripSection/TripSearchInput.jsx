@@ -240,12 +240,15 @@ const TripSearchInput = memo(forwardRef(({ compactMode = false, onSearch, heroMo
 }));
 
 // ------------------- Destination Select -------------------
+const hiddenDestinationValues = new Set(['bhaderwah', 'warwan-marwah-valley']);
+
 const DestinationSelect = ({ selectedDestination, setSelectedDestination, error, clearError }) => {
+  const visibleDestinations = (data.destinations || []).filter((destination) => !hiddenDestinationValues.has(destination.value));
   const destinationOptions = [
-    ...(data.destinations || []).filter(d => ['kashmir'].includes(d.value)),
+    ...visibleDestinations.filter(d => ['kashmir'].includes(d.value)),
     {
       label: 'Available Soon',
-      options: (data.destinations || []).filter(d => !['kashmir'].includes(d.value)).map(dest => ({
+      options: visibleDestinations.filter(d => !['kashmir'].includes(d.value)).map(dest => ({
         ...dest,
         isDisabled: true,
       }))
@@ -441,16 +444,30 @@ const selectStyles = {
   }),
   menuPortal: (base) => ({ ...base, zIndex: 9999 }),
   menuList: (provided) => ({ ...provided, padding: '4px', fontSize: '0.85rem' }),
+  groupHeading: (provided, state) => ({
+    ...provided,
+    color: state.children === 'Available Soon' ? '#9ca3af' : provided.color,
+    fontSize: '0.68rem',
+    fontWeight: 700,
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase',
+  }),
   option: (provided, state) => ({
     ...provided,
     borderRadius: '6px',
-    backgroundColor: state.isSelected ? '#a7f3d0' : state.isFocused ? '#d1fae5' : 'white',
-    color: state.isSelected ? '#065f46' : '#1e293b',
+    backgroundColor: state.isDisabled
+      ? '#f8fafc'
+      : state.isSelected ? '#a7f3d0' : state.isFocused ? '#d1fae5' : 'white',
+    color: state.isDisabled ? '#9ca3af' : state.isSelected ? '#065f46' : '#1e293b',
     margin: '4px 0',
     padding: '8px 12px',
+    cursor: state.isDisabled ? 'not-allowed' : 'pointer',
+    opacity: state.isDisabled ? 0.8 : 1,
     transition: 'all 0.15s ease-out',
-    '&:active': { backgroundColor: '#6ee7b7', color: '#064e3b' },
-    '&:hover:not(:active)': { backgroundColor: '#d1fae5', boxShadow: 'inset 0 0 0 1px #a7f3d0' },
+    '&:active': state.isDisabled ? {} : { backgroundColor: '#6ee7b7', color: '#064e3b' },
+    '&:hover:not(:active)': state.isDisabled
+      ? { backgroundColor: '#f8fafc', boxShadow: 'none' }
+      : { backgroundColor: '#d1fae5', boxShadow: 'inset 0 0 0 1px #a7f3d0' },
   }),
 };
 
