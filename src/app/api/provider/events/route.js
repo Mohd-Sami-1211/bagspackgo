@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { Guide } from "@/models/guide.model";
 import { Event } from "@/models/event.model";
 import { sanitizeString } from "@/lib/sanitize";
+import { sanitizeCustomFormFields } from '@/lib/eventBooking';
 
 // Allow larger request bodies for image uploads and longer execution time
 export const maxDuration = 60; // seconds
@@ -189,6 +190,21 @@ export async function POST(request) {
             (t) => typeof t === "string" && t.trim()
         );
 
+        const applicationFormType = body.applicationFormType === 'customized' ? 'customized' : 'default';
+        const customFormFields = sanitizeCustomFormFields(body.customFormFields);
+        if (applicationFormType === 'customized') {
+            const invalidField = customFormFields.find((field) =>
+                !field.title ||
+                (['dropdown', 'multiple_choice', 'checkbox'].includes(field.type) && field.options.length === 0)
+            );
+            if (customFormFields.length === 0 || invalidField) {
+                return NextResponse.json({
+                    success: false,
+                    message: 'Custom booking fields need a title and selection fields need at least one option.',
+                }, { status: 400 });
+            }
+        }
+
         // Sanitize sponsors (optional)
         const sponsors = (body.sponsors || [])
             .filter((s) => s && typeof s.name === "string" && s.name.trim())
@@ -247,8 +263,8 @@ export async function POST(request) {
             poster: body.poster || "",
             status: body.status === "draft" ? "draft" : "published",
             visibility: body.visibility === "private" ? "private" : "public",
-            applicationFormType: body.applicationFormType === "customized" ? "customized" : "default",
-            customFormFields: body.customFormFields || [],
+            applicationFormType,
+            customFormFields: applicationFormType === 'customized' ? customFormFields : [],
         });
 
         const statusLabel = event.status === "draft" ? "saved as draft" : "published";
@@ -320,6 +336,7 @@ export async function GET() {
                 duration: e.duration,
                 totalSlots: e.totalSlots,
                 bookedSlots: e.bookedSlots,
+                reservedSlots: e.reservedSlots || 0,
                 pricePerSlot: e.pricePerSlot,
                 destination: e.destination,
                 poster: e.poster,

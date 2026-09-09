@@ -610,8 +610,9 @@ export default function EventDetailView({ eventId, adminMode = false, providerId
         weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
     });
 
+    const committedSlots = (event.bookedSlots || 0) + (event.reservedSlots || 0);
     const occupancyPercent = event.totalSlots > 0
-        ? Math.round(((event.bookedSlots || 0) / event.totalSlots) * 100)
+        ? Math.round((committedSlots / event.totalSlots) * 100)
         : 0;
 
     const viewModeColors = {
@@ -772,10 +773,10 @@ export default function EventDetailView({ eventId, adminMode = false, providerId
                             <p className="text-2xl font-black text-blue-700">{event.bookedSlots || 0}</p>
                             <p className="text-[10px] font-bold text-blue-600 uppercase tracking-wider mt-0.5">Booked</p>
                         </div>
-                        <div className={`rounded-xl p-3 border text-center ${(event.totalSlots - (event.bookedSlots || 0)) <= 0 ? 'bg-red-50 border-red-100' : 'bg-amber-50 border-amber-100'}`}>
-                            <p className={`text-2xl font-black ${(event.totalSlots - (event.bookedSlots || 0)) <= 0 ? 'text-red-700' : 'text-amber-700'}`}>{event.totalSlots - (event.bookedSlots || 0)}</p>
-                            <p className={`text-[10px] font-bold uppercase tracking-wider mt-0.5 ${(event.totalSlots - (event.bookedSlots || 0)) <= 0 ? 'text-red-600' : 'text-amber-600'}`}>
-                                {(event.totalSlots - (event.bookedSlots || 0)) <= 0 ? 'Sold Out' : 'Available'}
+                        <div className={`rounded-xl p-3 border text-center ${(event.totalSlots - committedSlots) <= 0 ? 'bg-red-50 border-red-100' : 'bg-amber-50 border-amber-100'}`}>
+                            <p className={`text-2xl font-black ${(event.totalSlots - committedSlots) <= 0 ? 'text-red-700' : 'text-amber-700'}`}>{event.totalSlots - committedSlots}</p>
+                            <p className={`text-[10px] font-bold uppercase tracking-wider mt-0.5 ${(event.totalSlots - committedSlots) <= 0 ? 'text-red-600' : 'text-amber-600'}`}>
+                                {(event.totalSlots - committedSlots) <= 0 ? 'Sold Out' : 'Available'}
                             </p>
                         </div>
                     </div>

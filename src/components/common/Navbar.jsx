@@ -88,7 +88,12 @@ export default function Navbar() {
   const isUserAccount = isAuthenticated && user?.role === 'user';
   const isProviderAccount = isAuthenticated && user?.role === 'provider';
   const isOffbeatsLanding = pathname === '/user/offbeats' || pathname === '/user/offbeats/results';
+  const isEventDetails = pathname?.startsWith('/user/events/eventdetails/');
+  const isEventBookingSuccess = pathname === '/user/event/booking-success';
+  const isEventBookingProcessing = pathname === '/user/event/booking-processing';
+  const isEventFocused = isEventDetails || isEventBookingSuccess || isEventBookingProcessing;
   const isLanding = pathname === '/' || pathname === '/user/trip' || pathname === '/user/events' || pathname === '/user/companion' || isOffbeatsLanding;
+  const isOverlayNav = isLanding || isEventFocused;
 
   useEffect(() => {
     setShowDropdown(false);
@@ -107,7 +112,7 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className={`z-[100] w-full ${isLanding ? `absolute left-0 top-0 border-b border-white/10 text-white ${isOffbeatsLanding ? 'bg-[#111816]/45 shadow-[0_10px_35px_-26px_rgba(0,0,0,0.55)] backdrop-blur-md' : 'bg-transparent'}` : 'sticky top-0 border-b border-slate-200/80 bg-white/95 shadow-sm backdrop-blur-xl'}`}>
+      <nav className={`z-[100] w-full ${isEventFocused ? 'sticky top-0 border-b border-white/10 bg-[#070b0a]/85 text-white shadow-[0_10px_35px_-26px_rgba(0,0,0,0.8)] backdrop-blur-xl' : isLanding ? `absolute left-0 top-0 border-b border-white/10 text-white ${isOffbeatsLanding ? 'bg-[#111816]/45 shadow-[0_10px_35px_-26px_rgba(0,0,0,0.55)] backdrop-blur-md' : 'bg-transparent'}` : 'sticky top-0 border-b border-slate-200/80 bg-white/95 shadow-sm backdrop-blur-xl'}`}>
         <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between gap-4">
             <Link
@@ -118,9 +123,11 @@ export default function Navbar() {
               <Image src="/images/logo.svg" alt="bagspackgo" fill priority className="object-contain" />
             </Link>
 
-            <div className="hidden md:block">
-              <PrimaryLinks pathname={pathname} overlay={isLanding} />
-            </div>
+            {!isEventFocused && (
+              <div className="hidden md:block">
+                <PrimaryLinks pathname={pathname} overlay={isOverlayNav} />
+              </div>
+            )}
 
             <div className="relative flex shrink-0 items-center" ref={dropdownRef}>
               {loading ? (
@@ -165,7 +172,7 @@ export default function Navbar() {
                   <button
                     type="button"
                     onClick={() => setShowDropdown((open) => !open)}
-                    className="flex items-center gap-1 rounded-full border border-slate-200 bg-white p-1 text-[#17372f] shadow-sm transition-colors hover:bg-slate-50"
+                    className={`flex items-center gap-1 rounded-full border p-1 shadow-sm transition-colors ${isEventFocused ? 'border-white/15 bg-white/10 text-white hover:bg-white/15' : 'border-slate-200 bg-white text-[#17372f] hover:bg-slate-50'}`}
                     aria-label="Open account menu"
                   >
                     <span className="flex h-8 w-8 items-center justify-center rounded-full bg-green-600 text-xs font-extrabold text-white">
@@ -214,9 +221,11 @@ export default function Navbar() {
         </div>
       </nav>
 
-      <div className="fixed bottom-3 left-3 right-3 z-[110] overflow-hidden rounded-2xl border border-white/20 bg-[#17372f]/80 px-1 shadow-[0_10px_35px_rgba(10,33,28,0.28)] backdrop-blur-xl md:hidden">
-        <PrimaryLinks pathname={pathname} mobile overlay />
-      </div>
+      {!isEventFocused && (
+        <div className="fixed bottom-3 left-3 right-3 z-[110] overflow-hidden rounded-2xl border border-white/20 bg-[#17372f]/80 px-1 shadow-[0_10px_35px_rgba(10,33,28,0.28)] backdrop-blur-xl md:hidden">
+          <PrimaryLinks pathname={pathname} mobile overlay />
+        </div>
+      )}
 
       {showLogoutConfirm && (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm">

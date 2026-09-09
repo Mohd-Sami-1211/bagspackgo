@@ -18,13 +18,15 @@ export async function POST(req) {
 
         await dbConnect();
 
-        const booking = await Booking.findById(bookingId).populate('event');
+        const booking = await Booking.findById(bookingId)
+            .select('event status participants.passCode participants.checkedIn')
+            .populate({ path: 'event', select: 'guide' });
         if (!booking) {
             return NextResponse.json({ success: false, message: 'Booking not found.' }, { status: 404 });
         }
 
         // Verify that this provider owns the event
-        if (booking.event.guide.toString() !== user.userId) {
+        if (!booking.event || booking.event.guide.toString() !== user.userId) {
             return NextResponse.json({ success: false, message: 'You do not have permission to verify passes for this event.' }, { status: 403 });
         }
 
@@ -32,8 +34,8 @@ export async function POST(req) {
             return NextResponse.json({ success: false, message: `Booking status is ${booking.status}, cannot verify.` }, { status: 400 });
         }
 
-        // Find the specific participant
-        const participantIndex = booking.participants.findIndex(p => p.passCode === passCode);
+        const normalizedPassCode = String(passCode).trim().toUpperCase();
+        const participantIndex = booking.participants.findIndex(p => p.passCode === normalizedPassCode);
         
         if (participantIndex === -1) {
             return NextResponse.json({ success: false, message: 'Invalid pass code.' }, { status: 400 });
@@ -43,16 +45,35 @@ export async function POST(req) {
             return NextResponse.json({ success: false, message: 'Pass has already been scanned and used.' }, { status: 400 });
         }
 
-        // Mark as checked in
-        booking.participants[participantIndex].checkedIn = true;
-        await booking.save();
+        // Atomically consume the pass. Two scanners hitting the same QR at the
+        // same time cannot both change checkedIn from false to true.
+        const updatedBooking = await Booking.findOneAndUpdate(
+            {
+                _id: bookingId,
+                status: 'confirmed',
+                participants: {
+                    $elemMatch: {
+                        passCode: normalizedPassCode,
+                        checkedIn: { $ne: true },
+                    },
+                },
+            },
+            { $set: { 'participants.$.checkedIn': true } },
+            { new: true }
+        ).select('participants');
+
+        if (!updatedBooking) {
+            return NextResponse.json({ success: false, message: 'Pass has already been scanned and used.' }, { status: 409 });
+        }
+
+        const participant = updatedBooking.participants.find(p => p.passCode === normalizedPassCode);
 
         return NextResponse.json({
             success: true,
             message: 'Pass verified successfully!',
             participant: {
-                name: booking.participants[participantIndex].name,
-                idNumber: booking.participants[participantIndex].idNumber
+                name: participant?.name,
+                idNumber: participant?.idNumber
             }
         });
 

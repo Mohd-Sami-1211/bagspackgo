@@ -12,6 +12,8 @@ function EventBookingFailedContent() {
   // They can pass a return path to go straight back to data entry
   const returnPath = searchParams.get("return") || "/user/events";
   const isSoldOut = searchParams.get("soldOut") === "true";
+  const isExpired = searchParams.get("expired") === "true";
+  const isRefundableFailure = isSoldOut || isExpired;
 
   return (
     <div className="min-h-screen bg-gray-50/50 flex items-center justify-center p-4 font-sans">
@@ -22,12 +24,14 @@ function EventBookingFailedContent() {
         className="max-w-md w-full bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
       >
         <div className="p-8 flex flex-col items-center justify-center text-center">
-          {isSoldOut ? (
+          {isRefundableFailure ? (
             <>
               <Ticket className="w-16 h-16 text-amber-500 mb-6" />
-              <h1 className="text-2xl font-bold tracking-tight mb-2 text-foreground">Event Sold Out</h1>
+              <h1 className="text-2xl font-bold tracking-tight mb-2 text-foreground">{isExpired ? 'Checkout Expired' : 'Event Sold Out'}</h1>
               <p className="text-muted-foreground text-sm max-w-[300px]">
-                This event was fully booked while your payment was processing. Your payment will be <strong className="text-gray-800">automatically refunded within 5–7 business days</strong>.
+                {isExpired
+                  ? <>The checkout window ended before confirmation. Your payment will be <strong className="text-gray-800">automatically refunded in full</strong>.</>
+                  : <>This event was fully booked while your payment was processing. Your payment will be <strong className="text-gray-800">automatically refunded within 5–7 business days</strong>.</>}
               </p>
             </>
           ) : (
@@ -42,7 +46,7 @@ function EventBookingFailedContent() {
         </div>
 
         <div className="px-8 pb-8">
-          {isSoldOut ? (
+          {isRefundableFailure ? (
             <div className="flex items-start gap-3 bg-amber-50 text-amber-800 p-4 rounded-md border border-amber-100 mb-8 text-sm">
                <AlertTriangle className="w-5 h-5 shrink-0 text-amber-500 mt-0.5" />
                <p className="font-medium">No action is needed from your side. If you don't receive the refund within 7 days, please contact support.</p>
@@ -55,7 +59,7 @@ function EventBookingFailedContent() {
           )}
 
           <div className="space-y-3">
-             {isSoldOut ? (
+             {isRefundableFailure ? (
                <>
                  <Button
                    variant="default"

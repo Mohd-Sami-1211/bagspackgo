@@ -27,7 +27,7 @@ export async function GET(request) {
                     .lean();
             } else if (record.itemType === 'event') {
                 itemData = await Event.findById(record.itemId)
-                    .select({ title: 1, eventType: 1, destination: 1, date: 1, duration: 1, pricePerSlot: 1, poster: 1, location: 1, totalSlots: 1, bookedSlots: 1, guide: 1, photographs: { $slice: 1 } })
+                    .select({ title: 1, eventType: 1, destination: 1, date: 1, duration: 1, pricePerSlot: 1, poster: 1, location: 1, totalSlots: 1, bookedSlots: 1, reservedSlots: 1, guide: 1, photographs: { $slice: 1 } })
                     .populate({ path: 'guide', select: 'username' })
                     .lean();
                 if (itemData) {
@@ -44,7 +44,7 @@ export async function GET(request) {
                     }
                     
                     itemData.organizer = companyName || itemData.guide?.username || 'Premium Host';
-                    itemData.slotsRemaining = Math.max(0, (itemData.totalSlots || 0) - (itemData.bookedSlots || 0));
+                    itemData.slotsRemaining = Math.max(0, (itemData.totalSlots || 0) - (itemData.bookedSlots || 0) - (itemData.reservedSlots || 0));
                 }
             } else if (record.itemType === 'offbeat') {
                 itemData = await OffBeat.findById(record.itemId)

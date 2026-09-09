@@ -17,6 +17,7 @@ function BookingSuccessContent() {
     const [showContent, setShowContent] = useState(false);
     const [showQR, setShowQR] = useState(false);
     const [downloading, setDownloading] = useState(false);
+    const [loadError, setLoadError] = useState('');
 
     // Font style
     const fontStyle = {};
@@ -26,7 +27,7 @@ function BookingSuccessContent() {
             if (!bookingId) { setLoading(false); return; }
             try {
                 // Primary: use the public pass endpoint (works without auth)
-                const publicRes = await fetch(`/api/public/pass/${bookingId}`, { cache: 'no-store' });
+                const publicRes = await fetch(`/api/public/pass/${bookingId}?type=event`, { cache: 'no-store' });
                 const publicData = await publicRes.json();
                 if (publicData.success && publicData.data) {
                     setBooking(publicData.data);
@@ -36,11 +37,14 @@ function BookingSuccessContent() {
                     const authData = await authRes.json();
                     if (authData.success) {
                         const found = authData.data?.find(b => b.id === bookingId || b._id === bookingId);
-                        setBooking(found || null);
+                        if (found) setBooking(found);
+                        else setLoadError('We could not find this booking. It may still be processing.');
                     }
+                    else setLoadError(authData.message || 'We could not load this booking.');
                 }
             } catch (e) {
                 console.error('Fetch booking error:', e);
+                setLoadError('We could not load your booking right now. Please try again.');
             } finally {
                 setLoading(false);
                 setTimeout(() => setShowContent(true), 150);
@@ -51,7 +55,9 @@ function BookingSuccessContent() {
 
     const handleDownloadPDF = () => {
         if (!bookingId) return;
+        setDownloading(true);
         window.open(`/user/event/pass/${bookingId}?print=true`, '_blank');
+        window.setTimeout(() => setDownloading(false), 700);
     };
 
     const formatDate = (d) => {
@@ -66,6 +72,22 @@ function BookingSuccessContent() {
             <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4" style={fontStyle}>
                 <div className="w-12 h-12 border-4 border-emerald-100 border-t-emerald-600 rounded-full animate-spin mb-4" />
                 <p className="text-gray-400 font-semibold uppercase tracking-widest text-xs">Retrieving Booking Details...</p>
+            </div>
+        );
+    }
+
+    if (!booking) {
+        return (
+            <div className="min-h-screen bg-[#07110e] px-4 py-20 text-center text-white">
+                <div className="mx-auto max-w-md rounded-3xl border border-white/10 bg-white/[0.06] p-8 shadow-2xl backdrop-blur-xl">
+                    <AlertTriangle className="mx-auto mb-4 h-12 w-12 text-amber-300" />
+                    <h1 className="text-2xl font-extrabold">Booking details unavailable</h1>
+                    <p className="mt-3 text-sm leading-6 text-white/65">{loadError || 'Please check My Bookings or try again shortly.'}</p>
+                    <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+                        <button onClick={() => router.push('/user/bookings')} className="flex-1 rounded-xl bg-emerald-500 px-4 py-3 text-sm font-bold text-[#062018] transition hover:bg-emerald-400">Open My Bookings</button>
+                        <button onClick={() => router.push('/')} className="flex-1 rounded-xl border border-white/15 px-4 py-3 text-sm font-bold text-white transition hover:bg-white/10">Go Home</button>
+                    </div>
+                </div>
             </div>
         );
     }
@@ -110,7 +132,7 @@ function BookingSuccessContent() {
     );
 
     return (
-        <div className="min-h-screen bg-[#F0FDF4]/30 flex flex-col items-center" style={fontStyle}>
+        <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#123c30_0%,_#07110e_30%,_#f0fdf4_30%)] flex flex-col items-center" style={fontStyle}>
             <style dangerouslySetInnerHTML={{ __html: `
                 footer, .secondary-nav-wrapper { display: none !important; }
                 body { background-color: #F0FDF4; }
@@ -122,20 +144,20 @@ function BookingSuccessContent() {
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-                        className="w-full max-w-3xl mx-auto py-10 px-4 sm:px-6 relative"
+                        className="w-full max-w-4xl mx-auto py-10 px-4 sm:px-6 relative"
                     >
                         {/* ═══════ SUCCESS HEADER ═══════ */}
-                        <div className="text-center mb-8">
+                        <div className="text-center mb-8 pt-2 text-white">
                             <motion.div
                                 initial={{ scale: 0 }}
                                 animate={{ scale: 1 }}
                                 transition={{ type: 'spring', delay: 0.2 }}
-                                className="w-16 h-16 bg-emerald-100/50 rounded-full flex items-center justify-center mx-auto mb-3 border border-emerald-200 shadow-sm"
+                                className="w-16 h-16 bg-emerald-400/15 rounded-full flex items-center justify-center mx-auto mb-3 border border-emerald-300/40 shadow-[0_0_45px_rgba(52,211,153,0.2)]"
                             >
-                                <CheckCircle2 className="w-8 h-8 text-emerald-500" />
+                                <CheckCircle2 className="w-8 h-8 text-emerald-300" />
                             </motion.div>
-                            <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight mb-2" style={fontStyle}>Booking Confirmed</h1>
-                            <p className="text-emerald-700 font-semibold px-4 py-1 bg-emerald-100 inline-block rounded-full text-xs" style={fontStyle}>
+                            <h1 className="text-3xl font-extrabold tracking-tight mb-2" style={fontStyle}>Booking Confirmed</h1>
+                            <p className="text-emerald-100 font-semibold px-4 py-1 bg-emerald-400/20 border border-emerald-300/25 inline-block rounded-full text-xs" style={fontStyle}>
                                 Payment successful & Event Booked
                             </p>
                         </div>
@@ -147,7 +169,7 @@ function BookingSuccessContent() {
                                 <p className="font-mono font-extrabold text-gray-900 text-xl tracking-wider mb-4">{bookingRef}</p>
                                 
                                 <p className="text-[10px] uppercase font-semibold text-gray-400 tracking-wider mb-1 flex items-center gap-1" style={fontStyle}><CreditCard className="w-3 h-3"/> Payment ID</p>
-                                <p className="font-mono font-semibold text-gray-900 text-xs mb-4 truncate max-w-xs">{booking?.paymentId || 'VERIFIED'}</p>
+                                <p className="font-mono font-semibold text-gray-900 text-xs mb-4 truncate max-w-xs">{booking?.paymentId === 'free_event' ? 'No payment required' : (booking?.paymentId || 'VERIFIED')}</p>
                                 
                                 <div className="flex flex-wrap gap-2 mt-4">
                                     <button 

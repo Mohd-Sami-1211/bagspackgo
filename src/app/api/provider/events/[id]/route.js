@@ -5,6 +5,7 @@ import { Guide } from "@/models/guide.model";
 import { Event } from "@/models/event.model";
 import { Booking } from "@/models/booking.model";
 import { sanitizeString } from "@/lib/sanitize";
+import { sanitizeCustomFormFields } from '@/lib/eventBooking';
 
 /**
  * GET /api/provider/events/[id]
@@ -110,6 +111,7 @@ export async function GET(request, context) {
                 duration: event.duration,
                 totalSlots: event.totalSlots,
                 bookedSlots: event.bookedSlots,
+                reservedSlots: event.reservedSlots || 0,
                 pricePerSlot: event.pricePerSlot,
                 destination: event.destination,
                 destinationLink: event.destinationLink,
@@ -178,6 +180,21 @@ export async function PATCH(request, context) {
 
         const body = await request.json();
 
+        if (body.totalSlots !== undefined) {
+            const totalSlots = Number(body.totalSlots);
+            if (!Number.isInteger(totalSlots) || totalSlots < 1) {
+                return NextResponse.json({ success: false, message: 'Total slots must be a positive whole number.' }, { status: 400 });
+            }
+            const committedSlots = (event.bookedSlots || 0) + (event.reservedSlots || 0);
+            if (totalSlots < committedSlots) {
+                return NextResponse.json({
+                    success: false,
+                    message: `Total slots cannot be lower than the ${committedSlots} committed or reserved slots.`,
+                }, { status: 409 });
+            }
+            body.totalSlots = totalSlots;
+        }
+
         // Only drafts can be fully edited, but we allow updating totalSlots for published events
         if (event.status !== "draft") {
             const keys = Object.keys(body).filter(k => k !== 'action');
@@ -192,6 +209,32 @@ export async function PATCH(request, context) {
                     { status: 403 }
                 );
             }
+
+            const updatedEvent = await Event.findOneAndUpdate(
+                {
+                    _id: id,
+                    guide: user.userId,
+                    $expr: {
+                        $lte: [
+                            { $add: [{ $ifNull: ['$bookedSlots', 0] }, { $ifNull: ['$reservedSlots', 0] }] },
+                            body.totalSlots,
+                        ],
+                    },
+                },
+                { $set: { totalSlots: body.totalSlots } },
+                { new: true }
+            );
+            if (!updatedEvent) {
+                return NextResponse.json({
+                    success: false,
+                    message: 'Slots changed while updating. Refresh the event and try again.',
+                }, { status: 409 });
+            }
+            return NextResponse.json({
+                success: true,
+                message: 'Event slots updated successfully!',
+                event: { id: updatedEvent._id, title: updatedEvent.title, status: updatedEvent.status },
+            });
         }
 
         // Update allowed fields
@@ -247,12 +290,10 @@ export async function PATCH(request, context) {
             event.markModified('sponsors');
         }
 
-        // Update custom form fields (stored as-is, complex nested structure)
+        // Normalize custom fields so option prices and response types remain safe.
         if (Array.isArray(body.customFormFields)) {
-            console.log("RECEIVED BODY customFormFields:", JSON.stringify(body.customFormFields, null, 2));
-            event.customFormFields = body.customFormFields;
+            event.customFormFields = sanitizeCustomFormFields(body.customFormFields);
             event.markModified('customFormFields');
-            console.log("EVENT SET TO customFormFields:", JSON.stringify(event.customFormFields, null, 2));
         }
 
         // Update FAQs
@@ -290,6 +331,18 @@ export async function PATCH(request, context) {
 
         // If publishing a draft, update the status
         if (body.action === "publish") {
+            if (event.applicationFormType === 'customized') {
+                const invalidField = event.customFormFields.find((field) =>
+                    !field.title ||
+                    (['dropdown', 'multiple_choice', 'checkbox'].includes(field.type) && field.options.length === 0)
+                );
+                if (event.customFormFields.length === 0 || invalidField) {
+                    return NextResponse.json({
+                        success: false,
+                        message: 'Custom booking fields need a title and selection fields need at least one option.',
+                    }, { status: 400 });
+                }
+            }
             event.status = "published";
         }
 
@@ -302,6 +355,9 @@ export async function PATCH(request, context) {
         });
     } catch (error) {
         console.error("Update Event Error:", error);
+        if (error?.name === 'ValidationError' || error?.name === 'CastError') {
+            return NextResponse.json({ success: false, message: error.message }, { status: 400 });
+        }
         return NextResponse.json(
             { success: false, message: error.message || "Something went wrong" },
             { status: 500 }
