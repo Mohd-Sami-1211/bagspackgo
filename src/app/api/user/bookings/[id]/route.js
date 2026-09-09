@@ -16,7 +16,10 @@ export async function GET(req, context) {
         await dbConnect();
 
         const booking = await Booking.findOne({ _id: id, user: user.userId })
-            .populate('event', 'title eventType date duration slots location destination poster pricePerSlot guide highlights whatsIncluded whatsExcluded whatToBring restrictions includePickup pickupPoints itinerary termsAndConditions')
+            // Status polling and booking detail lookups do not need the
+            // event's base64 poster. Keep this response small, especially
+            // while the payment-processing page polls it after a disconnect.
+            .populate('event', 'title eventType date duration slots location destination pricePerSlot guide highlights whatsIncluded whatsExcluded whatToBring restrictions includePickup pickupPoints itinerary termsAndConditions')
             .exec();
 
         if (!booking) {

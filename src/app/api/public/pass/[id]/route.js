@@ -11,6 +11,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(req, context) {
     const params = await context.params;
     const { id } = params;
+    const requestedType = new URL(req.url).searchParams.get('type');
 
     if (!id) {
         return NextResponse.json({ success: false, message: 'ID required' }, { status: 400 });
@@ -59,7 +60,7 @@ export async function GET(req, context) {
         };
 
         // Check Trip Bookings
-        const trip = await TripBooking.findOne(query).lean();
+        const trip = requestedType === 'event' ? null : await TripBooking.findOne(query).lean();
         if (trip) {
             if (!user) {
                 return NextResponse.json({ success: false, message: 'Please login to your account to access pass' }, { status: 401 });
@@ -75,7 +76,7 @@ export async function GET(req, context) {
         }
 
         // Check Trek Bookings
-        const trek = await TrekBooking.findOne(query).lean();
+        const trek = requestedType === 'event' ? null : await TrekBooking.findOne(query).lean();
         if (trek) {
             if (!user) {
                 return NextResponse.json({ success: false, message: 'Please login to your account to access pass' }, { status: 401 });
@@ -93,8 +94,10 @@ export async function GET(req, context) {
         // Check Event Bookings (Events usually only have ObjectId)
         if (isValidId) {
             const eventBooking = await Booking.findOne({ _id: id })
+                .select('user event bookingDate amountPaid slots paymentId orderId contactDetails participants selectedPickup status createdAt')
                 .populate({
                     path: 'event',
+                    select: 'title eventType date duration location destination destinationLink pricePerSlot guide highlights whatsIncluded whatsExcluded whatToBring restrictions includePickup pickupPoints itinerary termsAndConditions sponsors status',
                     populate: { path: 'guide', select: 'companyName username name email phone profileImage' }
                 })
                 .lean();
@@ -131,14 +134,18 @@ export async function GET(req, context) {
                     facebook: gd?.socialLinks?.facebook || gd?.facebook || '',
                     website: gd?.website || '',
                     date: e.date || eventBooking.bookingDate,
-                    duration: e.duration ? `${e.duration} days` : '1 day',
+                    duration: e.duration ? `${e.duration} day${e.duration === 1 ? '' : 's'}` : '1 day',
                     people: eventBooking.slots || 1,
                     destination: e.destination || e.location || 'TBD',
                     destinationLink: e.destinationLink || '',
                     location: e.location || '',
-                    price: eventBooking.amountPaid || e.pricePerSlot,
-                    image: e.poster || '',
-                    poster: e.poster || '',
+                    price: eventBooking.amountPaid ?? e.pricePerSlot ?? 0,
+                    image: ['published', 'completed', 'cancelled'].includes(e.status)
+                        ? `/api/events/${e._id.toString()}/poster`
+                        : '',
+                    poster: ['published', 'completed', 'cancelled'].includes(e.status)
+                        ? `/api/events/${e._id.toString()}/poster`
+                        : '',
                     status: eventBooking.status,
                     highlights: e.highlights || [],
                     whatsIncluded: e.whatsIncluded || [],
@@ -150,33 +157,20 @@ export async function GET(req, context) {
                     termsAndConditions: e.termsAndConditions || [],
                     pickupPoints: e.pickupPoints || [],
                     itinerary: e.itinerary || [],
-                    participants: (eventBooking.participants || []).map((p, pIdx) => {
-                        let pName = p.name;
-                        let pMobile = p.phone;
-                        let pAge = p.age;
-                        let pGender = p.gender;
-    
-                        if (eventBooking.customFormResponses && Array.isArray(eventBooking.customFormResponses)) {
-                            const slotResponses = eventBooking.customFormResponses.filter(r => r.slotIndex === pIdx);
-                            if (!pName) {
-                                const nf = slotResponses.find(r => r.fieldTitle?.toLowerCase().includes('name'));
-                                if (nf) pName = nf.value;
-                            }
-                            if (!pMobile) {
-                                const phf = slotResponses.find(r => r.fieldTitle?.toLowerCase().includes('phone') || r.fieldTitle?.toLowerCase().includes('mobile'));
-                                if (phf) pMobile = phf.value;
-                            }
-                            if (!pAge) {
-                                const ag = slotResponses.find(r => r.fieldTitle?.toLowerCase() === 'age');
-                                if (ag) pAge = ag.value;
-                            }
-                            if (!pGender) {
-                                const gen = slotResponses.find(r => r.fieldTitle?.toLowerCase() === 'gender');
-                                if (gen) pGender = gen.value;
-                            }
-                        }
-                        return { ...p, name: pName || p.name, phone: pMobile || p.phone, age: pAge || p.age, gender: pGender || p.gender };
-                    }),
+                    participants: (eventBooking.participants || []).map((participant) => ({
+                        name: participant.name || '',
+                        email: participant.email || '',
+                        phone: participant.phone || '',
+                        age: participant.age,
+                        gender: participant.gender || '',
+                        bloodGroup: participant.bloodGroup || '',
+                        country: participant.country || '',
+                        idType: participant.idType || '',
+                        idNumber: participant.idNumber || '',
+                        medicalCondition: participant.medicalCondition || '',
+                        passCode: participant.passCode || '',
+                        checkedIn: participant.checkedIn === true,
+                    })),
                     contactDetails: eventBooking.contactDetails || {},
                     paymentId: eventBooking.paymentId || '',
                     orderId: eventBooking.orderId || '',

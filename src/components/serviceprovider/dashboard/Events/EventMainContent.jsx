@@ -231,8 +231,9 @@ function EventCard({ event, onAction }) {
     year: 'numeric',
   });
 
+  const committedSlots = (event.bookedSlots || 0) + (event.reservedSlots || 0);
   const occupancyPercent = event.totalSlots > 0
-    ? Math.round((event.bookedSlots / event.totalSlots) * 100)
+    ? Math.round((committedSlots / event.totalSlots) * 100)
     : 0;
 
   const hasPendingDelete = event.deleteRequest?.requested && event.deleteRequest?.adminStatus === 'pending';

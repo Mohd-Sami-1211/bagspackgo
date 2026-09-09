@@ -49,22 +49,17 @@ export default function EventMainContent() {
     return { tab: 'past', page: 1, limit: CARDS_PER_SECTION };
   }, [viewMode, expandedPage, searchQuery, sortBy]);
 
-  // ── Priority Loading: Live events load FIRST, recent events deferred ──
+  // Load both feeds independently so recent events are available when there
+  // are no live events to show below the carousel.
   const { data: liveData, isLoading: liveLoading, isValidating: liveValidating } = useEventsList(liveQueryParams);
-
-  // Only start fetching recent events after live data has arrived (or if we're in the 'all-recent' expanded view)
-  const [recentReady, setRecentReady] = useState(false);
-  useEffect(() => {
-    if (liveData || viewMode === 'all-recent') setRecentReady(true);
-  }, [liveData, viewMode]);
-
   const { data: recentData, isLoading: recentLoading, isValidating: recentValidating } = useEventsList(
-    recentQueryParams && recentReady ? recentQueryParams : null
+    recentQueryParams
   );
 
   const liveEvents = liveData?.events || [];
   const recentEvents = recentData?.events || [];
   const carouselEvents = liveEvents.slice(0, 5);
+  const hasLiveEvents = liveEvents.length > 0;
   const gridLiveEvents = liveEvents.slice(0, CARDS_PER_SECTION);
   const gridRecentEvents = recentEvents.slice(0, CARDS_PER_SECTION);
   const hasMoreLive = (liveData?.total || 0) > CARDS_PER_SECTION;
@@ -262,27 +257,25 @@ export default function EventMainContent() {
 
       {/* ────────────────────────────────────────────────────────────────────
           SECTION 2 — LIVE EVENTS CARDS GRID
+          Only show this section when there are live events. With no live
+          events, the Stay Tuned carousel state flows directly into recents.
           ──────────────────────────────────────────────────────────────────── */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="font-serif text-3xl font-normal tracking-[-0.035em] text-[#17372f] sm:text-4xl">Live Events</h2>
-          {hasMoreLive && (
-            <button onClick={() => openViewAll('all-live')} className="group flex items-center gap-1.5 text-sm font-semibold text-[#1d6b55] transition-colors hover:text-[#124838]">
-              View All <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-            </button>
-          )}
-        </div>
+      {hasLiveEvents && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="font-serif text-3xl font-normal tracking-[-0.035em] text-[#17372f] sm:text-4xl">Live Events</h2>
+            {hasMoreLive && (
+              <button onClick={() => openViewAll('all-live')} className="group flex items-center gap-1.5 text-sm font-semibold text-[#1d6b55] transition-colors hover:text-[#124838]">
+                View All <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              </button>
+            )}
+          </div>
 
-        {liveLoading ? (
-          <SkeletonGrid count={CARDS_PER_SECTION} />
-        ) : gridLiveEvents.length === 0 ? (
-          <div className="text-center py-12 text-neutral-500 text-sm">No live events right now. Check back soon!</div>
-        ) : (
           <motion.div initial="hidden" animate="show" variants={{ hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.07 } } }} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 xl:gap-8">
             {gridLiveEvents.map((event) => <EventCard key={event.id} event={event} />)}
           </motion.div>
-        )}
-      </section>
+        </section>
+      )}
 
       {/* ────────────────────────────────────────────────────────────────────
           SECTION 3 — RECENT EVENTS CARDS GRID
@@ -339,7 +332,7 @@ function CarouselSlide({ event }) {
           alt={event.name}
           className="w-full md:w-[70%] lg:w-[60%] h-full object-contain md:object-right object-top md:object-center drop-shadow-2xl transition-transform duration-1000 group-hover:scale-105 md:pr-10"
           draggable={false}
-          onError={(e) => { e.target.src = '/images/events/default.jpg'; }}
+          onError={(e) => { e.currentTarget.src = '/images/EventCover.webp'; }}
         />
       </div>
 

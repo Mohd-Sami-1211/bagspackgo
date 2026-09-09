@@ -56,12 +56,12 @@ const EventCard = ({ event }) => {
       {/* Image Section */}
       <div className="relative h-48 sm:h-52 w-full overflow-hidden bg-neutral-100">
         <img
-          src={event.image || '/images/events/default.jpg'}
+          src={event.image || '/images/EventCover.webp'}
           alt={event.name}
           loading="lazy"
           draggable={false}
           className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 ${isPast ? 'grayscale-[40%]' : ''}`}
-          onError={(e) => { e.target.src = '/images/events/default.jpg'; }}
+          onError={(e) => { e.currentTarget.src = '/images/EventCover.webp'; }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 pointer-events-none" />
 

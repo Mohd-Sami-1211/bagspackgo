@@ -238,7 +238,10 @@ function AuthModalContent() {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ credential: tokenResponse.access_token })
                 });
-                const data = await res.json();
+                const contentType = res.headers.get('content-type') || '';
+                const data = contentType.includes('application/json')
+                    ? await res.json()
+                    : { message: 'The login service returned an unexpected response.' };
                 
                 if (res.ok) {
                     localStorage.removeItem('bgp_auth_state');
@@ -252,7 +255,8 @@ function AuthModalContent() {
                     setError(data.message);
                 }
             } catch (err) {
-                setError('Google setup failed. Try another method.');
+                console.error('Google login request failed:', err);
+                setError('Unable to contact the login service. Please try again.');
             } finally {
                 setLoading(false);
             }

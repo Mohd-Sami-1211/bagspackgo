@@ -3,6 +3,8 @@ import dbConnect from '@/lib/db';
 import { Event } from '@/models/event.model';
 import mongoose from 'mongoose';
 
+export const revalidate = 300;
+
 /**
  * GET /api/events/[id]/sponsors
  * Returns only the sponsors for an event. Kept separate from the event detail
@@ -18,7 +20,7 @@ export async function GET(request, context) {
             return NextResponse.json({ success: false, message: 'Invalid Event ID format' }, { status: 404 });
         }
 
-        const event = await Event.findById(id).select('sponsors').lean();
+        const event = await Event.findOne({ _id: id, status: 'published' }).select('sponsors').lean();
 
         if (!event) {
             return NextResponse.json({ success: false, message: 'Event not found' }, { status: 404 });
@@ -33,7 +35,7 @@ export async function GET(request, context) {
                     sponsors,
                 },
             },
-            { headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600' } }
+            { headers: { 'Cache-Control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=600' } }
         );
     } catch (error) {
         console.error('Failed to fetch event sponsors:', error);

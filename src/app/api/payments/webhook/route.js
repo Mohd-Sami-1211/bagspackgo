@@ -4,9 +4,16 @@ import dbConnect from '@/lib/db';
 import { Booking } from '@/models/booking.model';
 import { TripBooking } from '@/models/tripbooking.model';
 import { TrekBooking } from '@/models/trekbooking.model';
-import { Event } from '@/models/event.model';
-import { User } from '@/models/user.model';
-import { sendEventBookingConfirmation } from '@/lib/otp-service';
+import {
+    confirmEventBooking,
+    refundEventBookingPayment,
+    sendEventConfirmationOnce,
+} from '@/lib/eventBooking';
+
+function signaturesMatch(actual, expected) {
+    if (typeof actual !== 'string' || actual.length !== expected.length) return false;
+    return crypto.timingSafeEqual(Buffer.from(actual), Buffer.from(expected));
+}
 
 export async function POST(req) {
     try {
@@ -21,7 +28,7 @@ export async function POST(req) {
 
         // Verify signature
         const expectedSignature = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
-        if (expectedSignature !== signature) {
+        if (!signaturesMatch(signature, expectedSignature)) {
             console.error('[Webhook] Invalid signature');
             return NextResponse.json({ success: false, message: 'Invalid signature' }, { status: 400 });
         }
@@ -42,103 +49,83 @@ export async function POST(req) {
             paymentId = payload.payment?.entity?.id;
         } else if (eventName === 'order.paid') {
             orderId = payload.order?.entity?.id;
-            // The payment ID is usually inside payload.payment if available, but for order.paid it might not be primary
-            paymentId = payload.payment?.entity?.id || 'webhook_order_paid';
+            paymentId = payload.payment?.entity?.id || null;
         }
 
         if (!orderId) {
             return NextResponse.json({ success: false, message: 'No order ID in payload' }, { status: 400 });
         }
 
+        // The order can be created at Razorpay just before the database write
+        // is interrupted. In that small window the booking still has the
+        // temporary `creating` marker, so looking up only by orderId would
+        // strand a captured payment. The receipt/notes carry the booking id
+        // for webhook-side reconciliation.
+        const orderReceipt = payload.order?.entity?.receipt;
+        const notedBookingId = payload.order?.entity?.notes?.bookingId
+            || payload.payment?.entity?.notes?.bookingId
+            || (typeof orderReceipt === 'string' ? orderReceipt.match(/^ev_([a-f0-9]{24})$/i)?.[1] : null);
+
         await dbConnect();
 
-        // 1. Check Event Bookings
-        let booking = await Booking.findOneAndUpdate(
-            { orderId, status: 'pending' },
-            { $set: { status: 'confirmed', paymentId: paymentId } },
-            { new: true }
-        );
-        
-        if (!booking) {
-            const existing = await Booking.findOne({ orderId });
-            if (existing) {
-                return NextResponse.json({ success: true, message: 'Event booking already processed' });
-            }
-        } else {
-            // Perform atomic slot reservation
-            const slotUpdate = await Event.findOneAndUpdate(
-                { 
-                    _id: booking.event, 
-                    $expr: { $lte: [{ $add: ['$bookedSlots', booking.slots] }, '$totalSlots'] }
-                },
-                { $inc: { bookedSlots: booking.slots } },
-                { new: true }
-            );
-
-            if (!slotUpdate) {
-                // Slots ran out — mark booking as cancelled & trigger refund
-                let refundSuccess = false;
-                if (paymentId && paymentId !== 'webhook_order_paid') {
-                    try {
-                        const Razorpay = (await import('razorpay')).default;
-                        const razorpay = new Razorpay({ 
-                            key_id: process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID, 
-                            key_secret: process.env.RAZORPAY_KEY_SECRET 
-                        });
-                        await razorpay.payments.refund(paymentId, {
-                            amount: Math.round(booking.amountPaid * 100),
-                            notes: { reason: "Slots sold out during checkout" }
-                        });
-                        refundSuccess = true;
-                    } catch (refundErr) {
-                        console.error('[Webhook] Auto-refund failed:', refundErr);
-                    }
-                }
-
-                booking.status = refundSuccess ? 'refund_initiated' : 'cancelled';
-                if (refundSuccess) {
-                    booking.cancellationDetails = {
-                        reason: 'Event sold out during payment',
-                        refundAmount: booking.amountPaid,
-                        refundInitiatedAt: new Date()
-                    };
-                }
-                await booking.save();
-                console.log(`[Webhook] Event sold out for booking ${booking._id}`);
-                return NextResponse.json({ success: true, message: 'Slots full, marked as cancelled/refunded' });
+        // 1. Check Event Bookings. Browser callbacks and webhooks share the
+        // same transactional confirmation path, so slots can only increment once.
+        const eventBooking = await Booking.findOne({
+            $or: [
+                { orderId },
+                ...(notedBookingId
+                    ? [{ _id: notedBookingId, status: 'pending', orderId: { $in: ['pending', 'creating'] } }]
+                    : []),
+            ],
+        }).lean();
+        if (eventBooking) {
+            if (!paymentId && eventBooking.status === 'pending') {
+                return NextResponse.json({ success: false, message: 'No payment ID in event payload' }, { status: 400 });
             }
 
-            // Send emails non-blocking
-            (async () => {
-                try {
-                    const [userDoc, eventDoc] = await Promise.all([
-                        User.findById(booking.user).select('username email phone').lean(),
-                        Event.findById(booking.event).populate('guide', 'username email').lean(),
-                    ]);
-                    const providerDoc = eventDoc?.guide;
+            const reportedAmount = Number(payload.payment?.entity?.amount ?? payload.order?.entity?.amount_paid);
+            const expectedAmount = Math.round(eventBooking.amountPaid * 100);
+            if (Number.isFinite(reportedAmount) && reportedAmount !== expectedAmount) {
+                console.error(`[Webhook] Amount mismatch for event booking ${eventBooking._id}`);
+                return NextResponse.json({ success: false, message: 'Payment amount mismatch' }, { status: 400 });
+            }
 
-                    await sendEventBookingConfirmation({
-                        userEmail: userDoc?.email,
-                        userName: userDoc?.username || 'Traveller',
-                        providerEmail: providerDoc?.email,
-                        providerName: providerDoc?.username || 'Guide',
-                        bookingId: booking._id.toString(),
-                        eventName: eventDoc?.title || eventDoc?.name || 'Event Booking',
-                        destination: eventDoc?.destinationId || eventDoc?.location || '',
-                        eventDate: eventDoc?.date,
-                        numPeople: booking.slots,
-                        totalAmount: booking.amountPaid
-                    });
-                } catch (err) {
-                    console.error('[Webhook] Email error:', err);
+            const outcome = await confirmEventBooking({
+                bookingId: eventBooking._id,
+                orderId,
+                paymentId: paymentId || eventBooking.paymentId,
+            });
+
+            if (outcome.kind === 'expired') {
+                if (outcome.shouldRefund && paymentId) {
+                    await refundEventBookingPayment(outcome.booking, paymentId);
                 }
-            })();
-
-            return NextResponse.json({ success: true, message: 'Event booking confirmed' });
+                return NextResponse.json({ success: true, message: 'Checkout expired; full refund workflow checked' });
+            }
+            if (outcome.kind === 'sold_out') {
+                if (outcome.shouldRefund && paymentId) {
+                    await refundEventBookingPayment(outcome.booking, paymentId);
+                }
+                return NextResponse.json({ success: true, message: 'Event unavailable; refund workflow started' });
+            }
+            if (
+                outcome.kind === 'unavailable'
+                && outcome.booking?.status === 'cancelled'
+                && outcome.booking?.cancellationDetails?.refundAmount > 0
+                && (paymentId || outcome.booking.paymentId)
+            ) {
+                await refundEventBookingPayment(outcome.booking, paymentId || outcome.booking.paymentId);
+                return NextResponse.json({ success: true, message: 'Event unavailable; refund workflow checked' });
+            }
+            if (outcome.kind === 'confirmed') {
+                if (outcome.newlyConfirmed) await sendEventConfirmationOnce(outcome.booking._id);
+                return NextResponse.json({ success: true, message: outcome.newlyConfirmed ? 'Event booking confirmed' : 'Event booking already processed' });
+            }
+            return NextResponse.json({ success: true, message: 'Event booking already processed' });
         }
 
         // 2. Check Trip Bookings
-        booking = await TripBooking.findOneAndUpdate(
+        let booking = await TripBooking.findOneAndUpdate(
             { orderId, status: 'pending' },
             { $set: { status: 'confirmed', paymentId: paymentId } },
             { new: true }

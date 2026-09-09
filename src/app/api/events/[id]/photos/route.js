@@ -4,6 +4,8 @@ import { Event } from '@/models/event.model';
 import { generateThumbnails } from '@/lib/generateThumbnails';
 import mongoose from 'mongoose';
 
+export const revalidate = 300;
+
 /**
  * GET /api/events/[id]/photos
  * Returns only the heavy gallery images for an event, plus tiny blurred
@@ -20,7 +22,7 @@ export async function GET(request, context) {
             return NextResponse.json({ success: false, message: 'Invalid Event ID format' }, { status: 404 });
         }
 
-        const event = await Event.findById(id).select('photographs').lean();
+        const event = await Event.findOne({ _id: id, status: 'published' }).select('photographs').lean();
 
         if (!event) {
             return NextResponse.json({ success: false, message: 'Event not found' }, { status: 404 });
@@ -37,7 +39,7 @@ export async function GET(request, context) {
                     photographThumbnails,
                 },
             },
-            { headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600' } }
+            { headers: { 'Cache-Control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=600' } }
         );
     } catch (error) {
         console.error('Failed to fetch event photos:', error);

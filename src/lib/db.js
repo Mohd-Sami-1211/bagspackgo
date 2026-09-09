@@ -16,8 +16,15 @@ if (!cached) {
 }
 
 async function dbConnect() {
-  if (cached.conn) {
+  if (cached.conn?.connection?.readyState === 1) {
     return cached.conn;
+  }
+
+  // A dropped connection or a previously rejected promise must not poison
+  // every later request handled by the same warm server process.
+  if (cached.conn && cached.conn.connection?.readyState !== 1) {
+    cached.conn = null;
+    cached.promise = null;
   }
 
   if (!cached.promise) {
@@ -31,8 +38,14 @@ async function dbConnect() {
       return mongoose;
     });
   }
-  cached.conn = await cached.promise;
-  return cached.conn;
+  try {
+    cached.conn = await cached.promise;
+    return cached.conn;
+  } catch (error) {
+    cached.promise = null;
+    cached.conn = null;
+    throw error;
+  }
 }
 
 export default dbConnect;

@@ -305,6 +305,9 @@ const EventDetails = ({ event, loading = false }) => {
   const { user, loading: authLoading, openAuthModal } = useAuth();
   const isUserAuthenticated = !authLoading && user?.role === "user";
   const [isInitialized, setIsInitialized] = useState(false);
+  const checkoutKeyRef = useRef('');
+  const eventId = event?._id || event?.id || 'unknown';
+  const bookingDraftKey = `temp_event_booking_${eventId}`;
 
   // ── View state: 'details' or 'booking' ──
   const [currentView, setCurrentView] = useState('details');
@@ -350,6 +353,8 @@ const EventDetails = ({ event, loading = false }) => {
   const [selectedPickup, setSelectedPickup] = useState('');
   const [pickupDropdownOpen, setPickupDropdownOpen] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [checkoutExpiresAt, setCheckoutExpiresAt] = useState(null);
+  const [checkoutSecondsLeft, setCheckoutSecondsLeft] = useState(null);
   const [expandedSections, setExpandedSections] = useState({ 0: true });
   const [expandedFaqs, setExpandedFaqs] = useState({});
   const toggleSection = (index) => setExpandedSections(prev => ({ ...prev, [index]: !prev[index] }));
@@ -360,6 +365,29 @@ const EventDetails = ({ event, loading = false }) => {
 
   const [showFeeDetails, setShowFeeDetails] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+
+  useEffect(() => {
+    if (!checkoutExpiresAt) {
+      setCheckoutSecondsLeft(null);
+      return undefined;
+    }
+
+    const updateCountdown = () => {
+      const seconds = Math.max(0, Math.ceil((new Date(checkoutExpiresAt).getTime() - Date.now()) / 1000));
+      setCheckoutSecondsLeft(seconds);
+      if (seconds === 0) {
+        setIsProcessingPayment(false);
+        setFormErrors((previous) => ({
+          ...previous,
+          payment: 'This checkout window has expired. Please start the booking again.',
+        }));
+      }
+    };
+
+    updateCountdown();
+    const timer = window.setInterval(updateCountdown, 1000);
+    return () => window.clearInterval(timer);
+  }, [checkoutExpiresAt]);
 
   // â”€â”€ Save & Share state â”€â”€
   const [isSaved, setIsSaved] = useState(false);
@@ -386,23 +414,26 @@ const EventDetails = ({ event, loading = false }) => {
   }, [user]);
 
   useEffect(() => {
-    if (!isInitialized) {
-       try {
-         const saved = localStorage.getItem("temp_event_booking");
-         if (saved) {
-             const parsed = JSON.parse(saved);
-             if (parsed && typeof parsed === 'object') {
-                if (parsed.formData) {
-                  setFormData(prev => ({ ...prev, ...parsed.formData, customFormResponses: parsed.formData.customFormResponses || [] }));
-                }
-                if (parsed.bookingSlots) setBookingSlots(parsed.bookingSlots);
-                if (parsed.selectedPickup) setSelectedPickup(parsed.selectedPickup);
-             }
-         }
-       } catch (e) {}
-       setIsInitialized(true);
-    }
+    try {
+      // Drafts are event-scoped and session-only. Sensitive ID numbers and
+      // uploaded proofs are deliberately never persisted in browser storage.
+      const saved = sessionStorage.getItem(bookingDraftKey);
+      localStorage.removeItem('temp_event_booking');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object') {
+          if (parsed.formData) {
+            setFormData(prev => ({ ...prev, ...parsed.formData, customFormResponses: parsed.formData.customFormResponses || [] }));
+          }
+          if (parsed.bookingSlots) setBookingSlots(parsed.bookingSlots);
+          if (parsed.selectedPickup) setSelectedPickup(parsed.selectedPickup);
+        }
+      }
+    } catch {}
+    setIsInitialized(true);
+  }, [bookingDraftKey]);
 
+  useEffect(() => {
     // Load Razorpay script (avoid duplicates)
     let script;
     if (!document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]')) {
@@ -416,35 +447,54 @@ const EventDetails = ({ event, loading = false }) => {
         document.body.removeChild(script);
       }
     };
-  }, [isInitialized]);
+  }, []);
 
 
   useEffect(() => {
     if (!isInitialized) return;
-    const saveObj = {
-        formData,
-        bookingSlots,
-        selectedPickup
+    const photoFieldIds = new Set(
+      (event.customFormFields || []).filter(field => field.type === 'photo_upload').map(field => field.id)
+    );
+    const safeFormData = {
+      ...formData,
+      participants: formData.participants.map(participant => ({
+        ...participant,
+        idNumber: '',
+        idProofImage: '',
+        idProofUrl: '',
+      })),
+      customFormResponses: formData.customFormResponses.filter(response => !photoFieldIds.has(response.fieldId)),
     };
-    localStorage.setItem('temp_event_booking', JSON.stringify(saveObj));
+    try {
+      sessionStorage.setItem(bookingDraftKey, JSON.stringify({
+        formData: safeFormData,
+        bookingSlots,
+        selectedPickup,
+      }));
+    } catch {
+      // Storage may be unavailable in private browsing; booking still works.
+    }
     
     // Resume unfinished booking logic
     const hasData = formData.contactDetails.email || formData.contactDetails.phone || formData.participants[0]?.name;
     if (hasData && currentView === 'booking') {
-      const pendingData = localStorage.getItem('pending_booking');
-      let parsedPending = pendingData ? JSON.parse(pendingData) : { ignored: false };
-      
-      if (!parsedPending.ignored) {
-         parsedPending = {
+      try {
+        const pendingData = localStorage.getItem('pending_booking');
+        let parsedPending = pendingData ? JSON.parse(pendingData) : { ignored: false };
+        if (!parsedPending.ignored) {
+          parsedPending = {
             ...parsedPending,
             ignored: false,
             url: window.location.pathname + window.location.search,
             timestamp: Date.now()
-         };
-         localStorage.setItem('pending_booking', JSON.stringify(parsedPending));
+          };
+          localStorage.setItem('pending_booking', JSON.stringify(parsedPending));
+        }
+      } catch {
+        // Pending reminder storage is optional and must never block checkout.
       }
     }
-  }, [formData, bookingSlots, selectedPickup, isInitialized, currentView]);
+  }, [formData, bookingSlots, selectedPickup, isInitialized, currentView, bookingDraftKey, event.customFormFields]);
 
   // Show mandatory login after 7.5s on details view (user can browse briefly first)
   useEffect(() => {
@@ -731,6 +781,10 @@ const EventDetails = ({ event, loading = false }) => {
     }
 
     setFormErrors({});
+    checkoutKeyRef.current = globalThis.crypto?.randomUUID?.()
+      || `${Date.now()}_${Math.random().toString(36).slice(2, 14)}`;
+    setCheckoutExpiresAt(null);
+    setCheckoutSecondsLeft(null);
     setBookingStep(2);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -748,6 +802,7 @@ const EventDetails = ({ event, loading = false }) => {
     e.preventDefault();
     setIsProcessingPayment(true);
     setFormErrors({});
+    let checkoutBookingId = null;
 
     if (!agreedToTerms) {
       setFormErrors({ terms: 'Please agree to the Terms & Conditions to proceed.' });
@@ -758,6 +813,9 @@ const EventDetails = ({ event, loading = false }) => {
     try {
       // Find the selected pickup point object
       const pickupObj = event.pickupPoints?.find(p => p.location === selectedPickup) || null;
+      const checkoutKey = checkoutKeyRef.current || (globalThis.crypto?.randomUUID?.()
+        || `${Date.now()}_${Math.random().toString(36).slice(2, 14)}`);
+      checkoutKeyRef.current = checkoutKey;
 
       const bookRes = await fetch('/api/user/bookings', {
         method: 'POST',
@@ -765,18 +823,20 @@ const EventDetails = ({ event, loading = false }) => {
         body: JSON.stringify({
           event: event._id || event.id,
           slots: bookingSlots,
-          amountPaid: totalPayable,
           contactDetails: formData.contactDetails,
           participants: formData.participants.slice(0, bookingSlots),
           selectedPickup: pickupObj ? { location: pickupObj.location, link: pickupObj.link || '', time: pickupObj.time || '' } : null,
           customFormResponses: event.applicationFormType === 'customized' 
               ? formData.customFormResponses.filter(r => r.slotIndex < bookingSlots) 
               : [],
-          extraChargesTotal: event.applicationFormType === 'customized' ? extraChargesTotal : 0
+          checkoutKey
         })
       });
       const bookData = await bookRes.json();
       if (!bookData.success) {
+        if (bookRes.status === 410 || /already been processed/i.test(bookData.message || '')) {
+          checkoutKeyRef.current = null;
+        }
         if (bookData.message?.toLowerCase().includes('sold out') || bookData.message?.toLowerCase().includes('slot')) {
           router.push(`/user/event/booking-failed?soldOut=true&return=/user/events`);
           return;
@@ -784,15 +844,21 @@ const EventDetails = ({ event, loading = false }) => {
         throw new Error(bookData.message || 'Booking failed');
       }
       const bookingId = bookData.bookingId;
+      checkoutBookingId = bookingId;
+      if (bookData.expiresAt) {
+        setCheckoutExpiresAt(bookData.expiresAt);
+      }
+      const authoritativeAmount = Number(bookData.amountPaid);
+      if (!Number.isFinite(authoritativeAmount) || authoritativeAmount < 0) {
+        throw new Error('The server returned an invalid booking amount.');
+      }
 
       // ── Free Event: skip payment gateway entirely ──
-      if (totalPayable === 0) {
+      if (authoritativeAmount === 0) {
         const verifyRes = await fetch('/api/payments/event-verify', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            razorpay_order_id: `mock_order_free_${Date.now()}`,
-            razorpay_payment_id: `free_pay_${Date.now()}`,
             bookingId
           })
         });
@@ -800,13 +866,15 @@ const EventDetails = ({ event, loading = false }) => {
         if (!verifyData.success) {
           if (verifyData.soldOut) {
             router.push(`/user/event/booking-failed?soldOut=true&return=/user/events`);
+          } else if (verifyData.expired) {
+            router.push(`/user/event/booking-failed?expired=true&return=/user/events`);
           } else {
             throw new Error(verifyData.message || 'Booking confirmation failed');
           }
           return;
         }
         localStorage.removeItem('pending_booking');
-        localStorage.removeItem('temp_event_booking');
+        sessionStorage.removeItem(bookingDraftKey);
         router.push(`/user/event/booking-success?bookingId=${bookingId}`);
         return;
       }
@@ -814,7 +882,7 @@ const EventDetails = ({ event, loading = false }) => {
       const orderRes = await fetch('/api/payments/event-create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: totalPayable, bookingId })
+        body: JSON.stringify({ bookingId })
       });
       const orderData = await orderRes.json();
       if (!orderData.success) {
@@ -822,10 +890,14 @@ const EventDetails = ({ event, loading = false }) => {
           router.push(`/user/event/booking-failed?soldOut=true&return=/user/events`);
           return;
         }
+        if (orderRes.status >= 500 || orderRes.status === 408) {
+          router.push(`/user/event/booking-processing?bookingId=${bookingId}`);
+          return;
+        }
         throw new Error(orderData.message || 'Order creation failed');
       }
 
-      const { orderId, key } = orderData;
+      const { orderId, key, amount: orderAmount } = orderData;
 
       if (typeof window.Razorpay !== "function") {
         throw new Error("Payment gateway is still loading. Please wait a moment and try again.");
@@ -833,7 +905,7 @@ const EventDetails = ({ event, loading = false }) => {
 
       const rzp = new window.Razorpay({
         key,
-        amount: totalPayable * 100,
+        amount: orderAmount,
         currency: 'INR',
         order_id: orderId,
         name: 'bagspackgo',
@@ -845,39 +917,63 @@ const EventDetails = ({ event, loading = false }) => {
         },
         theme: { color: "#059669" },
         handler: async (response) => {
-          const verifyRes = await fetch('/api/payments/event-verify', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-              bookingId
-            })
-          });
-          const verifyData = await verifyRes.json();
-          if (verifyData.success) {
-            localStorage.removeItem('pending_booking');
-            localStorage.removeItem('temp_event_booking');
-            router.push(`/user/event/booking-success?bookingId=${bookingId}`);
-          } else if (verifyData.soldOut) {
-            localStorage.removeItem('pending_booking');
-            localStorage.removeItem('temp_event_booking');
-            router.push(`/user/event/booking-failed?soldOut=true&return=/user/events`);
-          } else {
-            router.push(`/user/event/booking-failed?return=/user/events/eventdetails/${event._id || event.id}`);
+          try {
+            const verifyRes = await fetch('/api/payments/event-verify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                bookingId
+              })
+            });
+            const verifyData = await verifyRes.json();
+            if (verifyData.success) {
+              localStorage.removeItem('pending_booking');
+              sessionStorage.removeItem(bookingDraftKey);
+              router.push(`/user/event/booking-success?bookingId=${bookingId}`);
+            } else if (verifyData.soldOut) {
+              localStorage.removeItem('pending_booking');
+              sessionStorage.removeItem(bookingDraftKey);
+              router.push(`/user/event/booking-failed?soldOut=true&return=/user/events`);
+            } else if (verifyData.expired) {
+              localStorage.removeItem('pending_booking');
+              sessionStorage.removeItem(bookingDraftKey);
+              router.push(`/user/event/booking-failed?expired=true&return=/user/events`);
+            } else if (verifyRes.status >= 500 || verifyRes.status === 408) {
+              // The payment may already be captured. Let the webhook and a
+              // status poll reconcile it instead of showing a false failure.
+              router.push(`/user/event/booking-processing?bookingId=${bookingId}`);
+            } else {
+              router.push(`/user/event/booking-failed?return=/user/events/eventdetails/${event._id || event.id}`);
+            }
+          } catch (error) {
+            console.error('Payment verification request failed:', error);
+            router.push(`/user/event/booking-processing?bookingId=${bookingId}`);
           }
         },
-        modal: { ondismiss: () => setIsProcessingPayment(false) }
+        modal: { ondismiss: () => {
+          setIsProcessingPayment(false);
+          setFormErrors({ payment: 'Payment window closed. You can retry safely; if your account was charged, we will reconcile it automatically.' });
+        } }
       });
 
       rzp.on('payment.failed', function (response) {
-         router.push(`/user/event/booking-failed?return=/user/events/eventdetails/${event._id || event.id}`);
+         setIsProcessingPayment(false);
+         setFormErrors({ payment: response?.error?.description || 'Payment was not completed. You can try again.' });
       });
 
       rzp.open();
     } catch (err) {
       console.error(err);
+      if (checkoutBookingId) {
+        // A transport failure can happen after Razorpay has created the order.
+        // Keep the held booking visible to the reconciliation page instead of
+        // telling the user that payment definitely failed.
+        router.push(`/user/event/booking-processing?bookingId=${checkoutBookingId}`);
+        return;
+      }
       router.push(`/user/event/booking-failed?return=/user/events/eventdetails/${event._id || event.id}`);
     }
   };
@@ -1401,6 +1497,18 @@ const EventDetails = ({ event, loading = false }) => {
                     <div>
                       <div className="border border-gray-200 bg-gray-50/50 rounded-2xl p-6 sm:p-8 h-full flex flex-col justify-between">
                         <div>
+                          {checkoutSecondsLeft !== null && (
+                            <div className={`mb-5 flex items-center gap-3 rounded-xl border px-4 py-3 ${checkoutSecondsLeft <= 60 ? 'border-red-200 bg-red-50 text-red-700' : 'border-emerald-200 bg-emerald-50 text-emerald-800'}`}>
+                              <Clock size={18} className="shrink-0" />
+                              <div className="min-w-0 flex-1">
+                                <p className="text-[10px] font-bold uppercase tracking-widest opacity-75">Complete booking within</p>
+                                <p className="text-lg font-black tabular-nums leading-tight">
+                                  {String(Math.floor(checkoutSecondsLeft / 60)).padStart(2, '0')}:{String(checkoutSecondsLeft % 60).padStart(2, '0')}
+                                </p>
+                              </div>
+                              <span className="text-[10px] font-semibold text-right opacity-75">Your slot is temporarily reserved</span>
+                            </div>
+                          )}
                           <p className="text-xs font-bold text-gray-900 uppercase tracking-widest mb-6">{totalPayable === 0 ? 'Booking Summary' : 'Payment Breakdown'}</p>
 
                           {/* Calculation variables */}
@@ -1483,17 +1591,20 @@ const EventDetails = ({ event, loading = false }) => {
                                     </span>
                                   </label>
                                   {formErrors.terms && <p className="text-[10px] text-red-500 font-bold mt-2 uppercase tracking-wide flex items-center gap-1"><AlertCircle size={10} /> {formErrors.terms}</p>}
+                                  {formErrors.payment && <p className="mt-3 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs font-semibold leading-5 text-amber-800"><AlertCircle size={14} className="mt-0.5 shrink-0" /> {formErrors.payment}</p>}
 
                                   <button
                                     onClick={handleBooking}
-                                    disabled={isProcessingPayment}
+                                    disabled={isProcessingPayment || checkoutSecondsLeft === 0}
                                     className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium text-base transition-all flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-75 disabled:cursor-not-allowed group shadow-sm"
                                   >
                                     {isProcessingPayment ? (
                                       <div className="w-5 h-5 border-[3px] border-white/30 border-t-white rounded-full animate-spin" />
                                     ) : (
                                       <>
-                                        {totalPayable === 0 ? 'Confirm Booking' : 'Confirm & Pay Securely'}
+                                        {checkoutSecondsLeft === 0
+                                          ? 'Checkout Expired — Restart Booking'
+                                          : totalPayable === 0 ? 'Confirm Booking' : 'Confirm & Pay Securely'}
                                         <ChevronRight className="w-5 h-5 opacity-70 group-hover:translate-x-1 transition-transform" />
                                       </>
                                     )}

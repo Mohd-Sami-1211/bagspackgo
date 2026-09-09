@@ -85,7 +85,7 @@ export async function GET(request) {
         // 'whatToBring', 'restrictions', 'pickupPoints', 'itinerary' are NOT
         // fetched here — they are only loaded on the detail page.
         const projection =
-            "title date duration pricePerSlot eventType rating bookedSlots totalSlots " +
+            "title date duration pricePerSlot eventType rating bookedSlots reservedSlots totalSlots " +
             "location destination poster guide destinationLink createdAt status";
 
         const [eventsList, total] = await Promise.all([
@@ -147,7 +147,7 @@ export async function GET(request) {
                 type: e.eventType,
                 rating: e.rating,
                 bookings: e.bookedSlots,
-                slotsLeft: e.totalSlots - (e.bookedSlots || 0),
+                slotsLeft: e.totalSlots - (e.bookedSlots || 0) - (e.reservedSlots || 0),
                 totalSlots: e.totalSlots,
                 destinationId: e.location,
                 destination: e.destination,

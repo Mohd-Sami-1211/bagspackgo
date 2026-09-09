@@ -1,15 +1,19 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
-import Razorpay from 'razorpay';
+import mongoose from 'mongoose';
 import dbConnect from '@/lib/db';
 import { Booking } from '@/models/booking.model';
-import { User } from '@/models/user.model';
-import { Guide } from '@/models/guide.model';
-import { Event } from '@/models/event.model';
 import { getCurrentUser } from '@/lib/auth';
-import { sendEventBookingConfirmation } from '@/lib/otp-service';
+import {
+    confirmEventBooking,
+    refundEventBookingPayment,
+    sendEventConfirmationOnce,
+} from '@/lib/eventBooking';
 
-const RAZORPAY_SECRET = process.env.RAZORPAY_KEY_SECRET;
+function signaturesMatch(actual, expected) {
+    if (typeof actual !== 'string' || actual.length !== expected.length) return false;
+    return crypto.timingSafeEqual(Buffer.from(actual), Buffer.from(expected));
+}
 
 export async function POST(request) {
     try {
@@ -18,139 +22,115 @@ export async function POST(request) {
         if (user.role !== 'user') return NextResponse.json({ success: false, message: 'Only users can verify bookings.' }, { status: 403 });
 
         const { razorpay_order_id, razorpay_payment_id, razorpay_signature, bookingId } = await request.json();
-
         if (!bookingId) return NextResponse.json({ success: false, message: 'bookingId required' }, { status: 400 });
+        if (!mongoose.Types.ObjectId.isValid(bookingId)) {
+            return NextResponse.json({ success: false, message: 'Invalid booking ID.' }, { status: 400 });
+        }
 
         await dbConnect();
 
-        // ═══════ ATOMIC BOOKING CLAIM ═══════
-        // Update the booking status to confirmed atomically. If it returns null, 
-        // it means another process (like the webhook) already verified it.
-        const booking = await Booking.findOneAndUpdate(
-            { _id: bookingId, user: user.userId, status: 'pending' },
-            { 
-                $set: { 
-                    status: 'confirmed', 
-                    paymentId: razorpay_payment_id || 'free_event',
-                    orderId: razorpay_order_id || 'free_event' 
-                } 
-            },
-            { new: true }
-        );
-
-        if (!booking) {
-            // Check if it already exists but is no longer pending
-            const existing = await Booking.findOne({ _id: bookingId, user: user.userId });
-            if (!existing) return NextResponse.json({ success: false, message: 'Booking not found' }, { status: 404 });
-            if (existing.status === 'confirmed') {
-                return NextResponse.json({ success: true, message: 'Booking already confirmed.', bookingId: existing._id.toString() });
-            }
-            return NextResponse.json({ success: false, message: 'Booking is no longer pending.' }, { status: 400 });
+        const booking = await Booking.findOne({ _id: bookingId, user: user.userId }).lean();
+        if (!booking) return NextResponse.json({ success: false, message: 'Booking not found' }, { status: 404 });
+        if (booking.status === 'confirmed') {
+            return NextResponse.json({ success: true, message: 'Booking already confirmed.', bookingId: booking._id.toString() });
+        }
+        // A checkout can expire or be marked unavailable just before the
+        // browser callback arrives. Keep accepting a signed callback for a
+        // cancelled booking so the same path can issue the full refund.
+        if (!['pending', 'cancelled'].includes(booking.status)) {
+            return NextResponse.json({ success: false, message: 'Booking is no longer pending.' }, { status: 409 });
         }
 
-        // For free events (price = 0), skip signature verification
-        const isFreeEvent = razorpay_order_id?.startsWith('mock_order_free_');
+        const isFreeEvent = booking.amountPaid === 0;
+        let verifiedOrderId = 'free_event';
+        let verifiedPaymentId = 'free_event';
 
         if (!isFreeEvent) {
-            if (!RAZORPAY_SECRET) {
-                console.error('Razorpay secret not configured');
-                // Revert booking claim if gateway fails
-                booking.status = 'pending';
-                await booking.save();
+            if (!process.env.RAZORPAY_KEY_SECRET) {
                 return NextResponse.json({ success: false, message: 'Payment gateway not configured' }, { status: 500 });
             }
+            if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+                return NextResponse.json({ success: false, message: 'Incomplete payment verification data.' }, { status: 400 });
+            }
+            if (booking.orderId !== razorpay_order_id) {
+                return NextResponse.json({ success: false, message: 'Payment order does not match this booking.' }, { status: 400 });
+            }
 
-            // Verify Razorpay signature
-            const sign = razorpay_order_id + '|' + razorpay_payment_id;
-            const expectedSign = crypto.createHmac('sha256', RAZORPAY_SECRET).update(sign).digest('hex');
-            if (expectedSign !== razorpay_signature) {
-                // Revert booking claim on invalid signature
-                booking.status = 'pending';
-                await booking.save();
+            const expectedSignature = crypto
+                .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+                .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+                .digest('hex');
+            if (!signaturesMatch(razorpay_signature, expectedSignature)) {
                 return NextResponse.json({ success: false, message: 'Payment verification failed — invalid signature' }, { status: 400 });
             }
+            verifiedOrderId = razorpay_order_id;
+            verifiedPaymentId = razorpay_payment_id;
         }
 
-        // ═══════ ATOMIC SLOT RESERVATION ═══════
-        const slotUpdate = await Event.findOneAndUpdate(
-            { 
-                _id: booking.event, 
-                $expr: { $lte: [{ $add: ['$bookedSlots', booking.slots] }, '$totalSlots'] }
-            },
-            { $inc: { bookedSlots: booking.slots } },
-            { new: true }
-        );
+        const outcome = await confirmEventBooking({
+            bookingId,
+            userId: user.userId,
+            orderId: verifiedOrderId,
+            paymentId: verifiedPaymentId,
+        });
 
-        if (!slotUpdate) {
-            // Slots ran out — trigger automated Razorpay refund
-            let refundSuccess = false;
-            if (!isFreeEvent && razorpay_payment_id) {
-                try {
-                    const razorpay = new Razorpay({ 
-                        key_id: process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID, 
-                        key_secret: process.env.RAZORPAY_KEY_SECRET 
-                    });
-                    await razorpay.payments.refund(razorpay_payment_id, {
-                        amount: Math.round(booking.amountPaid * 100),
-                        notes: { reason: "Slots sold out during checkout" }
-                    });
-                    refundSuccess = true;
-                } catch (refundErr) {
-                    console.error('Auto-refund failed:', refundErr);
-                }
-            }
+        if (outcome.kind === 'expired') {
+            const refunded = outcome.shouldRefund
+                ? await refundEventBookingPayment(outcome.booking, verifiedPaymentId)
+                : false;
+            return NextResponse.json({
+                success: false,
+                expired: true,
+                message: outcome.shouldRefund
+                    ? refunded
+                        ? 'This checkout expired before confirmation. Your full payment refund has been initiated.'
+                        : 'This checkout expired before confirmation. Support has been notified to process your full refund.'
+                    : 'This checkout expired. Please start again.',
+                bookingId: outcome.booking._id.toString(),
+            }, { status: 410 });
+        }
 
-            booking.status = refundSuccess ? 'refund_initiated' : 'cancelled';
-            if (refundSuccess) {
-                booking.cancellationDetails = {
-                    reason: 'Event sold out during payment',
-                    refundAmount: booking.amountPaid,
-                    refundInitiatedAt: new Date()
-                };
-            }
-            await booking.save();
-
-            return NextResponse.json({ 
-                success: false, 
+        if (outcome.kind === 'sold_out') {
+            const refunded = outcome.shouldRefund
+                ? await refundEventBookingPayment(outcome.booking, verifiedPaymentId)
+                : false;
+            return NextResponse.json({
+                success: false,
                 soldOut: true,
-                message: refundSuccess 
-                    ? 'This event sold out while you were paying. A full refund has been initiated automatically.' 
-                    : 'This event sold out while you were paying. Your payment will be refunded within 5-7 business days.',
-                bookingId: booking._id.toString()
+                message: outcome.shouldRefund
+                    ? refunded
+                        ? 'This event became unavailable while you were paying. A full refund has been initiated.'
+                        : 'This event became unavailable while you were paying. Support has been notified to process your refund.'
+                    : 'This event is no longer available.',
+                bookingId: outcome.booking._id.toString(),
             }, { status: 409 });
         }
+        if (
+            outcome.kind === 'unavailable'
+            && outcome.booking?.status === 'cancelled'
+            && outcome.booking?.cancellationDetails?.refundAmount > 0
+        ) {
+            const refunded = await refundEventBookingPayment(outcome.booking, verifiedPaymentId);
+            return NextResponse.json({
+                success: false,
+                soldOut: true,
+                message: refunded
+                    ? 'This event became unavailable while you were paying. A full refund is being processed.'
+                    : 'This event became unavailable while you were paying. Support has been notified to process your refund.',
+                bookingId: outcome.booking._id.toString(),
+            }, { status: 409 });
+        }
+        if (outcome.kind !== 'confirmed') {
+            const status = outcome.kind === 'not_found' ? 404 : 409;
+            return NextResponse.json({ success: false, message: 'Booking could not be confirmed.' }, { status });
+        }
 
-        // Fetch related data for emails
-        const [userDoc, eventDoc] = await Promise.all([
-            User.findById(booking.user).select('username email phone').lean(),
-            Event.findById(booking.event).populate('guide', 'username email').lean(),
-        ]);
-        const providerDoc = eventDoc?.guide;
-
-        // Send confirmation emails (non-blocking)
-        (async () => {
-             try {
-                 await sendEventBookingConfirmation({
-                     userEmail: userDoc?.email,
-                     userName: userDoc?.username || 'Traveller',
-                     providerEmail: providerDoc?.email,
-                     providerName: providerDoc?.username || 'Guide',
-                     bookingId: booking._id.toString(),
-                     eventName: eventDoc?.title || eventDoc?.name || 'Event Booking',
-                     destination: eventDoc?.destinationId || eventDoc?.location || '',
-                     eventDate: eventDoc?.date,
-                     numPeople: booking.slots,
-                     totalAmount: booking.amountPaid
-                 });
-             } catch (err) {
-                 console.error('Booking email error:', err);
-             }
-        })();
+        if (outcome.newlyConfirmed) await sendEventConfirmationOnce(outcome.booking._id);
 
         return NextResponse.json({
             success: true,
             message: 'Payment verified! Booking confirmed.',
-            bookingId: booking._id.toString()
+            bookingId: outcome.booking._id.toString(),
         });
     } catch (error) {
         console.error('Event verify error:', error);

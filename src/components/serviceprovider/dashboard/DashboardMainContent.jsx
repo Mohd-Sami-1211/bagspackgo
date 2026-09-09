@@ -634,7 +634,8 @@ export default function DashboardMainContent() {
             ) : (
               <div className="space-y-3">
                 {upcomingEvents.map((ev, i) => {
-                  const pct  = ev.totalSlots > 0 ? Math.round((ev.bookedSlots / ev.totalSlots) * 100) : 0;
+                  const committedSlots = (ev.bookedSlots || 0) + (ev.reservedSlots || 0);
+                  const pct  = ev.totalSlots > 0 ? Math.round((committedSlots / ev.totalSlots) * 100) : 0;
                   const days = daysUntil(ev.date);
                   return (
                     <motion.div
@@ -668,7 +669,7 @@ export default function DashboardMainContent() {
                       <div>
                         <div className="flex justify-between mb-1">
                           <span className="text-[10px] text-gray-400">Slots filled</span>
-                          <span className="text-[10px] font-semibold text-gray-600">{ev.bookedSlots}/{ev.totalSlots}</span>
+                           <span className="text-[10px] font-semibold text-gray-600">{committedSlots}/{ev.totalSlots}</span>
                         </div>
                         <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
                           <motion.div

@@ -1,121 +1,33 @@
-import { NextResponse } from "next/server";
-import dbConnect from "@/lib/db";
-import { Event } from "@/models/event.model"; 
-import { GuideDetails } from "@/models/guidedetails.model";
-import mongoose from "mongoose";
+import { NextResponse } from 'next/server';
+import { getPublicEventDetails } from '@/lib/publicEvent';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 30;
 
 /**
  * GET /api/events/[id]
- * Fetch a single public (published) event by ID.
+ * Lightweight, cached public event details. Private published events remain
+ * accessible by direct link; drafts/cancelled events are never exposed.
  */
-export async function GET(request, context) {
-    const params = await context.params;
+export async function GET(_request, context) {
     try {
-        await dbConnect();
-        const { id } = params;
-
-        if (!mongoose.Types.ObjectId.isValid(id)) {
-            return NextResponse.json(
-                { success: false, message: "Invalid Event ID format" },
-                { status: 404 }
-            );
-        }
-
-
-        const [event, photoCountResult] = await Promise.all([
-            Event.findById(id)
-                .select('-photographs -sponsors') // exclude heavy base64 data; photos and sponsors fetched separately
-                .populate('guide', 'name username email profileImage')
-                .lean(),
-            // Get only the photo count without loading base64 data
-            Event.aggregate([
-                { $match: { _id: new mongoose.Types.ObjectId(id) } },
-                { $project: { 
-                    photoCount: { $size: { $ifNull: ['$photographs', []] } },
-                    sponsorCount: { $size: { $ifNull: ['$sponsors', []] } }
-                } }
-            ])
-        ]);
+        const { id } = await context.params;
+        const event = await getPublicEventDetails(id);
 
         if (!event) {
-            return NextResponse.json(
-                { success: false, message: "Event not found" },
-                { status: 404 }
-            );
+            return NextResponse.json({ success: false, message: 'Event not found' }, { status: 404 });
         }
 
-        const photoCount = photoCountResult?.[0]?.photoCount || 0;
-        const sponsorCount = photoCountResult?.[0]?.sponsorCount || 0;
-
-        let guideName = event.guide?.companyName || event.guide?.username || event.guide?.name || "Local Guide";
-        let guideLogo = event.guide?.profileImage || "";
-        if (event.guide && event.guide._id) {
-            const gd = await GuideDetails.findOne({ guide: event.guide._id }).select('companyname logo').lean();
-            if (gd) {
-                if (gd.companyname) guideName = gd.companyname;
-                if (gd.logo) guideLogo = gd.logo;
-            }
-        }
-
-
-        // Map DB fields to the format EventDetails expects, if needed, or just return as is.
-        return NextResponse.json({
-            success: true,
-            event: {
-                id: event._id.toString(),
-                name: event.title, // Map title to name
-                eventType: event.eventType,
-                location: event.location,
-                meetingPoint: event.pickupPoints?.[0]?.location || event.location,
-                date: event.date,
-                duration: `${event.duration} Days`, // Map back to string
-                totalSlots: event.totalSlots,
-                bookedSlots: event.bookedSlots || 0,
-                slotsLeft: event.totalSlots - (event.bookedSlots || 0),
-                price: event.pricePerSlot, // Map pricePerSlot to price
-                destinationId: event.destination,
-                description: event.about, // Map about to description
-                about: event.about,
-                highlights: event.highlights,
-                whatsIncluded: event.whatsIncluded,
-                whatsExcluded: event.whatsExcluded,
-                faqs: event.faqs,
-                whatToBring: event.whatToBring,
-                restrictions: event.restrictions,
-                includePickup: event.includePickup !== false, // default to true
-                pickupPoints: event.pickupPoints,
-                itinerary: event.itinerary,
-                image: event.poster, // Map poster to image
-                status: event.status,
-                rating: event.rating,
-                reviewCount: event.reviewCount || 0,
-                guide: event.guide,
-                guideName: guideName,
-                guideLogo: guideLogo,
-                // Photographs and Sponsors are intentionally excluded here to keep this response light.
-                // They are fetched separately via /api/events/[id]/photos and /api/events/[id]/sponsors.
-                photoCount: photoCount,
-                sponsorCount: sponsorCount,
-                termsAndConditions: event.termsAndConditions || [],
-                destinationLink: event.destinationLink,
-                visibility: event.visibility || 'public',
-                applicationFormType: event.applicationFormType || 'default',
-                customFormFields: event.customFormFields || [],
-                createdAt: event.createdAt
-            },
-        }, {
-            headers: {
-                // Cache event details at the edge for 60s, serve stale for 2min while revalidating
-                "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
-            },
-        });
-    } catch (error) {
-        console.error("Get Public Event Error:", error);
         return NextResponse.json(
-            { success: false, message: error.message || "Something went wrong" },
-            { status: 500 }
+            { success: true, event },
+            {
+                headers: {
+                    'Cache-Control': 'public, max-age=15, s-maxage=30, stale-while-revalidate=300',
+                    'CDN-Cache-Control': 'public, s-maxage=30, stale-while-revalidate=300',
+                },
+            }
         );
+    } catch (error) {
+        console.error('Get Public Event Error:', error);
+        return NextResponse.json({ success: false, message: 'Something went wrong' }, { status: 500 });
     }
 }

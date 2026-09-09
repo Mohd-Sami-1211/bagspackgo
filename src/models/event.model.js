@@ -93,6 +93,13 @@ const eventSchema = new mongoose.Schema(
             default: 0,
             min: 0,
         },
+        // Slots held by pending event checkouts. These are released when a
+        // checkout expires or is safely reconciled as unpaid.
+        reservedSlots: {
+            type: Number,
+            default: 0,
+            min: 0,
+        },
         pricePerSlot: {
             type: Number,
             required: [true, "Price per slot is required"],

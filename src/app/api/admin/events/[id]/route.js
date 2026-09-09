@@ -70,6 +70,23 @@ export async function PATCH(req, context) {
 
         await dbConnect();
         const body = await req.json();
+        const existingEvent = await Event.findById(id).select('bookedSlots reservedSlots').lean();
+        if (!existingEvent) return NextResponse.json({ success: false, message: 'Event not found' }, { status: 404 });
+
+        if (body.totalSlots !== undefined) {
+            const totalSlots = Number(body.totalSlots);
+            if (!Number.isInteger(totalSlots) || totalSlots < 1) {
+                return NextResponse.json({ success: false, message: 'Total slots must be a positive whole number.' }, { status: 400 });
+            }
+            const committedSlots = (existingEvent.bookedSlots || 0) + (existingEvent.reservedSlots || 0);
+            if (totalSlots < committedSlots) {
+                return NextResponse.json({
+                    success: false,
+                    message: `Total slots cannot be lower than the ${committedSlots} committed or reserved slots.`,
+                }, { status: 409 });
+            }
+            body.totalSlots = totalSlots;
+        }
 
         const allowedFields = [
             'title', 'eventType', 'location', 'date', 'duration', 'totalSlots', 
@@ -88,9 +105,22 @@ export async function PATCH(req, context) {
             updateData.status = 'published';
         }
 
-        const updatedEvent = await Event.findByIdAndUpdate(id, { $set: updateData }, { new: true });
-        if (!updatedEvent) return NextResponse.json({ success: false, message: 'Event not found' }, { status: 404 });
-
+        const updateFilter = { _id: id };
+        if (body.totalSlots !== undefined) {
+            updateFilter.$expr = {
+                $lte: [
+                    { $add: [{ $ifNull: ['$bookedSlots', 0] }, { $ifNull: ['$reservedSlots', 0] }] },
+                    body.totalSlots,
+                ],
+            };
+        }
+        const updatedEvent = await Event.findOneAndUpdate(updateFilter, { $set: updateData }, { new: true });
+        if (!updatedEvent) {
+            return NextResponse.json({
+                success: false,
+                message: 'Slots changed while updating. Refresh the event and try again.',
+            }, { status: 409 });
+        }
         return NextResponse.json({ 
             success: true, 
             message: body.action === 'publish' ? 'Event published successfully' : 'Event updated successfully', 

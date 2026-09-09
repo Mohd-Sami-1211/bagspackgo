@@ -43,7 +43,10 @@ const BookingMainContent = () => {
 
         if (eventsData.success && eventsData.data) {
           eventsData.data.forEach(b => {
-            if (b.status === 'pending') return;
+            // My Bookings is intentionally a confirmed-bookings view. Pending
+            // checkouts are reconciled by the payment flow and must not look
+            // like usable bookings to the traveller.
+            if (b.status !== 'confirmed') return;
             const bId = b.id || b._id;
             allFetched.push({
               ...b,
@@ -61,7 +64,7 @@ const BookingMainContent = () => {
 
         if (tripsData.success && tripsData.data) {
           tripsData.data.forEach(b => {
-            if (b.status === 'pending') return;
+            if (b.status !== 'confirmed') return;
             const bId = b.id || b._id;
             allFetched.push({
               id: bId,
@@ -119,8 +122,7 @@ const BookingMainContent = () => {
       const matchStatus =
         bookingStatusFilter === 'all' ||
         (bookingStatusFilter === 'upcoming' && (new Date(b.date) >= new Date() && !['cancelled', 'refund_initiated', 'cancellation_requested'].includes(b.status))) ||
-        (bookingStatusFilter === 'completed' && (new Date(b.date) < new Date() && !['cancelled', 'refund_initiated', 'cancellation_requested'].includes(b.status))) ||
-        (bookingStatusFilter === 'cancelled' && ['cancelled', 'cancellation_requested', 'refund_initiated'].includes(b.status));
+         (bookingStatusFilter === 'completed' && new Date(b.date) < new Date());
 
       const matchCategory = bookingCategoryFilter === 'all' || b.type === bookingCategoryFilter;
       return matchStatus && matchCategory;
@@ -132,7 +134,6 @@ const BookingMainContent = () => {
     { key: 'all', label: 'All' },
     { key: 'upcoming', label: 'Upcoming' },
     { key: 'completed', label: 'Completed' },
-    { key: 'cancelled', label: 'Cancelled' },
   ];
   const categoryFilters = [
     { key: 'all', label: 'All Types' },

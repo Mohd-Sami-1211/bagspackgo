@@ -22,20 +22,32 @@ function EventPassContent() {
         
         while (retries >= 0) {
             try {
-                const res = await fetch(`/api/public/pass/${bookingId}`, { cache: 'no-store' });
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
+                const res = await fetch(`/api/public/pass/${bookingId}?type=event`, {
+                    cache: 'no-store',
+                    signal: controller.signal,
+                });
+                clearTimeout(timeoutId);
                 const data = await res.json();
                 if (data.success && data.data) {
                     setBooking(data.data);
                     setErrorMsg(null);
                     setLoading(false);
                     return;
-                } else if (retries === 0) {
+                }
+
+                // Authentication, authorization and not-found responses are
+                // definitive; retrying them only leaves the user on a spinner.
+                if (res.status < 500 || retries === 0) {
                     console.warn('Pass API returned:', data.message);
                     setBooking(null);
                     setErrorMsg(data.message);
                     if (data.message === 'Please login to your account to access pass' && !isAuthenticated) {
                         openAuthModal();
                     }
+                    setLoading(false);
+                    return;
                 }
             } catch (e) {
                 console.error('Pass fetch error:', e);

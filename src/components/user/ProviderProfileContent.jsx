@@ -351,7 +351,7 @@ const ProviderProfileContent = ({ providerId }) => {
 
   // ── Event Card (rich details) ──
   const EventCard = ({ event }) => {
-    const slotsLeft = (event.totalSlots || 0) - (event.bookedSlots || 0);
+    const slotsLeft = (event.totalSlots || 0) - (event.bookedSlots || 0) - (event.reservedSlots || 0);
     const eventDate = event.date ? new Date(event.date) : null;
     const isPast = eventDate && eventDate < new Date();
 
