@@ -115,6 +115,38 @@ async function buildFormattedGuides(packages) {
     }).filter(Boolean);
 }
 
+function packageStartingPrice(pkg) {
+    const tiers = Array.isArray(pkg.pricingTiers) ? pkg.pricingTiers : [];
+    if (tiers.length) {
+        return Math.min(...tiers.map((tier) => {
+            const price = Number(tier.price || 0);
+            const discount = Number(tier.discount || 0);
+            return price > 0 ? price * (1 - discount / 100) : Number.POSITIVE_INFINITY;
+        }));
+    }
+
+    const price = pkg.price;
+    if (price && typeof price === 'object') return Number(price.individual || price.couple || 0) || Number.POSITIVE_INFINITY;
+    return Number(price || 0) || Number.POSITIVE_INFINITY;
+}
+
+function shufflePackages(packages) {
+    const shuffled = [...packages];
+    for (let index = shuffled.length - 1; index > 0; index -= 1) {
+        const randomIndex = Math.floor(Math.random() * (index + 1));
+        [shuffled[index], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[index]];
+    }
+    return shuffled;
+}
+
+function orderPackages(packages) {
+    const ranked = [...packages].sort((first, second) => packageStartingPrice(first) - packageStartingPrice(second));
+    return [
+        ...shufflePackages(ranked.slice(0, 4)),
+        ...shufflePackages(ranked.slice(4)),
+    ];
+}
+
 export async function GET(req) {
     try {
         console.time('totalApiTime');
@@ -128,6 +160,8 @@ export async function GET(req) {
         const peopleRange = searchParams.get('peopleRange') || '';
         const category = searchParams.get('category') || '';
         const providerId = searchParams.get('id') || '';
+        const page = Math.max(1, Number.parseInt(searchParams.get('page') || '1', 10));
+        const limit = Math.min(12, Math.max(1, Number.parseInt(searchParams.get('limit') || '12', 10)));
 
         // Build package query - filter strictly for 'trip' category
         const pkgQuery = { 
@@ -199,15 +233,19 @@ export async function GET(req) {
             }
         }
 
-        // Build primary results
+        const orderedPackages = orderPackages(packages);
+        const totalPackages = orderedPackages.length;
+        const pagedPackages = orderedPackages.slice((page - 1) * limit, page * limit);
+
+        // Build primary results from one lightweight page
         console.time('buildFormattedGuides1');
-        const formattedGuides = await buildFormattedGuides(packages);
+        const formattedGuides = await buildFormattedGuides(pagedPackages);
         console.timeEnd('buildFormattedGuides1');
 
         // --- Fetch "other packages" for the same destination ---
         let otherGuides = [];
-        if (destination && !providerId) {
-            const matchedPkgIds = new Set(packages.map(p => p._id.toString()));
+        if (destination && !providerId && page === 1) {
+            const matchedPkgIds = new Set(orderedPackages.map(p => p._id.toString()));
             const otherPkgQuery = {
                 status: { $in: ['active', 'published'] },
                 category: 'trip',
@@ -231,7 +269,18 @@ export async function GET(req) {
         const finalData = [...formattedGuides, ...otherGuides];
         console.log(`[TRIP API] Returning ${finalData.length} guides for id:`, providerId);
         return NextResponse.json(
-            { success: true, data: formattedGuides, otherPackages: otherGuides },
+            {
+                success: true,
+                data: formattedGuides,
+                otherPackages: otherGuides,
+                pagination: {
+                    page,
+                    limit,
+                    total: totalPackages,
+                    totalPages: Math.ceil(totalPackages / limit),
+                    hasMore: page * limit < totalPackages,
+                },
+            },
             { headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120' } }
         );
     } catch (error) {

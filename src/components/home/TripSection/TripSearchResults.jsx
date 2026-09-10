@@ -29,6 +29,8 @@ const destinationOptions = [
   }
 ];
 
+const RESULTS_PAGE_SIZE = 12;
+
 const findDestination = (val) => {
   return (data.destinations || []).find(d => d.value === val) || null;
 };
@@ -45,7 +47,7 @@ const SearchResults = () => {
   const [showSortDropdown, setShowSortDropdown] = useState(false);
 
   // Filter/sort state
-  const [sortOption, setSortOption] = useState('rating-desc');
+  const [sortOption, setSortOption] = useState('recommended');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState(null);
 
@@ -101,6 +103,7 @@ const SearchResults = () => {
   const [editableDaysRange, setEditableDaysRange] = useState(daysOptions.find(opt => opt.value === daysRange) || null);
   const [editablePeopleCount, setEditablePeopleCount] = useState(peopleCount);
   const [editableDate, setEditableDate] = useState(date);
+  const [page, setPage] = useState(1);
 
   const handleSearchChange = (value) => {
     setSearchQuery(value);
@@ -112,13 +115,20 @@ const SearchResults = () => {
     if (daysRange) p.daysRange = daysRange;
     if (peopleCount) p.peopleCount = peopleCount.toString();
     if (category) p.category = category;
+    p.page = page;
+    p.limit = RESULTS_PAGE_SIZE;
     return p;
-  }, [destination, daysRange, peopleCount, category]);
+  }, [destination, daysRange, peopleCount, category, page]);
 
   const { data: fetchResult, isLoading: loading } = useTripPackages(queryParams);
 
   const allGuides = fetchResult?.success ? fetchResult.data : [];
   const otherGuides = fetchResult?.success ? (fetchResult.otherPackages || []) : [];
+  const pagination = fetchResult?.pagination || {};
+
+  useEffect(() => {
+    setPage(1);
+  }, [destination, daysRange, peopleCount, category]);
 
   const guides = useMemo(() => {
     let results = allGuides;
@@ -137,6 +147,37 @@ const SearchResults = () => {
         packagesInRange.forEach(pkg => flatItems.push({ guide, pkg }));
       }
     });
+
+    if (sortOption === 'recommended') {
+      const getRecommendedPrice = (item) => {
+        const pkg = item.pkg;
+        const tiers = pkg?.pricingTiers || [];
+        if (tiers.length) {
+          const matchingTier = tiers.find((tier) => peopleCount >= tier.minPeople && peopleCount <= tier.maxPeople)
+            || [...tiers].sort((a, b) => a.maxPeople - b.maxPeople)[0];
+          if (matchingTier) {
+            const price = Number(matchingTier.price || 0);
+            const discount = Number(matchingTier.discount || 0);
+            return discount > 0 ? price * (1 - discount / 100) : price;
+          }
+        }
+        const rawPrice = pkg?.price ?? item.guide.price;
+        if (rawPrice && typeof rawPrice === 'object') {
+          return Number(rawPrice[category] || rawPrice.individual || rawPrice.couple || Object.values(rawPrice)[0] || Number.POSITIVE_INFINITY);
+        }
+        return Number(rawPrice) || Number.POSITIVE_INFINITY;
+      };
+      const shuffle = (items) => {
+        const shuffled = [...items];
+        for (let index = shuffled.length - 1; index > 0; index -= 1) {
+          const randomIndex = Math.floor(Math.random() * (index + 1));
+          [shuffled[index], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[index]];
+        }
+        return shuffled;
+      };
+      const ranked = [...flatItems].sort((a, b) => getRecommendedPrice(a) - getRecommendedPrice(b));
+      return [...shuffle(ranked.slice(0, 4)), ...shuffle(ranked.slice(4))];
+    }
 
     const [field, order] = sortOption.split('-');
     return flatItems.sort((a, b) => {
@@ -212,13 +253,13 @@ const SearchResults = () => {
 
   const clearFilter = (e) => {
     e.stopPropagation();
-    setSortOption('rating-desc');
+    setSortOption('recommended');
     setActiveFilter(null);
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen w-full bg-slate-50 -mt-20 pt-20">
+      <div className="min-h-screen w-full bg-[#f8f6f0] pt-16">
         <div className="max-w-7xl mx-auto px-4">
            <GuideListSkeleton />
         </div>
@@ -227,9 +268,9 @@ const SearchResults = () => {
   }
 
   return (
-    <div className="min-h-screen w-full bg-slate-50 font-sans pb-12 -mt-20">
+    <div className="min-h-screen w-full bg-[#f8f6f0] font-sans pb-12">
       {/* Refined Header - Single Line Action Bar */}
-      <div className="w-full bg-white border-b sticky top-0 z-[30] shadow-sm">
+      <div className="sticky top-16 z-[30] w-full border-b border-[#17372f]/10 bg-[#f8f6f0]/95 shadow-sm backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex items-center gap-3">
             {/* Back Button */}
@@ -249,10 +290,10 @@ const SearchResults = () => {
                 placeholder="Find a guide..."
                 value={searchQuery}
                 onChange={(e) => handleSearchChange(e.target.value)}
-                className="bg-gray-50 border border-gray-100 text-gray-800 py-2 sm:py-2.5 px-4 pl-10 rounded-xl w-full focus:outline-none focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all text-sm font-medium"
+                className="w-full rounded-xl border border-[#17372f]/12 bg-white/80 px-4 py-2 pl-10 text-sm font-medium text-[#17372f] transition-all focus:border-[#1d6b55] focus:outline-none focus:ring-2 focus:ring-[#1d6b55]/10 sm:py-2.5"
                 ref={searchInputRef}
               />
-              <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-400" />
+              <SearchIcon className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#1d6b55]" />
             </div>
 
             {/* Actions */}
@@ -262,7 +303,7 @@ const SearchResults = () => {
                 <Button
                   variant="outline"
                   onClick={() => setShowSortDropdown(!showSortDropdown)}
-                  className="font-medium shrink-0"
+                  className="shrink-0 border-[#17372f]/15 bg-white font-medium text-[#17372f] hover:bg-[#edf3ee]"
                 >
                   <Filter size={16} className="mr-2" />
                   <span className="hidden sm:inline">
@@ -305,7 +346,7 @@ const SearchResults = () => {
                           key={opt.value}
                           onClick={() => handleSortChange(opt.value)}
                           className={`w-full text-left px-5 py-2.5 text-xs sm:text-sm transition-colors ${
-                            activeFilter === opt.value ? 'bg-emerald-500 text-white font-bold' : 'text-gray-600 hover:bg-gray-50'
+                            activeFilter === opt.value ? 'bg-[#1d6b55] text-white font-bold' : 'text-gray-600 hover:bg-[#edf3ee]'
                           }`}
                         >
                           {opt.label}
@@ -327,7 +368,7 @@ const SearchResults = () => {
               ) : (
                 <Button
                   onClick={() => setIsEditing(true)}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                  className="bg-[#17372f] text-white hover:bg-[#214b40]"
                 >
                   <CalendarIcon size={16} className="hidden sm:inline mr-2" />
                   <span>Modify</span>
@@ -413,21 +454,36 @@ const SearchResults = () => {
         </AnimatePresence>
 
         {/* Results Body */}
-        <div className="py-6 space-y-6">
+        <div className="space-y-6 pb-6 pt-2 sm:pt-3">
+          <div className="flex flex-col gap-4 border-b border-[#17372f]/10 pb-6 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.22em] text-[#9b7440]">Your package shortlist</p>
+              <h1 className="font-serif text-4xl leading-none tracking-[-0.04em] text-[#17372f] sm:text-5xl">
+                {destinationLabel ? `${destinationLabel} trips` : 'Trip packages'}
+              </h1>
+              <p className="mt-3 text-sm leading-6 text-[#60716c]">
+                {guides.length > 0 ? `${guides.length} package option${guides.length === 1 ? '' : 's'} matched to your trip details.` : 'Adjust your trip details to find the right package.'}
+              </p>
+            </div>
+            <div className="inline-flex w-fit items-center gap-2 rounded-full border border-[#17372f]/10 bg-white/80 px-3.5 py-2 text-xs font-semibold text-[#526761]">
+              <span className="h-2 w-2 rounded-full bg-[#1d6b55]" />
+              {category === 'couple' ? 'Couple' : category === 'group' ? 'Group' : 'Individual'} · {peopleCount} traveller{peopleCount === 1 ? '' : 's'}
+            </div>
+          </div>
 
           <div className="grid gap-6">
             {guides.length === 0 ? (
               /* ──────── NO RESULTS: Friendly "Sorry" + Other Packages ──────── */
               <div className="space-y-8">
                 {/* Sorry Message */}
-                <div className="text-center py-16 bg-white rounded-xl border shadow-sm">
+                <div className="rounded-[1.5rem] border border-[#17372f]/10 bg-white px-6 py-16 text-center shadow-[0_18px_50px_-38px_rgba(23,55,47,0.55)]">
                   <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 mb-4 border border-slate-200">
-                    <PackageOpen className="h-8 w-8 text-slate-500" />
+                    <PackageOpen className="h-8 w-8 text-[#1d6b55]" />
                   </div>
-                  <h3 className="text-xl font-bold text-slate-900 mb-2">
+                  <h3 className="mb-2 font-serif text-2xl tracking-[-0.025em] text-[#17372f]">
                     No Exact Matches Found
                   </h3>
-                  <p className="text-sm text-slate-500 max-w-md mx-auto">
+                  <p className="mx-auto max-w-md text-sm leading-6 text-[#60716c]">
                     {otherGuides.length > 0 
                       ? <>We couldn&apos;t find packages matching your exact criteria. But don&apos;t worry — we have other amazing offerings{destinationLabel ? ` in ${destinationLabel}` : ''} for you!</>
                       : <>No trip packages are currently available for this destination. Please try another location or check back soon!</>
@@ -465,6 +521,28 @@ const SearchResults = () => {
                     <GuideCard guide={item.guide} category={category} daysRange={daysRange} peopleCount={peopleCount} date={date} selectedPackage={item.pkg} />
                   </motion.div>
                 ))}
+
+                {pagination.totalPages > 1 && (
+                  <div className="flex items-center justify-center gap-3 border-t border-[#17372f]/10 pt-7">
+                    <button
+                      type="button"
+                      onClick={() => setPage((current) => Math.max(1, current - 1))}
+                      disabled={page <= 1}
+                      className="rounded-full border border-[#17372f]/15 bg-white px-4 py-2 text-sm font-semibold text-[#526761] transition hover:bg-[#edf3ee] disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      Previous
+                    </button>
+                    <span className="text-sm font-semibold text-[#60716c]">Page {page} of {pagination.totalPages}</span>
+                    <button
+                      type="button"
+                      onClick={() => setPage((current) => Math.min(pagination.totalPages, current + 1))}
+                      disabled={!pagination.hasMore}
+                      className="rounded-full bg-[#17372f] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#214b40] disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
 
                 {/* ── "More Packages" Bonus Section ── */}
                 {otherGuides.length > 0 && (
