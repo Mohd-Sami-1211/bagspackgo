@@ -125,9 +125,11 @@ const GuideCard = ({ guide, category, daysRange, peopleCount = 1, date, selected
     params.set('category', category);
     params.set('daysRange', daysRange || '');
     params.set('count', numPeople);
-    if (matchedPackage) params.set('packageId', matchedPackage.id);
     if (date) params.set('date', date.toISOString());
-    router.push(`/user/trip/guidelist/tripdetails/${guide.id}?${params.toString()}`);
+    const detailsPath = matchedPackage
+      ? `/trip/${matchedPackage.id}`
+      : `/user/trip/guidelist/tripdetails/${guide.id}`;
+    router.push(`${detailsPath}?${params.toString()}`);
   };
 
   return (
@@ -135,7 +137,7 @@ const GuideCard = ({ guide, category, daysRange, peopleCount = 1, date, selected
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, ease: [0.25, 0.8, 0.25, 1] }}
-      className={`bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 border relative ${
+      className={`relative overflow-hidden rounded-[1.5rem] border bg-white shadow-[0_16px_45px_-34px_rgba(23,55,47,0.55)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_55px_-32px_rgba(23,55,47,0.55)] ${
         isPremium ? 'border-amber-200' : 'border-slate-200'
       }`}
     >
@@ -183,9 +185,9 @@ const GuideCard = ({ guide, category, daysRange, peopleCount = 1, date, selected
 
           {/* === STAT ROW: location, duration, people === */}
           <div className="mt-4 pt-3 border-t border-gray-100 grid grid-cols-3 gap-x-4 gap-y-3">
-            <StatBadge icon={MapPin} label="Location" value={guide.location || '—'} color="text-blue-600" />
-            <StatBadge icon={Clock} label="Duration" value={daysLabel} color="text-amber-600" />
-            <StatBadge icon={Users} label={category === 'couple' ? 'Couples' : 'People'} value={`${numPeople} ${peopleText}${numPeople > 1 ? 's' : ''}`} color="text-emerald-600" />
+            <StatBadge icon={MapPin} label="Location" value={guide.location || '—'} color="text-[#1d6b55]" />
+            <StatBadge icon={Clock} label="Duration" value={daysLabel} color="text-[#9b7440]" />
+            <StatBadge icon={Users} label={category === 'couple' ? 'Couples' : 'People'} value={`${numPeople} ${peopleText}${numPeople > 1 ? 's' : ''}`} color="text-[#1d6b55]" />
           </div>
 
           {/* Lowest price callout - desktop (left side, hidden on mobile) */}
@@ -243,7 +245,7 @@ const GuideCard = ({ guide, category, daysRange, peopleCount = 1, date, selected
                 className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap ${
                   isPremium
                     ? 'bg-gradient-to-r from-amber-400 to-yellow-400 text-white'
-                    : 'bg-emerald-500 hover:bg-emerald-600 text-white'
+                    : 'bg-[#1d6b55] hover:bg-[#17372f] text-white'
                 }`}
               >
                 <>View <ArrowRight className="h-3.5 w-3.5" /></>
@@ -255,8 +257,8 @@ const GuideCard = ({ guide, category, daysRange, peopleCount = 1, date, selected
         {/* ── Right Panel (desktop only) ────────────────── */}
         <div className={`hidden sm:flex flex-col items-center justify-between gap-5 px-5 py-5 min-w-[200px] max-w-[220px] transition-all duration-300 border-l ${
           isPremium
-            ? 'bg-amber-50/50 border-amber-100'
-            : 'bg-slate-50 border-slate-100'
+            ? 'bg-[#fbf4e5] border-amber-100'
+            : 'bg-[#edf3ee] border-[#17372f]/10'
         }`}>
           {isPremium && (
             <>
@@ -315,7 +317,7 @@ const GuideCard = ({ guide, category, daysRange, peopleCount = 1, date, selected
             className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 ${
               isPremium
                 ? 'bg-amber-500 text-white hover:bg-amber-600 focus:ring-amber-500'
-                : 'bg-emerald-600 text-white hover:bg-emerald-700 focus:ring-emerald-600'
+                : 'bg-[#17372f] text-white hover:bg-[#214b40] focus:ring-[#1d6b55]'
             }`}
           >
             <>{isPremium ? 'View Premium' : 'View Details'} <ArrowRight className="h-4 w-4" /></>

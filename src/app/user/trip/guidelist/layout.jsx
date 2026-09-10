@@ -7,7 +7,7 @@ export default function GuideListLayout({ children }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
-      className="bg-[#F2FFFC] min-h-screen pt-[80px] w-full " // Adjust based on your navbar height
+      className="bg-[#F2FFFC] min-h-screen pt-0 w-full"
     >
       {children}
     </motion.div>

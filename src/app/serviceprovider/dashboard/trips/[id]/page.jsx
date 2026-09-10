@@ -175,9 +175,7 @@ export default function SingleTripBooking() {
     const contact = booking.personalDetails?.contactDetails || {};
     const emergency = booking.personalDetails?.emergencyContact || {};
     const arrival = booking.arrivalDeparture?.arrival || {};
-    const departure = booking.arrivalDeparture?.departure || {};
     const pickup = booking.arrivalDeparture?.pickup || {};
-    const dropoff = booking.arrivalDeparture?.dropoff || {};
     const cfg = STATUS_CFG[booking.status] || STATUS_CFG.confirmed;
 
     return (
@@ -360,10 +358,10 @@ export default function SingleTripBooking() {
                     )}
 
                     {/* Logistics */}
-                    {(arrival.city || departure.city || pickup.location || dropoff.location) && (
+                    {(arrival.city || pickup.location) && (
                         <SectionCard title="Logistics" icon={Navigation} accent="amber">
                             <div className="relative pl-6 space-y-6">
-                                <div className="absolute left-[7px] top-2 bottom-2 w-0.5 bg-gradient-to-b from-emerald-300 to-rose-300 rounded-full" />
+                                <div className="absolute left-[7px] top-2 bottom-2 w-0.5 bg-emerald-200 rounded-full" />
 
                                 {arrival.city && (
                                     <div className="relative">
@@ -378,18 +376,6 @@ export default function SingleTripBooking() {
                                     </div>
                                 )}
 
-                                {departure.city && (
-                                    <div className="relative">
-                                        <span className="absolute -left-[22px] top-1 w-3 h-3 rounded-full bg-rose-400 border-2 border-white shadow" />
-                                        <p className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 mb-1">Departure</p>
-                                        <p className="text-sm font-bold text-gray-800">{departure.city}</p>
-                                        {departure.time && (
-                                            <p className="text-xs text-neutral-500 mt-0.5 flex items-center gap-1">
-                                                <Clock className="w-3 h-3" /> {departure.time}
-                                            </p>
-                                        )}
-                                    </div>
-                                )}
 
                                 {pickup.location && (
                                     <div className="relative">
@@ -405,19 +391,6 @@ export default function SingleTripBooking() {
                                     </div>
                                 )}
 
-                                {dropoff.location && (
-                                    <div className="relative">
-                                        <span className="absolute -left-[22px] top-1 w-3 h-3 rounded-full bg-purple-400 border-2 border-white shadow" />
-                                        <p className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 mb-1">Drop-off</p>
-                                        <p className="text-sm font-bold text-gray-800">{ensureString(dropoff.location)}</p>
-                                        {dropoff.address && <p className="text-xs text-neutral-600 mt-1">{ensureString(dropoff.address)}</p>}
-                                        {dropoff.time && (
-                                            <p className="text-xs text-neutral-500 mt-1 flex items-center gap-1">
-                                                <Clock className="w-3 h-3" /> {dropoff.time}
-                                            </p>
-                                        )}
-                                    </div>
-                                )}
                             </div>
                         </SectionCard>
                     )}

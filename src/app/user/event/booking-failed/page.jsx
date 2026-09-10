@@ -13,7 +13,14 @@ function EventBookingFailedContent() {
   const returnPath = searchParams.get("return") || "/user/events";
   const isSoldOut = searchParams.get("soldOut") === "true";
   const isExpired = searchParams.get("expired") === "true";
-  const isRefundableFailure = isSoldOut || isExpired;
+  const paymentCaptured = searchParams.get("paymentCaptured") === "true";
+  const refundInitiated = searchParams.get("refundInitiated") === "true";
+  const refundAmount = searchParams.get("refundAmount");
+  const orderId = searchParams.get("orderId");
+  const paymentId = searchParams.get("paymentId");
+  const refundId = searchParams.get("refundId");
+  const isRefundableFailure = isSoldOut || isExpired || paymentCaptured || refundInitiated;
+  const isPaymentRefund = paymentCaptured || refundInitiated;
 
   return (
     <div className="min-h-screen bg-gray-50/50 flex items-center justify-center p-4 font-sans">
@@ -27,11 +34,13 @@ function EventBookingFailedContent() {
           {isRefundableFailure ? (
             <>
               <Ticket className="w-16 h-16 text-amber-500 mb-6" />
-              <h1 className="text-2xl font-bold tracking-tight mb-2 text-foreground">{isExpired ? 'Checkout Expired' : 'Event Sold Out'}</h1>
+              <h1 className="text-2xl font-bold tracking-tight mb-2 text-foreground">{isPaymentRefund ? 'Booking Not Completed' : isExpired ? 'Checkout Expired' : 'Event Sold Out'}</h1>
               <p className="text-muted-foreground text-sm max-w-[300px]">
-                {isExpired
-                  ? <>The checkout window ended before confirmation. Your payment will be <strong className="text-gray-800">automatically refunded in full</strong>.</>
-                  : <>This event was fully booked while your payment was processing. Your payment will be <strong className="text-gray-800">automatically refunded within 5–7 business days</strong>.</>}
+                {isPaymentRefund
+                  ? <>Your payment was received, but the booking could not be completed. This may happen if the 5-minute checkout window expired or the event became unavailable. The refund {refundInitiated ? 'has been initiated' : 'is being processed'} and should reach your original payment method within <strong className="text-gray-800">3 business days</strong>.</>
+                  : isExpired
+                    ? <>The checkout window ended before confirmation. Your payment will be <strong className="text-gray-800">automatically refunded in full</strong>.</>
+                    : <>This event was fully booked while your payment was processing. Your payment will be <strong className="text-gray-800">automatically refunded within 3 business days</strong>.</>}
               </p>
             </>
           ) : (
@@ -49,12 +58,24 @@ function EventBookingFailedContent() {
           {isRefundableFailure ? (
             <div className="flex items-start gap-3 bg-amber-50 text-amber-800 p-4 rounded-md border border-amber-100 mb-8 text-sm">
                <AlertTriangle className="w-5 h-5 shrink-0 text-amber-500 mt-0.5" />
-               <p className="font-medium">No action is needed from your side. If you don't receive the refund within 7 days, please contact support.</p>
+               <p className="font-medium">No action is needed from your side. If the refund is not reflected within 3 business days, contact support and share the Razorpay details below.</p>
             </div>
           ) : (
             <div className="flex items-start gap-3 bg-red-50 text-red-800 p-4 rounded-md border border-red-100 mb-8 text-sm">
                <AlertTriangle className="w-5 h-5 shrink-0 text-red-500 mt-0.5" />
                <p className="font-medium">Your session and traveler details have been preserved. You won't need to retype them.</p>
+            </div>
+          )}
+
+          {isPaymentRefund && (orderId || paymentId || refundId || refundAmount) && (
+            <div className="mb-8 rounded-md border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600">
+              <p className="mb-3 font-bold uppercase tracking-wider text-slate-800">Razorpay reference details</p>
+              <div className="space-y-2 break-all font-mono">
+                {refundAmount && <p><span className="font-sans font-semibold text-slate-500">Refund amount:</span> ₹{Number(refundAmount).toLocaleString('en-IN')}</p>}
+                {orderId && <p><span className="font-sans font-semibold text-slate-500">Order ID:</span> {orderId}</p>}
+                {paymentId && <p><span className="font-sans font-semibold text-slate-500">Payment ID:</span> {paymentId}</p>}
+                {refundId && <p><span className="font-sans font-semibold text-slate-500">Refund ID:</span> {refundId}</p>}
+              </div>
             </div>
           )}
 

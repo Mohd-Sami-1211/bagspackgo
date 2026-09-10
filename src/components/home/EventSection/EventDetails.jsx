@@ -798,6 +798,22 @@ const EventDetails = ({ event, loading = false }) => {
   const totalFees = platformFee + gatewayFee + gstOnGateway;
   const totalPayable = baseForFees + totalFees;
 
+  const routeToPaymentReconciliation = (verification, returnPath) => {
+    const params = new URLSearchParams({
+      return: returnPath,
+      paymentCaptured: verification?.paymentCaptured ? 'true' : 'false',
+      refundInitiated: verification?.refundInitiated ? 'true' : 'false',
+    });
+    if (verification?.expired) params.set('expired', 'true');
+    if (verification?.soldOut) params.set('soldOut', 'true');
+    const refund = verification?.refundDetails;
+    if (refund?.orderId) params.set('orderId', refund.orderId);
+    if (refund?.paymentId) params.set('paymentId', refund.paymentId);
+    if (refund?.refundId) params.set('refundId', refund.refundId);
+    if (refund?.amount !== undefined) params.set('refundAmount', String(refund.amount));
+    router.push(`/user/event/booking-failed?${params.toString()}`);
+  };
+
   const handleBooking = async (e) => {
     e.preventDefault();
     setIsProcessingPayment(true);
@@ -933,6 +949,10 @@ const EventDetails = ({ event, loading = false }) => {
               localStorage.removeItem('pending_booking');
               sessionStorage.removeItem(bookingDraftKey);
               router.push(`/user/event/booking-success?bookingId=${bookingId}`);
+            } else if (verifyData.paymentCaptured || verifyData.refundInitiated) {
+              localStorage.removeItem('pending_booking');
+              sessionStorage.removeItem(bookingDraftKey);
+              routeToPaymentReconciliation(verifyData, `/user/events/eventdetails/${event._id || event.id}`);
             } else if (verifyData.soldOut) {
               localStorage.removeItem('pending_booking');
               sessionStorage.removeItem(bookingDraftKey);
@@ -944,6 +964,11 @@ const EventDetails = ({ event, loading = false }) => {
             } else if (verifyRes.status >= 500 || verifyRes.status === 408) {
               // The payment may already be captured. Let the webhook and a
               // status poll reconcile it instead of showing a false failure.
+              router.push(`/user/event/booking-processing?bookingId=${bookingId}`);
+            } else if (verifyRes.status === 409 && response.razorpay_payment_id) {
+              // A signed Razorpay callback proves the user completed payment;
+              // keep this in reconciliation while the webhook/refund workflow
+              // resolves instead of labelling it as a declined payment.
               router.push(`/user/event/booking-processing?bookingId=${bookingId}`);
             } else {
               router.push(`/user/event/booking-failed?return=/user/events/eventdetails/${event._id || event.id}`);

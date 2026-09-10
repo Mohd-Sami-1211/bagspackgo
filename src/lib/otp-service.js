@@ -455,3 +455,62 @@ export async function sendEventBookingConfirmation({ userEmail, userName, provid
         try { await transporter.sendMail(providerMail); } catch (e) { console.error('Provider event email failed:', e.message); }
     }
 }
+
+export async function sendEventRefundInitiated({ userEmail, userName, bookingId, eventName, destination, eventDate, numPeople, totalAmount, orderId, paymentId, refundId, refundInitiatedAt, reason }) {
+    if (!userEmail) return;
+
+    const formattedDate = eventDate ? new Date(eventDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : 'TBD';
+    const initiatedAt = refundInitiatedAt
+        ? new Date(refundInitiatedAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })
+        : new Date().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
+    const reference = bookingId?.toString()?.substring(0, 8).toUpperCase() || 'BPG-REF';
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://bagspackgo.com';
+
+    const userMail = {
+        from: `"bagspackgo" <${process.env.GMAIL_USER}>`,
+        to: userEmail,
+        subject: `↩️ Refund Initiated — ${eventName || 'Event Booking'} | Ref: ${reference}`,
+        attachments: getLogoAttachment(),
+        html: `
+            <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 30px rgba(0,0,0,0.12); border: 1px solid #f1f5f9;">
+                <div style="background: linear-gradient(135deg, #17372f, #1d6b55); padding: 42px 32px; text-align: center;">
+                    <div style="background: rgba(255,255,255,1); display: inline-block; padding: 12px 24px; border-radius: 12px; margin-bottom: 22px;">
+                        <img src="cid:bagspackgo-logo" alt="bagspackgo" style="height: 38px; width: auto; display: block;" />
+                    </div>
+                    <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 800;">Refund Process Initiated</h1>
+                    <p style="color: rgba(255,255,255,0.9); margin: 12px 0 0; font-size: 15px;">Your event booking could not be completed, but your payment is being returned.</p>
+                </div>
+                <div style="background: white; padding: 38px 32px;">
+                    <p style="color: #111827; font-size: 18px; margin: 0 0 14px;">Hi <strong>${userName || 'Traveller'}</strong>,</p>
+                    <p style="color: #4b5563; line-height: 1.7; font-size: 15px; margin: 0 0 24px;">
+                        We could not complete your booking for <strong>${eventName || 'the event'}</strong>. This can happen when the 5-minute checkout window expires or the event becomes unavailable while payment is being confirmed. A refund has been initiated to your original payment method and should reflect within <strong>3 business days</strong>, depending on your bank.
+                    </p>
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 22px; margin: 24px 0;">
+                        <h3 style="color: #17372f; font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; margin: 0 0 14px; font-weight: 800;">Refund & payment details</h3>
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr><td style="color: #64748b; padding: 7px 0; font-size: 13px;">Booking reference</td><td style="color: #0f172a; font-weight: 700; text-align: right; font-family: 'Courier New', monospace;">${reference}</td></tr>
+                            <tr><td style="color: #64748b; padding: 7px 0; font-size: 13px;">Event</td><td style="color: #0f172a; font-weight: 600; text-align: right;">${eventName || 'Event booking'}</td></tr>
+                            <tr><td style="color: #64748b; padding: 7px 0; font-size: 13px;">Event date</td><td style="color: #0f172a; text-align: right;">${formattedDate}</td></tr>
+                            <tr><td style="color: #64748b; padding: 7px 0; font-size: 13px;">Amount refunded</td><td style="color: #047857; font-size: 18px; font-weight: 800; text-align: right;">₹${Number(totalAmount || 0).toLocaleString('en-IN')}</td></tr>
+                            <tr><td style="color: #64748b; padding: 7px 0; font-size: 13px;">Refund initiated</td><td style="color: #0f172a; text-align: right;">${initiatedAt}</td></tr>
+                            <tr><td style="color: #64748b; padding: 7px 0; font-size: 13px;">Razorpay order ID</td><td style="color: #0f172a; font-size: 12px; text-align: right; word-break: break-all;">${orderId || '—'}</td></tr>
+                            <tr><td style="color: #64748b; padding: 7px 0; font-size: 13px;">Razorpay payment ID</td><td style="color: #0f172a; font-size: 12px; text-align: right; word-break: break-all;">${paymentId || '—'}</td></tr>
+                            <tr><td style="color: #64748b; padding: 7px 0; font-size: 13px;">Razorpay refund ID</td><td style="color: #0f172a; font-size: 12px; text-align: right; word-break: break-all;">${refundId || 'Pending gateway reference'}</td></tr>
+                        </table>
+                    </div>
+                    <p style="color: #64748b; line-height: 1.6; font-size: 13px; margin: 0 0 24px;">Reason recorded: ${reason || 'Booking could not be confirmed after payment.'}</p>
+                    <div style="text-align: center;"><a href="${appUrl}/user/bookings" style="background: #17372f; color: white; text-decoration: none; padding: 14px 28px; border-radius: 12px; font-size: 14px; font-weight: 700; display: inline-block;">View My Bookings</a></div>
+                </div>
+                <div style="background: #f1f5f9; padding: 20px 32px; text-align: center;"><p style="color: #64748b; font-size: 12px; margin: 0;">If the refund is not reflected after 3 business days, reply to this email with the payment details above.</p></div>
+            </div>
+        `,
+    };
+
+    try {
+        await transporter.sendMail(userMail);
+        console.log(`↩️ Refund initiation email sent to ${userEmail}`);
+    } catch (error) {
+        console.error('Refund initiation email failed:', error.message);
+        throw error;
+    }
+}

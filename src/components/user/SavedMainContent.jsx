@@ -25,14 +25,12 @@ const SavedMainContent = () => {
     const days = record.config?.days || pkg.days || 1;
 
     let path = '';
-    const actualProviderId = pkg.provider?._id || pkg.providerId || pkg.provider || pkg._id || record.providerId || '';
-    
     if (record.itemType === 'event') {
       path = `/user/events/eventdetails/${record.itemId}`;
     } else if (record.itemType === 'offbeat') {
       path = `/user/offbeats/${record.itemId}`;
     } else {
-      path = `/user/trip/guidelist/tripdetails/${actualProviderId}?packageId=${pkg._id}${dateQuery}&count=${count}&category=${cat}&days=${days}`;
+      path = `/trip/${pkg._id}?${dateQuery.replace(/^&/, '')}${dateQuery ? '&' : ''}count=${count}&category=${cat}&days=${days}`;
     }
     router.push(path);
   };
