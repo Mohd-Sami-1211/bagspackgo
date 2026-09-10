@@ -7,12 +7,25 @@ import { getCurrentUser } from '@/lib/auth';
 import {
     confirmEventBooking,
     refundEventBookingPayment,
+    sendEventRefundInitiationOnce,
     sendEventConfirmationOnce,
 } from '@/lib/eventBooking';
 
 function signaturesMatch(actual, expected) {
     if (typeof actual !== 'string' || actual.length !== expected.length) return false;
     return crypto.timingSafeEqual(Buffer.from(actual), Buffer.from(expected));
+}
+
+function getRefundDetails(booking) {
+    const details = booking?.cancellationDetails || {};
+    return {
+        amount: Number(details.refundAmount ?? booking?.amountPaid ?? 0),
+        status: details.refundStatus || 'pending',
+        refundId: details.refundId || '',
+        initiatedAt: details.refundInitiatedAt || null,
+        orderId: booking?.orderId || '',
+        paymentId: booking?.paymentId || '',
+    };
 }
 
 export async function POST(request) {
@@ -33,6 +46,19 @@ export async function POST(request) {
         if (!booking) return NextResponse.json({ success: false, message: 'Booking not found' }, { status: 404 });
         if (booking.status === 'confirmed') {
             return NextResponse.json({ success: true, message: 'Booking already confirmed.', bookingId: booking._id.toString() });
+        }
+        if (booking.status === 'refund_initiated') {
+            await sendEventRefundInitiationOnce(booking._id);
+            const refund = getRefundDetails(booking);
+            return NextResponse.json({
+                success: false,
+                paymentCaptured: true,
+                refundInitiated: refund.status === 'initiated',
+                expired: /expired/i.test(booking.cancellationDetails?.reason || ''),
+                message: 'Your payment was received, but the booking could not be completed. Your refund has been initiated and should reach your original payment method within 3 business days.',
+                bookingId: booking._id.toString(),
+                refundDetails: refund,
+            }, { status: 409 });
         }
         // A checkout can expire or be marked unavailable just before the
         // browser callback arrives. Keep accepting a signed callback for a
@@ -81,12 +107,15 @@ export async function POST(request) {
             return NextResponse.json({
                 success: false,
                 expired: true,
+                paymentCaptured: !isFreeEvent,
+                refundInitiated: refunded,
                 message: outcome.shouldRefund
                     ? refunded
                         ? 'This checkout expired before confirmation. Your full payment refund has been initiated.'
                         : 'This checkout expired before confirmation. Support has been notified to process your full refund.'
                     : 'This checkout expired. Please start again.',
                 bookingId: outcome.booking._id.toString(),
+                refundDetails: getRefundDetails(await Booking.findById(outcome.booking._id).lean()),
             }, { status: 410 });
         }
 
@@ -97,12 +126,15 @@ export async function POST(request) {
             return NextResponse.json({
                 success: false,
                 soldOut: true,
+                paymentCaptured: !isFreeEvent,
+                refundInitiated: refunded,
                 message: outcome.shouldRefund
                     ? refunded
                         ? 'This event became unavailable while you were paying. A full refund has been initiated.'
                         : 'This event became unavailable while you were paying. Support has been notified to process your refund.'
                     : 'This event is no longer available.',
                 bookingId: outcome.booking._id.toString(),
+                refundDetails: getRefundDetails(await Booking.findById(outcome.booking._id).lean()),
             }, { status: 409 });
         }
         if (
@@ -114,15 +146,29 @@ export async function POST(request) {
             return NextResponse.json({
                 success: false,
                 soldOut: true,
+                paymentCaptured: !isFreeEvent,
+                refundInitiated: refunded,
                 message: refunded
                     ? 'This event became unavailable while you were paying. A full refund is being processed.'
                     : 'This event became unavailable while you were paying. Support has been notified to process your refund.',
                 bookingId: outcome.booking._id.toString(),
+                refundDetails: getRefundDetails(await Booking.findById(outcome.booking._id).lean()),
             }, { status: 409 });
         }
         if (outcome.kind !== 'confirmed') {
             const status = outcome.kind === 'not_found' ? 404 : 409;
-            return NextResponse.json({ success: false, message: 'Booking could not be confirmed.' }, { status });
+            const refund = getRefundDetails(outcome.booking);
+            const paymentCaptured = !isFreeEvent && Boolean(verifiedPaymentId && verifiedPaymentId !== 'free_event');
+            return NextResponse.json({
+                success: false,
+                paymentCaptured,
+                refundInitiated: refund.status === 'initiated',
+                message: paymentCaptured && refund.status === 'initiated'
+                    ? 'Your payment was received, but the booking could not be completed. Your refund has been initiated and should reach your original payment method within 3 business days.'
+                    : 'Booking could not be confirmed. If your payment was deducted, it will be reconciled automatically.',
+                bookingId: outcome.booking?._id?.toString(),
+                refundDetails: outcome.booking ? refund : undefined,
+            }, { status });
         }
 
         if (outcome.newlyConfirmed) await sendEventConfirmationOnce(outcome.booking._id);

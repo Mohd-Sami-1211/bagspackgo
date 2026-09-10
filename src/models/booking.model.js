@@ -57,6 +57,7 @@ const bookingSchema = new mongoose.Schema({
         refundStatus: { type: String, enum: ['pending', 'processing', 'initiated', 'failed', 'not_required'], default: 'not_required' },
         refundId: { type: String, default: '' },
         refundInitiatedAt: { type: Date, default: null },
+        refundEmailSentAt: { type: Date, default: null },
     },
     // Provider Payment details
     providerPaymentStatus: { type: String, enum: ['pending', 'completed'], default: 'pending' },

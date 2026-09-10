@@ -4,7 +4,7 @@ import Razorpay from 'razorpay';
 import { Booking } from '@/models/booking.model';
 import { Event } from '@/models/event.model';
 import { User } from '@/models/user.model';
-import { sendEventBookingConfirmation } from '@/lib/otp-service';
+import { sendEventBookingConfirmation, sendEventRefundInitiated } from '@/lib/otp-service';
 
 const MAX_SLOTS_PER_BOOKING = 20;
 const MAX_TEXT_LENGTH = 2000;
@@ -400,6 +400,50 @@ export async function sendEventConfirmationOnce(bookingId) {
     }
 }
 
+export async function sendEventRefundInitiationOnce(bookingId) {
+    const claimed = await Booking.findOneAndUpdate(
+        {
+            _id: bookingId,
+            status: 'refund_initiated',
+            'cancellationDetails.refundStatus': 'initiated',
+            'cancellationDetails.refundEmailSentAt': null,
+        },
+        { $set: { 'cancellationDetails.refundEmailSentAt': new Date() } },
+        { new: true }
+    ).lean();
+    if (!claimed) return false;
+
+    try {
+        const [userDoc, eventDoc] = await Promise.all([
+            User.findById(claimed.user).select('username email').lean(),
+            Event.findById(claimed.event).select('title destination location date').lean(),
+        ]);
+        await sendEventRefundInitiated({
+            userEmail: userDoc?.email || claimed.contactDetails?.email,
+            userName: userDoc?.username || 'Traveller',
+            bookingId: claimed._id.toString(),
+            eventName: eventDoc?.title || 'Event Booking',
+            destination: eventDoc?.destination || eventDoc?.location || '',
+            eventDate: eventDoc?.date,
+            numPeople: claimed.slots,
+            totalAmount: claimed.cancellationDetails?.refundAmount ?? claimed.amountPaid,
+            orderId: claimed.orderId,
+            paymentId: claimed.paymentId,
+            refundId: claimed.cancellationDetails?.refundId,
+            refundInitiatedAt: claimed.cancellationDetails?.refundInitiatedAt,
+            reason: claimed.cancellationDetails?.reason,
+        });
+        return true;
+    } catch (error) {
+        await Booking.updateOne(
+            { _id: bookingId, 'cancellationDetails.refundEmailSentAt': { $ne: null } },
+            { $set: { 'cancellationDetails.refundEmailSentAt': null } }
+        ).catch(() => {});
+        console.error('Refund initiation email error:', error);
+        return false;
+    }
+}
+
 export async function refundEventBookingPayment(booking, paymentId) {
     const claimed = await Booking.findOneAndUpdate(
         {
@@ -416,8 +460,11 @@ export async function refundEventBookingPayment(booking, paymentId) {
     // request that atomically claims it is allowed to call Razorpay.
     if (!claimed) {
         const current = await Booking.findById(booking._id)
-            .select('cancellationDetails.refundStatus')
+            .select('status cancellationDetails.refundStatus')
             .lean();
+        if (current?.status === 'refund_initiated' && current?.cancellationDetails?.refundStatus === 'initiated') {
+            await sendEventRefundInitiationOnce(booking._id);
+        }
         return ['processing', 'initiated'].includes(current?.cancellationDetails?.refundStatus);
     }
 
@@ -445,6 +492,7 @@ export async function refundEventBookingPayment(booking, paymentId) {
                 },
             }
         );
+        await sendEventRefundInitiationOnce(booking._id);
         return true;
     } catch (error) {
         await Booking.updateOne(

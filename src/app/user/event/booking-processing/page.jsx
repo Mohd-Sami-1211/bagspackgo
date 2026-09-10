@@ -33,7 +33,17 @@ function BookingProcessingContent() {
                     return;
                 }
                 if (status === 'cancelled' || status === 'refund_initiated') {
-                    router.replace(`/user/event/booking-failed?return=/user/events`);
+                    const refund = payload?.booking?.cancellationDetails || {};
+                    const params = new URLSearchParams({
+                        return: '/user/events',
+                        paymentCaptured: refund.refundAmount > 0 ? 'true' : 'false',
+                        refundInitiated: status === 'refund_initiated' ? 'true' : 'false',
+                    });
+                    if (payload?.booking?.orderId) params.set('orderId', payload.booking.orderId);
+                    if (payload?.booking?.paymentId) params.set('paymentId', payload.booking.paymentId);
+                    if (refund.refundId) params.set('refundId', refund.refundId);
+                    if (refund.refundAmount !== undefined) params.set('refundAmount', String(refund.refundAmount));
+                    router.replace(`/user/event/booking-failed?${params.toString()}`);
                     return;
                 }
                 if (attempts >= 10) {

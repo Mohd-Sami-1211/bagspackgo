@@ -8,6 +8,7 @@ import {
     confirmEventBooking,
     refundEventBookingPayment,
     sendEventConfirmationOnce,
+    sendEventRefundInitiationOnce,
 } from '@/lib/eventBooking';
 
 function signaturesMatch(actual, expected) {
@@ -116,6 +117,10 @@ export async function POST(req) {
             ) {
                 await refundEventBookingPayment(outcome.booking, paymentId || outcome.booking.paymentId);
                 return NextResponse.json({ success: true, message: 'Event unavailable; refund workflow checked' });
+            }
+            if (outcome.kind === 'unavailable' && outcome.booking?.status === 'refund_initiated') {
+                await sendEventRefundInitiationOnce(outcome.booking._id);
+                return NextResponse.json({ success: true, message: 'Event booking already refunded; notification workflow checked' });
             }
             if (outcome.kind === 'confirmed') {
                 if (outcome.newlyConfirmed) await sendEventConfirmationOnce(outcome.booking._id);
