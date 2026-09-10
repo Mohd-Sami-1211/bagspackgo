@@ -248,7 +248,7 @@ export default function ViewPackage({ pkg, adminMode = false, providerId = null 
                             {pkg.pickupDropCities?.length > 0 && (
                                 <div>
                                     <h3 className="text-[15px] font-black text-gray-900 mb-3 flex items-center gap-2">
-                                        <Navigation size={18} className="text-emerald-500" /> Pickup & Drop Points
+                                        <Navigation size={18} className="text-emerald-500" /> {isTrek ? 'Pickup & Drop Points' : 'Pickup Points'}
                                     </h3>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         {pkg.pickupDropCities.map((city, idx) => (
@@ -265,10 +265,10 @@ export default function ViewPackage({ pkg, adminMode = false, providerId = null 
                                                                     <a href={loc.mapLink} target="_blank" rel="noreferrer" className="text-emerald-600 hover:text-emerald-700 font-medium text-[10px] bg-emerald-50 px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-all">Map →</a>
                                                                 )}
                                                             </div>
-                                                            {(loc.pickupTime || loc.dropoffTime) && (
+                                                            {(loc.pickupTime || (isTrek && loc.dropoffTime)) && (
                                                                 <div className="flex flex-wrap gap-3 mt-1.5 text-[11px] text-gray-500 bg-white/50 inline-flex px-2 py-1 rounded-md border border-gray-100">
                                                                     {loc.pickupTime && <span className="flex items-center gap-1"><Clock size={10} className="text-emerald-500"/> Pickup: <span className="font-semibold text-gray-700">{loc.pickupTime}</span></span>}
-                                                                    {loc.dropoffTime && <span className="flex items-center gap-1"><Clock size={10} className="text-rose-400"/> Drop-off: <span className="font-semibold text-gray-700">{loc.dropoffTime}</span></span>}
+                                                                    {isTrek && loc.dropoffTime && <span className="flex items-center gap-1"><Clock size={10} className="text-rose-400"/> Drop-off: <span className="font-semibold text-gray-700">{loc.dropoffTime}</span></span>}
                                                                 </div>
                                                             )}
                                                         </li>

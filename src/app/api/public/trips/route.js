@@ -13,7 +13,10 @@ async function buildFormattedGuides(packages) {
 
     const guideDetailsList = await GuideDetails.find({
         guide: { $in: providerIds }
-    }).select('-idFile -licenseFile -adminNotes').populate('guide', '-password').lean();
+    })
+        .select('guide companyname bio destinationId rating reviews totalTrips totalTreks languages logo pausedServices.trip')
+        .populate('guide', 'username')
+        .lean();
 
     // Filter out packages from providers who have paused trips
     const pausedProviderIds = new Set(
@@ -30,7 +33,7 @@ async function buildFormattedGuides(packages) {
     const missingProviderIds = providerIds.filter(id => !guideDetailsProviderIds.includes(id));
 
     const plainGuides = missingProviderIds.length > 0
-        ? await Guide.find({ _id: { $in: missingProviderIds } }).lean()
+        ? await Guide.find({ _id: { $in: missingProviderIds } }).select('username').lean()
         : [];
 
     const allGuideSources = [
@@ -130,13 +133,22 @@ function packageStartingPrice(pkg) {
     return Number(price || 0) || Number.POSITIVE_INFINITY;
 }
 
-function shufflePackages(packages) {
-    const shuffled = [...packages];
-    for (let index = shuffled.length - 1; index > 0; index -= 1) {
-        const randomIndex = Math.floor(Math.random() * (index + 1));
-        [shuffled[index], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[index]];
+function stablePackageHash(pkg) {
+    const key = String(pkg?._id || pkg?.id || pkg?.name || 'package');
+    let hash = 2166136261;
+    for (let index = 0; index < key.length; index += 1) {
+        hash ^= key.charCodeAt(index);
+        hash = Math.imul(hash, 16777619);
     }
-    return shuffled;
+    return hash >>> 0;
+}
+
+function shufflePackages(packages) {
+    return [...packages].sort((first, second) => {
+        const hashDifference = stablePackageHash(first) - stablePackageHash(second);
+        if (hashDifference !== 0) return hashDifference;
+        return String(first?._id || '').localeCompare(String(second?._id || ''));
+    });
 }
 
 function orderPackages(packages) {
@@ -149,10 +161,7 @@ function orderPackages(packages) {
 
 export async function GET(req) {
     try {
-        console.time('totalApiTime');
-        console.time('dbConnect');
         await dbConnect();
-        console.timeEnd('dbConnect');
 
         const { searchParams } = new URL(req.url);
         const destination = searchParams.get('destination') || '';
@@ -160,8 +169,14 @@ export async function GET(req) {
         const peopleRange = searchParams.get('peopleRange') || '';
         const category = searchParams.get('category') || '';
         const providerId = searchParams.get('id') || '';
+        const requestedPackageId = searchParams.get('packageId') || '';
+        const isDetailRequest = searchParams.get('detail') === '1';
         const page = Math.max(1, Number.parseInt(searchParams.get('page') || '1', 10));
         const limit = Math.min(12, Math.max(1, Number.parseInt(searchParams.get('limit') || '12', 10)));
+
+        if (requestedPackageId && !mongoose.Types.ObjectId.isValid(requestedPackageId)) {
+            return NextResponse.json({ success: false, message: 'Invalid package ID.' }, { status: 400 });
+        }
 
         // Build package query - filter strictly for 'trip' category
         const pkgQuery = { 
@@ -169,15 +184,20 @@ export async function GET(req) {
             category: 'trip' 
         };
 
-        if (providerId) {
+        if (requestedPackageId && mongoose.Types.ObjectId.isValid(requestedPackageId)) {
+            pkgQuery._id = new mongoose.Types.ObjectId(requestedPackageId);
+        } else if (providerId) {
             // Check if the passed ID is actually a package ID
-            const isPackage = await Package.findById(providerId).select('provider').lean();
+            const isPackage = mongoose.Types.ObjectId.isValid(providerId)
+                ? await Package.findById(providerId).select('provider').lean()
+                : null;
             if (isPackage) {
-                pkgQuery.provider = isPackage.provider;
+                if (isDetailRequest) pkgQuery._id = isPackage._id;
+                else pkgQuery.provider = isPackage.provider;
             } else if (mongoose.Types.ObjectId.isValid(providerId)) {
                 pkgQuery.provider = new mongoose.Types.ObjectId(providerId);
             } else {
-                pkgQuery.provider = providerId;
+                return NextResponse.json({ success: false, message: 'Invalid provider ID.' }, { status: 400 });
             }
         }
 
@@ -200,16 +220,14 @@ export async function GET(req) {
         }
 
         // Fetch matching packages. Select out heavy base64 photos if this is a general search.
-        console.time('fetchPackages');
         let packagesQuery = Package.find(pkgQuery);
-        if (!providerId) {
+        if (!providerId && !requestedPackageId) {
             packagesQuery = packagesQuery.select('-packagePhotos -photos -itinerary -inclusives -inclusivesList -exclusivesList -activities -termsAndConditions -additionalPoints -aboutPackage -pickupDropCities');
         } else {
             // For details view, include the text details but strip the heavy base64 images!
-            packagesQuery = packagesQuery.select('-packagePhotos -photos -itinerary.hotelPhotos');
+            packagesQuery = packagesQuery.select('-packagePhotos -photos -itinerary.hotelPhotos -itinerary.destinationPhotos');
         }
         let packages = await packagesQuery.lean();
-        console.timeEnd('fetchPackages');
 
         // Filter by peopleRange on the pricing tiers
         if (peopleRange) {
@@ -238,13 +256,11 @@ export async function GET(req) {
         const pagedPackages = orderedPackages.slice((page - 1) * limit, page * limit);
 
         // Build primary results from one lightweight page
-        console.time('buildFormattedGuides1');
         const formattedGuides = await buildFormattedGuides(pagedPackages);
-        console.timeEnd('buildFormattedGuides1');
 
         // --- Fetch "other packages" for the same destination ---
         let otherGuides = [];
-        if (destination && !providerId && page === 1) {
+        if (destination && !providerId && !requestedPackageId && page === 1) {
             const matchedPkgIds = new Set(orderedPackages.map(p => p._id.toString()));
             const otherPkgQuery = {
                 status: { $in: ['active', 'published'] },
@@ -257,17 +273,10 @@ export async function GET(req) {
             if (category && (category === 'individual' || category === 'couple')) {
                 otherPkgQuery.packageType = category;
             }
-            console.time('fetchOtherPackages');
             const otherPackages = await Package.find(otherPkgQuery).select('-packagePhotos -photos -itinerary -inclusives -inclusivesList -exclusivesList -activities -termsAndConditions -additionalPoints -aboutPackage -pickupDropCities').lean();
-            console.timeEnd('fetchOtherPackages');
-            console.time('buildFormattedGuides2');
             otherGuides = await buildFormattedGuides(otherPackages);
-            console.timeEnd('buildFormattedGuides2');
         }
 
-        console.timeEnd('totalApiTime');
-        const finalData = [...formattedGuides, ...otherGuides];
-        console.log(`[TRIP API] Returning ${finalData.length} guides for id:`, providerId);
         return NextResponse.json(
             {
                 success: true,
@@ -281,7 +290,7 @@ export async function GET(req) {
                     hasMore: page * limit < totalPackages,
                 },
             },
-            { headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120' } }
+            { headers: { 'Cache-Control': isDetailRequest ? 'public, s-maxage=300, stale-while-revalidate=900' : 'public, s-maxage=60, stale-while-revalidate=120' } }
         );
     } catch (error) {
         console.error('Failed to fetch public trips:', error);

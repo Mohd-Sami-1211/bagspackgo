@@ -137,8 +137,7 @@ const ProviderProfileContent = ({ providerId }) => {
          router.push(`/user/trek/guidelist/trekdetails/${providerId}?${params.toString()}`);
       } else {
          params.set('count', pkgConfig.count.toString());
-         params.set('packageId', pkg._id);
-         router.push(`/user/trip/guidelist/tripdetails/${providerId}?${params.toString()}`);
+         router.push(`/trip/${pkg._id}?${params.toString()}`);
       }
   };
 

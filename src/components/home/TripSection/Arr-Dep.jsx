@@ -1,6 +1,6 @@
 'use client';
 import Select from 'react-select';
-import { MapPin, Calendar, Clock, Car, ArrowLeft, ArrowRight } from 'lucide-react';
+import { MapPin, Calendar, Clock, Car, ArrowRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 // ── Shared react-select styles matching the site theme ──────
@@ -51,19 +51,13 @@ const selectStyles = {
   }),
 };
 
-const ArrDep = ({ defaultLocation, onNext, onBack, startDate, duration, pickupDropCities, packageId }) => {
+const ArrDep = ({ defaultLocation, onNext, onBack, startDate, pickupDropCities, packageId }) => {
   const [formData, setFormData] = useState({
     arrival: { city: null, pickupAddress: null, time: null, ampm: { value: 'AM', label: 'AM' } },
-    departure: { city: null, dropoffAddress: null, time: null, ampm: { value: 'PM', label: 'PM' } },
   });
 
   const [errors, setErrors] = useState({});
-  const [activeSection, setActiveSection] = useState('arrival');
   const [isInitialized, setIsInitialized] = useState(false);
-
-  const dropoffDate = startDate
-    ? new Date(new Date(startDate).setDate(startDate.getDate() + duration))
-    : new Date();
 
   useEffect(() => {
     // Only reset if not already initialized or default location genuinely changes significantly 
@@ -73,8 +67,10 @@ const ArrDep = ({ defaultLocation, onNext, onBack, startDate, duration, pickupDr
          const saved = localStorage.getItem(`temp_arr_dep_details_${packageId || 'default'}`);
          if (saved) {
            const parsed = JSON.parse(saved);
-           if (parsed) {
-             setFormData(parsed);
+           if (parsed?.arrival) {
+             setFormData(prev => ({
+               arrival: { ...prev.arrival, ...parsed.arrival },
+             }));
              loadedFromSession = true;
            }
          }
@@ -83,7 +79,6 @@ const ArrDep = ({ defaultLocation, onNext, onBack, startDate, duration, pickupDr
        if (!loadedFromSession) {
          setFormData(prev => ({
            arrival: { ...prev.arrival, city: null, pickupAddress: null },
-           departure: { ...prev.departure, city: null, dropoffAddress: null },
          }));
        }
        setIsInitialized(true);
@@ -93,8 +88,7 @@ const ArrDep = ({ defaultLocation, onNext, onBack, startDate, duration, pickupDr
   useEffect(() => {
     if (!isInitialized) return;
     
-    const hasData = formData.arrival.city || formData.arrival.pickupAddress || formData.arrival.time ||
-                    formData.departure.city || formData.departure.dropoffAddress || formData.departure.time;
+    const hasData = formData.arrival.city || formData.arrival.pickupAddress || formData.arrival.time;
     
     if (hasData) {
       localStorage.setItem(`temp_arr_dep_details_${packageId || 'default'}`, JSON.stringify(formData));
@@ -126,19 +120,7 @@ const ArrDep = ({ defaultLocation, onNext, onBack, startDate, duration, pickupDr
     if (!formData.arrival.city) errs.arrival_city = 'City is required';
     if (!formData.arrival.pickupAddress) errs.arrival_pickupAddress = 'Address is required';
     if (!formData.arrival.time) errs.arrival_time = 'Time is required';
-    if (!formData.departure.city) errs.departure_city = 'City is required';
-    if (!formData.departure.dropoffAddress) errs.departure_dropoffAddress = 'Address is required';
-    if (!formData.departure.time) errs.departure_time = 'Time is required';
     setErrors(errs);
-
-    // Auto-switch to the tab that has errors
-    const hasArrivalErrors = errs.arrival_city || errs.arrival_pickupAddress || errs.arrival_time;
-    const hasDepartureErrors = errs.departure_city || errs.departure_dropoffAddress || errs.departure_time;
-    if (!hasArrivalErrors && hasDepartureErrors) {
-      setActiveSection('departure');
-    } else if (hasArrivalErrors) {
-      setActiveSection('arrival');
-    }
 
     return Object.keys(errs).length === 0;
   };
@@ -153,19 +135,14 @@ const ArrDep = ({ defaultLocation, onNext, onBack, startDate, duration, pickupDr
           date: startDate,
           time: `${formData.arrival.time?.value}:${formData.arrival.min?.value || '00'} ${formData.arrival.ampm?.value}`,
         },
-        dropoff: {
-          location: formData.departure.city?.value,
-          address: formData.departure.dropoffAddress?.value,
-          date: dropoffDate,
-          time: `${formData.departure.time?.value}:${formData.departure.min?.value || '00'} ${formData.departure.ampm?.value}`,
-        },
         startDate,
       });
     }
   };
 
-  const formatDate = (date) =>
-    date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  const formatDate = (date) => date
+    ? date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+    : '';
 
   const availableCities = pickupDropCities?.length > 0
     ? pickupDropCities
@@ -197,41 +174,10 @@ const ArrDep = ({ defaultLocation, onNext, onBack, startDate, duration, pickupDr
 
   return (
     <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6 md:p-8">
-      <button
-        onClick={onBack}
-        className="group flex items-center gap-2.5 mb-6 sm:mb-8 transition-all w-fit bg-white hover:bg-gray-50 text-gray-700 font-semibold px-4 py-2 rounded-full border border-gray-200 shadow-sm hover:shadow-md hover:text-emerald-700 hover:border-emerald-200"
-      >
-        <div className="bg-gray-100 group-hover:bg-emerald-100 text-gray-600 group-hover:text-emerald-700 p-1.5 rounded-full transition-colors">
-          <ArrowLeft className="w-4 h-4" />
-        </div>
-        Back
-      </button>
-
       <div className="max-w-3xl mx-auto">
         <div className="bg-slate-50/80 border border-gray-100 p-6 rounded-xl mb-8">
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">Pickup & Drop Off Details</h2>
-          <p className="text-gray-500 text-sm font-medium">Provide your pickup and drop off information for a smooth journey</p>
-        </div>
-
-        {/* Tabs */}
-        <div className="flex flex-wrap mb-6 sm:mb-8 border-b border-gray-200">
-          {[
-            { key: 'arrival', label: 'Pickup Details' },
-            { key: 'departure', label: 'Drop Off Details' },
-          ].map(tab => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveSection(tab.key)}
-              className={`px-4 py-2.5 font-medium text-sm flex items-center gap-2 transition-colors border-b-2 ${
-                activeSection === tab.key
-                  ? 'text-gray-900 border-gray-900'
-                  : 'text-gray-500 border-transparent hover:text-gray-700'
-              }`}
-            >
-              <Car className="h-4 w-4" />
-              {tab.label}
-            </button>
-          ))}
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">Pickup Details</h2>
+          <p className="text-gray-500 text-sm font-medium">Tell us where and when you would like to be picked up.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
@@ -244,8 +190,7 @@ const ArrDep = ({ defaultLocation, onNext, onBack, startDate, duration, pickupDr
             </div>
           </div>
 
-          {activeSection === 'arrival' ? (
-            <div className="space-y-5">
+          <div className="space-y-5">
               {/* Pickup City */}
               <div>
                 <label className={labelClass}><MapPin className="h-3.5 w-3.5 text-gray-400" /> Pickup City*</label>
@@ -313,78 +258,7 @@ const ArrDep = ({ defaultLocation, onNext, onBack, startDate, duration, pickupDr
                   {errorEl('arrival_time')}
                 </div>
               </div>
-            </div>
-          ) : (
-            <div className="space-y-5">
-              {/* Drop Off City */}
-              <div>
-                <label className={labelClass}><MapPin className="h-3.5 w-3.5 text-gray-400" /> Drop Off City*</label>
-                <Select
-                  instanceId="dropoff-city"
-                  options={cityOptions}
-                  value={formData.departure.city}
-                  onChange={val => { handleChange('departure', 'city', val); handleChange('departure', 'dropoffAddress', null); }}
-                  placeholder="Select city..."
-                  styles={selectStyles}
-                  menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
-                  menuPosition="fixed"
-                />
-                {errorEl('departure_city')}
-              </div>
-
-              {/* Drop Off Address */}
-              <div>
-                <label className={labelClass}><MapPin className="h-3.5 w-3.5 text-gray-400" /> Drop Off Address*</label>
-                <Select
-                  instanceId="dropoff-address"
-                  options={getLocationOptions(formData.departure.city?.value)}
-                  value={formData.departure.dropoffAddress}
-                  onChange={val => handleChange('departure', 'dropoffAddress', val)}
-                  placeholder={formData.departure.city ? 'Select drop off point...' : 'Select a city first'}
-                  isDisabled={!formData.departure.city}
-                  styles={selectStyles}
-                  menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
-                  menuPosition="fixed"
-                />
-                {errorEl('departure_dropoffAddress')}
-              </div>
-
-              {/* Date & Time */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
-                <div>
-                  <label className={labelClass}><Calendar className="h-3.5 w-3.5 text-gray-400" /> Drop Off Date</label>
-                  <div className="px-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-sm font-medium text-gray-800">
-                    {formatDate(dropoffDate)}
-                  </div>
-                </div>
-                <div>
-                  <label className={labelClass}><Clock className="h-3.5 w-3.5 text-gray-400" /> Drop Off Time*</label>
-                  <div className="flex gap-1.5 items-center">
-                    <div className="flex-1">
-                      <Select instanceId="dep-hour" options={hourOptions} value={formData.departure.time}
-                        onChange={val => handleChange('departure', 'time', val)} placeholder="HH"
-                        styles={selectStyles}
-                        menuPortalTarget={typeof document !== 'undefined' ? document.body : null} menuPosition="fixed" />
-                    </div>
-                    <span className="text-gray-500 font-bold text-lg">:</span>
-                    <div className="flex-1">
-                      <Select instanceId="dep-min" options={minOptions} value={formData.departure.min || { value: '00', label: '00' }}
-                        onChange={val => handleChange('departure', 'min', val)} placeholder="MM"
-                        styles={selectStyles}
-                        menuPortalTarget={typeof document !== 'undefined' ? document.body : null} menuPosition="fixed" />
-                    </div>
-                    <div className="w-[80px]">
-                      <Select instanceId="dep-ampm" options={ampmOptions} value={formData.departure.ampm}
-                        onChange={val => handleChange('departure', 'ampm', val)}
-                        styles={selectStyles} isSearchable={false}
-                        menuPortalTarget={typeof document !== 'undefined' ? document.body : null} menuPosition="fixed" />
-                    </div>
-                  </div>
-                  {errorEl('departure_time')}
-                </div>
-              </div>
-            </div>
-          )}
+          </div>
 
           {/* Buttons */}
           <div className="mt-8 flex flex-col sm:flex-row justify-between gap-4 pt-2">

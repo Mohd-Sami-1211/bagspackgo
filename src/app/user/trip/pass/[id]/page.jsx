@@ -236,16 +236,6 @@ export default function TripPassPage() {
                                     ) : <p className="font-bold text-gray-900 text-[10px] sm:text-xs">TBD</p>}
                                 </div>
                                 <div className="text-center sm:text-left">
-                                    <p className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 flex items-center justify-center sm:justify-start gap-1">Dropoff</p>
-                                    {(arrivalDeparture?.dropoff?.address && arrivalDeparture?.dropoff?.time) ? (
-                                        <div className="flex flex-col gap-0.5">
-                                            <p className="font-bold text-gray-900 text-[10px] sm:text-xs leading-tight">{arrivalDeparture.dropoff.address} {arrivalDeparture.dropoff.location ? `(${arrivalDeparture.dropoff.location})` : ''}</p>
-                                            <p className="font-medium text-gray-500 text-[9px] sm:text-[10px]">{formatDate(arrivalDeparture.dropoff.date || booking.endDate || startDate)} @ {arrivalDeparture.dropoff.time}</p>
-                                            <a href={arrivalDeparture.dropoff.mapLink || `https://maps.google.com/?q=${encodeURIComponent(arrivalDeparture.dropoff.address + ' ' + (arrivalDeparture.dropoff.location || ''))}`} target="_blank" rel="noreferrer" className="text-[9px] text-emerald-600 font-bold hover:underline flex items-center justify-center sm:justify-start mt-0.5"><MapPin className="w-2.5 h-2.5 mr-0.5" /> View Map</a>
-                                        </div>
-                                    ) : <p className="font-bold text-gray-900 text-[10px] sm:text-xs">TBD</p>}
-                                </div>
-                                <div className="text-center sm:text-left">
                                     <p className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Guests</p>
                                     <p className="font-bold text-gray-900 text-sm sm:text-base">{numPeople} Pax</p>
                                 </div>
@@ -417,27 +407,6 @@ export default function TripPassPage() {
                                                 </div>
                                             )}
                                             
-                                            {/* Last Day Dropoff */}
-                                            {idx === itineraryList.length - 1 && booking.arrivalDeparture?.dropoff?.address && (
-                                                <div className="mb-2 p-1.5 bg-blue-50 rounded border border-blue-100 flex items-start gap-1.5">
-                                                    <Navigation className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-                                                    <div className="min-w-0">
-                                                        <p className="text-[10px] font-bold text-gray-800 leading-tight mb-0.5">
-                                                            Final Dropoff Details
-                                                        </p>
-                                                        <p className="text-[9px] font-medium text-gray-600 leading-tight mb-1">
-                                                            <span className="font-bold">Date:</span> {formatDate(booking.arrivalDeparture.dropoff.date || booking.endDate || startDate)} &nbsp;|&nbsp; 
-                                                            <span className="font-bold">Time:</span> {booking.arrivalDeparture.dropoff.time || 'TBD'}
-                                                        </p>
-                                                        <p className="text-[9px] font-medium text-gray-600 leading-tight mb-1">
-                                                            <span className="font-bold">Location:</span> {booking.arrivalDeparture.dropoff.address}{booking.arrivalDeparture.dropoff.location ? `, ${booking.arrivalDeparture.dropoff.location}` : ''}.
-                                                        </p>
-                                                        <a href={booking.arrivalDeparture.dropoff.mapLink || `https://maps.google.com/?q=${encodeURIComponent(booking.arrivalDeparture.dropoff.address + ' ' + booking.arrivalDeparture.dropoff.location)}`} target="_blank" rel="noreferrer" className="text-[10px] text-blue-600 font-bold hover:underline inline-flex items-center mt-0.5">
-                                                            <MapPin className="w-3 h-3 mr-1" /> Open Map Directions
-                                                        </a>
-                                                    </div>
-                                                </div>
-                                            )}
 
                                             {day.destinationPhotos && day.destinationPhotos.length > 0 && (
                                                 <div className="mb-2">

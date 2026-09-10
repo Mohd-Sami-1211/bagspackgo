@@ -425,7 +425,7 @@ const NewPackage = ({ initialData = null, isEdit = false, adminMode = false, pro
     // Pickup city validation
     const hasValidCity = pickupDropCities.some(c => c.cityName.trim() && c.locations?.some(l => l.name.trim()));
     if (!hasValidCity) {
-      errors.pickupCity = 'At least one pickup/drop-off city with a specific location name is required';
+      errors.pickupCity = 'At least one pickup city with a specific location name is required';
     }
 
     // ── Inclusions & Exclusions Validation ──
@@ -1164,12 +1164,12 @@ const NewPackage = ({ initialData = null, isEdit = false, adminMode = false, pro
               </div>
             </div>
 
-            {/* Pickup & Drop Off Locations */}
+            {/* Pickup Locations */}
             <div className={`p-6 rounded-xl border mt-6 md:col-span-12 ${validationErrors.pickupCity ? 'bg-rose-50/50 border-rose-200' : 'bg-emerald-50/50 border-emerald-100'}`} data-error="pickupCity">
               <div className="flex justify-between items-center mb-4">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-800">Pickup & Drop Off Locations *</h3>
-                  <p className="text-sm text-gray-500">Add cities and specific locations for your customers</p>
+                  <h3 className="text-lg font-semibold text-gray-800">Pickup Locations *</h3>
+                  <p className="text-sm text-gray-500">Add the cities and specific points where customers can be picked up</p>
                 </div>
                 <button type="button" onClick={() => {
                   const cityId = Date.now();

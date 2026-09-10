@@ -7,7 +7,7 @@ export default function TripDetailsLayout({ children }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
-      className="bg-white min-h-screen pt-[80px] w-full -mt-20" // Adjust based on your navbar height
+      className="min-h-screen w-full bg-[#f4f3ee]"
     >
       {children}
     </motion.div>

@@ -43,7 +43,7 @@ const packageSchema = new mongoose.Schema({
     trekName: { type: String, default: '' },
     trekLevel: { type: String, enum: ['easy', 'moderate', 'difficult', ''], default: '' },
 
-    // Pickup & Drop off locations by city
+    // Transport locations by city (trek packages may also provide a drop-off time)
     pickupDropCities: [{
         cityName: { type: String, required: true },
         locations: [{

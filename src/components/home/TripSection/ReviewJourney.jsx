@@ -292,14 +292,14 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
               `/user/trip/booking-success?bookingId=${bookingId}&ref=${verifyData.bookingRef}`,
             );
           } else {
-            router.push(`/user/trip/booking-failed?return=/user/trip/guidelist/tripdetails/${packageId}`);
+            router.push(`/user/trip/booking-failed?return=/trip/${packageId}`);
           }
         },
         modal: { ondismiss: () => setIsPaymentLoading(false) },
       });
       
       rzp.on('payment.failed', function (response) {
-         router.push(`/user/trip/booking-failed?return=/user/trip/guidelist/tripdetails/${packageId}`);
+         router.push(`/user/trip/booking-failed?return=/trip/${packageId}`);
       });
       
       rzp.open();
@@ -307,7 +307,7 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
       console.error("[Payment] Error:", err);
       // setPaymentError(err.message || "Payment failed.");
       // setIsPaymentLoading(false);
-      router.push(`/user/trip/booking-failed?return=/user/trip/guidelist/tripdetails/${packageId}`);
+      router.push(`/user/trip/booking-failed?return=/trip/${packageId}`);
     }
   };
 
@@ -444,11 +444,9 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
           {/* Logistics Card */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8 flex flex-col">
             <h3 className="text-base font-bold text-gray-900 mb-6 flex items-center gap-2">
-              <Navigation className="w-5 h-5 text-emerald-500" /> Transportation
+              <Navigation className="w-5 h-5 text-emerald-500" /> Pickup
             </h3>
-            <div className="flex-1 flex flex-col relative gap-8 ml-2">
-              <div className="absolute top-2 bottom-6 left-[7px] w-0.5 bg-gray-100 -z-0"></div>
-
+            <div className="flex-1 flex flex-col relative ml-2">
               {/* Pickup Node */}
               <div className="relative z-10 pl-8">
                 <div className="absolute top-0.5 left-0 w-4 h-4 rounded-full border-[4px] border-emerald-100 bg-emerald-500"></div>
@@ -476,32 +474,6 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
                 )}
               </div>
 
-              {/* Dropoff Node */}
-              <div className="relative z-10 pl-8">
-                <div className="absolute top-0.5 left-0 w-4 h-4 rounded-full border-[4px] border-emerald-100 bg-gray-400"></div>
-                <p className="text-xs font-semibold text-slate-500 tracking-wider uppercase mb-1 line-clamp-1 truncate pr-2">
-                  Drop Off • {arrivalDeparture?.dropoff?.time || "TBD"}
-                </p>
-                <p
-                  className="font-bold text-gray-900 text-sm line-clamp-1"
-                  title={
-                    arrivalDeparture?.dropoff?.address?.label ||
-                    arrivalDeparture?.dropoff?.address ||
-                    "No location chosen"
-                  }
-                >
-                  {arrivalDeparture?.dropoff?.address?.label ||
-                    arrivalDeparture?.dropoff?.address ||
-                    "No location chosen"}
-                </p>
-                {arrivalDeparture?.dropoff?.location && (
-                  <p className="text-xs font-semibold text-gray-500 mt-0.5">
-                    City:{" "}
-                    {arrivalDeparture.dropoff.location?.label ||
-                      arrivalDeparture.dropoff.location}
-                  </p>
-                )}
-              </div>
             </div>
           </div>
 
@@ -1122,4 +1094,3 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
 };
 
 export default ReviewJourney;
-

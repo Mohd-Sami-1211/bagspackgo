@@ -23,23 +23,33 @@ import {
   Utensils,
   Car,
   ShieldCheck,
-  Mountain
+  Mountain,
+  Images,
+  X,
+  ChevronLeft,
+  ZoomIn,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
-import Itenary from "src/components/home/TripSection/Itenary";
+import PackageItinerary from "src/components/home/TripSection/PackageItinerary";
 import ArrDep from "src/components/home/TripSection/Arr-Dep";
 import PersonalDetails from "src/components/home/TripSection/PersonalDetails";
 import { useAuth } from "@/context/AuthContext";
 import { useSavedItemIds, useTripPhotos } from "@/lib/useTripCache";
-import ProgressiveImage from "@/components/common/ProgressiveImage";
 
-const AGENDA_LABELS = {
-  'arrival': 'Arrival & Check-in',
-  'exploration': 'Exploration',
-  'travel-day': 'Travel Day',
-  'checkout': 'Exploration & Checkout'
-};
+const PACKAGE_HERO_IMAGES = [
+  "/images/package-heroes/kashmir-dawn-lake.webp",
+  "/images/package-heroes/kashmir-spring-valley.webp",
+  "/images/package-heroes/kashmir-dal-dawn.webp",
+  "/images/package-heroes/kashmir-winter-river.webp",
+  "/images/package-heroes/kashmir-autumn-chinar.webp",
+];
+
+function packageHeroFor(packageKey) {
+  const key = String(packageKey || "bagspackgo");
+  const hash = [...key].reduce((value, character) => ((value * 31) + character.charCodeAt(0)) >>> 0, 0);
+  return PACKAGE_HERO_IMAGES[hash % PACKAGE_HERO_IMAGES.length];
+}
 
 const GuideDetails = ({ guide }) => {
   const searchParams = useSearchParams();
@@ -78,7 +88,7 @@ const GuideDetails = ({ guide }) => {
       return packagesInRange?.[0]; // Return first package in range
     }
 
-    return null;
+    return guide.packages?.[0] || null;
   };
 
   const selectedPackage = findSelectedPackage();
@@ -112,7 +122,9 @@ const GuideDetails = ({ guide }) => {
       const matchedTier = tiers.find(t => numPeople >= t.minPeople && numPeople <= t.maxPeople) || tiers[0];
       
       if (matchedTier) {
-        perPersonPrice = Number(matchedTier.price);
+        const tierPrice = Number(matchedTier.price || 0);
+        const tierDiscount = Math.min(100, Math.max(0, Number(matchedTier.discount || 0)));
+        perPersonPrice = tierPrice * (1 - tierDiscount / 100);
       } else {
         perPersonPrice = Number(
           selectedPackage.price?.[category] ||
@@ -153,7 +165,51 @@ const GuideDetails = ({ guide }) => {
 
   // Background fetch for Base64 photos
   const pkgId = packageId || selectedPackage?._id || selectedPackage?.id;
-  const { data: photosData, isLoading: photosLoading } = useTripPhotos(pkgId);
+  const packageHeroImage = packageHeroFor(pkgId || guide.id || selectedPackage?.label);
+  const [galleryOpen, setGalleryOpen] = useState(false);
+  const [galleryPage, setGalleryPage] = useState(1);
+  const [activeGalleryPhoto, setActiveGalleryPhoto] = useState(null);
+  const [shouldLoadGallery, setShouldLoadGallery] = useState(false);
+  const galleryLoadRef = useRef(null);
+  const { data: photosData, isLoading: photosLoading } = useTripPhotos(shouldLoadGallery ? pkgId : null, { page: 1, limit: 5 });
+  const { data: galleryData, isLoading: galleryLoading } = useTripPhotos(
+    galleryOpen ? pkgId : null,
+    { page: galleryPage, limit: 12 },
+  );
+
+  useEffect(() => {
+    const target = galleryLoadRef.current;
+    if (!target || shouldLoadGallery) return undefined;
+
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return;
+      setShouldLoadGallery(true);
+      observer.disconnect();
+    }, { rootMargin: "240px 0px" });
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [shouldLoadGallery]);
+
+  useEffect(() => {
+    if (!galleryOpen && !activeGalleryPhoto) return undefined;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [galleryOpen, activeGalleryPhoto]);
+
+  useEffect(() => {
+    if (!galleryOpen && !activeGalleryPhoto) return undefined;
+    const handleKeyDown = (event) => {
+      if (event.key !== "Escape") return;
+      if (activeGalleryPhoto) setActiveGalleryPhoto(null);
+      else setGalleryOpen(false);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [galleryOpen, activeGalleryPhoto]);
 
   const { user, loading: authLoading, openAuthModal } = useAuth();
   const isUserAuthenticated = !authLoading && user?.role === "user";
@@ -193,7 +249,6 @@ const GuideDetails = ({ guide }) => {
   const [activeTab, setActiveTab] = useState("dayByDay");
   const [currentDay, setCurrentDay] = useState(1);
   const [acceptTerms, setAcceptTerms] = useState(false);
-  const [viewingDay, setViewingDay] = useState(null);
   const [itenaries, setItenaries] = useState([]);
   const [errors, setErrors] = useState({});
   const [arrDepCompleted, setArrDepCompleted] = useState(false);
@@ -251,6 +306,31 @@ const GuideDetails = ({ guide }) => {
     }
   };
 
+  const handleSharePackage = async () => {
+    const directPackageUrl = new URL(window.location.href);
+    if (pkgId) {
+      directPackageUrl.pathname = `/trip/${pkgId}`;
+      directPackageUrl.search = "";
+    }
+    const shareData = {
+      title: selectedPackage?.label || guide.name,
+      text: `Explore ${selectedPackage?.label || guide.name} on bagspackgo.`,
+      url: directPackageUrl.toString(),
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+        return;
+      }
+
+      await navigator.clipboard.writeText(directPackageUrl.toString());
+      alert("Package link copied to clipboard.");
+    } catch (error) {
+      if (error?.name !== "AbortError") console.error("Unable to share package", error);
+    }
+  };
+
   // Initial check for saved status
   const pkgIdToCheck = packageId || selectedPackage?._id || selectedPackage?.id || guide._id;
   const { data: savedData } = useSavedItemIds();
@@ -266,8 +346,6 @@ const GuideDetails = ({ guide }) => {
     name: selectedPackage?.label || "Basic Package",
     destination: guide.location,
     locations: ["Pahalgam", "Gulmarg", "Sonmarg"],
-    departureTime: "09:00",
-    departureAddress: "Central Meeting Point",
     hotel: {
       name: "Standard Hotel",
       location: "Pahalgam",
@@ -285,15 +363,9 @@ const GuideDetails = ({ guide }) => {
   };
 
   const [arrivalDepartureData, setArrivalDepartureData] = useState({
-    arrival: {
-      city: "",
-      pickupAddress: "",
-      date: "",
-      time: "",
-    },
-    departure: {
-      city: "",
-      dropoffAddress: "",
+    pickup: {
+      location: "",
+      address: "",
       date: "",
       time: "",
     },
@@ -305,54 +377,8 @@ const GuideDetails = ({ guide }) => {
     children: [],
   });
 
-  const scrollContainerRef = useRef(null);
-  const nodeRefs = useRef([]);
   const pageTopRef = useRef(null);
   const tabsRef = useRef(null);
-  const dayCardRefs = useRef([]);
-  const dayCardsContainerRef = useRef(null);
-
-  // Scroll to tabs section when viewing day details so user stays near the content
-  useEffect(() => {
-    if (viewingDay && tabsRef.current) {
-      tabsRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  }, [viewingDay]);
-
-  // Auto-scroll to selected day card
-  useEffect(() => {
-    if (!viewingDay && currentDay && dayCardRefs.current[currentDay - 1]) {
-      const dayCard = dayCardRefs.current[currentDay - 1];
-      const container = dayCardsContainerRef.current;
-
-      if (dayCard && container) {
-        const cardTop = dayCard.offsetTop;
-        const containerTop = container.offsetTop;
-        const scrollPosition = cardTop - containerTop - 20; // 20px offset
-
-        container.scrollTo({
-          top: scrollPosition,
-          behavior: "smooth",
-        });
-      }
-    }
-  }, [currentDay, viewingDay]);
-
-  useEffect(() => {
-    const activeNode = nodeRefs.current[currentDay - 1];
-    const container = scrollContainerRef.current;
-
-    if (activeNode && container) {
-      const nodeCenter = activeNode.offsetLeft + activeNode.offsetWidth / 2;
-      const containerCenter = container.offsetWidth / 2;
-      const scrollPos = nodeCenter - containerCenter;
-
-      container.scrollTo({
-        left: scrollPos,
-        behavior: "smooth",
-      });
-    }
-  }, [currentDay]);
 
   // Initialize itineraries using REAL package itinerary data if available
   useEffect(() => {
@@ -441,8 +467,8 @@ const GuideDetails = ({ guide }) => {
             icon: inclusiveIconMap[key] || (
               <ShieldCheck className="h-5 w-5 text-green-600" />
             ),
-            title: val.title || key.charAt(0).toUpperCase() + key.slice(1),
-            description: val.title || "",
+            title: key === "pickupDropoff" ? "Pickup" : val.title || key.charAt(0).toUpperCase() + key.slice(1),
+            description: key === "pickupDropoff" ? "Pickup included" : val.title || "",
             items: (val.details || []).filter((d) => d && d.trim()),
           }))
         : [
@@ -461,17 +487,8 @@ const GuideDetails = ({ guide }) => {
           },
         ];
 
-  const handleViewDay = (dayNumber) => {
-    setViewingDay(dayNumber);
-    setCurrentDay(dayNumber);
-  };
-
-  const handleBackToList = () => {
-    setViewingDay(null);
-  };
-
   const handleNextTab = () => {
-    if (activeTab === "dayByDay" && !viewingDay) {
+    if (activeTab === "dayByDay") {
       if (!isLoggedIn) {
         openAuthModal({ closable: true, tab: "user" });
         return;
@@ -499,7 +516,6 @@ const GuideDetails = ({ guide }) => {
       setActiveTab("arrivalDeparture");
     } else {
       setErrors({});
-      setViewingDay(null);
     }
   };
 
@@ -518,19 +534,6 @@ const GuideDetails = ({ guide }) => {
     }, 50);
   };
 
-  const formatTimeWithAMPM = (time) => {
-    if (!time || !time.toString().trim()) return "Not specified";
-    const t = time.toString().trim();
-    if (t.includes("AM") || t.includes("PM")) return t;
-    // Only convert if it's a valid HH:MM format
-    const match = t.match(/^(\d{1,2}):(\d{2})$/);
-    if (!match) return t; // Return as-is (could be alphabets or any format)
-    const hourNum = parseInt(match[1], 10);
-    const ampm = hourNum >= 12 ? "PM" : "AM";
-    const displayHour = hourNum % 12 || 12;
-    return `${displayHour}:${match[2]} ${ampm}`;
-  };
-
   const isTabDisabled = (tabKey) => {
     switch (tabKey) {
       case "arrivalDeparture":
@@ -540,12 +543,6 @@ const GuideDetails = ({ guide }) => {
       default:
         return false;
     }
-  };
-
-  // Handle day node click - set current day and scroll to that day card
-  const handleDayNodeClick = (dayNumber) => {
-    setCurrentDay(dayNumber);
-    // Auto-scroll will be handled by the useEffect above
   };
 
   // Handle navigation to review page
@@ -602,42 +599,84 @@ const GuideDetails = ({ guide }) => {
     if (dateParam) params.set("date", dateParam);
     if (packageId) params.set("packageId", packageId);
 
-    // Debug logging
-    console.log("Navigating to review page with guide ID:", guide.id);
-    console.log("Guide object:", guide);
-    console.log(
-      "Path being used:",
-      `/user/trip/guidelist/tripdetails/${guide.id}/reviewjourney`,
-    );
-    console.log(
-      "Full URL:",
-      `/user/trip/guidelist/tripdetails/${guide.id}/reviewjourney?${params.toString()}`,
-    );
-
-    // Try different route options:
-
-    // Option 1: Original path
-    // router.push(`/user/trip/guidelist/tripdetails/${guide.id}/reviewjourney?${params.toString()}`);
-
-    // Option 2: Simpler path (common pattern)
-    // router.push(`/trip/review/${guide.id}?${params.toString()}`);
-
-    // Option 3: Check if guide.id exists and use a fallback
     const guideId = guide?.id || guide?._id || "unknown";
     router.push(
       `/user/trip/guidelist/tripdetails/${guideId}/reviewjourney?${params.toString()}`,
     );
 
-    // Option 4: If you have a separate review page route
-    // router.push(`/review-journey?guideId=${guideId}&${params.toString()}`);
   };
 
   return (
     <>
       <div
-        className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 -mt-16 sm:-mt-10 md:-mt-12 lg:-mt-14"
+        className="relative w-full"
         ref={pageTopRef}
       >
+      <section className="relative flex min-h-[620px] items-end overflow-hidden bg-[#102a24] pb-12 pt-44 text-white sm:min-h-[640px] sm:pb-16 sm:pt-44">
+        <img
+          src={packageHeroImage}
+          alt="Kashmir mountain landscape"
+          fetchPriority="high"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(6,18,15,0.94)_0%,rgba(6,18,15,0.70)_42%,rgba(6,18,15,0.14)_76%,rgba(6,18,15,0.34)_100%)]" />
+        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#102a24] to-transparent" />
+
+        <div className="absolute inset-x-0 top-20 z-10 sm:top-24">
+          <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between gap-4">
+              <button
+                onClick={() => router.back()}
+                className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/25 px-4 py-2.5 text-sm font-semibold text-white shadow-lg backdrop-blur-md transition hover:bg-white/15"
+              >
+                <ArrowLeft className="h-4 w-4" /> Back
+              </button>
+              <div className="flex items-center gap-2">
+                <button type="button" onClick={handleSharePackage} className="flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-black/25 text-white shadow-lg backdrop-blur-md transition hover:bg-white/15" aria-label="Share package"><Share2 className="h-4 w-4" /></button>
+                <button type="button" onClick={handleSavePackage} className="flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-black/25 text-white shadow-lg backdrop-blur-md transition hover:bg-white/15" aria-label={isSaved ? "Remove saved package" : "Save package"}><Bookmark className={`h-4 w-4 ${isSaved ? "fill-white" : ""}`} /></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="relative mx-auto grid w-full max-w-7xl gap-8 px-4 sm:px-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-end lg:px-8">
+          <div className="max-w-3xl">
+            {isPremiumPackage && <div className="mb-4"><span className="inline-flex items-center rounded-full bg-amber-300 px-3 py-1.5 text-xs font-bold text-[#2b2414]"><Crown className="mr-1.5 h-3.5 w-3.5" /> Premium</span></div>}
+            <h1 className="max-w-3xl font-serif text-4xl leading-[0.98] tracking-[-0.045em] sm:text-6xl lg:text-7xl">
+              {selectedPackage?.label || guide.name}
+            </h1>
+            <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-3 text-sm text-white/75 sm:text-base">
+              <span className="inline-flex items-center gap-2"><MapPin className="h-4 w-4 text-emerald-300" /> {selectedPackage?.destination || guide.location}</span>
+              <span className="inline-flex items-center gap-2"><Clock className="h-4 w-4 text-emerald-300" /> {priceDetails.days} days · {Math.max(0, priceDetails.days - 1)} nights</span>
+              <span className="inline-flex items-center gap-2"><Users className="h-4 w-4 text-emerald-300" /> {numPeople} traveller{numPeople === 1 ? "" : "s"}</span>
+            </div>
+            <a href={`/user/provider/${guide.providerId || guide._id || guide.id}`} className="mt-6 inline-flex items-center gap-3 rounded-full border border-white/15 bg-black/20 py-2 pl-2 pr-4 text-sm backdrop-blur-md transition hover:bg-white/10">
+              <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-white text-sm font-bold text-[#17372f]">
+                {guide.logo ? <img src={guide.logo} alt="" className="h-full w-full object-cover" /> : (guide.companyName || guide.name)?.charAt(0)}
+              </span>
+              <span><span className="block text-[11px] uppercase tracking-wider text-white/50">Hosted by</span><span className="font-semibold">{guide.companyName || guide.name}</span></span>
+              {guide?.rating > 0 && <span className="ml-2 inline-flex items-center gap-1 border-l border-white/15 pl-3 font-semibold"><Star className="h-4 w-4 fill-amber-300 text-amber-300" /> {guide.rating}</span>}
+            </a>
+          </div>
+
+          <div className="rounded-[1.75rem] border border-white/15 bg-black/25 p-5 shadow-2xl backdrop-blur-xl sm:p-6">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/50">Starting from</p>
+            <div className="mt-2 flex items-end gap-2">
+              <span className="text-3xl font-extrabold tracking-tight sm:text-4xl">₹{Math.round(priceDetails.perPersonPrice).toLocaleString("en-IN")}</span>
+              <span className="pb-1 text-sm text-white/60">/{peopleText}</span>
+            </div>
+            <p className="mt-2 text-sm leading-6 text-white/70">Book your package by paying only <span className="font-extrabold text-amber-300">30% now</span></p>
+            <button
+              onClick={() => tabsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
+              className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-5 py-3.5 text-sm font-bold text-[#17372f] transition hover:-translate-y-0.5 hover:bg-emerald-50"
+            >
+              View itinerary <ArrowRight className="h-4 w-4" />
+            </button>
+            <div className="mt-4 flex items-center justify-center gap-2 text-xs font-medium text-white/55"><ShieldCheck className="h-4 w-4 text-emerald-300" /> Secure checkout · Local verified company</div>
+          </div>
+        </div>
+      </section>
+
       {/* Toast Notification - Shadcn Style */}
       {showSaveToast && (
         <div className="fixed bottom-4 sm:bottom-6 sm:right-6 z-[100] flex w-full max-w-[420px] flex-col p-4 sm:p-0">
@@ -655,7 +694,7 @@ const GuideDetails = ({ guide }) => {
 
       {/* Auth Gate Overlay — replaced by global AuthModal */}
       {/* Guide Card - Made Responsive */}
-      <div className="w-full bg-white pb-6 sm:pb-8 md:pb-10 font-sans border-b">
+      <div className="hidden">
         <div className="max-w-7xl mx-auto relative flex flex-col items-center">
 
           <div
@@ -789,65 +828,76 @@ const GuideDetails = ({ guide }) => {
     </div>
 
     {/* Full Screen Layout for Detail Panes */}
-    <div className="w-full bg-slate-50 py-8 pb-12 overflow-hidden font-sans">
+    <div className="w-full overflow-hidden bg-[#f4f3ee] py-8 pb-16 font-sans sm:py-12">
+      <div ref={galleryLoadRef} className="h-px w-full" aria-hidden="true" />
       {/* About Package Overview & Gallery - Full Width Section Above Layout */}
       {(selectedPackage?.aboutPackage?.trim() || photosLoading || photosData?.data?.packagePhotos?.length > 0) && (
-        <div className="w-full px-3 sm:px-4 md:px-6 lg:px-8 mb-8 overflow-hidden">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 lg:p-8 overflow-hidden">
+        <div className="mx-auto mb-10 w-full max-w-7xl overflow-hidden px-4 sm:px-6 lg:px-8">
+          <div className="overflow-hidden rounded-[2rem] border border-[#17372f]/10 bg-white p-5 shadow-[0_24px_70px_-50px_rgba(23,55,47,0.65)] sm:p-8 lg:p-10">
             {selectedPackage?.aboutPackage?.trim() && (
-              <div className="mb-6 sm:mb-8">
-                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-4 flex items-center gap-2">
-                  <Mountain className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600 flex-shrink-0" /> <span className="truncate">About This Trip</span>
+              <div className="mb-8 sm:mb-10">
+                <p className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-[#9b7440]">Package overview</p>
+                <h2 className="mb-4 flex items-center gap-3 font-serif text-3xl tracking-[-0.03em] text-[#17372f] sm:text-4xl">
+                  <Mountain className="h-6 w-6 flex-shrink-0 text-[#1d6b55]" /> <span>About this trip</span>
                 </h2>
-                <div className="bg-slate-50 rounded-xl p-4 sm:p-5 border border-slate-100 overflow-hidden">
-                  <p className="text-sm sm:text-[15px] text-slate-700 leading-relaxed whitespace-pre-wrap break-words">{selectedPackage.aboutPackage}</p>
-                </div>
+                <p className="max-w-4xl whitespace-pre-wrap break-words text-base leading-8 text-[#586b65]">{selectedPackage.aboutPackage}</p>
               </div>
             )}
             
             {(photosLoading || photosData?.data?.packagePhotos?.length > 0) && (
               <div>
-                <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                  📸 Package Gallery
-                </h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <div className="mb-5 flex items-end justify-between gap-4">
+                  <div>
+                    <p className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-[#9b7440]">A glimpse of the journey</p>
+                    <h3 className="flex items-center gap-3 font-serif text-3xl tracking-[-0.03em] text-[#17372f]"><Images className="h-6 w-6 text-[#1d6b55]" /> Package gallery</h3>
+                  </div>
+                  {!photosLoading && photosData?.pagination?.total > 0 && (
+                    <button onClick={() => { setGalleryPage(1); setGalleryOpen(true); }} className="hidden shrink-0 rounded-full border border-[#17372f]/15 px-4 py-2 text-sm font-bold text-[#17372f] transition hover:bg-[#edf3ee] sm:inline-flex">View all {photosData.pagination.total}</button>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-2 overflow-hidden rounded-[1.5rem] sm:gap-3 lg:grid-cols-4 lg:grid-rows-2">
                   {photosLoading ? (
-                    // While the API is loading, show blurred thumbnails with progress rings
-                    // We show 4 placeholder progressive images (no src yet, no thumbnail yet)
-                    [...Array(4)].map((_, i) => (
-                      <ProgressiveImage
-                        key={i}
-                        src={null}
-                        thumbnail={null}
-                        alt={`Package view ${i + 1}`}
-                        className="aspect-[4/3] rounded-xl shadow-sm border border-gray-100"
-                      />
+                    [...Array(5)].map((_, i) => (
+                      <div key={i} className={`animate-pulse bg-slate-200 ${i === 0 ? "col-span-2 aspect-[16/10] lg:row-span-2 lg:aspect-auto" : "aspect-[4/3] lg:aspect-auto lg:min-h-40"}`} />
                     ))
                   ) : (
                     photosData.data.packagePhotos.map((photo, i) => (
-                      <ProgressiveImage
+                      <button
                         key={i}
-                        src={photo}
-                        thumbnail={photosData.data.packagePhotoThumbnails?.[i] || null}
-                        alt={`Package view ${i + 1}`}
-                        className="aspect-[4/3] rounded-xl shadow-sm border border-gray-100 group hover:shadow-md transition-shadow duration-300"
-                        imgClassName="group-hover:scale-105 transition-transform duration-500"
-                      />
+                        type="button"
+                        onClick={() => {
+                          const isLastPreview = i === photosData.data.packagePhotos.length - 1;
+                          if (isLastPreview && photosData.pagination?.total > photosData.data.packagePhotos.length) {
+                            setGalleryPage(1);
+                            setGalleryOpen(true);
+                          } else {
+                            setActiveGalleryPhoto(photo);
+                          }
+                        }}
+                        className={`group relative overflow-hidden bg-[#17372f] text-left ${i === 0 ? "col-span-2 aspect-[16/10] lg:row-span-2 lg:aspect-auto" : "aspect-[4/3] lg:aspect-auto lg:min-h-40"}`}
+                      >
+                        <img src={photo} alt={`Package view ${i + 1}`} loading={i > 1 ? "lazy" : "eager"} decoding="async" className="h-full w-full object-cover transition duration-700 group-hover:scale-105 group-hover:opacity-90" />
+                        <span className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-black/35 text-white opacity-0 backdrop-blur-md transition group-hover:opacity-100"><ZoomIn className="h-4 w-4" /></span>
+                        {i === photosData.data.packagePhotos.length - 1 && photosData.pagination?.total > photosData.data.packagePhotos.length && (
+                          <span className="absolute inset-0 flex items-center justify-center bg-black/45 text-center text-base font-bold text-white backdrop-blur-[2px] sm:text-lg">+{photosData.pagination.total - photosData.data.packagePhotos.length} View more</span>
+                        )}
+                      </button>
                     ))
                   )}
                 </div>
+                {!photosLoading && photosData?.pagination?.total > 0 && <button onClick={() => { setGalleryPage(1); setGalleryOpen(true); }} className="mt-4 inline-flex w-full items-center justify-center rounded-full border border-[#17372f]/15 px-4 py-3 text-sm font-bold text-[#17372f] sm:hidden">View all {photosData.pagination.total} photos</button>}
               </div>
             )}
           </div>
         </div>
       )}
 
-      <div className="w-full px-3 sm:px-4 md:px-6 lg:px-8 flex flex-col lg:flex-row gap-4 sm:gap-6 md:gap-8">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-5 px-4 sm:px-6 lg:flex-row lg:gap-8 lg:px-8">
         <div className="w-full lg:w-8/12 scroll-mt-24 sm:scroll-mt-32" ref={tabsRef}>
-          <div className="flex bg-white rounded-t-xl shadow-sm overflow-hidden border border-gray-200 mb-1.5">
+          <div className="flex gap-1 overflow-x-auto rounded-[1.4rem] border border-[#17372f]/10 bg-white p-1.5 shadow-[0_18px_55px_-42px_rgba(23,55,47,0.8)]">
             {[
               { key: "dayByDay", label: "Day by Day" },
-              { key: "arrivalDeparture", label: "Pickup/Drop Off" },
+              { key: "arrivalDeparture", label: "Pickup Details" },
               { key: "personalDetails", label: "Personal Details" },
             ].map((tab) => (
               <button
@@ -864,11 +914,11 @@ const GuideDetails = ({ guide }) => {
                   }
                   setActiveTab(tab.key);
                 }}
-                className={`flex-1 text-center text-xs sm:text-sm font-semibold py-3 border-b-2 transition-all ${activeTab === tab.key
-                    ? "text-slate-900 border-slate-900 bg-white"
+                className={`min-w-[112px] flex-1 rounded-2xl px-2 py-3 text-center text-xs font-bold transition-all sm:text-sm ${activeTab === tab.key
+                    ? "bg-[#17372f] text-white shadow-sm"
                     : isTabDisabled(tab.key)
-                      ? "text-slate-400 bg-slate-50/50 cursor-not-allowed border-transparent"
-                      : "text-slate-500 hover:text-slate-700 bg-slate-50/50 border-transparent hover:bg-slate-100/50"
+                      ? "cursor-not-allowed text-slate-300"
+                      : "text-[#61716c] hover:bg-[#edf3ee] hover:text-[#17372f]"
                   }`}
                 disabled={isTabDisabled(tab.key)}
               >
@@ -877,330 +927,26 @@ const GuideDetails = ({ guide }) => {
             ))}
           </div>
 
-          <div className="bg-white rounded-b-xl shadow-sm px-4 sm:px-6 py-4 sm:py-5">
+          <div className="mt-3 rounded-[1.75rem] border border-[#17372f]/10 bg-white px-4 py-5 shadow-[0_22px_65px_-50px_rgba(23,55,47,0.75)] sm:px-6 sm:py-7">
             {activeTab === "dayByDay" && (
               <>
                 <div className="flex justify-between items-center mb-4 sm:mb-5">
-                  <h3 className="text-base sm:text-lg font-semibold text-green-500 ml-0 sm:ml-5">
-                    {viewingDay ? `Day ${viewingDay}` : "Your Itinerary"}
+                  <h3 className="font-serif text-2xl tracking-[-0.02em] text-[#17372f] sm:ml-2 sm:text-3xl">
+                    Your Itinerary
                   </h3>
                 </div>
 
 
 
-                {viewingDay ? (
-                  <div>
-                    <button
-                      onClick={handleBackToList}
-                      className="flex items-center text-green-600 mb-4 hover:text-green-700 transition-colors text-sm"
-                    >
-                      <ArrowLeft className="h-4 w-4 mr-1" />
-                      Back to Overview
-                    </button>
+                <PackageItinerary
+                  days={itenaries}
+                  activeDay={currentDay}
+                  onDayChange={setCurrentDay}
+                  packageId={pkgId}
+                />
 
-                    <Itenary
-                      day={itenaries[viewingDay - 1]}
-                      locations={defaultPackage.locations}
-                      photosData={photosData}
-                      photosLoading={photosLoading}
-                      dayIndex={viewingDay - 1}
-                      thumbnailsReady={!photosLoading && !!photosData?.data?.itineraryPhotos}
-                      hotels={
-                        guide.hotelsAvailable?.map((name, i) => ({
-                          id: `hotel-${i + 1}`,
-                          name,
-                          location:
-                            defaultPackage.locations[
-                            viewingDay % defaultPackage.locations.length
-                            ],
-                          price: "$100-$200/night",
-                        })) || []
-                      }
-                      activities={
-                        guide.activitiesAvailable?.map((name, i) => ({
-                          id: i + 1,
-                          name,
-                          location:
-                            defaultPackage.locations[
-                            viewingDay % defaultPackage.locations.length
-                            ],
-                          duration: i % 2 === 0 ? "2 hours" : "1 hour",
-                        })) || []
-                      }
-                      guide={guide}
-                      isEditing={false}
-                      setIsEditing={() => { }}
-                    />
-                  </div>
-                ) : (
-                  <div className="flex flex-col md:flex-row">
-                    {/* Timeline for medium screens and up */}
-                    <div className="hidden md:block md:w-1/4 pr-5">
-                      <div className="relative h-full">
-                        <div className="absolute left-1/2 top-0 h-full w-0.5 bg-slate-200 -translate-x-1/2">
-                          <div
-                            className={`w-0.5 transition-all duration-500 bg-emerald-600`}
-                            style={{
-                              height: `${(currentDay / numDays) * 100}%`,
-                            }}
-                          ></div>
-                        </div>
-                        <div className="h-full flex flex-col justify-between">
-                          {itenaries.map((day, index) => {
-                            const dayNum = index + 1;
-                            const isActive = dayNum <= currentDay;
-                            const isCurrent = dayNum === currentDay;
-                            return (
-                              <div
-                                key={dayNum}
-                                className="relative flex items-center justify-center cursor-pointer"
-                                style={{ height: "104px" }}
-                                onClick={() => handleDayNodeClick(dayNum)}
-                              >
-                                <div
-                                  className={`absolute left-1/2 transform -translate-x-1/2 w-8 h-8 flex items-center justify-center rounded-full text-xs font-semibold transition-all duration-300 ${isCurrent
-                                      ? "bg-emerald-600 text-white ring-2 ring-offset-2 ring-emerald-600 shadow-sm"
-                                      : isActive
-                                        ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
-                                        : "bg-white text-slate-400 border border-gray-200"
-                                    }`}
-                                >
-                                  {dayNum}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    </div>
 
-                    {/* Mobile Timeline - Centered with line through node centers */}
-                    <div className="block md:hidden mb-4">
-                      <div className="flex justify-center">
-                        <div
-                          className="flex items-center overflow-x-auto py-4 max-w-full"
-                          ref={scrollContainerRef}
-                          style={{ scrollbarWidth: 'thin', scrollbarColor: '#d1d5db transparent' }}
-                        >
-                          <div className="relative flex items-center justify-center space-x-8 sm:space-x-12 mx-auto px-6 min-w-max">
-                            {/* Connecting line - spans the full width of the scrollable content */}
-                            <div className="absolute top-[22px] h-1 bg-gray-300 z-0" style={{ left: '2rem', right: '2rem' }}></div>
-
-                            {itenaries.map((day, index) => {
-                              const dayNum = index + 1;
-                              const isActive = dayNum <= currentDay;
-                              const isCurrent = dayNum === currentDay;
-
-                              return (
-                                <div
-                                  key={dayNum}
-                                  className="relative z-10 flex flex-col items-center flex-shrink-0"
-                                >
-                                  <div className="h-12 flex items-center justify-center">
-                                    <button
-                                      onClick={() => handleDayNodeClick(dayNum)}
-                                      className={`
-                                        flex-shrink-0 flex items-center justify-center rounded-full font-semibold text-sm
-                                        transition-all duration-200 relative z-20 
-                                        ${isCurrent ? "w-10 h-10 ring-2 ring-offset-2 shadow-sm" : "w-10 h-10 border"}
-                                        ${!isActive ? "bg-gray-50 text-gray-400 border-gray-200" : ""}
-                                        ${isCurrent ? "bg-emerald-600 text-white ring-emerald-600" : ""}
-                                        ${!isCurrent && isActive ? "bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100" : ""}
-                                      `}
-                                      ref={(el) =>
-                                        (nodeRefs.current[index] = el)
-                                      }
-                                    >
-                                      {dayNum}
-                                    </button>
-                                  </div>
-                                  <span className="text-xs text-gray-600 mt-2 font-medium whitespace-nowrap">
-                                    Day {dayNum}
-                                  </span>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Day Cards Container with auto-scroll */}
-                    <div
-                      className="w-full md:w-3/4 space-y-3 sm:space-y-4 day-cards-container pr-1 max-h-[700px] overflow-y-auto scroll-smooth"
-                      ref={dayCardsContainerRef}
-                      style={{ scrollbarWidth: 'thin', scrollbarColor: '#d1d5db transparent' }}
-                    >
-                      {itenaries.map((day, index) => {
-                        const dayNum = index + 1;
-                        const isCurrentDay = dayNum === currentDay;
-
-                        return (
-                          <div
-                            key={index}
-                            ref={(el) => (dayCardRefs.current[index] = el)}
-                            className={`p-4 sm:p-5 rounded-xl border transition-all duration-200 group ${isCurrentDay
-                                  ? "border-emerald-500 bg-emerald-50/30 shadow-sm ring-1 ring-emerald-500"
-                                  : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
-                                } cursor-pointer`}
-                            onClick={() => {
-                              handleDayNodeClick(dayNum);
-                              handleViewDay(dayNum);
-                            }}
-                          >
-                            <div className="flex justify-between items-start gap-4">
-                              <div className="flex-1 min-w-0">
-                                <h4 className="font-semibold text-slate-900 flex items-center">
-                                  <span
-                                    className={`w-6 h-6 flex items-center justify-center rounded-full mr-3 text-xs font-bold shrink-0 ${isCurrentDay
-                                        ? "bg-emerald-600 text-white"
-                                        : "bg-emerald-50 text-emerald-700"
-                                      }`}
-                                  >
-                                    {day.dayNumber}
-                                  </span>
-                                  <span
-                                    className={`text-sm sm:text-base text-gray-900 truncate`}
-                                  >
-                                    {day.location}
-                                  </span>
-                                </h4>
-                                <p className="text-xs sm:text-sm text-slate-500 mt-1 ml-9 flex items-center">
-                                  <Calendar className="h-3.5 w-3.5 mr-2 text-slate-400 shrink-0" />
-                                  <span className="font-medium truncate">
-                                    {day.date}
-                                  </span>
-                                </p>
-                              </div>
-                              {day.destinationPhotos?.[0] && (
-                                <div className="shrink-0 ml-3">
-                                  <img 
-                                    src={day.destinationPhotos[0]} 
-                                    alt={day.location}
-                                    className="w-20 h-20 sm:w-24 sm:h-24 rounded-lg object-cover border border-slate-200"
-                                  />
-                                </div>
-                              )}
-                            </div>
-
-                            <div className="mt-3.5 ml-10 flex flex-col gap-3">
-                              {/* Badges */}
-                              <div className="flex flex-wrap gap-2">
-                                {day.agenda && (
-                                  <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border bg-emerald-50 text-emerald-700 border-emerald-100`}>
-                                    {AGENDA_LABELS[day.agenda?.toLowerCase()] || <span className="capitalize">{day.agenda?.replace(/-/g, ' ')}</span>}
-                                  </span>
-                                )}
-                                {day.isDayTrip && (
-                                  <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border bg-blue-50 text-blue-700 border-blue-100`}>
-                                    <Car className="w-3 h-3 mr-1" /> Day Trip
-                                  </span>
-                                )}
-                              </div>
-
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-1">
-                                {/* Logistics & Time */}
-                                <div className="flex items-start space-x-3">
-                                  <div className={`p-2 rounded-xl flex-shrink-0 bg-gray-50`}>
-                                    {day.agenda === 'travel-day' || day.isDayTrip ? (
-                                      <Navigation className={`h-4 w-4 text-gray-500`} />
-                                    ) : (
-                                      <Clock className={`h-4 w-4 text-gray-500`} />
-                                    )}
-                                  </div>
-                                  <div className="min-w-0">
-                                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
-                                      {day.agenda === 'arrival' ? 'Check-in Time' :
-                                        day.agenda === 'travel-day' ? 'Travel Route & Time' : 'Pick-up Time'}
-                                    </p>
-                                    <div className="text-xs sm:text-sm text-gray-800 mt-1">
-                                      {day.agenda === 'travel-day' ? (
-                                        <>
-                                          {day.travelFrom && day.travelTo ? (
-                                            <span className="font-semibold block truncate text-ellipsis overflow-hidden">
-                                              {day.travelFrom} → {day.travelTo}
-                                            </span>
-                                          ) : (
-                                            <span className="text-gray-400 block truncate">Route not specified</span>
-                                          )}
-                                          {day.pickupTime && (
-                                            <span className="text-xs text-gray-500 flex items-center mt-0.5">
-                                              <Clock className="w-3 h-3 mr-1" /> {formatTimeWithAMPM(day.pickupTime)}
-                                            </span>
-                                          )}
-                                        </>
-                                      ) : (
-                                        <span className="font-medium">
-                                          {day.agenda === 'arrival' && day.checkinTime
-                                            ? formatTimeWithAMPM(day.checkinTime)
-                                            : day.pickupTime
-                                              ? formatTimeWithAMPM(day.pickupTime) : <span className="text-gray-400">Time not specified</span>}
-                                        </span>
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
-
-                                {/* Hotel Stay (if not checkout) */}
-                                {day.agenda !== 'checkout' && (
-                                  <div className="flex items-start space-x-3">
-                                    <div className={`p-2 rounded-xl flex-shrink-0 ${isPremiumPackage ? 'bg-amber-50' : 'bg-purple-50'}`}>
-                                      <Hotel className={`h-4 w-4 ${isPremiumPackage ? 'text-amber-500' : 'text-purple-500'}`} />
-                                    </div>
-                                    <div className="min-w-0">
-                                      <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
-                                        Accommodation
-                                      </p>
-                                      <p className="text-xs sm:text-sm text-gray-800 mt-1">
-                                        {day.hotel?.name ? (
-                                          <>
-                                            <span className="font-semibold block truncate">
-                                              {day.hotel.name}
-                                            </span>
-                                            {day.hotelStars && (
-                                              <span className="text-[10px] text-[#D4AF37] flex items-center mt-0.5 font-bold tracking-tight uppercase">
-                                                ⭐ {day.hotelStars} Star
-                                              </span>
-                                            )}
-                                          </>
-                                        ) : (
-                                          <span className="text-gray-400">Not selected</span>
-                                        )}
-                                      </p>
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-
-                            <div className="mt-3 sm:mt-5 ml-10">
-                              <button
-                                className={`flex items-center text-xs sm:text-sm group ${isCurrentDay
-                                    ? isPremiumPackage
-                                      ? "text-amber-700"
-                                      : "text-green-700"
-                                    : isPremiumPackage
-                                      ? "text-amber-600"
-                                      : "text-green-600"
-                                  } font-medium`}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleViewDay(dayNum);
-                                }}
-                              >
-                                <span>View details</span>
-                                <ChevronRight className="ml-1.5 h-3 w-3 sm:h-4 sm:w-4 transition-transform group-hover:translate-x-0.5" />
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {!viewingDay && (
-                  <>
+                <>
                     {/* Mobile-only: Show package details inline before Next button */}
                     <div className="lg:hidden mt-6 space-y-6">
                       {/* What's Included */}
@@ -1312,8 +1058,7 @@ const GuideDetails = ({ guide }) => {
                         Next <ArrowRight className="ml-2 h-4 w-4" />
                       </button>
                     </div>
-                  </>
-                )}
+                </>
               </>
             )}
 
@@ -1347,19 +1092,19 @@ const GuideDetails = ({ guide }) => {
           </div>
         </div>
 
-        <div className={`w-full lg:w-4/12 mt-6 lg:mt-0 ${activeTab !== 'dayByDay' ? 'hidden lg:block' : 'hidden lg:block'}`}>
+        <div className={`w-full lg:w-4/12 mt-6 lg:sticky lg:top-24 lg:mt-0 lg:self-start ${activeTab !== 'dayByDay' ? 'hidden lg:block' : 'hidden lg:block'}`}>
 
 
           <div
-            className={`rounded-xl overflow-hidden border mb-6 sm:mb-12 shadow-sm ${isPremiumPackage
-                ? "border-amber-200 bg-amber-50/10"
-                : "border-slate-200 bg-white"
+            className={`mb-6 overflow-hidden rounded-[1.75rem] border shadow-[0_22px_65px_-50px_rgba(23,55,47,0.75)] ${isPremiumPackage
+                ? "border-amber-200 bg-amber-50/20"
+                : "border-[#17372f]/10 bg-white"
               }`}
           >
             <div
               className={`px-4 sm:px-5 py-3 border-b ${isPremiumPackage
                   ? "bg-amber-50 border-amber-100"
-                  : "bg-slate-50 border-slate-100"
+                  : "border-[#17372f]/10 bg-[#edf3ee]"
                 }`}
             >
               <h2 className="text-slate-900 font-semibold text-base">
@@ -1452,10 +1197,10 @@ const GuideDetails = ({ guide }) => {
 
           {selectedPackage?.pickupDropCities?.length > 0 && (
             <div
-              className="rounded-xl shadow-sm overflow-hidden border mb-6 sm:mb-12 border-slate-200 bg-white"
+                className="mb-6 overflow-hidden rounded-[1.75rem] border border-[#17372f]/10 bg-white shadow-[0_22px_65px_-50px_rgba(23,55,47,0.75)]"
             >
               <div
-                className="px-4 sm:px-5 py-3 bg-slate-50 border-b border-slate-100"
+                className="border-b border-[#17372f]/10 bg-[#edf3ee] px-4 py-3 sm:px-5"
               >
                 <h2 className="text-slate-900 font-semibold text-base flex items-center gap-2">
                   <MapPin className="w-4 h-4 ml-0 text-slate-500" /> Available Pickups
@@ -1512,6 +1257,53 @@ const GuideDetails = ({ guide }) => {
         </div>
       </div>
     </div>
+
+    {galleryOpen && (
+      <div className="fixed inset-0 z-[200] overflow-y-auto bg-[#07110e]/95 px-4 py-6 text-white backdrop-blur-xl sm:px-6 sm:py-8" role="dialog" aria-modal="true" aria-label="Package gallery">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-6 flex items-center justify-between gap-4">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-300">Package gallery</p>
+              <h2 className="mt-1 font-serif text-3xl sm:text-4xl">{selectedPackage?.label || guide.name}</h2>
+            </div>
+            <button type="button" onClick={() => setGalleryOpen(false)} className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/10 transition hover:bg-white/20" aria-label="Close gallery"><X className="h-5 w-5" /></button>
+          </div>
+
+          {galleryLoading && !galleryData ? (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+              {[...Array(8)].map((_, index) => <div key={index} className="aspect-[4/3] animate-pulse rounded-2xl bg-white/10" />)}
+            </div>
+          ) : (
+            <div className="relative">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                {(galleryData?.data?.packagePhotos || []).map((photo, index) => (
+                  <button key={`${galleryPage}-${index}`} type="button" onClick={() => setActiveGalleryPhoto(photo)} className="group relative aspect-[4/3] overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+                    <img src={photo} alt={`Gallery photo ${(galleryPage - 1) * 12 + index + 1}`} loading="lazy" decoding="async" className="h-full w-full object-cover transition duration-700 group-hover:scale-105 group-hover:opacity-80" />
+                    <span className="absolute inset-0 flex items-center justify-center bg-black/0 transition group-hover:bg-black/20"><ZoomIn className="h-6 w-6 opacity-0 transition group-hover:opacity-100" /></span>
+                  </button>
+                ))}
+              </div>
+              {galleryLoading && <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-[#07110e]/55"><div className="h-9 w-9 animate-spin rounded-full border-2 border-white/20 border-t-emerald-300" /></div>}
+            </div>
+          )}
+
+          {(galleryData?.pagination?.totalPages || 0) > 1 && (
+            <div className="mt-8 flex items-center justify-center gap-3">
+              <button type="button" onClick={() => setGalleryPage((page) => Math.max(1, page - 1))} disabled={galleryPage === 1} className="inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-2.5 text-sm font-bold transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-35"><ChevronLeft className="h-4 w-4" /> Previous</button>
+              <span className="px-2 text-sm font-semibold text-white/60">{galleryPage} / {galleryData.pagination.totalPages}</span>
+              <button type="button" onClick={() => setGalleryPage((page) => Math.min(galleryData.pagination.totalPages, page + 1))} disabled={!galleryData.pagination.hasMore} className="inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-2.5 text-sm font-bold transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-35">Next <ChevronRight className="h-4 w-4" /></button>
+            </div>
+          )}
+        </div>
+      </div>
+    )}
+
+    {activeGalleryPhoto && (
+      <div className="fixed inset-0 z-[220] flex items-center justify-center bg-black/95 p-3 sm:p-8" role="dialog" aria-modal="true" aria-label="Photo preview" onClick={() => setActiveGalleryPhoto(null)}>
+        <button type="button" onClick={() => setActiveGalleryPhoto(null)} className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white backdrop-blur-md transition hover:bg-white/20" aria-label="Close photo"><X className="h-5 w-5" /></button>
+        <img src={activeGalleryPhoto} alt="Expanded package view" className="max-h-full max-w-full rounded-xl object-contain shadow-2xl" onClick={(event) => event.stopPropagation()} />
+      </div>
+    )}
     </>
   );
 };

@@ -125,9 +125,11 @@ const GuideCard = ({ guide, category, daysRange, peopleCount = 1, date, selected
     params.set('category', category);
     params.set('daysRange', daysRange || '');
     params.set('count', numPeople);
-    if (matchedPackage) params.set('packageId', matchedPackage.id);
     if (date) params.set('date', date.toISOString());
-    router.push(`/user/trip/guidelist/tripdetails/${guide.id}?${params.toString()}`);
+    const detailsPath = matchedPackage
+      ? `/trip/${matchedPackage.id}`
+      : `/user/trip/guidelist/tripdetails/${guide.id}`;
+    router.push(`${detailsPath}?${params.toString()}`);
   };
 
   return (

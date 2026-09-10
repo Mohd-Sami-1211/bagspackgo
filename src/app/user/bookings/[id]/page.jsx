@@ -762,7 +762,6 @@ export default function BookingDetailPage() {
                                 { label: 'Travellers', value: `${booking.people || 1} Pax` },
                                 ...(booking?.type?.toLowerCase() !== 'trek' ? [{ label: 'Category', value: booking.category }] : []),
                                 { label: 'Pickup', value: booking.arrivalDeparture?.pickup?.address ? `${booking.arrivalDeparture.pickup.address}${booking.arrivalDeparture.pickup.location ? `, ${booking.arrivalDeparture.pickup.location}` : ''} @ ${formatTimeWithAMPM(booking.arrivalDeparture.pickup.time) || 'TBD'}` : 'TBD' },
-                                { label: 'Dropoff', value: booking.arrivalDeparture?.dropoff?.address ? `${booking.arrivalDeparture.dropoff.address}${booking.arrivalDeparture.dropoff.location ? `, ${booking.arrivalDeparture.dropoff.location}` : ''} ${booking.arrivalDeparture.dropoff.time ? `@ ${formatTimeWithAMPM(booking.arrivalDeparture.dropoff.time)}` : ''}` : 'TBD' },
                                 { label: 'Booked On', value: (booking.createdAt || booking.bookingDate) ? (() => { const d = new Date(booking.createdAt || booking.bookingDate); return `${d.toLocaleDateString('en-GB')} ${d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`; })() : '—' },
                                 { label: 'Amount Paid', value: rupee(booking.price), highlight: true },
                             ].map(({ label, value, highlight }) => (
@@ -864,29 +863,6 @@ export default function BookingDetailPage() {
                                             </div>
                                         )}
                                         
-                                        {/* Last Day Dropoff */}
-                                        {idx === itineraryList.length - 1 && booking.arrivalDeparture?.dropoff?.address && (
-                                            <div className="mb-3 bg-blue-50 p-2.5 rounded-lg border border-blue-100 flex items-start gap-2.5">
-                                                <div className="p-1.5 bg-blue-100 rounded-md text-blue-600 shrink-0">
-                                                    <Navigation className="w-3.5 h-3.5" />
-                                                </div>
-                                                <div className="min-w-0">
-                                                    <p className="text-xs font-bold text-gray-800 leading-tight">
-                                                        Drop off at {booking.arrivalDeparture.dropoff.address}{booking.arrivalDeparture.dropoff.location ? `, ${booking.arrivalDeparture.dropoff.location}` : ''} at {booking.arrivalDeparture.dropoff.time ? formatTimeWithAMPM(booking.arrivalDeparture.dropoff.time) : 'given time'}.
-                                                    </p>
-                                                    <div className="flex items-center gap-1.5 mt-1.5">
-                                                        <MapPin className="w-3 h-3 text-blue-500" />
-                                                        {booking.arrivalDeparture.dropoff.mapLink ? (
-                                                            <a href={booking.arrivalDeparture.dropoff.mapLink} target="_blank" rel="noreferrer" className="text-[10px] font-bold text-blue-600 hover:text-blue-700 hover:underline truncate">
-                                                                View Address Link
-                                                            </a>
-                                                        ) : (
-                                                            <span className="text-[10px] text-gray-500 font-medium italic">No link available</span>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
 
                                         {day.agenda && <p className="text-sm text-gray-700 font-semibold mb-2 capitalize">{day.agenda.replace(/-/g, ' ')}</p>}
                                         {((day.activities && day.activities.length > 0) || (day.highlights && day.highlights.length > 0)) && (

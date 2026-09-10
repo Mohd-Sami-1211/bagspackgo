@@ -62,16 +62,53 @@ export function useTripPackages(queryParams, options = {}) {
 }
 
 // 2. Specific trip package cache
-export function useTripDetail(id, options = {}) {
-    // Note: If you want to use the /api/public/trips endpoint with a specific ID filter
-    const url = id ? `/api/public/trips?id=${id}` : null;
-    return useSWR(url, { ...options, dedupingInterval: 120000 }); // 2 mins
+export function useTripDetail(id, packageId, options = {}) {
+    const params = new URLSearchParams({ id, detail: '1' });
+    const url = packageId
+        ? `/api/public/trips/${packageId}`
+        : id
+            ? `/api/public/trips?${params.toString()}`
+            : null;
+    return useSWR(url, {
+        dedupingInterval: 300000,
+        keepPreviousData: false,
+        revalidateOnFocus: false,
+        revalidateOnReconnect: false,
+        ...options,
+    });
 }
 
 // 2.5 Package Photos Cache (Background fetch for Base64)
-export function useTripPhotos(packageId, options = {}) {
-    const url = packageId ? `/api/public/trips/photos?packageId=${packageId}` : null;
-    return useSWR(url, { ...options, dedupingInterval: 300000 }); // Cache photos for 5 mins
+export function useTripPhotos(packageId, queryParams = {}, options = {}) {
+    const params = new URLSearchParams({
+        packageId: packageId || '',
+        scope: 'gallery',
+        page: String(queryParams.page || 1),
+        limit: String(queryParams.limit || 5),
+    });
+    const url = packageId ? `/api/public/trips/photos?${params.toString()}` : null;
+    return useSWR(url, {
+        dedupingInterval: 300000,
+        keepPreviousData: true,
+        revalidateOnFocus: false,
+        revalidateOnReconnect: false,
+        ...options,
+    });
+}
+
+export function useTripItineraryPhotos(packageId, dayIndex, options = {}) {
+    const params = new URLSearchParams({
+        packageId: packageId || '',
+        scope: 'itinerary',
+        dayIndex: String(dayIndex ?? 0),
+    });
+    const url = packageId && Number.isInteger(dayIndex) ? `/api/public/trips/photos?${params.toString()}` : null;
+    return useSWR(url, {
+        dedupingInterval: 300000,
+        revalidateOnFocus: false,
+        revalidateOnReconnect: false,
+        ...options,
+    });
 }
 
 // 2.6 Event Photos Cache (Background fetch for Base64 gallery images)
