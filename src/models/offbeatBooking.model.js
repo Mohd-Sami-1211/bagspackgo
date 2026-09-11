@@ -44,4 +44,7 @@ const offbeatBookingSchema = new mongoose.Schema({
   },
 }, { timestamps: true });
 
+offbeatBookingSchema.index({ user: 1, createdAt: -1 });
+offbeatBookingSchema.index({ offbeat: 1, status: 1, createdAt: -1 });
+
 export const OffBeatBooking = mongoose.models.OffBeatBooking || mongoose.model('OffBeatBooking', offbeatBookingSchema);

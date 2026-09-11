@@ -15,7 +15,7 @@ export async function POST(req, { params }) {
 
         const { reason } = await req.json();
 
-        if (!reason || !reason.trim()) {
+        if (typeof reason !== 'string' || !reason.trim()) {
             return NextResponse.json({ success: false, message: 'Cancellation reason is required.' }, { status: 400 });
         }
 
@@ -29,22 +29,33 @@ export async function POST(req, { params }) {
             return NextResponse.json({ success: false, message: `Cannot cancel a booking with status: ${booking.status}` }, { status: 400 });
         }
 
+        const safeReason = reason.trim().slice(0, 1000);
         const ticketId = 'CAN-TREK-' + Date.now().toString().slice(-6) + Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-        const refundAmt = Math.max(0, booking.totalAmount - (booking.platformFee || 0));
+        const hasPayment = Boolean(booking.paymentId) || booking.status === 'confirmed';
+        const paidAmount = Math.max(0, Number(booking.amountPaid || booking.totalAmount || 0));
+        const refundAmt = hasPayment
+            ? Math.max(0, paidAmount - Math.min(paidAmount, Number(booking.platformFee || 0)))
+            : 0;
 
-        booking.status = 'cancellation_requested';
+        // Keep unpaid checkouts as tombstones because an already-authorised
+        // payment can still be captured after the user cancels.
+        booking.status = hasPayment ? 'cancellation_requested' : 'cancelled';
         booking.cancellationDetails = {
             ticketId,
-            reason: reason.trim(),
+            reason: safeReason,
             requestedAt: new Date(),
             refundInitiatedAt: null,
             completedAt: null,
             refundAmount: refundAmt,
+            refundStatus: refundAmt > 0 ? 'pending' : 'not_required',
         };
 
         await booking.save();
 
-        return NextResponse.json({ success: true, message: 'Cancellation requested successfully.' });
+        return NextResponse.json({
+            success: true,
+            message: hasPayment ? 'Cancellation requested successfully.' : 'Pending booking cancelled.',
+        });
     } catch (error) {
         console.error('Cancel trek booking error:', error);
         return NextResponse.json({ success: false, message: 'Server error' }, { status: 500 });

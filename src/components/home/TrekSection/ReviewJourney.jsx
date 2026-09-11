@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -38,6 +38,7 @@ const ReviewTrek = ({ guide, searchParams }) => {
   const [isPaymentLoading, setIsPaymentLoading] = useState(false);
   const [paymentError, setPaymentError] = useState("");
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const checkoutKeyRef = useRef("");
 
   // Extract useful params
   const days = parseInt(searchParams?.get("days")) || 1;
@@ -113,6 +114,7 @@ const ReviewTrek = ({ guide, searchParams }) => {
     );
     const numPeople = count;
 
+    let tierDiscountPercent = 0;
     if (guide?.pricingTiers && guide.pricingTiers.length > 0) {
       let matchingTier = guide.pricingTiers.find(
         (t) => numPeople >= t.minPeople && numPeople <= t.maxPeople,
@@ -124,11 +126,12 @@ const ReviewTrek = ({ guide, searchParams }) => {
           : sortedTiers[0];
       }
       pricePerPerson = Number(matchingTier?.price || 0);
+      tierDiscountPercent = Math.min(100, Math.max(0, Number(matchingTier?.discount) || 0));
     }
 
     const packageAmount = pricePerPerson * numPeople;
 
-    let discount = 0;
+    let discount = packageAmount * (tierDiscountPercent / 100);
     if (appliedCoupon?.type === "percent") {
       discount = packageAmount * (appliedCoupon.value / 100);
     } else if (appliedCoupon?.type === "flat") {
@@ -170,9 +173,8 @@ const ReviewTrek = ({ guide, searchParams }) => {
     const guideData = trekData.guide;
     const config = trekData.trekConfig || {};
     const packageId = config.trekId || guideData?.packageId || guideData?._id;
-    const guideId = guideData?.provider?._id || guideData?.provider;
 
-    if (!packageId || !guideId) {
+    if (!packageId) {
       setPaymentError(
         "Missing required data. Please go back and select a package again.",
       );
@@ -180,28 +182,23 @@ const ReviewTrek = ({ guide, searchParams }) => {
       return;
     }
 
+    let activeBookingId = "";
     try {
+      if (!checkoutKeyRef.current) {
+        checkoutKeyRef.current = globalThis.crypto?.randomUUID?.()
+          || `trek-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      }
       const bookingRes = await fetch("/api/user/trek-bookings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           packageId,
-          guideId,
           startDate: config.date || new Date().toISOString(),
           numPeople: count,
-          peopleCount,
-          baseAmount: paymentDetails.packageAmount,
-          discount: paymentDetails.discount,
-          platformFee: paymentDetails.platformFee,
-          taxes: paymentDetails.gstOnGateway,
-          totalAmount: Math.round(paymentDetails.totalAmount),
+          peopleRange: String(peopleCount),
+          checkoutKey: checkoutKeyRef.current,
           pickupDropoff: trekData.pickupDropoff || {},
           personalDetails: trekData.personalDetails || {},
-          packageSnapshot: {
-            name: guideData?.name || "Trek Package",
-            destination: guideData?.location || guideData?.destination || "",
-            days: config.days || days || 1,
-          },
         }),
       });
 
@@ -210,18 +207,25 @@ const ReviewTrek = ({ guide, searchParams }) => {
         throw new Error(bookingResult.message || "Failed to create booking");
 
       const { bookingId } = bookingResult;
-      const amountToPay = Math.round(paymentDetails.totalAmount);
+      activeBookingId = bookingId;
 
       const orderRes = await fetch("/api/payments/trek-create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: amountToPay || 1, bookingId }),
+        body: JSON.stringify({ bookingId }),
       });
       const orderData = await orderRes.json();
-      if (!orderData.success)
-        throw new Error(orderData.message || "Order creation failed");
+      if (!orderData.success) {
+        if (orderData.processing) {
+          router.push(`/user/trek/booking-failed?state=processing&bookingId=${bookingId}&return=${encodeURIComponent(`/user/trek/guidelist/trekdetails/${packageId}`)}`);
+          return;
+        }
+        const orderError = new Error(orderData.message || "Order creation failed");
+        orderError.safeToRetry = true;
+        throw orderError;
+      }
 
-      const { orderId, key } = orderData;
+      const { orderId, key, amount: orderAmount } = orderData;
 
       if (typeof window.Razorpay !== "function") {
         throw new Error("Payment gateway is still loading. Please wait a moment and try again.");
@@ -229,7 +233,7 @@ const ReviewTrek = ({ guide, searchParams }) => {
 
       const rzp = new window.Razorpay({
         key,
-        amount: amountToPay * 100,
+        amount: orderAmount,
         currency: "INR",
         order_id: orderId,
         name: "bagspackgo",
@@ -241,37 +245,45 @@ const ReviewTrek = ({ guide, searchParams }) => {
         },
         theme: { color: "#059669" },
         handler: async (response) => {
-          const verifyRes = await fetch("/api/payments/trek-verify", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-              bookingId,
-            }),
-          });
-          const verifyData = await verifyRes.json();
-          if (verifyData.success) {
-            localStorage.removeItem("pending_booking");
-            router.push(
-              `/user/trek/booking-success?bookingId=${bookingId}&ref=${verifyData.bookingRef}`,
-            );
-          } else {
-            router.push(`/user/trek/booking-failed?return=/user/trek/guidelist/trekdetails/${packageId}`);
+          try {
+            const verifyRes = await fetch("/api/payments/trek-verify", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                bookingId,
+              }),
+            });
+            const verifyData = await verifyRes.json();
+            if (verifyData.success) {
+              localStorage.removeItem("pending_booking");
+              localStorage.removeItem("trekData");
+              router.push(
+                `/user/trek/booking-success?bookingId=${bookingId}&ref=${verifyData.bookingRef}`,
+              );
+              return;
+            }
+            const state = verifyData.refundInitiated || verifyData.refundPending ? "refund" : "processing";
+            router.push(`/user/trek/booking-failed?state=${state}&bookingId=${bookingId}&return=${encodeURIComponent(`/user/trek/guidelist/trekdetails/${packageId}`)}`);
+          } catch (error) {
+            console.error("[Trek Payment] Verification request failed:", error);
+            router.push(`/user/trek/booking-failed?state=processing&bookingId=${bookingId}&return=${encodeURIComponent(`/user/trek/guidelist/trekdetails/${packageId}`)}`);
           }
         },
         modal: { ondismiss: () => setIsPaymentLoading(false) },
       });
 
       rzp.on('payment.failed', function (response) {
-         router.push(`/user/trek/booking-failed?return=/user/trek/guidelist/trekdetails/${packageId}`);
+         router.push(`/user/trek/booking-failed?state=failed&bookingId=${bookingId}&return=${encodeURIComponent(`/user/trek/guidelist/trekdetails/${packageId}`)}`);
       });
 
       rzp.open();
     } catch (err) {
       console.error("[Payment] Error:", err);
-      router.push(`/user/trek/booking-failed?return=/user/trek/guidelist/trekdetails/${packageId}`);
+      const state = activeBookingId && !err.safeToRetry ? "processing" : "failed";
+      router.push(`/user/trek/booking-failed?state=${state}${activeBookingId ? `&bookingId=${activeBookingId}` : ""}&return=${encodeURIComponent(`/user/trek/guidelist/trekdetails/${packageId}`)}`);
     }
   };
 

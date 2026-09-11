@@ -15,12 +15,6 @@ const nextConfig = {
             bodySizeLimit: '15mb',
         },
     },
-    // Increase body size limit for API route handlers (App Router)
-    api: {
-        bodyParser: {
-            sizeLimit: '15mb',
-        },
-    },
     async headers() {
         return [
             {

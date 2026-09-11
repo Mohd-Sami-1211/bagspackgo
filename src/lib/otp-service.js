@@ -259,10 +259,16 @@ function getLogoAttachment() {
 /**
  * Send trip/trek booking confirmation to user and provider
  */
-export async function sendTripBookingConfirmation({ userEmail, userName, providerEmail, providerName, bookingRef, packageName, destination, startDate, endDate, numPeople, totalAmount, isTrek }) {
+export async function sendTripBookingConfirmation({ userEmail, userName, providerEmail, providerName, bookingRef, packageName, destination, startDate, endDate, numPeople, totalAmount, amountPaid, remainingAmount, paymentMode, isTrek }) {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://bagspackgo.com';
     const formattedStart = startDate ? new Date(startDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : 'TBD';
     const formattedEnd = endDate ? new Date(endDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : 'TBD';
+    const paidNow = Number(amountPaid ?? totalAmount ?? 0);
+    const packageTotal = Number(totalAmount ?? paidNow);
+    const balanceDue = Number(remainingAmount ?? Math.max(0, packageTotal - paidNow));
+
+    let userSent = !userEmail;
+    let providerSent = !providerEmail;
 
     // Email to user
     if (userEmail) {
@@ -303,7 +309,9 @@ export async function sendTripBookingConfirmation({ userEmail, userName, provide
                                 <tr><td style="color: #64748b; padding: 10px 0; font-size: 14px;">Destination</td><td style="color: #0f172a; font-weight: 600; font-size: 14px; text-align: right;">${destination}</td></tr>
                                 <tr><td style="color: #64748b; padding: 10px 0; font-size: 14px;">Travel Dates</td><td style="color: #0f172a; font-size: 14px; text-align: right; font-weight: 500;">${formattedStart} — ${formattedEnd}</td></tr>
                                 <tr><td style="color: #64748b; padding: 10px 0; font-size: 14px;">Group Size</td><td style="color: #0f172a; font-size: 14px; text-align: right; font-weight: 500;">${numPeople} Pax</td></tr>
-                                <tr style="border-top: 2px solid #ecfdf5;"><td style="color: #059669; padding: 20px 0 0; font-size: 20px; font-weight: 800;">Total Paid</td><td style="color: #059669; font-size: 20px; font-weight: 800; text-align: right; padding-top: 20px;">₹${Number(totalAmount).toLocaleString('en-IN')}</td></tr>
+                                <tr><td style="color: #64748b; padding: 10px 0; font-size: 14px;">Package Total</td><td style="color: #0f172a; font-size: 14px; text-align: right; font-weight: 600;">₹${packageTotal.toLocaleString('en-IN')}</td></tr>
+                                <tr style="border-top: 2px solid #ecfdf5;"><td style="color: #059669; padding: 20px 0 0; font-size: 20px; font-weight: 800;">Paid Now</td><td style="color: #059669; font-size: 20px; font-weight: 800; text-align: right; padding-top: 20px;">₹${paidNow.toLocaleString('en-IN')}</td></tr>
+                                ${paymentMode === 'partial' && balanceDue > 0 ? `<tr><td style="color:#64748b;padding:10px 0 0;font-size:14px;">Balance Due</td><td style="color:#0f172a;padding-top:10px;text-align:right;font-size:14px;font-weight:700;">₹${balanceDue.toLocaleString('en-IN')}</td></tr>` : ''}
                             </table>
                         </div>
                         
@@ -322,7 +330,12 @@ export async function sendTripBookingConfirmation({ userEmail, userName, provide
                 </div>
             `,
         };
-        try { await transporter.sendMail(userMail); } catch (e) { console.error('User booking email failed:', e.message); }
+        try {
+            await transporter.sendMail(userMail);
+            userSent = true;
+        } catch (e) {
+            console.error('User booking email failed:', e.message);
+        }
     }
 
     // Email to provider
@@ -348,7 +361,7 @@ export async function sendTripBookingConfirmation({ userEmail, userName, provide
                                 <tr><td style="color: #6b7280; padding: 6px 0; font-size: 14px;">Destination</td><td style="color: #111827; font-size: 14px; text-align: right;">${destination}</td></tr>
                                 <tr><td style="color: #6b7280; padding: 6px 0; font-size: 14px;">Start Date</td><td style="color: #111827; font-size: 14px; text-align: right;">${formattedStart}</td></tr>
                                 <tr><td style="color: #6b7280; padding: 6px 0; font-size: 14px;">Travellers</td><td style="color: #111827; font-size: 14px; text-align: right;">${numPeople}</td></tr>
-                                <tr style="border-top: 1px solid #fde68a;"><td style="color: #d97706; padding: 12px 0 0; font-size: 16px; font-weight: 700;">Amount</td><td style="color: #d97706; font-size: 16px; font-weight: 700; text-align: right; padding-top: 12px;">₹${Number(totalAmount).toLocaleString('en-IN')}</td></tr>
+                                <tr style="border-top: 1px solid #fde68a;"><td style="color: #d97706; padding: 12px 0 0; font-size: 16px; font-weight: 700;">Paid Online</td><td style="color: #d97706; font-size: 16px; font-weight: 700; text-align: right; padding-top: 12px;">₹${paidNow.toLocaleString('en-IN')}</td></tr>
                             </table>
                         </div>
                         <div style="text-align: center; margin: 28px 0 8px;">
@@ -361,8 +374,14 @@ export async function sendTripBookingConfirmation({ userEmail, userName, provide
                 </div>
             `,
         };
-        try { await transporter.sendMail(providerMail); } catch (e) { console.error('Provider booking email failed:', e.message); }
+        try {
+            await transporter.sendMail(providerMail);
+            providerSent = true;
+        } catch (e) {
+            console.error('Provider booking email failed:', e.message);
+        }
     }
+    return { userSent, providerSent };
 }
 
 export async function sendEventBookingConfirmation({ userEmail, userName, providerEmail, providerName, bookingId, eventName, destination, eventDate, numPeople, totalAmount }) {
@@ -513,4 +532,42 @@ export async function sendEventRefundInitiated({ userEmail, userName, bookingId,
         console.error('Refund initiation email failed:', error.message);
         throw error;
     }
+}
+
+export async function sendTripRefundInitiated({ userEmail, userName, bookingRef, packageName, destination, amount, orderId, paymentId, refundId, initiatedAt }) {
+    if (!userEmail) return;
+
+    const formattedInitiatedAt = initiatedAt
+        ? new Date(initiatedAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })
+        : new Date().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
+
+    const mail = {
+        from: `"bagspackgo" <${process.env.GMAIL_USER}>`,
+        to: userEmail,
+        subject: `Refund initiated — ${packageName || 'Trip package'} | ${bookingRef || 'Booking'}`,
+        attachments: getLogoAttachment(),
+        html: `
+            <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;border:1px solid #e5e7eb;border-radius:20px;overflow:hidden">
+                <div style="background:linear-gradient(135deg,#17372f,#1d6b55);padding:36px 30px;text-align:center;color:white">
+                    <h1 style="margin:0;font-size:27px">Refund process initiated</h1>
+                    <p style="margin:10px 0 0;color:#d1fae5">Your payment is being returned to its original method.</p>
+                </div>
+                <div style="padding:32px;background:white;color:#374151">
+                    <p style="font-size:17px">Hi <strong>${userName || 'Traveller'}</strong>,</p>
+                    <p style="line-height:1.7">We have initiated your refund for <strong>${packageName || 'your trip package'}</strong>${destination ? ` in ${destination}` : ''}. It should normally appear within <strong>3 business days</strong>, depending on your bank.</p>
+                    <table style="width:100%;background:#f8fafc;border-radius:14px;padding:16px;margin:22px 0">
+                        <tr><td style="padding:6px;color:#64748b">Booking reference</td><td style="padding:6px;text-align:right;font-weight:700">${bookingRef || '—'}</td></tr>
+                        <tr><td style="padding:6px;color:#64748b">Refund amount</td><td style="padding:6px;text-align:right;font-weight:800;color:#047857">₹${Number(amount || 0).toLocaleString('en-IN')}</td></tr>
+                        <tr><td style="padding:6px;color:#64748b">Initiated</td><td style="padding:6px;text-align:right">${formattedInitiatedAt}</td></tr>
+                        <tr><td style="padding:6px;color:#64748b">Razorpay order ID</td><td style="padding:6px;text-align:right;font-size:12px;word-break:break-all">${orderId || '—'}</td></tr>
+                        <tr><td style="padding:6px;color:#64748b">Razorpay payment ID</td><td style="padding:6px;text-align:right;font-size:12px;word-break:break-all">${paymentId || '—'}</td></tr>
+                        <tr><td style="padding:6px;color:#64748b">Razorpay refund ID</td><td style="padding:6px;text-align:right;font-size:12px;word-break:break-all">${refundId || 'Pending'}</td></tr>
+                    </table>
+                    <p style="font-size:13px;color:#64748b">Please keep these references until the refund appears in your account.</p>
+                </div>
+            </div>
+        `,
+    };
+
+    await transporter.sendMail(mail);
 }

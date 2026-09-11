@@ -65,6 +65,7 @@ function BookingSuccessContent() {
         startDate,
         numPeople,
         totalAmount,
+        amountPaid,
         pickupDropoff = {},
         personalDetails = {},
         paymentId
@@ -237,7 +238,7 @@ function BookingSuccessContent() {
                                     </div>
                                     <div className="flex flex-col gap-1.5">
                                         <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5 text-slate-400"/> Total Paid</p>
-                                        <p className="font-bold text-emerald-600 text-lg leading-none mt-0.5">₹{Number(totalAmount || 0).toLocaleString('en-IN')}</p>
+                                        <p className="font-bold text-emerald-600 text-lg leading-none mt-0.5">₹{Number(amountPaid || totalAmount || 0).toLocaleString('en-IN')}</p>
                                     </div>
                                 </div>
                             </div>

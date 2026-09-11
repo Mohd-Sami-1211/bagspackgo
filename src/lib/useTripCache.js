@@ -190,11 +190,16 @@ export function useOffbeatSuggestions(query, queryParams = {}, options = {}) {
 // 8. Offbeat destination detail cache (full document with all photos/videos)
 export function useOffbeatDetail(id, options = {}) {
     const url = id ? `/api/public/offbeats/${id}` : null;
-    return useSWR(url, { ...options, dedupingInterval: 120000 }); // Cache detail for 2 mins
+    return useSWR(url, { ...options, dedupingInterval: 300000, revalidateOnFocus: false, revalidateOnReconnect: false });
 }
 
-// 8.5 Offbeat Photos Cache (Background fetch for Base64 gallery images)
-export function useOffbeatPhotos(id, options = {}) {
-    const url = id ? `/api/public/offbeats/${id}/photos` : null;
-    return useSWR(url, { ...options, dedupingInterval: 300000 }); // Cache photos for 5 mins
+// 8.5 Offbeat media cache. Only the requested page of heavy image/video data is transferred.
+export function useOffbeatMedia(id, queryParams = {}, options = {}) {
+    const queryString = new URLSearchParams(Object.fromEntries(
+        Object.entries(queryParams)
+            .filter(([, value]) => value !== undefined && value !== null && value !== '')
+            .sort(([firstKey], [secondKey]) => firstKey.localeCompare(secondKey))
+    )).toString();
+    const url = id ? `/api/public/offbeats/${id}/photos${queryString ? `?${queryString}` : ''}` : null;
+    return useSWR(url, { ...options, dedupingInterval: 300000, revalidateOnFocus: false, revalidateOnReconnect: false });
 }

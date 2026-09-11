@@ -1,123 +1,180 @@
 'use client';
-import { useState, use } from 'react';
-import { motion } from 'framer-motion';
-import { MapPin, Check, X, Calendar, Camera, Info, Loader2, ArrowLeft, Bookmark, Share2 } from 'lucide-react';
+
+import { use, useEffect, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import {
+    ArrowLeft,
+    ArrowRight,
+    Bookmark,
+    Calendar,
+    Camera,
+    Check,
+    ChevronLeft,
+    ChevronRight,
+    Clock3,
+    Compass,
+    Info,
+    MapPin,
+    Maximize2,
+    Mountain,
+    Play,
+    Share2,
+    Sparkles,
+    X,
+} from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import OffbeatBookingForm from '@/components/user/offbeats/OffbeatBookingForm';
 import GroupTripBookingForm from '@/components/user/offbeats/GroupTripBookingForm';
-import { useOffbeatDetail, useOffbeatPhotos } from '@/lib/useTripCache';
+import { useOffbeatDetail, useOffbeatMedia } from '@/lib/useTripCache';
 
-const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1621245799986-e3d1c9ccfc65?auto=format&fit=crop&q=80';
+const FALLBACK_IMAGE = '/images/hero-kashmir-v3.webp';
 
-const OffbeatDetailsSkeleton = () => (
-    <div className="min-h-screen bg-slate-50 animate-pulse pb-20">
-        <div className="h-[60vh] min-h-[400px] w-full bg-slate-200" />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-24 relative z-20">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2 space-y-8">
-                    <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-slate-100">
-                        <div className="h-10 bg-slate-200 rounded-lg w-3/4 mb-4" />
-                        <div className="h-6 bg-slate-200 rounded-md w-1/3 mb-8" />
-                        <div className="space-y-3">
-                            <div className="h-4 bg-slate-200 rounded-md w-full" />
-                            <div className="h-4 bg-slate-200 rounded-md w-full" />
-                            <div className="h-4 bg-slate-200 rounded-md w-5/6" />
-                        </div>
-                    </div>
-                </div>
-                <div className="lg:col-span-1">
-                    <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 h-96" />
-                </div>
-            </div>
-            
-            <div className="flex flex-col items-center justify-center mt-16 mb-8 gap-3">
-                <Loader2 className="w-10 h-10 text-emerald-600 animate-spin" />
-                <p className="text-emerald-600 text-sm font-medium">Loading...</p>
-            </div>
-        </div>
-    </div>
-);
-
-/**
- * Lazy-loading image with a blurred placeholder.
- * Uses loading="lazy" so the browser defers off-screen images.
- * Shows a spinner until the image fires its onLoad event.
- */
-const ImageWithLoader = ({ src, alt, className, eager = false }) => {
-    const [loaded, setLoaded] = useState(false);
+function OffbeatDetailsSkeleton() {
     return (
-        <>
-            {!loaded && (
-                <div className="absolute inset-0 bg-slate-200 animate-pulse flex items-center justify-center z-0">
-                    <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />
+        <div className="min-h-screen animate-pulse bg-[#f7f5ef]" role="status" aria-label="Loading destination">
+            <div className="relative h-[82vh] min-h-[640px] max-h-[920px] overflow-hidden bg-[#17201d]">
+                <div className="absolute inset-0 bg-gradient-to-br from-[#36463f] via-[#1c2824] to-[#101513]" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/20" />
+                <div className="absolute inset-x-0 bottom-0 mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
+                    <div className="h-3 w-44 rounded-full bg-white/20" />
+                    <div className="mt-5 h-14 w-3/4 max-w-2xl rounded-2xl bg-white/20 sm:h-20" />
+                    <div className="mt-5 h-4 w-full max-w-xl rounded-full bg-white/15" />
+                    <div className="mt-3 h-4 w-4/5 max-w-lg rounded-full bg-white/15" />
+                    <div className="mt-7 h-12 w-44 rounded-full bg-white/20" />
                 </div>
-            )}
-            <img 
-                src={src} 
-                alt={alt} 
-                loading={eager ? 'eager' : 'lazy'}
-                onLoad={() => setLoaded(true)} 
-                className={`${className} transition-opacity duration-500 relative z-10 ${loaded ? '' : 'opacity-0'}`} 
-            />
-        </>
+            </div>
+            <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:px-8">
+                <div className="space-y-12">
+                    <div className="space-y-4"><div className="h-4 w-32 rounded bg-[#17372f]/10" /><div className="h-10 w-3/5 rounded-xl bg-[#17372f]/10" /><div className="h-4 w-full rounded bg-[#17372f]/10" /><div className="h-4 w-5/6 rounded bg-[#17372f]/10" /></div>
+                    <div className="grid h-80 grid-cols-2 gap-3 sm:grid-cols-4"><div className="col-span-2 row-span-2 rounded-3xl bg-[#17372f]/10" /><div className="rounded-3xl bg-[#17372f]/10" /><div className="rounded-3xl bg-[#17372f]/10" /><div className="col-span-2 rounded-3xl bg-[#17372f]/10" /></div>
+                </div>
+                <div className="h-80 rounded-3xl bg-[#17372f]/10" />
+            </div>
+            <span className="sr-only">Loading destination details</span>
+        </div>
     );
-};
+}
+
+function MediaTile({ item, index, onOpen, full = false }) {
+    const previewClasses = index === 0
+        ? 'col-span-2 row-span-2 min-h-64 sm:min-h-80'
+        : index === 3
+            ? 'col-span-2 min-h-36 sm:min-h-40'
+            : 'min-h-36 sm:min-h-40';
+
+    return (
+        <button
+            type="button"
+            onClick={() => onOpen(item)}
+            className={`group relative overflow-hidden bg-[#dfe5df] text-left ${full ? 'aspect-[4/3] rounded-2xl' : `rounded-3xl ${previewClasses}`}`}
+        >
+            {item.type === 'video' ? (
+                <video src={item.url} muted playsInline preload="metadata" className="h-full w-full object-cover transition duration-700 group-hover:scale-105" />
+            ) : (
+                <img src={item.url} alt={`Destination gallery ${index + 1}`} loading="lazy" decoding="async" className="h-full w-full object-cover transition duration-700 group-hover:scale-105" />
+            )}
+            <span className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent opacity-70 transition group-hover:opacity-90" />
+            <span className="absolute bottom-3 right-3 flex h-9 w-9 items-center justify-center rounded-full border border-white/25 bg-black/35 text-white backdrop-blur-md transition group-hover:scale-105 group-hover:bg-black/50">
+                {item.type === 'video' ? <Play className="h-4 w-4 fill-white" /> : <Maximize2 className="h-4 w-4" />}
+            </span>
+        </button>
+    );
+}
+
+function ListPanel({ title, items, tone = 'green' }) {
+    if (!items?.length) return null;
+    const colors = tone === 'red'
+        ? 'bg-rose-50 text-rose-700 border-rose-100'
+        : tone === 'amber'
+            ? 'bg-amber-50 text-amber-800 border-amber-100'
+            : 'bg-[#eaf2ec] text-[#1d6b55] border-[#d6e5da]';
+    return (
+        <div className="rounded-3xl border border-[#17372f]/10 bg-white p-6 shadow-[0_18px_45px_-36px_rgba(23,55,47,.4)] sm:p-7">
+            <h3 className="font-serif text-2xl tracking-[-0.025em] text-[#17372f]">{title}</h3>
+            <ul className="mt-5 space-y-3">
+                {items.map((item, index) => (
+                    <li key={`${title}-${index}`} className="flex items-start gap-3 text-sm leading-6 text-[#40564f]">
+                        <span className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border ${colors}`}><Check className="h-3.5 w-3.5" /></span>
+                        <span>{item}</span>
+                    </li>
+                ))}
+            </ul>
+        </div>
+    );
+}
 
 export default function OffBeatDetailsPage({ params }) {
     const { id } = use(params);
     const router = useRouter();
-    const { user, isAuthenticated, openAuthModal, authLoading } = useAuth();
-    
+    const { user, isAuthenticated, openAuthModal, loading: authLoading } = useAuth();
     const [isBookingOpen, setIsBookingOpen] = useState(false);
     const [isGroupBookingOpen, setIsGroupBookingOpen] = useState(false);
     const [isSaved, setIsSaved] = useState(false);
     const [saving, setSaving] = useState(false);
     const [selectedMedia, setSelectedMedia] = useState(null);
+    const [galleryOpen, setGalleryOpen] = useState(false);
+    const [galleryPage, setGalleryPage] = useState(1);
     const [activeItineraryDay, setActiveItineraryDay] = useState(0);
+    const trackedRef = useRef(false);
 
-    // SWR-cached fetch for offbeat detail (2 min dedupe, stale-while-revalidate)
-    const { data, isLoading, error } = useOffbeatDetail(id, {
-        revalidateOnFocus: false,
-        onSuccess: (data) => {
-            // Check saved status once data is loaded and user is authenticated
-            if (isAuthenticated && data?.data?._id) {
-                fetch('/api/user/saved')
-                    .then(res => res.json())
-                    .then(d => {
-                        if (d.success && d.saved) {
-                            setIsSaved(d.saved.some(s => s.itemType === 'offbeat' && s.itemId === id));
-                        }
-                    })
-                    .catch(() => {});
-            }
-            // Track activity visit
-            if (isAuthenticated && data?.data?._id) {
-                fetch('/api/activity/track-offbeat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ offbeatId: data.data._id, heartbeat: false })
-                }).catch(() => {});
-            }
-            // Force login if not authenticated after 7s
-            if (!authLoading && !isAuthenticated) {
-                setTimeout(() => {
-                    if (openAuthModal) {
-                        openAuthModal({ closable: false, hideTabs: true, tab: 'user' });
-                    }
-                }, 7000);
-            }
-        }
-    });
-
-    // Background fetch for heavy base64 gallery photos
-    const { data: photosData, isLoading: photosLoading } = useOffbeatPhotos(data?.success ? id : null, {
-        revalidateOnFocus: false,
-    });
-
+    const { data, isLoading, error } = useOffbeatDetail(id);
     const offbeat = data?.data || null;
+    const { data: previewData, isLoading: previewLoading } = useOffbeatMedia(
+        data?.success ? id : null,
+        { page: 1, limit: 4 }
+    );
+    const { data: galleryData, isLoading: galleryLoading } = useOffbeatMedia(
+        galleryOpen ? id : null,
+        { page: galleryPage, limit: 12 },
+        { keepPreviousData: true }
+    );
+
+    const previewMedia = previewData?.data?.media || [];
+    const mediaTotal = previewData?.pagination?.total || 0;
+
+    useEffect(() => {
+        if (!isAuthenticated || !id) return;
+        fetch(`/api/user/saved/check?itemId=${encodeURIComponent(id)}`, { headers: { Accept: 'application/json' } })
+            .then((response) => response.json())
+            .then((result) => setIsSaved(Boolean(result.success && result.isSaved)))
+            .catch(() => {});
+    }, [id, isAuthenticated]);
+
+    useEffect(() => {
+        if (!isAuthenticated || !offbeat?._id || trackedRef.current) return;
+        trackedRef.current = true;
+        fetch('/api/activity/track-offbeat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ offbeatId: offbeat._id, heartbeat: false }),
+        }).catch(() => {});
+    }, [isAuthenticated, offbeat?._id]);
+
+    useEffect(() => {
+        if (authLoading || isAuthenticated || !openAuthModal) return undefined;
+        const timer = window.setTimeout(() => {
+            openAuthModal({ closable: false, hideTabs: true, tab: 'user' });
+        }, 7000);
+        return () => window.clearTimeout(timer);
+    }, [authLoading, isAuthenticated, openAuthModal]);
+
+    useEffect(() => {
+        if (!galleryOpen && !selectedMedia) return undefined;
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        return () => { document.body.style.overflow = previousOverflow; };
+    }, [galleryOpen, selectedMedia]);
+
+    const askToBook = (group = false) => {
+        if (!isAuthenticated && openAuthModal) {
+            openAuthModal({ closable: true, hideTabs: false, tab: 'user' });
+            return;
+        }
+        if (group) setIsGroupBookingOpen(true);
+        else setIsBookingOpen(true);
+    };
 
     const handleSaveToggle = async () => {
         if (!isAuthenticated && openAuthModal) {
@@ -126,38 +183,23 @@ export default function OffBeatDetailsPage({ params }) {
         }
         setSaving(true);
         try {
-            if (isSaved) {
-                await fetch(`/api/user/saved?itemId=${id}`, { method: 'DELETE' });
-                setIsSaved(false);
-            } else {
-                await fetch('/api/user/saved', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ itemId: id, itemType: 'offbeat' })
-                });
-                setIsSaved(true);
-            }
-        } catch (e) {
-            console.error('Failed to toggle save', e);
+            const response = await fetch(isSaved ? `/api/user/saved?itemId=${encodeURIComponent(id)}` : '/api/user/saved', {
+                method: isSaved ? 'DELETE' : 'POST',
+                headers: isSaved ? undefined : { 'Content-Type': 'application/json' },
+                body: isSaved ? undefined : JSON.stringify({ itemId: id, itemType: 'offbeat' }),
+            });
+            if (response.ok) setIsSaved((value) => !value);
         } finally {
             setSaving(false);
         }
     };
 
     const handleShare = async () => {
+        const shareData = { title: offbeat?.title, text: offbeat?.shortDescription, url: window.location.href };
         if (navigator.share) {
-            try {
-                await navigator.share({
-                    title: offbeat.title,
-                    text: offbeat.shortDescription,
-                    url: window.location.href,
-                });
-            } catch (err) {
-                console.log('Share canceled or failed', err);
-            }
+            try { await navigator.share(shareData); } catch (error) { if (error?.name !== 'AbortError') console.error(error); }
         } else {
-            navigator.clipboard.writeText(window.location.href);
-            alert("Link copied to clipboard!");
+            await navigator.clipboard.writeText(window.location.href);
         }
     };
 
@@ -165,422 +207,141 @@ export default function OffBeatDetailsPage({ params }) {
 
     if (error || !offbeat || !data?.success) {
         return (
-            <div className="min-h-screen pt-20 flex flex-col items-center justify-center bg-slate-50 text-center px-4">
-                <h1 className="text-3xl font-bold text-slate-800 mb-4">Destination Not Found</h1>
-                <p className="text-slate-500 mb-8">This offbeat destination might have been removed or is currently unavailable.</p>
-                <Link href="/user/offbeats">
-                    <button className="px-6 py-3 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition">
-                        Back to OffBeats
-                    </button>
-                </Link>
+            <div className="flex min-h-screen flex-col items-center justify-center bg-[#f7f5ef] px-4 text-center text-[#17372f]">
+                <Compass className="mb-5 h-10 w-10 text-[#9b7440]" />
+                <h1 className="font-serif text-4xl tracking-[-0.035em]">This trail is not available</h1>
+                <p className="mt-3 max-w-md text-sm leading-6 text-[#61716c]">The destination may have been removed or is not published right now.</p>
+                <Link href="/user/offbeats" className="mt-7 rounded-full bg-[#17372f] px-6 py-3 text-sm font-bold text-white">Explore offbeats</Link>
             </div>
         );
     }
 
-    // Hero image: always use coverPhoto — this is the "face" of the destination
     const heroImage = offbeat.coverPhoto || FALLBACK_IMAGE;
-
-    // Gallery photos: fetch asynchronously to prevent blocking the main page load
-    const rawPhotos = photosData?.data?.photographs || offbeat.photographs || [];
-    const galleryPhotos = rawPhotos.filter(
-        (photo) => photo !== offbeat.coverPhoto
-    );
+    const itinerary = offbeat.itinerary || [];
+    const activeDay = itinerary[activeItineraryDay];
 
     return (
-        <div className="min-h-screen bg-slate-50 pb-20">
-            {/* Hero Image Section */}
-            <div className="relative h-[60vh] min-h-[400px] max-h-[600px] w-full">
-                <div className="absolute inset-0 bg-slate-900 overflow-hidden">
-                    {/* Hero is eager-loaded — it's above the fold */}
-                    <ImageWithLoader src={heroImage} alt={offbeat.title} className="w-full h-full object-cover opacity-80" eager />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent z-20 pointer-events-none" />
-                </div>
-                
-                {/* Top Nav Overlay */}
-                <div className="absolute top-6 left-4 sm:left-8 z-30 flex items-center justify-between w-[calc(100%-2rem)] sm:w-[calc(100%-4rem)] pointer-events-none">
-                    <button 
-                        onClick={() => router.back()}
-                        className="pointer-events-auto flex items-center justify-center w-10 h-10 rounded-full bg-slate-800/40 text-white hover:bg-slate-800/60 transition border border-white/20"
-                    >
-                        <ArrowLeft size={20} />
-                    </button>
+        <div className="min-h-screen overflow-x-hidden bg-[#f7f5ef] pb-20 text-[#17372f]">
+            <section className="relative isolate h-[82vh] min-h-[640px] max-h-[920px] overflow-hidden bg-[#111816] text-white">
+                <img src={heroImage} alt={offbeat.title} fetchPriority="high" decoding="async" className="absolute inset-0 h-full w-full object-cover" onError={(event) => { event.currentTarget.src = FALLBACK_IMAGE; }} />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0f1014] via-[#0f1014]/60 to-[#0f1014]/35 md:hidden" />
+                <div
+                    className="absolute inset-0 hidden md:block"
+                    style={{ background: 'linear-gradient(90deg, rgba(15,16,20,0.78) 0%, rgba(15,16,20,0.48) 27%, rgba(15,16,20,0.14) 48%, transparent 66%)' }}
+                />
+                <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/35 via-black/10 to-transparent" />
 
-                    <div className="flex items-center gap-3 pointer-events-auto">
-                        <button 
-                            onClick={handleShare}
-                            className="flex items-center justify-center w-10 h-10 rounded-full bg-slate-800/40 text-white hover:bg-slate-800/60 transition border border-white/20"
-                            title="Share Destination"
-                        >
-                            <Share2 size={18} />
-                        </button>
-                        <button 
-                            onClick={handleSaveToggle}
-                            disabled={saving}
-                            className="flex items-center justify-center w-10 h-10 rounded-full bg-slate-800/40 text-white hover:bg-slate-800/60 transition border border-white/20 disabled:opacity-50"
-                            title={isSaved ? "Unsave Destination" : "Save Destination"}
-                        >
-                            <Bookmark size={18} className={isSaved ? "fill-white" : ""} />
-                        </button>
+                <div className="absolute left-4 right-4 top-24 z-20 mx-auto flex max-w-7xl items-center justify-between sm:left-6 sm:right-6 lg:left-8 lg:right-8">
+                    <button type="button" onClick={() => router.back()} className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/20 px-4 py-2.5 text-sm font-bold text-white backdrop-blur-md transition hover:bg-black/35"><ArrowLeft className="h-4 w-4" /> Back</button>
+                    <div className="flex gap-2">
+                        <button type="button" onClick={handleShare} aria-label="Share destination" className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-black/20 backdrop-blur-md transition hover:bg-black/35"><Share2 className="h-4 w-4" /></button>
+                        <button type="button" onClick={handleSaveToggle} disabled={saving} aria-label={isSaved ? 'Remove saved destination' : 'Save destination'} className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-black/20 backdrop-blur-md transition hover:bg-black/35 disabled:opacity-50"><Bookmark className={`h-4 w-4 ${isSaved ? 'fill-white' : ''}`} /></button>
                     </div>
                 </div>
 
-                <div className="absolute bottom-0 left-0 w-full px-4 sm:px-8 pb-12 z-30">
-                    <div className="max-w-6xl mx-auto">
-                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-                            <div className="flex items-center gap-2 text-emerald-400 font-semibold mb-4 text-sm sm:text-base">
-                                <MapPin size={18} /> {offbeat.destination}
-                            </div>
-                            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-6 tracking-tight">
-                                {offbeat.title}
-                            </h1>
-                            <div className="flex flex-wrap gap-4 items-center">
-                                <button 
-                                    onClick={() => {
-                                        if (!isAuthenticated && openAuthModal) {
-                                            openAuthModal({ closable: true, hideTabs: false, tab: 'user' });
-                                        } else {
-                                            setIsBookingOpen(true);
-                                        }
-                                    }}
-                                    className="px-8 py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-lg transition shadow-lg shadow-emerald-600/30"
-                                >
-                                    Book This Experience
-                                </button>
-                            </div>
-                        </motion.div>
-                    </div>
+                <div className="relative z-10 mx-auto flex h-full max-w-7xl items-end px-4 pb-12 pt-40 sm:px-6 sm:pb-16 lg:px-8">
+                    <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55 }} className="max-w-3xl">
+                        <p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.24em] text-[#e1c48e]"><Sparkles className="h-4 w-4" /> Quietly extraordinary</p>
+                        <h1 className="mt-4 max-w-3xl font-serif text-5xl leading-[.94] tracking-[-0.045em] sm:text-6xl lg:text-7xl">{offbeat.title}</h1>
+                        <p className="mt-5 flex items-center gap-2 text-sm font-semibold text-white/80"><MapPin className="h-4 w-4 text-[#e1c48e]" /> {offbeat.destination}{offbeat.region ? ` · ${offbeat.region}` : ''}</p>
+                        <p className="mt-5 max-w-2xl text-sm leading-6 text-white/75 sm:text-base">{offbeat.shortDescription}</p>
+                        <button type="button" onClick={() => askToBook(false)} className="mt-7 inline-flex items-center gap-2 rounded-full bg-white px-6 py-3.5 text-sm font-bold text-[#17372f] shadow-xl transition hover:-translate-y-0.5 hover:bg-[#f7f5ef]">Plan this escape <ArrowRight className="h-4 w-4" /></button>
+                    </motion.div>
                 </div>
-            </div>
+            </section>
 
-            {/* Content Section */}
-            <div className="max-w-6xl mx-auto px-4 sm:px-8 mt-12 grid grid-cols-1 lg:grid-cols-3 gap-12">
-                <div className="lg:col-span-2 space-y-16">
-                    
-                    {/* About */}
-                    <section>
-                        <h2 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">
-                            <Info className="text-emerald-600" /> About the Experience
-                        </h2>
-                        <div className="prose prose-slate prose-lg max-w-none text-slate-600 leading-relaxed whitespace-pre-wrap">
-                            {offbeat.description}
-                        </div>
-                    </section>
+            <main className="mx-auto grid max-w-7xl gap-12 px-4 py-12 sm:px-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:px-8 lg:py-16">
+                <div className="min-w-0 space-y-16 lg:space-y-20">
+                    <motion.section initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-80px' }}>
+                        <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#9b7440]">The place, at a glance</p>
+                        <h2 className="mt-3 max-w-2xl font-serif text-4xl leading-[1.02] tracking-[-0.035em] sm:text-5xl">Far from the usual route. Close to what matters.</h2>
+                        <div className="mt-7 max-w-3xl whitespace-pre-wrap text-base leading-8 text-[#52665f]">{offbeat.description}</div>
+                    </motion.section>
 
-                    {/* Gallery — shows additional photos and videos only (NOT the cover photo) */}
-                    {(galleryPhotos.length > 0 || offbeat.videos?.length > 0) && (
+                    {(previewLoading || mediaTotal > 0) && (
                         <section>
-                            <h2 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">
-                                <Camera className="text-emerald-600" /> Gallery
-                            </h2>
-                            {photosLoading ? (
-                                <div className="flex items-center gap-2 text-slate-400">
-                                    <Loader2 className="w-5 h-5 animate-spin" /> Loading gallery photos...
-                                </div>
-                            ) : (
-                            <div className="columns-1 sm:columns-2 md:columns-3 gap-4 space-y-4">
-                                {galleryPhotos.map((photo, idx) => (
-                                    <div 
-                                        key={`photo-${idx}`} 
-                                        className="break-inside-avoid rounded-xl overflow-hidden shadow-sm relative bg-slate-100 cursor-pointer group"
-                                        onClick={() => setSelectedMedia({ type: 'image', url: photo })}
-                                    >
-                                        {/* Gallery images are lazy-loaded — they're below the fold */}
-                                        <ImageWithLoader
-                                            src={photo}
-                                            alt={`Gallery photo ${idx + 1}`}
-                                            className="w-full h-auto object-cover group-hover:scale-[1.02] transition-transform duration-500"
-                                        />
-                                    </div>
-                                ))}
-                                
-                                {offbeat.videos?.map((video, idx) => (
-                                    <div 
-                                        key={`video-${idx}`} 
-                                        className="break-inside-avoid rounded-xl overflow-hidden shadow-sm bg-slate-100 flex items-center justify-center cursor-pointer group"
-                                        onClick={() => setSelectedMedia({ type: 'video', url: video })}
-                                    >
-                                        <video 
-                                            src={video} 
-                                            autoPlay
-                                            loop
-                                            muted
-                                            playsInline
-                                            className="w-full h-auto object-cover group-hover:scale-[1.02] transition-transform duration-500" 
-                                        />
-                                    </div>
-                                ))}
+                            <div className="mb-7 flex items-end justify-between gap-4">
+                                <div><p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#9b7440]">Seen on the trail</p><h2 className="mt-2 font-serif text-4xl tracking-[-0.035em]">Gallery</h2></div>
+                                {!previewLoading && mediaTotal > 0 && <button type="button" onClick={() => { setGalleryPage(1); setGalleryOpen(true); }} className="hidden items-center gap-2 rounded-full border border-[#17372f]/15 bg-white px-4 py-2.5 text-sm font-bold shadow-sm transition hover:bg-[#edf3ee] sm:inline-flex"><Camera className="h-4 w-4" /> View all {mediaTotal}</button>}
                             </div>
+                            {previewLoading ? (
+                                <div className="grid h-[420px] animate-pulse grid-cols-2 grid-rows-2 gap-3 sm:grid-cols-4"><div className="col-span-2 row-span-2 rounded-3xl bg-[#17372f]/10" /><div className="rounded-3xl bg-[#17372f]/10" /><div className="rounded-3xl bg-[#17372f]/10" /><div className="col-span-2 rounded-3xl bg-[#17372f]/10" /></div>
+                            ) : (
+                                <div className="grid grid-cols-2 auto-rows-fr gap-3 sm:grid-cols-4">{previewMedia.map((item, index) => <MediaTile key={`${item.type}-${index}`} item={item} index={index} onOpen={setSelectedMedia} />)}</div>
                             )}
+                            {!previewLoading && mediaTotal > 0 && <button type="button" onClick={() => { setGalleryPage(1); setGalleryOpen(true); }} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#17372f]/15 bg-white px-4 py-3 text-sm font-bold sm:hidden"><Camera className="h-4 w-4" /> View all {mediaTotal}</button>}
                         </section>
                     )}
 
-                    {/* Highlights */}
                     {offbeat.highlights?.length > 0 && (
                         <section>
-                            <h2 className="text-2xl font-bold text-slate-800 mb-6">Experience Highlights</h2>
-                            <div className="grid sm:grid-cols-2 gap-4">
-                                {offbeat.highlights.map((item, idx) => (
-                                    <div key={idx} className="flex gap-3 bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-                                        <Check className="w-5 h-5 text-emerald-500 flex-shrink-0" />
-                                        <span className="text-slate-700">{item}</span>
-                                    </div>
-                                ))}
-                            </div>
+                            <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#9b7440]">Worth the detour</p>
+                            <h2 className="mt-2 font-serif text-4xl tracking-[-0.035em]">Experience highlights</h2>
+                            <div className="mt-7 grid gap-4 sm:grid-cols-2">{offbeat.highlights.map((item, index) => <div key={index} className="flex items-start gap-4 rounded-3xl border border-[#17372f]/10 bg-white p-5"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#eaf2ec] text-[#1d6b55]"><Mountain className="h-4 w-4" /></span><p className="pt-1 text-sm leading-6 text-[#40564f]">{item}</p></div>)}</div>
                         </section>
                     )}
 
-                    {/* Itinerary */}
-                    {offbeat.itinerary?.length > 0 && (
+                    {itinerary.length > 0 && (
                         <section>
-                            <h2 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">
-                                <Calendar className="text-emerald-600" /> Itinerary
-                            </h2>
-                            {/* Desktop: Split-Pane View / Mobile: Interactive Stack */}
-                            <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-                                {/* Left Side: Day Selector */}
-                                <div className="w-full lg:w-1/3 flex flex-row lg:flex-col gap-3 overflow-x-auto lg:overflow-y-auto lg:max-h-[500px] pb-2 lg:pb-0 scrollbar-hide shrink-0 snap-x">
-                                    {offbeat.itinerary.map((day, idx) => (
-                                        <button
-                                            key={idx}
-                                            onClick={(e) => {
-                                                setActiveItineraryDay(idx);
-                                                // Automatically scroll the clicked day into view (centered)
-                                                e.currentTarget.scrollIntoView({
-                                                    behavior: 'smooth',
-                                                    block: 'nearest',
-                                                    inline: 'center'
-                                                });
-                                            }}
-                                            className={`text-left px-5 py-4 rounded-2xl transition-all duration-300 flex items-center gap-4 shrink-0 snap-center min-w-[200px] lg:min-w-0 border ${
-                                                activeItineraryDay === idx
-                                                    ? 'bg-emerald-50 border-emerald-200 shadow-sm'
-                                                    : 'bg-slate-50 border-transparent hover:bg-slate-100'
-                                            }`}
-                                        >
-                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0 transition-colors ${
-                                                activeItineraryDay === idx 
-                                                    ? 'bg-emerald-600 text-white shadow-md' 
-                                                    : 'bg-white text-slate-500 border border-slate-200'
-                                            }`}>
-                                                {idx + 1}
-                                            </div>
-                                            <div className="min-w-0">
-                                                <h4 className={`font-bold text-sm truncate ${activeItineraryDay === idx ? 'text-emerald-800' : 'text-slate-700'}`}>
-                                                    Day {idx + 1}
-                                                </h4>
-                                            </div>
-                                        </button>
-                                    ))}
+                            <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#9b7440]">A simple way through</p>
+                            <h2 className="mt-2 font-serif text-4xl tracking-[-0.035em]">Suggested itinerary</h2>
+                            <div className="mt-7 overflow-hidden rounded-[2rem] border border-[#17372f]/10 bg-white shadow-[0_24px_60px_-48px_rgba(23,55,47,.55)] lg:grid lg:grid-cols-[250px_1fr]">
+                                <div className="flex gap-2 overflow-x-auto border-b border-[#17372f]/10 bg-[#edf3ee] p-3 lg:flex-col lg:border-b-0 lg:border-r lg:p-4">
+                                    {itinerary.map((day, index) => <button key={index} type="button" onClick={(event) => { setActiveItineraryDay(index); event.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' }); }} className={`min-w-44 rounded-2xl px-4 py-3 text-left transition lg:min-w-0 ${activeItineraryDay === index ? 'bg-[#17372f] text-white shadow-lg' : 'text-[#52665f] hover:bg-white/70'}`}><span className="text-[10px] font-bold uppercase tracking-[.18em] opacity-60">Day {index + 1}</span><span className="mt-1 block truncate text-sm font-bold">{typeof day === 'object' ? day.title || `Explore day ${index + 1}` : `Explore day ${index + 1}`}</span></button>)}
                                 </div>
-                                
-                                {/* Right Side: Day Details */}
-                                <div className="w-full lg:w-2/3 bg-slate-50 rounded-2xl p-6 lg:p-8 border border-slate-100 min-h-[300px]">
-                                    <motion.div
-                                        key={activeItineraryDay}
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ duration: 0.3 }}
-                                    >
-                                        <div className="flex items-center gap-3 mb-6 border-b border-slate-200 pb-4">
-                                            <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-black text-lg">
-                                                {activeItineraryDay + 1}
-                                            </div>
-                                            <div>
-                                                <h3 className="font-bold text-xl text-slate-800">
-                                                    Day {activeItineraryDay + 1}
-                                                </h3>
-                                                {typeof offbeat.itinerary[activeItineraryDay] === 'object' && offbeat.itinerary[activeItineraryDay].title && (
-                                                    <p className="text-emerald-600 font-medium text-sm mt-0.5">
-                                                        {offbeat.itinerary[activeItineraryDay].title}
-                                                    </p>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        {typeof offbeat.itinerary[activeItineraryDay] === 'string' ? (
-                                            <p className="text-slate-600 leading-relaxed text-lg">
-                                                {offbeat.itinerary[activeItineraryDay]}
-                                            </p>
-                                        ) : (
-                                            <ul className="space-y-4">
-                                                {offbeat.itinerary[activeItineraryDay].points?.map((point, pIdx) => (
-                                                    <li key={pIdx} className="text-slate-600 flex items-start gap-3 bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-                                                        <Check className="text-emerald-500 mt-1 shrink-0 w-5 h-5" />
-                                                        <span className="leading-relaxed">{point}</span>
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        )}
-                                    </motion.div>
+                                <div className="min-h-72 p-6 sm:p-8">
+                                    <AnimatePresence mode="wait"><motion.div key={activeItineraryDay} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }} transition={{ duration: 0.25 }}><p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[.2em] text-[#9b7440]"><Calendar className="h-4 w-4" /> Day {activeItineraryDay + 1}</p><h3 className="mt-3 font-serif text-3xl tracking-[-0.025em]">{typeof activeDay === 'object' ? activeDay.title || 'Explore at your pace' : 'Explore at your pace'}</h3>{typeof activeDay === 'string' ? <p className="mt-5 leading-7 text-[#52665f]">{activeDay}</p> : <ul className="mt-6 space-y-4">{activeDay?.points?.map((point, index) => <li key={index} className="flex items-start gap-3 text-sm leading-6 text-[#52665f]"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#9b7440]" />{point}</li>)}</ul>}</motion.div></AnimatePresence>
                                 </div>
                             </div>
                         </section>
                     )}
-                </div>
 
-                {/* Sticky Sidebar */}
-                <div className="lg:col-span-1">
-                    <div className="sticky top-28 space-y-8">
-                        {/* Inclusions & Exclusions */}
-                        {(offbeat.whatsIncluded?.length > 0 || offbeat.whatsExcluded?.length > 0) && (
-                            <div className="bg-white p-6 rounded-3xl shadow-lg border border-slate-100">
-                                {offbeat.whatsIncluded?.length > 0 && (
-                                    <div className="mb-6">
-                                        <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                                            <span className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center"><Check size={16} /></span>
-                                            What's Included
-                                        </h3>
-                                        <ul className="space-y-3">
-                                            {offbeat.whatsIncluded.map((item, idx) => (
-                                                <li key={idx} className="text-slate-600 flex items-start gap-2 text-sm">
-                                                    <span className="text-emerald-500 mt-1">•</span> {item}
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                )}
-                                {offbeat.whatsExcluded?.length > 0 && (
-                                    <div>
-                                        <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                                            <span className="w-8 h-8 rounded-full bg-red-50 text-red-600 flex items-center justify-center"><X size={16} /></span>
-                                            Not Included
-                                        </h3>
-                                        <ul className="space-y-3">
-                                            {offbeat.whatsExcluded.map((item, idx) => (
-                                                <li key={idx} className="text-slate-600 flex items-start gap-2 text-sm">
-                                                    <span className="text-red-400 mt-1">•</span> {item}
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                )}
-                            </div>
-                        )}
+                    {(offbeat.whatsIncluded?.length > 0 || offbeat.whatsExcluded?.length > 0 || offbeat.whatToBring?.length > 0 || offbeat.restrictions?.length > 0) && (
+                        <section><p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#9b7440]">Know before you go</p><h2 className="mt-2 font-serif text-4xl tracking-[-0.035em]">The essentials</h2><div className="mt-7 grid gap-5 sm:grid-cols-2"><ListPanel title="What's included" items={offbeat.whatsIncluded} /><ListPanel title="Not included" items={offbeat.whatsExcluded} tone="red" /><ListPanel title="What to bring" items={offbeat.whatToBring} /><ListPanel title="Restrictions" items={offbeat.restrictions} tone="amber" /></div></section>
+                    )}
 
-                        {/* What to Bring & Restrictions */}
-                        {(offbeat.whatToBring?.length > 0 || offbeat.restrictions?.length > 0) && (
-                            <div className="bg-slate-50 p-6 rounded-3xl border border-slate-200">
-                                {offbeat.whatToBring?.length > 0 && (
-                                    <div className="mb-6">
-                                        <h3 className="text-lg font-bold text-slate-800 mb-3 flex items-center gap-2">
-                                            <span className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center"><Check size={16} /></span>
-                                            What to Bring
-                                        </h3>
-                                        <ul className="space-y-2">
-                                            {offbeat.whatToBring.map((item, idx) => (
-                                                <li key={idx} className="text-slate-600 flex items-start gap-2 text-sm">
-                                                    <span className="text-blue-400 mt-1">•</span> {item}
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                )}
-                                {offbeat.restrictions?.length > 0 && (
-                                    <div>
-                                        <h3 className="text-lg font-bold text-slate-800 mb-3 flex items-center gap-2">
-                                            <span className="w-8 h-8 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center"><Info size={16} /></span>
-                                            Restrictions
-                                        </h3>
-                                        <ul className="space-y-2">
-                                            {offbeat.restrictions.map((item, idx) => (
-                                                <li key={idx} className="text-slate-600 flex items-start gap-2 text-sm">
-                                                    <span className="text-orange-400 mt-1">•</span> {item}
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        {/* Booking CTA */}
-                        <div className="bg-emerald-600 p-8 rounded-3xl shadow-xl shadow-emerald-600/20 text-center relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-16 -mt-16"></div>
-                            <h3 className="text-xl font-bold text-white mb-2 relative z-10">Ready for an Adventure?</h3>
-                            <p className="text-emerald-100 text-sm mb-6 relative z-10">Book your spot and our experts will craft the perfect plan.</p>
-                            <button 
-                                onClick={() => {
-                                    if (!isAuthenticated && openAuthModal) {
-                                        openAuthModal({ closable: true, hideTabs: false, tab: 'user' });
-                                    } else {
-                                        setIsBookingOpen(true);
-                                    }
-                                }}
-                                className="w-full py-4 bg-white text-emerald-700 hover:bg-slate-50 rounded-xl font-bold transition shadow-md relative z-10"
-                            >
-                                Book Now
-                            </button>
-                        </div>
-
-                        {/* Secondary Group Trip CTA */}
-                        <div className="bg-white p-6 rounded-3xl border border-slate-200 text-center shadow-sm">
-                            <h3 className="text-lg font-bold text-slate-800 mb-2">Looking for a Group?</h3>
-                            <p className="text-slate-500 text-xs mb-4">
-                                We quite often host group trips to these destinations. Register your interest and we'll notify you when a group is forming!
-                            </p>
-                            <button 
-                                onClick={() => {
-                                    if (!isAuthenticated && openAuthModal) {
-                                        openAuthModal({ closable: true, hideTabs: false, tab: 'user' });
-                                    } else {
-                                        setIsGroupBookingOpen(true);
-                                    }
-                                }}
-                                className="w-full py-3 bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100 rounded-xl font-bold transition flex items-center justify-center gap-2"
-                            >
-                                <Calendar size={18} /> Register Group Interest
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Booking Modal */}
-            <OffbeatBookingForm 
-                isOpen={isBookingOpen}
-                onClose={() => setIsBookingOpen(false)}
-                offbeatId={offbeat._id}
-                offbeatTitle={offbeat.title}
-                user={user}
-            />
-
-            <GroupTripBookingForm 
-                isOpen={isGroupBookingOpen}
-                onClose={() => setIsGroupBookingOpen(false)}
-                offbeatId={offbeat._id}
-                offbeatTitle={offbeat.title}
-                user={user}
-            />
-
-            {/* Media Modal — full-screen overlay for viewing gallery items */}
-            {selectedMedia && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4" onClick={() => setSelectedMedia(null)}>
-                    <button 
-                        className="absolute top-6 right-6 text-white hover:text-emerald-400 transition"
-                        onClick={() => setSelectedMedia(null)}
-                    >
-                        <X size={32} />
-                    </button>
-                    {selectedMedia.type === 'image' ? (
-                        <img 
-                            src={selectedMedia.url} 
-                            alt="Gallery full view" 
-                            className="max-w-full max-h-[90vh] object-contain rounded-lg"
-                            onClick={(e) => e.stopPropagation()} 
-                        />
-                    ) : (
-                        <video 
-                            src={selectedMedia.url} 
-                            autoPlay
-                            loop
-                            muted
-                            playsInline
-                            className="max-w-full max-h-[90vh] object-contain rounded-lg"
-                            onClick={(e) => e.stopPropagation()} 
-                        />
+                    {offbeat.faqs?.length > 0 && (
+                        <section><p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#9b7440]">Good to know</p><h2 className="mt-2 font-serif text-4xl tracking-[-0.035em]">Frequently asked questions</h2><div className="mt-7 divide-y divide-[#17372f]/10 rounded-3xl border border-[#17372f]/10 bg-white px-5 sm:px-7">{offbeat.faqs.map((faq, index) => <details key={index} className="group py-5"><summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-bold text-[#17372f]"><span>{faq.question}</span><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#edf3ee] transition group-open:rotate-45">+</span></summary><p className="max-w-2xl pb-1 pt-4 text-sm leading-7 text-[#61716c]">{faq.answer}</p></details>)}</div></section>
                     )}
                 </div>
-            )}
+
+                <aside className="min-w-0">
+                    <div className="sticky top-24 space-y-5">
+                        <div className="overflow-hidden rounded-[2rem] bg-[#17372f] p-7 text-white shadow-[0_28px_70px_-38px_rgba(23,55,47,.75)]">
+                            <p className="text-[10px] font-bold uppercase tracking-[.22em] text-[#e1c48e]">Made personal</p>
+                            <h2 className="mt-3 font-serif text-3xl leading-tight tracking-[-.025em]">Visit it your way.</h2>
+                            <p className="mt-4 text-sm leading-6 text-white/68">Tell us your dates and preferences. We will help shape the route and connect the local details.</p>
+                            <button type="button" onClick={() => askToBook(false)} className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-white px-5 py-3.5 text-sm font-bold text-[#17372f] transition hover:bg-[#f7f5ef]">Plan a personal trip <ArrowRight className="h-4 w-4" /></button>
+                        </div>
+                        <button type="button" onClick={() => askToBook(true)} className="w-full rounded-[2rem] border border-[#17372f]/10 bg-white p-6 text-left shadow-[0_18px_50px_-40px_rgba(23,55,47,.45)] transition hover:-translate-y-0.5"><span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#edf3ee] text-[#1d6b55]"><Calendar className="h-4 w-4" /></span><span className="mt-4 block font-serif text-2xl tracking-[-.02em]">Prefer a group trip?</span><span className="mt-2 block text-sm leading-6 text-[#61716c]">Register your interest and we will let you know when a group is forming.</span><span className="mt-4 flex items-center gap-2 text-sm font-bold text-[#1d6b55]">Submit interest <ArrowRight className="h-4 w-4" /></span></button>
+                        {(offbeat.pickupPoints?.length > 0 || offbeat.dropoffPoints?.length > 0) && <div className="rounded-3xl border border-[#17372f]/10 bg-[#ece9df] p-6"><p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[.18em] text-[#9b7440]"><Clock3 className="h-4 w-4" /> Meeting details</p>{offbeat.pickupPoints?.slice(0, 3).map((point, index) => <div key={`pickup-${index}`} className="mt-4"><p className="text-sm font-bold">{point.location}</p>{point.time && <p className="mt-1 text-xs text-[#61716c]">Pickup · {point.time}</p>}</div>)}</div>}
+                    </div>
+                </aside>
+            </main>
+
+            <OffbeatBookingForm isOpen={isBookingOpen} onClose={() => setIsBookingOpen(false)} offbeatId={offbeat._id} offbeatTitle={offbeat.title} user={user} />
+            <GroupTripBookingForm isOpen={isGroupBookingOpen} onClose={() => setIsGroupBookingOpen(false)} offbeatId={offbeat._id} offbeatTitle={offbeat.title} user={user} />
+
+            <AnimatePresence>
+                {galleryOpen && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[220] overflow-y-auto bg-[#07110e]/96 px-4 py-6 text-white backdrop-blur-xl sm:px-6 sm:py-8" role="dialog" aria-modal="true" aria-label="Full destination gallery">
+                        <div className="mx-auto max-w-7xl">
+                            <div className="mb-7 flex items-center justify-between gap-4"><div><p className="text-[10px] font-bold uppercase tracking-[.22em] text-[#e1c48e]">{offbeat.destination}</p><h2 className="mt-2 font-serif text-3xl tracking-[-.03em] sm:text-4xl">Full gallery</h2></div><button type="button" onClick={() => setGalleryOpen(false)} className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/10 transition hover:bg-white/20" aria-label="Close gallery"><X className="h-5 w-5" /></button></div>
+                            {galleryLoading && !galleryData ? <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"><div className="aspect-[4/3] animate-pulse rounded-2xl bg-white/10" /><div className="aspect-[4/3] animate-pulse rounded-2xl bg-white/10" /><div className="aspect-[4/3] animate-pulse rounded-2xl bg-white/10" /></div> : <div className="relative grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">{(galleryData?.data?.media || []).map((item, index) => <MediaTile key={`${galleryPage}-${item.type}-${index}`} item={item} index={index} onOpen={setSelectedMedia} full />)}{galleryLoading && <div className="absolute inset-0 rounded-2xl bg-black/35" />}</div>}
+                            {(galleryData?.pagination?.totalPages || 0) > 1 && <div className="mt-8 flex items-center justify-center gap-4"><button type="button" onClick={() => setGalleryPage((page) => Math.max(1, page - 1))} disabled={galleryPage === 1} className="inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-2.5 text-sm font-bold transition hover:bg-white/10 disabled:opacity-35"><ChevronLeft className="h-4 w-4" /> Previous</button><span className="text-sm text-white/55">{galleryPage} / {galleryData.pagination.totalPages}</span><button type="button" onClick={() => setGalleryPage((page) => Math.min(galleryData.pagination.totalPages, page + 1))} disabled={!galleryData.pagination.hasMore} className="inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-2.5 text-sm font-bold transition hover:bg-white/10 disabled:opacity-35">Next <ChevronRight className="h-4 w-4" /></button></div>}
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            <AnimatePresence>
+                {selectedMedia && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[240] flex items-center justify-center bg-black/92 p-4 backdrop-blur-md" onClick={() => setSelectedMedia(null)} role="dialog" aria-modal="true" aria-label="Media viewer">
+                        <button type="button" onClick={() => setSelectedMedia(null)} className="absolute right-5 top-5 flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white" aria-label="Close media"><X className="h-5 w-5" /></button>
+                        {selectedMedia.type === 'video' ? <video src={selectedMedia.url} controls autoPlay playsInline className="max-h-[88vh] max-w-full rounded-2xl" onClick={(event) => event.stopPropagation()} /> : <img src={selectedMedia.url} alt="Destination gallery full view" className="max-h-[88vh] max-w-full rounded-2xl object-contain" onClick={(event) => event.stopPropagation()} />}
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

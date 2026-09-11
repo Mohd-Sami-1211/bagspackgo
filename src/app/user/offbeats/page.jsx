@@ -11,13 +11,36 @@ import { OffbeatDestinationCard, OffbeatEmptyState, OffbeatGridSkeleton } from '
 const SLIDE_INTERVAL = 5000;
 const FALLBACK_IMAGE = '/images/hero-kashmir-v3.webp';
 
+function FeaturedOffbeatSkeleton() {
+    return (
+        <div className="absolute inset-0 overflow-hidden bg-[#111317]" aria-label="Loading featured destinations" role="status">
+            <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-[#29312e] via-[#191d1c] to-[#101214]" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0f1014] via-[#0f1014]/65 to-transparent md:bg-[linear-gradient(90deg,rgba(15,16,20,.88)_0%,rgba(15,16,20,.48)_42%,transparent_72%)]" />
+            <div className="relative z-10 mx-auto flex min-h-[610px] max-w-7xl items-end px-4 pb-14 pt-44 sm:px-6 md:items-center lg:min-h-[680px] lg:px-8">
+                <div className="w-full max-w-xl animate-pulse">
+                    <div className="mb-5 h-3 w-32 rounded-full bg-white/20" />
+                    <div className="h-12 w-4/5 rounded-2xl bg-white/20 sm:h-16" />
+                    <div className="mt-3 h-12 w-3/5 rounded-2xl bg-white/15 sm:h-16" />
+                    <div className="mt-6 h-3 w-48 rounded-full bg-white/15" />
+                    <div className="mt-6 space-y-3">
+                        <div className="h-3 w-full rounded-full bg-white/12" />
+                        <div className="h-3 w-5/6 rounded-full bg-white/12" />
+                    </div>
+                    <div className="mt-8 h-12 w-40 rounded-full bg-white/20" />
+                </div>
+            </div>
+            <span className="sr-only">Loading featured offbeats</span>
+        </div>
+    );
+}
+
 export default function OffbeatsLandingPage() {
     const [currentSlide, setCurrentSlide] = useState(0);
     const [region, setRegion] = useState('All');
     const pointerStart = useRef(0);
     const { data: featuredData, isLoading: featuredLoading } = useOffbeatList(
         { featured: true, region, page: 1, limit: 24, sort: 'popular' },
-        { dedupingInterval: 0, keepPreviousData: false, revalidateIfStale: true }
+        { dedupingInterval: 300000, keepPreviousData: true, revalidateIfStale: false }
     );
     const { data: latestData, isLoading: latestLoading, error } = useOffbeatList(
         { region, page: 1, limit: 24, sort: 'newest' },
@@ -82,7 +105,7 @@ export default function OffbeatsLandingPage() {
                 onTouchStart={(event) => { pointerStart.current = event.touches[0].clientX; }}
                 onTouchEnd={finishSwipe}
             >
-                {heroLoading && !activeFeatured && <div className="absolute inset-0 animate-pulse bg-[#17191d]" />}
+                {heroLoading && !activeFeatured && <FeaturedOffbeatSkeleton />}
 
                 {activeFeatured && (
                     <AnimatePresence mode="wait">

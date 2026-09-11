@@ -3,6 +3,8 @@ import dbConnect from '@/lib/db';
 import { TrekBooking } from '@/models/trekbooking.model';
 import { Package } from '@/models/package.model';
 import { getCurrentUser } from '@/lib/auth';
+import mongoose from 'mongoose';
+import { calculateTripBookingQuote, TripBookingValidationError } from '@/lib/tripBooking';
 
 // GET — fetch all trek bookings for the logged-in user
 export async function GET(req) {
@@ -59,6 +61,7 @@ export async function GET(req) {
                 numPeople: b.numPeople,
                 peopleRange: b.peopleRange,
                 totalAmount: b.totalAmount,
+                amountPaid: b.amountPaid || b.totalAmount,
                 status: b.status,
                 days: b.package?.days || b.packageSnapshot?.days || 0,
                 createdAt: b.createdAt,
@@ -92,62 +95,92 @@ export async function POST(req) {
         await dbConnect();
 
         const {
-            packageId, guideId, startDate, numPeople, peopleRange,
-            baseAmount, discount, platformFee, taxes, totalAmount,
-            pickupDropoff, personalDetails, packageSnapshot
+            packageId, startDate, numPeople, peopleRange,
+            pickupDropoff, personalDetails, checkoutKey,
         } = await req.json();
 
-        if (!packageId || !startDate || !numPeople || !totalAmount) {
-            return NextResponse.json({ success: false, message: `Missing required fields.` }, { status: 400 });
+        if (!packageId || !startDate || !numPeople || !checkoutKey) {
+            return NextResponse.json({ success: false, message: 'Package, travel date, travellers and checkout key are required.' }, { status: 400 });
+        }
+        if (!mongoose.Types.ObjectId.isValid(packageId)) {
+            return NextResponse.json({ success: false, message: 'Invalid package ID.' }, { status: 400 });
+        }
+        if (typeof checkoutKey !== 'string' || checkoutKey.length < 8 || checkoutKey.length > 120) {
+            return NextResponse.json({ success: false, message: 'Invalid checkout key.' }, { status: 400 });
         }
 
-        // Verify package exists
-        let pkg = null;
-        try {
-            pkg = await Package.findById(packageId);
-        } catch (castErr) {
-            return NextResponse.json({ success: false, message: `Invalid packageId format.` }, { status: 400 });
+        const existing = await TrekBooking.findOne({ user: user.userId, checkoutKey });
+        if (existing) {
+            return NextResponse.json({
+                success: true,
+                bookingId: existing._id.toString(),
+                bookingRef: existing.bookingRef,
+                amountPaid: existing.amountPaid || existing.totalAmount,
+                totalAmount: existing.totalAmount,
+                reused: true,
+            });
         }
-        if (!pkg) return NextResponse.json({ success: false, message: `Package not found.` }, { status: 404 });
+
+        const pkg = await Package.findOne({ _id: packageId, category: 'trek', status: 'active' });
+        if (!pkg) return NextResponse.json({ success: false, message: 'This trek is no longer available for booking.' }, { status: 409 });
+
+        const quote = calculateTripBookingQuote(pkg, numPeople, 'full');
 
         // Calculate end date
         const start = new Date(startDate);
+        if (Number.isNaN(start.getTime())) {
+            return NextResponse.json({ success: false, message: 'Choose a valid travel date.' }, { status: 400 });
+        }
+        if (start < new Date(Date.now() - 24 * 60 * 60 * 1000) || start > new Date(Date.now() + 3 * 365 * 24 * 60 * 60 * 1000)) {
+            return NextResponse.json({ success: false, message: 'The selected travel date is outside the allowed range.' }, { status: 400 });
+        }
         const end = new Date(start);
-        end.setDate(end.getDate() + (pkg.days || packageSnapshot?.days || 1) - 1);
+        end.setDate(end.getDate() + (pkg.days || 1) - 1);
 
         const bookingData = {
             user: user.userId,
             package: packageId,
+            provider: pkg.provider,
+            checkoutKey,
             peopleRange: peopleRange || '1-2',
-            numPeople: Number(numPeople),
+            numPeople: quote.numPeople,
             startDate: start,
             endDate: end,
-            baseAmount: Number(baseAmount) || 0,
-            discount: Number(discount) || 0,
-            platformFee: Number(platformFee) || 50,
-            taxes: Number(taxes) || 0,
-            totalAmount: Number(totalAmount),
+            baseAmount: quote.baseAmount,
+            discount: quote.discount,
+            platformFee: quote.platformFee,
+            taxes: quote.taxes,
+            totalAmount: quote.totalAmount,
+            amountPaid: quote.amountPaid,
             pickupDropoff: pickupDropoff || {},
             personalDetails: personalDetails || {},
             packageSnapshot: {
-                name: pkg.name || packageSnapshot?.name || 'Trek Package',
-                destination: pkg.destination || packageSnapshot?.destination || '',
-                days: pkg.days || packageSnapshot?.days || 1,
+                name: pkg.name || 'Trek Package',
+                destination: pkg.destination || '',
+                days: pkg.days || 1,
+                perPersonPrice: quote.baseAmount / quote.numPeople,
+                gatewayFee: quote.gatewayFee,
             },
             status: 'pending',
         };
 
-        if (guideId && guideId !== 'undefined' && guideId !== 'null') {
-            bookingData.provider = guideId;
-        } else if (pkg.provider) {
-            bookingData.provider = pkg.provider;
-        }
-
         const booking = await TrekBooking.create(bookingData);
 
-        return NextResponse.json({ success: true, bookingId: booking._id.toString(), bookingRef: booking.bookingRef }, { status: 201 });
+        return NextResponse.json({
+            success: true,
+            bookingId: booking._id.toString(),
+            bookingRef: booking.bookingRef,
+            amountPaid: booking.amountPaid,
+            totalAmount: booking.totalAmount,
+        }, { status: 201 });
     } catch (error) {
         console.error('Create trek booking error:', error);
-        return NextResponse.json({ success: false, message: error.message || 'Server error' }, { status: 500 });
+        if (error instanceof TripBookingValidationError) {
+            return NextResponse.json({ success: false, message: error.message }, { status: error.status });
+        }
+        if (error?.code === 11000) {
+            return NextResponse.json({ success: false, message: 'This checkout is already being created. Please retry.' }, { status: 409 });
+        }
+        return NextResponse.json({ success: false, message: 'Could not create this trek booking.' }, { status: 500 });
     }
 }

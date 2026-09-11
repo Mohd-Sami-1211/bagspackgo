@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { AlertCircle } from 'lucide-react';
+import { ArrowUpRight, BookmarkCheck, X } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 export default function PendingBookingNotification() {
   const [show, setShow] = useState(false);
@@ -65,53 +66,78 @@ export default function PendingBookingNotification() {
 
   if (!show || !bookingData) return null;
 
+  const hideForSession = () => {
+    sessionStorage.setItem('hide_pending_booking', 'true');
+    setShow(false);
+  };
+
+  const stopReminding = () => {
+    const pendingStr = localStorage.getItem('pending_booking');
+    if (pendingStr) {
+      try {
+        const pending = JSON.parse(pendingStr);
+        pending.ignored = true;
+        localStorage.setItem('pending_booking', JSON.stringify(pending));
+      } catch (error) {
+        console.error('Error updating pending booking', error);
+      }
+    }
+    setShow(false);
+  };
+
   return (
-    <div className="fixed bottom-4 sm:bottom-6 left-0 right-0 sm:left-auto sm:right-6 pointer-events-none z-[9999] flex justify-center sm:justify-end px-4 sm:px-0 animate-in slide-in-from-bottom-5 fade-in duration-500">
-      <div className="bg-white border border-slate-200 rounded-xl shadow-xl p-5 w-full max-w-[340px] sm:max-w-sm relative overflow-hidden flex flex-col pointer-events-auto">
-        <div className="flex items-start gap-3">
-          <div className="mt-0.5">
-             <AlertCircle className="w-5 h-5 text-emerald-600" />
+    <div className="pointer-events-none fixed bottom-[5.75rem] left-3 right-3 z-[160] flex justify-center sm:bottom-6 sm:left-auto sm:right-6 sm:justify-end">
+      <motion.aside
+        initial={{ opacity: 0, y: 28, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ type: 'spring', stiffness: 320, damping: 28 }}
+        aria-live="polite"
+        className="pointer-events-auto relative w-full max-w-[410px] overflow-hidden rounded-[1.6rem] border border-white/15 bg-[#122c26]/95 text-white shadow-[0_24px_70px_-22px_rgba(7,26,21,0.72)] backdrop-blur-xl"
+      >
+        <div className="absolute -right-12 -top-16 h-40 w-40 rounded-full bg-emerald-300/15 blur-3xl" />
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-200/70 to-transparent" />
+
+        <button
+          type="button"
+          onClick={hideForSession}
+          aria-label="Remind me later"
+          className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/65 transition hover:bg-white/10 hover:text-white"
+        >
+          <X className="h-4 w-4" />
+        </button>
+
+        <div className="relative p-4 sm:p-5">
+          <div className="flex items-start gap-3.5 pr-8">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-emerald-200/20 bg-emerald-200/10 text-emerald-200">
+              <BookmarkCheck className="h-5 w-5" />
+            </div>
+            <div className="min-w-0 pt-0.5 text-left">
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-200/75">Saved booking</p>
+              <h4 className="mt-1 font-serif text-xl leading-tight tracking-[-0.02em] text-white">Your trip is still here</h4>
+              <p className="mt-1.5 text-xs font-medium leading-relaxed text-white/62 sm:text-[13px]">
+                Continue from where you stopped. Your selections are saved on this device.
+              </p>
+            </div>
           </div>
-          <div className="flex flex-col flex-1 pr-1 text-left">
-            <h4 className="text-sm font-bold text-slate-900 tracking-tight leading-none mb-1">Pending Booking</h4>
-            <p className="text-xs font-medium text-slate-500 leading-snug">
-              You left a booking incomplete. Would you like to resume where you left off?
-            </p>
+
+          <div className="mt-4 flex items-center gap-3 border-t border-white/10 pt-4">
+            <button
+              type="button"
+              onClick={stopReminding}
+              className="px-1 py-2 text-xs font-semibold text-white/55 transition hover:text-white"
+            >
+              Don&apos;t remind me
+            </button>
+            <a
+              href={bookingData.url}
+              className="ml-auto inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-[#dce88b] px-5 text-sm font-bold text-[#17372f] shadow-[0_10px_30px_-14px_rgba(220,232,139,0.85)] transition hover:bg-[#e8f39e] active:scale-[0.98]"
+            >
+              Continue booking
+              <ArrowUpRight className="h-4 w-4" />
+            </a>
           </div>
         </div>
-        
-        <div className="mt-4 flex items-center justify-end gap-2">
-           <button
-             onClick={() => {
-                const pendingStr = localStorage.getItem('pending_booking');
-                if (pendingStr) {
-                   const pending = JSON.parse(pendingStr);
-                   pending.ignored = true;
-                   localStorage.setItem('pending_booking', JSON.stringify(pending));
-                }
-                setShow(false);
-             }}
-             className="cursor-pointer py-1.5 px-3 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-md transition-colors"
-           >
-             Ignore
-           </button>
-           <button
-             onClick={() => {
-                sessionStorage.setItem('hide_pending_booking', 'true');
-                setShow(false);
-             }}
-             className="cursor-pointer py-1.5 px-3 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-md transition-colors"
-           >
-             Later
-           </button>
-           <a
-             href={bookingData.url}
-             className="cursor-pointer py-1.5 px-3 text-center text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-md transition-colors"
-           >
-             Resume
-           </a>
-        </div>
-      </div>
+      </motion.aside>
     </div>
   );
 }

@@ -94,6 +94,7 @@ export default function TrekPassPage() {
         startDate,
         numPeople,
         totalAmount,
+        amountPaid,
         personalDetails = {},
     } = booking || {};
 
@@ -267,7 +268,7 @@ export default function TrekPassPage() {
                                 </div>
                                 <div className="text-center sm:text-left">
                                     <p className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Paid</p>
-                                    <p className="font-black text-emerald-600 text-sm sm:text-base">₹{Number(totalAmount || 0).toLocaleString('en-IN')}</p>
+                                    <p className="font-black text-emerald-600 text-sm sm:text-base">₹{Number(amountPaid || totalAmount || 0).toLocaleString('en-IN')}</p>
                                 </div>
                             </div>
                         </div>

@@ -124,5 +124,8 @@ const offbeatSchema = new mongoose.Schema(
 offbeatSchema.index({ status: 1 });
 offbeatSchema.index({ destination: 1 });
 offbeatSchema.index({ status: 1, featured: 1, createdAt: -1 });
+offbeatSchema.index({ status: 1, region: 1, featured: 1, visitCount: -1, createdAt: -1 });
+offbeatSchema.index({ status: 1, region: 1, createdAt: -1 });
+offbeatSchema.index({ status: 1, title: 1 });
 
 export const OffBeat = mongoose.models.OffBeat || mongoose.model("OffBeat", offbeatSchema);
