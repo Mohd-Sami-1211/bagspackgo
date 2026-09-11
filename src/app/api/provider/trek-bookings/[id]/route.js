@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import { TrekBooking } from '@/models/trekbooking.model';
 import { getCurrentUser } from '@/lib/auth';
+import { refundTrekBookingPayment } from '@/lib/trekBooking';
 
 export async function GET(request, context) {
     const params = await context.params;
@@ -77,17 +78,25 @@ export async function PATCH(request, context) {
         const isOwner = (booking.provider?.toString() === user.userId || booking.package?.provider?.toString() === user.userId);
         if (!isOwner) return NextResponse.json({ success: false, message: 'Forbidden' }, { status: 403 });
 
-        // Status update logic
+        // A provider cannot confirm an unpaid booking or mark a refund without
+        // actually initiating it at Razorpay.
         if (status === 'refund_initiated' && booking.status === 'cancellation_requested') {
-            booking.status = 'refund_initiated';
-            if (!booking.cancellationDetails) booking.cancellationDetails = {};
-            booking.cancellationDetails.refundInitiatedAt = new Date();
-        } else if (status === 'cancelled') {
+            const outcome = await refundTrekBookingPayment(booking);
+            if (outcome.kind !== 'refunded') {
+                return NextResponse.json({
+                    success: false,
+                    message: outcome.kind === 'not_required'
+                        ? 'No captured payment is available to refund.'
+                        : 'The refund could not be initiated. Please retry or contact support.',
+                }, { status: 502 });
+            }
+            return NextResponse.json({ success: true, message: 'Refund initiated with Razorpay.' });
+        } else if (status === 'cancelled' && booking.status === 'refund_initiated') {
             booking.status = 'cancelled';
             if (!booking.cancellationDetails) booking.cancellationDetails = {};
             booking.cancellationDetails.completedAt = new Date();
         } else {
-            booking.status = status;
+            return NextResponse.json({ success: false, message: 'Invalid booking status transition.' }, { status: 409 });
         }
 
         await booking.save();

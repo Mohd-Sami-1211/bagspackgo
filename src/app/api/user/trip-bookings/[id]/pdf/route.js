@@ -3,6 +3,7 @@ import { TripBooking } from '@/models/tripbooking.model';
 import { GuideDetails } from '@/models/guidedetails.model';
 import { PDFDocument, StandardFonts, rgb, PageSizes } from 'pdf-lib';
 import mongoose from 'mongoose';
+import { getCurrentUser } from '@/lib/auth';
 
 function hexColor(h) {
     const r = parseInt(h.slice(1, 3), 16) / 255;
@@ -13,6 +14,10 @@ function hexColor(h) {
 
 export async function GET(request, { params }) {
     try {
+        const user = await getCurrentUser(request);
+        if (!user) return new Response('Unauthorized', { status: 401 });
+        if (user.role !== 'user') return new Response('Users only', { status: 403 });
+
         const { id } = await params;
         await dbConnect();
 
@@ -27,6 +32,12 @@ export async function GET(request, { params }) {
         if (!booking) {
             return new Response(`Booking not found for id: ${id}`, { status: 404 });
         }
+        if (booking.user?.toString() !== user.userId) {
+            return new Response('You do not have access to this booking.', { status: 403 });
+        }
+        if (booking.status !== 'confirmed') {
+            return new Response('The booking pass is only available after confirmation.', { status: 403 });
+        }
 
         const guideDetails = await GuideDetails.findOne({ guide: booking.provider?._id })
             .select('companyname companymobile companyemail instagram facebook website')
@@ -36,7 +47,7 @@ export async function GET(request, { params }) {
         const providerPhone = guideDetails?.companymobile || booking.provider?.phone || '';
         const providerEmail = guideDetails?.companyemail || booking.provider?.email || '';
 
-        const { startDate, numPeople, totalAmount, personalDetails = {}, arrivalDeparture = {}, packageSnapshot = {} } = booking;
+        const { startDate, numPeople, totalAmount, amountPaid, personalDetails = {}, arrivalDeparture = {}, packageSnapshot = {} } = booking;
         const travelers = personalDetails?.personalDetails || [];
         const formattedDate = startDate
             ? new Date(startDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })
@@ -173,7 +184,7 @@ export async function GET(request, { params }) {
             { label: 'TRAVEL DATE', value: formattedDate },
             { label: 'PICKUP TIME', value: pickupTime },
             { label: 'GUESTS', value: `${numPeople} Pax` },
-            { label: 'TOTAL PAID', value: `Rs.${Number(totalAmount||0).toLocaleString('en-IN')}` },
+            { label: 'TOTAL PAID', value: `Rs.${Number(amountPaid || totalAmount || 0).toLocaleString('en-IN')}` },
         ];
         const colW4 = DETAILS_BOX_W / 4;
         details.forEach((d, i) => {

@@ -50,6 +50,9 @@ const guidedetailsSchema = new mongoose.Schema(
         totalTreks: { type: Number, default: 0 },
         totalTrips: { type: Number, default: 0 },
         totalEvents: { type: Number, default: 0 },
+        // Makes callback/webhook retries unable to increment the same trip twice.
+        countedTripBookings: [{ type: mongoose.Schema.Types.ObjectId, ref: "TripBooking" }],
+        countedTrekBookings: [{ type: mongoose.Schema.Types.ObjectId, ref: "TrekBooking" }],
 
         // Bank Details
         bankName: { type: String, default: "" },

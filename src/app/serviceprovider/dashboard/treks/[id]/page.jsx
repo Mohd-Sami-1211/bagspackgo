@@ -113,7 +113,10 @@ export default function SingleTrekBooking() {
     }, [id]);
 
     const handleStatusUpdate = async (newStatus) => {
-        if (!confirm(`Are you sure you want to update status to ${newStatus}?`)) return;
+        const confirmationMessage = newStatus === 'refund_initiated'
+            ? 'This will initiate the approved refund through Razorpay. Continue?'
+            : `Are you sure you want to update status to ${newStatus}?`;
+        if (!confirm(confirmationMessage)) return;
         setUpdating(true);
         try {
             const res = await fetch(`/api/provider/trek-bookings/${id}`, {
@@ -229,6 +232,18 @@ export default function SingleTrekBooking() {
                                 </p>
                             </div>
                         </div>
+
+                        {booking.status === 'cancellation_requested' && (
+                            <button
+                                type="button"
+                                disabled={updating}
+                                onClick={() => handleStatusUpdate('refund_initiated')}
+                                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#17372f] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#244c41] disabled:cursor-wait disabled:opacity-60"
+                            >
+                                <RefreshCcw className={`h-4 w-4 ${updating ? 'animate-spin' : ''}`} />
+                                {updating ? 'Starting refund…' : 'Approve & start refund'}
+                            </button>
+                        )}
 
                     </div>
 

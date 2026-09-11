@@ -11,14 +11,19 @@ import {
     releaseEventBookingHold,
     sendEventConfirmationOnce,
 } from '@/lib/eventBooking';
+import { reconcileTripBooking, refundTripBookingPayment } from '@/lib/tripBooking';
+import { reconcileTrekBooking, refundTrekBookingPayment } from '@/lib/trekBooking';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request) {
     try {
-        // Vercel Cron Authentication (if CRON_SECRET is defined)
+        // Never expose a destructive cleanup endpoint without authentication.
         const authHeader = request.headers.get('authorization');
-        if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+        if (!process.env.CRON_SECRET) {
+            return NextResponse.json({ success: false, message: 'Cron secret not configured' }, { status: 503 });
+        }
+        if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
             return NextResponse.json({ success: false, message: 'Unauthorized cron trigger' }, { status: 401 });
         }
 
@@ -29,6 +34,7 @@ export async function GET(request) {
         // released, so a late capture is confirmed or refunded rather than
         // silently losing the booking.
         const checkoutHoldCutoff = new Date(Date.now() - EVENT_CHECKOUT_HOLD_MS);
+        const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
 
         const eventFilter = {
             status: 'pending',
@@ -100,19 +106,211 @@ export async function GET(request) {
             if (result.kind === 'released') releasedEvents += 1;
         }
 
-        const [tripResult, trekResult] = await Promise.all([
-            TripBooking.deleteMany(packageFilter),
-            TrekBooking.deleteMany(packageFilter)
-        ]);
+        const expiredTrips = await TripBooking.find(packageFilter).sort({ createdAt: 1 }).limit(200);
+        let deletedTrips = 0;
+        let reconciledTrips = 0;
+
+        for (let trip of expiredTrips) {
+            let hasGatewayOrder = trip.orderId && !['pending', 'creating'].includes(trip.orderId);
+
+            if (trip.orderId === 'creating') {
+                // A request may have timed out after Razorpay created the order
+                // but before MongoDB stored its id. Recover it by unique receipt.
+                if (!razorpay) continue;
+                try {
+                    const recovered = await razorpay.orders.all({ receipt: `tr_${trip._id.toString()}`, count: 10 });
+                    const order = recovered?.items?.sort((a, b) => (b.created_at || 0) - (a.created_at || 0))[0];
+                    if (order?.id) {
+                        trip = await TripBooking.findByIdAndUpdate(
+                            trip._id,
+                            { $set: { orderId: order.id, orderCreationStartedAt: null } },
+                            { new: true }
+                        );
+                        hasGatewayOrder = true;
+                    } else {
+                        await TripBooking.deleteOne({ _id: trip._id, status: 'pending', orderId: 'creating' });
+                        deletedTrips += 1;
+                        continue;
+                    }
+                } catch (error) {
+                    console.error('[Cron] Could not recover trip order:', trip._id, error);
+                    continue;
+                }
+            }
+
+            if (hasGatewayOrder) {
+                if (!razorpay) continue;
+                try {
+                    const outcome = await reconcileTripBooking(trip);
+                    if (['confirmed', 'refunded'].includes(outcome.kind)) {
+                        reconciledTrips += 1;
+                        continue;
+                    }
+                    if (['processing', 'unknown'].includes(outcome.kind)) continue;
+                } catch (error) {
+                    // Unknown gateway state is never safe to delete.
+                    console.error('[Cron] Could not reconcile trip order:', trip.orderId, error);
+                    continue;
+                }
+            }
+
+            const deleted = await TripBooking.deleteOne({ _id: trip._id, status: 'pending' });
+            deletedTrips += deleted.deletedCount || 0;
+        }
+
+        // Retry refunds that were left pending/failed by a transient gateway
+        // or database error. The helper first recovers any existing Razorpay
+        // refund, so this retry cannot issue the same refund twice.
+        const tripRefundsToRetry = await TripBooking.find({
+            status: 'cancellation_requested',
+            paymentId: { $nin: ['', null] },
+            // `pending` is a normal user cancellation awaiting provider
+            // approval. Only retry refunds that were already attempted.
+            'cancellationDetails.refundStatus': 'failed',
+        }).sort({ updatedAt: 1 }).limit(50);
+        let retriedTripRefunds = 0;
+        for (const trip of tripRefundsToRetry) {
+            const outcome = await refundTripBookingPayment(trip);
+            if (outcome.kind === 'refunded') retriedTripRefunds += 1;
+        }
+
+        // A user can cancel while a payment is still authorising. If its
+        // captured webhook is missed, reconcile the cancelled tombstone here.
+        const cancelledCheckoutCandidates = await TripBooking.find({
+            status: 'cancelled',
+            orderId: { $nin: ['', 'pending', 'creating', null] },
+            paymentId: { $in: ['', null] },
+            createdAt: { $lt: thirtyMinutesAgo },
+        }).sort({ updatedAt: 1 }).limit(50);
+        for (const trip of cancelledCheckoutCandidates) {
+            try {
+                const outcome = await reconcileTripBooking(trip);
+                if (outcome.kind === 'refunded') retriedTripRefunds += 1;
+            } catch (error) {
+                console.error('[Cron] Could not reconcile cancelled trip checkout:', trip.orderId, error);
+            }
+        }
+
+        const confirmationRetries = await TripBooking.find({
+            status: 'confirmed',
+            confirmedAt: { $ne: null },
+            confirmationEmailSentAt: null,
+        }).sort({ updatedAt: 1 }).limit(50);
+        let retriedTripConfirmations = 0;
+        for (const trip of confirmationRetries) {
+            try {
+                await reconcileTripBooking(trip);
+                retriedTripConfirmations += 1;
+            } catch (error) {
+                console.error('[Cron] Could not retry trip confirmation effects:', trip._id, error);
+            }
+        }
+
+        const expiredTreks = await TrekBooking.find(packageFilter).sort({ createdAt: 1 }).limit(200);
+        let deletedTreks = 0;
+        let reconciledTreks = 0;
+        for (let trek of expiredTreks) {
+            let hasGatewayOrder = trek.orderId && !['pending', 'creating'].includes(trek.orderId);
+
+            if (trek.orderId === 'creating') {
+                if (!razorpay) continue;
+                try {
+                    const recovered = await razorpay.orders.all({ receipt: `tk_${trek._id.toString()}`, count: 10 });
+                    const order = recovered?.items?.sort((a, b) => (b.created_at || 0) - (a.created_at || 0))[0];
+                    if (order?.id) {
+                        trek = await TrekBooking.findByIdAndUpdate(
+                            trek._id,
+                            { $set: { orderId: order.id, orderCreationStartedAt: null } },
+                            { new: true }
+                        );
+                        hasGatewayOrder = true;
+                    } else {
+                        const deleted = await TrekBooking.deleteOne({ _id: trek._id, status: 'pending', orderId: 'creating' });
+                        deletedTreks += deleted.deletedCount || 0;
+                        continue;
+                    }
+                } catch (error) {
+                    console.error('[Cron] Could not recover trek order:', trek._id, error);
+                    continue;
+                }
+            }
+
+            if (hasGatewayOrder) {
+                if (!razorpay) continue;
+                try {
+                    const outcome = await reconcileTrekBooking(trek);
+                    if (['confirmed', 'refunded'].includes(outcome.kind)) {
+                        reconciledTreks += 1;
+                        continue;
+                    }
+                    if (['processing', 'unknown'].includes(outcome.kind)) continue;
+                } catch (error) {
+                    console.error('[Cron] Could not reconcile trek order:', trek.orderId, error);
+                    continue;
+                }
+            }
+
+            const deleted = await TrekBooking.deleteOne({ _id: trek._id, status: 'pending' });
+            deletedTreks += deleted.deletedCount || 0;
+        }
+
+        const trekRefundsToRetry = await TrekBooking.find({
+            status: 'cancellation_requested',
+            paymentId: { $nin: ['', null] },
+            'cancellationDetails.refundStatus': 'failed',
+        }).sort({ updatedAt: 1 }).limit(50);
+        let retriedTrekRefunds = 0;
+        for (const trek of trekRefundsToRetry) {
+            const outcome = await refundTrekBookingPayment(trek);
+            if (outcome.kind === 'refunded') retriedTrekRefunds += 1;
+        }
+
+        const cancelledTrekCandidates = await TrekBooking.find({
+            status: 'cancelled',
+            orderId: { $nin: ['', 'pending', 'creating', null] },
+            paymentId: { $in: ['', null] },
+            createdAt: { $lt: thirtyMinutesAgo },
+        }).sort({ updatedAt: 1 }).limit(50);
+        for (const trek of cancelledTrekCandidates) {
+            try {
+                const outcome = await reconcileTrekBooking(trek);
+                if (outcome.kind === 'refunded') retriedTrekRefunds += 1;
+            } catch (error) {
+                console.error('[Cron] Could not reconcile cancelled trek checkout:', trek.orderId, error);
+            }
+        }
+
+        const trekConfirmationRetries = await TrekBooking.find({
+            status: 'confirmed',
+            confirmedAt: { $ne: null },
+            confirmationEmailSentAt: null,
+        }).sort({ updatedAt: 1 }).limit(50);
+        let retriedTrekConfirmations = 0;
+        for (const trek of trekConfirmationRetries) {
+            try {
+                await reconcileTrekBooking(trek);
+                retriedTrekConfirmations += 1;
+            } catch (error) {
+                console.error('[Cron] Could not retry trek confirmation effects:', trek._id, error);
+            }
+        }
 
         return NextResponse.json({
             success: true,
-            message: 'Abandoned pending bookings cleaned up (5-minute window)',
+            message: 'Abandoned bookings reconciled and cleaned up',
             deleted: {
                 events: releasedEvents,
-                trips: tripResult.deletedCount,
-                treks: trekResult.deletedCount
-            }
+                trips: deletedTrips,
+                treks: deletedTreks
+            },
+            reconciled: {
+                trips: reconciledTrips,
+                tripRefunds: retriedTripRefunds,
+                tripConfirmations: retriedTripConfirmations,
+                treks: reconciledTreks,
+                trekRefunds: retriedTrekRefunds,
+                trekConfirmations: retriedTrekConfirmations,
+            },
         });
     } catch (error) {
         console.error('[Cron] Cleanup failed:', error);

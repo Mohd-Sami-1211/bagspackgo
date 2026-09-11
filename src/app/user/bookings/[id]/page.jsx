@@ -444,7 +444,7 @@ export default function BookingDetailPage() {
                         people: raw.numPeople,
                         date: raw.startDate,
                         endDate: raw.endDate,
-                        price: raw.totalAmount,
+                        price: raw.amountPaid || raw.totalAmount,
                         duration: `${raw.days} Days`,
                         passUrl: `/user/trip/pass/${raw.id || raw._id}`,
                     };
@@ -463,7 +463,7 @@ export default function BookingDetailPage() {
                         people: raw.numPeople,
                         date: raw.startDate,
                         endDate: raw.endDate,
-                        price: raw.totalAmount,
+                        price: raw.amountPaid || raw.totalAmount,
                         duration: `${raw.days} Days`,
                         passUrl: `/user/trek/pass/${raw.id || raw._id}`,
                         arrivalDeparture: raw.pickupDropoff || raw.arrivalDeparture || {},

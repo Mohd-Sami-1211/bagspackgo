@@ -15,6 +15,8 @@ const trekBookingSchema = new mongoose.Schema({
         }
     },
 
+    checkoutKey: { type: String },
+
     // Trek config
     peopleRange: { type: String, default: '1-2' },
     numPeople: { type: Number, required: true },
@@ -27,6 +29,7 @@ const trekBookingSchema = new mongoose.Schema({
     platformFee: { type: Number, default: 50 },
     taxes: { type: Number, default: 0 },
     totalAmount: { type: Number, required: true },
+    amountPaid: { type: Number, default: 0 },
 
     // Booking status
     status: { type: String, enum: ['pending', 'confirmed', 'cancelled', 'cancellation_requested', 'refund_initiated'], default: 'pending' },
@@ -39,6 +42,10 @@ const trekBookingSchema = new mongoose.Schema({
         refundInitiatedAt: { type: Date },
         completedAt: { type: Date },
         refundAmount: { type: Number, default: 0 },
+        refundStatus: { type: String, enum: ['pending', 'processing', 'initiated', 'failed', 'not_required'], default: 'not_required' },
+        refundId: { type: String, default: '' },
+        refundEmailStartedAt: { type: Date, default: null },
+        refundEmailSentAt: { type: Date, default: null },
     },
 
     // Provider Payment details
@@ -50,6 +57,12 @@ const trekBookingSchema = new mongoose.Schema({
     // Payment details
     paymentId: { type: String, default: '' },
     orderId: { type: String, default: '' },
+    orderCreationStartedAt: { type: Date, default: null },
+    confirmedAt: { type: Date, default: null },
+    confirmationEmailStartedAt: { type: Date, default: null },
+    confirmationEmailSentAt: { type: Date, default: null },
+    confirmationUserEmailSentAt: { type: Date, default: null },
+    confirmationProviderEmailSentAt: { type: Date, default: null },
 
     // Traveller details
     pickupDropoff: { type: mongoose.Schema.Types.Mixed, default: {} },
@@ -59,6 +72,11 @@ const trekBookingSchema = new mongoose.Schema({
     packageSnapshot: { type: mongoose.Schema.Types.Mixed, default: {} },
 
 }, { timestamps: true });
+
+trekBookingSchema.index({ user: 1, checkoutKey: 1 }, { unique: true, sparse: true });
+trekBookingSchema.index({ orderId: 1 });
+trekBookingSchema.index({ paymentId: 1 });
+trekBookingSchema.index({ status: 1, createdAt: 1 });
 
 delete mongoose.models.TrekBooking;
 export const TrekBooking = mongoose.models.TrekBooking || mongoose.model('TrekBooking', trekBookingSchema);

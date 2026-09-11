@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -40,6 +40,7 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
   const [paymentError, setPaymentError] = useState("");
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [paymentMode, setPaymentMode] = useState('partial'); // 'partial' or 'full'
+  const checkoutKeyRef = useRef("");
 
   // Extract useful params
   const category = searchParams?.get("category") || "individual";
@@ -212,30 +213,24 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
       return;
     }
 
+    let activeBookingId = "";
     try {
+      if (!checkoutKeyRef.current) {
+        checkoutKeyRef.current = globalThis.crypto?.randomUUID?.()
+          || `trip-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      }
       const bookingRes = await fetch("/api/user/trip-bookings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           packageId,
-          guideId,
           startDate: config.date || new Date().toISOString(),
           numPeople: Number(config.count || 1),
           category: config.category || "individual",
-          baseAmount: paymentDetails.packageAmount,
-          discount: paymentDetails.discount,
-          platformFee: paymentDetails.platformFee,
-          taxes: paymentDetails.gstOnGateway,
-          totalAmount: Math.round(paymentDetails.totalAmount),
           paymentMode: paymentMode,
-          amountPaid: payableAmount,
+          checkoutKey: checkoutKeyRef.current,
           arrivalDeparture: tripData.arrivalDeparture || {},
           personalDetails: tripData.personalDetails || {},
-          packageSnapshot: {
-            name: selectedPkg?.label || selectedPkg?.name || "Trip Package",
-            destination: guideData?.location || selectedPkg?.destination || "",
-            days: selectedPkg?.days || config.days || 1,
-          },
         }),
       });
 
@@ -244,18 +239,25 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
         throw new Error(bookingResult.message || "Failed to create booking");
 
       const { bookingId } = bookingResult;
-      const amountToPay = payableAmount;
+      activeBookingId = bookingId;
 
       const orderRes = await fetch("/api/payments/trip-create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: amountToPay || 1, bookingId }),
+        body: JSON.stringify({ bookingId }),
       });
       const orderData = await orderRes.json();
-      if (!orderData.success)
-        throw new Error(orderData.message || "Order creation failed");
+      if (!orderData.success) {
+        if (orderData.processing) {
+          router.push(`/user/trip/booking-failed?state=processing&bookingId=${bookingId}&return=${encodeURIComponent(`/trip/${packageId}`)}`);
+          return;
+        }
+        const orderError = new Error(orderData.message || "Order creation failed");
+        orderError.safeToRetry = true;
+        throw orderError;
+      }
 
-      const { orderId, key } = orderData;
+      const { orderId, key, amount: orderAmount } = orderData;
 
       if (typeof window.Razorpay !== "function") {
         throw new Error("Payment gateway is still loading. Please wait a moment and try again.");
@@ -263,7 +265,7 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
 
       const rzp = new window.Razorpay({
         key,
-        amount: amountToPay * 100,
+        amount: orderAmount,
         currency: "INR",
         order_id: orderId,
         name: "bagspackgo",
@@ -275,31 +277,41 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
         },
         theme: { color: "#059669" },
         handler: async (response) => {
-          const verifyRes = await fetch("/api/payments/trip-verify", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-              bookingId,
-            }),
-          });
-          const verifyData = await verifyRes.json();
-          if (verifyData.success) {
-            localStorage.removeItem("pending_booking");
-            router.push(
-              `/user/trip/booking-success?bookingId=${bookingId}&ref=${verifyData.bookingRef}`,
-            );
-          } else {
-            router.push(`/user/trip/booking-failed?return=/trip/${packageId}`);
+          try {
+            const verifyRes = await fetch("/api/payments/trip-verify", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                bookingId,
+              }),
+            });
+            const verifyData = await verifyRes.json();
+            if (verifyData.success) {
+              localStorage.removeItem("pending_booking");
+              localStorage.removeItem("tripData");
+              router.push(
+                `/user/trip/booking-success?bookingId=${bookingId}&ref=${verifyData.bookingRef}`,
+              );
+              return;
+            }
+
+            const state = verifyData.refundInitiated || verifyData.refundPending
+              ? "refund"
+              : "processing";
+            router.push(`/user/trip/booking-failed?state=${state}&bookingId=${bookingId}&return=${encodeURIComponent(`/trip/${packageId}`)}`);
+          } catch (error) {
+            console.error("[Payment] Verification request failed:", error);
+            router.push(`/user/trip/booking-failed?state=processing&bookingId=${bookingId}&return=${encodeURIComponent(`/trip/${packageId}`)}`);
           }
         },
         modal: { ondismiss: () => setIsPaymentLoading(false) },
       });
       
       rzp.on('payment.failed', function (response) {
-         router.push(`/user/trip/booking-failed?return=/trip/${packageId}`);
+         router.push(`/user/trip/booking-failed?state=failed&bookingId=${bookingId}&return=${encodeURIComponent(`/trip/${packageId}`)}`);
       });
       
       rzp.open();
@@ -307,7 +319,8 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
       console.error("[Payment] Error:", err);
       // setPaymentError(err.message || "Payment failed.");
       // setIsPaymentLoading(false);
-      router.push(`/user/trip/booking-failed?return=/trip/${packageId}`);
+      const state = activeBookingId && !err.safeToRetry ? "processing" : "failed";
+      router.push(`/user/trip/booking-failed?state=${state}${activeBookingId ? `&bookingId=${activeBookingId}` : ""}&return=${encodeURIComponent(`/trip/${packageId}`)}`);
     }
   };
 

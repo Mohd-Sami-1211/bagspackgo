@@ -10,6 +10,20 @@ import {
     sendEventConfirmationOnce,
     sendEventRefundInitiationOnce,
 } from '@/lib/eventBooking';
+import {
+    confirmTripBooking,
+    refundTripBookingPayment,
+    runTripConfirmationEffects,
+    sendTripRefundInitiationOnce,
+    validateCapturedTripPayment,
+} from '@/lib/tripBooking';
+import {
+    confirmTrekBooking,
+    refundTrekBookingPayment,
+    runTrekConfirmationEffects,
+    sendTrekRefundInitiationOnce,
+    validateCapturedTrekPayment,
+} from '@/lib/trekBooking';
 
 function signaturesMatch(actual, expected) {
     if (typeof actual !== 'string' || actual.length !== expected.length) return false;
@@ -65,7 +79,7 @@ export async function POST(req) {
         const orderReceipt = payload.order?.entity?.receipt;
         const notedBookingId = payload.order?.entity?.notes?.bookingId
             || payload.payment?.entity?.notes?.bookingId
-            || (typeof orderReceipt === 'string' ? orderReceipt.match(/^ev_([a-f0-9]{24})$/i)?.[1] : null);
+            || (typeof orderReceipt === 'string' ? orderReceipt.match(/^(?:ev|tr|tk)_([a-f0-9]{24})$/i)?.[1] : null);
 
         await dbConnect();
 
@@ -129,25 +143,136 @@ export async function POST(req) {
             return NextResponse.json({ success: true, message: 'Event booking already processed' });
         }
 
-        // 2. Check Trip Bookings
-        let booking = await TripBooking.findOneAndUpdate(
-            { orderId, status: 'pending' },
-            { $set: { status: 'confirmed', paymentId: paymentId } },
-            { new: true }
-        );
-        if (booking) return NextResponse.json({ success: true, message: 'Trip booking confirmed' });
-        const existingTrip = await TripBooking.findOne({ orderId });
-        if (existingTrip) return NextResponse.json({ success: true, message: 'Trip booking already processed' });
+        // 2. Check Trip Bookings. This shares the same idempotent confirmation
+        // and side-effect path as the browser callback.
+        let tripBooking = await TripBooking.findOne({
+            $or: [
+                { orderId },
+                ...(notedBookingId
+                    ? [{ _id: notedBookingId, status: 'pending', orderId: { $in: ['', 'pending', 'creating', null] } }]
+                    : []),
+            ],
+        });
+        if (tripBooking) {
+            if (!paymentId || !payload.payment?.entity) {
+                return NextResponse.json({ success: false, message: 'No payment details in trip payload' }, { status: 400 });
+            }
+            if (tripBooking.orderId !== orderId) {
+                const recoveredTrip = await TripBooking.findOneAndUpdate(
+                    { _id: tripBooking._id, status: 'pending', orderId: { $in: ['', 'pending', 'creating', null] } },
+                    { $set: { orderId, orderCreationStartedAt: null } },
+                    { new: true }
+                );
+                tripBooking = recoveredTrip || await TripBooking.findById(tripBooking._id);
+            }
 
-        // 3. Check Trek Bookings
-        booking = await TrekBooking.findOneAndUpdate(
-            { orderId, status: 'pending' },
-            { $set: { status: 'confirmed', paymentId: paymentId } },
-            { new: true }
-        );
-        if (booking) return NextResponse.json({ success: true, message: 'Trek booking confirmed' });
-        const existingTrek = await TrekBooking.findOne({ orderId });
-        if (existingTrek) return NextResponse.json({ success: true, message: 'Trek booking already processed' });
+            const paymentEntity = {
+                ...payload.payment.entity,
+                order_id: orderId,
+                amount: payload.payment.entity.amount ?? payload.order?.entity?.amount_paid,
+                currency: payload.payment.entity.currency ?? payload.order?.entity?.currency,
+                status: payload.payment.entity.status || 'captured',
+                captured: payload.payment.entity.captured ?? true,
+            };
+            validateCapturedTripPayment(tripBooking, paymentEntity);
+
+            if (tripBooking.status === 'refund_initiated') {
+                await sendTripRefundInitiationOnce(tripBooking._id);
+                return NextResponse.json({ success: true, message: 'Trip refund already initiated' });
+            }
+            if (['cancelled', 'cancellation_requested'].includes(tripBooking.status)) {
+                tripBooking = await TripBooking.findByIdAndUpdate(
+                    tripBooking._id,
+                    {
+                        $set: {
+                            paymentId,
+                            status: 'cancellation_requested',
+                            'cancellationDetails.refundAmount': tripBooking.amountPaid,
+                            'cancellationDetails.refundStatus': 'pending',
+                        },
+                    },
+                    { new: true }
+                );
+                await refundTripBookingPayment(tripBooking, paymentId);
+                return NextResponse.json({ success: true, message: 'Late trip payment refund workflow checked' });
+            }
+
+            const outcome = await confirmTripBooking({
+                bookingId: tripBooking._id,
+                orderId,
+                paymentId,
+            });
+            if (outcome.kind === 'confirmed') {
+                await runTripConfirmationEffects(outcome.booking);
+                return NextResponse.json({ success: true, message: outcome.newlyConfirmed ? 'Trip booking confirmed' : 'Trip booking already processed' });
+            }
+            return NextResponse.json({ success: false, message: 'Trip booking could not be confirmed' }, { status: 409 });
+        }
+
+        // 3. Check Trek Bookings using the same guarded confirmation path.
+        let trekBooking = await TrekBooking.findOne({
+            $or: [
+                { orderId },
+                ...(notedBookingId
+                    ? [{ _id: notedBookingId, status: 'pending', orderId: { $in: ['', 'pending', 'creating', null] } }]
+                    : []),
+            ],
+        });
+        if (trekBooking) {
+            if (!paymentId || !payload.payment?.entity) {
+                return NextResponse.json({ success: false, message: 'No payment details in trek payload' }, { status: 400 });
+            }
+            if (trekBooking.orderId !== orderId) {
+                const recovered = await TrekBooking.findOneAndUpdate(
+                    { _id: trekBooking._id, status: 'pending', orderId: { $in: ['', 'pending', 'creating', null] } },
+                    { $set: { orderId, orderCreationStartedAt: null } },
+                    { new: true }
+                );
+                trekBooking = recovered || await TrekBooking.findById(trekBooking._id);
+            }
+
+            const paymentEntity = {
+                ...payload.payment.entity,
+                order_id: orderId,
+                amount: payload.payment.entity.amount ?? payload.order?.entity?.amount_paid,
+                currency: payload.payment.entity.currency ?? payload.order?.entity?.currency,
+                status: payload.payment.entity.status || 'captured',
+                captured: payload.payment.entity.captured ?? true,
+            };
+            validateCapturedTrekPayment(trekBooking, paymentEntity);
+
+            if (trekBooking.status === 'refund_initiated') {
+                await sendTrekRefundInitiationOnce(trekBooking._id);
+                return NextResponse.json({ success: true, message: 'Trek refund already initiated' });
+            }
+            if (['cancelled', 'cancellation_requested'].includes(trekBooking.status)) {
+                trekBooking = await TrekBooking.findByIdAndUpdate(
+                    trekBooking._id,
+                    {
+                        $set: {
+                            paymentId,
+                            status: 'cancellation_requested',
+                            'cancellationDetails.refundAmount': trekBooking.amountPaid || trekBooking.totalAmount,
+                            'cancellationDetails.refundStatus': 'pending',
+                        },
+                    },
+                    { new: true }
+                );
+                await refundTrekBookingPayment(trekBooking, paymentId);
+                return NextResponse.json({ success: true, message: 'Late trek payment refund workflow checked' });
+            }
+
+            const outcome = await confirmTrekBooking({
+                bookingId: trekBooking._id,
+                orderId,
+                paymentId,
+            });
+            if (outcome.kind === 'confirmed') {
+                await runTrekConfirmationEffects(outcome.booking);
+                return NextResponse.json({ success: true, message: outcome.newlyConfirmed ? 'Trek booking confirmed' : 'Trek booking already processed' });
+            }
+            return NextResponse.json({ success: false, message: 'Trek booking could not be confirmed' }, { status: 409 });
+        }
 
         // Booking not found
         console.warn(`[Webhook] No booking found for orderId: ${orderId}`);

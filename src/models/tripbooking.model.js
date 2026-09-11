@@ -15,6 +15,9 @@ const tripBookingSchema = new mongoose.Schema({
         }
     },  // e.g. BPG-2603-XKQZ
 
+    // A browser-generated key makes retries of the booking POST idempotent.
+    checkoutKey: { type: String },
+
     // Trip config
     category: { type: String, enum: ['individual', 'couple', 'group'], default: 'individual' },
     numPeople: { type: Number, required: true },
@@ -39,6 +42,10 @@ const tripBookingSchema = new mongoose.Schema({
         refundInitiatedAt: { type: Date },
         completedAt: { type: Date },
         refundAmount: { type: Number, default: 0 },
+        refundStatus: { type: String, enum: ['pending', 'processing', 'initiated', 'failed', 'not_required'], default: 'not_required' },
+        refundId: { type: String, default: '' },
+        refundEmailStartedAt: { type: Date, default: null },
+        refundEmailSentAt: { type: Date, default: null },
     },
 
     // Provider Payment details
@@ -50,6 +57,12 @@ const tripBookingSchema = new mongoose.Schema({
     // Payment details
     paymentId: { type: String, default: '' },
     orderId: { type: String, default: '' },
+    orderCreationStartedAt: { type: Date, default: null },
+    confirmedAt: { type: Date, default: null },
+    confirmationEmailStartedAt: { type: Date, default: null },
+    confirmationEmailSentAt: { type: Date, default: null },
+    confirmationUserEmailSentAt: { type: Date, default: null },
+    confirmationProviderEmailSentAt: { type: Date, default: null },
 
     // Payment mode tracking
     paymentMode: { type: String, enum: ['full', 'partial'], default: 'full' },
@@ -64,6 +77,11 @@ const tripBookingSchema = new mongoose.Schema({
     packageSnapshot: { type: mongoose.Schema.Types.Mixed, default: {} },
 
 }, { timestamps: true });
+
+tripBookingSchema.index({ user: 1, checkoutKey: 1 }, { unique: true, sparse: true });
+tripBookingSchema.index({ orderId: 1 });
+tripBookingSchema.index({ paymentId: 1 });
+tripBookingSchema.index({ status: 1, createdAt: 1 });
 
 delete mongoose.models.TripBooking;
 export const TripBooking = mongoose.models.TripBooking || mongoose.model('TripBooking', tripBookingSchema);
