@@ -20,12 +20,6 @@ const CACHE_HEADERS = {
     'Vercel-CDN-Cache-Control': 'public, max-age=60, stale-while-revalidate=300',
 };
 
-const FRESH_FEATURED_HEADERS = {
-    'Cache-Control': 'no-store, max-age=0',
-    'CDN-Cache-Control': 'no-store',
-    'Vercel-CDN-Cache-Control': 'no-store',
-};
-
 const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const normalize = (value = '') => value.toLowerCase().trim();
 
@@ -187,7 +181,7 @@ export async function GET(request) {
                     hasMore: page < totalPages,
                 },
             },
-            { headers: featured === null ? CACHE_HEADERS : FRESH_FEATURED_HEADERS }
+            { headers: CACHE_HEADERS }
         );
     } catch (error) {
         console.error('Failed to fetch public offbeats:', error);

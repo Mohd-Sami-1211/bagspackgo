@@ -87,7 +87,9 @@ export default function Navbar() {
 
   const isUserAccount = isAuthenticated && user?.role === 'user';
   const isProviderAccount = isAuthenticated && user?.role === 'provider';
-  const isOffbeatsLanding = pathname === '/user/offbeats' || pathname === '/user/offbeats/results';
+  const isOffbeatsLanding = pathname === '/user/offbeats';
+  const isOffbeatsResults = pathname === '/user/offbeats/results';
+  const isOffbeatDetails = Boolean(pathname?.startsWith('/user/offbeats/')) && !isOffbeatsResults;
   const isEventDetails = pathname?.startsWith('/user/events/eventdetails/');
   const isEventBookingSuccess = pathname === '/user/event/booking-success';
   const isEventBookingProcessing = pathname === '/user/event/booking-processing';
@@ -96,10 +98,10 @@ export default function Navbar() {
   const isTripDetails = /^\/user\/trip\/guidelist\/tripdetails\/[^/]+\/?$/.test(pathname || '') || /^\/trip\/[^/]+\/?$/.test(pathname || '');
   const isTripReview = /^\/user\/trip\/guidelist\/tripdetails\/[^/]+\/reviewjourney\/?$/.test(pathname || '') || /^\/trip\/[^/]+\/reviewjourney\/?$/.test(pathname || '');
   const isTripFocused = isTripDetails || isTripReview;
-  const isLanding = pathname === '/' || pathname === '/user/trip' || pathname === '/user/events' || pathname === '/user/companion' || isOffbeatsLanding;
-  const isDarkNav = isLanding || isEventFocused || isTripResults || isTripFocused;
-  const hidePrimaryNav = isEventFocused || isTripResults || isTripFocused;
-  const isOverlayNav = isLanding || isEventFocused || isTripResults || isTripFocused;
+  const isLanding = pathname === '/' || pathname === '/user/trip' || pathname === '/user/events' || pathname === '/user/companion' || isOffbeatsLanding || isOffbeatsResults;
+  const isDarkNav = isLanding || isEventFocused || isTripResults || isTripFocused || isOffbeatDetails;
+  const hidePrimaryNav = isEventFocused || isTripResults || isTripFocused || isOffbeatDetails;
+  const isOverlayNav = isLanding || isEventFocused || isTripResults || isTripFocused || isOffbeatDetails;
 
   useEffect(() => {
     setShowDropdown(false);
@@ -118,7 +120,7 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className={`z-[100] w-full ${isTripFocused ? 'absolute left-0 top-0 border-b border-white/10 bg-[#111816]/45 text-white shadow-[0_10px_35px_-26px_rgba(0,0,0,0.7)] backdrop-blur-md' : isEventFocused || isTripResults ? 'sticky top-0 border-b border-white/10 bg-[#111816]/60 text-white shadow-[0_10px_35px_-26px_rgba(0,0,0,0.7)] backdrop-blur-xl' : isLanding ? `absolute left-0 top-0 border-b border-white/10 text-white ${isOffbeatsLanding ? 'bg-[#111816]/45 shadow-[0_10px_35px_-26px_rgba(0,0,0,0.55)] backdrop-blur-md' : 'bg-transparent'}` : 'sticky top-0 border-b border-slate-200/80 bg-white/95 shadow-sm backdrop-blur-xl'}`}>
+      <nav className={`z-[100] w-full ${isTripFocused ? 'absolute left-0 top-0 border-b border-white/10 bg-[#111816]/45 text-white shadow-[0_10px_35px_-26px_rgba(0,0,0,0.7)] backdrop-blur-md' : isOffbeatDetails ? 'absolute left-0 top-0 border-b border-white/10 bg-[#070c0b]/90 text-white shadow-[0_12px_34px_-24px_rgba(0,0,0,0.95)] backdrop-blur-xl' : isEventFocused || isTripResults ? 'sticky top-0 border-b border-white/10 bg-[#111816]/60 text-white shadow-[0_10px_35px_-26px_rgba(0,0,0,0.7)] backdrop-blur-xl' : isLanding ? `absolute left-0 top-0 border-b border-white/10 text-white ${isOffbeatsLanding || isOffbeatsResults ? 'bg-[#111816]/45 shadow-[0_10px_35px_-26px_rgba(0,0,0,0.55)] backdrop-blur-md' : 'bg-transparent'}` : 'sticky top-0 border-b border-slate-200/80 bg-white/95 shadow-sm backdrop-blur-xl'}`}>
         <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between gap-4">
             <Link
