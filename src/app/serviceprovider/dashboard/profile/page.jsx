@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { providerProfilePath } from '@/lib/providerSlug';
 
 export default function ProviderProfilePage() {
     const router = useRouter();
@@ -83,7 +84,7 @@ export default function ProviderProfilePage() {
 
     const handleShare = async () => {
         const guideId = profile?.guideId || profile?._id || '';
-        const url = `${window.location.origin}/user/provider/${guideId}`;
+        const url = `${window.location.origin}${providerProfilePath(profile.companyname || profile.name, guideId)}`;
         try {
             if (navigator.share) {
                 await navigator.share({

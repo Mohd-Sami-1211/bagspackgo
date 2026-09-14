@@ -7,6 +7,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { MapPin, User, Mail, Phone, Instagram, Facebook, Globe, CheckCircle2, Navigation, X } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { providerProfilePath } from '@/lib/providerSlug';
 
 const formatTimeWithAMPM = (time) => {
     if (!time || !time.toString().trim()) return "Not specified";
@@ -195,7 +196,7 @@ export default function TripPassPage() {
                                 )}
                                 <h2 className="text-lg sm:text-xl font-black text-gray-900 md:text-right">
                                     {booking?.provider ? (
-                                        <Link href={`/user/provider/${booking.provider}`} className="hover:text-emerald-700 hover:underline">{providerName}</Link>
+                                        <Link href={providerProfilePath(providerName, booking.provider)} className="hover:text-emerald-700 hover:underline">{providerName}</Link>
                                     ) : providerName}
                                 </h2>
                             </div>

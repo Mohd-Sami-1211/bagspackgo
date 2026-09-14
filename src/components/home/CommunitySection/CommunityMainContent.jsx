@@ -35,6 +35,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { compressImage } from '@/lib/imageCompression';
+import { providerProfilePath } from '@/lib/providerSlug';
 
 // ─── Animation Variants ────────────────────────────────────
 const TAB_VARIANTS = {
@@ -269,7 +270,7 @@ const CommunityMainContent = () => {
       if (data.success && data.data && data.data.length > 0) {
         const match = data.data.find(m => m.name.toLowerCase() === companyName.toLowerCase());
         if (match && !match.isOfficial) {
-          router.push(`/user/provider/${match.id}`);
+          router.push(providerProfilePath(match.name, match.id));
         }
       }
     } catch (err) {
@@ -730,7 +731,7 @@ const CommunityMainContent = () => {
                             <div className="flex justify-between items-start">
                               <div className="flex items-center gap-3">
                                 <Avatar 
-                                  onClick={() => isVerifiedProviderPost(story) ? router.push(`/user/provider/${story.providerId}`) : undefined}
+                                  onClick={() => isVerifiedProviderPost(story) ? router.push(providerProfilePath(story.name, story.providerId)) : undefined}
                                   className={cn(
                                   "w-10 h-10 ring-2",
                                   isOfficialPost(story) ? "ring-blue-200 bg-white" :
@@ -744,7 +745,7 @@ const CommunityMainContent = () => {
                                     {isVerifiedProviderPost(story) ? (
                                       <span
                                         className="font-semibold text-[15px] text-gray-900 leading-tight cursor-pointer hover:text-emerald-700 hover:underline transition-colors"
-                                        onClick={() => router.push(`/user/provider/${story.providerId}`)}
+                                        onClick={() => router.push(providerProfilePath(story.name, story.providerId))}
                                       >
                                         {story.name}
                                       </span>
@@ -914,7 +915,7 @@ const CommunityMainContent = () => {
                                             <div key={commentId}>
                                               <div className={cn("flex gap-2.5", isReply && "ml-8 mt-2")}>
                                                 <Avatar 
-                                                  onClick={() => verifiedProvider ? router.push(`/user/provider/${c.providerId}`) : undefined}
+                                                  onClick={() => verifiedProvider ? router.push(providerProfilePath(c.name, c.providerId)) : undefined}
                                                   className={cn(
                                                   "w-7 h-7 flex-shrink-0",
                                                   official ? "ring-1 ring-blue-200 bg-white" :
@@ -929,7 +930,7 @@ const CommunityMainContent = () => {
                                                         {verifiedProvider ? (
                                                           <span
                                                             className="font-semibold text-[13px] text-gray-900 cursor-pointer hover:text-emerald-700 hover:underline transition-colors"
-                                                            onClick={() => router.push(`/user/provider/${c.providerId}`)}
+                                                            onClick={() => router.push(providerProfilePath(c.name, c.providerId))}
                                                           >
                                                             {c.name}
                                                           </span>

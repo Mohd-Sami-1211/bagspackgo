@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { toProviderSlug } from "@/lib/providerSlug";
 
 const guidedetailsSchema = new mongoose.Schema(
     {
@@ -12,6 +13,12 @@ const guidedetailsSchema = new mongoose.Schema(
             type: String,
             required: true,
             unique: true,
+            trim: true,
+        },
+
+        profileSlug: {
+            type: String,
+            lowercase: true,
             trim: true,
         },
 
@@ -43,6 +50,7 @@ const guidedetailsSchema = new mongoose.Schema(
         youtube: { type: String, default: "" },
         twitter: { type: String, default: "" },
         logo: { type: String, default: "" },
+        coverPhoto: { type: String, default: "" },
         speciality: { type: String, default: "" },
         bio: { type: String, default: "" },
 
@@ -101,6 +109,13 @@ const guidedetailsSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
+guidedetailsSchema.pre("validate", function setProfileSlug() {
+    if (this.companyname && (this.isModified("companyname") || !this.profileSlug)) {
+        this.profileSlug = toProviderSlug(this.companyname);
+    }
+});
+
 guidedetailsSchema.index({ guide: 1 });
+guidedetailsSchema.index({ profileSlug: 1 }, { unique: true, sparse: true });
 
 export const GuideDetails = mongoose.models.GuideDetails || mongoose.model("GuideDetails", guidedetailsSchema);

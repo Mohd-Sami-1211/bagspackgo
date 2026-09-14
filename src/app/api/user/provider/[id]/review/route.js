@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
 import mongoose from 'mongoose';
 import dbConnect from '@/lib/db';
 import Review from '@/models/review.model';
@@ -23,16 +24,21 @@ export async function POST(request, { params }) {
         }
 
         const body = await request.json();
-        const { rating, comment } = body;
+        const ratingValue = Number(body.rating);
+        const commentValue = String(body.comment || '').trim();
 
-        if (!rating || !comment) {
+        if (!Number.isInteger(ratingValue) || ratingValue < 1 || ratingValue > 5 || !commentValue) {
             return NextResponse.json({ success: false, message: 'Rating and comment are required' }, { status: 400 });
+        }
+
+        if (commentValue.length > 1000) {
+            return NextResponse.json({ success: false, message: 'Review must be 1000 characters or fewer' }, { status: 400 });
         }
 
         const newReview = new Review({
             name: userName,
-            content: comment,
-            rating: Number(rating),
+            content: commentValue,
+            rating: ratingValue,
             provider: id
         });
 
@@ -43,12 +49,14 @@ export async function POST(request, { params }) {
         if (guideDetails) {
             const currentTotal = (guideDetails.rating || 0) * (guideDetails.reviews || 0);
             const newCount = (guideDetails.reviews || 0) + 1;
-            const newAvg = (currentTotal + Number(rating)) / newCount;
+            const newAvg = (currentTotal + ratingValue) / newCount;
             
             guideDetails.rating = Number(newAvg.toFixed(1));
             guideDetails.reviews = newCount;
             await guideDetails.save();
         }
+
+        revalidateTag('public-provider-profile', 'max');
 
         const reviewObj = {
             id: newReview._id.toString(),

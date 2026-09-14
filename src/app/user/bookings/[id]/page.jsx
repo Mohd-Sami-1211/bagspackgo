@@ -12,6 +12,7 @@ import {
 import Link from 'next/link';
 import { QRCodeSVG } from 'qrcode.react';
 import AccountPageHeader from '@/components/user/AccountPageHeader';
+import useHistoryBack from '@/hooks/useHistoryBack';
 
 const formatTimeWithAMPM = (time) => {
     if (!time || !time.toString().trim()) return "Not specified";
@@ -423,6 +424,7 @@ function BookingPassEmbed({ booking }) {
 /* ─── Main Page ──────────────────────────────────────────────── */
 export default function BookingDetailPage() {
     const { id } = useParams();
+    const goBack = useHistoryBack('/user/bookings');
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [cancelling, setCancelling] = useState(false);
     const [toast, setToast] = useState(null);
@@ -524,9 +526,9 @@ export default function BookingDetailPage() {
                 </div>
                 <h2 className="text-xl font-black text-gray-800">Booking Not Found</h2>
                 <p className="text-sm text-gray-500 text-center max-w-xs">{bookingError?.status === 404 ? 'This booking does not exist or may have been removed.' : 'We could not load this booking. Please check your connection and try again.'}</p>
-                <Link href="/user/bookings" className="mt-2 px-5 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 transition">
+                <button type="button" onClick={goBack} className="mt-2 px-5 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 transition">
                     Back to My Bookings
-                </Link>
+                </button>
             </div>
         );
     }

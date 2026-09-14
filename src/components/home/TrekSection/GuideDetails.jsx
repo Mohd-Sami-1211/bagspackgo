@@ -11,6 +11,7 @@ import PickupDropoff from 'src/components/home/TrekSection/Pick-Drop';
 import PersonalDetails from 'src/components/home/TrekSection/PersonalDetails';
 import { useAuth } from '@/context/AuthContext';
 import ProgressiveImage from '@/components/common/ProgressiveImage';
+import { providerProfilePath } from '@/lib/providerSlug';
 
 /* ── helpers ───────────────────────────────────────── */
 const DIFF_CFG = {
@@ -388,7 +389,7 @@ const TrekGuideDetails = ({ guide }) => {
               {/* Main Info Cluster */}
               <div className="flex items-center w-full sm:flex-1 min-w-0 mt-1 sm:mt-0 justify-start gap-4 sm:gap-6">
                 <a
-                  href={`/user/provider/${providerId}`}
+                  href={providerProfilePath(companyName, providerId)}
                   className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 rounded-full flex items-center justify-center bg-emerald-50 border border-emerald-100 flex-shrink-0 hover:border-emerald-200 transition-colors overflow-hidden"
                 >
                   {guide?.provider?.logo ? (
@@ -405,7 +406,7 @@ const TrekGuideDetails = ({ guide }) => {
                 </a>
 
                 <div className="min-w-0 pr-20 sm:pr-4 text-left flex-1">
-                  <a href={`/user/provider/${providerId}`} className="group/title block">
+                  <a href={providerProfilePath(companyName, providerId)} className="group/title block">
                     <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold text-gray-900 leading-tight mb-2 truncate group-hover/title:text-emerald-700 transition-colors">
                       {trekName}
                     </h2>
@@ -417,7 +418,7 @@ const TrekGuideDetails = ({ guide }) => {
                       {destination}
                     </div>
 
-                    <a href={`/user/provider/${providerId}`} className="inline-flex items-center text-sm hover:text-emerald-700 transition-colors">
+                    <a href={providerProfilePath(companyName, providerId)} className="inline-flex items-center text-sm hover:text-emerald-700 transition-colors">
                       <span className="text-gray-500 mr-1.5">By</span>
                       <span className="font-medium text-gray-900 truncate">{companyName}</span>
                     </a>

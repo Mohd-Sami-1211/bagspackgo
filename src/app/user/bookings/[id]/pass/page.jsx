@@ -1,15 +1,16 @@
 'use client';
 import { useEffect, useState, useRef } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import QRCode from 'qrcode';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Download, CheckCircle, Ticket, MapPin, Calendar, Clock, User, Phone, Mail } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import useHistoryBack from '@/hooks/useHistoryBack';
 
 export default function DownloadPassPage() {
     const { id } = useParams();
-    const router = useRouter();
+    const goBack = useHistoryBack('/user/bookings');
     const [booking, setBooking] = useState(null);
     const [loading, setLoading] = useState(true);
     const [qrCodes, setQrCodes] = useState({});
@@ -93,7 +94,7 @@ export default function DownloadPassPage() {
         return (
             <div className="min-h-screen pt-28 pb-16 flex flex-col items-center justify-center bg-gray-50">
                 <p className="text-xl text-gray-600 mb-6">Pass not found or unauthorized.</p>
-                <button onClick={() => router.push('/user/bookings')} className="text-emerald-600 hover:text-emerald-700 font-semibold flex items-center gap-2">
+                <button onClick={goBack} className="text-emerald-600 hover:text-emerald-700 font-semibold flex items-center gap-2">
                     <ArrowLeft className="w-5 h-5" /> Back to Bookings
                 </button>
             </div>
@@ -114,7 +115,7 @@ export default function DownloadPassPage() {
                 {/* Header Controls */}
                 <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center mb-6 gap-4 border-b border-gray-200/50 pb-6">
                     <button
-                        onClick={() => router.push('/user/bookings')}
+                        onClick={goBack}
                         className="flex items-center justify-center gap-2 text-emerald-900 bg-white hover:bg-gray-50 border border-gray-200 px-6 py-2.5 rounded-full shadow-sm transition font-medium w-full sm:w-auto"
                     >
                         <ArrowLeft className="w-4 h-4" /> Back to Bookings

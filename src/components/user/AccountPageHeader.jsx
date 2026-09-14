@@ -1,20 +1,23 @@
 'use client';
 
 import { ArrowLeft } from 'lucide-react';
-import Link from 'next/link';
+import useHistoryBack from '@/hooks/useHistoryBack';
 
 export default function AccountPageHeader({ eyebrow, title, description, icon: Icon, trailing, backHref = '/' }) {
+  const goBack = useHistoryBack(backHref);
+
   return (
     <section className="flex flex-col gap-4 border-b border-slate-200 pb-6 sm:flex-row sm:items-end sm:justify-between sm:gap-6 sm:pb-7">
       <div className="min-w-0 flex-1">
         <div className="flex min-w-0 items-start gap-3 sm:gap-4">
-          <Link
-            href={backHref}
+          <button
+            type="button"
+            onClick={goBack}
             className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-emerald-300 hover:text-emerald-700 active:scale-95 sm:mt-2"
             aria-label="Go back"
           >
             <ArrowLeft className="h-4 w-4" />
-          </Link>
+          </button>
           <span className="hidden h-14 w-14 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-700 sm:flex">
             <Icon className="h-6 w-6" />
           </span>

@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import ProgressiveImage from '@/components/common/ProgressiveImage';
 import { useEventPhotos, useEventSponsors } from '@/lib/useTripCache';
+import { providerProfilePath } from '@/lib/providerSlug';
 
 /* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Custom Dropdown â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const CustomSelect = ({ value, onChange, options, placeholder }) => {
@@ -1752,7 +1753,7 @@ const EventDetails = ({ event, loading = false }) => {
                   <p className="text-xs text-gray-400 uppercase tracking-wider font-bold">Organized by</p>
                   <p className="text-sm font-bold text-gray-800">
                     {(event.guide || event.guideId) ? (
-                        <Link href={`/user/provider/${event.guide?._id || event.guideId || event.guide}`} className="hover:text-emerald-700 hover:underline">
+                        <Link href={providerProfilePath(event.guideName, event.guide?._id || event.guideId || event.guide)} className="hover:text-emerald-700 hover:underline">
                             {event.guideName || 'Local Organizer'}
                         </Link>
                     ) : (event.guideName || 'Local Organizer')}

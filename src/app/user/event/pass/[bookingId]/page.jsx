@@ -6,6 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { MapPin, User, CheckCircle2, Ticket, Calendar, Users, Clock, ExternalLink, X, Sparkles, AlertTriangle, ShieldCheck, Navigation, List, Mail, Phone, Instagram, Facebook, Star } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { providerProfilePath } from '@/lib/providerSlug';
 
 function EventPassContent() {
     const { bookingId } = useParams();
@@ -240,7 +241,7 @@ function EventPassContent() {
                                 )}
                                 <h2 className="text-lg sm:text-xl font-extrabold text-gray-900 md:text-right" style={fontStyle}>
                                     {booking?.providerId ? (
-                                        <Link href={`/user/provider/${booking.providerId}`} className="hover:text-emerald-700 hover:underline">{companyName}</Link>
+                                        <Link href={providerProfilePath(companyName, booking.providerId)} className="hover:text-emerald-700 hover:underline">{companyName}</Link>
                                     ) : companyName}
                                 </h2>
                             </div>
