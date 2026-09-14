@@ -71,8 +71,8 @@ export async function GET(req) {
                 packageSnapshot: b.packageSnapshot || {},
                 paymentId: b.paymentId || '',
                 paymentMode: b.paymentMode || 'full',
-                amountPaid: b.amountPaid || b.totalAmount,
-                remainingAmount: b.remainingAmount || 0,
+                amountPaid: b.amountPaid ?? b.totalAmount,
+                remainingAmount: b.remainingAmount ?? Math.max(0, Number(b.totalAmount || 0) - Number(b.amountPaid ?? b.totalAmount ?? 0)),
                 cancellationDetails: b.cancellationDetails || {},
                 itinerary: b.package?.itinerary || b.packageSnapshot?.itinerary || [],
                 termsAndConditions: b.package?.termsAndConditions || b.packageSnapshot?.termsAndConditions || [],
@@ -121,6 +121,8 @@ export async function POST(req) {
                 bookingRef: existing.bookingRef,
                 amountPaid: existing.amountPaid,
                 totalAmount: existing.totalAmount,
+                paymentMode: existing.paymentMode,
+                remainingAmount: existing.remainingAmount,
                 reused: true,
             });
         }
@@ -181,6 +183,8 @@ export async function POST(req) {
             bookingRef: booking.bookingRef,
             amountPaid: booking.amountPaid,
             totalAmount: booking.totalAmount,
+            paymentMode: booking.paymentMode,
+            remainingAmount: booking.remainingAmount,
         }, { status: 201 });
     } catch (error) {
         console.error('Create trip booking error:', error);

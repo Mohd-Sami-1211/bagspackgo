@@ -307,7 +307,12 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
             router.push(`/user/trip/booking-failed?state=processing&bookingId=${bookingId}&return=${encodeURIComponent(`/trip/${packageId}`)}`);
           }
         },
-        modal: { ondismiss: () => setIsPaymentLoading(false) },
+        modal: {
+          ondismiss: () => {
+            setIsPaymentLoading(false);
+            setPaymentError("Payment window closed. Your trip is not confirmed yet; you can safely try again.");
+          },
+        },
       });
       
       rzp.on('payment.failed', function (response) {

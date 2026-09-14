@@ -97,9 +97,16 @@ export default function TripPassPage() {
         category,
         totalAmount,
         amountPaid,
+        remainingAmount,
+        paymentMode,
         arrivalDeparture = {},
         personalDetails = {},
     } = booking || {};
+
+    const tripTotal = Number(totalAmount || 0);
+    const paidNow = Number(amountPaid ?? tripTotal);
+    const balanceDue = Math.max(0, Number(remainingAmount ?? tripTotal - paidNow));
+    const isPartialPayment = paymentMode === 'partial' || balanceDue > 0;
 
     const pSnapshot = booking?.packageSnapshot || booking?.packageId || booking?.package || {};
     const gSnapshot = booking?.guideId || booking?.guideSnapshot || {};
@@ -250,9 +257,23 @@ export default function TripPassPage() {
                                     </p>
                                 </div>
                                 <div className="text-center sm:text-left">
-                                    <p className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Paid</p>
-                                    <p className="font-black text-emerald-600 text-sm sm:text-base">₹{Number(amountPaid || totalAmount || 0).toLocaleString('en-IN')}</p>
+                                    <p className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Paid Now</p>
+                                    <p className="font-black text-emerald-600 text-sm sm:text-base">₹{paidNow.toLocaleString('en-IN')}</p>
                                 </div>
+                            </div>
+                            <div className={`mt-5 rounded-xl border px-4 py-3 ${isPartialPayment ? 'border-amber-200 bg-amber-50' : 'border-emerald-100 bg-emerald-50'}`}>
+                                <div className="flex items-center justify-between gap-4 text-xs sm:text-sm">
+                                    <span className="font-bold text-gray-600">Trip total</span>
+                                    <span className="font-black text-gray-900">₹{tripTotal.toLocaleString('en-IN')}</span>
+                                </div>
+                                {isPartialPayment ? (
+                                    <div className="mt-1.5 flex items-center justify-between gap-4 text-xs sm:text-sm">
+                                        <span className="font-black text-amber-800">Balance due on trip day</span>
+                                        <span className="font-black text-amber-700">₹{balanceDue.toLocaleString('en-IN')}</span>
+                                    </div>
+                                ) : (
+                                    <p className="mt-1.5 text-[11px] font-bold text-emerald-700">Paid in full. No further payment is due.</p>
+                                )}
                             </div>
                         </div>
                         
