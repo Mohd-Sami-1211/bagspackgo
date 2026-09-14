@@ -53,7 +53,7 @@ const Footer = () => {
             <span className="w-3 h-1 bg-emerald-600 rounded-full"></span> For Local Companies
           </h3>
           <p className="text-sm text-slate-600 mb-4 font-medium leading-relaxed">List your packages and host events for travellers looking for trusted local experiences.</p>
-          <Link href="/serviceprovider" className="inline-flex rounded-full bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-emerald-800">
+          <Link href="/signin?tab=provider" className="inline-flex rounded-full bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-emerald-800">
             Become a provider
           </Link>
         </div>

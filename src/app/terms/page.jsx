@@ -7,22 +7,26 @@ export default function UserTermsPage() {
   const router = useRouter();
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col pt-6 pb-16 px-4 md:px-8 lg:px-12 w-full">
-      <div className="w-full bg-white rounded-xl border border-gray-100 shadow-[0_4px_20px_rgb(0,0,0,0.03)] overflow-hidden flex-1">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#16483b_0%,_#06110e_42%,_#030807_100%)] flex flex-col pt-10 pb-16 px-4 md:px-8 lg:px-12 w-full">
+      <div className="w-full max-w-5xl mx-auto bg-white rounded-3xl border border-white/20 shadow-2xl overflow-hidden flex-1">
         
         {/* Header */}
-        <div className="px-6 py-8 sm:px-10 border-b border-gray-100 bg-white flex items-start gap-4 sm:gap-6">
-          <button onClick={() => router.back()} className="w-10 h-10 mt-1 shrink-0 bg-gray-50 border border-gray-200 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-100 transition shadow-sm group">
+        <div className="px-6 py-9 sm:px-10 border-b border-white/10 bg-[#0b211b] flex items-start gap-4 sm:gap-6">
+          <button onClick={() => router.back()} className="w-10 h-10 mt-1 shrink-0 bg-white/10 border border-white/15 rounded-full flex items-center justify-center text-white/80 hover:bg-white/20 transition shadow-sm group">
              <ArrowLeft className="w-5 h-5 group-hover:-translate-x-0.5 transition-transform" />
           </button>
           <div>
-            <h1 className="text-2xl font-black text-gray-900 uppercase tracking-widest mb-1.5">Terms & Conditions</h1>
-            <p className="text-gray-400 font-medium text-xs tracking-wider uppercase">Last Updated: April 2026</p>
+            <p className="text-emerald-300 text-[10px] font-black uppercase tracking-[0.24em] mb-2">bagspackgo legal</p>
+            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight mb-1.5">Terms & Conditions</h1>
+            <p className="text-white/55 font-medium text-xs tracking-wider uppercase">Last updated: September 2026</p>
           </div>
         </div>
 
         {/* Content Body */}
         <div className="p-6 sm:p-10 lg:p-12">
+          <div className="mb-9 rounded-2xl border border-amber-100 bg-amber-50/80 p-5 text-sm leading-6 text-amber-950">
+            Please read these terms before booking. Package-specific cancellation, payment, safety, and participation conditions may also appear during checkout.
+          </div>
           <div className="space-y-8 text-gray-600 leading-relaxed font-medium text-sm sm:text-[15px]">
             <section>
               <h2 className="text-base font-bold text-gray-900 mb-2.5">1. Introduction</h2>
@@ -51,7 +55,8 @@ export default function UserTermsPage() {
               <h2 className="text-base font-bold text-gray-900 mb-2.5">4. Booking & Payments</h2>
               <ul className="list-disc pl-5 space-y-1.5">
                 <li>All payments are processed via Razorpay.</li>
-                <li>Users must pay 100% of the booking amount upfront.</li>
+                <li>Depending on the package, users may pay the full amount or a 30% upfront amount.</li>
+                <li>For a partial payment, the remaining amount is due directly on the trip day as shown during checkout and on the booking pass.</li>
                 <li>Payment handling is managed securely by third-party payment processors.</li>
               </ul>
             </section>
@@ -150,7 +155,7 @@ export default function UserTermsPage() {
       {/* Footer Navigation */}
       <div className="mt-8 text-center pb-8">
         <p className="text-gray-400 font-medium text-xs tracking-widest uppercase">
-          Please also review our <Link href="/privacy" className="text-emerald-600 font-bold hover:text-emerald-700">Privacy Policy</Link>
+          Please also review our <Link href="/privacy" className="text-emerald-300 font-bold hover:text-emerald-200">Privacy Policy</Link>
         </p>
       </div>
 

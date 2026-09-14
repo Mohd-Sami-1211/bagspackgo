@@ -7,22 +7,26 @@ export default function UserPrivacyPage() {
   const router = useRouter();
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col pt-6 pb-16 px-4 md:px-8 lg:px-12 w-full">
-      <div className="w-full bg-white rounded-xl border border-gray-100 shadow-[0_4px_20px_rgb(0,0,0,0.03)] overflow-hidden flex-1">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#16483b_0%,_#06110e_42%,_#030807_100%)] flex flex-col pt-10 pb-16 px-4 md:px-8 lg:px-12 w-full">
+      <div className="w-full max-w-5xl mx-auto bg-white rounded-3xl border border-white/20 shadow-2xl overflow-hidden flex-1">
         
         {/* Header */}
-        <div className="px-6 py-8 sm:px-10 border-b border-gray-100 bg-white flex items-start gap-4 sm:gap-6">
-          <button onClick={() => router.back()} className="w-10 h-10 mt-1 shrink-0 bg-gray-50 border border-gray-200 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-100 transition shadow-sm group">
+        <div className="px-6 py-9 sm:px-10 border-b border-white/10 bg-[#0b211b] flex items-start gap-4 sm:gap-6">
+          <button onClick={() => router.back()} className="w-10 h-10 mt-1 shrink-0 bg-white/10 border border-white/15 rounded-full flex items-center justify-center text-white/80 hover:bg-white/20 transition shadow-sm group">
              <ArrowLeft className="w-5 h-5 group-hover:-translate-x-0.5 transition-transform" />
           </button>
           <div>
-            <h1 className="text-2xl font-black text-gray-900 uppercase tracking-widest mb-1.5">Privacy Policy</h1>
-            <p className="text-gray-400 font-medium text-xs tracking-wider uppercase">Last Updated: April 2026</p>
+            <p className="text-emerald-300 text-[10px] font-black uppercase tracking-[0.24em] mb-2">bagspackgo legal</p>
+            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight mb-1.5">Privacy Policy</h1>
+            <p className="text-white/55 font-medium text-xs tracking-wider uppercase">Last updated: September 2026</p>
           </div>
         </div>
 
         {/* Content Body */}
         <div className="p-6 sm:p-10 lg:p-12">
+          <div className="mb-9 rounded-2xl border border-emerald-100 bg-emerald-50/70 p-5 text-sm leading-6 text-emerald-950">
+            This policy explains what information bagspackgo collects, why we use it, and the choices available to you when you use our travel marketplace.
+          </div>
           <div className="space-y-8 text-gray-600 leading-relaxed font-medium text-sm sm:text-[15px]">
             
             <section>
@@ -89,8 +93,8 @@ export default function UserPrivacyPage() {
       
       {/* Footer Navigation */}
       <div className="mt-8 text-center pb-8">
-        <p className="text-gray-400 font-medium text-xs tracking-widest uppercase">
-          Please also review our <Link href="/terms" className="text-emerald-600 font-bold hover:text-emerald-700">Terms & Conditions</Link>
+        <p className="text-white/60 font-medium text-xs tracking-widest uppercase">
+          Please also review our <Link href="/terms" className="text-emerald-300 font-bold hover:text-emerald-200">Terms & Conditions</Link>
         </p>
       </div>
 
