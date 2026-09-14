@@ -71,6 +71,7 @@ bookingSchema.index(
     { unique: true, partialFilterExpression: { checkoutKey: { $type: 'string' } } }
 );
 bookingSchema.index({ event: 1, status: 1 });
+bookingSchema.index({ user: 1, status: 1, createdAt: -1 });
 bookingSchema.index({ orderId: 1 });
 bookingSchema.index({ status: 1, expiresAt: 1 });
 

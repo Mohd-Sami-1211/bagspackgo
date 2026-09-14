@@ -7,7 +7,7 @@ export default function HelpLayout({ children }) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
-      className="bg-gradient-to-br from-green-50 to-blue-50 min-h-screen pt-[80px] w-full "
+      className="min-h-screen w-full bg-gradient-to-b from-emerald-50/60 via-white to-slate-50"
     >
       {children}
     </motion.div>

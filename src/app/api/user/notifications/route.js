@@ -5,16 +5,27 @@ import { UserNotification } from '@/models/usernotification.model';
 
 export async function GET(request) {
     try {
-        const user = await getCurrentUser();
+        const user = await getCurrentUser(request);
         if (!user || user.role !== 'user') {
             return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
         }
 
+        const url = new URL(request.url);
+        const page = Math.max(1, Number.parseInt(url.searchParams.get('page') || '1', 10));
+        const limit = Math.min(50, Math.max(1, Number.parseInt(url.searchParams.get('limit') || '12', 10)));
+
         await dbConnect();
-        
-        let dbNotifications = await UserNotification.find({ userId: user.userId })
-            .sort({ createdAt: -1 })
-            .lean();
+        const query = { userId: user.userId };
+        const [dbNotifications, total, unreadCount] = await Promise.all([
+            UserNotification.find(query)
+                .select('title message type read link metadata createdAt')
+                .sort({ createdAt: -1 })
+                .skip((page - 1) * limit)
+                .limit(limit)
+                .lean(),
+            UserNotification.countDocuments(query),
+            UserNotification.countDocuments({ ...query, read: false }),
+        ]);
             
         // Map _id to id and createdAt to date for frontend compatibility
         const mapped = dbNotifications.map(n => ({
@@ -23,7 +34,12 @@ export async function GET(request) {
             date: n.createdAt
         }));
 
-        return NextResponse.json({ success: true, notifications: mapped });
+        return NextResponse.json({
+            success: true,
+            notifications: mapped,
+            unreadCount,
+            pagination: { page, limit, total, totalPages: Math.max(1, Math.ceil(total / limit)), hasMore: page * limit < total },
+        }, { headers: { 'Cache-Control': 'private, max-age=10, stale-while-revalidate=30' } });
     } catch (error) {
         console.error("Notifications fetch error:", error);
         return NextResponse.json({ success: false, message: "Failed to fetch notifications" }, { status: 500 });

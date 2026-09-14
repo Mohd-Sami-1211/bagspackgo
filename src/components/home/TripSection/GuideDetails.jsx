@@ -36,20 +36,7 @@ import ArrDep from "src/components/home/TripSection/Arr-Dep";
 import PersonalDetails from "src/components/home/TripSection/PersonalDetails";
 import { useAuth } from "@/context/AuthContext";
 import { useSavedItemIds, useTripPhotos } from "@/lib/useTripCache";
-
-const PACKAGE_HERO_IMAGES = [
-  "/images/package-heroes/kashmir-dawn-lake.webp",
-  "/images/package-heroes/kashmir-spring-valley.webp",
-  "/images/package-heroes/kashmir-dal-dawn.webp",
-  "/images/package-heroes/kashmir-winter-river.webp",
-  "/images/package-heroes/kashmir-autumn-chinar.webp",
-];
-
-function packageHeroFor(packageKey) {
-  const key = String(packageKey || "bagspackgo");
-  const hash = [...key].reduce((value, character) => ((value * 31) + character.charCodeAt(0)) >>> 0, 0);
-  return PACKAGE_HERO_IMAGES[hash % PACKAGE_HERO_IMAGES.length];
-}
+import { packageHeroFor } from "@/lib/packageHero";
 
 const GuideDetails = ({ guide }) => {
   const searchParams = useSearchParams();

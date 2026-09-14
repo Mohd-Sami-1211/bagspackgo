@@ -14,15 +14,27 @@ const transporter = nodemailer.createTransport({
 
 export async function GET(request) {
     try {
-        const user = await getCurrentUser();
+        const user = await getCurrentUser(request);
         if (!user || user.role !== 'user') {
             return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
         }
 
-        await dbConnect();
-        const queries = await Support.find({ user: user.userId, side: 'user' }).sort({ createdAt: -1 }).lean();
+        const url = new URL(request.url);
+        const page = Math.max(1, Number.parseInt(url.searchParams.get('page') || '1', 10));
+        const limit = Math.min(30, Math.max(1, Number.parseInt(url.searchParams.get('limit') || '8', 10)));
+        const query = { user: user.userId, side: 'user' };
 
-        return NextResponse.json({ success: true, queries });
+        await dbConnect();
+        const [queries, total] = await Promise.all([
+            Support.find(query).select('ticketNumber type subject message status adminReply repliedAt createdAt').sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).lean(),
+            Support.countDocuments(query),
+        ]);
+
+        return NextResponse.json({
+            success: true,
+            queries,
+            pagination: { page, limit, total, totalPages: Math.max(1, Math.ceil(total / limit)), hasMore: page * limit < total },
+        }, { headers: { 'Cache-Control': 'private, max-age=10, stale-while-revalidate=30' } });
     } catch (error) {
         console.error("Fetch support error:", error);
         return NextResponse.json({ success: false, message: "Internal server error" }, { status: 500 });

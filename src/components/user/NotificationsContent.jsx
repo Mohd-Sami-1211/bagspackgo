@@ -1,55 +1,50 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import useSWR from 'swr';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useRouter } from 'next/navigation';
-import { Bell, CheckCircle, Info, AlertTriangle, Clock, X, Sparkles, CheckCheck, ArrowLeft } from 'lucide-react';
-
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
+import { Bell, CheckCircle, Info, AlertTriangle, Clock, X, Sparkles, CheckCheck } from 'lucide-react';
+import AccountPageHeader from '@/components/user/AccountPageHeader';
 
 const NotificationsContent = () => {
-  const router = useRouter();
-  const [notifications, setNotifications] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchNotifications() {
-      try {
-        const res = await fetch('/api/user/notifications');
-        const json = await res.json();
-        if (json.success && json.notifications) {
-          setNotifications(json.notifications);
-        }
-      } catch (err) {
-        console.error("Notifications fetch error:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchNotifications();
-  }, []);
+  const [page, setPage] = useState(1);
+  const [view, setView] = useState('all');
+  const { data, error, isLoading: loading, mutate } = useSWR(`/api/user/notifications?page=${page}&limit=10`, {
+    dedupingInterval: 30000,
+    revalidateOnFocus: false,
+    keepPreviousData: true,
+  });
+  const notifications = data?.notifications || [];
+  const pagination = data?.pagination || { page, total: notifications.length, totalPages: 1 };
+  const unreadCount = Number(data?.unreadCount || 0);
+  const visibleNotifications = view === 'unread' ? notifications.filter((notification) => !notification.read) : notifications;
 
   const markAllAsRead = async () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-    await fetch('/api/user/notifications', { method: 'PATCH' });
+    await mutate((current) => current ? { ...current, unreadCount: 0, notifications: current.notifications.map((notification) => ({ ...notification, read: true })) } : current, { revalidate: false });
+    const response = await fetch('/api/user/notifications', { method: 'PATCH' });
+    if (!response.ok) await mutate();
   };
 
   const markAsRead = async (id) => {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-    await fetch(`/api/user/notifications?id=${id}`, { method: 'PATCH' });
+    const target = notifications.find((notification) => notification.id === id);
+    if (!target || target.read) return;
+    await mutate((current) => current ? { ...current, unreadCount: Math.max(0, Number(current.unreadCount || 0) - 1), notifications: current.notifications.map((notification) => notification.id === id ? { ...notification, read: true } : notification) } : current, { revalidate: false });
+    const response = await fetch(`/api/user/notifications?id=${id}`, { method: 'PATCH' });
+    if (!response.ok) await mutate();
   };
 
   const removeNotification = async (id) => {
-    setNotifications(prev => prev.filter(n => n.id !== id));
-    await fetch(`/api/user/notifications?id=${id}`, { method: 'DELETE' });
+    const target = notifications.find((notification) => notification.id === id);
+    await mutate((current) => current ? { ...current, unreadCount: Math.max(0, Number(current.unreadCount || 0) - (target?.read ? 0 : 1)), notifications: current.notifications.filter((notification) => notification.id !== id), pagination: { ...current.pagination, total: Math.max(0, Number(current.pagination?.total || 1) - 1) } } : current, { revalidate: false });
+    const response = await fetch(`/api/user/notifications?id=${id}`, { method: 'DELETE' });
+    if (!response.ok) await mutate();
   };
 
   const getIcon = (type) => {
     switch (type) {
-      case 'success': return <div className="p-2 bg-emerald-50 rounded-full border border-emerald-100 flex items-center justify-center shrink-0"><CheckCircle className="w-4 h-4 text-emerald-600" /></div>;
-      case 'alert': return <div className="p-2 bg-amber-50 rounded-full border border-amber-100 flex items-center justify-center shrink-0"><AlertTriangle className="w-4 h-4 text-amber-600" /></div>;
-      default: return <div className="p-2 bg-blue-50 rounded-full border border-blue-100 flex items-center justify-center shrink-0"><Info className="w-4 h-4 text-blue-600" /></div>;
+      case 'success': return <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-emerald-100"><CheckCircle className="h-6 w-6 text-emerald-700" /></div>;
+      case 'alert': return <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-rose-100"><AlertTriangle className="h-6 w-6 text-rose-600" /></div>;
+      case 'warning': return <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-amber-100"><AlertTriangle className="h-6 w-6 text-amber-700" /></div>;
+      default: return <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-sky-100"><Info className="h-6 w-6 text-sky-700" /></div>;
     }
   };
 
@@ -67,127 +62,45 @@ const NotificationsContent = () => {
     return 'Just now';
   };
 
-  const unreadCount = notifications.filter(n => !n.read).length;
-
   if (loading) {
     return (
-      <div className="flex justify-center items-center py-40">
-        <div className="w-8 h-8 rounded-full border-2 border-gray-200 border-t-gray-900 animate-spin"></div>
+      <div className="flex min-h-[70vh] justify-center items-center bg-emerald-50/40">
+        <div className="w-8 h-8 rounded-full border-2 border-emerald-100 border-t-emerald-600 animate-spin"></div>
       </div>
     );
   }
 
   return (
-    <div className="w-full px-4 sm:px-6 lg:px-8 mt-4 sm:mt-8 pt-0 pb-4 sm:pb-6 mb-16 font-sans">
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-6 gap-4">
-        <div className="flex items-center gap-3 sm:gap-4">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => router.back()}
-            className="shrink-0"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </Button>
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">Notifications</h1>
-              <div className="p-1 px-2 bg-emerald-100 text-emerald-700 rounded-md text-xs font-semibold flex items-center gap-1">
-                <Bell className="w-3 h-3" />
-                {unreadCount > 0 ? `${unreadCount} unread` : '0 unread'}
-              </div>
-            </div>
-            <p className="text-sm text-gray-500">Stay updated regarding your bookings and travel alerts.</p>
-          </div>
+    <div className="min-h-screen bg-[#f5f8f6] px-4 py-8 font-sans sm:px-6 sm:py-10 lg:px-8">
+      <div className="mx-auto max-w-6xl">
+        <AccountPageHeader eyebrow="Updates centre" title="Notifications" description="Booking, payment and travel updates that matter to you." icon={Bell} trailing={<div className="flex items-center gap-3"><span className="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-600">{unreadCount} unread</span>{unreadCount > 0 && <button onClick={markAllAsRead} className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs font-black text-emerald-700 transition hover:bg-emerald-50"><CheckCheck className="h-4 w-4" />Mark all as read</button>}</div>} />
+
+        <div className="my-7 flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
+          <button onClick={() => setView('all')} className={`rounded-full border px-5 py-2.5 text-xs font-bold transition ${view === 'all' ? 'border-emerald-700 bg-emerald-700 text-white' : 'border-slate-200 bg-white text-slate-600 hover:bg-emerald-50'}`}>All ({pagination.total})</button>
+          <button onClick={() => setView('unread')} className={`rounded-full border px-5 py-2.5 text-xs font-bold transition ${view === 'unread' ? 'border-emerald-700 bg-emerald-700 text-white' : 'border-slate-200 bg-white text-slate-600 hover:bg-emerald-50'}`}>Unread ({unreadCount})</button>
         </div>
 
-        {unreadCount > 0 && (
-          <Button
-            variant="outline"
-            onClick={markAllAsRead}
-            className="flex items-center gap-2 w-full sm:w-auto"
-          >
-            <CheckCheck className="w-4 h-4" /> Mark all as read
-          </Button>
-        )}
-      </div>
-
-      <Separator className="mb-6" />
-
-      <div className="space-y-3">
-        <AnimatePresence>
-          {notifications.length > 0 ? (
-            notifications.map((notif) => (
-              <motion.div
-                key={notif.id}
-                layout
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.2 }}
-                onClick={() => { if (!notif.read) markAsRead(notif.id); }}
-              >
-                <Card className={`relative group overflow-hidden border transition-all duration-200 cursor-pointer hover:shadow-md ${notif.read ? 'bg-white opacity-80' : 'bg-emerald-50/30'}`}>
-                  {/* Unread Indicator Bar */}
-                  {!notif.read && <div className="absolute top-0 bottom-0 left-0 w-1 bg-emerald-500"></div>}
-
-                  <div className="flex sm:flex-row items-start gap-4 p-4 sm:p-5">
-                    <div className="shrink-0 mt-0.5">
+          <main className="space-y-3">
+            {error ? <div className="rounded-2xl border border-red-100 bg-red-50 p-6 text-center text-sm font-semibold text-red-700">Notifications could not be loaded. Please try again.</div> : (
+              <AnimatePresence mode="popLayout">
+                {visibleNotifications.length > 0 ? visibleNotifications.map((notif) => (
+                  <motion.article key={notif.id} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.98 }} onClick={() => markAsRead(notif.id)} className={`group relative cursor-pointer overflow-hidden rounded-2xl border p-4 shadow-sm transition hover:border-emerald-200 hover:shadow-md sm:p-5 ${notif.read ? 'border-slate-200 bg-white' : notif.type === 'alert' ? 'border-rose-100 bg-rose-50/70' : notif.type === 'warning' ? 'border-amber-100 bg-amber-50/70' : 'border-emerald-100 bg-emerald-50/55'}`}>
+                    <div className="flex items-center gap-4">
                       {getIcon(notif.type)}
-                    </div>
-                    
-                    <div className="flex-1 min-w-0 pr-8">
-                      <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between mb-1.5 gap-1 sm:gap-4">
-                        <h3 className={`text-sm font-semibold truncate ${notif.read ? 'text-gray-700' : 'text-gray-900'}`}>
-                          {notif.title}
-                        </h3>
-                        <span className="text-xs font-medium text-gray-400 flex items-center shrink-0">
-                          <Clock className="w-3 h-3 mr-1" /> {formatTime(notif.date)}
-                        </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2"><h2 className="text-[15px] font-black text-slate-900 sm:text-base">{notif.title}</h2>{!notif.read && <span className="h-2 w-2 rounded-full bg-emerald-500" aria-label="Unread" />}</div>
+                        <p className="mt-1 text-sm leading-5 text-slate-600">{notif.message}</p>
                       </div>
-                      <p className={`text-sm ${notif.read ? 'text-gray-500' : 'text-gray-600'} leading-relaxed`}>
-                        {notif.message}
-                      </p>
+                      <div className="flex shrink-0 flex-col items-end gap-3"><span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400"><Clock className="h-3.5 w-3.5" />{formatTime(notif.date)}</span><button onClick={(event) => { event.stopPropagation(); removeNotification(notif.id); }} className="flex h-8 w-8 items-center justify-center rounded-full text-slate-400 opacity-70 transition hover:bg-red-50 hover:text-red-600 group-hover:opacity-100" aria-label="Remove notification"><X className="h-4 w-4" /></button></div>
                     </div>
-                  </div>
-
-                  {/* Desktop Hover Actions */}
-                  <div className="absolute top-1/2 -translate-y-1/2 right-3 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    {!notif.read && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-100"
-                        onClick={(e) => { e.stopPropagation(); markAsRead(notif.id); }}
-                        title="Mark as read"
-                      >
-                        <CheckCircle className="w-4 h-4" />
-                      </Button>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-gray-400 hover:text-red-600 hover:bg-red-50"
-                      onClick={(e) => { e.stopPropagation(); removeNotification(notif.id); }}
-                      title="Remove notification"
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </Card>
-              </motion.div>
-            ))
-          ) : (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center justify-center py-20 text-center px-4">
-              <div className="w-16 h-16 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center mb-4">
-                <Bell className="w-7 h-7 text-gray-300" />
-                <Sparkles className="w-4 h-4 text-emerald-300 absolute top-2 right-2" />
-              </div>
-              <h3 className="text-base font-semibold text-gray-700 mb-1">You're all caught up!</h3>
-              <p className="text-sm text-gray-400 max-w-sm">No new notifications. When you get updates about your bookings, they'll show up here.</p>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                  </motion.article>
+                )) : (
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex min-h-[360px] flex-col items-center justify-center rounded-[28px] border border-dashed border-slate-300 bg-white px-5 text-center"><div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50"><Bell className="h-7 w-7 text-emerald-500" /><Sparkles className="absolute right-2 top-2 h-4 w-4 text-emerald-300" /></div><h3 className="mt-5 text-lg font-black text-slate-800">You're all caught up</h3><p className="mt-1 max-w-sm text-sm text-slate-500">New booking and travel updates will appear here.</p></motion.div>
+                )}
+              </AnimatePresence>
+            )}
+            {pagination.totalPages > 1 && <div className="flex items-center justify-center gap-3 pt-4"><button disabled={page <= 1} onClick={() => setPage((value) => Math.max(1, value - 1))} className="rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 disabled:opacity-40">Previous</button><span className="text-xs font-bold text-slate-500">Page {page} of {pagination.totalPages}</span><button disabled={page >= pagination.totalPages} onClick={() => setPage((value) => value + 1)} className="rounded-full bg-emerald-700 px-5 py-2.5 text-sm font-bold text-white disabled:opacity-40">Next</button></div>}
+          </main>
       </div>
     </div>
   );

@@ -67,6 +67,35 @@ select:focus {
   }
 }
 
+@keyframes sponsorBandScroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.sponsor-band-track {
+  animation: sponsorBandScroll 26s linear infinite;
+}
+
+.sponsor-band:hover .sponsor-band-track,
+.sponsor-band:focus-within .sponsor-band-track {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sponsor-band-track {
+    animation: none;
+    transform: none;
+  }
+
+  .sponsor-band-copy[aria-hidden='true'] {
+    display: none;
+  }
+}
+
 /* 📅 Custom Styled React Datepicker for Theme Compatibility */
 .react-datepicker {
   background-color: #fff !important;

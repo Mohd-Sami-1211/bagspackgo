@@ -19,7 +19,7 @@ export default function DownloadPassPage() {
     useEffect(() => {
         async function fetchPassDetails() {
             try {
-                const detailRes = await fetch(`/api/user/bookings/${id}`);
+                const detailRes = await fetch(`/api/user/bookings/${id}?view=legacy-pass`);
                 const detailData = await detailRes.json();
                 if (detailData.success) {
                     setBooking(detailData.booking);

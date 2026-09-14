@@ -14,9 +14,14 @@ export async function GET(req) {
         if (user.role !== 'user') return NextResponse.json({ success: false, message: 'Users only' }, { status: 403 });
 
         await dbConnect();
+        const listView = new URL(req.url).searchParams.get('view') === 'list';
 
-        const bookings = await TripBooking.find({ user: user.userId })
-            .populate('package', 'name destination days pricingTiers activities termsAndConditions itinerary inclusivesList exclusivesList additionalPoints')
+        let bookingQuery = TripBooking.find({ user: user.userId, ...(listView ? { status: 'confirmed' } : {}) });
+        if (listView) {
+            bookingQuery = bookingQuery.select('bookingRef package provider startDate endDate numPeople category totalAmount status createdAt paymentMode amountPaid remainingAmount packageSnapshot');
+        }
+        const bookings = await bookingQuery
+            .populate('package', listView ? 'name destination days' : 'name destination days pricingTiers activities termsAndConditions itinerary inclusivesList exclusivesList additionalPoints')
             .populate('provider', 'username email phone')
             .sort({ createdAt: -1 })
             .lean();
@@ -25,7 +30,9 @@ export async function GET(req) {
         const providerIds = [...new Set(bookings.map(b => b.provider?._id).filter(id => id))];
         const { GuideDetails } = await import('@/models/guidedetails.model');
         const guideDetailsList = await GuideDetails.find({ guide: { $in: providerIds } })
-            .select('guide companyname companymobile companyemail instagram facebook website twitter')
+            .select(listView
+                ? 'guide companyname companymobile companyemail'
+                : 'guide companyname companymobile companyemail instagram facebook website twitter')
             .lean();
         
         const companyMap = {};
@@ -45,6 +52,7 @@ export async function GET(req) {
             const gd = companyMap[b.provider?._id?.toString()] || {};
             return {
                 id: b._id.toString(),
+                packageId: b.package?._id?.toString() || b.package?.toString() || '',
                 bookingRef: b.bookingRef,
                 type: 'trip',
                 packageName: b.package?.name || b.packageSnapshot?.name || 'Trip Package',
@@ -82,7 +90,9 @@ export async function GET(req) {
             };
         });
 
-        return NextResponse.json({ success: true, data: formatted });
+        return NextResponse.json({ success: true, data: formatted }, {
+            headers: { 'Cache-Control': listView ? 'private, max-age=15, stale-while-revalidate=45' : 'private, no-cache' },
+        });
     } catch (error) {
         console.error('Fetch trip bookings error:', error);
         return NextResponse.json({ success: false, message: 'Server error' }, { status: 500 });

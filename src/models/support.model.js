@@ -70,6 +70,7 @@ const supportSchema = new mongoose.Schema(
 );
 
 supportSchema.index({ side: 1, status: 1, createdAt: -1 });
+supportSchema.index({ user: 1, side: 1, createdAt: -1 });
 
 export const Support = mongoose.models.Support || mongoose.model("Support", supportSchema);
 

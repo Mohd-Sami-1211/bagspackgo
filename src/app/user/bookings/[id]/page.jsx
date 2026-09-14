@@ -1,16 +1,17 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { useParams } from 'next/navigation';
+import useSWR from 'swr';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    ChevronLeft, MapPin, Calendar, Users, Clock, Tag,
-    Printer, CheckCircle2, XCircle, AlertCircle, RotateCcw,
-    Star, RefreshCcw, AlertTriangle, Phone, Mail, Download, Globe,
-    Instagram, Facebook, QrCode, Navigation
+    MapPin, Calendar, Users, Clock, Tag, CheckCircle2, XCircle,
+    AlertCircle, RotateCcw, Star, RefreshCcw, AlertTriangle,
+    Phone, Mail, Download, QrCode, Navigation, CalendarCheck2
 } from 'lucide-react';
 import Link from 'next/link';
 import { QRCodeSVG } from 'qrcode.react';
+import AccountPageHeader from '@/components/user/AccountPageHeader';
 
 const formatTimeWithAMPM = (time) => {
     if (!time || !time.toString().trim()) return "Not specified";
@@ -238,6 +239,10 @@ function BookingPassEmbed({ booking }) {
     const destinationName = ensureString(pSnapshot.destination || booking?.destination || '');
     const travelers = booking?.personalDetails?.personalDetails || [];
     const arrivalDeparture = booking?.arrivalDeparture || {};
+    const totalAmount = Number(booking?.totalAmount ?? booking?.price ?? 0);
+    const amountPaid = Number(booking?.amountPaid ?? booking?.price ?? totalAmount);
+    const remainingAmount = Math.max(0, Number(booking?.remainingAmount ?? totalAmount - amountPaid));
+    const isPartialPayment = booking?.type?.toLowerCase() === 'trip' && (booking?.paymentMode === 'partial' || remainingAmount > 0);
 
     const passUrl = typeof window !== 'undefined'
         ? `${window.location.origin}${booking.passUrl || `/user/trip/pass/${booking.id}`}`
@@ -272,7 +277,7 @@ function BookingPassEmbed({ booking }) {
                                 {booking.bookingRef || booking.id?.substring(0, 8).toUpperCase()}
                             </p>
                             <span className="inline-block text-[10px] font-black text-emerald-700 bg-emerald-100 px-3 py-0.5 rounded-full mt-1 border border-emerald-200">
-                                Payment Confirmed
+                                {isPartialPayment ? 'Booking Confirmed · 30% Paid' : 'Payment Confirmed'}
                             </span>
                         </div>
                         {passUrl && (
@@ -353,9 +358,21 @@ function BookingPassEmbed({ booking }) {
                             <p className="text-sm font-black text-gray-900">{booking.people || 1} Pax</p>
                         </div>
                         <div>
-                            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Paid</p>
-                            <p className="text-sm font-black text-emerald-600">{rupee(booking.price)}</p>
+                            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Paid Now</p>
+                            <p className="text-sm font-black text-emerald-600">{rupee(amountPaid)}</p>
                         </div>
+                        {isPartialPayment && (
+                            <div className="col-span-2 sm:col-span-4 flex items-center justify-between gap-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5">
+                                <div>
+                                    <p className="text-[9px] font-black uppercase tracking-widest text-amber-700">Trip Total</p>
+                                    <p className="text-xs font-bold text-amber-950">{rupee(totalAmount)}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-[9px] font-black uppercase tracking-widest text-amber-700">Balance Due On Trip Day</p>
+                                    <p className="text-sm font-black text-amber-800">{rupee(remainingAmount)}</p>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     <div className="shrink-0 w-full lg:w-48 bg-emerald-50/50 border border-emerald-100 rounded-xl p-4 flex flex-col justify-center">
@@ -406,111 +423,28 @@ function BookingPassEmbed({ booking }) {
 /* ─── Main Page ──────────────────────────────────────────────── */
 export default function BookingDetailPage() {
     const { id } = useParams();
-    const router = useRouter();
-    const [booking, setBooking] = useState(null);
-    const [loading, setLoading] = useState(true);
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [cancelling, setCancelling] = useState(false);
     const [toast, setToast] = useState(null);
-
-    const fetchBooking = useCallback(async () => {
-        if (!id) return;
-        try {
-            setLoading(true);
-            // Fetch from all booking sources and find the right one
-            const [tripsRes, treksRes, eventsRes] = await Promise.all([
-                fetch('/api/user/trip-bookings'),
-                fetch('/api/user/trek-bookings'),
-                fetch('/api/user/bookings'),
-            ]);
-            const [tripsData, treksData, eventsData] = await Promise.all([tripsRes.json(), treksRes.json(), eventsRes.json()]);
-
-            let found = null;
-            const ensureString = (val) => {
-                if (!val) return '';
-                if (typeof val === 'object') return val.label || val.value || '';
-                return String(val);
-            };
-
-            if (tripsData.success) {
-                const raw = tripsData.data?.find(b => b.id === id || b._id === id);
-                if (raw) {
-                    found = {
-                        ...raw,
-                        type: 'trip',
-                        name: ensureString(raw.packageName),
-                        destination: ensureString(raw.destination),
-                        guide: ensureString(raw.guideName),
-                        people: raw.numPeople,
-                        date: raw.startDate,
-                        endDate: raw.endDate,
-                        price: raw.amountPaid || raw.totalAmount,
-                        duration: `${raw.days} Days`,
-                        passUrl: `/user/trip/pass/${raw.id || raw._id}`,
-                    };
-                }
+    const { data: booking, error: bookingError, isLoading: loading, mutate } = useSWR(
+        id ? `/api/user/bookings/${id}?view=detail` : null,
+        async (url) => {
+            const response = await fetch(url, { headers: { Accept: 'application/json' } });
+            const payload = await response.json().catch(() => null);
+            if (!response.ok || !payload?.success) {
+                const error = new Error(payload?.message || 'Unable to load booking');
+                error.status = response.status;
+                throw error;
             }
-
-            if (!found && treksData.success) {
-                const raw = treksData.data?.find(b => b.id === id || b._id === id);
-                if (raw) {
-                    found = {
-                        ...raw,
-                        type: 'Trek',
-                        name: ensureString(raw.packageName),
-                        destination: ensureString(raw.destination),
-                        guide: ensureString(raw.guideName),
-                        people: raw.numPeople,
-                        date: raw.startDate,
-                        endDate: raw.endDate,
-                        price: raw.amountPaid || raw.totalAmount,
-                        duration: `${raw.days} Days`,
-                        passUrl: `/user/trek/pass/${raw.id || raw._id}`,
-                        arrivalDeparture: raw.pickupDropoff || raw.arrivalDeparture || {},
-                    };
-                }
-            }
-
-            if (!found && eventsData.success) {
-                const raw = eventsData.data?.find(b => b.id === id || b._id === id);
-                if (raw) {
-                    found = {
-                        ...raw,
-                        type: 'Event',
-                        name: ensureString(raw.name),
-                        destination: ensureString(raw.destination),
-                        guide: ensureString(raw.guide),
-                        people: raw.people,
-                        date: raw.date,
-                        price: raw.price,
-                        duration: raw.duration || '1 Day',
-                        passUrl: `/user/event/pass/${raw.id || raw._id}`,
-                        // Normalize for UI components
-                        personalDetails: { personalDetails: raw.participants || [] },
-                        selectedPickup: raw.selectedPickup || null,
-                        pickupPoints: raw.pickupPoints || [],
-                        arrivalDeparture: {},
-                        inclusivesList: raw.whatsIncluded || [],
-                        exclusivesList: raw.whatsExcluded || [],
-                        termsAndConditions: raw.termsAndConditions || [],
-                        itinerary: raw.itinerary || [],
-                        highlights: raw.highlights || [],
-                        whatToBring: raw.whatToBring || [],
-                        restrictions: raw.restrictions || [],
-                        poster: raw.poster || raw.image || '',
-                    };
-                }
-            }
-
-            if (found) setBooking(found);
-        } catch (e) {
-            console.error(e);
-        } finally {
-            setLoading(false);
-        }
-    }, [id]);
-
-    useEffect(() => { fetchBooking(); }, [fetchBooking]);
+            return payload.data;
+        },
+        {
+            dedupingInterval: 300000,
+            revalidateOnFocus: false,
+            revalidateOnReconnect: false,
+            keepPreviousData: true,
+        },
+    );
 
     const handleCancelConfirm = async (reason) => {
         if (!booking) return;
@@ -529,7 +463,7 @@ export default function BookingDetailPage() {
             if (data.success) {
                 setShowCancelModal(false);
                 setToast({ type: 'success', message: 'Cancellation requested. We\'ll process your refund shortly.' });
-                await fetchBooking(); // refresh state
+                await mutate();
             } else {
                 setToast({ type: 'error', message: data.message || 'Failed to cancel booking.' });
             }
@@ -548,6 +482,10 @@ export default function BookingDetailPage() {
     const canCancel = booking && ['confirmed', 'pending'].includes(booking.status) && booking.type?.toLowerCase() !== 'event';
     const cancelStatus = booking && ['cancellation_requested', 'refund_initiated', 'cancelled'].includes(booking.status);
     const cfg = STATUS_CFG[booking?.status] || STATUS_CFG.pending;
+    const bookingTotal = Number(booking?.totalAmount ?? booking?.price ?? 0);
+    const bookingPaid = Number(booking?.amountPaid ?? booking?.price ?? bookingTotal);
+    const bookingBalance = Math.max(0, Number(booking?.remainingAmount ?? bookingTotal - bookingPaid));
+    const isPartialTripPayment = booking?.type?.toLowerCase() === 'trip' && (booking?.paymentMode === 'partial' || bookingBalance > 0);
 
     const pSnapshot = booking?.packageSnapshot || booking?.packageId || booking?.package || {};
     const getList = (key) => booking?.[key] || pSnapshot?.[key] || [];
@@ -566,6 +504,7 @@ export default function BookingDetailPage() {
     const whatToBring = getList('whatToBring');
     const restrictions = getList('restrictions');
     const sponsors = booking?.sponsors || pSnapshot?.sponsors || [];
+    const coverImage = booking?.poster || booking?.coverImage || '/images/hero.svg';
 
     /* ─── Loading ─── */
     if (loading) {
@@ -577,14 +516,14 @@ export default function BookingDetailPage() {
         );
     }
 
-    if (!booking) {
+    if (!booking || bookingError) {
         return (
             <div className="min-h-[70vh] flex flex-col items-center justify-center gap-4 px-4">
                 <div className="w-20 h-20 rounded-2xl bg-gray-100 flex items-center justify-center">
                     <AlertCircle className="w-10 h-10 text-gray-400" />
                 </div>
                 <h2 className="text-xl font-black text-gray-800">Booking Not Found</h2>
-                <p className="text-sm text-gray-500 text-center max-w-xs">This booking doesn't exist or may have been removed.</p>
+                <p className="text-sm text-gray-500 text-center max-w-xs">{bookingError?.status === 404 ? 'This booking does not exist or may have been removed.' : 'We could not load this booking. Please check your connection and try again.'}</p>
                 <Link href="/user/bookings" className="mt-2 px-5 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 transition">
                     Back to My Bookings
                 </Link>
@@ -593,54 +532,59 @@ export default function BookingDetailPage() {
     }
 
     return (
-        <>
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-16 space-y-6">
+        <main className="min-h-screen bg-[#f5f8f6] pb-16 pt-8 font-sans sm:pt-10">
+            <div className="mx-auto max-w-6xl space-y-6 px-4 sm:px-6 lg:px-8">
+                <AccountPageHeader
+                    eyebrow="Booking details"
+                    title="View Booking"
+                    description="Everything you need for this confirmed journey, payment and travel pass."
+                    icon={CalendarCheck2}
+                    backHref="/user/bookings"
+                    trailing={<span className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-black ${cfg.bg} ${cfg.border} ${cfg.text}`}><cfg.Icon className="h-4 w-4" />{cfg.label}</span>}
+                />
 
-                {/* Back */}
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                    <Link href="/user/bookings"
-                        className="inline-flex items-center gap-1.5 text-sm font-bold text-gray-500 hover:text-emerald-700 transition-colors mt-4">
-                        <ChevronLeft className="w-4 h-4" /> My Bookings
-                    </Link>
-                </motion.div>
-
-                {/* Status + actions header */}
-                <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-                    className={`rounded-2xl border ${cfg.bg} ${cfg.border} p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4`}>
-                    <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-xl ${cfg.bg} border ${cfg.border} flex items-center justify-center`}>
-                            <cfg.Icon className={`w-5 h-5 ${cfg.text}`} />
+                <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
+                    <div className="relative h-64 overflow-hidden sm:h-72">
+                        <img src={coverImage} alt={booking.name || 'Booking'} className="h-full w-full object-cover" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/25 to-slate-950/10" />
+                        <div className="absolute left-5 right-5 top-5 flex flex-wrap items-center justify-between gap-3">
+                            <span className="rounded-full border border-white/25 bg-white/90 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-slate-800 backdrop-blur">{booking.type}</span>
+                            {isPartialTripPayment && <span className="rounded-full border border-amber-200/50 bg-amber-300 px-3 py-1.5 text-[10px] font-black text-amber-950">30% paid</span>}
                         </div>
-                        <div>
-                            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Booking Status</p>
-                            <p className={`text-lg font-black ${cfg.text}`}>{cfg.label}</p>
+                        <div className="absolute bottom-5 left-5 right-5 text-white sm:bottom-7 sm:left-7 sm:right-7">
+                            <p className="mb-2 font-mono text-[11px] font-bold uppercase tracking-wider text-white/65">Booking ID: {booking.bookingRef || booking.id?.slice(-10).toUpperCase()}</p>
+                            <h2 className="text-2xl font-black leading-tight sm:text-4xl">{booking.name}</h2>
+                            <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-xs font-semibold text-white/80 sm:text-sm">
+                                <span className="inline-flex items-center gap-2"><MapPin className="h-4 w-4" />{booking.destination || 'Location to be confirmed'}</span>
+                                <span className="inline-flex items-center gap-2"><Calendar className="h-4 w-4" />{formatDate(booking.date)}</span>
+                                <span className="inline-flex items-center gap-2"><Users className="h-4 w-4" />{booking.people || 1} traveller{Number(booking.people || 1) === 1 ? '' : 's'}</span>
+                            </div>
                         </div>
                     </div>
-
-                    <div className="flex items-center gap-3 flex-wrap">
-                        {/* View Full Pass */}
+                    <div className="flex flex-col gap-4 border-t border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div><p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Managed by</p><p className="mt-1 text-sm font-black text-slate-900">{booking.companyName || booking.guide || 'Verified Partner'}</p></div>
+                        <div className="flex flex-wrap items-center gap-2">
                         {!cancelStatus && booking.passUrl && (
                             <Link href={booking.passUrl}
-                                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold transition shadow-sm">
+                                className="flex items-center gap-1.5 rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-800">
                                 <QrCode className="w-4 h-4" /> View Pass
                             </Link>
                         )}
-                        {/* Download Pass */}
                         {!cancelStatus && booking.passUrl && (
                             <Link href={`${booking.passUrl}?print=true`} target="_blank"
-                                className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-50 text-sm font-bold transition">
+                                className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50">
                                 <Download className="w-4 h-4" /> Download / Print
                             </Link>
                         )}
-                        {/* Cancel */}
                         {canCancel && (
                             <button onClick={() => setShowCancelModal(true)}
-                                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 text-sm font-bold transition">
+                                className="flex items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm font-bold text-rose-700 transition hover:bg-rose-100">
                                 <XCircle className="w-4 h-4" /> Cancel Booking
                             </button>
                         )}
+                        </div>
                     </div>
-                </motion.div>
+                </motion.section>
 
                 {/* Cancellation tracker */}
                 {cancelStatus && (
@@ -697,13 +641,13 @@ export default function BookingDetailPage() {
 
                 {/* Booking summary card */}
                 <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.07 }}
-                    className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                    <div className="px-5 py-4 border-b border-gray-50 flex items-center gap-3 bg-gray-50/50">
-                        <Tag className="w-4 h-4 text-emerald-600" />
-                        <h3 className="text-sm font-black text-gray-700 tracking-tight uppercase">Booking Summary</h3>
+                    className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
+                    <div className="flex items-center gap-3 border-b border-slate-100 px-6 py-5">
+                        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50"><Tag className="h-4 w-4 text-emerald-700" /></span>
+                        <div><p className="text-[9px] font-black uppercase tracking-[0.18em] text-emerald-700">At a glance</p><h3 className="text-base font-black text-slate-900">Booking summary</h3></div>
                     </div>
                     {booking?.type?.toLowerCase() === 'event' ? (
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-6">
+                        <div className="grid grid-cols-2 gap-3 p-5 sm:grid-cols-3 sm:p-6 lg:grid-cols-4">
                             {[
                                 { label: 'Event Name', value: booking.name },
                                 { label: 'Location', value: booking.destination },
@@ -715,7 +659,7 @@ export default function BookingDetailPage() {
                                 { label: 'Booked On', value: (booking.createdAt || booking.bookingDate) ? (() => { const d = new Date(booking.createdAt || booking.bookingDate); return `${d.toLocaleDateString('en-GB')} ${d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`; })() : '—' },
                                 { label: 'Amount Paid', value: rupee(booking.price), highlight: true },
                             ].map(({ label, value, highlight }) => (
-                                <div key={label}>
+                                <div key={label} className="rounded-xl bg-slate-50 p-3.5">
                                     <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-0.5">{label}</p>
                                     <p className={`text-sm font-bold ${highlight ? 'text-emerald-600' : 'text-gray-900'}`}>{value || '—'}</p>
                                 </div>
@@ -751,7 +695,7 @@ export default function BookingDetailPage() {
                             })()}
                         </div>
                     ) : (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 p-6">
+                        <div className="grid grid-cols-2 gap-3 p-5 sm:grid-cols-3 sm:p-6">
                             {[
                                 { label: 'Package', value: booking.name },
                                 { label: 'Destination', value: booking.destination },
@@ -763,11 +707,13 @@ export default function BookingDetailPage() {
                                 ...(booking?.type?.toLowerCase() !== 'trek' ? [{ label: 'Category', value: booking.category }] : []),
                                 { label: 'Pickup', value: booking.arrivalDeparture?.pickup?.address ? `${booking.arrivalDeparture.pickup.address}${booking.arrivalDeparture.pickup.location ? `, ${booking.arrivalDeparture.pickup.location}` : ''} @ ${formatTimeWithAMPM(booking.arrivalDeparture.pickup.time) || 'TBD'}` : 'TBD' },
                                 { label: 'Booked On', value: (booking.createdAt || booking.bookingDate) ? (() => { const d = new Date(booking.createdAt || booking.bookingDate); return `${d.toLocaleDateString('en-GB')} ${d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`; })() : '—' },
-                                { label: 'Amount Paid', value: rupee(booking.price), highlight: true },
-                            ].map(({ label, value, highlight }) => (
-                                <div key={label}>
+                                { label: 'Trip Total', value: rupee(bookingTotal) },
+                                { label: 'Paid Now', value: rupee(bookingPaid), highlight: true },
+                                ...(isPartialTripPayment ? [{ label: 'Balance Due On Trip Day', value: rupee(bookingBalance), warning: true }] : []),
+                            ].map(({ label, value, highlight, warning }) => (
+                                <div key={label} className={`rounded-xl p-3.5 ${warning ? 'border border-amber-200 bg-amber-50' : highlight ? 'border border-emerald-100 bg-emerald-50' : 'bg-slate-50'}`}>
                                     <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-0.5">{label}</p>
-                                    <p className={`text-sm font-bold ${highlight ? 'text-emerald-600' : 'text-gray-900'}`}>{value || '—'}</p>
+                                    <p className={`text-sm font-bold ${warning ? 'text-amber-700' : highlight ? 'text-emerald-600' : 'text-gray-900'}`}>{value || '—'}</p>
                                 </div>
                             ))}
                         </div>
@@ -1087,6 +1033,6 @@ export default function BookingDetailPage() {
                     </motion.div>
                 )}
             </AnimatePresence>
-        </>
+        </main>
     );
 }

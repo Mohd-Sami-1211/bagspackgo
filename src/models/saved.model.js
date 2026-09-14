@@ -16,6 +16,7 @@ const savedSchema = new mongoose.Schema(
 );
 
 savedSchema.index({ userId: 1, itemId: 1 }, { unique: true });
+savedSchema.index({ userId: 1, itemType: 1, createdAt: -1 });
 
 delete mongoose.models.Saved;
 export const Saved = mongoose.model("Saved", savedSchema);

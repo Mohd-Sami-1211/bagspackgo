@@ -10,4 +10,7 @@ const userNotificationSchema = new mongoose.Schema({
     metadata: { type: mongoose.Schema.Types.Mixed, default: {} }
 }, { timestamps: true });
 
+userNotificationSchema.index({ userId: 1, createdAt: -1 });
+userNotificationSchema.index({ userId: 1, read: 1 });
+
 export const UserNotification = mongoose.models.UserNotification || mongoose.model('UserNotification', userNotificationSchema);
