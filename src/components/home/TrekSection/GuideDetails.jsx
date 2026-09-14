@@ -332,6 +332,29 @@ const TrekGuideDetails = ({ guide }) => {
   const providerId = guide?.provider?._id || guide?.provider || guide?._id;
   const initials = companyName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 
+  const handleSharePackage = async () => {
+    const shareUrl = new URL(window.location.href);
+    shareUrl.searchParams.set('trekId', trekPackage._id);
+    shareUrl.searchParams.set('peopleCount', String(peopleCount));
+    shareUrl.searchParams.set('count', String(peopleCount));
+    shareUrl.searchParams.set('date', selectedStartDate.toISOString());
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: trekName,
+          text: 'Check out this amazing trek on bagspackgo!',
+          url: shareUrl.toString(),
+        });
+      } else {
+        await navigator.clipboard.writeText(shareUrl.toString());
+        alert('Link copied to clipboard!');
+      }
+    } catch (error) {
+      if (error?.name !== 'AbortError') console.error('Error sharing', error);
+    }
+  };
+
   return (
     <>
       <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 pt-4 sm:pt-6 -mt-12">
@@ -444,22 +467,7 @@ const TrekGuideDetails = ({ guide }) => {
                 </div>
                 <div className="flex gap-2">
                   <button
-                    onClick={async () => {
-                      try {
-                        if (navigator.share) {
-                          await navigator.share({
-                            title: trekName,
-                            text: `Check out this amazing trek on bagspackgo!`,
-                            url: window.location.href,
-                          });
-                        } else {
-                          await navigator.clipboard.writeText(window.location.href);
-                          alert('Link copied to clipboard!');
-                        }
-                      } catch (err) {
-                        console.error('Error sharing', err);
-                      }
-                    }}
+                    onClick={handleSharePackage}
                     className="p-2.5 bg-gray-50 rounded-lg hover:bg-gray-100 border border-gray-200 transition-colors text-gray-600 hover:text-gray-900 flex-shrink-0"
                   >
                     <Share2 className="h-4 w-4" />

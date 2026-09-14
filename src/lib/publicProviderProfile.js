@@ -7,6 +7,7 @@ import { Package } from '@/models/package.model';
 import { Event } from '@/models/event.model';
 import Review from '@/models/review.model';
 import { toProviderSlug } from '@/lib/providerSlug';
+import { packageHeroFor } from '@/lib/packageHero';
 
 function companyNamePattern(slug) {
   const tokens = slug.split('_').filter(Boolean).map((token) => token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
@@ -144,7 +145,9 @@ async function queryPublicProviderProfile(identifier) {
       totalRatings: Number(pkg.totalRatings || 0),
       trekName: pkg.trekName || '',
       trekLevel: pkg.trekLevel || '',
-      coverImage: `/api/public/packages/${pkg._id.toString()}/cover`,
+      // Keep provider-profile cards visually identical to the corresponding
+      // package detail hero. Both are derived from the same stable package ID.
+      coverImage: packageHeroFor(pkg._id.toString()),
     })),
     events: events.map((event) => ({
       _id: event._id.toString(),
@@ -175,6 +178,6 @@ async function queryPublicProviderProfile(identifier) {
 
 export const getPublicProviderProfile = unstable_cache(
   queryPublicProviderProfile,
-  ['public-provider-profile-v3'],
+  ['public-provider-profile-v4'],
   { revalidate: 300, tags: ['public-provider-profile'] }
 );

@@ -298,8 +298,18 @@ const GuideDetails = ({ guide }) => {
     const directPackageUrl = new URL(window.location.href);
     if (pkgId) {
       directPackageUrl.pathname = `/trip/${pkgId}`;
-      directPackageUrl.search = "";
     }
+    const sharedParams = new URLSearchParams(directPackageUrl.search);
+    sharedParams.set("packageId", pkgId);
+    sharedParams.set("category", category);
+    sharedParams.set("count", String(numPeople));
+    sharedParams.set("days", String(priceDetails.days));
+    if (daysRange) sharedParams.set("daysRange", daysRange);
+    if (selectedStartDate && !Number.isNaN(new Date(selectedStartDate).getTime())) {
+      sharedParams.set("date", new Date(selectedStartDate).toISOString());
+    }
+    directPackageUrl.search = sharedParams.toString();
+
     const shareData = {
       title: selectedPackage?.label || guide.name,
       text: `Explore ${selectedPackage?.label || guide.name} on bagspackgo.`,
