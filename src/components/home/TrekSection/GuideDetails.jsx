@@ -430,9 +430,7 @@ const TrekGuideDetails = ({ guide }) => {
 
                 <div className="min-w-0 pr-20 sm:pr-4 text-left flex-1">
                   <a href={providerProfilePath(companyName, providerId)} className="group/title block">
-                    <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold text-gray-900 leading-tight mb-2 truncate group-hover/title:text-emerald-700 transition-colors">
-                      {trekName}
-                    </h2>
+                    <h1 className="text-lg sm:text-xl lg:text-2xl font-semibold text-gray-900 leading-tight mb-2 truncate group-hover/title:text-emerald-700 transition-colors">{trekName}</h1>
                   </a>
 
                   <div className="flex flex-col gap-2 items-start sm:items-start text-sm text-gray-600">

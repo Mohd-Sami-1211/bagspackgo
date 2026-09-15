@@ -1,96 +1,27 @@
-// src/app/layout.js — Server Component (enables metadata for ALL pages)
 import './globals.css';
 import ClientLayout from '@/components/common/ClientLayout';
 import { Suspense } from 'react';
 import PostHogProvider, { PostHogPageView } from '@/components/analytics/PostHogProvider';
+import { SITE_URL, SITE_NAME, SITE_DESCRIPTION, DEFAULT_IMAGE } from '@/lib/seo';
 
 export const metadata = {
-    metadataBase: new URL('https://bagspackgo.com'),
-    title: {
-        default: 'bagspackgo — Kashmir Tour Packages with Verified Local Guides',
-        template: '%s | bagspackgo',
-    },
-    description:
-        'Explore Kashmir, Ladakh, Bhaderwah, and Warwan and Marwah Valley with verified local guides. Book budget & premium tour packages, treks, and events with transparent pricing — no middlemen.',
-    keywords: [
-        'kashmir tour packages',
-        'ladakh tour packages',
-        'bhaderwah tourism',
-        'warwan and marwah valley trekking',
-        'kashmir trip',
-        'kashmir travel',
-        'local guide kashmir',
-        'kashmir tourism',
-        'kashmir trekking',
-        'gulmarg',
-        'pahalgam',
-        'sonmarg',
-        'srinagar tour',
-        'ladakh trip',
-        'kashmir honeymoon packages',
-        'kashmir budget trip',
-        'offbeat kashmir',
-    ],
-    authors: [{ name: 'bagspackgo', url: 'https://bagspackgo.com' }],
-    creator: 'bagspackgo',
-    publisher: 'bagspackgo',
-    robots: {
-        index: true,
-        follow: true,
-        googleBot: {
-            index: true,
-            follow: true,
-            'max-video-preview': -1,
-            'max-image-preview': 'large',
-            'max-snippet': -1,
-        },
-    },
-    verification: {
-        google: 'google-site-verification-id',
-    },
-    openGraph: {
-        type: 'website',
-        locale: 'en_IN',
-        url: 'https://bagspackgo.com',
-        siteName: 'bagspackgo',
-        title: 'bagspackgo — Kashmir Tour Packages with Verified Local Guides',
-        description:
-            'Explore Kashmir, Ladakh, Bhaderwah, and Warwan and Marwah Valley with verified local guides. Book budget & premium tour packages, treks, and events. Transparent pricing, no middlemen.',
-        images: [
-            {
-                url: '/logo.png',
-                width: 1200,
-                height: 630,
-                alt: 'bagspackgo — Explore Kashmir with Local Guides',
-            },
-        ],
-    },
-    twitter: {
-        card: 'summary_large_image',
-        title: 'bagspackgo — Kashmir Tour Packages with Verified Local Guides',
-        description:
-            'Book trips in Kashmir, Ladakh, and more with verified local guides. Budget & premium packages available.',
-        images: ['/logo.png'],
-    },
-    alternates: {
-        canonical: 'https://bagspackgo.com',
-    },
+  metadataBase: new URL(SITE_URL),
+  title: { default: 'Bagspackgo | Kashmir Trips, Offbeats, Events & Companion', template: '%s | Bagspackgo' },
+  description: SITE_DESCRIPTION,
+  creator: SITE_NAME,
+  publisher: SITE_NAME,
+  robots: { index: true, follow: true, googleBot: { index: true, follow: true, 'max-video-preview': -1, 'max-image-preview': 'large', 'max-snippet': -1 } },
+  verification: process.env.GOOGLE_SITE_VERIFICATION ? { google: process.env.GOOGLE_SITE_VERIFICATION } : undefined,
+  openGraph: { type: 'website', locale: 'en_IN', siteName: SITE_NAME, images: [{ url: DEFAULT_IMAGE, alt: 'Kashmir mountains and lake' }] },
+  twitter: { card: 'summary_large_image', images: [DEFAULT_IMAGE] },
 };
-
 export default function RootLayout({ children }) {
-    return (
-        <html lang="en" className="w-full overflow-x-hidden">
-            <body
-                className="bg-white/90 text-gray-800 min-h-screen flex flex-col w-full max-w-[100vw] overflow-x-hidden antialiased font-sans"
-            >
-                <PostHogProvider>
-                    {/* Tracks page views on every route change (Suspense required by Next.js) */}
-                    <Suspense fallback={null}>
-                        <PostHogPageView />
-                    </Suspense>
-                    <ClientLayout>{children}</ClientLayout>
-                </PostHogProvider>
-            </body>
-        </html>
-    );
+  return <html lang="en-IN" className="w-full overflow-x-hidden">
+    <body className="bg-white/90 text-gray-800 min-h-screen flex flex-col w-full max-w-[100vw] overflow-x-hidden antialiased font-sans">
+      <PostHogProvider>
+        <Suspense fallback={null}><PostHogPageView /></Suspense>
+        <ClientLayout>{children}</ClientLayout>
+      </PostHogProvider>
+    </body>
+  </html>;
 }

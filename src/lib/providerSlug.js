@@ -1,5 +1,10 @@
 const RESERVED_ROOT_PATHS = new Set([
   'admin',
+  'about',
+  'providers',
+  'travel-guides',
+  'robots.txt',
+  'sitemap.xml',
   'api',
   'privacy',
   'provider-privacy',
@@ -34,4 +39,3 @@ export function providerProfilePath(companyName, providerId = '') {
     ? `/${slug}`
     : `/user/provider/${providerId}`;
 }
-

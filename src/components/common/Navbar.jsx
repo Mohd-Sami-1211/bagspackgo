@@ -28,7 +28,7 @@ const primaryLinks = [
 ];
 
 const nonProviderRootPaths = new Set([
-  '/', '/privacy', '/provider-privacy', '/provider-terms', '/signin', '/signup', '/terms',
+  '/', '/about', '/providers', '/travel-guides', '/privacy', '/provider-privacy', '/provider-terms', '/signin', '/signup', '/terms',
 ]);
 
 function getInitials(name) {

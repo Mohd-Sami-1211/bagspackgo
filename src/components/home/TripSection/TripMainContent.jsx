@@ -32,7 +32,7 @@ const fetcher = (url) => fetch(url).then((response) => {
 const faqs = [
   {
     question: 'What is bagspackgo?',
-    answer: 'bagspackgo brings travel packages, offbeat destinations, hosted events and on-trip assistance together in one place, with a focus on trusted local providers.',
+    answer: 'Bagspackgo is a Kashmir-based startup founded by Mohd Samiullah. It brings travel packages, offbeat destinations, hosted events and on-trip assistance together in one place, with a focus on trusted local providers.',
   },
   {
     question: 'How are trip packages different here?',
@@ -410,7 +410,7 @@ export default function TripMainContent() {
           <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }} className="relative isolate w-full max-w-[310px] py-2 sm:max-w-none lg:-translate-y-2 lg:py-5">
             <div className="pointer-events-none absolute -inset-x-10 -inset-y-16 z-0 bg-[#0a211c]/55 blur-3xl backdrop-blur-md" style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%), linear-gradient(to right, transparent 0%, black 10%, rgba(0,0,0,0.86) 52%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%), linear-gradient(to right, transparent 0%, black 10%, rgba(0,0,0,0.86) 52%, transparent 100%)', maskComposite: 'intersect', WebkitMaskComposite: 'source-in' }} />
             <div className="relative z-10">
-              <h1 className="max-w-2xl font-serif text-[2.45rem] leading-[0.98] tracking-[-0.04em] sm:text-7xl lg:max-w-[590px] lg:leading-[0.88] lg:text-[5.6rem]">The trip you imagine, made easier to find.</h1>
+              <h1 className="max-w-2xl font-serif text-[2.45rem] leading-[0.98] tracking-[-0.04em] sm:text-7xl lg:max-w-[590px] lg:leading-[0.88] lg:text-[5.6rem]">Your Kashmir trip, made easier to find.</h1>
               <p className="mt-5 max-w-xl text-sm leading-6 text-white/78 sm:mt-7 sm:text-base sm:leading-7">Compare local packages, discover quieter places, join upcoming adventures or take expert support along for the journey.</p>
               <div className="mt-5 flex flex-wrap gap-4 text-[11px] font-medium text-white/75 sm:mt-8 sm:gap-5 sm:text-xs"><span className="flex items-center gap-2"><CheckCircle2 size={16} /> Clear itineraries</span><span className="flex items-center gap-2"><CheckCircle2 size={16} /> Local providers</span></div>
             </div>

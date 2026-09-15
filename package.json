@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "eslint .",
+    "test:seo": "node --test tests/seo.test.mjs"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

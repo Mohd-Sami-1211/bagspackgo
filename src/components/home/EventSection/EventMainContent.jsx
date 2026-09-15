@@ -155,7 +155,7 @@ export default function EventMainContent() {
               <ArrowLeft className="w-4 h-4" /> Back
             </button>
             <div className="h-5 w-px bg-neutral-200" />
-            <h1 className="font-serif text-2xl font-normal tracking-[-0.025em] text-[#17372f]">{title}</h1>
+            <h2 className="font-serif text-2xl font-normal tracking-[-0.025em] text-[#17372f]">{title}</h2>
           </div>
         </div>
 

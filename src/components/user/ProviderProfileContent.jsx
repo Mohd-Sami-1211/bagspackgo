@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -111,12 +112,12 @@ function PackageCard({ pkg, providerId, onNavigate }) {
   const isTrek = pkg.category === 'trek';
   const price = packagePrice(pkg);
   const href = isTrek
-    ? `/user/trek/guidelist/trekdetails/${providerId}?trekId=${pkg._id}`
+    ? `/user/trek/guidelist/trekdetails/${pkg._id}`
     : `/trip/${pkg._id}`;
 
   return (
     <article className="group overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_18px_45px_-38px_rgba(15,23,42,0.5)] transition hover:-translate-y-0.5 hover:shadow-[0_24px_55px_-38px_rgba(15,23,42,0.6)]">
-      <button type="button" onClick={() => onNavigate(href)} className="block w-full text-left">
+      <Link href={href} className="block w-full text-left">
         <div className="relative h-48 overflow-hidden bg-slate-100">
           <img
             src={pkg.coverImage}
@@ -147,7 +148,7 @@ function PackageCard({ pkg, providerId, onNavigate }) {
             </span>
           </div>
         </div>
-      </button>
+      </Link>
     </article>
   );
 }
@@ -156,7 +157,7 @@ function EventCard({ event, state, onNavigate }) {
   const isLive = state === 'live';
   return (
     <article className={`group overflow-hidden rounded-3xl border bg-white shadow-[0_18px_45px_-38px_rgba(15,23,42,0.5)] transition hover:-translate-y-0.5 ${isLive ? 'border-emerald-300 ring-4 ring-emerald-50' : 'border-slate-200'}`}>
-      <button type="button" onClick={() => onNavigate(`/user/events/eventdetails/${event._id}`)} className="block w-full text-left">
+      <Link href={`/user/events/eventdetails/${event._id}`} className="block w-full text-left">
         <div className="relative h-48 overflow-hidden bg-slate-100">
           <img src={event.poster} alt={event.title} loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]" />
           <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/60 to-transparent" />
@@ -176,7 +177,7 @@ function EventCard({ event, state, onNavigate }) {
             <span className="flex items-center gap-1 text-xs font-black text-emerald-700">View event <ChevronRight className="h-4 w-4" /></span>
           </div>
         </div>
-      </button>
+      </Link>
     </article>
   );
 }

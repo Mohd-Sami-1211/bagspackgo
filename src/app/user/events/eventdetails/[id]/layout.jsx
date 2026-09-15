@@ -1,15 +1,9 @@
-'use client';
-import { motion } from 'framer-motion';
-
-export default function EventDetailsLayout({ children }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
-      className="bg-white min-h-screen pt-[80px] w-full"
-    >
-      {children}
-    </motion.div>
-  );
+import { notFound } from 'next/navigation';
+import { getPublicEventDetails } from '@/lib/publicEvent';
+export const revalidate = 30;
+export default async function EventDetailsLayout({ children, params }) {
+  const { id } = await params;
+  // Check before the child's loading boundary commits a streamed 200 response.
+  if (!await getPublicEventDetails(id)) notFound();
+  return <div className="bg-white min-h-screen pt-[80px] w-full">{children}</div>;
 }
