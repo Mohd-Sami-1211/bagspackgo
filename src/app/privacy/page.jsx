@@ -75,7 +75,7 @@ export default function UserPrivacyPage() {
               <ul className="list-disc pl-5 space-y-1.5 mb-3">
                 <li>Request updates to your personal information at any time.</li>
                 <li>Request deletion of your account and associated data.</li>
-              </ul>
+              </ul>npm run dev
               <p>To exercise these rights, please contact us at <a href="mailto:bagspackgo01@gmail.com" className="text-emerald-600 font-bold hover:underline">support@bagspackgo.com</a>.</p>
             </section>
 
