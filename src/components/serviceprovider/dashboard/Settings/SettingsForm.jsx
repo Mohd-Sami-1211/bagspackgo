@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
+import { providerProfilePath } from '@/lib/providerSlug';
 import {
   User,
   Settings,
@@ -49,7 +50,7 @@ import {
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 
 const menuItems = [
-  { id: 'profile', label: 'Business Profile', icon: Building2, desc: 'Manage your public details, logo, and bank accounts' },
+  { id: 'profile', label: 'Business Profile', icon: Building2, desc: 'Manage your public details, logo, cover, and bank accounts' },
   { id: 'packages', label: 'Package Management', icon: Package, desc: 'Create and edit your travel packages' },
   { id: 'payments', label: 'Payments & Revenue', icon: Banknote, desc: 'View transactions, payouts, and revenue stats' },
   { id: 'status', label: 'Service Status', icon: Power, desc: 'Pause or resume your services temporarily' },
@@ -184,6 +185,7 @@ function ProfileContent({ initialEditMode = false }) {
   const [isEditing, setIsEditing] = useState(initialEditMode);
   const [copied, setCopied] = useState(false);
   const fileInputRef = useRef(null);
+  const coverInputRef = useRef(null);
 
   // Crop modal state
   const [cropModal, setCropModal] = useState(false);
@@ -216,6 +218,7 @@ function ProfileContent({ initialEditMode = false }) {
     accountNumber: '',
     ifscCode: '',
     logo: '',
+    coverPhoto: '',
     createdAt: null
   });
   const [isLoading, setIsLoading] = useState(true);
@@ -247,6 +250,7 @@ function ProfileContent({ initialEditMode = false }) {
             accountNumber: profile.accountNumber || '',
             ifscCode: profile.ifscCode || '',
             logo: profile.logo || '',
+            coverPhoto: profile.coverPhoto || '',
             createdAt: profile.createdAt || null,
           });
         }
@@ -299,7 +303,7 @@ function ProfileContent({ initialEditMode = false }) {
       const res = await fetch('/api/provider/profile');
       const { profile } = await res.json();
       const guideId = profile?.guideId || profile?._id || '';
-      const url = `${window.location.origin}/user/provider/${guideId}`;
+      const url = `${window.location.origin}${providerProfilePath(formData.companyname || formData.name, guideId)}`;
       if (navigator.share) {
         await navigator.share({
           title: `${formData.companyname || formData.name} on bagspackgo`,
@@ -318,6 +322,52 @@ function ProfileContent({ initialEditMode = false }) {
 
   const handleCancel = () => {
     setIsEditing(false);
+  };
+
+  const handleCoverUpload = (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      alert('Please choose an image file.');
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      alert('Cover photo must be less than 8MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const image = new window.Image();
+      image.onload = () => {
+        const width = 1800;
+        const height = 700;
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const context = canvas.getContext('2d');
+        const sourceRatio = image.naturalWidth / image.naturalHeight;
+        const targetRatio = width / height;
+        let sourceWidth = image.naturalWidth;
+        let sourceHeight = image.naturalHeight;
+        let sourceX = 0;
+        let sourceY = 0;
+
+        if (sourceRatio > targetRatio) {
+          sourceWidth = image.naturalHeight * targetRatio;
+          sourceX = (image.naturalWidth - sourceWidth) / 2;
+        } else {
+          sourceHeight = image.naturalWidth / targetRatio;
+          sourceY = (image.naturalHeight - sourceHeight) / 2;
+        }
+
+        context.drawImage(image, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, width, height);
+        setFormData((current) => ({ ...current, coverPhoto: canvas.toDataURL('image/jpeg', 0.82) }));
+      };
+      image.src = reader.result;
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleLogoUpload = (e) => {
@@ -475,6 +525,28 @@ function ProfileContent({ initialEditMode = false }) {
           </div>
         </div>
       )}
+
+      <div className="relative mb-5 h-44 overflow-hidden rounded-2xl border border-gray-100 bg-gray-100 shadow-sm md:h-56">
+        <img
+          src={formData.coverPhoto || '/images/providers/default-provider-cover.webp'}
+          alt="Public profile cover"
+          className="h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-black/10" />
+        {isEditing && (
+          <button
+            type="button"
+            onClick={() => coverInputRef.current?.click()}
+            className="absolute bottom-4 right-4 flex items-center gap-2 rounded-full border border-white/25 bg-black/45 px-4 py-2.5 text-xs font-bold text-white shadow-lg backdrop-blur-md transition hover:bg-black/60"
+          >
+            <Camera size={16} /> {formData.coverPhoto ? 'Change cover' : 'Upload cover'}
+          </button>
+        )}
+        <input ref={coverInputRef} type="file" accept="image/*" className="hidden" onChange={handleCoverUpload} disabled={!isEditing} />
+        {!isEditing && !formData.coverPhoto && (
+          <span className="absolute bottom-4 right-4 rounded-full bg-white/85 px-3 py-1.5 text-[10px] font-bold text-gray-600 backdrop-blur-md">Default cover</span>
+        )}
+      </div>
 
       {/* Brand New Clean Header Concept */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 md:p-8 mb-8 flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-8 transition-all relative overflow-hidden">

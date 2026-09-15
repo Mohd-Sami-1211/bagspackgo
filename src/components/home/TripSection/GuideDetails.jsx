@@ -33,23 +33,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import PackageItinerary from "src/components/home/TripSection/PackageItinerary";
 import ArrDep from "src/components/home/TripSection/Arr-Dep";
+import { providerProfilePath } from "@/lib/providerSlug";
 import PersonalDetails from "src/components/home/TripSection/PersonalDetails";
 import { useAuth } from "@/context/AuthContext";
 import { useSavedItemIds, useTripPhotos } from "@/lib/useTripCache";
-
-const PACKAGE_HERO_IMAGES = [
-  "/images/package-heroes/kashmir-dawn-lake.webp",
-  "/images/package-heroes/kashmir-spring-valley.webp",
-  "/images/package-heroes/kashmir-dal-dawn.webp",
-  "/images/package-heroes/kashmir-winter-river.webp",
-  "/images/package-heroes/kashmir-autumn-chinar.webp",
-];
-
-function packageHeroFor(packageKey) {
-  const key = String(packageKey || "bagspackgo");
-  const hash = [...key].reduce((value, character) => ((value * 31) + character.charCodeAt(0)) >>> 0, 0);
-  return PACKAGE_HERO_IMAGES[hash % PACKAGE_HERO_IMAGES.length];
-}
+import { packageHeroFor } from "@/lib/packageHero";
 
 const GuideDetails = ({ guide }) => {
   const searchParams = useSearchParams();
@@ -310,8 +298,18 @@ const GuideDetails = ({ guide }) => {
     const directPackageUrl = new URL(window.location.href);
     if (pkgId) {
       directPackageUrl.pathname = `/trip/${pkgId}`;
-      directPackageUrl.search = "";
     }
+    const sharedParams = new URLSearchParams(directPackageUrl.search);
+    sharedParams.set("packageId", pkgId);
+    sharedParams.set("category", category);
+    sharedParams.set("count", String(numPeople));
+    sharedParams.set("days", String(priceDetails.days));
+    if (daysRange) sharedParams.set("daysRange", daysRange);
+    if (selectedStartDate && !Number.isNaN(new Date(selectedStartDate).getTime())) {
+      sharedParams.set("date", new Date(selectedStartDate).toISOString());
+    }
+    directPackageUrl.search = sharedParams.toString();
+
     const shareData = {
       title: selectedPackage?.label || guide.name,
       text: `Explore ${selectedPackage?.label || guide.name} on bagspackgo.`,
@@ -650,7 +648,7 @@ const GuideDetails = ({ guide }) => {
               <span className="inline-flex items-center gap-2"><Clock className="h-4 w-4 text-emerald-300" /> {priceDetails.days} days · {Math.max(0, priceDetails.days - 1)} nights</span>
               <span className="inline-flex items-center gap-2"><Users className="h-4 w-4 text-emerald-300" /> {numPeople} traveller{numPeople === 1 ? "" : "s"}</span>
             </div>
-            <a href={`/user/provider/${guide.providerId || guide._id || guide.id}`} className="mt-6 inline-flex items-center gap-3 rounded-full border border-white/15 bg-black/20 py-2 pl-2 pr-4 text-sm backdrop-blur-md transition hover:bg-white/10">
+            <a href={providerProfilePath(guide.companyName || guide.name, guide.providerId || guide._id || guide.id)} className="mt-6 inline-flex items-center gap-3 rounded-full border border-white/15 bg-black/20 py-2 pl-2 pr-4 text-sm backdrop-blur-md transition hover:bg-white/10">
               <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-white text-sm font-bold text-[#17372f]">
                 {guide.logo ? <img src={guide.logo} alt="" className="h-full w-full object-cover" /> : (guide.companyName || guide.name)?.charAt(0)}
               </span>
@@ -732,7 +730,7 @@ const GuideDetails = ({ guide }) => {
             {/* Main Info Cluster */}
             <div className="flex items-center w-full sm:flex-1 min-w-0 mt-1 sm:mt-0 justify-start gap-4 sm:gap-6">
               <a
-                href={`/user/provider/${guide.providerId || guide._id || guide.id}`}
+                href={providerProfilePath(guide.companyName || guide.name, guide.providerId || guide._id || guide.id)}
                 className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 rounded-full flex items-center justify-center bg-emerald-50 border border-emerald-100 flex-shrink-0 hover:border-emerald-200 transition-colors overflow-hidden"
               >
                 {guide.logo ? (
@@ -750,7 +748,7 @@ const GuideDetails = ({ guide }) => {
 
               <div className="min-w-0 pr-20 sm:pr-4 text-left flex-1">
                 <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
-                  <a href={`/user/provider/${guide.providerId || guide._id || guide.id}`} className="group/title block min-w-0">
+                  <a href={providerProfilePath(guide.companyName || guide.name, guide.providerId || guide._id || guide.id)} className="group/title block min-w-0">
                     <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold text-gray-900 leading-tight truncate group-hover/title:text-emerald-700 transition-colors">
                       {selectedPackage ? selectedPackage.label : guide.name}
                     </h2>
@@ -768,7 +766,7 @@ const GuideDetails = ({ guide }) => {
                     {selectedPackage?.destination || guide.location}
                   </div>
 
-                  <a href={`/user/provider/${guide.providerId || guide._id || guide.id}`} className="inline-flex items-center text-sm hover:text-emerald-700 transition-colors">
+                  <a href={providerProfilePath(guide.companyName || guide.name, guide.providerId || guide._id || guide.id)} className="inline-flex items-center text-sm hover:text-emerald-700 transition-colors">
                     <span className="text-gray-500 mr-1.5">By</span>
                     <span className="font-medium text-gray-900 truncate">{guide.companyName || guide.name}</span>
                   </a>

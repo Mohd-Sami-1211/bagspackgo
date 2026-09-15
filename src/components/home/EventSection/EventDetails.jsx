@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import ProgressiveImage from '@/components/common/ProgressiveImage';
 import { useEventPhotos, useEventSponsors } from '@/lib/useTripCache';
+import { providerProfilePath } from '@/lib/providerSlug';
 
 /* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Custom Dropdown â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const CustomSelect = ({ value, onChange, options, placeholder }) => {
@@ -344,6 +345,9 @@ const EventDetails = ({ event, loading = false }) => {
   // ── Sponsors: fetched separately to avoid heavy base64 data blocking render ──
   const { data: sponsorsData, isLoading: sponsorsLoading } = useEventSponsors(event?.id || event?._id);
   const sponsors = sponsorsData?.data?.sponsors || [];
+  const sponsorBandItems = sponsors.length > 0
+    ? Array.from({ length: Math.max(4, sponsors.length) }, (_, index) => sponsors[index % sponsors.length])
+    : [];
   // How many skeleton tiles to show while photos load (from the lightweight detail response)
   const photoCount = event?.photoCount || 0;
 
@@ -1749,7 +1753,7 @@ const EventDetails = ({ event, loading = false }) => {
                   <p className="text-xs text-gray-400 uppercase tracking-wider font-bold">Organized by</p>
                   <p className="text-sm font-bold text-gray-800">
                     {(event.guide || event.guideId) ? (
-                        <Link href={`/user/provider/${event.guide?._id || event.guideId || event.guide}`} className="hover:text-emerald-700 hover:underline">
+                        <Link href={providerProfilePath(event.guideName, event.guide?._id || event.guideId || event.guide)} className="hover:text-emerald-700 hover:underline">
                             {event.guideName || 'Local Organizer'}
                         </Link>
                     ) : (event.guideName || 'Local Organizer')}
@@ -1801,6 +1805,151 @@ const EventDetails = ({ event, loading = false }) => {
           </div>
         </div>
       </motion.div>
+
+      {/* Compact sponsor band */}
+      {(event?.sponsorCount > 0 || sponsors?.length > 0) && (
+        <div className="sponsor-band relative mb-6 overflow-hidden rounded-2xl border border-emerald-100 bg-white py-3 shadow-sm">
+          <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-12 bg-gradient-to-r from-white to-transparent sm:w-20" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 bg-gradient-to-l from-white to-transparent sm:w-20" />
+
+          {sponsorsLoading ? (
+            <div className="grid grid-cols-4 gap-2 px-4 sm:gap-4 sm:px-8" aria-label="Loading event sponsors">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <div key={`sponsor-band-skeleton-${index}`} className="flex animate-pulse justify-center px-1 sm:px-2">
+                  <div className="h-12 w-full max-w-28 rounded-xl bg-slate-100 sm:h-14" />
+                </div>
+              ))}
+            </div>
+          ) : sponsorBandItems.length > 0 ? (
+            <div
+              className="sponsor-band-track flex items-center will-change-transform"
+              style={{
+                width: `calc(${sponsorBandItems.length} * 50%)`,
+                animationDuration: `${Math.max(22, sponsorBandItems.length * 5.5)}s`,
+              }}
+            >
+              {[0, 1].map((copyIndex) => (
+                <div
+                  key={`sponsor-band-copy-${copyIndex}`}
+                  className="sponsor-band-copy flex w-1/2 shrink-0 items-center"
+                  aria-hidden={copyIndex > 0 ? 'true' : undefined}
+                >
+                  {sponsorBandItems.map((sponsor, index) => (
+                    <div
+                      key={`${copyIndex}-${sponsor._id || sponsor.name || 'sponsor'}-${index}`}
+                      className="flex shrink-0 justify-center px-1.5 sm:px-3"
+                      style={{ width: `${100 / sponsorBandItems.length}%` }}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setSelectedSponsor(sponsor)}
+                        tabIndex={copyIndex > 0 ? -1 : 0}
+                        aria-label={`View ${sponsor.name || 'sponsor'} details`}
+                        className="flex w-full max-w-32 items-center justify-center rounded-xl border border-transparent bg-white p-1.5 transition hover:border-emerald-100 hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                        title={`View ${sponsor.name || 'sponsor'}`}
+                      >
+                        {sponsor.image ? (
+                          <img src={sponsor.image} alt="" className="h-12 w-full rounded-lg object-contain sm:h-14" />
+                        ) : (
+                          <span className="flex h-12 w-full items-center justify-center rounded-lg bg-emerald-50 text-lg font-black text-emerald-700 sm:h-14">
+                            {(sponsor.name || 'S').charAt(0).toUpperCase()}
+                          </span>
+                        )}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          ) : null}
+
+          <AnimatePresence>
+            {selectedSponsor && (
+              <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm" onClick={() => setSelectedSponsor(null)}>
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  role="dialog"
+                  aria-modal="true"
+                  aria-label={`${selectedSponsor.name || 'Sponsor'} details`}
+                  className="relative max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-6 shadow-xl"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setSelectedSponsor(null)}
+                    className="absolute right-4 top-4 rounded-full bg-gray-50 p-2 text-gray-400 transition-colors hover:text-gray-700"
+                    aria-label="Close sponsor details"
+                  >
+                    <X size={20} />
+                  </button>
+
+                  <div className="mb-6 mt-2 flex flex-col items-center">
+                    {selectedSponsor.image ? (
+                      <img src={selectedSponsor.image} alt={selectedSponsor.name} className="mb-4 h-56 w-56 rounded-xl border border-gray-100 bg-white object-contain" />
+                    ) : (
+                      <div className="mb-4 flex h-56 w-56 items-center justify-center rounded-xl bg-emerald-50 text-7xl font-bold text-emerald-600">
+                        {(selectedSponsor.name || 'S').charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <h3 className="text-center text-2xl font-bold text-gray-900">{selectedSponsor.name}</h3>
+                    {selectedSponsor.website && (
+                      <a href={selectedSponsor.website.startsWith('http') ? selectedSponsor.website : `https://${selectedSponsor.website}`} target="_blank" rel="noopener noreferrer" className="mt-2 flex items-center gap-1 font-medium text-emerald-600 hover:text-emerald-700 hover:underline">
+                        <ExternalLink size={16} /> Visit Website
+                      </a>
+                    )}
+                  </div>
+
+                  {selectedSponsor.description && (
+                    <div className="mb-6 rounded-xl bg-gray-50 p-4">
+                      <h4 className="mb-2 text-sm font-semibold text-gray-900">About Sponsor</h4>
+                      <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700">{selectedSponsor.description}</p>
+                    </div>
+                  )}
+
+                  {selectedSponsor.socialMedia && Object.entries(selectedSponsor.socialMedia).some(([_, url]) => url) && (
+                    <div className="mt-6 flex justify-center gap-4 border-t border-gray-100 pt-6">
+                      {selectedSponsor.socialMedia.instagram && (
+                        <a href={selectedSponsor.socialMedia.instagram.startsWith('http') ? selectedSponsor.socialMedia.instagram : `https://${selectedSponsor.socialMedia.instagram}`} target="_blank" rel="noopener noreferrer" className="rounded-full p-2 text-gray-400 transition-colors hover:bg-pink-50 hover:text-pink-600" aria-label="Instagram">
+                          <Instagram size={22} />
+                        </a>
+                      )}
+                      {selectedSponsor.socialMedia.facebook && (
+                        <a href={selectedSponsor.socialMedia.facebook.startsWith('http') ? selectedSponsor.socialMedia.facebook : `https://${selectedSponsor.socialMedia.facebook}`} target="_blank" rel="noopener noreferrer" className="rounded-full p-2 text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-600" aria-label="Facebook">
+                          <Facebook size={22} />
+                        </a>
+                      )}
+                      {selectedSponsor.socialMedia.twitter && (
+                        <a href={selectedSponsor.socialMedia.twitter.startsWith('http') ? selectedSponsor.socialMedia.twitter : `https://${selectedSponsor.socialMedia.twitter}`} target="_blank" rel="noopener noreferrer" className="rounded-full p-2 text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-400" aria-label="Twitter">
+                          <Twitter size={22} />
+                        </a>
+                      )}
+                      {selectedSponsor.socialMedia.linkedin && (
+                        <a href={selectedSponsor.socialMedia.linkedin.startsWith('http') ? selectedSponsor.socialMedia.linkedin : `https://${selectedSponsor.socialMedia.linkedin}`} target="_blank" rel="noopener noreferrer" className="rounded-full p-2 text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-700" aria-label="LinkedIn">
+                          <Linkedin size={22} />
+                        </a>
+                      )}
+                    </div>
+                  )}
+
+                  {selectedSponsor.links && selectedSponsor.links.length > 0 && (
+                    <div className="mt-6 flex flex-col gap-2">
+                      <h4 className="mb-1 text-sm font-semibold text-gray-900">Additional Links</h4>
+                      {selectedSponsor.links.map((link, index) => link.url && link.label ? (
+                        <a key={index} href={link.url.startsWith('http') ? link.url : `https://${link.url}`} target="_blank" rel="noopener noreferrer" className="group flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 p-3 transition-colors hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700">
+                          <span className="text-sm font-medium text-gray-700 group-hover:text-emerald-700">{link.label}</span>
+                          <ExternalLink size={16} className="text-gray-400 group-hover:text-emerald-600" />
+                        </a>
+                      ) : null)}
+                    </div>
+                  )}
+                </motion.div>
+              </div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
 
       {/* â”€â”€ Tabs Section â”€â”€ */}
       <div ref={tabsRef} className="bg-white/90 backdrop-blur-sm px-4 sm:px-6 py-4 shadow-lg rounded-2xl overflow-hidden scroll-mt-20">
@@ -1921,123 +2070,6 @@ const EventDetails = ({ event, loading = false }) => {
                       </div>
                     ))}
                   </div>
-                </div>
-              )}
-
-              {/* Event Sponsors */}
-              {(event?.sponsorCount > 0 || sponsors?.length > 0) && (
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                    <Star className="text-emerald-500 fill-emerald-500" size={20} /> Event Sponsors
-                  </h3>
-                  <div className="flex flex-wrap gap-4">
-                    {sponsorsLoading ? (
-                      Array.from({ length: event?.sponsorCount || 1 }).map((_, idx) => (
-                        <div key={`sponsor-skel-${idx}`} className="flex items-center gap-3 bg-white p-3 pr-4 rounded-xl shadow-sm border border-gray-100 w-48 animate-pulse">
-                          <div className="w-12 h-12 rounded-lg bg-gray-200" />
-                          <div className="h-4 bg-gray-200 rounded w-24" />
-                        </div>
-                      ))
-                    ) : (
-                      sponsors.map((sponsor, index) => (
-                        <button
-                          key={index}
-                          onClick={() => setSelectedSponsor(sponsor)}
-                          title={sponsor.name}
-                          className="flex items-center justify-center p-3 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md hover:border-emerald-200 transition-all cursor-pointer"
-                        >
-                          {sponsor.image ? (
-                            <img src={sponsor.image} alt={sponsor.name} className="w-24 h-24 rounded-lg object-contain" />
-                          ) : (
-                            <div className="w-24 h-24 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 font-bold text-3xl">
-                              {sponsor.name.charAt(0)}
-                            </div>
-                          )}
-                        </button>
-                      ))
-                    )}
-                  </div>
-                  
-                  {/* Sponsor Modal */}
-                  <AnimatePresence>
-                    {selectedSponsor && (
-                      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-                        <motion.div 
-                          initial={{ opacity: 0, scale: 0.95 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.95 }}
-                          className="bg-white rounded-2xl max-w-md w-full p-6 relative shadow-xl max-h-[90vh] overflow-y-auto"
-                        >
-                          <button 
-                            onClick={() => setSelectedSponsor(null)}
-                            className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 bg-gray-50 p-2 rounded-full transition-colors"
-                          >
-                            <X size={20} />
-                          </button>
-                          
-                          <div className="flex flex-col items-center mb-6 mt-2">
-                            {selectedSponsor.image ? (
-                              <img src={selectedSponsor.image} alt={selectedSponsor.name} className="w-56 h-56 object-contain rounded-xl border border-gray-100 mb-4 bg-white" />
-                            ) : (
-                              <div className="w-56 h-56 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 font-bold text-7xl mb-4">
-                                {selectedSponsor.name.charAt(0)}
-                              </div>
-                            )}
-                            <h3 className="text-2xl font-bold text-gray-900 text-center">{selectedSponsor.name}</h3>
-                            {selectedSponsor.website && (
-                              <a href={selectedSponsor.website.startsWith('http') ? selectedSponsor.website : `https://${selectedSponsor.website}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-emerald-600 hover:text-emerald-700 hover:underline mt-2 font-medium">
-                                <ExternalLink size={16} /> Visit Website
-                              </a>
-                            )}
-                          </div>
-                          
-                          {selectedSponsor.description && (
-                            <div className="mb-6 bg-gray-50 p-4 rounded-xl">
-                              <h4 className="text-sm font-semibold text-gray-900 mb-2">About Sponsor</h4>
-                              <p className="text-gray-700 text-sm whitespace-pre-wrap leading-relaxed">{selectedSponsor.description}</p>
-                            </div>
-                          )}
-                          
-                          {selectedSponsor.socialMedia && Object.entries(selectedSponsor.socialMedia).some(([_, url]) => url) && (
-                            <div className="flex justify-center gap-4 mt-6 pt-6 border-t border-gray-100">
-                              {selectedSponsor.socialMedia.instagram && (
-                                <a href={selectedSponsor.socialMedia.instagram.startsWith('http') ? selectedSponsor.socialMedia.instagram : `https://${selectedSponsor.socialMedia.instagram}`} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-pink-600 transition-colors p-2 hover:bg-pink-50 rounded-full">
-                                  <Instagram size={22} />
-                                </a>
-                              )}
-                              {selectedSponsor.socialMedia.facebook && (
-                                <a href={selectedSponsor.socialMedia.facebook.startsWith('http') ? selectedSponsor.socialMedia.facebook : `https://${selectedSponsor.socialMedia.facebook}`} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-600 transition-colors p-2 hover:bg-blue-50 rounded-full">
-                                  <Facebook size={22} />
-                                </a>
-                              )}
-                              {selectedSponsor.socialMedia.twitter && (
-                                <a href={selectedSponsor.socialMedia.twitter.startsWith('http') ? selectedSponsor.socialMedia.twitter : `https://${selectedSponsor.socialMedia.twitter}`} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-400 transition-colors p-2 hover:bg-blue-50 rounded-full">
-                                  <Twitter size={22} />
-                                </a>
-                              )}
-                              {selectedSponsor.socialMedia.linkedin && (
-                                <a href={selectedSponsor.socialMedia.linkedin.startsWith('http') ? selectedSponsor.socialMedia.linkedin : `https://${selectedSponsor.socialMedia.linkedin}`} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-700 transition-colors p-2 hover:bg-blue-50 rounded-full">
-                                  <Linkedin size={22} />
-                                </a>
-                              )}
-                            </div>
-                          )}
-                          
-                          {selectedSponsor.links && selectedSponsor.links.length > 0 && (
-                            <div className="mt-6 flex flex-col gap-2">
-                              <h4 className="text-sm font-semibold text-gray-900 mb-1">Additional Links</h4>
-                              {selectedSponsor.links.map((link, i) => link.url && link.label ? (
-                                <a key={i} href={link.url.startsWith('http') ? link.url : `https://${link.url}`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-3 bg-gray-50 border border-gray-100 rounded-xl hover:bg-emerald-50 hover:border-emerald-200 hover:text-emerald-700 transition-colors group">
-                                  <span className="font-medium text-sm text-gray-700 group-hover:text-emerald-700">{link.label}</span>
-                                  <ExternalLink size={16} className="text-gray-400 group-hover:text-emerald-600" />
-                                </a>
-                              ) : null)}
-                            </div>
-                          )}
-                        </motion.div>
-                      </div>
-                    )}
-                  </AnimatePresence>
                 </div>
               )}
 

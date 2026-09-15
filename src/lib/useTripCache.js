@@ -132,9 +132,14 @@ export function useSavedItemIds(options = {}) {
 }
 
 // 4. Provider profile cache
-export function useProviderProfile(id, options = {}) {
-    const url = id ? `/api/user/provider/${id}` : null;
-    return useSWR(url, { ...options, dedupingInterval: 300000 }); // 5 minutes
+export function useProviderProfile(identifier, options = {}) {
+    const url = identifier ? `/api/public/provider/${encodeURIComponent(identifier)}` : null;
+    return useSWR(url, {
+        dedupingInterval: 300000,
+        revalidateOnFocus: false,
+        revalidateOnReconnect: false,
+        ...options,
+    });
 }
 
 // 5. User bookings cache

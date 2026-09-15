@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import dbConnect from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { Guide } from "@/models/guide.model";
 import { GuideDetails } from "@/models/guidedetails.model";
+import { toProviderSlug } from "@/lib/providerSlug";
 
 export const maxDuration = 60; // Optional but good for large payload processing
 export const dynamic = 'force-dynamic';
@@ -86,6 +88,7 @@ export async function PUT(req) {
             twitter,
             youtube,
             logo,
+            coverPhoto,
             totalTreks,
             totalTrips,
             totalEvents,
@@ -114,7 +117,10 @@ export async function PUT(req) {
 
         // 2. Update GuideDetails
         const updateFields = {};
-        if (companyname !== undefined) updateFields.companyname = companyname;
+        if (companyname !== undefined) {
+            updateFields.companyname = companyname;
+            updateFields.profileSlug = toProviderSlug(companyname);
+        }
         if (companyemail !== undefined) updateFields.companyemail = companyemail;
         if (companymobile !== undefined) updateFields.companymobile = companymobile;
         if (address !== undefined) updateFields.address = address;
@@ -126,6 +132,7 @@ export async function PUT(req) {
         if (twitter !== undefined) updateFields.twitter = twitter;
         if (youtube !== undefined) updateFields.youtube = youtube;
         if (logo !== undefined) updateFields.logo = logo;
+        if (coverPhoto !== undefined) updateFields.coverPhoto = coverPhoto;
 
         if (totalTreks !== undefined) updateFields.totalTreks = Number(totalTreks);
         if (totalTrips !== undefined) updateFields.totalTrips = Number(totalTrips);
@@ -154,6 +161,8 @@ export async function PUT(req) {
                 { status: 404 }
             );
         }
+
+        revalidateTag('public-provider-profile', 'max');
 
         return NextResponse.json(
             {

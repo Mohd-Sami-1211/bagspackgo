@@ -82,6 +82,7 @@ tripBookingSchema.index({ user: 1, checkoutKey: 1 }, { unique: true, sparse: tru
 tripBookingSchema.index({ orderId: 1 });
 tripBookingSchema.index({ paymentId: 1 });
 tripBookingSchema.index({ status: 1, createdAt: 1 });
+tripBookingSchema.index({ user: 1, status: 1, createdAt: -1 });
 
 delete mongoose.models.TripBooking;
 export const TripBooking = mongoose.models.TripBooking || mongoose.model('TripBooking', tripBookingSchema);

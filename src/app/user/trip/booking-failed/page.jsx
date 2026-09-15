@@ -20,6 +20,11 @@ const COPY = {
     description: "Your payment was received after the booking could not be completed. Once initiated, it should return to the original payment method within 3 business days.",
     tone: "bg-amber-600",
   },
+  review: {
+    title: "Payment needs a quick check",
+    description: "We could not safely match this payment to a booking yet. No second payment is needed while we check it.",
+    tone: "bg-slate-700",
+  },
 };
 
 function TripBookingFailedContent() {
@@ -28,12 +33,16 @@ function TripBookingFailedContent() {
   const returnPath = searchParams.get("return") || "/user/trip";
   const bookingId = searchParams.get("bookingId") || "";
   const initialState = searchParams.get("state") || "failed";
-  const [state, setState] = useState(COPY[initialState] ? initialState : "failed");
+  const [state, setState] = useState(COPY[initialState] ? initialState : bookingId ? "failed" : "review");
   const [message, setMessage] = useState("");
   const [checking, setChecking] = useState(false);
 
   const checkStatus = useCallback(async () => {
-    if (!bookingId) return;
+    if (!bookingId) {
+      setState("review");
+      setMessage("This page is missing the booking reference. Open My Trips and start from there so we can protect your payment.");
+      return;
+    }
     setChecking(true);
     try {
       const response = await fetch(`/api/payments/trip-status?bookingId=${encodeURIComponent(bookingId)}`, {
@@ -49,6 +58,7 @@ function TripBookingFailedContent() {
       }
       if (["refund_initiated", "refund_processing"].includes(result.state)) setState("refund");
       else if (result.state === "failed") setState("failed");
+      else if (result.state === "review_required") setState("review");
       else setState("processing");
       setMessage(result.message || "");
     } catch {
@@ -81,11 +91,12 @@ function TripBookingFailedContent() {
   const Icon = state === "processing" ? LoaderCircle : state === "refund" ? CheckCircle2 : XCircle;
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#16483b_0%,_#06110e_48%,_#030807_100%)] flex items-center justify-center p-4 text-slate-900">
+      <style dangerouslySetInnerHTML={{ __html: `footer, .secondary-nav-wrapper { display: none !important; }` }} />
       <motion.div
         initial={{ opacity: 0, scale: 0.96, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="max-w-md w-full bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100"
+        className="max-w-md w-full bg-white rounded-3xl shadow-2xl overflow-hidden border border-white/20"
       >
         <div className={`${content.tone} p-8 flex flex-col items-center text-white`}>
           <Icon className={`w-14 h-14 mb-4 ${state === "processing" || checking ? "animate-spin" : ""}`} />
@@ -96,7 +107,7 @@ function TripBookingFailedContent() {
         <div className="p-8 pb-10">
           <div className="flex items-start gap-3 bg-slate-50 text-slate-700 p-4 rounded-xl border border-slate-100 mb-7 text-sm font-semibold">
             <AlertTriangle className="w-5 h-5 shrink-0 text-amber-600 mt-0.5" />
-            <p>{message || (state === "failed" ? "You can safely return to the booking form and try again." : "We will keep the booking linked to this payment while its final status is checked.")}</p>
+            <p>{message || (state === "failed" ? "You can safely return to the booking form and try again." : state === "refund" ? "Please do not pay again. Any captured amount is being sent back to the original payment method." : "We will keep the booking linked to this payment while its final status is checked.")}</p>
           </div>
 
           <div className="space-y-3">
@@ -119,6 +130,16 @@ function TripBookingFailedContent() {
               </button>
             )}
 
+            {state === "review" && bookingId && (
+              <button
+                onClick={checkStatus}
+                disabled={checking}
+                className="w-full flex items-center justify-center gap-2 bg-[#17372f] text-white font-bold py-4 rounded-2xl disabled:opacity-60"
+              >
+                <RefreshCw className={`w-5 h-5 ${checking ? "animate-spin" : ""}`} /> Check payment status
+              </button>
+            )}
+
             <button
               onClick={() => router.push("/user/trip")}
               className="w-full flex items-center justify-center gap-2 bg-white border-2 border-gray-200 text-gray-700 font-bold py-3.5 rounded-2xl"
@@ -134,7 +155,7 @@ function TripBookingFailedContent() {
 
 export default function TripBookingFailed() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center">Loading...</div>}>
+    <Suspense fallback={<div className="min-h-screen bg-[#06110e] flex items-center justify-center text-white">Loading...</div>}>
       <TripBookingFailedContent />
     </Suspense>
   );

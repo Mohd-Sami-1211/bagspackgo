@@ -13,7 +13,7 @@ function BookingSuccessContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const bookingId = searchParams.get('bookingId');
-    const bookingRef = searchParams.get('ref') || 'Processing...';
+    const bookingRefFromUrl = searchParams.get('ref') || '';
 
     const [booking, setBooking] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -23,8 +23,10 @@ function BookingSuccessContent() {
     const [downloading, setDownloading] = useState(false);
     const passRef = useRef(null);
 
-    const { data: bookingsData, isLoading: fetchLoading } = useUserBookings({
-        isPaused: () => !bookingId
+    const { data: bookingsData, error: bookingsError, isLoading: fetchLoading, isValidating } = useUserBookings({
+        isPaused: () => !bookingId,
+        revalidateOnMount: true,
+        dedupingInterval: 0,
     });
 
     useEffect(() => {
@@ -33,18 +35,18 @@ function BookingSuccessContent() {
             return;
         }
 
-        if (!fetchLoading && bookingsData) {
+        if (!fetchLoading && !isValidating && bookingsData) {
             if (bookingsData.success) {
                 const found = bookingsData.data?.find(b => b.id === bookingId || b._id === bookingId);
                 setBooking(found || null);
             }
             setLoading(false);
             setTimeout(() => setShowContent(true), 150);
-        } else if (!fetchLoading && bookingsData === undefined) {
+        } else if (!fetchLoading && !isValidating && bookingsData === undefined) {
             setLoading(false);
             setTimeout(() => setShowContent(true), 150);
         }
-    }, [bookingsData, fetchLoading, bookingId]);
+    }, [bookingsData, fetchLoading, isValidating, bookingId]);
 
     const handleDownloadPDF = () => {
         if (!bookingId) return;
@@ -61,9 +63,29 @@ function BookingSuccessContent() {
 
     if (loading) {
         return (
-            <div className="fixed inset-0 z-50 bg-gray-50 flex flex-col items-center justify-center p-4">
-                <div className="w-12 h-12 border-4 border-emerald-100 border-t-emerald-600 rounded-full animate-spin mb-4" />
-                <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">Retrieving Booking Details...</p>
+            <div className="fixed inset-0 z-50 bg-[#06110e] flex flex-col items-center justify-center p-4">
+                <div className="w-12 h-12 border-4 border-white/10 border-t-emerald-400 rounded-full animate-spin mb-4" />
+                <p className="text-white/60 font-bold uppercase tracking-widest text-xs">Retrieving Booking Details...</p>
+            </div>
+        );
+    }
+
+    if (!booking) {
+        return (
+            <div className="min-h-screen bg-[#06110e] flex items-center justify-center p-4 text-white">
+                <style dangerouslySetInnerHTML={{ __html: `footer, .secondary-nav-wrapper { display: none !important; }` }} />
+                <div className="w-full max-w-md rounded-3xl border border-white/10 bg-white/[0.06] p-8 text-center shadow-2xl backdrop-blur-xl">
+                    <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-amber-400/15 text-amber-300">
+                        <CreditCard className="h-7 w-7" />
+                    </div>
+                    <h1 className="text-2xl font-black">Booking details unavailable</h1>
+                    <p className="mt-3 text-sm leading-6 text-white/65">
+                        {bookingsError?.message || 'We could not load this confirmed booking. Please check My Bookings or try again.'}
+                    </p>
+                    <button onClick={() => router.push('/user/bookings')} className="mt-7 w-full rounded-2xl bg-emerald-400 px-5 py-3.5 font-black text-[#062018] transition hover:bg-emerald-300">
+                        Open My Bookings
+                    </button>
+                </div>
             </div>
         );
     }
@@ -75,10 +97,18 @@ function BookingSuccessContent() {
         category,
         totalAmount,
         amountPaid,
+        remainingAmount,
+        paymentMode,
         arrivalDeparture = {},
         personalDetails = {},
         paymentId
     } = booking || {};
+
+    const tripTotal = Number(totalAmount || 0);
+    const paidNow = Number(amountPaid ?? tripTotal);
+    const balanceDue = Math.max(0, Number(remainingAmount ?? tripTotal - paidNow));
+    const isPartialPayment = paymentMode === 'partial' || balanceDue > 0;
+    const displayBookingRef = booking?.bookingRef || bookingRefFromUrl || '—';
 
     // More robust data extraction from the booking object
     const pSnapshot = booking?.packageSnapshot || booking?.packageId || {};
@@ -102,12 +132,12 @@ function BookingSuccessContent() {
     const catLabel = ensureString(category);
 
     return (
-        <div className="min-h-screen bg-slate-50 flex flex-col items-center font-sans">
+        <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#16483b_0%,_#06110e_44%,_#030807_100%)] flex flex-col items-center font-sans text-slate-900">
             
             {/* Hide footer & secondary nav - keep main navbar */}
             <style dangerouslySetInnerHTML={{ __html: `
                 footer, .secondary-nav-wrapper { display: none !important; }
-                body { background-color: #f8fafc; }
+                body { background-color: #06110e; }
                 .print-only { display: none; }
                 
                 @media print {
@@ -137,24 +167,25 @@ function BookingSuccessContent() {
                             >
                                 <CheckCircle2 className="w-8 h-8 text-emerald-500" />
                             </motion.div>
-                            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight mb-2">Booking Confirmed</h1>
-                            <p className="text-emerald-700 font-medium px-4 py-1 bg-emerald-100 inline-block rounded-full text-xs">
-                                Payment successful & Trip Booked
+                            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight mb-2">Booking Confirmed</h1>
+                            <p className="text-emerald-100 font-bold px-4 py-1.5 bg-emerald-400/15 border border-emerald-300/20 inline-block rounded-full text-xs">
+                                Payment received · Trip booked
                             </p>
+                            {isPartialPayment && <p className="mt-3 text-sm font-semibold text-white/65">30% paid now · balance due on the trip day</p>}
                         </div>
 
                         {/* Interactive QR Reveal Container */}
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6 flex flex-col sm:flex-row items-stretch">
+                        <div className="bg-white/95 rounded-2xl shadow-2xl border border-white/20 overflow-hidden mb-6 flex flex-col sm:flex-row items-stretch">
                             <div className="flex-1 p-6 flex flex-col justify-center border-b sm:border-b-0 sm:border-r border-gray-200 bg-white">
                                 <p className="text-xs uppercase font-semibold text-slate-500 tracking-wider mb-1 flex items-center gap-1"><Hash className="w-3.5 h-3.5"/> Booking Ref</p>
-                                <p className="font-mono font-bold text-slate-900 text-xl tracking-widest mb-4">{bookingRef}</p>
+                                <p className="font-mono font-bold text-slate-900 text-xl tracking-widest mb-4">{displayBookingRef}</p>
                                 
                                 <p className="text-xs uppercase font-semibold text-slate-500 tracking-wider mb-1 flex items-center gap-1"><CreditCard className="w-3.5 h-3.5"/> Payment ID</p>
                                 <p className="font-mono font-medium text-slate-900 text-xs mb-4 truncate max-w-xs">{paymentId || "RAZORPAY_VERIFIED"}</p>
                                 
                                 <div className="flex flex-wrap gap-2 mt-4">
                                     <button 
-                                        onClick={() => handleDownloadPDF(false)}
+                                        onClick={handleDownloadPDF}
                                         disabled={downloading}
                                         className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-4 rounded-lg text-sm transition-colors shadow-sm disabled:opacity-50"
                                     >
@@ -176,7 +207,7 @@ function BookingSuccessContent() {
                                 </div>
                             </div>
                             
-                            <div className="p-6 relative flex flex-col items-center justify-center min-w-[200px] bg-slate-50">
+                            <div className="p-6 relative flex flex-col items-center justify-center min-w-[200px] bg-emerald-50/70">
                                 <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">Official E-Ticket</h3>
                                 
                                 <div className="relative group cursor-pointer" onClick={() => {
@@ -212,7 +243,7 @@ function BookingSuccessContent() {
                         </div>
 
                         {/* Main Details Document Card */}
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-8">
+                        <div className="bg-white rounded-2xl shadow-2xl border border-white/20 overflow-hidden mb-8">
                             
                             {/* Trip Summary Details */}
                             <div className="p-6 sm:p-8 border-b border-gray-200 relative">
@@ -247,9 +278,23 @@ function BookingSuccessContent() {
                                         <p className="font-semibold text-slate-900 text-sm leading-tight">{arrivalDeparture?.pickup?.time || 'Pending'}</p>
                                     </div>
                                     <div className="flex flex-col gap-1.5">
-                                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5 text-slate-400"/> Total Paid</p>
-                                        <p className="font-bold text-emerald-600 text-lg leading-none mt-0.5">₹{Number(amountPaid || totalAmount || 0).toLocaleString('en-IN')}</p>
+                                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5"><CreditCard className="w-3.5 h-3.5 text-slate-400"/> Paid Now</p>
+                                        <p className="font-bold text-emerald-600 text-lg leading-none mt-0.5">₹{paidNow.toLocaleString('en-IN')}</p>
                                     </div>
+                                </div>
+                                <div className={`mt-6 rounded-xl border p-4 ${isPartialPayment ? 'border-amber-200 bg-amber-50' : 'border-emerald-100 bg-emerald-50'}`}>
+                                    <div className="flex items-center justify-between gap-4 text-sm">
+                                        <span className="font-semibold text-slate-600">Trip total</span>
+                                        <span className="font-black text-slate-900">₹{tripTotal.toLocaleString('en-IN')}</span>
+                                    </div>
+                                    {isPartialPayment ? (
+                                        <div className="mt-2 flex items-center justify-between gap-4 text-sm">
+                                            <span className="font-bold text-amber-800">Balance due on trip day</span>
+                                            <span className="font-black text-amber-700">₹{balanceDue.toLocaleString('en-IN')}</span>
+                                        </div>
+                                    ) : (
+                                        <p className="mt-2 text-xs font-semibold text-emerald-700">Paid in full. No further payment is due.</p>
+                                    )}
                                 </div>
                             </div>
 

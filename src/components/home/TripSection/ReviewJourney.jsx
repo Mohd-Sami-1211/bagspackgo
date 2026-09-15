@@ -307,7 +307,12 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
             router.push(`/user/trip/booking-failed?state=processing&bookingId=${bookingId}&return=${encodeURIComponent(`/trip/${packageId}`)}`);
           }
         },
-        modal: { ondismiss: () => setIsPaymentLoading(false) },
+        modal: {
+          ondismiss: () => {
+            setIsPaymentLoading(false);
+            setPaymentError("Payment window closed. Your trip is not confirmed yet; you can safely try again.");
+          },
+        },
       });
       
       rzp.on('payment.failed', function (response) {
@@ -326,9 +331,9 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center py-20">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-[#f5f8f6] px-4 py-20 pt-28">
         <div className="w-10 h-10 border-4 border-emerald-100 border-t-emerald-600 rounded-full animate-spin"></div>
-        <p className="mt-4 text-sm font-semibold text-gray-400 tracking-wider uppercase text-emerald-600/80">
+        <p className="mt-4 text-sm font-semibold uppercase tracking-wider text-emerald-700">
           Preparing Summary...
         </p>
       </div>
@@ -337,12 +342,14 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
 
   if (!tripData) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center py-20 text-center px-4">
-        <AlertCircle className="w-16 h-16 text-gray-200 mb-4" />
-        <h2 className="text-xl font-bold text-gray-800 mb-2">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-[#f5f8f6] px-4 py-20 pt-28 text-center">
+        <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full border border-amber-100 bg-amber-50 text-amber-600">
+          <AlertCircle className="h-7 w-7" />
+        </div>
+        <h2 className="mb-2 text-xl font-black text-slate-950">
           No Booking Data Found
         </h2>
-        <p className="text-sm text-gray-500 mb-6">
+        <p className="mb-6 max-w-md text-sm leading-6 text-slate-500">
           It seems your booking session expired. Please start again.
         </p>
         <button
@@ -380,12 +387,13 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
       });
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#f3f5f0] pb-12 font-sans text-[#17372f] selection:bg-[#dce88b]">
+    <div className="relative min-h-screen overflow-hidden bg-[#f5f8f6] pb-12 font-sans text-slate-900 selection:bg-emerald-100">
       <style dangerouslySetInnerHTML={{ __html: "footer { display: none !important; }" }} />
 
-      <div className="absolute inset-x-0 top-0 h-[355px] bg-[#102923]">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_82%_15%,rgba(220,232,139,0.13),transparent_28%),radial-gradient(circle_at_12%_80%,rgba(85,139,117,0.18),transparent_35%)]" />
-        <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-b from-transparent to-[#f3f5f0]" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-[420px] overflow-hidden" aria-hidden="true">
+        <div className="absolute -left-24 top-12 h-72 w-72 rounded-full bg-emerald-100/70 blur-3xl" />
+        <div className="absolute right-[-5rem] top-20 h-72 w-72 rounded-full bg-amber-100/60 blur-3xl" />
+        <div className="absolute inset-x-0 top-16 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
       </div>
 
       <main className="relative z-10 mx-auto max-w-7xl px-4 pb-10 pt-24 sm:px-6 sm:pt-28 lg:px-8">
@@ -393,27 +401,27 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45 }}
-          className="mb-7 flex flex-col gap-5 text-white sm:mb-9 sm:flex-row sm:items-end sm:justify-between"
+          className="mb-7 flex flex-col gap-5 sm:mb-9 sm:flex-row sm:items-end sm:justify-between"
         >
           <div>
             <button
               type="button"
               onClick={() => router.back()}
-              className="relative -top-3 mb-6 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-bold text-white backdrop-blur-md transition hover:bg-white/15"
+              className="mb-6 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-600 shadow-sm transition hover:border-emerald-300 hover:text-emerald-700 active:scale-95"
             >
               <ArrowLeft className="h-4 w-4" />
               Back
             </button>
-            <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#dce88b]">Final step</p>
-            <h1 className="mt-2 max-w-2xl font-serif text-4xl leading-[0.98] tracking-[-0.04em] sm:text-5xl lg:text-6xl">
+            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-emerald-700">Final step</p>
+            <h1 className="mt-2 max-w-2xl text-3xl font-black leading-tight tracking-tight text-slate-950 sm:text-5xl">
               Review your journey.
             </h1>
-            <p className="mt-3 max-w-xl text-sm leading-6 text-white/65 sm:text-base">
+            <p className="mt-3 max-w-xl text-sm leading-6 text-slate-500 sm:text-base">
               Check the important details once, choose how you want to pay, and reserve your trip.
             </p>
           </div>
-          <div className="hidden items-center gap-2 rounded-full border border-white/12 bg-white/8 px-4 py-2.5 text-xs font-semibold text-white/75 backdrop-blur-md sm:flex">
-            <ShieldCheck className="h-4 w-4 text-[#dce88b]" />
+          <div className="hidden items-center gap-2 rounded-full border border-emerald-100 bg-white px-4 py-2.5 text-xs font-bold text-slate-600 shadow-sm sm:flex">
+            <ShieldCheck className="h-4 w-4 text-emerald-700" />
             Secure checkout
           </div>
         </motion.header>
@@ -568,17 +576,19 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
               transition={{ duration: 0.5, delay: 0.12 }}
               className="overflow-hidden rounded-[1.75rem] border border-[#17372f]/10 bg-white shadow-[0_28px_80px_-48px_rgba(23,55,47,0.75)] lg:sticky lg:top-6"
             >
-              <div className="relative overflow-hidden bg-[#17372f] p-5 text-white sm:p-6">
-                <div className="absolute -right-10 -top-14 h-36 w-36 rounded-full bg-[#dce88b]/12 blur-3xl" />
-                <p className="relative text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#dce88b]">Payment summary</p>
+              <div className="relative overflow-hidden border-b border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-amber-50 p-5 sm:p-6">
+                <div className="absolute -right-10 -top-14 h-36 w-36 rounded-full bg-emerald-100/60 blur-3xl" />
+                <p className="relative text-[10px] font-extrabold uppercase tracking-[0.2em] text-emerald-700">Payment summary</p>
                 <div className="relative mt-3 flex items-end justify-between gap-4">
                   <div>
-                    <p className="text-xs font-semibold text-white/55">Total trip value</p>
-                    <p className="mt-1 font-serif text-4xl tracking-[-0.04em]">
+                    <p className="text-xs font-semibold text-slate-500">Total trip value</p>
+                    <p className="mt-1 text-4xl font-black tracking-[-0.04em] text-slate-950">
                       ₹{Math.round(paymentDetails.totalAmount).toLocaleString("en-IN")}
                     </p>
                   </div>
-                  <CreditCard className="mb-1 h-6 w-6 text-white/45" />
+                  <div className="mb-1 flex h-11 w-11 items-center justify-center rounded-2xl border border-emerald-100 bg-white text-emerald-700 shadow-sm">
+                    <CreditCard className="h-5 w-5" />
+                  </div>
                 </div>
               </div>
 
@@ -743,13 +753,13 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
                   </div>
                 )}
 
-                <div className="rounded-2xl bg-[#edf3ee] p-4">
+                <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4">
                   <div className="flex items-end justify-between gap-4">
                     <div>
                       <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#668277]">
                         {paymentMode === "partial" ? "Paying now · 30%" : "Paying now"}
                       </p>
-                      <p className="mt-1 font-serif text-3xl tracking-[-0.03em] text-[#17372f]">₹{payableAmount.toLocaleString("en-IN")}</p>
+                      <p className="mt-1 text-3xl font-black tracking-[-0.03em] text-slate-950">₹{payableAmount.toLocaleString("en-IN")}</p>
                     </div>
                     {paymentMode === "partial" && (
                       <p className="pb-1 text-right text-[10px] font-semibold text-[#789087]">
@@ -763,7 +773,7 @@ const ReviewJourney = ({ guide, searchParams, tripData: propTripData }) => {
                   type="button"
                   onClick={handleMakePayment}
                   disabled={isPaymentLoading}
-                  className="group flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full bg-[#17372f] px-5 text-sm font-bold text-white shadow-[0_16px_35px_-18px_rgba(23,55,47,0.9)] transition hover:bg-[#244c41] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-65"
+                  className="group flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full bg-emerald-700 px-5 text-sm font-bold text-white shadow-[0_16px_35px_-18px_rgba(4,120,87,0.8)] transition hover:bg-emerald-800 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-65"
                 >
                   {isPaymentLoading ? (
                     <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/25 border-t-white" />

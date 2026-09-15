@@ -1,8 +1,6 @@
 'use client';
-import { MapPin, Calendar, Users, Clock, ArrowRight, CheckCircle, AlertCircle, XCircle, RefreshCcw } from 'lucide-react';
+import { MapPin, Calendar, Users, Clock, ArrowRight, CheckCircle, AlertCircle, XCircle, RefreshCcw, Compass, Ticket } from 'lucide-react';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 
 const STATUS_CONFIG = {
     confirmed: {
@@ -32,12 +30,6 @@ const STATUS_CONFIG = {
     },
 };
 
-const TYPE_CONFIG = {
-    Trip: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200' },
-    Trek: { bg: 'bg-sky-50', text: 'text-sky-700', border: 'border-sky-200' },
-    Event: { bg: 'bg-violet-50', text: 'text-violet-700', border: 'border-violet-200' },
-};
-
 const BookingCard = ({ booking, onClick }) => {
     const ensureString = (val) => {
         if (!val) return '';
@@ -51,7 +43,10 @@ const BookingCard = ({ booking, onClick }) => {
     const status = booking.status || 'pending';
     const statusCfg = STATUS_CONFIG[status] || STATUS_CONFIG.pending;
     const type = booking.type || 'Trip';
-    const typeCfg = TYPE_CONFIG[type] || TYPE_CONFIG.Trip;
+    const totalAmount = Number(booking.totalAmount ?? booking.price ?? 0);
+    const amountPaid = Number(booking.amountPaid ?? booking.price ?? totalAmount);
+    const remainingAmount = Math.max(0, Number(booking.remainingAmount ?? totalAmount - amountPaid));
+    const isPartialPayment = type === 'Trip' && (booking.paymentMode === 'partial' || remainingAmount > 0);
 
     const formatDate = (d) => {
         if (!d) return 'TBD';
@@ -64,98 +59,69 @@ const BookingCard = ({ booking, onClick }) => {
         new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(v || 0);
 
     const isCancelled = ['cancelled', 'cancellation_requested', 'refund_initiated'].includes(status);
+    const TypeIcon = type === 'Event' ? Ticket : Compass;
 
     return (
         <Card
             onClick={onClick}
-            className="group cursor-pointer hover:shadow-md transition-all duration-200 border-gray-200/80 overflow-hidden"
+            className="group cursor-pointer overflow-hidden rounded-2xl border-slate-200 bg-white p-4 shadow-sm transition-all duration-300 hover:border-emerald-300 hover:shadow-lg sm:p-5"
         >
-            <div className="p-4 sm:p-5">
-                {/* Header: Type badge + Status + Ref */}
-                <div className="flex items-center justify-between gap-3 mb-3">
-                    <div className="flex items-center gap-2 min-w-0">
-                        <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border ${typeCfg.bg} ${typeCfg.text} ${typeCfg.border}`}>
-                            {type}
-                        </span>
-                        {booking.bookingRef && (
-                            <span className="text-[11px] text-gray-400 font-mono">#{booking.bookingRef}</span>
-                        )}
-                    </div>
-                    <Badge variant={statusCfg.variant} className="text-[10px] gap-1 shrink-0">
-                        <statusCfg.Icon className="w-3 h-3" />
-                        {statusCfg.label}
-                    </Badge>
+          <div className="grid gap-5 md:grid-cols-[240px_1fr]">
+            <div className="relative min-h-48 overflow-hidden rounded-xl bg-gradient-to-br from-emerald-700 to-teal-950 md:min-h-full">
+                {booking.image && <img src={booking.image} alt={name || type} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/10" />
+                {!booking.image && <TypeIcon className="absolute bottom-5 right-5 h-20 w-20 text-white/15" />}
+                <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full border border-white/30 bg-white/90 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-slate-800 backdrop-blur"><TypeIcon className="h-3 w-3" />{type}</span>
+            </div>
+
+            <div className="min-w-0">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div><h3 className={`text-xl font-black leading-tight text-slate-950 ${isCancelled ? 'line-through opacity-70' : ''}`}>{name || 'Package'}</h3><p className="mt-1.5 font-mono text-xs font-semibold text-slate-400">{booking.bookingRef ? `Booking ID: ${booking.bookingRef}` : 'Confirmed booking'}</p></div>
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1.5 text-[10px] font-black text-emerald-800"><statusCfg.Icon className="h-3 w-3" />{statusCfg.label}</span>
                 </div>
 
-                {/* Title + Destination */}
-                <h3 className={`text-[15px] font-semibold text-gray-900 leading-snug truncate mb-1 ${isCancelled ? 'line-through opacity-60' : ''}`}>
-                    {name || 'Package'}
-                </h3>
-                {destination && (
-                    <p className="text-xs text-gray-500 flex items-center gap-1.5 mb-4 font-medium">
-                        <MapPin className="w-3 h-3 text-gray-400 shrink-0" />
-                        {destination}
-                    </p>
-                )}
-
-                <Separator className="mb-4" />
-
-                {/* Info grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-3">
-                    <div>
-                        <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-1">Travel Date</p>
-                        <p className="text-xs font-semibold text-gray-800 flex items-center gap-1.5">
-                            <Calendar className="w-3 h-3 text-gray-400 shrink-0" />
-                            {formatDate(booking.date)}
-                        </p>
-                    </div>
-                    <div>
-                        <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-1">Duration</p>
-                        <p className="text-xs font-semibold text-gray-800 flex items-center gap-1.5">
-                            <Clock className="w-3 h-3 text-gray-400 shrink-0" />
-                            {booking.duration || '—'}
-                        </p>
-                    </div>
-                    <div>
-                        <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-1">Booked On</p>
-                        <p className="text-[11px] font-semibold text-gray-500">
-                            {(booking.createdAt || booking.bookingDate) ? (
-                                (() => {
-                                    const d = new Date(booking.createdAt || booking.bookingDate);
-                                    return `${d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })} at ${d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`;
-                                })()
-                            ) : '—'}
-                        </p>
-                    </div>
-                    <div>
-                        <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-1">Travellers</p>
-                        <p className="text-xs font-semibold text-gray-800 flex items-center gap-1.5">
-                            <Users className="w-3 h-3 text-gray-400 shrink-0" />
-                            {booking.people || 1}
-                        </p>
-                    </div>
+                <div className="mt-5 flex flex-wrap gap-x-6 gap-y-3 text-sm font-semibold text-slate-600">
+                    <span className="inline-flex items-center gap-2"><Calendar className="h-4 w-4 text-emerald-700" />{formatDate(booking.date)}{booking.endDate ? ` – ${formatDate(booking.endDate)}` : ''}</span>
+                    {destination && <span className="inline-flex items-center gap-2"><MapPin className="h-4 w-4 text-emerald-700" />{destination}</span>}
                 </div>
 
-                <Separator className="my-4" />
+                <div className="mt-5 flex flex-wrap items-center gap-x-7 gap-y-2 border-t border-slate-100 pt-4 text-xs font-bold text-slate-600">
+                    <span className="inline-flex items-center gap-2"><Users className="h-4 w-4 text-slate-400" />{booking.people || 1} traveller{Number(booking.people || 1) === 1 ? '' : 's'}</span>
+                    <span className="inline-flex items-center gap-2"><Clock className="h-4 w-4 text-slate-400" />{booking.duration || 'Duration to be confirmed'}</span>
+                </div>
 
-                {/* Footer: Price + CTA */}
-                <div className="flex items-center justify-between">
+                {isPartialPayment ? (
+                    <div className="mt-4 flex flex-col gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <p className="text-xs font-black text-amber-900">30% paid now · {rupee(amountPaid)}</p>
+                            <p className="mt-0.5 text-[11px] font-semibold text-amber-700">Trip total: {rupee(totalAmount)}</p>
+                        </div>
+                        <div className="sm:text-right">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-amber-700">Pay on trip day</p>
+                            <p className="text-base font-black text-amber-900">{rupee(remainingAmount)}</p>
+                        </div>
+                    </div>
+                ) : null}
+
+                <div className="mt-5 flex flex-wrap items-end justify-between gap-4">
                     <div>
-                        <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Total</p>
+                        <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">{isPartialPayment ? 'Paid now' : 'Total paid'}</p>
                         <p className={`text-lg font-bold tabular-nums ${isCancelled ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
-                            {rupee(booking.price)}
+                            {rupee(isPartialPayment ? amountPaid : totalAmount)}
                         </p>
                     </div>
                     <button
-                        className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold text-gray-700 bg-gray-50 border border-gray-200 hover:bg-gray-100 hover:border-gray-300 transition-all group-hover:bg-gray-900 group-hover:text-white group-hover:border-gray-900"
-                        onClick={onClick}
+                        className="flex items-center gap-1.5 rounded-xl bg-slate-950 px-5 py-3 text-sm font-bold text-white transition-all hover:bg-emerald-800"
+                        onClick={(event) => {
+                            event.stopPropagation();
+                            onClick?.();
+                        }}
                     >
                         View Details
                         <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
                     </button>
                 </div>
 
-                {/* Refund notice */}
                 {status === 'refund_initiated' && (
                     <div className="mt-4 flex items-center gap-2 text-xs font-medium rounded-lg px-3 py-2.5 border border-blue-200 bg-blue-50 text-blue-700">
                         <RefreshCcw className="w-3.5 h-3.5 shrink-0" />
@@ -163,6 +129,7 @@ const BookingCard = ({ booking, onClick }) => {
                     </div>
                 )}
             </div>
+          </div>
         </Card>
     );
 };

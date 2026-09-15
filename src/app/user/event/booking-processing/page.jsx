@@ -24,7 +24,7 @@ function BookingProcessingContent() {
         const checkStatus = async () => {
             attempts += 1;
             try {
-                const response = await fetch(`/api/user/bookings/${bookingId}`, { cache: 'no-store' });
+                const response = await fetch(`/api/user/bookings/${bookingId}?view=status`, { cache: 'no-store' });
                 const payload = await response.json();
                 const status = payload?.booking?.status;
 

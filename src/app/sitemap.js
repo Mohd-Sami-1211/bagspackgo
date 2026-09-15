@@ -2,6 +2,7 @@
 import dbConnect from '@/lib/db';
 import { Guide } from '@/models/guide.model';
 import { GuideDetails } from '@/models/guidedetails.model';
+import { providerProfilePath } from '@/lib/providerSlug';
 
 export default async function sitemap() {
     const baseUrl = 'https://bagspackgo.com';
@@ -70,21 +71,24 @@ export default async function sitemap() {
             guide: { $in: guideIds },
             status: 'approved',
         })
-            .select('guide updatedAt')
+            .select('guide companyname profileSlug updatedAt')
             .lean();
 
         const detailsMap = new Map(
-            approvedDetails.map((d) => [d.guide.toString(), d.updatedAt])
+            approvedDetails.map((details) => [details.guide.toString(), details])
         );
 
         providerPages = approvedGuides
             .filter((g) => detailsMap.has(g._id.toString()))
-            .map((guide) => ({
-                url: `${baseUrl}/user/provider/${guide._id}`,
-                lastModified: detailsMap.get(guide._id.toString()) || guide.updatedAt,
-                changeFrequency: 'weekly',
-                priority: 0.8,
-            }));
+            .map((guide) => {
+                const details = detailsMap.get(guide._id.toString());
+                return {
+                    url: `${baseUrl}${providerProfilePath(details.profileSlug || details.companyname, guide._id)}`,
+                    lastModified: details.updatedAt || guide.updatedAt,
+                    changeFrequency: 'weekly',
+                    priority: 0.8,
+                };
+            });
     } catch (err) {
         console.error('Sitemap: Failed to fetch providers:', err);
     }

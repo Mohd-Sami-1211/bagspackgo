@@ -24,14 +24,19 @@ export async function GET(req) {
         }
 
         await dbConnect();
+        const listView = new URL(req.url).searchParams.get('view') === 'list';
 
         // This endpoint powers My Bookings and intentionally exposes only
         // usable, confirmed reservations. Pending/cancelled checkouts stay
         // in the backend for payment reconciliation, not in the user's list.
-        const bookings = await Booking.find({ user: user.userId, status: 'confirmed' })
+        let bookingsQuery = Booking.find({ user: user.userId, status: 'confirmed' });
+        if (listView) bookingsQuery = bookingsQuery.select('event bookingDate amountPaid slots status createdAt');
+        const bookings = await bookingsQuery
             .populate({
                 path: 'event',
-                select: 'title eventType date duration slots location destination destinationLink pricePerSlot guide highlights whatsIncluded whatsExcluded whatToBring restrictions includePickup pickupPoints itinerary termsAndConditions sponsors status',
+                select: listView
+                    ? 'title eventType date duration location destination pricePerSlot guide status'
+                    : 'title eventType date duration slots location destination destinationLink pricePerSlot guide highlights whatsIncluded whatsExcluded whatToBring restrictions includePickup pickupPoints itinerary termsAndConditions sponsors status',
                 populate: { path: 'guide', select: 'companyName username name' }
             })
             .sort({ createdAt: -1 })
@@ -135,7 +140,9 @@ export async function GET(req) {
             };
         }).filter(b => b !== null);
 
-        return NextResponse.json({ success: true, count: formattedBookings.length, data: formattedBookings });
+        return NextResponse.json({ success: true, count: formattedBookings.length, data: formattedBookings }, {
+            headers: { 'Cache-Control': listView ? 'private, max-age=15, stale-while-revalidate=45' : 'private, no-cache' },
+        });
     } catch (error) {
         console.error('Failed to fetch bookings:', error);
         return NextResponse.json({ success: false, message: 'Server error' }, { status: 500 });
