@@ -1,107 +1,20 @@
-// src/app/sitemap.js — Dynamic sitemap generation for Google Search Console
-import dbConnect from '@/lib/db';
-import { Guide } from '@/models/guide.model';
-import { GuideDetails } from '@/models/guidedetails.model';
+import { getPublicCatalog } from '@/lib/publicCatalog';
+import { absoluteUrl, packagePath } from '@/lib/seo';
 import { providerProfilePath } from '@/lib/providerSlug';
-
+import { travelGuides, GUIDE_UPDATED_AT } from '@/data/travelGuides';
+export const revalidate = 300;
 export default async function sitemap() {
-    const baseUrl = 'https://bagspackgo.com';
-
-    // ── Static pages ──────────────────────────────────────────────
-    const staticPages = [
-        {
-            url: baseUrl,
-            lastModified: new Date(),
-            changeFrequency: 'daily',
-            priority: 1.0,
-        },
-        {
-            url: `${baseUrl}/user/trip`,
-            lastModified: new Date(),
-            changeFrequency: 'daily',
-            priority: 0.9,
-        },
-        {
-            url: `${baseUrl}/user/trek`,
-            lastModified: new Date(),
-            changeFrequency: 'daily',
-            priority: 0.9,
-        },
-        {
-            url: `${baseUrl}/user/events`,
-            lastModified: new Date(),
-            changeFrequency: 'daily',
-            priority: 0.8,
-        },
-        {
-            url: `${baseUrl}/user/companion`,
-            lastModified: new Date(),
-            changeFrequency: 'daily',
-            priority: 0.8,
-        },
-        {
-            url: `${baseUrl}/privacy`,
-            lastModified: new Date(),
-            changeFrequency: 'yearly',
-            priority: 0.3,
-        },
-        {
-            url: `${baseUrl}/terms`,
-            lastModified: new Date(),
-            changeFrequency: 'yearly',
-            priority: 0.3,
-        },
-    ];
-
-    // ── Dynamic: All approved guide/company profile pages ─────────
-    let providerPages = [];
-    try {
-        await dbConnect();
-
-        // Find all approved guides
-        const approvedGuides = await Guide.find({
-            applicationStatus: 'approved',
-        })
-            .select('_id updatedAt')
-            .lean();
-
-        // Cross-check with GuideDetails for approved status
-        const guideIds = approvedGuides.map((g) => g._id);
-        const approvedDetails = await GuideDetails.find({
-            guide: { $in: guideIds },
-            status: 'approved',
-        })
-            .select('guide companyname profileSlug updatedAt')
-            .lean();
-
-        const detailsMap = new Map(
-            approvedDetails.map((details) => [details.guide.toString(), details])
-        );
-
-        providerPages = approvedGuides
-            .filter((g) => detailsMap.has(g._id.toString()))
-            .map((guide) => {
-                const details = detailsMap.get(guide._id.toString());
-                return {
-                    url: `${baseUrl}${providerProfilePath(details.profileSlug || details.companyname, guide._id)}`,
-                    lastModified: details.updatedAt || guide.updatedAt,
-                    changeFrequency: 'weekly',
-                    priority: 0.8,
-                };
-            });
-    } catch (err) {
-        console.error('Sitemap: Failed to fetch providers:', err);
-    }
-
-    // ── Dynamic: Package detail pages (extend later) ──────────────
-    // import { Package } from '@/models/package.model';
-    // const packages = await Package.find({ status: 'active' }).select('_id updatedAt').lean();
-    // const packagePages = packages.map(pkg => ({
-    //     url: `${baseUrl}/user/trip/tripdetails/${pkg._id}`,
-    //     lastModified: pkg.updatedAt,
-    //     changeFrequency: 'weekly',
-    //     priority: 0.7,
-    // }));
-
-    return [...staticPages, ...providerPages];
+  // A failed refresh must not replace the last successful sitemap with a partial one.
+  const catalog = await getPublicCatalog();
+  const entries = [
+    ...['/user/trip', '/user/trek', '/user/events', '/user/offbeats', '/user/companion', '/about', '/providers', '/travel-guides', '/privacy', '/terms'].map(path => ({ url: absoluteUrl(path) })),
+    ...travelGuides.map(g => ({ url: absoluteUrl('/travel-guides/' + g.slug), lastModified: GUIDE_UPDATED_AT })),
+    ...catalog.providers.map(p => ({ url: absoluteUrl(providerProfilePath(p.profileSlug || p.name, p.guide)), lastModified: p.updatedAt })),
+    ...catalog.packages.map(p => ({ url: absoluteUrl(packagePath(p)), lastModified: p.updatedAt })),
+    ...catalog.offbeats.map(p => ({ url: absoluteUrl('/user/offbeats/' + p._id), lastModified: p.updatedAt })),
+    ...catalog.events.map(e => ({ url: absoluteUrl('/user/events/eventdetails/' + e._id), lastModified: e.updatedAt })),
+  ];
+  const unique = [...new Map(entries.map(entry => [entry.url, entry])).values()];
+  if (unique.length > 50000) throw new Error('Sitemap exceeds 50,000 URLs; split it with generateSitemaps before publishing.');
+  return unique;
 }

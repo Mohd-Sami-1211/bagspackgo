@@ -1,6 +1,2 @@
-// src/app/page.js
-import { redirect } from 'next/navigation';
-
-export default function Page() {
-  redirect('/user/trip');
-}
+import { permanentRedirect } from 'next/navigation';
+export default function HomeRedirect() { permanentRedirect('/user/trip'); }

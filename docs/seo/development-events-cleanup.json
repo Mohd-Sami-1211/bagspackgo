@@ -1,0 +1,168 @@
+{
+  "batchId": "unpublish-development-events-2026-09-15",
+  "applied": true,
+  "verifiedAt": "2026-09-15T08:10:38.377Z",
+  "cutoff": "2026-09-15T08:07:23.132Z",
+  "approvedEvents": 7,
+  "modifiedCount": 7,
+  "remainingPublishedTrials": 0,
+  "eventIds": [
+    "69d529dd73599d47fecfb0cc",
+    "69d813fd8bd5ed5172502222",
+    "69df8e0a7e59ee90b59c0814",
+    "69e87d19186ebcba1334782f",
+    "6a052869ca27ee297967e0c7",
+    "6a3e501739e87eaeae55b9bc",
+    "6a4b52c8b6fb0c0667231340"
+  ],
+  "linkedBookingsBefore": 19,
+  "linkedBookingsAfter": 19,
+  "bookingHistoryUnchanged": true,
+  "otherEventsBefore": 0,
+  "otherEventsAfter": 0,
+  "recoveryRecord": "maintenance_changes/unpublish-development-events-2026-09-15",
+  "events": [
+    {
+      "id": "69d529dd73599d47fecfb0cc",
+      "title": "Example Event",
+      "statusBefore": "published",
+      "visibilityBefore": "private"
+    },
+    {
+      "id": "69d813fd8bd5ed5172502222",
+      "title": "Example Event",
+      "statusBefore": "published",
+      "visibilityBefore": "private"
+    },
+    {
+      "id": "69df8e0a7e59ee90b59c0814",
+      "title": "GetFit Event",
+      "statusBefore": "published",
+      "visibilityBefore": "(default public)"
+    },
+    {
+      "id": "69e87d19186ebcba1334782f",
+      "title": "kashmir special offers",
+      "statusBefore": "published",
+      "visibilityBefore": "(default public)"
+    },
+    {
+      "id": "6a052869ca27ee297967e0c7",
+      "title": "bf bh",
+      "statusBefore": "published",
+      "visibilityBefore": "private"
+    },
+    {
+      "id": "6a3e501739e87eaeae55b9bc",
+      "title": "7 Waterfalls of Bani - Proposed Event",
+      "statusBefore": "published",
+      "visibilityBefore": "public"
+    },
+    {
+      "id": "6a4b52c8b6fb0c0667231340",
+      "title": "Example Event",
+      "statusBefore": "published",
+      "visibilityBefore": "public"
+    }
+  ],
+  "publicChecks": {
+    "checkedAt": "2026-09-15T08:12:01.152Z",
+    "results": [
+      {
+        "base": "http://localhost:3000",
+        "upcoming": 0,
+        "past": 0,
+        "sitemapTrialIds": [],
+        "page": {
+          "status": 404,
+          "noindex": true
+        },
+        "api": {
+          "status": 404,
+          "cache": null,
+          "age": null
+        }
+      },
+      {
+        "base": "https://www.bagspackgo.com",
+        "upcoming": 2,
+        "past": 0,
+        "sitemapTrialIds": [],
+        "page": {
+          "status": 200,
+          "noindex": false
+        },
+        "api": {
+          "status": 404,
+          "cache": "MISS",
+          "age": "0"
+        }
+      }
+    ]
+  },
+  "finalChecks": {
+    "checkedAt": "2026-09-15T08:12:48.919Z",
+    "liveLists": [
+      {
+        "url": "https://www.bagspackgo.com/api/events?tab=upcoming&limit=12",
+        "status": 200,
+        "total": 0,
+        "cache": "HIT",
+        "age": "35"
+      },
+      {
+        "url": "https://www.bagspackgo.com/api/events?tab=upcoming&limit=12&cleanup=20260915",
+        "status": 200,
+        "total": 0,
+        "cache": "MISS",
+        "age": "0"
+      },
+      {
+        "url": "https://www.bagspackgo.com/api/events?tab=past&limit=12&cleanup=20260915",
+        "status": 200,
+        "total": 0,
+        "cache": "MISS",
+        "age": "0"
+      }
+    ],
+    "localRemoved": [
+      {
+        "id": "69d529dd73599d47fecfb0cc",
+        "status": 404,
+        "noindex": true
+      },
+      {
+        "id": "69d813fd8bd5ed5172502222",
+        "status": 404,
+        "noindex": true
+      },
+      {
+        "id": "69df8e0a7e59ee90b59c0814",
+        "status": 404,
+        "noindex": true
+      },
+      {
+        "id": "69e87d19186ebcba1334782f",
+        "status": 404,
+        "noindex": true
+      },
+      {
+        "id": "6a052869ca27ee297967e0c7",
+        "status": 404,
+        "noindex": true
+      },
+      {
+        "id": "6a3e501739e87eaeae55b9bc",
+        "status": 404,
+        "noindex": true
+      },
+      {
+        "id": "6a4b52c8b6fb0c0667231340",
+        "status": 404,
+        "noindex": true
+      }
+    ],
+    "providerContainsTrialLinks": true,
+    "providerTrialLinksAfterRefresh": []
+  }
+}

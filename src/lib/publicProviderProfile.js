@@ -43,17 +43,13 @@ async function resolveDetails(identifier) {
 
   // Existing providers may predate profileSlug and can contain punctuation that
   // cannot be reconstructed reliably from a URL. This bounded fallback runs only
-  // on an initial cache miss and backfills the canonical slug below.
+  // on an initial cache miss without changing provider records.
   if (!details) {
     const candidates = await GuideDetails.find({ profileSlug: { $in: [null, ''] } })
       .select('guide companyname profileSlug bio destinationId speciality rating reviews totalTrips totalTreks totalEvents pausedServices status updatedAt')
       .limit(250)
       .lean();
     details = candidates.find((candidate) => toProviderSlug(candidate.companyname) === slug) || null;
-  }
-
-  if (details && !details.profileSlug) {
-    GuideDetails.updateOne({ _id: details._id, $or: [{ profileSlug: { $exists: false } }, { profileSlug: null }, { profileSlug: '' }] }, { $set: { profileSlug: slug } }).catch(() => {});
   }
 
   return details;
@@ -178,6 +174,6 @@ async function queryPublicProviderProfile(identifier) {
 
 export const getPublicProviderProfile = unstable_cache(
   queryPublicProviderProfile,
-  ['public-provider-profile-v4'],
+  ['public-provider-profile-v5'],
   { revalidate: 300, tags: ['public-provider-profile'] }
 );

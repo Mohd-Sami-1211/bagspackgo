@@ -2276,4 +2276,3 @@ const EventDetails = ({ event, loading = false }) => {
 };
 
 export default EventDetails;
-

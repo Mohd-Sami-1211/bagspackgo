@@ -4,6 +4,8 @@ import dbConnect from '@/lib/db';
 import { Event } from '@/models/event.model';
 import { Guide } from '@/models/guide.model';
 import { GuideDetails } from '@/models/guidedetails.model';
+import { isPublicProvider } from '@/lib/seo';
+import { providerProfilePath } from '@/lib/providerSlug';
 
 async function queryPublicEventDetails(id) {
     if (!mongoose.Types.ObjectId.isValid(id)) return null;
@@ -15,12 +17,13 @@ async function queryPublicEventDetails(id) {
         {
             $match: {
                 _id: new mongoose.Types.ObjectId(id),
-                status: 'published',
+                status: { $in: ['published', 'completed', 'cancelled'] },
             },
         },
         {
             $project: {
                 title: 1,
+                status: 1,
                 eventType: 1,
                 location: 1,
                 date: 1,
@@ -50,6 +53,7 @@ async function queryPublicEventDetails(id) {
                 createdAt: 1,
                 guide: 1,
                 photoCount: { $size: { $ifNull: ['$photographs', []] } },
+                hasPoster: { $gt: [{ $strLenCP: { $ifNull: ['$poster', ''] } }, 0] },
                 sponsorCount: { $size: { $ifNull: ['$sponsors', []] } },
             },
         },
@@ -58,11 +62,11 @@ async function queryPublicEventDetails(id) {
     if (!event) return null;
 
     const [guideAccount, guideDetails] = await Promise.all([
-        Guide.findById(event.guide).select('username name').lean(),
-        GuideDetails.findOne({ guide: event.guide }).select('companyname pausedServices').lean(),
+        Guide.findById(event.guide).select('username name applicationStatus isActive').lean(),
+        GuideDetails.findOne({ guide: event.guide }).select('companyname profileSlug pausedServices status').lean(),
     ]);
 
-    if (guideDetails?.pausedServices?.event === true) return null;
+    if (!isPublicProvider(guideAccount, guideDetails) || guideDetails?.pausedServices?.event === true) return null;
 
     const eventId = event._id.toString();
     const guideName = guideDetails?.companyname
@@ -78,6 +82,7 @@ async function queryPublicEventDetails(id) {
         meetingPoint: event.pickupPoints?.[0]?.location || event.location,
         date: event.date?.toISOString?.() || event.date,
         duration: `${event.duration} day${event.duration === 1 ? '' : 's'}`,
+        durationDays: event.duration,
         totalSlots: event.totalSlots,
         bookedSlots: event.bookedSlots || 0,
         reservedSlots: event.reservedSlots || 0,
@@ -95,8 +100,8 @@ async function queryPublicEventDetails(id) {
         includePickup: event.includePickup !== false,
         pickupPoints: event.pickupPoints || [],
         itinerary: event.itinerary || [],
-        image: `/api/events/${eventId}/poster`,
-        status: 'published',
+        image: event.hasPoster ? `/api/events/${eventId}/poster` : '/images/EventCover.webp',
+        status: event.status,
         rating: event.rating || 0,
         reviewCount: event.reviewCount || 0,
         guide: {
@@ -105,6 +110,7 @@ async function queryPublicEventDetails(id) {
             name: guideAccount?.name || '',
         },
         guideName,
+        guidePath: providerProfilePath(guideDetails?.profileSlug || guideName, event.guide?.toString()),
         guideLogo: `/api/events/${eventId}/guide-logo`,
         photoCount: event.photoCount || 0,
         sponsorCount: event.sponsorCount || 0,
@@ -119,6 +125,6 @@ async function queryPublicEventDetails(id) {
 
 export const getPublicEventDetails = unstable_cache(
     queryPublicEventDetails,
-    ['public-event-details-v4'],
+    ['public-event-details-v7'],
     { revalidate: 30 }
 );
