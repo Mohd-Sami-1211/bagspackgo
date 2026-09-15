@@ -15,13 +15,13 @@ export async function GET(req) {
         const providerId = url.searchParams.get('providerId');
 
         if (packageId) {
-            const pkg = await Package.findById(packageId);
+            const pkg = await Package.findOne({ _id: packageId, category: 'trip' });
             if (!pkg) return NextResponse.json({ success: false, message: 'Package not found' }, { status: 404 });
             return NextResponse.json({ success: true, package: pkg });
         }
 
         if (providerId) {
-            const packages = await Package.find({ provider: providerId }).sort({ createdAt: -1 });
+            const packages = await Package.find({ provider: providerId, category: 'trip' }).sort({ createdAt: -1 });
             return NextResponse.json({ success: true, packages });
         }
 
@@ -45,7 +45,7 @@ export async function POST(req) {
 
         // Duplicate logic
         if (data.action === 'duplicate' && data.packageId) {
-            const original = await Package.findOne({ _id: data.packageId, provider: providerId });
+            const original = await Package.findOne({ _id: data.packageId, provider: providerId, category: 'trip' });
             if (!original) return NextResponse.json({ success: false, message: 'Package not found' }, { status: 404 });
 
             const cloned = original.toObject();
@@ -67,14 +67,11 @@ export async function POST(req) {
         const newPackage = new Package({
             provider: providerId,
             name: packageInfo.name.trim(),
-            category: packageInfo.category || 'trip',
+            category: 'trip',
             packageType: packageInfo.packageType || 'individual',
             packageCategory: packageInfo.packageCategory || 'budget',
             destination: packageInfo.destination.trim(),
             days: parseInt(packageInfo.days) || 1,
-            trekName: packageInfo.trekName || '',
-            trekLevel: packageInfo.trekLevel || '',
-            photos: data.photos || [],
             pricingTiers: (pricingTiers || []).map(t => ({
                 minPeople: parseInt(t.minPeople) || 1,
                 maxPeople: parseInt(t.maxPeople) || 2,
@@ -126,14 +123,11 @@ export async function PUT(req) {
 
         const updateData = {
             name: packageInfo.name.trim(),
-            category: packageInfo.category || 'trip',
+            category: 'trip',
             packageType: packageInfo.packageType || 'individual',
             packageCategory: packageInfo.packageCategory || 'budget',
             destination: packageInfo.destination.trim(),
             days: parseInt(packageInfo.days) || 1,
-            trekName: packageInfo.trekName || '',
-            trekLevel: packageInfo.trekLevel || '',
-            photos: data.photos || [],
             pricingTiers: (pricingTiers || []).map(t => ({
                 minPeople: parseInt(t.minPeople) || 1,
                 maxPeople: parseInt(t.maxPeople) || 2,
@@ -161,7 +155,7 @@ export async function PUT(req) {
             packagePhotos: data.packagePhotos || []
         };
 
-        const updated = await Package.findByIdAndUpdate(packageId, { $set: updateData }, { new: true });
+        const updated = await Package.findOneAndUpdate({ _id: packageId, category: 'trip' }, { $set: updateData }, { new: true });
         if (!updated) return NextResponse.json({ success: false, message: 'Package not found' }, { status: 404 });
 
         return NextResponse.json({ success: true, message: 'Package updated', packageId: updated._id });

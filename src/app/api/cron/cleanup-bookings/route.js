@@ -3,7 +3,6 @@ import Razorpay from 'razorpay';
 import dbConnect from '@/lib/db';
 import { Booking } from '@/models/booking.model';
 import { TripBooking } from '@/models/tripbooking.model';
-import { TrekBooking } from '@/models/trekbooking.model';
 import {
     confirmEventBooking,
     EVENT_CHECKOUT_HOLD_MS,
@@ -12,7 +11,6 @@ import {
     sendEventConfirmationOnce,
 } from '@/lib/eventBooking';
 import { reconcileTripBooking, refundTripBookingPayment } from '@/lib/tripBooking';
-import { reconcileTrekBooking, refundTrekBookingPayment } from '@/lib/trekBooking';
 
 export const dynamic = 'force-dynamic';
 
@@ -206,110 +204,17 @@ export async function GET(request) {
             }
         }
 
-        const expiredTreks = await TrekBooking.find(packageFilter).sort({ createdAt: 1 }).limit(200);
-        let deletedTreks = 0;
-        let reconciledTreks = 0;
-        for (let trek of expiredTreks) {
-            let hasGatewayOrder = trek.orderId && !['pending', 'creating'].includes(trek.orderId);
-
-            if (trek.orderId === 'creating') {
-                if (!razorpay) continue;
-                try {
-                    const recovered = await razorpay.orders.all({ receipt: `tk_${trek._id.toString()}`, count: 10 });
-                    const order = recovered?.items?.sort((a, b) => (b.created_at || 0) - (a.created_at || 0))[0];
-                    if (order?.id) {
-                        trek = await TrekBooking.findByIdAndUpdate(
-                            trek._id,
-                            { $set: { orderId: order.id, orderCreationStartedAt: null } },
-                            { new: true }
-                        );
-                        hasGatewayOrder = true;
-                    } else {
-                        const deleted = await TrekBooking.deleteOne({ _id: trek._id, status: 'pending', orderId: 'creating' });
-                        deletedTreks += deleted.deletedCount || 0;
-                        continue;
-                    }
-                } catch (error) {
-                    console.error('[Cron] Could not recover trek order:', trek._id, error);
-                    continue;
-                }
-            }
-
-            if (hasGatewayOrder) {
-                if (!razorpay) continue;
-                try {
-                    const outcome = await reconcileTrekBooking(trek);
-                    if (['confirmed', 'refunded'].includes(outcome.kind)) {
-                        reconciledTreks += 1;
-                        continue;
-                    }
-                    if (['processing', 'unknown'].includes(outcome.kind)) continue;
-                } catch (error) {
-                    console.error('[Cron] Could not reconcile trek order:', trek.orderId, error);
-                    continue;
-                }
-            }
-
-            const deleted = await TrekBooking.deleteOne({ _id: trek._id, status: 'pending' });
-            deletedTreks += deleted.deletedCount || 0;
-        }
-
-        const trekRefundsToRetry = await TrekBooking.find({
-            status: 'cancellation_requested',
-            paymentId: { $nin: ['', null] },
-            'cancellationDetails.refundStatus': 'failed',
-        }).sort({ updatedAt: 1 }).limit(50);
-        let retriedTrekRefunds = 0;
-        for (const trek of trekRefundsToRetry) {
-            const outcome = await refundTrekBookingPayment(trek);
-            if (outcome.kind === 'refunded') retriedTrekRefunds += 1;
-        }
-
-        const cancelledTrekCandidates = await TrekBooking.find({
-            status: 'cancelled',
-            orderId: { $nin: ['', 'pending', 'creating', null] },
-            paymentId: { $in: ['', null] },
-            createdAt: { $lt: thirtyMinutesAgo },
-        }).sort({ updatedAt: 1 }).limit(50);
-        for (const trek of cancelledTrekCandidates) {
-            try {
-                const outcome = await reconcileTrekBooking(trek);
-                if (outcome.kind === 'refunded') retriedTrekRefunds += 1;
-            } catch (error) {
-                console.error('[Cron] Could not reconcile cancelled trek checkout:', trek.orderId, error);
-            }
-        }
-
-        const trekConfirmationRetries = await TrekBooking.find({
-            status: 'confirmed',
-            confirmedAt: { $ne: null },
-            confirmationEmailSentAt: null,
-        }).sort({ updatedAt: 1 }).limit(50);
-        let retriedTrekConfirmations = 0;
-        for (const trek of trekConfirmationRetries) {
-            try {
-                await reconcileTrekBooking(trek);
-                retriedTrekConfirmations += 1;
-            } catch (error) {
-                console.error('[Cron] Could not retry trek confirmation effects:', trek._id, error);
-            }
-        }
-
         return NextResponse.json({
             success: true,
             message: 'Abandoned bookings reconciled and cleaned up',
             deleted: {
                 events: releasedEvents,
-                trips: deletedTrips,
-                treks: deletedTreks
+                trips: deletedTrips
             },
             reconciled: {
                 trips: reconciledTrips,
                 tripRefunds: retriedTripRefunds,
                 tripConfirmations: retriedTripConfirmations,
-                treks: reconciledTreks,
-                trekRefunds: retriedTrekRefunds,
-                trekConfirmations: retriedTrekConfirmations,
             },
         });
     } catch (error) {

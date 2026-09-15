@@ -6,12 +6,8 @@ export default function HomeJsonLd() {
     '@graph': [
       { '@type': 'Organization', '@id': absoluteUrl('/#organization'), name: SITE_NAME,
         url: absoluteUrl('/'), logo: absoluteUrl('/images/logo.png'), description: SITE_DESCRIPTION,
-        founder: { '@id': absoluteUrl('/about#founder') },
         address: { '@type': 'PostalAddress', addressRegion: 'Jammu and Kashmir', addressCountry: 'IN' },
         areaServed: { '@type': 'Place', name: 'Kashmir' } },
-      { '@type': 'Person', '@id': absoluteUrl('/about#founder'), name: 'Mohd Samiullah',
-        jobTitle: 'Founder of Bagspackgo', url: absoluteUrl('/about'),
-        worksFor: { '@id': absoluteUrl('/#organization') } },
       { '@type': 'WebSite', '@id': absoluteUrl('/#website'), name: SITE_NAME,
         alternateName: 'bagspackgo.com', url: absoluteUrl('/'), description: SITE_DESCRIPTION,
         publisher: { '@id': absoluteUrl('/#organization') }, inLanguage: 'en-IN' },

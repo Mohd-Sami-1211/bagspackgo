@@ -20,7 +20,7 @@ async function inspectPage(path) {
     for(const match of schemas) JSON.parse(match[1]);
     record(path,'JSON-LD parses',true,schemas.length+' blocks');
     record(path,'indexable public page',!/<meta name="robots" content="[^"]*noindex/.test(html) && !response.headers.get('x-robots-tag')?.includes('noindex'));
-    if(path==='/user/trip') record(path,'founder is readable',visible.includes('Mohd Samiullah'));
+    if(path==='/user/trip') record(path,'Kashmir-based brand identity is readable',visible.includes('Kashmir-based'));
   } catch(error) { record(path,'page inspection',false,error.message); }
 }
 
@@ -35,10 +35,10 @@ assert.ok(urls.every(url=>url.startsWith('https://www.bagspackgo.com/')&&!url.in
 assert.ok(urls.every(url=>!/(\/api\/|\/admin|\/serviceprovider|\/signin|\/pass\/|reviewjourney|booking-success)/.test(url)));
 console.log(JSON.stringify({sitemapUrls:urls.length}));
 const paths=urls.map(url=>new URL(url).pathname);
-const staticPaths=paths.filter(p=>['/user/trip','/user/trek','/user/events','/user/offbeats','/user/companion','/about','/providers','/travel-guides','/privacy','/terms'].includes(p)||p.startsWith('/travel-guides/'));
+assert.ok(!paths.includes('/providers'),'Removed provider directory must not be in the sitemap');
+const staticPaths=paths.filter(p=>['/user/trip','/user/events','/user/offbeats','/user/companion','/about','/travel-guides','/privacy','/terms'].includes(p)||p.startsWith('/travel-guides/'));
 const samples=[
   paths.find(p=>/^\/trip\/[^/]+$/.test(p)),
-  paths.find(p=>/^\/user\/trek\/guidelist\/trekdetails\/[^/]+$/.test(p)),
   paths.find(p=>/^\/user\/offbeats\/[^/]+$/.test(p)),
   ...paths.filter(p=>/^\/user\/events\/eventdetails\/[^/]+$/.test(p)).slice(0,2),
   paths.find(p=>/^\/[^/]+$/.test(p)&&!staticPaths.includes(p)),
@@ -49,7 +49,7 @@ for(const path of ['/signin','/user/saved','/user/trip/guidelist','/user/offbeat
   const response=await request(path,{redirect:'manual'});
   record(path,'noindex response header',response.headers.get('x-robots-tag')?.includes('noindex')===true);
 }
-for(const path of ['/trip/not-a-valid-id','/user/offbeats/not-a-valid-id','/user/events/eventdetails/not-a-valid-id','/user/trek/guidelist/trekdetails/not-a-valid-id']) {
+for(const path of ['/providers','/trip/not-a-valid-id','/user/offbeats/not-a-valid-id','/user/events/eventdetails/not-a-valid-id']) {
   const response=await request(path,{headers:{'User-Agent':'Googlebot'}});
   record(path,'missing listing gives 404',response.status===404,String(response.status));
 }

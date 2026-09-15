@@ -5,7 +5,6 @@ import {
   LayoutDashboard,
   BarChart3,
   CalendarDays,
-  Mountain,
   UsersRound,
   Settings,
   LogOut,
@@ -16,7 +15,7 @@ import { useAuth } from "@/context/AuthContext";
 
 import { X } from 'lucide-react';
 
-// Get initials from name: "Mohd Samiullah" → "MS"
+// Get initials from a provider's display name.
 function getInitials(name) {
   if (!name) return "?";
   const words = name.trim().split(/\s+/);
@@ -80,7 +79,7 @@ export default function Sidebar({ isCollapsed, onClose, isMobile }) {
       }
     });
     // Add stats as bonus or separate fields
-    if (profileData.totalTreks > 0 || profileData.totalTrips > 0 || profileData.totalEvents > 0) {
+    if (profileData.totalTrips > 0 || profileData.totalEvents > 0) {
       filled++;
     }
     // Totals fields: 11 fields monitored + 1 for any activity stats = 12 total points

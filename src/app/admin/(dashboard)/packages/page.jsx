@@ -149,7 +149,6 @@ export default function AdminPackagesPage() {
                                         <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
                                             // Make category colored
                                             item.type === 'trip' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
-                                            item.type === 'trek' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' :
                                             'bg-pink-500/10 text-pink-400 border border-pink-500/20'
                                         }`}>
                                             {item.type}

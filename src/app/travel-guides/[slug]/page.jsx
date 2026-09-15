@@ -1,45 +1,102 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { travelGuides, competitors, GUIDE_UPDATED_AT } from '@/data/travelGuides';
+import { ArrowRight, Check } from 'lucide-react';
+import { travelGuides, GUIDE_UPDATED_AT } from '@/data/travelGuides';
 import { pageMetadata, breadcrumbs, absoluteUrl } from '@/lib/seo';
 import JsonLd from '@/components/seo/JsonLd';
-import TripBudgetCalculator from '@/components/seo/TripBudgetCalculator';
+import ServiceCards from '@/components/seo/ServiceCards';
+
 export function generateStaticParams() { return travelGuides.map(({ slug }) => ({ slug })); }
 export const dynamicParams = false;
+
 export async function generateMetadata({ params }) {
   const { slug } = await params;
-  const guide = travelGuides.find(g => g.slug === slug);
-  return guide ? pageMetadata({ title: guide.title, description: guide.description, path: '/travel-guides/' + slug, type: 'article' }) : { robots: { index: false } };
+  const page = travelGuides.find(item => item.slug === slug);
+  return page ? pageMetadata({ title: page.title, description: page.description, path: '/travel-guides/' + slug }) : { robots: { index: false } };
 }
-export default async function GuidePage({ params }) {
+
+export default async function TravelLandingPage({ params }) {
   const { slug } = await params;
-  const guide = travelGuides.find(g => g.slug === slug);
-  if (!guide) notFound();
+  const page = travelGuides.find(item => item.slug === slug);
+  if (!page) notFound();
   const path = '/travel-guides/' + slug;
-  return <article className="mx-auto max-w-5xl px-5 py-14 text-[#17372f] sm:px-8">
-    <JsonLd data={breadcrumbs([{ name: 'Travel guides', path: '/travel-guides' }, { name: guide.shortTitle, path }])} />
-    <JsonLd data={{ '@context': 'https://schema.org', '@type': 'Article', headline: guide.title, description: guide.description, mainEntityOfPage: absoluteUrl(path),
-      author: { '@type': 'Organization', name: 'Bagspackgo', url: absoluteUrl('/about') }, publisher: { '@type': 'Organization', '@id': absoluteUrl('/#organization'), name: 'Bagspackgo', logo: { '@type': 'ImageObject', url: absoluteUrl('/images/logo.png') } },
-      dateModified: GUIDE_UPDATED_AT, image: absoluteUrl('/images/hero-kashmir-v3.webp') }} />
-    <nav aria-label="Breadcrumb" className="mb-8 flex flex-wrap gap-2 text-sm text-slate-600"><Link href="/user/trip" className="underline">Home</Link><span>/</span><Link href="/travel-guides" className="underline">Travel guides</Link><span>/ {guide.shortTitle}</span></nav>
-    <p className="text-xs font-bold uppercase tracking-[.2em] text-[#9b7440]">{guide.category}</p>
-    <h1 className="mt-4 font-serif text-4xl leading-tight sm:text-6xl">{guide.title}</h1>
-    <p className="mt-5 text-sm text-slate-500">By <Link href="/about" className="underline underline-offset-4">Bagspackgo</Link> · Updated <time dateTime={GUIDE_UPDATED_AT}>15 September 2026</time></p>
-    <p className="mt-8 text-xl leading-9 text-slate-600">{guide.intro}</p>
-    <nav aria-label="On this page" className="my-10 rounded-2xl bg-[#f8f6f0] p-6"><p className="font-semibold">In this guide</p><ol className="mt-4 list-inside list-decimal space-y-2 text-sm">{guide.sections.map((section,i) => <li key={section.title}><a href={'#section-' + i} className="underline underline-offset-4">{section.title}</a></li>)}</ol></nav>
-    {guide.comparison && <div className="my-10 overflow-x-auto rounded-2xl border border-[#17372f]/15">
-      <table className="w-full min-w-[620px] text-left text-sm"><caption className="bg-[#17372f] p-5 text-left font-semibold text-white">Kashmir travel options: what to compare</caption><thead className="bg-[#f8f6f0]"><tr><th scope="col" className="p-4">Platform</th><th scope="col" className="p-4">What its public pages show</th><th scope="col" className="p-4">Your comparison focus</th></tr></thead><tbody>
-        <tr className="border-t border-[#17372f]/15"><th scope="row" className="p-4"><Link href="/about" className="underline">Bagspackgo</Link></th><td className="p-4 leading-6">Local packages, offbeat trip requests, events and Companion call assistance.</td><td className="p-4 leading-6">Choose between a package, a personalized request, a dated activity and independent travel support.</td></tr>
-        {competitors.map(c => <tr key={c.name} className="border-t border-[#17372f]/15"><th scope="row" className="p-4"><a href={c.url} className="underline underline-offset-4">{c.name}</a></th><td className="p-4 leading-6">{c.offering}</td><td className="p-4 leading-6">{c.compare}</td></tr>)}
-      </tbody></table></div>}
-    {guide.sections.map((section,i) => <section id={'section-' + i} key={section.title} className="my-10 scroll-mt-24">
-      <h2 className="font-serif text-3xl leading-tight">{section.title}</h2>
-      {section.text && <p className="mt-5 text-base leading-8 text-slate-600">{section.text}{section.source && <> <a href={section.source.url} className="underline underline-offset-4">{section.source.label}</a>.</>}</p>}
-      {section.bullets && <ul className="mt-5 list-disc space-y-3 pl-6 leading-8 text-slate-600">{section.bullets.map(item => <li key={item}>{item}</li>)}</ul>}
-      {guide.calculator && i === 1 && <TripBudgetCalculator />}
-    </section>)}
-    <section className="mt-14"><h2 className="font-serif text-3xl">Questions travelers ask</h2><div className="mt-6 divide-y divide-[#17372f]/15">{guide.faqs.map(([q,a]) => <details key={q} className="py-5"><summary className="cursor-pointer font-semibold">{q}</summary><p className="mt-4 leading-8 text-slate-600">{a}</p></details>)}</div></section>
-    <aside className="mt-12 rounded-3xl bg-[#17372f] p-7 text-white"><h2 className="font-serif text-3xl">Put your plan into motion.</h2><div className="mt-6 flex flex-wrap gap-3">{guide.links.map(([name,href]) => <Link key={href} href={href} className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-[#17372f]">{name} →</Link>)}</div></aside>
-  </article>;
+
+  return <div className="bg-[#f8f6f0] text-[#17372f]">
+    <JsonLd data={breadcrumbs([{ name: 'Explore Bagspackgo', path: '/travel-guides' }, { name: page.shortTitle, path }])} />
+    <JsonLd data={{
+      '@context': 'https://schema.org', '@type': 'WebPage', '@id': absoluteUrl(path) + '#webpage',
+      name: page.title, description: page.description, url: absoluteUrl(path), dateModified: GUIDE_UPDATED_AT,
+      about: { '@type': 'Organization', '@id': absoluteUrl('/#organization'), name: 'Bagspackgo' },
+      publisher: { '@type': 'Organization', '@id': absoluteUrl('/#organization'), name: 'Bagspackgo' },
+    }} />
+
+    <section className="bg-[#17372f] text-white">
+      <div className="mx-auto max-w-7xl px-5 pb-14 pt-7 sm:px-8 lg:pb-20">
+        <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs leading-6 text-white/70 sm:text-sm">
+          <Link href="/user/trip" className="underline underline-offset-4 hover:text-white">Home</Link><span aria-hidden="true">/</span>
+          <Link href="/travel-guides" className="underline underline-offset-4 hover:text-white">Explore Bagspackgo</Link><span aria-hidden="true">/</span>
+          <span aria-current="page" className="text-white">{page.shortTitle}</span>
+        </nav>
+        <div className="mt-10 grid items-center gap-10 lg:mt-14 lg:grid-cols-[1.15fr_1fr] lg:gap-16">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[.18em] text-[#e4cba3]">{page.category}</p>
+            <h1 className="mt-5 max-w-2xl font-serif text-4xl leading-[1.08] tracking-tight sm:text-5xl lg:text-6xl">{page.heading}</h1>
+            <p className="mt-6 max-w-xl text-base leading-8 text-white/80 sm:text-lg">{page.intro}</p>
+            <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-5">
+              <Link href={page.primary[1]} className="inline-flex min-h-12 items-center justify-center gap-3 rounded-full bg-[#e4cba3] px-6 py-3.5 text-sm font-bold text-[#17372f] transition hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white">
+                {page.primary[0]}<ArrowRight size={18} aria-hidden="true" />
+              </Link>
+              <Link href={page.secondary[1]} className="py-2 text-sm font-semibold underline decoration-white/40 underline-offset-4 hover:decoration-white">{page.secondary[0]}</Link>
+            </div>
+            <p className="mt-8 text-sm text-white/65">Kashmir-based. Built around your journey. <Link href="/about" className="underline underline-offset-4 hover:text-white">Meet Bagspackgo.</Link></p>
+          </div>
+          <div className="overflow-hidden rounded-3xl bg-white text-[#17372f]">
+            <div className="relative h-48 sm:h-64 lg:h-56">
+              <Image src="/images/hero-kashmir-v3.webp" alt="Mountain scenery in Kashmir" fill priority sizes="(min-width: 1024px) 42vw, 100vw" className="object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#17372f]/40 to-transparent" />
+              <span className="absolute bottom-5 left-6 text-xs font-semibold uppercase tracking-[.18em] text-white">Experience Kashmir with Bagspackgo</span>
+            </div>
+            <div className="p-6 sm:p-8">
+              <h2 className="font-serif text-3xl leading-tight">{page.panel.title}</h2>
+              <p className="mt-3 text-sm leading-6 text-slate-600">{page.panel.text}</p>
+              <ul className="mt-5 space-y-3">{page.panel.points.map(point => <li key={point} className="flex gap-3 text-sm leading-6"><Check size={18} className="mt-1 shrink-0 text-[#8c6939]" aria-hidden="true" /><span>{point}</span></li>)}</ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section aria-label="Why choose Bagspackgo" className="border-b border-[#17372f]/10 bg-white">
+      <div className="mx-auto grid max-w-7xl gap-8 px-5 py-12 sm:px-8 lg:grid-cols-3 lg:gap-12">
+        {page.benefits.map((benefit, index) => <div key={benefit.title}>
+          <p aria-hidden="true" className="text-xs font-bold tracking-widest text-[#8c6939]">0{index + 1}</p>
+          <h2 className="mt-3 font-serif text-2xl">{benefit.title}</h2>
+          <p className="mt-3 leading-7 text-slate-600">{benefit.text}</p>
+        </div>)}
+      </div>
+    </section>
+
+    <section className="mx-auto max-w-7xl px-5 py-14 sm:px-8 lg:py-20">
+      <p className="text-xs font-bold uppercase tracking-[.18em] text-[#8c6939]">Find your next step</p>
+      <h2 className="mt-4 max-w-3xl font-serif text-3xl leading-tight sm:text-4xl">{page.offerTitle}</h2>
+      <p className="mb-8 mt-4 max-w-2xl leading-7 text-slate-600">{page.offerIntro}</p>
+      <ServiceCards services={page.services} />
+    </section>
+
+    <section className="mx-auto max-w-7xl px-5 pb-14 sm:px-8 lg:pb-20">
+      <div className="grid gap-6 border-t border-[#17372f]/15 pt-10 lg:grid-cols-[1fr_1.5fr] lg:gap-16">
+        <div><p className="text-xs font-bold uppercase tracking-[.18em] text-[#8c6939]">Before you get started</p><h2 className="mt-4 font-serif text-3xl">A few things about<br className="hidden lg:block" /> your Bagspackgo trip.</h2></div>
+        <div className="divide-y divide-[#17372f]/15">{page.faqs.map(([question, answer]) => <details key={question} className="py-5 first:pt-0"><summary className="cursor-pointer pr-3 font-semibold leading-7">{question}</summary><p className="mt-4 leading-7 text-slate-600">{answer}</p></details>)}</div>
+      </div>
+    </section>
+
+    <section className="bg-[#17372f] px-5 py-14 text-white sm:px-8 lg:py-16">
+      <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-8 lg:flex-row lg:items-center">
+        <div><h2 className="max-w-2xl font-serif text-3xl leading-tight sm:text-4xl">{page.closingTitle}</h2><p className="mt-4 max-w-2xl leading-7 text-white/75">{page.closingText}</p></div>
+        <Link href={page.primary[1]} className="inline-flex shrink-0 items-center gap-3 rounded-full bg-[#e4cba3] px-6 py-4 text-sm font-bold text-[#17372f] transition hover:bg-white">{page.primary[0]}<ArrowRight size={18} aria-hidden="true" /></Link>
+      </div>
+    </section>
+  </div>;
 }
 

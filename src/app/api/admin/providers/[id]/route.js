@@ -4,7 +4,6 @@ import { Guide } from '@/models/guide.model';
 import { GuideDetails } from '@/models/guidedetails.model';
 import { Package } from '@/models/package.model';
 import { TripBooking } from '@/models/tripbooking.model';
-import { TrekBooking } from '@/models/trekbooking.model';
 import { Event } from '@/models/event.model';
 import { getCurrentAdmin } from '@/lib/adminAuth';
 
@@ -22,18 +21,14 @@ export async function GET(req, context) {
         const details = await GuideDetails.findOne({ guide: params.id }).lean();
 
         // Fetch packages
-        const packages = await Package.find({ provider: params.id })
-            .select('name category packageType packageCategory destination days status rating totalRatings createdAt trekName trekLevel pricingTiers')
+        const packages = await Package.find({ provider: params.id, category: 'trip' })
+            .select('name category packageType packageCategory destination days status rating totalRatings createdAt pricingTiers')
             .sort({ createdAt: -1 })
             .lean();
 
         // Fetch booking stats
-        const [tripBookings, trekBookings] = await Promise.all([
-            TripBooking.find({ provider: params.id, status: { $ne: 'pending' } }).select('status totalAmount providerPaymentStatus createdAt').lean(),
-            TrekBooking.find({ provider: params.id, status: { $ne: 'pending' } }).select('status totalAmount providerPaymentStatus createdAt').lean(),
-        ]);
-
-        const allBookings = [...tripBookings, ...trekBookings];
+        const allBookings = await TripBooking.find({ provider: params.id, status: { $ne: 'pending' } })
+            .select('status totalAmount providerPaymentStatus createdAt').lean();
         const bookingStats = {
             total: allBookings.length,
             confirmed: allBookings.filter(b => b.status === 'confirmed').length,

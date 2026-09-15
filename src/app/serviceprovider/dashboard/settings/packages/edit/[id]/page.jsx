@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import NewPackage from '@/components/serviceprovider/dashboard/Settings/NewPackage';
-import NewTrekPackage from '@/components/serviceprovider/dashboard/Settings/NewTrekPackage';
 
 export default function EditPackagePage() {
     const { id } = useParams();
@@ -40,10 +39,6 @@ export default function EditPackagePage() {
     }
 
     if (!pkg) return null;
-
-    if (pkg.category === 'trek') {
-        return <NewTrekPackage initialData={pkg} isEdit={true} />;
-    }
 
     return <NewPackage initialData={pkg} isEdit={true} />;
 }

@@ -21,7 +21,7 @@ export default function PendingBookingNotification() {
         // Note: URL parsing might differ, we'll try to match exact paths or generic tripdetails 
         const currentPath = window.location.pathname;
         const pendingPath = new URL(pending.url, window.location.origin).pathname;
-        if (currentPath === pendingPath || currentPath.includes('/tripdetails/') || currentPath.includes('/trekdetails/') || currentPath.includes('/eventdetails/')) {
+        if (currentPath === pendingPath || currentPath.includes('/tripdetails/') || currentPath.includes('/eventdetails/')) {
            return;
         }
 

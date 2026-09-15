@@ -42,7 +42,7 @@ export async function GET() {
                     phone: guide.phone,
                     applicationStatus: guide.applicationStatus,
                     createdAt: guide.createdAt,
-                    pausedServices: details.pausedServices || { trip: false, trek: false, event: false },
+                    pausedServices: details.pausedServices || { trip: false, event: false },
                     notifications: details.notifications || { email: true, sms: false },
                     ...details
                 }
@@ -89,7 +89,6 @@ export async function PUT(req) {
             youtube,
             logo,
             coverPhoto,
-            totalTreks,
             totalTrips,
             totalEvents,
             bankName,
@@ -134,7 +133,6 @@ export async function PUT(req) {
         if (logo !== undefined) updateFields.logo = logo;
         if (coverPhoto !== undefined) updateFields.coverPhoto = coverPhoto;
 
-        if (totalTreks !== undefined) updateFields.totalTreks = Number(totalTreks);
         if (totalTrips !== undefined) updateFields.totalTrips = Number(totalTrips);
         if (totalEvents !== undefined) updateFields.totalEvents = Number(totalEvents);
 

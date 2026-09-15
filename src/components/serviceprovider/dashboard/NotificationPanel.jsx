@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Bell, X, CheckCheck, Luggage, Mountain,
+  Bell, X, CheckCheck, Luggage,
   CalendarDays, Info, ChevronRight, Loader2,
 } from 'lucide-react';
 
@@ -27,12 +27,6 @@ const TYPE_CFG = {
     dot:   'bg-blue-500',
     label: 'Trip',
   },
-  trek_booking: {
-    icon: Mountain,
-    color: 'bg-emerald-50 text-emerald-600',
-    dot:   'bg-emerald-500',
-    label: 'Trek',
-  },
   event: {
     icon: CalendarDays,
     color: 'bg-violet-50 text-violet-600',
@@ -50,7 +44,7 @@ const TYPE_CFG = {
 const FILTERS = ['All', 'Bookings', 'Events'];
 
 function filterMap(f) {
-  if (f === 'Bookings') return ['trip_booking', 'trek_booking'];
+  if (f === 'Bookings') return ['trip_booking'];
   if (f === 'Events')   return ['event'];
   return null; // All
 }

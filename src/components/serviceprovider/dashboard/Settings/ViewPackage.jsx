@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, Edit, MapPin, Calendar, Clock, Star, 
   Check, X, FileText, Info, Camera, Tag,
-  Navigation, Users, Tent, Sun, Award, Shield, Heart,
+  Navigation, Users, Sun, Award, Shield, Heart,
   Package as PackageIcon, CheckCircle, Zap, Navigation2
 } from 'lucide-react';
 
@@ -33,7 +33,6 @@ export default function ViewPackage({ pkg, adminMode = false, providerId = null 
     return prices.length > 0 ? Math.min(...prices) : 0;
   };
 
-  const isTrek = pkg.category === 'trek';
   const displayStatus = pkg.status === 'published' ? 'active' : (pkg.status || 'active');
 
   return (
@@ -50,7 +49,7 @@ export default function ViewPackage({ pkg, adminMode = false, providerId = null 
           </button>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-sm shrink-0">
-              {isTrek ? <Tent size={20} className="text-white" /> : <PackageIcon size={20} className="text-white" />}
+              <PackageIcon size={20} className="text-white" />
             </div>
             <div>
               <h1 className="text-[18px] font-black text-gray-900 tracking-tight leading-none mb-1">Package Details</h1>
@@ -71,9 +70,9 @@ export default function ViewPackage({ pkg, adminMode = false, providerId = null 
       {/* ── Banner & Title Card ───────────────────────────── */}
       <div className="bg-white rounded-[24px] shadow-sm border border-gray-100 overflow-hidden relative">
          <div className="h-40 sm:h-52 w-full bg-emerald-900 relative overflow-hidden flex items-center justify-center">
-             {pkg.photos && pkg.photos.length > 0 ? (
+             {pkg.packagePhotos && pkg.packagePhotos.length > 0 ? (
                  <>
-                    <img src={pkg.photos[0]} alt="Cover" className="absolute inset-0 w-full h-full object-cover opacity-60" />
+                    <img src={pkg.packagePhotos[0]} alt="Cover" className="absolute inset-0 w-full h-full object-cover opacity-60" />
                     <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent z-0" />
                  </>
              ) : (
@@ -94,7 +93,7 @@ export default function ViewPackage({ pkg, adminMode = false, providerId = null 
                             {displayStatus}
                         </span>
                         <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-100 flex items-center gap-1">
-                            {isTrek ? <Tent size={10} /> : <PackageIcon size={10} />}
+                            <PackageIcon size={10} />
                             {pkg.category}
                         </span>
                          {pkg.packageType && (
@@ -122,9 +121,6 @@ export default function ViewPackage({ pkg, adminMode = false, providerId = null 
                     <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[12px] font-medium text-gray-500">
                         <span className="flex items-center gap-1.5"><MapPin size={14} className="text-emerald-500" /> {pkg.destination}</span>
                         <span className="flex items-center gap-1.5"><Calendar size={14} className="text-emerald-500" /> {pkg.days} Days / {pkg.days > 1 ? pkg.days - 1 : 1} Nights</span>
-                        {isTrek && pkg.trekLevel && (
-                            <span className="flex items-center gap-1.5 capitalize"><Award size={14} className="text-emerald-500" /> Level: {pkg.trekLevel}</span>
-                        )}
                         <span className="flex items-center gap-1.5">
                             <Star size={14} className="text-amber-400 fill-amber-400" /> 
                             <span className="font-bold text-gray-700">{pkg.rating || 'New'}</span>
@@ -204,24 +200,6 @@ export default function ViewPackage({ pkg, adminMode = false, providerId = null 
                                 </div>
                             )}
 
-                            {isTrek && (
-                                <div>
-                                    <h3 className="text-[15px] font-black text-gray-900 mb-3 flex items-center gap-2">
-                                        <Info size={18} className="text-emerald-500" /> Trek Specifics
-                                    </h3>
-                                    <div className="bg-emerald-50/50 rounded-xl p-4 border border-emerald-100 grid grid-cols-2 md:grid-cols-4 gap-4">
-                                        <div>
-                                            <p className="text-[11px] text-gray-500 font-medium">Trek Name</p>
-                                            <p className="text-[13px] font-bold text-gray-900 mt-0.5">{pkg.trekName}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-[11px] text-gray-500 font-medium">Level</p>
-                                            <p className="text-[13px] font-bold text-gray-900 mt-0.5 capitalize">{pkg.trekLevel}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
                             <div>
                                 <h3 className="text-[15px] font-black text-gray-900 mb-3 flex items-center gap-2">
                                     <Tag size={18} className="text-emerald-500" /> Pricing Tiers
@@ -248,7 +226,7 @@ export default function ViewPackage({ pkg, adminMode = false, providerId = null 
                             {pkg.pickupDropCities?.length > 0 && (
                                 <div>
                                     <h3 className="text-[15px] font-black text-gray-900 mb-3 flex items-center gap-2">
-                                        <Navigation size={18} className="text-emerald-500" /> {isTrek ? 'Pickup & Drop Points' : 'Pickup Points'}
+                                        <Navigation size={18} className="text-emerald-500" /> Pickup Points
                                     </h3>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         {pkg.pickupDropCities.map((city, idx) => (
@@ -265,10 +243,9 @@ export default function ViewPackage({ pkg, adminMode = false, providerId = null 
                                                                     <a href={loc.mapLink} target="_blank" rel="noreferrer" className="text-emerald-600 hover:text-emerald-700 font-medium text-[10px] bg-emerald-50 px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-all">Map →</a>
                                                                 )}
                                                             </div>
-                                                            {(loc.pickupTime || (isTrek && loc.dropoffTime)) && (
+                                                            {loc.pickupTime && (
                                                                 <div className="flex flex-wrap gap-3 mt-1.5 text-[11px] text-gray-500 bg-white/50 inline-flex px-2 py-1 rounded-md border border-gray-100">
-                                                                    {loc.pickupTime && <span className="flex items-center gap-1"><Clock size={10} className="text-emerald-500"/> Pickup: <span className="font-semibold text-gray-700">{loc.pickupTime}</span></span>}
-                                                                    {isTrek && loc.dropoffTime && <span className="flex items-center gap-1"><Clock size={10} className="text-rose-400"/> Drop-off: <span className="font-semibold text-gray-700">{loc.dropoffTime}</span></span>}
+                                                                    <span className="flex items-center gap-1"><Clock size={10} className="text-emerald-500"/> Pickup: <span className="font-semibold text-gray-700">{loc.pickupTime}</span></span>
                                                                 </div>
                                                             )}
                                                         </li>
@@ -300,20 +277,6 @@ export default function ViewPackage({ pkg, adminMode = false, providerId = null 
                                 </div>
                             )}
 
-                            {pkg.photos?.length > 0 && (
-                                <div>
-                                    <h3 className="text-[15px] font-black text-gray-900 mb-3 flex items-center gap-2">
-                                        <Camera size={18} className="text-emerald-500" /> Gallery
-                                    </h3>
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                                        {pkg.photos.map((src, i) => (
-                                            <div key={i} className="aspect-square rounded-xl overflow-hidden border border-gray-100 bg-gray-50">
-                                                <img src={src} alt={`Gallery ${i}`} className="w-full h-full object-cover hover:scale-110 transition-transform duration-500" />
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
                         </div>
                     )}
 
@@ -339,7 +302,7 @@ export default function ViewPackage({ pkg, adminMode = false, providerId = null 
                                         
                                         {day.agenda && (
                                             <p className="text-[13px] text-gray-600 leading-relaxed mb-4 whitespace-pre-line">
-                                                {!isTrek && ['arrival', 'exploration', 'travel-day', 'checkout'].includes(day.agenda) 
+                                                {['arrival', 'exploration', 'travel-day', 'checkout'].includes(day.agenda)
                                                     ? {
                                                         'arrival': 'Arrival & Check-in',
                                                         'exploration': 'Exploration',

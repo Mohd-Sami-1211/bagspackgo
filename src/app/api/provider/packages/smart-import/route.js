@@ -3,11 +3,11 @@ import { getCurrentUser } from '@/lib/auth';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 /* ─── System prompt for structured extraction ──────────── */
-const EXTRACTION_PROMPT = `You are an expert travel-package AI assistant. Your job is to deeply analyze the content of a travel or trek package (from a PDF or web page) and extract data to perfectly fill out our platform's package-creation form.
+const EXTRACTION_PROMPT = `You are an expert travel-package AI assistant. Your job is to deeply analyze the content of a travel package (from a PDF or web page) and extract data to perfectly fill out our platform's package-creation form.
 
 FIRSTLY, UNDERSTAND OUR CORE STRUCTURE:
 1. OVERVIEW SECTION: This is the "aboutPackage" field. You must write a comprehensive overview of the whole package here, keeping the meaning intact but making it highly professional and engaging.
-2. ABOUT PACKAGE SECTION: This maps to the "packageInfo" object. Here you must fill in the package name, destination, how many days, category (trip/trek), packageType (individual/couple), and packageCategory (premium/budget).
+2. ABOUT PACKAGE SECTION: This maps to the "packageInfo" object. Here you must fill in the package name, destination, how many days, packageType (individual/couple), and packageCategory (premium/budget).
 3. INCLUSIONS & EXCLUSIONS & ADDITIONAL POINTS: You must analyze what things are mentioned under inclusions, exclusions, and additional points. Extract all three of them, grammatically correct them, and format them perfectly to meet word limits (short, punchy bullet points).
 4. ITINERARY SECTION: This is the most important section. For EACH day, you must analyze what is happening and fill out the structure:
    - "location": Which destination-centric location is the day focused on?
@@ -19,15 +19,13 @@ FIRSTLY, UNDERSTAND OUR CORE STRUCTURE:
 
 Return a valid JSON object with this EXACT structure:
 {
-  "category": "trip" or "trek",
+  "category": "trip",
   "packageInfo": {
     "name": "Package Name",
     "packageType": "individual" or "couple",
     "packageCategory": "premium" or "budget",
     "destination": "one of the valid destination values (e.g. kashmir, ladakh, etc.)",
-    "days": number,
-    "trekName": "name of trek (trek only)",
-    "trekLevel": "easy" or "moderate" or "difficult" (trek only)
+    "days": number
   },
   "aboutPackage": "Comprehensive overview of the whole package...",
   "pricingTiers": [
@@ -245,15 +243,13 @@ export async function POST(req) {
 
     // Ensure all required fields exist with defaults
     const sanitized = {
-      category: extracted.category || 'trip',
+      category: 'trip',
       packageInfo: {
         name: extracted.packageInfo?.name || 'Untitled Package',
         packageType: extracted.packageInfo?.packageType || 'individual',
         packageCategory: extracted.packageInfo?.packageCategory || 'budget',
         destination: extracted.packageInfo?.destination || '',
         days: parseInt(extracted.packageInfo?.days) || 3,
-        trekName: extracted.packageInfo?.trekName || '',
-        trekLevel: extracted.packageInfo?.trekLevel || '',
       },
       aboutPackage: extracted.aboutPackage || '',
       pricingTiers: (extracted.pricingTiers || []).map(t => ({

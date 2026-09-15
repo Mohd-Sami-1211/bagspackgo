@@ -2,12 +2,10 @@
 import { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import NewPackage from '@/components/serviceprovider/dashboard/Settings/NewPackage';
-import NewTrekPackage from '@/components/serviceprovider/dashboard/Settings/NewTrekPackage';
 
 export default function AdminNewPackagePage() {
     const { id } = useParams();
     const searchParams = useSearchParams();
-    const type = searchParams.get('type') || 'trip';
     const duplicateId = searchParams.get('duplicate');
 
     const [prefillData, setPrefillData] = useState(null);
@@ -48,14 +46,6 @@ export default function AdminNewPackagePage() {
             <div className="flex flex-col items-center justify-center py-24 gap-4">
                 <div className="w-10 h-10 border-[3px] border-emerald-100 border-t-emerald-600 rounded-full animate-spin" />
                 <p className="text-[13px] font-medium text-gray-400">Loading package data...</p>
-            </div>
-        );
-    }
-
-    if (type === 'trek') {
-        return (
-            <div className="admin-dark-form">
-                <NewTrekPackage initialData={prefillData} isEdit={false} adminMode={true} providerId={id} />
             </div>
         );
     }

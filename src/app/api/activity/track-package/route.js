@@ -7,7 +7,7 @@ import { Package } from '@/models/package.model';
 
 /**
  * POST /api/activity/track-package
- * Records or updates a user's visit to a trip/trek package details page.
+ * Records or updates a user's visit to a trip package details page.
  * Fire-and-forget from the client — silently succeeds or fails.
  */
 export async function POST(req) {

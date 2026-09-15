@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import {
     ArrowLeft, User, Building2, Mail, Phone, MapPin, Globe, Shield, ShieldCheck,
     Package, Calendar, IndianRupee, Loader2, AlertTriangle, ExternalLink,
-    Ban, CheckCircle2, Trash2, Eye, Star, Mountain, Car, Tent, Clock,
+    Ban, CheckCircle2, Trash2, Eye, Star, Car, Tent, Clock,
     Instagram, Facebook, Twitter, Youtube, CreditCard, FileText, Key,
     Plus, Copy, Edit2, ChevronDown, Download, Sparkles
 } from 'lucide-react';
@@ -241,8 +241,8 @@ export default function AdminProviderDetailPage() {
 
                         {/* Service Status */}
                         <Card title="Service Status" icon={Shield} className="lg:col-span-2">
-                            <div className="grid grid-cols-3 gap-4">
-                                {['trip', 'trek', 'event'].map(svc => {
+                            <div className="grid grid-cols-2 gap-4">
+                                {['trip', 'event'].map(svc => {
                                     const paused = d.pausedServices?.[svc];
                                     return (
                                         <div key={svc} className={`p-4 rounded-xl border text-center ${paused ? 'border-amber-500/20 bg-amber-500/5' : 'border-emerald-500/20 bg-emerald-500/5'}`}>
@@ -320,9 +320,6 @@ export default function AdminProviderDetailPage() {
                                     <button onClick={() => { setShowAddMenu(false); router.push(`/admin/providers/${id}/packages/new?type=trip`); }} className="w-full px-4 py-3 text-left text-sm text-gray-300 hover:bg-gray-700/50 hover:text-white flex items-center gap-3 transition-colors">
                                         <Car size={16} className="text-purple-400" /> Trip Package
                                     </button>
-                                    <button onClick={() => { setShowAddMenu(false); router.push(`/admin/providers/${id}/packages/new?type=trek`); }} className="w-full px-4 py-3 text-left text-sm text-gray-300 hover:bg-gray-700/50 hover:text-white flex items-center gap-3 transition-colors border-t border-gray-700/50">
-                                        <Mountain size={16} className="text-blue-400" /> Trek Package
-                                    </button>
                                 </div>
                                 </>
                             )}
@@ -336,8 +333,8 @@ export default function AdminProviderDetailPage() {
                             return (
                             <div key={pkg._id} className="bg-gray-900 border border-gray-800 rounded-xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:border-gray-600 transition-colors cursor-pointer group" onClick={() => router.push(`/admin/providers/${id}/packages/${pkg._id}`)}>
                                 <div className="flex items-center gap-4 min-w-0 flex-1">
-                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${pkg.category === 'trek' ? 'bg-blue-500/10 text-blue-400' : 'bg-purple-500/10 text-purple-400'}`}>
-                                        {pkg.category === 'trek' ? <Mountain size={18} /> : <Car size={18} />}
+                                    <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-purple-500/10 text-purple-400">
+                                        <Car size={18} />
                                     </div>
                                     <div className="min-w-0">
                                         <p className="font-bold text-white truncate group-hover:text-emerald-400 transition-colors">{pkg.name}</p>

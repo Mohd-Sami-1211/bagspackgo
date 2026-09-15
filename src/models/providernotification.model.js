@@ -5,7 +5,7 @@ const providerNotificationSchema = new mongoose.Schema({
 
   type: {
     type: String,
-    enum: ['trip_booking', 'trek_booking', 'event', 'system'],
+    enum: ['trip_booking', 'event', 'system'],
     required: true,
   },
 
@@ -14,7 +14,7 @@ const providerNotificationSchema = new mongoose.Schema({
 
   // Optional reference to a booking / event
   refId:   { type: String, default: null },
-  refType: { type: String, enum: ['TripBooking', 'TrekBooking', 'Event', null], default: null },
+  refType: { type: String, enum: ['TripBooking', 'Event', null], default: null },
 
   read: { type: Boolean, default: false },
 

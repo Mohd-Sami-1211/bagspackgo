@@ -100,7 +100,7 @@ export async function POST(request) {
             guideDetails.website = website;
             guideDetails.licenseFile = licenseFile;
             guideDetails.idFile = idFile;
-            guideDetails.availability = body.availability || { trips: true, treks: true };
+            guideDetails.availability = { trips: body.availability?.trips !== false };
             guideDetails.agree = true;
             guideDetails.status = "pending";
             guideDetails.adminNotes = "";
@@ -119,7 +119,7 @@ export async function POST(request) {
                 website,
                 licenseFile,
                 idFile,
-                availability: body.availability || { trips: true, treks: true },
+                availability: { trips: body.availability?.trips !== false },
                 agree: true,
                 status: "pending",
             });

@@ -33,7 +33,7 @@ export function breadcrumbs(items) {
   };
 }
 export function packagePath(pkg) {
-  return pkg.category === 'trek' ? '/user/trek/guidelist/trekdetails/' + pkg._id : '/trip/' + pkg._id;
+  return '/trip/' + pkg._id;
 }
 export function isPublicProvider(account, details) {
   return Boolean(account && details && account.isActive !== false &&

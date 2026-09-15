@@ -11,7 +11,6 @@ import {
   ChevronRight,
   Clock3,
   MapPin,
-  Mountain,
   Navigation,
   Share2,
   Sparkles,
@@ -89,7 +88,7 @@ export function ProviderProfileSkeleton() {
               <div className="h-4 w-3/4 max-w-xl rounded bg-slate-100" />
             </div>
           </div>
-          <div className="mt-7 grid grid-cols-2 gap-3 border-t border-slate-100 pt-6 sm:grid-cols-4">
+          <div className="mt-7 grid grid-cols-2 gap-3 border-t border-slate-100 pt-6 sm:grid-cols-3">
             {Array.from({ length: 4 }).map((_, index) => <div key={index} className="h-16 rounded-2xl bg-slate-50" />)}
           </div>
           </div>
@@ -109,11 +108,8 @@ export function ProviderProfileSkeleton() {
 }
 
 function PackageCard({ pkg, providerId, onNavigate }) {
-  const isTrek = pkg.category === 'trek';
   const price = packagePrice(pkg);
-  const href = isTrek
-    ? `/user/trek/guidelist/trekdetails/${pkg._id}`
-    : `/trip/${pkg._id}`;
+  const href = `/trip/${pkg._id}`;
 
   return (
     <article className="group overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_18px_45px_-38px_rgba(15,23,42,0.5)] transition hover:-translate-y-0.5 hover:shadow-[0_24px_55px_-38px_rgba(15,23,42,0.6)]">
@@ -128,14 +124,14 @@ function PackageCard({ pkg, providerId, onNavigate }) {
           />
           <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/55 to-transparent" />
           <span className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-slate-700 backdrop-blur-md">
-            {isTrek ? pkg.trekLevel || 'Trek' : pkg.packageCategory || 'Trip'}
+            {pkg.packageCategory || 'Trip'}
           </span>
           <span className="absolute bottom-4 left-4 rounded-full bg-black/40 px-3 py-1 text-xs font-bold text-white backdrop-blur-md">
             {pkg.days} day{pkg.days === 1 ? '' : 's'}
           </span>
         </div>
         <div className="p-5">
-          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-emerald-700">{isTrek ? 'Trek package' : 'Trip package'}</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-emerald-700">Trip package</p>
           <h3 className="mt-1.5 line-clamp-2 text-lg font-black leading-snug text-slate-950">{pkg.name}</h3>
           <p className="mt-2 flex items-center gap-1.5 text-sm text-slate-500"><MapPin className="h-4 w-4 text-emerald-600" /> {pkg.destination}</p>
           <div className="mt-5 flex items-end justify-between gap-3 border-t border-slate-100 pt-4">
@@ -190,7 +186,6 @@ export default function ProviderProfileContent({ providerId, providerSlug, initi
     revalidateOnMount: !initialData,
   });
   const [showAllTrips, setShowAllTrips] = useState(false);
-  const [showAllTreks, setShowAllTreks] = useState(false);
   const [showAllEvents, setShowAllEvents] = useState(false);
   const [ratingHover, setRatingHover] = useState(0);
   const [ratingSubmit, setRatingSubmit] = useState(0);
@@ -209,7 +204,6 @@ export default function ProviderProfileContent({ providerId, providerSlug, initi
   const feedbacks = data?.feedbacks || [];
 
   const tripPackages = useMemo(() => packages.filter((pkg) => pkg.category === 'trip'), [packages]);
-  const trekPackages = useMemo(() => packages.filter((pkg) => pkg.category === 'trek'), [packages]);
   const liveEvents = useMemo(() => events.filter((event) => eventState(event, now) === 'live'), [events, now]);
   const recentEvents = useMemo(() => events
     .filter((event) => eventState(event, now) === 'recent')
@@ -269,11 +263,10 @@ export default function ProviderProfileContent({ providerId, providerSlug, initi
   const stats = [
     { label: 'Rating', value: provider.rating > 0 ? provider.rating.toFixed(1) : 'New', icon: Star },
     { label: 'Trips', value: tripPackages.length, icon: Navigation },
-    { label: 'Treks', value: trekPackages.length, icon: Mountain },
     { label: 'Events', value: events.length, icon: Ticket },
   ];
 
-  const aboutBio = provider.bio?.trim() || `${provider.name} creates thoughtfully planned trips, treks and local experiences.`;
+  const aboutBio = provider.bio?.trim() || `${provider.name} creates thoughtfully planned trips and local experiences.`;
 
   const renderPackages = (items, showAll) => (showAll ? items : items.slice(0, 6)).map((pkg) => (
     <PackageCard key={pkg._id} pkg={pkg} providerId={provider._id} onNavigate={navigate} />
@@ -320,7 +313,7 @@ export default function ProviderProfileContent({ providerId, providerSlug, initi
               </div>
             </div>
 
-            <div className="mt-7 grid grid-cols-2 gap-3 border-t border-slate-100 pt-6 sm:grid-cols-4">
+            <div className="mt-7 grid grid-cols-2 gap-3 border-t border-slate-100 pt-6 sm:grid-cols-3">
             {stats.map(({ label, value, icon: Icon }) => (
               <div key={label} className="rounded-2xl border border-slate-100 bg-[#f8faf9] p-4 transition hover:border-emerald-100 hover:bg-emerald-50/40">
                 <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.16em] text-slate-400"><Icon className="h-4 w-4 text-emerald-600" /> {label}</div>
@@ -371,14 +364,6 @@ export default function ProviderProfileContent({ providerId, providerSlug, initi
             <SectionHeading eyebrow="Curated journeys" title="Trip packages" description="Flexible journeys designed and hosted by this provider." icon={Navigation} count={tripPackages.length} />
             <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">{renderPackages(tripPackages, showAllTrips)}</div>
             {tripPackages.length > 6 && <button type="button" onClick={() => setShowAllTrips((value) => !value)} className="mt-5 w-full rounded-2xl border border-slate-200 bg-white py-3 text-sm font-bold text-slate-600 hover:border-emerald-200 hover:text-emerald-700">{showAllTrips ? 'Show fewer trips' : `View all ${tripPackages.length} trips`}</button>}
-          </section>
-        )}
-
-        {trekPackages.length > 0 && (
-          <section className="mt-8 rounded-[2rem] border border-slate-200 bg-white p-5 shadow-[0_20px_60px_-48px_rgba(15,23,42,0.55)] sm:p-8">
-            <SectionHeading eyebrow="On the trail" title="Trek packages" description="Guided routes for travellers looking for a more active journey." icon={Mountain} count={trekPackages.length} />
-            <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">{renderPackages(trekPackages, showAllTreks)}</div>
-            {trekPackages.length > 6 && <button type="button" onClick={() => setShowAllTreks((value) => !value)} className="mt-5 w-full rounded-2xl border border-slate-200 bg-white py-3 text-sm font-bold text-slate-600 hover:border-emerald-200 hover:text-emerald-700">{showAllTreks ? 'Show fewer treks' : `View all ${trekPackages.length} treks`}</button>}
           </section>
         )}
 

@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import { Booking } from '@/models/booking.model';
 import { TripBooking } from '@/models/tripbooking.model';
-import { TrekBooking } from '@/models/trekbooking.model';
 import mongoose from 'mongoose';
 
 export const dynamic = 'force-dynamic';
@@ -73,22 +72,6 @@ export async function GET(req, context) {
             }
             const augmentedTrip = await augmentBooking(trip);
             return NextResponse.json({ success: true, type: 'trip', data: { ...augmentedTrip, bookingType: 'trip' } });
-        }
-
-        // Check Trek Bookings
-        const trek = requestedType === 'event' ? null : await TrekBooking.findOne(query).lean();
-        if (trek) {
-            if (!user) {
-                return NextResponse.json({ success: false, message: 'Please login to your account to access pass' }, { status: 401 });
-            }
-            if (trek.user.toString() !== user.userId) {
-                return NextResponse.json({ success: false, message: 'Seems like booking wasn\'t made from this account' }, { status: 403 });
-            }
-            if (trek.status !== 'confirmed') {
-                return NextResponse.json({ success: false, message: 'Pass is only available for confirmed bookings' }, { status: 403 });
-            }
-            const augmentedTrek = await augmentBooking(trek);
-            return NextResponse.json({ success: true, type: 'trek', data: { ...augmentedTrek, bookingType: 'trek' } });
         }
 
         // Check Event Bookings (Events usually only have ObjectId)

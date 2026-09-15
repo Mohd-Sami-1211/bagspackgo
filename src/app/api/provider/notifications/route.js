@@ -4,7 +4,6 @@ import { getCurrentUser } from '@/lib/auth';
 import { Guide } from '@/models/guide.model';
 import { ProviderNotification } from '@/models/providernotification.model';
 import { TripBooking } from '@/models/tripbooking.model';
-import { TrekBooking } from '@/models/trekbooking.model';
 import { Event } from '@/models/event.model';
 import { User } from '@/models/user.model';
 
@@ -47,38 +46,6 @@ async function syncNotifications(guide) {
       });
     }
   }
-
-  // ── Trek bookings ─────────────────────────────────────────
-  const trekBookings = await TrekBooking.find({ provider: providerId })
-    .populate('user', 'name email')
-    .lean();
-
-  for (const b of trekBookings) {
-    // Only notify for confirmed or cancelled bookings
-    if (b.status !== 'confirmed' && b.status !== 'cancelled') continue;
-
-    const refId = `${b._id.toString()}_${b.status}`;
-    const exists = await ProviderNotification.exists({ provider: providerId, refId, type: 'trek_booking' });
-    if (!exists) {
-      const userName = b.user?.name || 'A traveller';
-      const pkgName  = b.packageSnapshot?.name || 'a trek package';
-
-      let title, message;
-      if (b.status === 'cancelled') {
-        title   = 'Trek booking cancelled';
-        message = `${userName} cancelled their trek booking for ${pkgName}.`;
-      } else {
-        title   = 'New trek booking received';
-        message = `${userName} booked ${pkgName}. Ref: ${b.bookingRef}`;
-      }
-
-      await ProviderNotification.create({
-        provider: providerId, type: 'trek_booking',
-        title, message, refId, refType: 'TrekBooking',
-      });
-    }
-  }
-
 
   // ── Events ────────────────────────────────────────────────
   const events = await Event.find({ guide: providerId }).lean();

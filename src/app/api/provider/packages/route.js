@@ -23,7 +23,7 @@ export async function POST(req) {
 
         // ── DUPLICATE PACKAGE LOGIC ──
         if (data.action === 'duplicate' && data.packageId) {
-            const originalPackage = await Package.findOne({ _id: data.packageId, provider: user.userId });
+            const originalPackage = await Package.findOne({ _id: data.packageId, provider: user.userId, category: 'trip' });
             if (!originalPackage) {
                 return NextResponse.json({ success: false, message: 'Package not found' }, { status: 404 });
             }
@@ -71,14 +71,11 @@ export async function POST(req) {
         const newPackage = new Package({
             provider: user.userId,
             name: packageInfo.name.trim(),
-            category: packageInfo.category || 'trip',
+            category: 'trip',
             packageType: packageInfo.packageType || 'individual',
             packageCategory: packageInfo.packageCategory || 'budget',
             destination: packageInfo.destination.trim(),
             days,
-            trekName: packageInfo.trekName || '',
-            trekLevel: packageInfo.trekLevel || '',
-            photos: data.photos || [],
             pricingTiers: pricingTiers.map(tier => ({
                 minPeople: parseInt(tier.minPeople) || 1,
                 maxPeople: parseInt(tier.maxPeople) || 2,
@@ -144,14 +141,14 @@ export async function GET(req) {
         const packageId = url.searchParams.get('id');
 
         if (packageId) {
-            const pkg = await Package.findOne({ _id: packageId, provider: user.userId });
+            const pkg = await Package.findOne({ _id: packageId, provider: user.userId, category: 'trip' });
             if (!pkg) {
                  return NextResponse.json({ success: false, message: 'Package not found' }, { status: 404 });
             }
             return NextResponse.json({ success: true, package: pkg }, { status: 200 });
         }
 
-        const packages = await Package.find({ provider: user.userId }).sort({ createdAt: -1 });
+        const packages = await Package.find({ provider: user.userId, category: 'trip' }).sort({ createdAt: -1 });
 
         return NextResponse.json({
             success: true,
@@ -198,14 +195,11 @@ export async function PUT(req) {
 
         const updateData = {
             name: packageInfo.name.trim(),
-            category: packageInfo.category || 'trip',
+            category: 'trip',
             packageType: packageInfo.packageType || 'individual',
             packageCategory: packageInfo.packageCategory || 'budget',
             destination: packageInfo.destination.trim(),
             days,
-            trekName: packageInfo.trekName || '',
-            trekLevel: packageInfo.trekLevel || '',
-            photos: data.photos || [],
             pricingTiers: pricingTiers.map(tier => ({
                 minPeople: parseInt(tier.minPeople) || 1,
                 maxPeople: parseInt(tier.maxPeople) || 2,
@@ -243,7 +237,7 @@ export async function PUT(req) {
         };
 
         const updatedPackage = await Package.findOneAndUpdate(
-            { _id: packageId, provider: user.userId },
+            { _id: packageId, provider: user.userId, category: 'trip' },
             { $set: updateData },
             { new: true }
         );

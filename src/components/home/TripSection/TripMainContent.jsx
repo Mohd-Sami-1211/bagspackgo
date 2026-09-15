@@ -32,7 +32,7 @@ const fetcher = (url) => fetch(url).then((response) => {
 const faqs = [
   {
     question: 'What is bagspackgo?',
-    answer: 'Bagspackgo is a Kashmir-based startup founded by Mohd Samiullah. It brings travel packages, offbeat destinations, hosted events and on-trip assistance together in one place, with a focus on trusted local providers.',
+    answer: 'Bagspackgo is a Kashmir-based startup. It brings travel packages, offbeat destinations, hosted events and on-trip assistance together in one place, with a focus on trusted local providers.',
   },
   {
     question: 'How are trip packages different here?',
@@ -48,7 +48,7 @@ const faqs = [
   },
   {
     question: 'Who hosts the events?',
-    answer: 'Local travel and trekking companies publish their scheduled experiences. You can review what is happening, availability and destination before joining.',
+    answer: 'Local travel companies publish their scheduled experiences. You can review what is happening, availability and destination before joining.',
   },
   {
     question: 'Are local companies verified?',

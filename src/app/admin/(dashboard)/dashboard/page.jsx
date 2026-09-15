@@ -99,8 +99,7 @@ export default function AdminDashboardPage() {
             const m = d.getMonth() + 1;
             const y = d.getFullYear();
             const tripEntry = data.charts.monthlyBookings.trips.find(t => t._id.month === m && t._id.year === y);
-            const trekEntry = data.charts.monthlyBookings.treks.find(t => t._id.month === m && t._id.year === y);
-            return { name: MONTHS[m - 1], Trips: tripEntry?.count || 0, Treks: trekEntry?.count || 0 };
+            return { name: MONTHS[m - 1], Trips: tripEntry?.count || 0 };
         });
     })();
 
@@ -153,7 +152,6 @@ export default function AdminDashboardPage() {
                                 <Tooltip content={<CustomTooltip />} />
                                 <Legend formatter={v => <span className="text-gray-400 text-xs">{v}</span>} />
                                 <Line type="monotone" dataKey="Trips" stroke="#10b981" strokeWidth={2.5} dot={{ fill: '#10b981', r: 4 }} activeDot={{ r: 6 }} />
-                                <Line type="monotone" dataKey="Treks" stroke="#8b5cf6" strokeWidth={2.5} dot={{ fill: '#8b5cf6', r: 4 }} activeDot={{ r: 6 }} />
                             </LineChart>
                         </ResponsiveContainer>
                     )}

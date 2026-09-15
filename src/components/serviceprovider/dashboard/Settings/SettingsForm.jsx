@@ -209,7 +209,6 @@ function ProfileContent({ initialEditMode = false }) {
     instagram: '',
     facebook: '',
     twitter: '',
-    totalTreks: 0,
     totalTrips: 0,
     totalEvents: 0,
     bankName: '',
@@ -241,7 +240,6 @@ function ProfileContent({ initialEditMode = false }) {
             instagram: profile.instagram || '',
             facebook: profile.facebook || '',
             twitter: profile.twitter || '',
-            totalTreks: profile.totalTreks || 0,
             totalTrips: profile.totalTrips || 0,
             totalEvents: profile.totalEvents || 0,
             bankName: profile.bankName || '',
@@ -735,7 +733,7 @@ function ProfileContent({ initialEditMode = false }) {
                 <label className={labelClasses}>Speciality</label>
                 <div className="relative">
                   <div className={iconWrapperClasses}><Award size={18} /></div>
-                  <input type="text" className={inputClasses} placeholder="e.g. High Altitude Treks..." name="speciality" value={formData.speciality} onChange={handleChange} readOnly={!isEditing} />
+                  <input type="text" className={inputClasses} placeholder="e.g. Kashmir Family Tours..." name="speciality" value={formData.speciality} onChange={handleChange} readOnly={!isEditing} />
                 </div>
               </div>
             </div>
@@ -817,20 +815,6 @@ function ProfileContent({ initialEditMode = false }) {
             </div>
 
             <div className="space-y-4">
-              {/* Treks */}
-              <div className={`group flex justify-between items-center p-4 rounded-2xl border transition-all ${isEditing ? 'border-emerald-200 bg-emerald-50/50 shadow-inner focus-within:ring-2 focus-within:ring-emerald-500/20 focus-within:border-emerald-500' : 'border-gray-100 bg-white shadow-sm'}`}>
-                <label className="text-sm text-gray-600 flex items-center gap-3 font-semibold pointer-events-none transition-colors">
-                  <div className={`p-2 rounded-lg transition-colors ${isEditing ? 'bg-emerald-100 text-emerald-700' : 'bg-emerald-50 text-emerald-600'}`}>
-                    <Map size={18} />
-                  </div>
-                  Treks Hosted
-                </label>
-                <div className="relative flex items-center">
-                  <input type="number" className={`text-right bg-transparent border-none font-black text-lg outline-none focus:ring-0 transition-all ${isEditing ? 'w-24 text-emerald-800 bg-white pl-3 pr-8 py-2 rounded-xl shadow-inner border border-emerald-300 pointer-events-auto cursor-text focus:border-emerald-500' : 'w-16 p-0 text-gray-800 pointer-events-none'}`} name="totalTreks" value={formData.totalTreks} onChange={handleChange} readOnly={!isEditing} />
-                  {isEditing && <Edit2 size={14} className="absolute right-3 text-emerald-400 pointer-events-none" />}
-                </div>
-              </div>
-
               {/* Trips */}
               <div className={`group flex justify-between items-center p-4 rounded-2xl border transition-all ${isEditing ? 'border-teal-200 bg-teal-50/50 shadow-inner focus-within:ring-2 focus-within:ring-teal-500/20 focus-within:border-teal-500' : 'border-gray-100 bg-white shadow-sm'}`}>
                 <label className="text-sm text-gray-600 flex items-center gap-3 font-semibold pointer-events-none transition-colors">
@@ -916,7 +900,7 @@ function ProfileContent({ initialEditMode = false }) {
 function PaymentsContent() {
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('trip'); // 'trip', 'trek', 'event'
+  const [activeTab, setActiveTab] = useState('trip');
   const [dateFilter, setDateFilter] = useState('all'); // '10days', '1month', '3months', 'all'
 
   useEffect(() => {
@@ -1005,7 +989,7 @@ function PaymentsContent() {
 
         {/* Tabs */}
         <div className="flex items-center gap-2 border-b border-gray-100 mb-6 pb-2 overflow-x-auto hide-scrollbar">
-          {['trip', 'trek', 'event'].map(tab => (
+          {['trip', 'event'].map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -1092,7 +1076,6 @@ function PaymentsContent() {
 function ServiceStatusContent() {
   const [pausedServices, setPausedServices] = useState({
     trip: false,
-    trek: false,
     event: false
   });
   const [loading, setLoading] = useState(true);
@@ -1170,7 +1153,6 @@ function ServiceStatusContent() {
 
   const servicesList = [
     { id: 'trip', label: 'Trip Bookings', descOn: 'Listed and publicly bookable.', descOff: 'Hidden. Customers will see "Available soon".' },
-    { id: 'trek', label: 'Trek Bookings', descOn: 'Listed and publicly bookable.', descOff: 'Hidden. Customers will see "Available soon".' },
     { id: 'event', label: 'Event Bookings', descOn: 'Listed and publicly bookable.', descOff: 'Hidden. Customers will see "Available soon".' },
   ];
 

@@ -18,7 +18,7 @@ const Footer = () => {
             />
           </Link>
           <p className="text-sm font-medium text-gray-900 max-w-xs leading-relaxed">
-            A Kashmir-based travel startup founded by Mohd Samiullah. Local trips, offbeats, events and Companion assistance.
+            Just pack your bags, we&apos;ve got the rest...
           </p>
         </div>
 
@@ -29,10 +29,9 @@ const Footer = () => {
           </h3>
           <ul className="space-y-2.5">
             <li><Link href="/" className="text-sm text-slate-600 hover:text-emerald-600 hover:translate-x-1 inline-block transition-all font-medium">Home</Link></li>
-            <li><Link href="/about" className="text-sm text-slate-600 hover:text-emerald-600 hover:translate-x-1 inline-block transition-all font-medium">About & Founder</Link></li>
+            <li><Link href="/about" className="text-sm text-slate-600 hover:text-emerald-600 hover:translate-x-1 inline-block transition-all font-medium">About Bagspackgo</Link></li>
             <li><Link href="/user/offbeats" className="text-sm text-slate-600 hover:text-emerald-600 hover:translate-x-1 inline-block transition-all font-medium">Offbeats</Link></li>
-            <li><Link href="/travel-guides" className="text-sm text-slate-600 hover:text-emerald-600 font-medium">Kashmir Travel Guides</Link></li>
-            <li><Link href="/providers" className="text-sm text-slate-600 hover:text-emerald-600 font-medium">Local Travel Companies</Link></li>
+            <li><Link href="/travel-guides" className="text-sm text-slate-600 hover:text-emerald-600 font-medium">Explore Bagspackgo</Link></li>
             <li><Link href="/user/companion" className="text-sm text-slate-600 hover:text-emerald-600 font-medium">Companion Assistance</Link></li>
             <li><Link href="/user/events" className="text-sm text-slate-600 hover:text-emerald-600 hover:translate-x-1 inline-block transition-all font-medium">Events</Link></li>
           </ul>

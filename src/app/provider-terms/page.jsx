@@ -48,7 +48,7 @@ export default function ProviderTermsPage() {
             <section>
               <h2 className="text-base font-bold text-gray-900 mb-2.5">3. Commission Structure</h2>
               <ul className="list-disc pl-5 space-y-1.5">
-                <li><span className="font-bold text-gray-900">10% commission</span> on trips and treks.</li>
+                <li><span className="font-bold text-gray-900">10% commission</span> on trips.</li>
                 <li><span className="font-bold text-gray-900">7% commission</span> on events.</li>
               </ul>
             </section>
@@ -57,7 +57,7 @@ export default function ProviderTermsPage() {
               <h2 className="text-base font-bold text-gray-900 mb-2.5">4. Payment Structure</h2>
               
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-5 mb-5">
-                <h3 className="font-bold text-gray-900 mb-3 tracking-tight">Trips & Treks</h3>
+                <h3 className="font-bold text-gray-900 mb-3 tracking-tight">Trips</h3>
                 <p className="mb-2">Payments will be released in 3 phases:</p>
                 <ol className="list-decimal pl-5 space-y-1.5 mb-4">
                   <li><span className="font-bold text-gray-900">Initial release</span> at trip start.</li>

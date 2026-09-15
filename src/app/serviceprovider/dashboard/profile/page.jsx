@@ -12,7 +12,6 @@ import {
     Twitter,
     Youtube,
     Award,
-    Tent,
     Car,
     PartyPopper,
     ShieldCheck,
@@ -246,12 +245,7 @@ export default function ProviderProfilePage() {
                             </div>
 
                             {/* Stats Grid */}
-                            <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 grid grid-cols-2 gap-4">
-                                <div className="bg-blue-50/50 rounded-2xl p-4 border border-blue-100 flex flex-col items-center justify-center text-center">
-                                    <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-2"><Tent size={18} /></div>
-                                    <span className="text-3xl font-black text-blue-900">{profile.totalTreks || 0}</span>
-                                    <span className="text-xs font-bold text-blue-600/70 uppercase tracking-widest mt-1">Treks</span>
-                                </div>
+                            <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
                                 <div className="bg-purple-50/50 rounded-2xl p-4 border border-purple-100 flex flex-col items-center justify-center text-center">
                                     <div className="w-10 h-10 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center mb-2"><Car size={18} /></div>
                                     <span className="text-3xl font-black text-purple-900">{profile.totalTrips || 0}</span>

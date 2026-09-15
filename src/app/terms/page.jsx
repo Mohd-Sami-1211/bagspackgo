@@ -28,7 +28,7 @@ export default function UserTermsPage() {
             <section>
               <h2 className="text-base font-bold text-gray-900 mb-2.5">1. Introduction</h2>
               <p className="mb-2">Welcome to bagspackgo. By accessing or using our platform, you agree to comply with and be bound by these Terms & Conditions.</p>
-              <p>bagspackgo operates as a marketplace platform that connects users with independent travel service providers for trips, treks, and events.</p>
+              <p>bagspackgo operates as a marketplace platform that connects users with independent travel service providers for trips and events.</p>
             </section>
 
             <section>
@@ -59,7 +59,7 @@ export default function UserTermsPage() {
             </section>
 
             <section>
-              <h2 className="text-base font-bold text-gray-900 mb-2.5">5. Cancellation & Refund Policy (Trips & Treks)</h2>
+              <h2 className="text-base font-bold text-gray-900 mb-2.5">5. Cancellation & Refund Policy (Trips)</h2>
               <p className="mb-4">All cancellations and refunds are managed solely by bagspackgo and are subject to applicable deductions including platform fees, payment gateway charges, and operational costs.</p>
               
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-5">
@@ -122,8 +122,8 @@ export default function UserTermsPage() {
             </section>
 
             <section>
-              <h2 className="text-base font-bold text-gray-900 mb-2.5">9. Community Guidelines</h2>
-              <p className="mb-2">Users may post reviews and travel stories. Users must not:</p>
+              <h2 className="text-base font-bold text-gray-900 mb-2.5">9. User Conduct</h2>
+              <p className="mb-2">Users may post reviews. Users must not:</p>
               <ul className="list-disc pl-5 space-y-1.5 mb-2">
                 <li>Post abusive, illegal, or misleading content.</li>
                 <li>Harass or harm others.</li>

@@ -33,17 +33,13 @@ const itineraryDaySchema = new mongoose.Schema({
 const packageSchema = new mongoose.Schema({
     provider: { type: mongoose.Schema.Types.ObjectId, ref: 'Guide', required: true },
     name: { type: String, required: true },
-    category: { type: String, enum: ['trip', 'trek'], default: 'trip' },
+    category: { type: String, enum: ['trip'], default: 'trip' },
     packageType: { type: String, enum: ['individual', 'couple'], required: true },
     packageCategory: { type: String, enum: ['budget', 'premium'], required: true },
     destination: { type: String, required: true },
     days: { type: Number, required: true },
 
-    // Trek specific fields
-    trekName: { type: String, default: '' },
-    trekLevel: { type: String, enum: ['easy', 'moderate', 'difficult', ''], default: '' },
-
-    // Transport locations by city (trek packages may also provide a drop-off time)
+    // Transport locations by city
     pickupDropCities: [{
         cityName: { type: String, required: true },
         locations: [{
@@ -77,9 +73,6 @@ const packageSchema = new mongoose.Schema({
     packagePhotos: [{ type: String }],
 
     status: { type: String, enum: ['draft', 'active', 'inactive'], default: 'active' },
-
-    // Trek photos (optional up to 5)
-    photos: [{ type: String }],
 
     // Stats for the package
     reviews: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Review' }],

@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import NewPackage from '@/components/serviceprovider/dashboard/Settings/NewPackage';
-import NewTrekPackage from '@/components/serviceprovider/dashboard/Settings/NewTrekPackage';
 
 export default function AdminEditPackagePage() {
     const { id, packageId } = useParams();
@@ -40,14 +39,6 @@ export default function AdminEditPackagePage() {
     }
 
     if (!pkg) return null;
-
-    if (pkg.category === 'trek') {
-        return (
-            <div className="admin-dark-form">
-                <NewTrekPackage initialData={pkg} isEdit={true} adminMode={true} providerId={id} />
-            </div>
-        );
-    }
 
     return (
         <div className="admin-dark-form">

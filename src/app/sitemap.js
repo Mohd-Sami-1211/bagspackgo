@@ -7,7 +7,7 @@ export default async function sitemap() {
   // A failed refresh must not replace the last successful sitemap with a partial one.
   const catalog = await getPublicCatalog();
   const entries = [
-    ...['/user/trip', '/user/trek', '/user/events', '/user/offbeats', '/user/companion', '/about', '/providers', '/travel-guides', '/privacy', '/terms'].map(path => ({ url: absoluteUrl(path) })),
+    ...['/user/trip', '/user/events', '/user/offbeats', '/user/companion', '/about', '/travel-guides', '/privacy', '/terms'].map(path => ({ url: absoluteUrl(path) })),
     ...travelGuides.map(g => ({ url: absoluteUrl('/travel-guides/' + g.slug), lastModified: GUIDE_UPDATED_AT })),
     ...catalog.providers.map(p => ({ url: absoluteUrl(providerProfilePath(p.profileSlug || p.name, p.guide)), lastModified: p.updatedAt })),
     ...catalog.packages.map(p => ({ url: absoluteUrl(packagePath(p)), lastModified: p.updatedAt })),

@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import { TripBooking } from '@/models/tripbooking.model';
-import { TrekBooking } from '@/models/trekbooking.model';
 import { Booking as EventBooking } from '@/models/booking.model';
 import { getCurrentAdmin } from '@/lib/adminAuth';
 
@@ -29,8 +28,6 @@ export async function PATCH(req, context) {
         let updated;
         if (model === 'TripBooking') {
             updated = await TripBooking.findByIdAndUpdate(params.id, update, { new: true });
-        } else if (model === 'TrekBooking') {
-            updated = await TrekBooking.findByIdAndUpdate(params.id, update, { new: true });
         } else if (model === 'EventBooking') {
             updated = await EventBooking.findByIdAndUpdate(params.id, update, { new: true });
         }
