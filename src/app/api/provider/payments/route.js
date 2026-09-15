@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { TripBooking } from "@/models/tripbooking.model";
-import { TrekBooking } from "@/models/trekbooking.model";
 import { Booking } from "@/models/booking.model";
 import { Event } from "@/models/event.model";
 
@@ -28,12 +27,6 @@ export async function GET() {
             status: "confirmed"
         }).populate("package", "title").lean();
 
-        // Fetch Trek Bookings
-        const trekBookings = await TrekBooking.find({
-            provider: user.userId,
-            status: "confirmed"
-        }).populate("package", "title").lean();
-
         // Fetch Event Bookings
         const events = await Event.find({ guide: user.userId }).distinct("_id");
         const eventBookings = await Booking.find({
@@ -46,19 +39,6 @@ export async function GET() {
             _id: b._id,
             type: 'trip',
             title: b.package?.title || 'Trip Package',
-            bookingRef: b.bookingRef,
-            date: b.createdAt,
-            amount: b.totalAmount,
-            providerPaymentStatus: b.providerPaymentStatus || "pending",
-            providerTransactionId: b.providerTransactionId || "",
-            providerPaymentDate: b.providerPaymentDate || null,
-            providerDepositedAccount: b.providerDepositedAccount || ""
-        }));
-
-        const normalizedTreks = trekBookings.map(b => ({
-            _id: b._id,
-            type: 'trek',
-            title: b.package?.title || 'Trek Package',
             bookingRef: b.bookingRef,
             date: b.createdAt,
             amount: b.totalAmount,
@@ -81,7 +61,7 @@ export async function GET() {
             providerDepositedAccount: b.providerDepositedAccount || ""
         }));
 
-        const allPayments = [...normalizedTrips, ...normalizedTreks, ...normalizedEvents].sort((a, b) => new Date(b.date) - new Date(a.date));
+        const allPayments = [...normalizedTrips, ...normalizedEvents].sort((a, b) => new Date(b.date) - new Date(a.date));
 
         return NextResponse.json({
             success: true,

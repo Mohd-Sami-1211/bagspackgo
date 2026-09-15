@@ -29,7 +29,7 @@ const GuideCard = ({ guide }) => {
       <div className="w-[25%] bg-white flex items-center justify-center p-4">
         <div className="h-28 w-28 rounded-full overflow-hidden border-4 border-green-400 relative">
           <Image
-            src={guide.profilePhoto || '/images/default-guide.jpg'}
+            src={guide.profilePhoto || '/images/providers/default-provider-cover.webp'}
             alt={guide.name || 'Guide profile'}
             fill
             className="object-cover"

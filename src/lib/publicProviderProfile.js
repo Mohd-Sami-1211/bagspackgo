@@ -21,7 +21,7 @@ function asIso(value) {
 async function resolveDetails(identifier) {
   if (mongoose.Types.ObjectId.isValid(identifier)) {
     return GuideDetails.findOne({ guide: new mongoose.Types.ObjectId(identifier) })
-      .select('guide companyname profileSlug bio destinationId speciality rating reviews totalTrips totalTreks totalEvents pausedServices status updatedAt')
+      .select('guide companyname profileSlug bio destinationId speciality rating reviews totalTrips totalEvents pausedServices status updatedAt')
       .lean();
   }
 
@@ -29,14 +29,14 @@ async function resolveDetails(identifier) {
   if (!slug) return null;
 
   let details = await GuideDetails.findOne({ profileSlug: slug })
-    .select('guide companyname profileSlug bio destinationId speciality rating reviews totalTrips totalTreks totalEvents pausedServices status updatedAt')
+    .select('guide companyname profileSlug bio destinationId speciality rating reviews totalTrips totalEvents pausedServices status updatedAt')
     .lean();
 
   if (!details) {
     const fallbackPattern = companyNamePattern(slug);
     if (fallbackPattern) {
       details = await GuideDetails.findOne({ companyname: fallbackPattern })
-        .select('guide companyname profileSlug bio destinationId speciality rating reviews totalTrips totalTreks totalEvents pausedServices status updatedAt')
+        .select('guide companyname profileSlug bio destinationId speciality rating reviews totalTrips totalEvents pausedServices status updatedAt')
         .lean();
     }
   }
@@ -46,7 +46,7 @@ async function resolveDetails(identifier) {
   // on an initial cache miss without changing provider records.
   if (!details) {
     const candidates = await GuideDetails.find({ profileSlug: { $in: [null, ''] } })
-      .select('guide companyname profileSlug bio destinationId speciality rating reviews totalTrips totalTreks totalEvents pausedServices status updatedAt')
+      .select('guide companyname profileSlug bio destinationId speciality rating reviews totalTrips totalEvents pausedServices status updatedAt')
       .limit(250)
       .lean();
     details = candidates.find((candidate) => toProviderSlug(candidate.companyname) === slug) || null;
@@ -71,17 +71,10 @@ async function queryPublicProviderProfile(identifier) {
     Package.find({
       provider: providerObjectId,
       status: 'active',
-      ...(
-        details.pausedServices?.trip && details.pausedServices?.trek
-          ? { _id: null }
-          : details.pausedServices?.trip
-            ? { category: 'trek' }
-            : details.pausedServices?.trek
-              ? { category: 'trip' }
-              : {}
-      ),
+      category: 'trip',
+      ...(details.pausedServices?.trip ? { _id: null } : {}),
     })
-      .select('name category packageType packageCategory destination days pricingTiers rating totalRatings trekName trekLevel createdAt')
+      .select('name category packageType packageCategory destination days pricingTiers rating totalRatings createdAt')
       .sort({ createdAt: -1 })
       .limit(30)
       .lean(),
@@ -119,7 +112,6 @@ async function queryPublicProviderProfile(identifier) {
       rating: Number(details.rating || 0),
       reviews: Number(details.reviews || reviews.length || 0),
       totalTrips: Number(details.totalTrips || 0),
-      totalTreks: Number(details.totalTreks || 0),
       totalEvents: Number(details.totalEvents || 0),
       isVerified: true,
     },
@@ -139,8 +131,6 @@ async function queryPublicProviderProfile(identifier) {
       })),
       rating: Number(pkg.rating || 0),
       totalRatings: Number(pkg.totalRatings || 0),
-      trekName: pkg.trekName || '',
-      trekLevel: pkg.trekLevel || '',
       // Keep provider-profile cards visually identical to the corresponding
       // package detail hero. Both are derived from the same stable package ID.
       coverImage: packageHeroFor(pkg._id.toString()),

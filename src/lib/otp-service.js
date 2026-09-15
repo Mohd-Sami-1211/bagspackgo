@@ -92,7 +92,7 @@ export async function sendWelcomeEmail(email, name, role) {
     const roleLabel = role === "user" ? "Traveler" : "Service Provider";
     const roleMessage =
         role === "user"
-            ? "You now have access to explore amazing destinations, book trips, treks, and connect with fellow travelers."
+            ? "You now have access to explore amazing destinations, book trips and join travel events."
             : "You can now set up your company profile, list your services, and start connecting with travelers.";
 
     const mailOptions = {
@@ -135,7 +135,7 @@ export async function sendWelcomeEmail(email, name, role) {
                             ` : `
                                 <li>Complete your company profile</li>
                                 <li>Upload your license & ID verification</li>
-                                <li>Create trip & trek packages</li>
+                                <li>Create trip packages and host events</li>
                                 <li>Start receiving bookings!</li>
                             `}
                         </ul>
@@ -201,7 +201,7 @@ export async function sendApprovalEmail(providerEmail, companyName, providerName
                         <p style="color: #166534; font-size: 14px; font-weight: 600; margin: 0 0 12px;">What you can do now:</p>
                         <ul style="color: #4b5563; font-size: 14px; line-height: 1.8; margin: 0; padding-left: 20px;">
                             <li>Access your complete provider dashboard</li>
-                            <li>Create and manage your trips & treks</li>
+                            <li>Create and manage your trips and events</li>
                             <li>View and manage bookings and customers</li>
                         </ul>
                     </div>
@@ -257,9 +257,9 @@ function getLogoAttachment() {
 }
 
 /**
- * Send trip/trek booking confirmation to user and provider
+ * Send trip booking confirmation to user and provider
  */
-export async function sendTripBookingConfirmation({ userEmail, userName, providerEmail, providerName, bookingRef, packageName, destination, startDate, endDate, numPeople, totalAmount, amountPaid, remainingAmount, paymentMode, isTrek }) {
+export async function sendTripBookingConfirmation({ userEmail, userName, providerEmail, providerName, bookingRef, packageName, destination, startDate, endDate, numPeople, totalAmount, amountPaid, remainingAmount, paymentMode }) {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://bagspackgo.com';
     const formattedStart = startDate ? new Date(startDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : 'TBD';
     const formattedEnd = endDate ? new Date(endDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : 'TBD';
@@ -290,12 +290,12 @@ export async function sendTripBookingConfirmation({ userEmail, userName, provide
                     <div style="background: white; padding: 44px 32px;">
                         <p style="color: #111827; font-size: 19px; margin: 0 0 16px;">Hi <strong>${userName}</strong> 👋</p>
                         <p style="color: #4b5563; line-height: 1.7; font-size: 15px; margin-bottom: 32px;">
-                            Pack your bags! Your ${isTrek ? 'trek' : 'trip'} booking for <strong>${packageName}</strong> has been successfully confirmed. 
+                            Pack your bags! Your trip booking for <strong>${packageName}</strong> has been successfully confirmed.
                             You can now access your official travel pass and e-ticket directly from the link below.
                         </p>
                         
                         <div style="text-align: center; margin-bottom: 40px;">
-                            <a href="${appUrl}/user/${isTrek ? 'trek' : 'trip'}/pass/${bookingRef}?print=true" 
+                            <a href="${appUrl}/user/trip/pass/${bookingRef}?print=true"
                                style="background: #059669; color: white; text-decoration: none; padding: 18px 44px; border-radius: 14px; font-size: 16px; font-weight: 700; display: inline-block; box-shadow: 0 10px 20px rgba(5,150,105,0.25); border: 2px solid #047857;">
                                 Download Booking Pass ⬇
                             </a>

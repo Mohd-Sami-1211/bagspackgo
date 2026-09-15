@@ -139,7 +139,7 @@ export default function ProviderRegistrationForm({ rejected = false }) {
     const [form, setForm] = useState({
         companyName: '', companyMail: '', companyMobile: '', destinationId: '',
         address: '', instagram: '', facebook: '', website: '', licenseFile: null, idFile: null,
-        availability: { trips: true, treks: true }, agree: false,
+        availability: { trips: true }, agree: false,
     });
     const [errors, setErrors] = useState({});
     const [submitting, setSubmitting] = useState(false);
@@ -167,7 +167,7 @@ export default function ProviderRegistrationForm({ rejected = false }) {
                             instagram: app.instagram || '',
                             facebook: app.facebook || '',
                             website: app.website || '',
-                            availability: app.availability || { trips: true, treks: true },
+                            availability: { trips: app.availability?.trips !== false },
                             // Load existing files so they don't have to re-upload if they don't want to
                             licenseFile: app.licenseFile || null,
                             idFile: app.idFile || null,

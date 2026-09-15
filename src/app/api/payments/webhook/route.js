@@ -3,7 +3,6 @@ import crypto from 'crypto';
 import dbConnect from '@/lib/db';
 import { Booking } from '@/models/booking.model';
 import { TripBooking } from '@/models/tripbooking.model';
-import { TrekBooking } from '@/models/trekbooking.model';
 import {
     confirmEventBooking,
     refundEventBookingPayment,
@@ -17,13 +16,6 @@ import {
     sendTripRefundInitiationOnce,
     validateCapturedTripPayment,
 } from '@/lib/tripBooking';
-import {
-    confirmTrekBooking,
-    refundTrekBookingPayment,
-    runTrekConfirmationEffects,
-    sendTrekRefundInitiationOnce,
-    validateCapturedTrekPayment,
-} from '@/lib/trekBooking';
 
 function signaturesMatch(actual, expected) {
     if (typeof actual !== 'string' || actual.length !== expected.length) return false;
@@ -207,71 +199,6 @@ export async function POST(req) {
                 return NextResponse.json({ success: true, message: outcome.newlyConfirmed ? 'Trip booking confirmed' : 'Trip booking already processed' });
             }
             return NextResponse.json({ success: false, message: 'Trip booking could not be confirmed' }, { status: 409 });
-        }
-
-        // 3. Check Trek Bookings using the same guarded confirmation path.
-        let trekBooking = await TrekBooking.findOne({
-            $or: [
-                { orderId },
-                ...(notedBookingId
-                    ? [{ _id: notedBookingId, status: 'pending', orderId: { $in: ['', 'pending', 'creating', null] } }]
-                    : []),
-            ],
-        });
-        if (trekBooking) {
-            if (!paymentId || !payload.payment?.entity) {
-                return NextResponse.json({ success: false, message: 'No payment details in trek payload' }, { status: 400 });
-            }
-            if (trekBooking.orderId !== orderId) {
-                const recovered = await TrekBooking.findOneAndUpdate(
-                    { _id: trekBooking._id, status: 'pending', orderId: { $in: ['', 'pending', 'creating', null] } },
-                    { $set: { orderId, orderCreationStartedAt: null } },
-                    { new: true }
-                );
-                trekBooking = recovered || await TrekBooking.findById(trekBooking._id);
-            }
-
-            const paymentEntity = {
-                ...payload.payment.entity,
-                order_id: orderId,
-                amount: payload.payment.entity.amount ?? payload.order?.entity?.amount_paid,
-                currency: payload.payment.entity.currency ?? payload.order?.entity?.currency,
-                status: payload.payment.entity.status || 'captured',
-                captured: payload.payment.entity.captured ?? true,
-            };
-            validateCapturedTrekPayment(trekBooking, paymentEntity);
-
-            if (trekBooking.status === 'refund_initiated') {
-                await sendTrekRefundInitiationOnce(trekBooking._id);
-                return NextResponse.json({ success: true, message: 'Trek refund already initiated' });
-            }
-            if (['cancelled', 'cancellation_requested'].includes(trekBooking.status)) {
-                trekBooking = await TrekBooking.findByIdAndUpdate(
-                    trekBooking._id,
-                    {
-                        $set: {
-                            paymentId,
-                            status: 'cancellation_requested',
-                            'cancellationDetails.refundAmount': trekBooking.amountPaid || trekBooking.totalAmount,
-                            'cancellationDetails.refundStatus': 'pending',
-                        },
-                    },
-                    { new: true }
-                );
-                await refundTrekBookingPayment(trekBooking, paymentId);
-                return NextResponse.json({ success: true, message: 'Late trek payment refund workflow checked' });
-            }
-
-            const outcome = await confirmTrekBooking({
-                bookingId: trekBooking._id,
-                orderId,
-                paymentId,
-            });
-            if (outcome.kind === 'confirmed') {
-                await runTrekConfirmationEffects(outcome.booking);
-                return NextResponse.json({ success: true, message: outcome.newlyConfirmed ? 'Trek booking confirmed' : 'Trek booking already processed' });
-            }
-            return NextResponse.json({ success: false, message: 'Trek booking could not be confirmed' }, { status: 409 });
         }
 
         // Booking not found

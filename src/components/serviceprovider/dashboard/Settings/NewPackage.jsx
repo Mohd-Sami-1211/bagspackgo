@@ -937,7 +937,7 @@ const NewPackage = ({ initialData = null, isEdit = false, adminMode = false, pro
                 value={packageInfo.name}
                 onChange={(e) => handlePackageInfoChange('name', e.target.value)}
                 className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
-                placeholder="Eg: Premium Himalayan Trek Adventure"
+                placeholder="Eg: Premium Kashmir Valley Escape"
                 required
               />
               {validationErrors.packageName && (

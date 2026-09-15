@@ -4,7 +4,7 @@ These are suggested queries and intent variations, **not measured search volumes
 
 P1 means the first group to measure and improve. P2 means a secondary opportunity requiring evidence or more detailed local review. Typo queries are monitoring terms: publishing typo-heavy copy is not the implementation.
 
-## Brand & founder
+## Brand & company
 
 **Priority:** P1  
 **Primary page:** /user/trip; /about
@@ -17,13 +17,12 @@ P1 means the first group to measure and improve. P2 means a secondary opportunit
 - bagspackgo Kashmir
 - bagspackgo website
 - what is Bagspackgo
-- who founded Bagspackgo
-- Mohd Samiullah Bagspackgo
+- about Bagspackgo
 
 ## Provider identity
 
 **Priority:** P1  
-**Primary page:** /providers; canonical provider profile
+**Primary page:** The relevant company's individual canonical profile. The public company directory has been removed at the owner's request.
 
 - [company name] Kashmir
 - [company name] tour packages
@@ -54,7 +53,7 @@ P1 means the first group to measure and improve. P2 means a secondary opportunit
 - Kashmir package inclusions
 - Kashmir package without flights
 
-## Planning & itineraries
+## Trip planning with Bagspackgo
 
 **Priority:** P1  
 **Primary page:** /travel-guides/plan-kashmir-trip
@@ -82,7 +81,7 @@ P1 means the first group to measure and improve. P2 means a secondary opportunit
 - Kashmir trip cost for family
 - 5 day Kashmir trip budget
 - 7 day Kashmir trip cost
-- Kashmir budget calculator
+- Kashmir packages for my budget
 - Kashmir travel cost per person
 - Kashmir package hidden costs
 - Kashmir trip hotel and taxi budget
@@ -108,43 +107,23 @@ P1 means the first group to measure and improve. P2 means a secondary opportunit
 - Kashmir local price advice
 - Bagspackgo Companion
 
-## Treks & selection
-
-**Priority:** P1  
-**Primary page:** /user/trek; /travel-guides/kashmir-trekking-and-events; actual trek listing
-
-- trekking in Kashmir
-- Kashmir trekking packages
-- best Kashmir treks for beginners
-- how to choose a Kashmir trek
-- Kashmir Great Lakes trek package
-- Tarsar Marsar trek package
-- Kashmir trek itinerary
-- Kashmir trekking organizer
-- Kashmir trek inclusions
-- Kashmir day treks
-- Kashmir group trekking
-- Kashmir trek difficulty
-- Kashmir trekking budget
-- what to ask a trek organizer
-
 ## Adventure events
 
 **Priority:** P1  
 **Primary page:** /user/events; specific event
 
-- upcoming trekking events Kashmir
+- upcoming adventure events Kashmir
 - Kashmir adventure events
-- weekend trek Kashmir
-- trekking event near Srinagar
-- Kashmir group trek dates
+- weekend adventure event Kashmir
+- hiking event near Srinagar
+- Kashmir group activity dates
 - [event name] [date]
 - [organizer name] upcoming events
 - [event name] meeting point
 - [event name] ticket price
 - [event name] availability
-- recent trekking events Kashmir
-- join a trek during Kashmir holiday
+- recent adventure events Kashmir
+- join an event during Kashmir holiday
 
 ## Offbeat destinations
 
@@ -166,10 +145,12 @@ P1 means the first group to measure and improve. P2 means a secondary opportunit
 - [listed destination] stay and transport
 - [listed destination spelling variant]
 
-## Travel-platform comparisons
+## Choosing Bagspackgo
 
 **Priority:** P2  
-**Primary page:** /travel-guides/compare-kashmir-travel-platforms
+**Primary page:** /travel-guides/why-bagspackgo
+
+Competitor phrases below are internal research and monitoring terms. The public page sells Bagspackgo's local packages, Offbeats, Events and Companion; it does not recommend or link to competitors.
 
 - Tripoto Kashmir packages alternative
 - Bagspackgo vs Tripoto
@@ -186,10 +167,10 @@ P1 means the first group to measure and improve. P2 means a secondary opportunit
 - TravelTriangle Kashmir packages alternative
 - Bagspackgo vs TravelTriangle
 
-## Editorial expansion after local verification
+## Future service opportunities after validation
 
 **Priority:** P2  
-**Primary page:** Expand existing guides or a distinct original guide when justified
+**Primary page:** Improve the relevant service or landing page only where an actual Bagspackgo offering addresses the query.
 
 - best time for my Kashmir itinerary
 - Kashmir monthly trip planning
@@ -198,7 +179,7 @@ P1 means the first group to measure and improve. P2 means a secondary opportunit
 - Kashmir photography trip planning
 - Kashmir accommodation checklist
 - questions to ask a Kashmir taxi provider
-- what to pack for my Kashmir trek
+- what to pack for my Kashmir adventure event
 - offbeat destination seasonal access
 - Kashmir activity cancellation checklist
 
@@ -211,5 +192,5 @@ P1 means the first group to measure and improve. P2 means a secondary opportunit
 5. Expand a page when new questions support its purpose. Create a new page only for a distinct intent with enough original value.
 6. Compare conversions and qualified inquiries before scaling content.
 
-Total suggested query patterns: 132.
+Commercial rule: respond to the travel need by presenting the relevant Bagspackgo service, its benefits and a direct next action. Do not expand these into free itineraries, DIY calculators or external-platform roundups.
 

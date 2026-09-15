@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import { TripBooking } from '@/models/tripbooking.model';
-import { TrekBooking } from '@/models/trekbooking.model';
 import { Booking as EventBooking } from '@/models/booking.model';
 import { getCurrentAdmin } from '@/lib/adminAuth';
 
@@ -21,9 +20,8 @@ export async function GET(req) {
             query.providerPaymentStatus = payoutStatus;
         }
 
-        const [trips, treks, events] = await Promise.all([
+        const [trips, events] = await Promise.all([
             TripBooking.find(query).populate('user', 'username').populate('provider', 'username').populate('package', 'name title').lean(),
-            TrekBooking.find(query).populate('user', 'username').populate('provider', 'username').populate('package', 'name title').lean(),
             EventBooking.find(query).populate('user', 'username').populate({ path: 'event', select: 'title guide', populate: { path: 'guide', select: 'username' } }).lean()
         ]);
 
@@ -43,7 +41,6 @@ export async function GET(req) {
 
         const all = [
             ...trips.map(t => formatBooking(t, 'TripBooking')),
-            ...treks.map(t => formatBooking(t, 'TrekBooking')),
             ...events.map(e => formatBooking(e, 'EventBooking'))
         ];
 

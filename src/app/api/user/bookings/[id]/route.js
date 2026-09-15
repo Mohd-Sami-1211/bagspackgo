@@ -3,7 +3,6 @@ import mongoose from 'mongoose';
 import dbConnect from '@/lib/db';
 import { Booking } from '@/models/booking.model';
 import { TripBooking } from '@/models/tripbooking.model';
-import { TrekBooking } from '@/models/trekbooking.model';
 import { GuideDetails } from '@/models/guidedetails.model';
 import { getCurrentUser } from '@/lib/auth';
 import { packageHeroFor } from '@/lib/packageHero';
@@ -67,7 +66,7 @@ export async function GET(request, context) {
             });
         }
 
-        const [eventBooking, tripBooking, trekBooking] = await Promise.all([
+        const [eventBooking, tripBooking] = await Promise.all([
             Booking.findOne(ownerQuery)
                 .select('event bookingDate amountPaid slots status createdAt participants contactDetails paymentId orderId selectedPickup customFormResponses cancellationDetails')
                 .populate({ path: 'event', select: EVENT_DETAIL_FIELDS, populate: { path: 'guide', select: 'username name companyName email phone' } })
@@ -77,14 +76,9 @@ export async function GET(request, context) {
                 .populate('package', PACKAGE_DETAIL_FIELDS)
                 .populate('provider', 'username name email phone')
                 .lean(),
-            TrekBooking.findOne(ownerQuery)
-                .select('bookingRef package provider startDate endDate numPeople peopleRange totalAmount amountPaid status createdAt personalDetails pickupDropoff packageSnapshot paymentId orderId cancellationDetails')
-                .populate('package', PACKAGE_DETAIL_FIELDS)
-                .populate('provider', 'username name email phone')
-                .lean(),
         ]);
 
-        const source = eventBooking || tripBooking || trekBooking;
+        const source = eventBooking || tripBooking;
         if (!source) {
             return NextResponse.json({ success: false, message: 'Booking not found' }, { status: 404 });
         }
@@ -131,12 +125,12 @@ export async function GET(request, context) {
         } else {
             const pkg = source.package || {};
             const snapshot = source.packageSnapshot || {};
-            const type = isTrip ? 'trip' : 'Trek';
+            const type = 'trip';
             const packageId = pkg._id?.toString() || source.package?.toString() || '';
             data = {
                 id: source._id.toString(), packageId, type,
-                name: pkg.name || snapshot.name || (isTrip ? 'Trip Package' : 'Trek Package'),
-                packageName: pkg.name || snapshot.name || (isTrip ? 'Trip Package' : 'Trek Package'),
+                name: pkg.name || snapshot.name || 'Trip Package',
+                packageName: pkg.name || snapshot.name || 'Trip Package',
                 destination: pkg.destination || snapshot.destination || '', guide: companyName, guideName: companyName, companyName,
                 providerEmail: providerDetails?.companyemail || provider?.email || '',
                 providerPhone: providerDetails?.companymobile || provider?.phone || '',
@@ -144,27 +138,26 @@ export async function GET(request, context) {
                 website: providerDetails?.website || '', twitter: providerDetails?.twitter || '',
                 people: source.numPeople, numPeople: source.numPeople, date: source.startDate, startDate: source.startDate,
                 endDate: source.endDate, duration: `${pkg.days || snapshot.days || 0} Days`, days: pkg.days || snapshot.days || 0,
-                category: isTrip ? source.category : source.peopleRange, bookingRef: source.bookingRef,
+                category: source.category, bookingRef: source.bookingRef,
                 totalAmount: source.totalAmount, amountPaid: source.amountPaid ?? source.totalAmount,
-                remainingAmount: isTrip ? (source.remainingAmount ?? Math.max(0, Number(source.totalAmount || 0) - Number(source.amountPaid ?? source.totalAmount ?? 0))) : 0,
-                paymentMode: isTrip ? (source.paymentMode || 'full') : 'full', price: source.amountPaid ?? source.totalAmount,
+                remainingAmount: source.remainingAmount ?? Math.max(0, Number(source.totalAmount || 0) - Number(source.amountPaid ?? source.totalAmount ?? 0)),
+                paymentMode: source.paymentMode || 'full', price: source.amountPaid ?? source.totalAmount,
                 status: source.status, createdAt: source.createdAt, paymentId: source.paymentId || '', orderId: source.orderId || '',
                 cancellationDetails: source.cancellationDetails || {}, personalDetails: source.personalDetails || {},
-                arrivalDeparture: isTrip ? (source.arrivalDeparture || {}) : (source.pickupDropoff || {}),
-                pickupDropoff: source.pickupDropoff || {}, packageSnapshot: snapshot,
+                arrivalDeparture: source.arrivalDeparture || {}, packageSnapshot: snapshot,
                 itinerary: cleanList(pkg.itinerary || snapshot.itinerary),
                 termsAndConditions: cleanList(pkg.termsAndConditions || snapshot.termsAndConditions),
                 inclusivesList: cleanList(pkg.inclusivesList || snapshot.inclusivesList),
                 exclusivesList: cleanList(pkg.exclusivesList || snapshot.exclusivesList),
                 additionalPoints: cleanList(pkg.additionalPoints || snapshot.additionalPoints),
                 coverImage: packageHeroFor(packageId),
-                passUrl: isTrip ? `/user/trip/pass/${source._id.toString()}` : `/user/trek/pass/${source._id.toString()}`,
+                passUrl: `/user/trip/pass/${source._id.toString()}`,
             };
         }
 
         return NextResponse.json({
             success: true,
-            type: isEvent ? 'event' : isTrip ? 'trip' : 'trek',
+            type: isEvent ? 'event' : 'trip',
             data,
             booking: eventBooking || source,
         }, { headers: { 'Cache-Control': 'private, max-age=30, stale-while-revalidate=120' } });

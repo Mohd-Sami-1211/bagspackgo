@@ -138,7 +138,6 @@ export async function sendTripConfirmationOnce(bookingId) {
             amountPaid: booking.amountPaid,
             remainingAmount: booking.remainingAmount,
             paymentMode: booking.paymentMode,
-            isTrek: false,
         });
         const completedAt = new Date();
         const userDone = Boolean(booking.confirmationUserEmailSentAt) || result.userSent;

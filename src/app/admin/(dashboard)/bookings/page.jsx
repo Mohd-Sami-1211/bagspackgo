@@ -7,7 +7,6 @@ import Image from 'next/image';
 
 const TABS = [
     { id: 'trips', label: 'Trips' },
-    { id: 'treks', label: 'Treks' },
     { id: 'events', label: 'Events' }
 ];
 

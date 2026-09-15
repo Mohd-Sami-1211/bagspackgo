@@ -4,7 +4,6 @@ import { getCurrentUser } from '@/lib/auth';
 import { Guide } from '@/models/guide.model';
 import { GuideDetails } from '@/models/guidedetails.model';
 import { TripBooking } from '@/models/tripbooking.model';
-import { TrekBooking } from '@/models/trekbooking.model';
 import { Event } from '@/models/event.model';
 import { Package } from '@/models/package.model';
 import { User } from '@/models/user.model';
@@ -138,21 +137,13 @@ export async function GET() {
         startOfPrev30.setDate(startOfPrev30.getDate() - 30);
 
         // Get all packages for this provider
-        const providerPackages = await Package.find({ provider: guideId }).select('_id name destination category status').lean();
+        const providerPackages = await Package.find({ provider: guideId, category: 'trip' }).select('_id name destination category status').lean();
         const packageIds = providerPackages.map(p => p._id);
 
-        // Fetch all trip & trek bookings with user population
-        const [tripBookings, trekBookings, events] = await Promise.all([
+        // Fetch trip bookings and events with user population
+        const [tripBookings, events] = await Promise.all([
             packageIds.length > 0
                 ? TripBooking.find({
-                    $or: [{ package: { $in: packageIds } }, { provider: guideId }],
-                    status: { $ne: 'pending' }
-                })
-                    .populate('user', 'username email phone')
-                    .lean()
-                : [],
-            packageIds.length > 0
-                ? TrekBooking.find({
                     $or: [{ package: { $in: packageIds } }, { provider: guideId }],
                     status: { $ne: 'pending' }
                 })
@@ -162,7 +153,7 @@ export async function GET() {
             Event.find({ guide: guideId }).lean(),
         ]);
 
-        const allBookings = [...tripBookings, ...trekBookings];
+        const allBookings = tripBookings;
 
         // ── Stats ─────────────────────────────────────────────
         const bookingsLast30 = allBookings.filter(b => new Date(b.createdAt) >= startOf30Days);
@@ -202,7 +193,6 @@ export async function GET() {
         // ── Pipeline bar chart ────────────────────────────────
         const pipeline = [
             { name: 'Trips', scheduled: tripBookings.filter(b => b.status === 'confirmed').length, pending: 0 },
-            { name: 'Treks', scheduled: trekBookings.filter(b => b.status === 'confirmed').length, pending: 0 },
             { name: 'Events', scheduled: events.filter(e => e.bookedSlots > 0).length, pending: 0 },
         ];
 
@@ -211,7 +201,6 @@ export async function GET() {
             .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
             .slice(0, 8)
             .map(b => {
-                const isTrek = !!b.peopleRange;
                 // get name from populated user, then fall back to personalDetails, then snapshot
                 const bookerName =
                     b.user?.username ||
@@ -222,7 +211,7 @@ export async function GET() {
                 return {
                     id: b._id.toString(),
                     bookingRef: b.bookingRef || '',
-                    type: isTrek ? 'Trek' : 'Trip',
+                    type: 'Trip',
                     packageName: b.package?.name || b.packageSnapshot?.name || 'Package',
                     destination: b.package?.destination || b.packageSnapshot?.destination || '',
                     amount: b.totalAmount || 0,
@@ -263,7 +252,7 @@ export async function GET() {
                     speciality: details?.speciality || '',
                     memberSince: guide?.createdAt,
                     applicationStatus: guide?.applicationStatus,
-                    pausedServices: details?.pausedServices || { trip: false, trek: false, event: false },
+                    pausedServices: details?.pausedServices || { trip: false, event: false },
                 },
                 stats: {
                     totalBookings30,
@@ -275,7 +264,6 @@ export async function GET() {
                     publishedEvents,
                     totalEvents,
                     totalTripBookings: tripBookings.length,
-                    totalTrekBookings: trekBookings.length,
                     confirmedBookings: allBookings.filter(b => b.status === 'confirmed').length,
                     pendingBookings: allBookings.filter(b => b.status === 'pending').length,
                     cancelledBookings: allBookings.filter(b => ['cancelled', 'cancellation_requested', 'refund_initiated'].includes(b.status)).length,

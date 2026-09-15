@@ -26,7 +26,7 @@ export default function SignInPage() {
             Sign in or create your provider account to list packages and host events.
           </p>
           <div className="mx-auto mt-6 grid max-w-md gap-2 text-left sm:grid-cols-2">
-            <p className="flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2.5 text-xs font-bold text-emerald-900"><CheckCircle2 className="h-4 w-4 text-emerald-600" />List trips and treks</p>
+            <p className="flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2.5 text-xs font-bold text-emerald-900"><CheckCircle2 className="h-4 w-4 text-emerald-600" />List trips and events</p>
             <p className="flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2.5 text-xs font-bold text-emerald-900"><CheckCircle2 className="h-4 w-4 text-emerald-600" />Create local events</p>
           </div>
           <button

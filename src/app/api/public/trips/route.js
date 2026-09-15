@@ -14,7 +14,7 @@ async function buildFormattedGuides(packages) {
     const guideDetailsList = await GuideDetails.find({
         guide: { $in: providerIds }
     })
-        .select('guide companyname bio destinationId rating reviews totalTrips totalTreks languages logo pausedServices.trip')
+        .select('guide companyname bio destinationId rating reviews totalTrips languages logo pausedServices.trip')
         .populate('guide', 'username')
         .lean();
 
@@ -44,7 +44,7 @@ async function buildFormattedGuides(packages) {
             location: gd.destinationId?.toLowerCase() || '',
             rating: gd.rating || 0,
             reviews: gd.reviews || 0,
-            touristsHandled: (gd.totalTrips || 0) + (gd.totalTreks || 0),
+            touristsHandled: gd.totalTrips || 0,
             languages: gd.languages?.length ? gd.languages : ['English', 'Hindi'],
             logo: gd.logo || null
         })),
@@ -106,7 +106,7 @@ async function buildFormattedGuides(packages) {
             name: guideInfo.name,
             bio: guideInfo.bio,
             logo: guideInfo.logo,
-            image: guideInfo.logo || '/images/guides/kashmir1.jpg',
+            image: guideInfo.logo || '/images/providers/default-provider-cover.webp',
             rating: guideInfo.rating,
             reviews: guideInfo.reviews,
             location: guideInfo.location || (firstPkg?.destination?.toLowerCase() || ''),

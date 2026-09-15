@@ -18,7 +18,7 @@ export async function GET(request) {
         const page = Math.max(1, Number.parseInt(url.searchParams.get('page') || '1', 10));
         const limit = Math.min(24, Math.max(1, Number.parseInt(url.searchParams.get('limit') || '9', 10)));
         const requestedType = url.searchParams.get('type');
-        const allowedTypes = new Set(['trip', 'trek', 'event', 'offbeat']);
+        const allowedTypes = new Set(['trip', 'event', 'offbeat']);
         const query = { userId: user.userId };
         if (allowedTypes.has(requestedType)) query.itemType = requestedType;
 
@@ -28,12 +28,12 @@ export async function GET(request) {
             Saved.countDocuments(query),
         ]);
 
-        const packageIds = savedRecords.filter((record) => ['trip', 'trek'].includes(record.itemType)).map((record) => record.itemId);
+        const packageIds = savedRecords.filter((record) => record.itemType === 'trip').map((record) => record.itemId);
         const eventIds = savedRecords.filter((record) => record.itemType === 'event').map((record) => record.itemId);
         const offbeatIds = savedRecords.filter((record) => record.itemType === 'offbeat').map((record) => record.itemId);
 
         const [packages, events, offbeats] = await Promise.all([
-            packageIds.length ? Package.find({ _id: { $in: packageIds } }).select({ title: 1, name: 1, destination: 1, label: 1, days: 1, packageCategory: 1, pricingTiers: 1, coverImage: 1, photos: { $slice: 1 }, images: { $slice: 1 } }).lean() : [],
+            packageIds.length ? Package.find({ _id: { $in: packageIds }, category: 'trip' }).select({ title: 1, name: 1, destination: 1, label: 1, days: 1, packageCategory: 1, pricingTiers: 1, coverImage: 1, images: { $slice: 1 } }).lean() : [],
             eventIds.length ? Event.find({ _id: { $in: eventIds } }).select({ title: 1, eventType: 1, destination: 1, date: 1, duration: 1, pricePerSlot: 1, poster: 1, location: 1, totalSlots: 1, bookedSlots: 1, reservedSlots: 1, guide: 1, photographs: { $slice: 1 } }).populate({ path: 'guide', select: 'username' }).lean() : [],
             offbeatIds.length ? OffBeat.find({ _id: { $in: offbeatIds } }).select({ title: 1, destination: 1, shortDescription: 1, region: 1, status: 1, coverPhoto: 1, photographs: { $slice: 1 } }).lean() : [],
         ]);
@@ -47,7 +47,7 @@ export async function GET(request) {
 
         const validItems = savedRecords.map((record) => {
             const itemId = record.itemId.toString();
-            let itemData = ['trip', 'trek'].includes(record.itemType) ? packageById.get(itemId) : record.itemType === 'event' ? eventById.get(itemId) : offbeatById.get(itemId);
+            let itemData = record.itemType === 'trip' ? packageById.get(itemId) : record.itemType === 'event' ? eventById.get(itemId) : offbeatById.get(itemId);
             if (!itemData) return null;
             if (record.itemType === 'event') {
                 itemData = {
@@ -87,6 +87,9 @@ export async function POST(request) {
 
         if (!itemId || !itemType) {
             return NextResponse.json({ success: false, message: "Missing required fields" }, { status: 400 });
+        }
+        if (!['trip', 'event', 'offbeat'].includes(itemType)) {
+            return NextResponse.json({ success: false, message: "Unsupported saved item type" }, { status: 400 });
         }
 
         await dbConnect();

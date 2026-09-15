@@ -4,7 +4,6 @@ import { getCurrentAdmin } from '@/lib/adminAuth';
 import { User } from '@/models/user.model';
 import { Guide } from '@/models/guide.model';
 import { TripBooking } from '@/models/tripbooking.model';
-import { TrekBooking } from '@/models/trekbooking.model';
 import { Event } from '@/models/event.model';
 import { GuideDetails } from '@/models/guidedetails.model';
 import { Support } from '@/models/support.model';
@@ -27,29 +26,22 @@ export async function GET() {
         const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
 
         // ── Core Stats ──────────────────────────────────────
-        const [totalUsers, totalProviders, totalTripBookings, totalTrekBookings,
+        const [totalUsers, totalProviders, totalTripBookings,
             pendingApplications, unresolvedSupport, unreadNotifications] = await Promise.all([
             User.countDocuments({}),
             Guide.countDocuments({}),
             TripBooking.countDocuments({ status: { $ne: 'pending' } }),
-            TrekBooking.countDocuments({ status: { $ne: 'pending' } }),
             GuideDetails.countDocuments({ status: 'pending' }),
             Support.countDocuments({ status: { $in: ['pending', 'in-progress'] } }),
             AdminNotification.countDocuments({ isRead: false }),
         ]);
 
         // ── Revenue This Month ───────────────────────────────
-        const [tripRevThisMonth, trekRevThisMonth] = await Promise.all([
-            TripBooking.aggregate([
-                { $match: { createdAt: { $gte: startOfMonth }, status: 'confirmed' } },
-                { $group: { _id: null, total: { $sum: '$totalAmount' } } }
-            ]),
-            TrekBooking.aggregate([
-                { $match: { createdAt: { $gte: startOfMonth }, status: 'confirmed' } },
-                { $group: { _id: null, total: { $sum: '$totalAmount' } } }
-            ]),
+        const tripRevThisMonth = await TripBooking.aggregate([
+            { $match: { createdAt: { $gte: startOfMonth }, status: 'confirmed' } },
+            { $group: { _id: null, total: { $sum: '$totalAmount' } } }
         ]);
-        const revenueThisMonth = (tripRevThisMonth[0]?.total || 0) + (trekRevThisMonth[0]?.total || 0);
+        const revenueThisMonth = tripRevThisMonth[0]?.total || 0;
 
         // ── Monthly Bookings Chart (last 6 months) ───────────
         const sixMonthsAgo = new Date(now);
@@ -57,27 +49,17 @@ export async function GET() {
         sixMonthsAgo.setDate(1);
         sixMonthsAgo.setHours(0, 0, 0, 0);
 
-        const [tripMonthly, trekMonthly] = await Promise.all([
-            TripBooking.aggregate([
-                { $match: { createdAt: { $gte: sixMonthsAgo } } },
-                { $group: { _id: { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } }, count: { $sum: 1 } } },
-                { $sort: { '_id.year': 1, '_id.month': 1 } }
-            ]),
-            TrekBooking.aggregate([
-                { $match: { createdAt: { $gte: sixMonthsAgo } } },
-                { $group: { _id: { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } }, count: { $sum: 1 } } },
-                { $sort: { '_id.year': 1, '_id.month': 1 } }
-            ]),
+        const tripMonthly = await TripBooking.aggregate([
+            { $match: { createdAt: { $gte: sixMonthsAgo } } },
+            { $group: { _id: { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } }, count: { $sum: 1 } } },
+            { $sort: { '_id.year': 1, '_id.month': 1 } }
         ]);
 
         // ── Booking Status Breakdown ─────────────────────────
-        const [tripStatus, trekStatus] = await Promise.all([
-            TripBooking.aggregate([{ $group: { _id: '$status', count: { $sum: 1 } } }]),
-            TrekBooking.aggregate([{ $group: { _id: '$status', count: { $sum: 1 } } }]),
-        ]);
+        const tripStatus = await TripBooking.aggregate([{ $group: { _id: '$status', count: { $sum: 1 } } }]);
 
         const statusMap = {};
-        [...tripStatus, ...trekStatus].forEach(s => {
+        tripStatus.forEach(s => {
             statusMap[s._id] = (statusMap[s._id] || 0) + s.count;
         });
 
@@ -92,14 +74,14 @@ export async function GET() {
             success: true,
             stats: {
                 totalUsers, totalProviders,
-                totalBookings: totalTripBookings + totalTrekBookings,
+                totalBookings: totalTripBookings,
                 revenueThisMonth,
                 pendingApplications,
                 unresolvedSupport,
                 unreadNotifications,
             },
             charts: {
-                monthlyBookings: { trips: tripMonthly, treks: trekMonthly },
+                monthlyBookings: { trips: tripMonthly },
                 statusBreakdown: statusMap,
             },
             recent: {

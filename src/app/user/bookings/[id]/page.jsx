@@ -329,7 +329,7 @@ function BookingPassEmbed({ booking }) {
                                     );
                                 })()
                             ) : (
-                                // Trip/Trek pickup
+                                // Trip pickup
                                 arrivalDeparture?.pickup?.location ? (
                                     <div className="space-y-1.5 mt-1">
                                         <p className="text-xs font-black text-gray-900 leading-tight flex items-start gap-1.5">
@@ -452,9 +452,7 @@ export default function BookingDetailPage() {
         if (!booking) return;
         setCancelling(true);
         try {
-            const endpoint = booking.type === 'Trek'
-                ? `/api/user/trek-bookings/${id}/cancel`
-                : `/api/user/trip-bookings/${id}/cancel`;
+            const endpoint = `/api/user/trip-bookings/${id}/cancel`;
 
             const res = await fetch(endpoint, {
                 method: 'POST',
@@ -499,7 +497,6 @@ export default function BookingDetailPage() {
     
     const inclusivesList = filterItems(getList('inclusivesList'));
     const exclusivesList = filterItems(getList('exclusivesList'));
-    const additionalPoints = getList('additionalPoints').filter(p => (p?.text || p)?.trim?.());
     const termsAndConditionsList = getList('termsAndConditions');
     const itineraryList = getList('itinerary');
     const highlights = getList('highlights');
@@ -706,7 +703,7 @@ export default function BookingDetailPage() {
                                 { label: 'End Date', value: formatDate(booking.endDate) },
                                 { label: 'Duration', value: booking.duration },
                                 { label: 'Travellers', value: `${booking.people || 1} Pax` },
-                                ...(booking?.type?.toLowerCase() !== 'trek' ? [{ label: 'Category', value: booking.category }] : []),
+                                { label: 'Category', value: booking.category },
                                 { label: 'Pickup', value: booking.arrivalDeparture?.pickup?.address ? `${booking.arrivalDeparture.pickup.address}${booking.arrivalDeparture.pickup.location ? `, ${booking.arrivalDeparture.pickup.location}` : ''} @ ${formatTimeWithAMPM(booking.arrivalDeparture.pickup.time) || 'TBD'}` : 'TBD' },
                                 { label: 'Booked On', value: (booking.createdAt || booking.bookingDate) ? (() => { const d = new Date(booking.createdAt || booking.bookingDate); return `${d.toLocaleDateString('en-GB')} ${d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`; })() : '—' },
                                 { label: 'Trip Total', value: rupee(bookingTotal) },
@@ -856,7 +853,7 @@ export default function BookingDetailPage() {
                 )}
 
                 {/* Inclusions and Exclusions Section */}
-                {(inclusivesList.length > 0 || exclusivesList.length > 0 || (additionalPoints.length > 0 && booking?.type?.toLowerCase() === 'trek')) && (
+                {(inclusivesList.length > 0 || exclusivesList.length > 0) && (
                     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.11 }}
                         className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden p-6">
                         <div className="flex items-center gap-2 mb-4">
@@ -889,18 +886,6 @@ export default function BookingDetailPage() {
                                 </div>
                             )}
                         </div>
-                        {additionalPoints.length > 0 && booking?.type?.toLowerCase() === 'trek' && (
-                            <div className="mt-6 pt-6 border-t border-gray-100">
-                                <h4 className="font-bold text-gray-800 uppercase tracking-widest mb-3 text-[11px] flex items-center gap-2">
-                                    <Navigation className="w-3.5 h-3.5 text-amber-500" /> Additional Points
-                                </h4>
-                                <ul className="list-disc pl-5 space-y-1.5 text-sm text-gray-600">
-                                    {additionalPoints.map((item, i) => (
-                                        <li key={i}>{item?.text || item}</li>
-                                    ))}
-                                </ul>
-                            </div>
-                        )}
                     </motion.div>
                 )}
 

@@ -119,7 +119,7 @@ const SavedMainContent = () => {
               const pkg = record.item || {};
               const typeCfg = TYPE_CONFIG[record.itemType] || TYPE_CONFIG.trip;
               const Icon = typeCfg.icon;
-              const image = ['trip', 'trek'].includes(record.itemType)
+              const image = record.itemType === 'trip'
                 ? packageHeroFor(record.itemId)
                 : record.itemType === 'offbeat'
                   ? pkg.coverPhoto || pkg.coverImage

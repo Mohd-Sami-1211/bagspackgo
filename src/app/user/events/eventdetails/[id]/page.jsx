@@ -19,7 +19,7 @@ function EventArchive({ event }) {
     <p className="mt-8 text-xs font-bold uppercase tracking-[.2em] text-[#9b7440]">{label}</p>
     <h1 className="mt-4 font-serif text-4xl leading-tight sm:text-6xl">{event.name}</h1>
     <p className="mt-5 text-slate-600">{event.location} · {new Date(event.date).toLocaleDateString('en-IN', { dateStyle: 'long', timeZone: 'Asia/Kolkata' })} · {event.duration}</p>
-    <p className="mt-4 text-sm">Organized by <Link href={event.guidePath || '/providers'} className="font-semibold underline">{event.guideName}</Link></p>
+    <p className="mt-4 text-sm">Organized by {event.guidePath ? <Link href={event.guidePath} className="font-semibold underline">{event.guideName}</Link> : <span className="font-semibold">{event.guideName}</span>}</p>
     <div className="mt-8 rounded-2xl bg-[#f8f6f0] p-6 leading-7">{label === 'Registration closed' ? 'This event has already started. Registration is closed.' : 'This listing is kept as a record of a ' + label.toLowerCase() + '. Booking is closed.'} <Link href="/user/events" className="font-semibold underline">Find another upcoming adventure.</Link></div>
     <img width={1200} height={800} src={event.image} alt={event.name + " event poster"} loading="lazy" className="mt-8 max-h-[520px] w-full rounded-3xl object-contain" />
     <h2 className="mt-10 font-serif text-3xl">About this event</h2><p className="mt-5 whitespace-pre-line leading-8 text-slate-600">{event.about}</p>

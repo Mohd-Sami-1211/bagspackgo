@@ -8,7 +8,7 @@ import {
 import {
   TrendingUp, TrendingDown, Minus, IndianRupee, Package,
   CalendarDays, Clock, CheckCircle2, XCircle, MapPin, RefreshCw,
-  Mountain, Plane, PartyPopper, Zap, ChevronRight,
+  Plane, PartyPopper, Zap, ChevronRight,
   ArrowRight, BarChart2, Share2,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -384,7 +384,7 @@ export default function DashboardMainContent() {
         </motion.div>
 
         {/* ── Paused Banner ─────────────────────────────────── */}
-        {(profile?.pausedServices?.trip || profile?.pausedServices?.trek || profile?.pausedServices?.event) && (
+        {(profile?.pausedServices?.trip || profile?.pausedServices?.event) && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -395,7 +395,6 @@ export default function DashboardMainContent() {
               <span className="font-semibold">Services paused: </span>
               {[
                 profile.pausedServices.trip  && 'Trips',
-                profile.pausedServices.trek  && 'Treks',
                 profile.pausedServices.event && 'Events',
               ].filter(Boolean).join(', ')}.{' '}
               <Link href="/serviceprovider/dashboard/settings" className="underline hover:text-amber-900">Manage</Link>
@@ -555,7 +554,7 @@ export default function DashboardMainContent() {
           >
             <SectionHeader
               title="Recent Bookings"
-              sub="Latest activity across trips & treks"
+              sub="Latest activity across trips"
               linkLabel="View all"
               linkHref="/serviceprovider/dashboard/trips"
             />
@@ -584,7 +583,7 @@ export default function DashboardMainContent() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
                         <span className="text-[13px] font-semibold text-gray-800 truncate">{b.bookerName}</span>
-                        <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${b.type === 'Trek' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'}`}>
+                        <span className="rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-600">
                           {b.type}
                         </span>
                       </div>

@@ -136,19 +136,15 @@ export default function SmartImport({ adminMode = false, providerId = null }) {
 
       // Store extracted data in sessionStorage and redirect to the form
       const data = result.data;
-      const isTrip = data.category === 'trip';
-
       sessionStorage.setItem('smartImportData', JSON.stringify(data));
-      sessionStorage.setItem('smartImportCategory', data.category);
+      sessionStorage.setItem('smartImportCategory', 'trip');
 
       // Brief pause to show completion
       setTimeout(() => {
         if (adminMode) {
-          router.push(`/admin/providers/${providerId}/packages/new?type=${isTrip ? 'trip' : 'trek'}&fromImport=true`);
-        } else if (isTrip) {
-          router.push('/serviceprovider/dashboard/settings/packages/new?fromImport=true');
+          router.push(`/admin/providers/${providerId}/packages/new?type=trip&fromImport=true`);
         } else {
-          router.push('/serviceprovider/dashboard/settings/packages/new-trek?fromImport=true');
+          router.push('/serviceprovider/dashboard/settings/packages/new?fromImport=true');
         }
       }, 1200);
 

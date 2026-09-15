@@ -31,7 +31,7 @@ export async function GET(_request, { params }) {
 
         const [providerDetails, provider] = await Promise.all([
             GuideDetails.findOne({ guide: pkg.provider })
-                .select('companyname bio destinationId rating reviews totalTrips totalTreks languages logo pausedServices.trip')
+                .select('companyname bio destinationId rating reviews totalTrips languages logo pausedServices.trip')
                 .lean(),
             Guide.findById(pkg.provider).select('username').lean(),
         ]);
@@ -79,13 +79,13 @@ export async function GET(_request, { params }) {
                 companyName: providerName,
                 bio: providerDetails?.bio || 'Experienced local travel company',
                 logo: providerDetails?.logo || null,
-                image: providerDetails?.logo || '/images/guides/kashmir1.jpg',
+                image: providerDetails?.logo || '/images/providers/default-provider-cover.webp',
                 rating: Number(providerDetails?.rating || pkg.rating || 0),
                 reviews: Number(providerDetails?.reviews || pkg.totalRatings || 0),
                 location: providerDetails?.destinationId?.toLowerCase() || pkg.destination?.toLowerCase() || '',
                 price: displayPrice,
                 languages: providerDetails?.languages?.length ? providerDetails.languages : ['English', 'Hindi'],
-                touristsHandled: Number(providerDetails?.totalTrips || 0) + Number(providerDetails?.totalTreks || 0),
+                touristsHandled: Number(providerDetails?.totalTrips || 0),
                 packages: [formattedPackage],
             }],
             pagination: { page: 1, limit: 1, total: 1, totalPages: 1, hasMore: false },

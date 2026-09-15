@@ -5,7 +5,7 @@ import { PackageVisit } from '@/models/packagevisit.model';
 
 /**
  * GET /api/admin/activity/packages
- * Returns all trip/trek package visit records from the last 24 hours.
+ * Returns all trip package visit records from the last 24 hours.
  * Sorted by lastVisitedAt descending (most recent / most revisits at top).
  * Protected: admin only.
  */

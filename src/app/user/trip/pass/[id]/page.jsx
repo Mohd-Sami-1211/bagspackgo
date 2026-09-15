@@ -124,9 +124,9 @@ export default function TripPassPage() {
     const destinationName = pSnapshot.destination || booking?.destination || arrivalDeparture?.arrival?.city || "Kashmir Valleys";
     const travelers = personalDetails?.personalDetails || [];
 
-    const passUrl = typeof window !== 'undefined' 
-        ? `${window.location.origin}/user/${booking?.bookingType === 'trek' ? 'trek' : 'trip'}/pass/${id}` 
-        : `https://bagspackgo.com/user/${booking?.bookingType === 'trek' ? 'trek' : 'trip'}/pass/${id}`;
+    const passUrl = typeof window !== 'undefined'
+        ? `${window.location.origin}/user/trip/pass/${id}`
+        : `https://bagspackgo.com/user/trip/pass/${id}`;
         
     const qrPrintUrl = passUrl + "?print=true";
 
