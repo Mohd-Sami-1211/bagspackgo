@@ -1,0 +1,1628 @@
+{
+  "testedAt": "2026-09-16T08:09:38.453Z",
+  "base": "http://localhost:3007",
+  "sitemapUrls": 42,
+  "pages": 42,
+  "results": [
+    {
+      "path": "/",
+      "check": "permanent homepage redirect",
+      "passed": true,
+      "detail": "308 /user/trip"
+    },
+    {
+      "path": "/user/trip",
+      "check": "HTTP 200",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "path": "/user/trip",
+      "check": "one self canonical",
+      "passed": true,
+      "detail": "https://www.bagspackgo.com/user/trip"
+    },
+    {
+      "path": "/user/trip",
+      "check": "server-rendered heading",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/user/trip",
+      "check": "page title present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/user/trip",
+      "check": "JSON-LD parses",
+      "passed": true,
+      "detail": "1 blocks"
+    },
+    {
+      "path": "/user/trip",
+      "check": "indexable public page",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/user/trip",
+      "check": "Kashmir-based brand identity is readable",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/user/events",
+      "check": "HTTP 200",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "path": "/user/events",
+      "check": "one self canonical",
+      "passed": true,
+      "detail": "https://www.bagspackgo.com/user/events"
+    },
+    {
+      "path": "/user/events",
+      "check": "server-rendered heading",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/user/events",
+      "check": "page title present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/user/events",
+      "check": "JSON-LD parses",
+      "passed": true,
+      "detail": "0 blocks"
+    },
+    {
+      "path": "/user/events",
+      "check": "indexable public page",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/user/events",
+      "check": "upcoming events have links in initial HTML",
+      "passed": true,
+      "detail": "0 events"
+    },
+    {
+      "path": "/user/events",
+      "check": "past events have links in initial HTML",
+      "passed": true,
+      "detail": "0 events"
+    },
+    {
+      "path": "/user/offbeats",
+      "check": "HTTP 200",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "path": "/user/offbeats",
+      "check": "one self canonical",
+      "passed": true,
+      "detail": "https://www.bagspackgo.com/user/offbeats"
+    },
+    {
+      "path": "/user/offbeats",
+      "check": "server-rendered heading",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/user/offbeats",
+      "check": "page title present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/user/offbeats",
+      "check": "JSON-LD parses",
+      "passed": true,
+      "detail": "0 blocks"
+    },
+    {
+      "path": "/user/offbeats",
+      "check": "indexable public page",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/user/offbeats",
+      "check": "published destinations have links in initial HTML",
+      "passed": true,
+      "detail": "3 destinations"
+    },
+    {
+      "path": "/about",
+      "check": "HTTP 200",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "path": "/about",
+      "check": "one self canonical",
+      "passed": true,
+      "detail": "https://www.bagspackgo.com/about"
+    },
+    {
+      "path": "/about",
+      "check": "server-rendered heading",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/about",
+      "check": "page title present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/about",
+      "check": "JSON-LD parses",
+      "passed": true,
+      "detail": "1 blocks"
+    },
+    {
+      "path": "/about",
+      "check": "indexable public page",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/travel-guides",
+      "check": "HTTP 200",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "path": "/travel-guides",
+      "check": "one self canonical",
+      "passed": true,
+      "detail": "https://www.bagspackgo.com/travel-guides"
+    },
+    {
+      "path": "/travel-guides",
+      "check": "server-rendered heading",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/travel-guides",
+      "check": "page title present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/travel-guides",
+      "check": "JSON-LD parses",
+      "passed": true,
+      "detail": "1 blocks"
+    },
+    {
+      "path": "/travel-guides",
+      "check": "indexable public page",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/user/companion",
+      "check": "HTTP 200",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "path": "/user/companion",
+      "check": "one self canonical",
+      "passed": true,
+      "detail": "https://www.bagspackgo.com/user/companion"
+    },
+    {
+      "path": "/user/companion",
+      "check": "server-rendered heading",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/user/companion",
+      "check": "page title present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/user/companion",
+      "check": "JSON-LD parses",
+      "passed": true,
+      "detail": "1 blocks"
+    },
+    {
+      "path": "/user/companion",
+      "check": "indexable public page",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/terms",
+      "check": "HTTP 200",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "path": "/terms",
+      "check": "one self canonical",
+      "passed": true,
+      "detail": "https://www.bagspackgo.com/terms"
+    },
+    {
+      "path": "/terms",
+      "check": "server-rendered heading",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/terms",
+      "check": "page title present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/terms",
+      "check": "JSON-LD parses",
+      "passed": true,
+      "detail": "0 blocks"
+    },
+    {
+      "path": "/terms",
+      "check": "indexable public page",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/privacy",
+      "check": "HTTP 200",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "path": "/privacy",
+      "check": "one self canonical",
+      "passed": true,
+      "detail": "https://www.bagspackgo.com/privacy"
+    },
+    {
+      "path": "/privacy",
+      "check": "server-rendered heading",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/privacy",
+      "check": "page title present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/privacy",
+      "check": "JSON-LD parses",
+      "passed": true,
+      "detail": "0 blocks"
+    },
+    {
+      "path": "/privacy",
+      "check": "indexable public page",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/travel-guides/plan-kashmir-trip",
+      "check": "HTTP 200",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "path": "/travel-guides/plan-kashmir-trip",
+      "check": "one self canonical",
+      "passed": true,
+      "detail": "https://www.bagspackgo.com/travel-guides/plan-kashmir-trip"
+    },
+    {
+      "path": "/travel-guides/plan-kashmir-trip",
+      "check": "server-rendered heading",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/travel-guides/plan-kashmir-trip",
+      "check": "page title present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/travel-guides/plan-kashmir-trip",
+      "check": "JSON-LD parses",
+      "passed": true,
+      "detail": "2 blocks"
+    },
+    {
+      "path": "/travel-guides/plan-kashmir-trip",
+      "check": "indexable public page",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/travel-guides/choose-kashmir-tour-package",
+      "check": "HTTP 200",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "path": "/travel-guides/choose-kashmir-tour-package",
+      "check": "one self canonical",
+      "passed": true,
+      "detail": "https://www.bagspackgo.com/travel-guides/choose-kashmir-tour-package"
+    },
+    {
+      "path": "/travel-guides/choose-kashmir-tour-package",
+      "check": "server-rendered heading",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/travel-guides/choose-kashmir-tour-package",
+      "check": "page title present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/travel-guides/choose-kashmir-tour-package",
+      "check": "JSON-LD parses",
+      "passed": true,
+      "detail": "2 blocks"
+    },
+    {
+      "path": "/travel-guides/choose-kashmir-tour-package",
+      "check": "indexable public page",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/travel-guides/kashmir-trip-budget",
+      "check": "HTTP 200",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "path": "/travel-guides/kashmir-trip-budget",
+      "check": "one self canonical",
+      "passed": true,
+      "detail": "https://www.bagspackgo.com/travel-guides/kashmir-trip-budget"
+    },
+    {
+      "path": "/travel-guides/kashmir-trip-budget",
+      "check": "server-rendered heading",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/travel-guides/kashmir-trip-budget",
+      "check": "page title present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/travel-guides/kashmir-trip-budget",
+      "check": "JSON-LD parses",
+      "passed": true,
+      "detail": "2 blocks"
+    },
+    {
+      "path": "/travel-guides/kashmir-trip-budget",
+      "check": "indexable public page",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/travel-guides/kashmir-adventure-events",
+      "check": "HTTP 200",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "path": "/travel-guides/kashmir-adventure-events",
+      "check": "one self canonical",
+      "passed": true,
+      "detail": "https://www.bagspackgo.com/travel-guides/kashmir-adventure-events"
+    },
+    {
+      "path": "/travel-guides/kashmir-adventure-events",
+      "check": "server-rendered heading",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/travel-guides/kashmir-adventure-events",
+      "check": "page title present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/travel-guides/kashmir-adventure-events",
+      "check": "JSON-LD parses",
+      "passed": true,
+      "detail": "2 blocks"
+    },
+    {
+      "path": "/travel-guides/kashmir-adventure-events",
+      "check": "indexable public page",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/travel-guides/offbeat-kashmir-travel",
+      "check": "HTTP 200",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "path": "/travel-guides/offbeat-kashmir-travel",
+      "check": "one self canonical",
+      "passed": true,
+      "detail": "https://www.bagspackgo.com/travel-guides/offbeat-kashmir-travel"
+    },
+    {
+      "path": "/travel-guides/offbeat-kashmir-travel",
+      "check": "server-rendered heading",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/travel-guides/offbeat-kashmir-travel",
+      "check": "page title present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/travel-guides/offbeat-kashmir-travel",
+      "check": "JSON-LD parses",
+      "passed": true,
+      "detail": "2 blocks"
+    },
+    {
+      "path": "/travel-guides/offbeat-kashmir-travel",
+      "check": "indexable public page",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/travel-guides/independent-kashmir-travel",
+      "check": "HTTP 200",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "path": "/travel-guides/independent-kashmir-travel",
+      "check": "one self canonical",
+      "passed": true,
+      "detail": "https://www.bagspackgo.com/travel-guides/independent-kashmir-travel"
+    },
+    {
+      "path": "/travel-guides/independent-kashmir-travel",
+      "check": "server-rendered heading",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/travel-guides/independent-kashmir-travel",
+      "check": "page title present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/travel-guides/independent-kashmir-travel",
+      "check": "JSON-LD parses",
+      "passed": true,
+      "detail": "2 blocks"
+    },
+    {
+      "path": "/travel-guides/independent-kashmir-travel",
+      "check": "indexable public page",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/travel-guides/why-bagspackgo",
+      "check": "HTTP 200",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "path": "/travel-guides/why-bagspackgo",
+      "check": "one self canonical",
+      "passed": true,
+      "detail": "https://www.bagspackgo.com/travel-guides/why-bagspackgo"
+    },
+    {
+      "path": "/travel-guides/why-bagspackgo",
+      "check": "server-rendered heading",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/travel-guides/why-bagspackgo",
+      "check": "page title present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/travel-guides/why-bagspackgo",
+      "check": "JSON-LD parses",
+      "passed": true,
+      "detail": "2 blocks"
+    },
+    {
+      "path": "/travel-guides/why-bagspackgo",
+      "check": "indexable public page",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/bagspackgo",
+      "check": "HTTP 200",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "path": "/bagspackgo",
+      "check": "one self canonical",
+      "passed": true,
+      "detail": "https://www.bagspackgo.com/bagspackgo"
+    },
+    {
+      "path": "/bagspackgo",
+      "check": "server-rendered heading",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/bagspackgo",
+      "check": "page title present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/bagspackgo",
+      "check": "JSON-LD parses",
+      "passed": true,
+      "detail": "2 blocks"
+    },
+    {
+      "path": "/bagspackgo",
+      "check": "indexable public page",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/myekashmir_travels",
+      "check": "HTTP 200",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "path": "/myekashmir_travels",
+      "check": "one self canonical",
+      "passed": true,
+      "detail": "https://www.bagspackgo.com/myekashmir_travels"
+    },
+    {
+      "path": "/myekashmir_travels",
+      "check": "server-rendered heading",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/myekashmir_travels",
+      "check": "page title present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/myekashmir_travels",
+      "check": "JSON-LD parses",
+      "passed": true,
+      "detail": "2 blocks"
+    },
+    {
+      "path": "/myekashmir_travels",
+      "check": "indexable public page",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/tribesmen_travels",
+      "check": "HTTP 200",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "path": "/tribesmen_travels",
+      "check": "one self canonical",
+      "passed": true,
+      "detail": "https://www.bagspackgo.com/tribesmen_travels"
+    },
+    {
+      "path": "/tribesmen_travels",
+      "check": "server-rendered heading",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/tribesmen_travels",
+      "check": "page title present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/tribesmen_travels",
+      "check": "JSON-LD parses",
+      "passed": true,
+      "detail": "2 blocks"
+    },
+    {
+      "path": "/tribesmen_travels",
+      "check": "indexable public page",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/runnersclubkashmir",
+      "check": "HTTP 200",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "path": "/runnersclubkashmir",
+      "check": "one self canonical",
+      "passed": true,
+      "detail": "https://www.bagspackgo.com/runnersclubkashmir"
+    },
+    {
+      "path": "/runnersclubkashmir",
+      "check": "server-rendered heading",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/runnersclubkashmir",
+      "check": "page title present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/runnersclubkashmir",
+      "check": "JSON-LD parses",
+      "passed": true,
+      "detail": "2 blocks"
+    },
+    {
+      "path": "/runnersclubkashmir",
+      "check": "indexable public page",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/kashmir_with_us_tour_and_travels",
+      "check": "HTTP 200",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "path": "/kashmir_with_us_tour_and_travels",
+      "check": "one self canonical",
+      "passed": true,
+      "detail": "https://www.bagspackgo.com/kashmir_with_us_tour_and_travels"
+    },
+    {
+      "path": "/kashmir_with_us_tour_and_travels",
+      "check": "server-rendered heading",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/kashmir_with_us_tour_and_travels",
+      "check": "page title present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/kashmir_with_us_tour_and_travels",
+      "check": "JSON-LD parses",
+      "passed": true,
+      "detail": "2 blocks"
+    },
+    {
+      "path": "/kashmir_with_us_tour_and_travels",
+      "check": "indexable public page",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/pukaar_tour_and_travel",
+      "check": "HTTP 200",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "path": "/pukaar_tour_and_travel",
+      "check": "one self canonical",
+      "passed": true,
+      "detail": "https://www.bagspackgo.com/pukaar_tour_and_travel"
+    },
+    {
+      "path": "/pukaar_tour_and_travel",
+      "check": "server-rendered heading",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/pukaar_tour_and_travel",
+      "check": "page title present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/pukaar_tour_and_travel",
+      "check": "JSON-LD parses",
+      "passed": true,
+      "detail": "2 blocks"
+    },
+    {
+      "path": "/pukaar_tour_and_travel",
+      "check": "indexable public page",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/mahman_e_kashmir",
+      "check": "HTTP 200",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "path": "/mahman_e_kashmir",
+      "check": "one self canonical",
+      "passed": true,
+      "detail": "https://www.bagspackgo.com/mahman_e_kashmir"
+    },
+    {
+      "path": "/mahman_e_kashmir",
+      "check": "server-rendered heading",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/mahman_e_kashmir",
+      "check": "page title present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/mahman_e_kashmir",
+      "check": "JSON-LD parses",
+      "passed": true,
+      "detail": "2 blocks"
+    },
+    {
+      "path": "/mahman_e_kashmir",
+      "check": "indexable public page",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/intrip_travels",
+      "check": "HTTP 200",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "path": "/intrip_travels",
+      "check": "one self canonical",
+      "passed": true,
+      "detail": "https://www.bagspackgo.com/intrip_travels"
+    },
+    {
+      "path": "/intrip_travels",
+      "check": "server-rendered heading",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/intrip_travels",
+      "check": "page title present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/intrip_travels",
+      "check": "JSON-LD parses",
+      "passed": true,
+      "detail": "2 blocks"
+    },
+    {
+      "path": "/intrip_travels",
+      "check": "indexable public page",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/trip/6a09a89734777c2f3edc88ed",
+      "check": "HTTP 200",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "path": "/trip/6a09a89734777c2f3edc88ed",
+      "check": "one self canonical",
+      "passed": true,
+      "detail": "https://www.bagspackgo.com/trip/6a09a89734777c2f3edc88ed"
+    },
+    {
+      "path": "/trip/6a09a89734777c2f3edc88ed",
+      "check": "server-rendered heading",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/trip/6a09a89734777c2f3edc88ed",
+      "check": "page title present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/trip/6a09a89734777c2f3edc88ed",
+      "check": "JSON-LD parses",
+      "passed": true,
+      "detail": "2 blocks"
+    },
+    {
+      "path": "/trip/6a09a89734777c2f3edc88ed",
+      "check": "indexable public page",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/trip/6a09a6d3a2df2b8ac8ac17a3",
+      "check": "HTTP 200",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "path": "/trip/6a09a6d3a2df2b8ac8ac17a3",
+      "check": "one self canonical",
+      "passed": true,
+      "detail": "https://www.bagspackgo.com/trip/6a09a6d3a2df2b8ac8ac17a3"
+    },
+    {
+      "path": "/trip/6a09a6d3a2df2b8ac8ac17a3",
+      "check": "server-rendered heading",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/trip/6a09a6d3a2df2b8ac8ac17a3",
+      "check": "page title present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/trip/6a09a6d3a2df2b8ac8ac17a3",
+      "check": "JSON-LD parses",
+      "passed": true,
+      "detail": "2 blocks"
+    },
+    {
+      "path": "/trip/6a09a6d3a2df2b8ac8ac17a3",
+      "check": "indexable public page",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/trip/6a03b156c9b0fa256069b713",
+      "check": "HTTP 200",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "path": "/trip/6a03b156c9b0fa256069b713",
+      "check": "one self canonical",
+      "passed": true,
+      "detail": "https://www.bagspackgo.com/trip/6a03b156c9b0fa256069b713"
+    },
+    {
+      "path": "/trip/6a03b156c9b0fa256069b713",
+      "check": "server-rendered heading",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/trip/6a03b156c9b0fa256069b713",
+      "check": "page title present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/trip/6a03b156c9b0fa256069b713",
+      "check": "JSON-LD parses",
+      "passed": true,
+      "detail": "2 blocks"
+    },
+    {
+      "path": "/trip/6a03b156c9b0fa256069b713",
+      "check": "indexable public page",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/trip/6a039ef9c9b0fa256069b48c",
+      "check": "HTTP 200",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "path": "/trip/6a039ef9c9b0fa256069b48c",
+      "check": "one self canonical",
+      "passed": true,
+      "detail": "https://www.bagspackgo.com/trip/6a039ef9c9b0fa256069b48c"
+    },
+    {
+      "path": "/trip/6a039ef9c9b0fa256069b48c",
+      "check": "server-rendered heading",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/trip/6a039ef9c9b0fa256069b48c",
+      "check": "page title present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/trip/6a039ef9c9b0fa256069b48c",
+      "check": "JSON-LD parses",
+      "passed": true,
+      "detail": "2 blocks"
+    },
+    {
+      "path": "/trip/6a039ef9c9b0fa256069b48c",
+      "check": "indexable public page",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/trip/6a038f19c9b0fa256069b251",
+      "check": "HTTP 200",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "path": "/trip/6a038f19c9b0fa256069b251",
+      "check": "one self canonical",
+      "passed": true,
+      "detail": "https://www.bagspackgo.com/trip/6a038f19c9b0fa256069b251"
+    },
+    {
+      "path": "/trip/6a038f19c9b0fa256069b251",
+      "check": "server-rendered heading",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/trip/6a038f19c9b0fa256069b251",
+      "check": "page title present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/trip/6a038f19c9b0fa256069b251",
+      "check": "JSON-LD parses",
+      "passed": true,
+      "detail": "2 blocks"
+    },
+    {
+      "path": "/trip/6a038f19c9b0fa256069b251",
+      "check": "indexable public page",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/trip/6a039148c9b0fa256069b2bd",
+      "check": "HTTP 200",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "path": "/trip/6a039148c9b0fa256069b2bd",
+      "check": "one self canonical",
+      "passed": true,
+      "detail": "https://www.bagspackgo.com/trip/6a039148c9b0fa256069b2bd"
+    },
+    {
+      "path": "/trip/6a039148c9b0fa256069b2bd",
+      "check": "server-rendered heading",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/trip/6a039148c9b0fa256069b2bd",
+      "check": "page title present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/trip/6a039148c9b0fa256069b2bd",
+      "check": "JSON-LD parses",
+      "passed": true,
+      "detail": "2 blocks"
+    },
+    {
+      "path": "/trip/6a039148c9b0fa256069b2bd",
+      "check": "indexable public page",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/trip/6a0337ebc9b0fa256069ae47",
+      "check": "HTTP 200",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "path": "/trip/6a0337ebc9b0fa256069ae47",
+      "check": "one self canonical",
+      "passed": true,
+      "detail": "https://www.bagspackgo.com/trip/6a0337ebc9b0fa256069ae47"
+    },
+    {
+      "path": "/trip/6a0337ebc9b0fa256069ae47",
+      "check": "server-rendered heading",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/trip/6a0337ebc9b0fa256069ae47",
+      "check": "page title present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/trip/6a0337ebc9b0fa256069ae47",
+      "check": "JSON-LD parses",
+      "passed": true,
+      "detail": "2 blocks"
+    },
+    {
+      "path": "/trip/6a0337ebc9b0fa256069ae47",
+      "check": "indexable public page",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/trip/69fdee43f9bd72882ffaa752",
+      "check": "HTTP 200",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "path": "/trip/69fdee43f9bd72882ffaa752",
+      "check": "one self canonical",
+      "passed": true,
+      "detail": "https://www.bagspackgo.com/trip/69fdee43f9bd72882ffaa752"
+    },
+    {
+      "path": "/trip/69fdee43f9bd72882ffaa752",
+      "check": "server-rendered heading",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/trip/69fdee43f9bd72882ffaa752",
+      "check": "page title present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/trip/69fdee43f9bd72882ffaa752",
+      "check": "JSON-LD parses",
+      "passed": true,
+      "detail": "2 blocks"
+    },
+    {
+      "path": "/trip/69fdee43f9bd72882ffaa752",
+      "check": "indexable public page",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/trip/6a005f0bb1037d966cb8e5cb",
+      "check": "HTTP 200",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "path": "/trip/6a005f0bb1037d966cb8e5cb",
+      "check": "one self canonical",
+      "passed": true,
+      "detail": "https://www.bagspackgo.com/trip/6a005f0bb1037d966cb8e5cb"
+    },
+    {
+      "path": "/trip/6a005f0bb1037d966cb8e5cb",
+      "check": "server-rendered heading",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/trip/6a005f0bb1037d966cb8e5cb",
+      "check": "page title present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/trip/6a005f0bb1037d966cb8e5cb",
+      "check": "JSON-LD parses",
+      "passed": true,
+      "detail": "2 blocks"
+    },
+    {
+      "path": "/trip/6a005f0bb1037d966cb8e5cb",
+      "check": "indexable public page",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/trip/6a006d19b1037d966cb8e916",
+      "check": "HTTP 200",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "path": "/trip/6a006d19b1037d966cb8e916",
+      "check": "one self canonical",
+      "passed": true,
+      "detail": "https://www.bagspackgo.com/trip/6a006d19b1037d966cb8e916"
+    },
+    {
+      "path": "/trip/6a006d19b1037d966cb8e916",
+      "check": "server-rendered heading",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/trip/6a006d19b1037d966cb8e916",
+      "check": "page title present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/trip/6a006d19b1037d966cb8e916",
+      "check": "JSON-LD parses",
+      "passed": true,
+      "detail": "2 blocks"
+    },
+    {
+      "path": "/trip/6a006d19b1037d966cb8e916",
+      "check": "indexable public page",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/trip/6a0067f6b1037d966cb8e775",
+      "check": "HTTP 200",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "path": "/trip/6a0067f6b1037d966cb8e775",
+      "check": "one self canonical",
+      "passed": true,
+      "detail": "https://www.bagspackgo.com/trip/6a0067f6b1037d966cb8e775"
+    },
+    {
+      "path": "/trip/6a0067f6b1037d966cb8e775",
+      "check": "server-rendered heading",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/trip/6a0067f6b1037d966cb8e775",
+      "check": "page title present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/trip/6a0067f6b1037d966cb8e775",
+      "check": "JSON-LD parses",
+      "passed": true,
+      "detail": "2 blocks"
+    },
+    {
+      "path": "/trip/6a0067f6b1037d966cb8e775",
+      "check": "indexable public page",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/trip/69f48330d195e38f58e7575d",
+      "check": "HTTP 200",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "path": "/trip/69f48330d195e38f58e7575d",
+      "check": "one self canonical",
+      "passed": true,
+      "detail": "https://www.bagspackgo.com/trip/69f48330d195e38f58e7575d"
+    },
+    {
+      "path": "/trip/69f48330d195e38f58e7575d",
+      "check": "server-rendered heading",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/trip/69f48330d195e38f58e7575d",
+      "check": "page title present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/trip/69f48330d195e38f58e7575d",
+      "check": "JSON-LD parses",
+      "passed": true,
+      "detail": "2 blocks"
+    },
+    {
+      "path": "/trip/69f48330d195e38f58e7575d",
+      "check": "indexable public page",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/trip/69f08ae3fa1f5eddb27dc159",
+      "check": "HTTP 200",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "path": "/trip/69f08ae3fa1f5eddb27dc159",
+      "check": "one self canonical",
+      "passed": true,
+      "detail": "https://www.bagspackgo.com/trip/69f08ae3fa1f5eddb27dc159"
+    },
+    {
+      "path": "/trip/69f08ae3fa1f5eddb27dc159",
+      "check": "server-rendered heading",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/trip/69f08ae3fa1f5eddb27dc159",
+      "check": "page title present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/trip/69f08ae3fa1f5eddb27dc159",
+      "check": "JSON-LD parses",
+      "passed": true,
+      "detail": "2 blocks"
+    },
+    {
+      "path": "/trip/69f08ae3fa1f5eddb27dc159",
+      "check": "indexable public page",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/trip/69f44e39d3ac628cfd8a6b41",
+      "check": "HTTP 200",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "path": "/trip/69f44e39d3ac628cfd8a6b41",
+      "check": "one self canonical",
+      "passed": true,
+      "detail": "https://www.bagspackgo.com/trip/69f44e39d3ac628cfd8a6b41"
+    },
+    {
+      "path": "/trip/69f44e39d3ac628cfd8a6b41",
+      "check": "server-rendered heading",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/trip/69f44e39d3ac628cfd8a6b41",
+      "check": "page title present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/trip/69f44e39d3ac628cfd8a6b41",
+      "check": "JSON-LD parses",
+      "passed": true,
+      "detail": "2 blocks"
+    },
+    {
+      "path": "/trip/69f44e39d3ac628cfd8a6b41",
+      "check": "indexable public page",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/trip/69f4a1f49beb59a10b314319",
+      "check": "HTTP 200",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "path": "/trip/69f4a1f49beb59a10b314319",
+      "check": "one self canonical",
+      "passed": true,
+      "detail": "https://www.bagspackgo.com/trip/69f4a1f49beb59a10b314319"
+    },
+    {
+      "path": "/trip/69f4a1f49beb59a10b314319",
+      "check": "server-rendered heading",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/trip/69f4a1f49beb59a10b314319",
+      "check": "page title present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/trip/69f4a1f49beb59a10b314319",
+      "check": "JSON-LD parses",
+      "passed": true,
+      "detail": "2 blocks"
+    },
+    {
+      "path": "/trip/69f4a1f49beb59a10b314319",
+      "check": "indexable public page",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/trip/69f44a4f805984fea6f86f1d",
+      "check": "HTTP 200",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "path": "/trip/69f44a4f805984fea6f86f1d",
+      "check": "one self canonical",
+      "passed": true,
+      "detail": "https://www.bagspackgo.com/trip/69f44a4f805984fea6f86f1d"
+    },
+    {
+      "path": "/trip/69f44a4f805984fea6f86f1d",
+      "check": "server-rendered heading",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/trip/69f44a4f805984fea6f86f1d",
+      "check": "page title present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/trip/69f44a4f805984fea6f86f1d",
+      "check": "JSON-LD parses",
+      "passed": true,
+      "detail": "2 blocks"
+    },
+    {
+      "path": "/trip/69f44a4f805984fea6f86f1d",
+      "check": "indexable public page",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/user/offbeats/6a55efdad48a387532d62ad9",
+      "check": "HTTP 200",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "path": "/user/offbeats/6a55efdad48a387532d62ad9",
+      "check": "one self canonical",
+      "passed": true,
+      "detail": "https://www.bagspackgo.com/user/offbeats/6a55efdad48a387532d62ad9"
+    },
+    {
+      "path": "/user/offbeats/6a55efdad48a387532d62ad9",
+      "check": "server-rendered heading",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/user/offbeats/6a55efdad48a387532d62ad9",
+      "check": "page title present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/user/offbeats/6a55efdad48a387532d62ad9",
+      "check": "JSON-LD parses",
+      "passed": true,
+      "detail": "2 blocks"
+    },
+    {
+      "path": "/user/offbeats/6a55efdad48a387532d62ad9",
+      "check": "indexable public page",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/user/offbeats/6a589f3a17d8eda46f35a6d4",
+      "check": "HTTP 200",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "path": "/user/offbeats/6a589f3a17d8eda46f35a6d4",
+      "check": "one self canonical",
+      "passed": true,
+      "detail": "https://www.bagspackgo.com/user/offbeats/6a589f3a17d8eda46f35a6d4"
+    },
+    {
+      "path": "/user/offbeats/6a589f3a17d8eda46f35a6d4",
+      "check": "server-rendered heading",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/user/offbeats/6a589f3a17d8eda46f35a6d4",
+      "check": "page title present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/user/offbeats/6a589f3a17d8eda46f35a6d4",
+      "check": "JSON-LD parses",
+      "passed": true,
+      "detail": "2 blocks"
+    },
+    {
+      "path": "/user/offbeats/6a589f3a17d8eda46f35a6d4",
+      "check": "indexable public page",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/user/offbeats/6a60faa71ad1e8a126b93e56",
+      "check": "HTTP 200",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "path": "/user/offbeats/6a60faa71ad1e8a126b93e56",
+      "check": "one self canonical",
+      "passed": true,
+      "detail": "https://www.bagspackgo.com/user/offbeats/6a60faa71ad1e8a126b93e56"
+    },
+    {
+      "path": "/user/offbeats/6a60faa71ad1e8a126b93e56",
+      "check": "server-rendered heading",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/user/offbeats/6a60faa71ad1e8a126b93e56",
+      "check": "page title present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/user/offbeats/6a60faa71ad1e8a126b93e56",
+      "check": "JSON-LD parses",
+      "passed": true,
+      "detail": "2 blocks"
+    },
+    {
+      "path": "/user/offbeats/6a60faa71ad1e8a126b93e56",
+      "check": "indexable public page",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/signin",
+      "check": "noindex response header",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/user/saved",
+      "check": "noindex response header",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/user/trip/guidelist",
+      "check": "noindex response header",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/user/offbeats/results",
+      "check": "noindex response header",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/providers",
+      "check": "missing listing gives 404",
+      "passed": true,
+      "detail": "404"
+    },
+    {
+      "path": "/trip/not-a-valid-id",
+      "check": "missing listing gives 404",
+      "passed": true,
+      "detail": "404"
+    },
+    {
+      "path": "/user/offbeats/not-a-valid-id",
+      "check": "missing listing gives 404",
+      "passed": true,
+      "detail": "404"
+    },
+    {
+      "path": "/user/events/eventdetails/not-a-valid-id",
+      "check": "missing listing gives 404",
+      "passed": true,
+      "detail": "404"
+    },
+    {
+      "path": "/robots.txt",
+      "check": "production sitemap declared",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/robots.txt",
+      "check": "public media crawl exceptions",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/robots.txt",
+      "check": "public listing resources crawlable with private APIs blocked",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/api/events?tab=upcoming&limit=1",
+      "check": "JSON resources do not become search result pages",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "path": "/api/public/offbeats?limit=1",
+      "check": "JSON resources do not become search result pages",
+      "passed": true,
+      "detail": ""
+    }
+  ]
+}

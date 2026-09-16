@@ -23,6 +23,12 @@ const nextConfig = {
     },
     async headers() {
         return [
+            // Public data may be fetched while rendering pages, but the HTML
+            // destination/profile pages are the intended search results.
+            ...['/api/events', '/api/public/offbeats'].map(source => ({
+                source,
+                headers: [{ key: 'X-Robots-Tag', value: 'noindex, follow' }],
+            })),
             ...["/admin/:path*","/serviceprovider/:path*","/signin","/signup","/user/bookings/:path*","/user/saved/:path*","/user/notifications/:path*","/user/trip/guidelist","/user/offbeats/results","/user/trip/pass/:path*","/user/event/pass/:path*","/api/public/pass/:path*","/user/trip/guidelist/tripdetails/:id/reviewjourney/:path*","/user/trip/booking-success","/user/trip/booking-failed","/user/trip/booking-processing","/user/event/booking-success","/user/event/booking-failed","/user/event/booking-processing"].map(source => ({ source, headers: [{ key: "X-Robots-Tag", value: "noindex, follow" }] })),
             {
                 source: '/(.*)',

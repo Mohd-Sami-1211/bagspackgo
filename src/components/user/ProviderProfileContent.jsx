@@ -223,7 +223,7 @@ export default function ProviderProfileContent({ providerId, providerSlug, initi
   }
 
   const navigate = (href) => router.push(href);
-  const canonicalPath = providerProfilePath(provider.name, provider._id);
+  const canonicalPath = providerProfilePath(provider.slug || provider.name, provider._id);
 
   const handleShare = async () => {
     const url = `${window.location.origin}${canonicalPath}`;

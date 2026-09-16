@@ -8,6 +8,9 @@ import { Event } from '@/models/event.model';
 import Review from '@/models/review.model';
 import { toProviderSlug } from '@/lib/providerSlug';
 import { packageHeroFor } from '@/lib/packageHero';
+import { providerIdentityLinks } from '@/lib/providerSeo';
+
+const PROFILE_FIELDS = 'guide companyname profileSlug bio destinationId speciality rating reviews totalTrips totalEvents pausedServices status updatedAt website instagram facebook youtube twitter';
 
 function companyNamePattern(slug) {
   const tokens = slug.split('_').filter(Boolean).map((token) => token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
@@ -21,7 +24,7 @@ function asIso(value) {
 async function resolveDetails(identifier) {
   if (mongoose.Types.ObjectId.isValid(identifier)) {
     return GuideDetails.findOne({ guide: new mongoose.Types.ObjectId(identifier) })
-      .select('guide companyname profileSlug bio destinationId speciality rating reviews totalTrips totalEvents pausedServices status updatedAt')
+      .select(PROFILE_FIELDS)
       .lean();
   }
 
@@ -29,14 +32,14 @@ async function resolveDetails(identifier) {
   if (!slug) return null;
 
   let details = await GuideDetails.findOne({ profileSlug: slug })
-    .select('guide companyname profileSlug bio destinationId speciality rating reviews totalTrips totalEvents pausedServices status updatedAt')
+    .select(PROFILE_FIELDS)
     .lean();
 
   if (!details) {
     const fallbackPattern = companyNamePattern(slug);
     if (fallbackPattern) {
       details = await GuideDetails.findOne({ companyname: fallbackPattern })
-        .select('guide companyname profileSlug bio destinationId speciality rating reviews totalTrips totalEvents pausedServices status updatedAt')
+        .select(PROFILE_FIELDS)
         .lean();
     }
   }
@@ -46,7 +49,7 @@ async function resolveDetails(identifier) {
   // on an initial cache miss without changing provider records.
   if (!details) {
     const candidates = await GuideDetails.find({ profileSlug: { $in: [null, ''] } })
-      .select('guide companyname profileSlug bio destinationId speciality rating reviews totalTrips totalEvents pausedServices status updatedAt')
+      .select(PROFILE_FIELDS)
       .limit(250)
       .lean();
     details = candidates.find((candidate) => toProviderSlug(candidate.companyname) === slug) || null;
@@ -109,6 +112,7 @@ async function queryPublicProviderProfile(identifier) {
       coverPhoto: `/api/public/provider/${providerId}/cover?v=${assetVersion}`,
       location: details.destinationId || '',
       speciality: details.speciality || '',
+      identityLinks: providerIdentityLinks(details),
       rating: Number(details.rating || 0),
       reviews: Number(details.reviews || reviews.length || 0),
       totalTrips: Number(details.totalTrips || 0),
@@ -164,6 +168,6 @@ async function queryPublicProviderProfile(identifier) {
 
 export const getPublicProviderProfile = unstable_cache(
   queryPublicProviderProfile,
-  ['public-provider-profile-v5'],
+  ['public-provider-profile-v6'],
   { revalidate: 300, tags: ['public-provider-profile'] }
 );

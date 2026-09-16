@@ -247,6 +247,7 @@ export async function GET() {
                     id: guideId,
                     name: guide?.username || '',
                     companyName: details?.companyname || '',
+                    profileSlug: details?.profileSlug || '',
                     logo: details?.logo || '',
                     bio: details?.bio || '',
                     speciality: details?.speciality || '',

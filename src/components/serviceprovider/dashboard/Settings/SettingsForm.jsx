@@ -301,7 +301,7 @@ function ProfileContent({ initialEditMode = false }) {
       const res = await fetch('/api/provider/profile');
       const { profile } = await res.json();
       const guideId = profile?.guideId || profile?._id || '';
-      const url = `${window.location.origin}${providerProfilePath(formData.companyname || formData.name, guideId)}`;
+      const url = `${window.location.origin}${providerProfilePath(profile?.profileSlug || profile?.companyname || profile?.name, guideId)}`;
       if (navigator.share) {
         await navigator.share({
           title: `${formData.companyname || formData.name} on bagspackgo`,

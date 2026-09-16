@@ -29,6 +29,12 @@ export function toProviderSlug(value = '') {
     .slice(0, 72);
 }
 
+// Company names can change after Google and customers have saved a profile URL.
+// Legacy profiles without a stored slug already use their original name in URLs.
+export function retainedProviderSlug(existingSlug, originalName, companyName) {
+  return toProviderSlug(existingSlug || originalName || companyName);
+}
+
 export function isReservedProviderSlug(value = '') {
   return RESERVED_ROOT_PATHS.has(toProviderSlug(value).replace(/_/g, '-'));
 }

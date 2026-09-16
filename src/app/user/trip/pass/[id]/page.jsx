@@ -196,7 +196,7 @@ export default function TripPassPage() {
                                 )}
                                 <h2 className="text-lg sm:text-xl font-black text-gray-900 md:text-right">
                                     {booking?.provider ? (
-                                        <Link href={providerProfilePath(providerName, booking.provider)} className="hover:text-emerald-700 hover:underline">{providerName}</Link>
+                                        <Link href={providerProfilePath('', booking.provider)} className="hover:text-emerald-700 hover:underline">{providerName}</Link>
                                     ) : providerName}
                                 </h2>
                             </div>
@@ -351,7 +351,7 @@ export default function TripPassPage() {
                     <div className="mt-8 pt-6 border-t border-emerald-100 grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 print-section">
                         <div>
                             <h4 className="font-bold text-gray-800 uppercase tracking-widest mb-3 text-[11px] flex items-center gap-2">
-                                <CheckCircle2 className="w-3 h-3 text-emerald-600" /> What's Included
+                                <CheckCircle2 className="w-3 h-3 text-emerald-600" /> What&apos;s Included
                             </h4>
                             {inclusivesList.length > 0 ? (
                                 <ul className="list-disc pl-4 space-y-2">
@@ -365,7 +365,7 @@ export default function TripPassPage() {
                         </div>
                         <div>
                             <h4 className="font-bold text-gray-800 uppercase tracking-widest mb-3 text-[11px] flex items-center gap-2">
-                                <X className="w-3 h-3 text-rose-500" /> What's Excluded
+                                <X className="w-3 h-3 text-rose-500" /> What&apos;s Excluded
                             </h4>
                             {exclusivesList.length > 0 ? (
                                 <ul className="list-disc pl-4 space-y-2">

@@ -7,6 +7,7 @@ import { Package } from '@/models/package.model';
 import { OffBeat } from '@/models/offbeat.model';
 import { Event } from '@/models/event.model';
 import { isPublicProvider } from '@/lib/seo';
+import { offbeatCoverUrl } from '@/lib/offbeatMedia';
 
 const serialize = (value) => JSON.parse(JSON.stringify(value));
 
@@ -56,14 +57,14 @@ export const getPublicOffbeat = unstable_cache(async (id) => {
   if (!mongoose.Types.ObjectId.isValid(id)) return null;
   await dbConnect();
   const item = await OffBeat.findOne({ _id: id, status: 'published' }).select('-photographs -videos').lean();
-  return item ? serialize(item) : null;
-}, ['seo-public-offbeat-v1'], { revalidate: 300 });
+  return item ? serialize({ ...item, coverPhoto: offbeatCoverUrl(item) }) : null;
+}, ['seo-public-offbeat-v2'], { revalidate: 300 });
 
 export function tripGuideFromPackage(pkg) {
   const tiers = [...(pkg.pricingTiers || [])].sort((a, b) => a.minPeople - b.minPeople);
   const price = { individual: Number(tiers[0]?.price || 0), couple: Number(tiers[0]?.price || 0) * 2 };
   return {
-    id: pkg.provider._id, providerId: pkg.provider._id, name: pkg.provider.companyname,
+    id: pkg.provider._id, providerId: pkg.provider._id, name: pkg.provider.companyname, profileSlug: pkg.provider.profileSlug,
     companyName: pkg.provider.companyname, bio: pkg.provider.bio, logo: pkg.provider.logo,
     image: pkg.provider.logo, location: pkg.destination, price, rating: pkg.provider.rating || 0, reviews: pkg.provider.reviews || 0, languages: pkg.provider.languages || [], touristsHandled: Number(pkg.provider.totalTrips || 0),
     packages: [{ ...pkg, id: pkg._id, label: pkg.name, type: pkg.packageCategory, price, packagePhotos: [] }],

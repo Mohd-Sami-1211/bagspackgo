@@ -4,24 +4,20 @@ import dbConnect from '@/lib/db';
 import { Event } from '@/models/event.model';
 import { Guide } from '@/models/guide.model';
 import { GuideDetails } from '@/models/guidedetails.model';
+import { EVENT_MEDIA_STATUSES, eventMediaHeaders } from '@/lib/eventMediaAccess';
 
-export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
 
-const CACHE_HEADERS = {
-    'Cache-Control': 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400',
-    'X-Content-Type-Options': 'nosniff',
-};
-
-function imageResponse(source, request) {
+function imageResponse(source, request, headers) {
     const image = source?.trim();
     if (!image) return null;
 
     if (/^https?:\/\//i.test(image)) {
-        return NextResponse.redirect(image, { headers: CACHE_HEADERS });
+        return NextResponse.redirect(image, { headers });
     }
 
     if (image.startsWith('/')) {
-        return NextResponse.redirect(new URL(image, request.url), { headers: CACHE_HEADERS });
+        return NextResponse.redirect(new URL(image, request.url), { headers });
     }
 
     const dataUrl = image.match(/^data:(image\/[a-z0-9.+-]+);base64,([a-z0-9+/=\s]+)$/i);
@@ -32,7 +28,7 @@ function imageResponse(source, request) {
 
     return new Response(body, {
         headers: {
-            ...CACHE_HEADERS,
+            ...headers,
             'Content-Type': dataUrl[1].toLowerCase(),
             'Content-Length': String(body.length),
         },
@@ -47,17 +43,21 @@ export async function GET(request, context) {
         }
 
         await dbConnect();
-        const event = await Event.findOne({ _id: id, status: 'published' }).select('guide').lean();
+        const event = await Event.findOne({ _id: id, status: { $in: EVENT_MEDIA_STATUSES } })
+            .select('guide status visibility').lean();
         if (!event?.guide) {
             return NextResponse.json({ success: false, message: 'Guide logo not found' }, { status: 404 });
         }
 
         const [details, guide] = await Promise.all([
-            GuideDetails.findOne({ guide: event.guide }).select('logo').lean(),
-            Guide.findById(event.guide).select('profileImage').lean(),
+            GuideDetails.findOne({ guide: event.guide }).select('logo status pausedServices.event').lean(),
+            Guide.findById(event.guide).select('profileImage applicationStatus isActive').lean(),
         ]);
 
-        const response = imageResponse(details?.logo || guide?.profileImage, request);
+        const headers = eventMediaHeaders(event, guide, details);
+        if (!headers) return NextResponse.json({ success: false, message: 'Guide logo not found' }, { status: 404 });
+
+        const response = imageResponse(details?.logo || guide?.profileImage, request, headers);
         return response
             || NextResponse.json({ success: false, message: 'Guide logo not found' }, { status: 404 });
     } catch (error) {

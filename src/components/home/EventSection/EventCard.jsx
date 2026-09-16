@@ -1,7 +1,9 @@
 'use client';
 import { motion } from 'framer-motion';
 import { MapPin, Calendar, Star, Ticket, Clock, Users, ArrowRight } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+
+const MotionLink = motion.create(Link);
 
 // Helper to calculate "time ago"
 const formatTimeAgo = (dateString) => {
@@ -22,21 +24,16 @@ const formatTimeAgo = (dateString) => {
 };
 
 const EventCard = ({ event }) => {
-  const router = useRouter();
   const isPast = event.isPast || false;
   const isSoldOut = !isPast && (event.slotsLeft <= 0);
 
   const formattedDate = new Date(event.date).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
+    timeZone: 'Asia/Kolkata',
   });
 
   const publishedAgo = formatTimeAgo(event.createdAt);
-
-  const handleClick = (e) => {
-    // Prevent routing if user clicked something else, though the whole card is a hit target
-    router.push(`/user/events/eventdetails/${event.id}`);
-  };
 
   const cardVariants = {
     hidden: { opacity: 0, y: 24 },
@@ -48,9 +45,9 @@ const EventCard = ({ event }) => {
   };
 
   return (
-    <motion.div
+    <MotionLink
       variants={cardVariants}
-      onClick={handleClick}
+      href={`/user/events/eventdetails/${event.id}`}
       className="group flex flex-col bg-white rounded-3xl overflow-hidden border border-neutral-100 hover:border-emerald-200 shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:-translate-y-1 relative"
     >
       {/* Image Section */}
@@ -79,7 +76,7 @@ const EventCard = ({ event }) => {
         </div>
 
         {/* Published Time (Top Right) */}
-        <div className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1 bg-black/40 backdrop-blur-md rounded-lg text-[10px] font-medium text-white/90 z-10">
+        <div suppressHydrationWarning className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1 bg-black/40 backdrop-blur-md rounded-lg text-[10px] font-medium text-white/90 z-10">
           <Clock className="w-3 h-3" />
           {publishedAgo}
         </div>
@@ -154,16 +151,16 @@ const EventCard = ({ event }) => {
             </span>
           </div>
           
-          <button 
+          <span
             className="flex items-center gap-1.5 rounded-xl bg-[#1d6b55] px-4 py-2 text-xs font-semibold text-white transition-all duration-300 hover:bg-[#155240] group-hover:shadow-md"
             aria-label={`View details for ${event.name}`}
           >
             View Details
             <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-          </button>
+          </span>
         </div>
       </div>
-    </motion.div>
+    </MotionLink>
   );
 };
 

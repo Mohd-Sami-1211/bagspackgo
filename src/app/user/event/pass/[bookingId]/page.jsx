@@ -241,7 +241,7 @@ function EventPassContent() {
                                 )}
                                 <h2 className="text-lg sm:text-xl font-extrabold text-gray-900 md:text-right" style={fontStyle}>
                                     {booking?.providerId ? (
-                                        <Link href={providerProfilePath(companyName, booking.providerId)} className="hover:text-emerald-700 hover:underline">{companyName}</Link>
+                                        <Link href={providerProfilePath('', booking.providerId)} className="hover:text-emerald-700 hover:underline">{companyName}</Link>
                                     ) : companyName}
                                 </h2>
                             </div>

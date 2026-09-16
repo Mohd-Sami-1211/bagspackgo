@@ -236,7 +236,7 @@ export default function DashboardMainContent() {
 
   const handleShareProfile = async () => {
     if (!data?.profile?.id) return;
-    const url = `${window.location.origin}${providerProfilePath(data.profile.companyName || data.profile.name, data.profile.id)}`;
+    const url = `${window.location.origin}${providerProfilePath(data.profile.profileSlug || data.profile.companyName || data.profile.name, data.profile.id)}`;
     
     if (navigator.share) {
       try {
