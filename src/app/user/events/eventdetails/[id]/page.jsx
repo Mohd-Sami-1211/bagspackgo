@@ -3,13 +3,14 @@ import { notFound } from 'next/navigation';
 import EventDetails from '@/components/home/EventSection/EventDetails';
 import { getPublicEventDetails } from '@/lib/publicEvent';
 import { pageMetadata, breadcrumbs, eventSchema, eventHasEnded, eventRegistrationClosed } from '@/lib/seo';
+import { eventSearchMetadata } from '@/lib/detailSeo';
 import JsonLd from '@/components/seo/JsonLd';
 export const revalidate = 30;
 export async function generateMetadata({ params }) {
   const { id } = await params;
   const event = await getPublicEventDetails(id);
   if (!event) return { title: 'Event not found', robots: { index: false } };
-  return pageMetadata({ title: event.name + ' — ' + event.location, description: event.about,
+  return pageMetadata({ ...eventSearchMetadata(event),
     path: '/user/events/eventdetails/' + id, image: event.image, noindex: event.visibility !== 'public' });
 }
 function EventArchive({ event }) {

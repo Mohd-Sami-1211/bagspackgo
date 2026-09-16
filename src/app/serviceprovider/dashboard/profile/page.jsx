@@ -83,7 +83,7 @@ export default function ProviderProfilePage() {
 
     const handleShare = async () => {
         const guideId = profile?.guideId || profile?._id || '';
-        const url = `${window.location.origin}${providerProfilePath(profile.companyname || profile.name, guideId)}`;
+        const url = `${window.location.origin}${providerProfilePath(profile.profileSlug || profile.companyname || profile.name, guideId)}`;
         try {
             if (navigator.share) {
                 await navigator.share({

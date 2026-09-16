@@ -34,18 +34,20 @@ function FeaturedOffbeatSkeleton() {
     );
 }
 
-export default function OffbeatsLandingPage() {
+export default function OffbeatsLandingPage({ initialFeaturedData, initialLatestData } = {}) {
     const [currentSlide, setCurrentSlide] = useState(0);
     const [region, setRegion] = useState('All');
     const pointerStart = useRef(0);
-    const { data: featuredData, isLoading: featuredLoading } = useOffbeatList(
+    const { data: featuredData, isLoading: featuredPending } = useOffbeatList(
         { featured: true, region, page: 1, limit: 24, sort: 'popular' },
-        { dedupingInterval: 300000, keepPreviousData: true, revalidateIfStale: false }
+        { dedupingInterval: 300000, keepPreviousData: true, revalidateIfStale: false, fallbackData: region === 'All' ? initialFeaturedData : undefined }
     );
-    const { data: latestData, isLoading: latestLoading, error } = useOffbeatList(
+    const { data: latestData, isLoading: latestPending, error } = useOffbeatList(
         { region, page: 1, limit: 24, sort: 'newest' },
-        { keepPreviousData: false }
+        { keepPreviousData: false, fallbackData: region === 'All' ? initialLatestData : undefined }
     );
+    const featuredLoading = featuredPending && !featuredData;
+    const latestLoading = latestPending && !latestData;
     const selectedFeatured = featuredData?.data || [];
     const destinations = latestData?.data || [];
     const featuredIds = new Set(selectedFeatured.map((destination) => destination._id));

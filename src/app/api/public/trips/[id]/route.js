@@ -31,7 +31,7 @@ export async function GET(_request, { params }) {
 
         const [providerDetails, provider] = await Promise.all([
             GuideDetails.findOne({ guide: pkg.provider })
-                .select('companyname bio destinationId rating reviews totalTrips languages logo pausedServices.trip')
+                .select('companyname profileSlug bio destinationId rating reviews totalTrips languages logo pausedServices.trip')
                 .lean(),
             Guide.findById(pkg.provider).select('username').lean(),
         ]);
@@ -77,6 +77,7 @@ export async function GET(_request, { params }) {
                 providerId,
                 name: providerName,
                 companyName: providerName,
+                profileSlug: providerDetails?.profileSlug || '',
                 bio: providerDetails?.bio || 'Experienced local travel company',
                 logo: providerDetails?.logo || null,
                 image: providerDetails?.logo || '/images/providers/default-provider-cover.webp',

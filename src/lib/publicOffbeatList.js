@@ -1,0 +1,179 @@
+import dbConnect from '@/lib/db';
+import { OffBeat } from '@/models/offbeat.model';
+import { offbeatCoverUrl } from '@/lib/offbeatMedia';
+
+const LIST_PROJECTION = {
+    title: 1,
+    destination: 1,
+    region: 1,
+    shortDescription: 1,
+    coverPhoto: 1,
+    featured: 1,
+    visitCount: 1,
+    status: 1,
+    createdAt: 1,
+    updatedAt: 1,
+};
+
+const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const normalize = (value = '') => value.toLowerCase().trim();
+
+function editDistance(first, second) {
+    const left = normalize(first);
+    const right = normalize(second);
+    const row = Array.from({ length: right.length + 1 }, (_, index) => index);
+
+    for (let i = 1; i <= left.length; i += 1) {
+        let diagonal = row[0];
+        row[0] = i;
+        for (let j = 1; j <= right.length; j += 1) {
+            const previous = row[j];
+            row[j] = left[i - 1] === right[j - 1]
+                ? diagonal
+                : Math.min(diagonal, row[j - 1], row[j]) + 1;
+            diagonal = previous;
+        }
+    }
+
+    return row[right.length];
+}
+
+function matchScore(offbeat, input) {
+    const query = normalize(input);
+    const values = [offbeat.title, offbeat.destination, offbeat.region].map(normalize).filter(Boolean);
+
+    if (values.some((value) => value === query)) return 0;
+    if (values.some((value) => value.startsWith(query))) return 0.05;
+    if (values.some((value) => value.includes(query))) return 0.1;
+
+    return Math.min(...values.map((value) => editDistance(value, query) / Math.max(value.length, query.length, 1)));
+}
+
+function rankMatches(items, input) {
+    return items
+        .map((item) => ({ item, score: matchScore(item, input) }))
+        .sort((first, second) => first.score - second.score || (second.item.visitCount || 0) - (first.item.visitCount || 0));
+}
+
+function sortFor(value) {
+    if (value === 'popular') return { visitCount: -1, createdAt: -1, _id: -1 };
+    if (value === 'name_asc') return { title: 1, _id: 1 };
+    if (value === 'name_desc') return { title: -1, _id: -1 };
+    return { createdAt: -1, _id: -1 };
+}
+
+// Shared by the public API and the server-rendered Offbeats landing page.
+export async function getPublicOffbeatList(searchParams) {
+    await dbConnect();
+
+    const page = Math.max(1, Number.parseInt(searchParams.get('page') || '1', 10));
+    const limit = Math.min(24, Math.max(1, Number.parseInt(searchParams.get('limit') || '9', 10)));
+    const requestedRegion = searchParams.get('region')?.trim() || 'All';
+    const isAllRegions = ['all', 'all regions'].includes(normalize(requestedRegion));
+    const region = isAllRegions ? 'All' : requestedRegion;
+    const search = searchParams.get('search')?.trim() || '';
+    const suggestionInput = searchParams.get('suggest')?.trim() || '';
+    const featured = searchParams.get('featured');
+    const sort = searchParams.get('sort') || 'newest';
+    const skip = (page - 1) * limit;
+
+    if (suggestionInput) {
+        const suggestionQuery = { status: 'published' };
+        if (region !== 'All') suggestionQuery.region = region;
+
+        const candidates = await OffBeat.collection.find(suggestionQuery, { projection: LIST_PROJECTION })
+            .sort({ visitCount: -1, createdAt: -1 })
+            .limit(150)
+            .toArray();
+
+        const suggestions = rankMatches(candidates, suggestionInput)
+            .slice(0, limit)
+            .map(({ item, score }) => ({
+                id: item._id.toString(),
+                title: item.title,
+                destination: item.destination,
+                region: item.region,
+                coverPhoto: offbeatCoverUrl(item),
+                exact: score === 0,
+            }));
+
+        return { success: true, suggestions };
+    }
+
+    const query = { status: 'published' };
+    if (region !== 'All') query.region = region;
+    if (featured === 'true') query.featured = { $in: [true, 'true', 1] };
+    if (featured === 'false') query.featured = { $ne: true };
+    if (search) {
+        const safeSearch = escapeRegExp(search);
+        const exactMatch = await OffBeat.collection.findOne(
+            {
+                ...query,
+                $or: [
+                    { title: { $regex: `^${safeSearch}$`, $options: 'i' } },
+                    { destination: { $regex: `^${safeSearch}$`, $options: 'i' } },
+                ],
+            },
+            { projection: { _id: 1 } }
+        );
+
+        if (exactMatch) {
+            query._id = exactMatch._id;
+        } else {
+            query.$or = [
+                { title: { $regex: safeSearch, $options: 'i' } },
+                { destination: { $regex: safeSearch, $options: 'i' } },
+                { region: { $regex: safeSearch, $options: 'i' } },
+            ];
+        }
+    }
+
+    let [offbeats, total] = await Promise.all([
+        OffBeat.collection.find(query, { projection: LIST_PROJECTION })
+            .sort(sortFor(sort))
+            .skip(skip)
+            .limit(limit)
+            .toArray(),
+        OffBeat.collection.countDocuments(query),
+    ]);
+
+    let usedNearestMatch = false;
+    let hadNoDirectMatch = false;
+    let suggestedQuery = null;
+    if (search && total === 0) {
+        hadNoDirectMatch = true;
+        const fallbackQuery = { status: 'published' };
+        if (region !== 'All') fallbackQuery.region = region;
+
+        const candidates = await OffBeat.collection.find(fallbackQuery, { projection: LIST_PROJECTION })
+            .sort({ visitCount: -1, createdAt: -1 })
+            .limit(150)
+            .toArray();
+        const ranked = rankMatches(candidates, search);
+        suggestedQuery = ranked[0]?.item?.title || null;
+        const nearest = ranked
+            .slice(0, 6)
+            .map(({ item }) => item);
+
+        total = nearest.length;
+        offbeats = nearest.slice(skip, skip + limit);
+        usedNearestMatch = nearest.length > 0;
+    }
+
+    const totalPages = Math.ceil(total / limit);
+    return (
+        {
+            success: true,
+            data: offbeats.map((item) => ({ ...item, coverPhoto: offbeatCoverUrl(item) })),
+            matchType: hadNoDirectMatch ? (usedNearestMatch ? 'nearest' : 'none') : search ? 'exact-or-partial' : 'default',
+            suggestedQuery,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages,
+                hasMore: page < totalPages,
+            },
+        }
+    );
+}

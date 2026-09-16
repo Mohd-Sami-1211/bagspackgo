@@ -2,13 +2,11 @@ import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 import dbConnect from '@/lib/db';
 import { Event } from '@/models/event.model';
+import { Guide } from '@/models/guide.model';
+import { GuideDetails } from '@/models/guidedetails.model';
+import { EVENT_MEDIA_STATUSES, eventMediaHeaders } from '@/lib/eventMediaAccess';
 
-export const revalidate = 3600;
-
-const CACHE_HEADERS = {
-    'Cache-Control': 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400',
-    'X-Content-Type-Options': 'nosniff',
-};
+export const dynamic = 'force-dynamic';
 
 export async function GET(request, context) {
     try {
@@ -19,19 +17,27 @@ export async function GET(request, context) {
         }
 
         await dbConnect();
-        const event = await Event.findOne({ _id: id, status: { $in: ['published', 'completed', 'cancelled'] } }).select('poster').lean();
+        const event = await Event.findOne({ _id: id, status: { $in: EVENT_MEDIA_STATUSES } })
+            .select('poster guide status visibility').lean();
         const poster = event?.poster?.trim();
 
-        if (!poster) {
+        if (!poster || !event?.guide) {
             return NextResponse.json({ success: false, message: 'Event poster not found' }, { status: 404 });
         }
 
+        const [guide, details] = await Promise.all([
+            Guide.findById(event.guide).select('applicationStatus isActive').lean(),
+            GuideDetails.findOne({ guide: event.guide }).select('status pausedServices.event').lean(),
+        ]);
+        const headers = eventMediaHeaders(event, guide, details);
+        if (!headers) return NextResponse.json({ success: false, message: 'Event poster not found' }, { status: 404 });
+
         if (/^https?:\/\//i.test(poster)) {
-            return NextResponse.redirect(poster, { headers: CACHE_HEADERS });
+            return NextResponse.redirect(poster, { headers });
         }
 
         if (poster.startsWith('/')) {
-            return NextResponse.redirect(new URL(poster, request.url), { headers: CACHE_HEADERS });
+            return NextResponse.redirect(new URL(poster, request.url), { headers });
         }
 
         const dataUrl = poster.match(/^data:(image\/[a-z0-9.+-]+);base64,([a-z0-9+/=\s]+)$/i);
@@ -46,7 +52,7 @@ export async function GET(request, context) {
 
         return new Response(body, {
             headers: {
-                ...CACHE_HEADERS,
+                ...headers,
                 'Content-Type': dataUrl[1].toLowerCase(),
                 'Content-Length': String(body.length),
             },

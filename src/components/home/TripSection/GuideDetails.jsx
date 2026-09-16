@@ -30,6 +30,7 @@ import {
   ZoomIn,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import PackageItinerary from "src/components/home/TripSection/PackageItinerary";
 import ArrDep from "src/components/home/TripSection/Arr-Dep";
@@ -648,7 +649,7 @@ const GuideDetails = ({ guide }) => {
               <span className="inline-flex items-center gap-2"><Clock className="h-4 w-4 text-emerald-300" /> {priceDetails.days} days · {Math.max(0, priceDetails.days - 1)} nights</span>
               <span className="inline-flex items-center gap-2"><Users className="h-4 w-4 text-emerald-300" /> {numPeople} traveller{numPeople === 1 ? "" : "s"}</span>
             </div>
-            <a href={providerProfilePath(guide.companyName || guide.name, guide.providerId || guide._id || guide.id)} className="mt-6 inline-flex items-center gap-3 rounded-full border border-white/15 bg-black/20 py-2 pl-2 pr-4 text-sm backdrop-blur-md transition hover:bg-white/10">
+            <a href={providerProfilePath(guide.profileSlug || guide.companyName || guide.name, guide.providerId || guide._id || guide.id)} className="mt-6 inline-flex items-center gap-3 rounded-full border border-white/15 bg-black/20 py-2 pl-2 pr-4 text-sm backdrop-blur-md transition hover:bg-white/10">
               <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-white text-sm font-bold text-[#17372f]">
                 {guide.logo ? <img src={guide.logo} alt="" className="h-full w-full object-cover" /> : (guide.companyName || guide.name)?.charAt(0)}
               </span>
@@ -683,9 +684,9 @@ const GuideDetails = ({ guide }) => {
               <p className="text-sm font-semibold text-slate-950">Package Saved</p>
               <p className="text-sm text-slate-500">Added to your favorites.</p>
             </div>
-            <a href="/user/saved" className="inline-flex h-8 items-center justify-center rounded-md border border-slate-200 bg-transparent px-3 text-sm font-medium text-slate-950 transition-colors hover:bg-slate-100 focus:outline-none focus:ring-1 focus:ring-slate-950 disabled:pointer-events-none disabled:opacity-50">
+            <Link href="/user/saved" className="inline-flex h-8 items-center justify-center rounded-md border border-slate-200 bg-transparent px-3 text-sm font-medium text-slate-950 transition-colors hover:bg-slate-100 focus:outline-none focus:ring-1 focus:ring-slate-950 disabled:pointer-events-none disabled:opacity-50">
               View
-            </a>
+            </Link>
           </div>
         </div>
       )}
@@ -730,7 +731,7 @@ const GuideDetails = ({ guide }) => {
             {/* Main Info Cluster */}
             <div className="flex items-center w-full sm:flex-1 min-w-0 mt-1 sm:mt-0 justify-start gap-4 sm:gap-6">
               <a
-                href={providerProfilePath(guide.companyName || guide.name, guide.providerId || guide._id || guide.id)}
+                href={providerProfilePath(guide.profileSlug || guide.companyName || guide.name, guide.providerId || guide._id || guide.id)}
                 className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 rounded-full flex items-center justify-center bg-emerald-50 border border-emerald-100 flex-shrink-0 hover:border-emerald-200 transition-colors overflow-hidden"
               >
                 {guide.logo ? (
@@ -748,7 +749,7 @@ const GuideDetails = ({ guide }) => {
 
               <div className="min-w-0 pr-20 sm:pr-4 text-left flex-1">
                 <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
-                  <a href={providerProfilePath(guide.companyName || guide.name, guide.providerId || guide._id || guide.id)} className="group/title block min-w-0">
+                  <a href={providerProfilePath(guide.profileSlug || guide.companyName || guide.name, guide.providerId || guide._id || guide.id)} className="group/title block min-w-0">
                     <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold text-gray-900 leading-tight truncate group-hover/title:text-emerald-700 transition-colors">
                       {selectedPackage ? selectedPackage.label : guide.name}
                     </h2>
@@ -766,7 +767,7 @@ const GuideDetails = ({ guide }) => {
                     {selectedPackage?.destination || guide.location}
                   </div>
 
-                  <a href={providerProfilePath(guide.companyName || guide.name, guide.providerId || guide._id || guide.id)} className="inline-flex items-center text-sm hover:text-emerald-700 transition-colors">
+                  <a href={providerProfilePath(guide.profileSlug || guide.companyName || guide.name, guide.providerId || guide._id || guide.id)} className="inline-flex items-center text-sm hover:text-emerald-700 transition-colors">
                     <span className="text-gray-500 mr-1.5">By</span>
                     <span className="font-medium text-gray-900 truncate">{guide.companyName || guide.name}</span>
                   </a>
@@ -950,7 +951,7 @@ const GuideDetails = ({ guide }) => {
                       {/* What's Included */}
                       <div className="rounded-xl overflow-hidden border border-slate-200 bg-white">
                         <div className="px-4 py-3 bg-slate-50 border-b border-slate-100">
-                          <h2 className="text-slate-900 font-semibold text-base">What's Included</h2>
+                          <h2 className="text-slate-900 font-semibold text-base">What&apos;s Included</h2>
                         </div>
                         <div className="p-4">
                           <div className="space-y-4">
@@ -977,7 +978,7 @@ const GuideDetails = ({ guide }) => {
 
                           {selectedPackage?.exclusivesList && selectedPackage.exclusivesList.length > 0 && (
                             <div className="mt-4 pt-4 border-t border-gray-200">
-                              <h4 className="font-medium text-gray-800 mb-3 text-sm">What's NOT Included</h4>
+                              <h4 className="font-medium text-gray-800 mb-3 text-sm">What&apos;s NOT Included</h4>
                               <ul className="space-y-2">
                                 {selectedPackage.exclusivesList.map((item, index) => (
                                   <li key={item.id || index} className="flex items-start text-xs text-gray-600">
@@ -1106,7 +1107,7 @@ const GuideDetails = ({ guide }) => {
                 }`}
             >
               <h2 className="text-slate-900 font-semibold text-base">
-                What's Included
+                What&apos;s Included
               </h2>
             </div>
 
@@ -1158,7 +1159,7 @@ const GuideDetails = ({ guide }) => {
                 selectedPackage.exclusivesList.length > 0 && (
                   <div className="mt-4 sm:mt-6 pt-4 border-t border-gray-200">
                     <h4 className="font-medium text-gray-800 mb-3 text-sm sm:text-base">
-                      What's NOT Included
+                      What&apos;s NOT Included
                     </h4>
                     <ul className="space-y-2">
                       {selectedPackage.exclusivesList.map((item, index) => (

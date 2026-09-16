@@ -14,7 +14,7 @@ async function buildFormattedGuides(packages) {
     const guideDetailsList = await GuideDetails.find({
         guide: { $in: providerIds }
     })
-        .select('guide companyname bio destinationId rating reviews totalTrips languages logo pausedServices.trip')
+        .select('guide companyname profileSlug bio destinationId rating reviews totalTrips languages logo pausedServices.trip')
         .populate('guide', 'username')
         .lean();
 
@@ -40,6 +40,7 @@ async function buildFormattedGuides(packages) {
         ...guideDetailsList.map(gd => ({
             id: gd.guide._id.toString(),
             name: gd.companyname || gd.guide.username,
+            profileSlug: gd.profileSlug || '',
             bio: gd.bio || `Specialist at ${gd.destinationId || 'various destinations'}`,
             location: gd.destinationId?.toLowerCase() || '',
             rating: gd.rating || 0,
@@ -104,6 +105,7 @@ async function buildFormattedGuides(packages) {
         return {
             id: guideInfo.id,
             name: guideInfo.name,
+            profileSlug: guideInfo.profileSlug || '',
             bio: guideInfo.bio,
             logo: guideInfo.logo,
             image: guideInfo.logo || '/images/providers/default-provider-cover.webp',

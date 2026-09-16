@@ -4,7 +4,7 @@ import dbConnect from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { Guide } from "@/models/guide.model";
 import { GuideDetails } from "@/models/guidedetails.model";
-import { toProviderSlug } from "@/lib/providerSlug";
+import { retainedProviderSlug } from "@/lib/providerSlug";
 
 export const maxDuration = 60; // Optional but good for large payload processing
 export const dynamic = 'force-dynamic';
@@ -117,8 +117,11 @@ export async function PUT(req) {
         // 2. Update GuideDetails
         const updateFields = {};
         if (companyname !== undefined) {
+            const existingProfile = await GuideDetails.findOne({ guide: user.userId })
+                .select('companyname profileSlug')
+                .lean();
             updateFields.companyname = companyname;
-            updateFields.profileSlug = toProviderSlug(companyname);
+            updateFields.profileSlug = retainedProviderSlug(existingProfile?.profileSlug, existingProfile?.companyname, companyname);
         }
         if (companyemail !== undefined) updateFields.companyemail = companyemail;
         if (companymobile !== undefined) updateFields.companymobile = companymobile;

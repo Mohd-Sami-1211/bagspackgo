@@ -1020,9 +1020,9 @@ const EventDetails = ({ event, loading = false }) => {
           <p className="text-sm font-semibold text-slate-950">Event Saved</p>
           <p className="text-sm text-slate-500">Added to your favorites.</p>
         </div>
-        <a href="/user/saved" className="inline-flex h-8 items-center justify-center rounded-md border border-slate-200 bg-transparent px-3 text-sm font-medium text-slate-950 transition-colors hover:bg-slate-100 focus:outline-none focus:ring-1 focus:ring-slate-950 disabled:pointer-events-none disabled:opacity-50">
+        <Link href="/user/saved" className="inline-flex h-8 items-center justify-center rounded-md border border-slate-200 bg-transparent px-3 text-sm font-medium text-slate-950 transition-colors hover:bg-slate-100 focus:outline-none focus:ring-1 focus:ring-slate-950 disabled:pointer-events-none disabled:opacity-50">
           View
-        </a>
+        </Link>
       </div>
     </div>
   );
@@ -1753,7 +1753,7 @@ const EventDetails = ({ event, loading = false }) => {
                   <p className="text-xs text-gray-400 uppercase tracking-wider font-bold">Organized by</p>
                   <p className="text-sm font-bold text-gray-800">
                     {(event.guide || event.guideId) ? (
-                        <Link href={providerProfilePath(event.guideName, event.guide?._id || event.guideId || event.guide)} className="hover:text-emerald-700 hover:underline">
+                        <Link href={event.guidePath || providerProfilePath(event.guideName, event.guide?._id || event.guideId || event.guide)} className="hover:text-emerald-700 hover:underline">
                             {event.guideName || 'Local Organizer'}
                         </Link>
                     ) : (event.guideName || 'Local Organizer')}

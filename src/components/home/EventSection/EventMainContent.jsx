@@ -18,7 +18,7 @@ const CARDS_PER_PAGE = 12;
 /* ═══════════════════════════════════════════════════════════════════════════
    MAIN COMPONENT
    ═══════════════════════════════════════════════════════════════════════════ */
-export default function EventMainContent() {
+export default function EventMainContent({ initialLiveData, initialRecentData } = {}) {
   const [viewMode, setViewMode] = useState('default');
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
@@ -51,10 +51,16 @@ export default function EventMainContent() {
 
   // Load both feeds independently so recent events are available when there
   // are no live events to show below the carousel.
-  const { data: liveData, isLoading: liveLoading, isValidating: liveValidating } = useEventsList(liveQueryParams);
-  const { data: recentData, isLoading: recentLoading, isValidating: recentValidating } = useEventsList(
-    recentQueryParams
+  const { data: liveData, isLoading: livePending, isValidating: liveValidating } = useEventsList(
+    liveQueryParams,
+    { fallbackData: viewMode === 'default' ? initialLiveData : undefined }
   );
+  const { data: recentData, isLoading: recentPending, isValidating: recentValidating } = useEventsList(
+    recentQueryParams,
+    { fallbackData: viewMode === 'default' ? initialRecentData : undefined }
+  );
+  const liveLoading = livePending && !liveData;
+  const recentLoading = recentPending && !recentData;
 
   const liveEvents = liveData?.events || [];
   const recentEvents = recentData?.events || [];
@@ -309,7 +315,7 @@ export default function EventMainContent() {
    ═══════════════════════════════════════════════════════════════════════════ */
 function CarouselSlide({ event }) {
   const formattedDate = new Date(event.date).toLocaleDateString('en-US', {
-    month: 'long', day: 'numeric', year: 'numeric'
+    month: 'long', day: 'numeric', year: 'numeric', timeZone: 'Asia/Kolkata'
   });
 
   return (
@@ -432,7 +438,7 @@ function EmptyState({ onReset }) {
       </div>
       <h3 className="mb-2 font-serif text-2xl font-normal tracking-[-0.025em] text-[#17372f]">No Events Found</h3>
       <p className="text-neutral-500 max-w-md mx-auto mb-6 text-sm">
-        We couldn't find any events matching your search.
+        We couldn&apos;t find any events matching your search.
       </p>
       <Button onClick={onReset} variant="outline" className="rounded-xl">Clear Filters</Button>
     </div>

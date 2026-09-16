@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "test:seo": "node --test tests/seo.test.mjs"
+    "test:seo": "node --test tests/seo.test.mjs tests/detail-seo.test.mjs tests/provider-seo.test.mjs tests/provider-slug.test.mjs tests/publicEventList.test.mjs tests/offbeat-media.test.mjs tests/event-media-access.test.mjs"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

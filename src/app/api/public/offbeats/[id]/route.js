@@ -2,11 +2,11 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import { OffBeat } from '@/models/offbeat.model';
 import mongoose from 'mongoose';
+import { offbeatCoverUrl } from '@/lib/offbeatMedia';
 
 const CACHE_HEADERS = {
-    'Cache-Control': 'public, max-age=60, stale-while-revalidate=300',
-    'CDN-Cache-Control': 'public, s-maxage=300, stale-while-revalidate=86400',
-    'Vercel-CDN-Cache-Control': 'public, max-age=300, stale-while-revalidate=86400',
+    'Cache-Control': 'public, max-age=60, s-maxage=300, must-revalidate',
+    'X-Robots-Tag': 'noindex, follow',
 };
 
 export async function GET(req, { params }) {
@@ -24,7 +24,7 @@ export async function GET(req, { params }) {
             return NextResponse.json({ success: false, message: 'Not found' }, { status: 404 });
         }
         
-        return NextResponse.json({ success: true, data: offbeat }, { headers: CACHE_HEADERS });
+        return NextResponse.json({ success: true, data: { ...offbeat, coverPhoto: offbeatCoverUrl(offbeat) } }, { headers: CACHE_HEADERS });
     } catch (error) {
         return NextResponse.json({ success: false, message: 'Server error' }, { status: 500 });
     }

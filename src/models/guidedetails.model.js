@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { toProviderSlug } from "@/lib/providerSlug";
+import { retainedProviderSlug } from "@/lib/providerSlug";
 
 const guidedetailsSchema = new mongoose.Schema(
     {
@@ -105,9 +105,13 @@ const guidedetailsSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
+guidedetailsSchema.post("init", function rememberProfileName(document) {
+    document.$locals.originalProfileName = document.companyname;
+});
+
 guidedetailsSchema.pre("validate", function setProfileSlug() {
-    if (this.companyname && (this.isModified("companyname") || !this.profileSlug)) {
-        this.profileSlug = toProviderSlug(this.companyname);
+    if (this.companyname && !this.profileSlug) {
+        this.profileSlug = retainedProviderSlug('', this.$locals.originalProfileName, this.companyname);
     }
 });
 
