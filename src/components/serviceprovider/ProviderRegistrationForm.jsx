@@ -308,7 +308,7 @@ export default function ProviderRegistrationForm({ rejected = false }) {
                     <div className="relative z-10">
                         {/* Header */}
                         <div className="mb-4">
-                            <Link href="/" className="inline-block mb-3">
+                            <Link href="/user/trip" className="inline-block mb-3">
                                 <div className="w-[110px] h-[30px] relative">
                                     <Image src="/images/logo.svg" alt="bagspackgo" fill className="object-contain" />
                                 </div>

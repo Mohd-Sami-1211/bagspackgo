@@ -8,7 +8,7 @@ const Footer = () => {
 
         {/* Brand Info */}
         <div className="space-y-4">
-          <Link href="/" className="inline-block w-[150px] h-[40px] overflow-hidden relative rounded-3xl bg-white shadow-sm">
+          <Link href="/user/trip" className="inline-block w-[150px] h-[40px] overflow-hidden relative rounded-3xl bg-white shadow-sm">
             <Image
               src="/images/logo.svg"
               alt="bagspackgo Logo"
@@ -28,7 +28,7 @@ const Footer = () => {
             <span className="w-3 h-1 bg-emerald-600 rounded-full"></span> Quick Links
           </h3>
           <ul className="space-y-2.5">
-            <li><Link href="/" className="text-sm text-slate-600 hover:text-emerald-600 hover:translate-x-1 inline-block transition-all font-medium">Home</Link></li>
+            <li><Link href="/user/trip" className="text-sm text-slate-600 hover:text-emerald-600 hover:translate-x-1 inline-block transition-all font-medium">Home</Link></li>
             <li><Link href="/about" className="text-sm text-slate-600 hover:text-emerald-600 hover:translate-x-1 inline-block transition-all font-medium">About Bagspackgo</Link></li>
             <li><Link href="/user/offbeats" className="text-sm text-slate-600 hover:text-emerald-600 hover:translate-x-1 inline-block transition-all font-medium">Offbeats</Link></li>
             <li><Link href="/travel-guides" className="text-sm text-slate-600 hover:text-emerald-600 font-medium">Explore Bagspackgo</Link></li>

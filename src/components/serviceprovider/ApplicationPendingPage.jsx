@@ -132,7 +132,7 @@ export default function ApplicationPendingPage({ onResubmit }) {
                     <div className="relative z-10">
                         {/* Header */}
                         <div className="mb-6">
-                            <Link href="/" className="inline-block mb-5">
+                            <Link href="/user/trip" className="inline-block mb-5">
                                 <div className="w-[130px] h-[40px] relative">
                                     <Image src="/images/logo.svg" alt="bagspackgo" fill className="object-contain" />
                                 </div>
