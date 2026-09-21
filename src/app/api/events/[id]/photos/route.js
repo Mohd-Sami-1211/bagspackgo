@@ -22,13 +22,24 @@ export async function GET(request, context) {
             return NextResponse.json({ success: false, message: 'Invalid Event ID format' }, { status: 404 });
         }
 
+        const { searchParams } = new URL(request.url);
+        const requestedPage = Number.parseInt(searchParams.get('page') || '1', 10);
+        const requestedLimit = Number.parseInt(searchParams.get('limit') || '5', 10);
+        const page = Number.isFinite(requestedPage) ? Math.max(1, requestedPage) : 1;
+        const limit = Number.isFinite(requestedLimit) ? Math.min(24, Math.max(1, requestedLimit)) : 5;
+        const skip = (page - 1) * limit;
+
         const event = await Event.findOne({ _id: id, status: 'published' }).select('photographs').lean();
 
         if (!event) {
             return NextResponse.json({ success: false, message: 'Event not found' }, { status: 404 });
         }
 
-        const photographs = event.photographs || [];
+        const allPhotographs = event.photographs || [];
+        const total = allPhotographs.length;
+        const totalPages = Math.ceil(total / limit);
+
+        const photographs = allPhotographs.slice(skip, skip + limit);
         const photographThumbnails = await generateThumbnails(photographs);
 
         return NextResponse.json(
@@ -38,6 +49,7 @@ export async function GET(request, context) {
                     photographs,
                     photographThumbnails,
                 },
+                pagination: { page, limit, total, totalPages, hasMore: page < totalPages },
             },
             { headers: { 'Cache-Control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=600' } }
         );

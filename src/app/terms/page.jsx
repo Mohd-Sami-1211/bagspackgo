@@ -9,7 +9,7 @@ export default function UserTermsPage() {
         
         {/* Header */}
         <div className="flex items-start gap-4 border-b border-emerald-100 bg-gradient-to-r from-white via-emerald-50/70 to-amber-50/60 px-6 py-8 sm:gap-6 sm:px-10 sm:py-10">
-          <Link href="/" className="group mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-emerald-300 hover:text-emerald-700" aria-label="Back to home">
+          <Link href="/user/trip" className="group mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-emerald-300 hover:text-emerald-700" aria-label="Back to home">
              <ArrowLeft className="w-5 h-5 group-hover:-translate-x-0.5 transition-transform" />
           </Link>
           <div>

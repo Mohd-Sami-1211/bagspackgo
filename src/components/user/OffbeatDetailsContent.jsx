@@ -264,9 +264,32 @@ export default function OffBeatDetailsPage({ id, initialData }) {
                                 {!previewLoading && mediaTotal > 0 && <button type="button" onClick={() => { setGalleryPage(1); setGalleryOpen(true); }} className="hidden items-center gap-2 rounded-full border border-[#17372f]/15 bg-white px-4 py-2.5 text-sm font-bold shadow-sm transition hover:bg-[#edf3ee] sm:inline-flex"><Camera className="h-4 w-4" /> View all {mediaTotal}</button>}
                             </div>
                             {previewLoading ? (
-                                <div className="grid h-[420px] animate-pulse grid-cols-2 grid-rows-2 gap-3 sm:grid-cols-4"><div className="col-span-2 row-span-2 rounded-3xl bg-[#17372f]/10" /><div className="rounded-3xl bg-[#17372f]/10" /><div className="rounded-3xl bg-[#17372f]/10" /><div className="col-span-2 rounded-3xl bg-[#17372f]/10" /></div>
+                                <div className="grid grid-cols-2 gap-2 overflow-hidden rounded-[1.5rem] sm:gap-3 lg:grid-cols-4 lg:grid-rows-2">
+                                    {[...Array(5)].map((_, i) => (
+                                        <div key={i} className={`bg-[#17372f]/10 animate-pulse ${i === 0 ? 'col-span-2 aspect-[16/10] lg:row-span-2 lg:aspect-auto' : 'aspect-[4/3] lg:aspect-auto lg:min-h-40'}`} />
+                                    ))}
+                                </div>
                             ) : (
-                                <div className="grid grid-cols-2 auto-rows-fr gap-3 sm:grid-cols-4">{previewMedia.map((item, index) => <MediaTile key={`${item.type}-${index}`} item={item} index={index} onOpen={setSelectedMedia} />)}</div>
+                                <div className="grid grid-cols-2 gap-2 overflow-hidden rounded-[1.5rem] sm:gap-3 lg:grid-cols-4 lg:grid-rows-2">
+                                    {previewMedia.slice(0, 5).map((item, index) => (
+                                        <button
+                                            key={`${item.type}-${index}`}
+                                            type="button"
+                                            onClick={() => setSelectedMedia(item)}
+                                            className={`group relative overflow-hidden bg-[#dfe5df] text-left ${index === 0 ? "col-span-2 aspect-[16/10] lg:row-span-2 lg:aspect-auto" : "aspect-[4/3] lg:aspect-auto lg:min-h-40"}`}
+                                        >
+                                            {item.type === 'video' ? (
+                                                <video src={item.url} muted playsInline preload="metadata" className="h-full w-full object-cover transition duration-700 group-hover:scale-105 group-hover:opacity-80" />
+                                            ) : (
+                                                <img src={item.url} alt={`Destination preview ${index + 1}`} loading="lazy" decoding="async" className="h-full w-full object-cover transition duration-700 group-hover:scale-105 group-hover:opacity-80" />
+                                            )}
+                                            <span className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-70 transition group-hover:opacity-90" />
+                                            <span className="absolute inset-0 flex items-center justify-center bg-black/0 transition group-hover:bg-black/20">
+                                                <Camera className="h-6 w-6 opacity-0 transition group-hover:opacity-100 text-white" />
+                                            </span>
+                                        </button>
+                                    ))}
+                                </div>
                             )}
                             {!previewLoading && mediaTotal > 0 && <button type="button" onClick={() => { setGalleryPage(1); setGalleryOpen(true); }} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#17372f]/15 bg-white px-4 py-3 text-sm font-bold sm:hidden"><Camera className="h-4 w-4" /> View all {mediaTotal}</button>}
                         </section>

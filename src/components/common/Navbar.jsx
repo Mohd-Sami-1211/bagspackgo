@@ -133,7 +133,7 @@ export default function Navbar() {
         <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between gap-4">
             <Link
-              href="/"
+              href="/user/trip"
               className="relative h-10 w-[128px] shrink-0 overflow-hidden rounded-full bg-white sm:w-[150px]"
               aria-label="bagspackgo home"
             >
