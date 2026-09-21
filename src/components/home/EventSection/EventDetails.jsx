@@ -1676,7 +1676,7 @@ const EventDetails = ({ event, loading = false }) => {
 
           {/* Left: Poster with Back Button */}
           <div className="w-full md:w-1/2 lg:w-2/3 flex flex-col gap-4">
-            <div className="rounded-xl overflow-hidden shadow-lg relative bg-neutral-900 group min-h-[256px] md:min-h-[384px] flex items-center justify-center">
+            <div className={`rounded-xl overflow-hidden shadow-lg relative bg-neutral-900 group flex items-center justify-center transition-all duration-500 ${!posterLoaded ? 'min-h-[256px] md:min-h-[384px]' : ''}`}>
               <Button
                 variant="secondary"
                 size="sm"
