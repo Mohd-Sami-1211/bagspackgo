@@ -31,7 +31,7 @@ export async function GET(req, { params }) {
                         $filter: {
                             input: { $ifNull: ['$photographs', []] },
                             as: 'photo',
-                            cond: { $and: [{ $ne: ['$$photo', '$coverPhoto'] }, { $ne: ['$$photo', ''] }] },
+                            cond: { $ne: ['$$photo', ''] },
                         },
                     },
                     videos: { $filter: { input: { $ifNull: ['$videos', []] }, as: 'video', cond: { $ne: ['$$video', ''] } } },
