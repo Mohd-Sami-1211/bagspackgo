@@ -112,9 +112,13 @@ export function useTripItineraryPhotos(packageId, dayIndex, options = {}) {
 }
 
 // 2.6 Event Photos Cache (Background fetch for Base64 gallery images)
-export function useEventPhotos(eventId, options = {}) {
-    const url = eventId ? `/api/events/${eventId}/photos` : null;
-    return useSWR(url, { ...options, dedupingInterval: 300000 }); // Cache photos for 5 mins
+export function useEventPhotos(eventId, queryParams = {}, options = {}) {
+    const params = new URLSearchParams({
+        page: String(queryParams.page || 1),
+        limit: String(queryParams.limit || 5),
+    });
+    const url = eventId ? `/api/events/${eventId}/photos?${params.toString()}` : null;
+    return useSWR(url, { ...options, dedupingInterval: 300000, keepPreviousData: true }); // Cache photos for 5 mins
 }
 
 // 2.7 Event Sponsors Cache (Background fetch for Base64 logo images)

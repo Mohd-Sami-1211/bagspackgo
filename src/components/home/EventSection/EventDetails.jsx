@@ -1,7 +1,7 @@
 'use client';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  MapPin, Clock, Calendar, Star, User, Ticket, ChevronRight, Info,
+  MapPin, Clock, Calendar, Star, User, Ticket, ChevronRight, ChevronLeft, Info,
   AlertCircle, Map, CheckCircle, CreditCard, ShieldCheck, ArrowLeft,
   Mail, Phone, Upload, XCircle, ChevronDown, ExternalLink, HelpCircle,
   Minus, Plus, Navigation, Users, Sparkles, Bookmark, Share2, FileText,
@@ -333,14 +333,19 @@ const EventDetails = ({ event, loading = false }) => {
     }
   };
 
-  // â”€â”€ Photo lightbox â”€â”€
+  // â”€â”€  // ✨ Photo lightbox & Gallery states ✨
   const [lightboxPhoto, setLightboxPhoto] = useState(null);
   const [selectedSponsor, setSelectedSponsor] = useState(null);
 
-  // â”€â”€ Gallery photos: fetched separately so the page renders without waiting on heavy images â”€â”€
-  const { data: photosData, isLoading: photosLoading } = useEventPhotos(event?.id || event?._id);
+  const [galleryOpen, setGalleryOpen] = useState(false);
+  const [galleryPage, setGalleryPage] = useState(1);
+
+  // 🖼️ Gallery photos: fetched separately so the page renders without waiting on heavy images 🖼️
+  const photosLimit = galleryOpen ? 12 : 5;
+  const { data: photosData, isLoading: photosLoading } = useEventPhotos(event?.id || event?._id, { page: galleryOpen ? galleryPage : 1, limit: photosLimit });
   const galleryPhotos = photosData?.data?.photographs || [];
   const galleryThumbnails = photosData?.data?.photographThumbnails || [];
+  const galleryTotal = photosData?.pagination?.total || event?.photoCount || 0;
   
   // ── Sponsors: fetched separately to avoid heavy base64 data blocking render ──
   const { data: sponsorsData, isLoading: sponsorsLoading } = useEventSponsors(event?.id || event?._id);
@@ -1974,7 +1979,7 @@ const EventDetails = ({ event, loading = false }) => {
         {/* Tab Content */}
         <motion.div key={activeTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
 
-          {/* â•â•â• TAB 1: Event Details â•â•â• */}
+          {/* TAB 1: Event Details */}
           {activeTab === 'eventDetails' && (
             <div className="w-full min-w-0 overflow-hidden break-words space-y-8">
               {/* About */}
@@ -1985,40 +1990,44 @@ const EventDetails = ({ event, loading = false }) => {
                 </div>
               </div>
 
-              {/* Photographs Gallery */}
+              {/* Gallery */}
               {photoCount > 0 && (
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                    <Sparkles className="text-gray-900" size={20} /> Gallery
-                  </h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                      <Sparkles className="text-gray-900" size={20} /> Gallery
+                    </h3>
+                    {!photosLoading && galleryTotal > 5 && (
+                      <button onClick={() => { setGalleryPage(1); setGalleryOpen(true); }} className="hidden sm:inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-bold text-gray-700 shadow-sm transition hover:bg-gray-50">
+                        View all {galleryTotal}
+                      </button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 overflow-hidden rounded-[1.5rem] sm:gap-3 lg:grid-cols-4 lg:grid-rows-2">
                     {photosLoading
-                      ? // While photos load, show progress-ring placeholders matching the photo count
-                        [...Array(photoCount)].map((_, i) => (
-                          <div
-                            key={i}
-                            className="relative aspect-[4/3] rounded-xl overflow-hidden shadow-sm border border-gray-100"
-                          >
-                            <ProgressiveImage src={null} thumbnail={null} alt={`Event photo ${i + 1}`} className="w-full h-full" />
-                          </div>
+                      ? [...Array(Math.min(5, photoCount || 5))].map((_, i) => (
+                          <div key={i} className={"bg-gray-100 animate-pulse " + (i === 0 ? 'col-span-2 aspect-[16/10] lg:row-span-2 lg:aspect-auto' : 'aspect-[4/3] lg:aspect-auto lg:min-h-40')} />
                         ))
-                      : galleryPhotos.map((photo, i) => (
-                          <button
-                            key={i}
-                            onClick={() => setLightboxPhoto(photo)}
-                            className="relative aspect-[4/3] rounded-xl overflow-hidden shadow-sm border border-gray-100 group cursor-pointer"
+                      : galleryPhotos.slice(0, 5).map((photo, i) => (
+                          <button key={i}
+                            onClick={() => { if (i === 4 && galleryTotal > 5) { setGalleryPage(1); setGalleryOpen(true); } else { setLightboxPhoto(photo); } }}
+                            className={"group relative overflow-hidden bg-gray-100 text-left cursor-pointer " + (i === 0 ? 'col-span-2 aspect-[16/10] lg:row-span-2 lg:aspect-auto' : 'aspect-[4/3] lg:aspect-auto lg:min-h-40')}
                           >
-                            <ProgressiveImage
-                              src={photo}
-                              thumbnail={galleryThumbnails[i] || null}
-                              alt={`Event photo ${i + 1}`}
-                              className="w-full h-full"
-                              imgClassName="group-hover:scale-105 transition-transform duration-300"
-                            />
-                            <div className="absolute inset-0 z-10 bg-black/0 group-hover:bg-black/10 transition-all duration-300" />
+                            <ProgressiveImage src={photo} thumbnail={galleryThumbnails[i] || null} alt={"Event photo " + (i + 1)} className="w-full h-full" imgClassName="group-hover:scale-105 transition-transform duration-500 object-cover w-full h-full" />
+                            <div className="absolute inset-0 z-10 bg-black/0 group-hover:bg-black/15 transition-all duration-300" />
+                            {i === 4 && galleryTotal > 5 && (
+                              <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/40">
+                                <span className="text-white text-lg font-bold">+{galleryTotal - 4} more</span>
+                              </div>
+                            )}
                           </button>
                         ))}
                   </div>
+                  {!photosLoading && galleryTotal > 5 && (
+                    <button onClick={() => { setGalleryPage(1); setGalleryOpen(true); }} className="mt-4 sm:hidden inline-flex w-full items-center justify-center rounded-full border border-gray-200 bg-white px-4 py-3 text-sm font-bold text-gray-700">
+                      View all {galleryTotal} photos
+                    </button>
+                  )}
                 </div>
               )}
 
@@ -2243,6 +2252,70 @@ const EventDetails = ({ event, loading = false }) => {
         </motion.div>
       </div>
 
+
+      {/* Gallery Full-Screen Modal - matches Trip Packages dark gallery */}
+      <AnimatePresence>
+        {galleryOpen && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] overflow-y-auto bg-[#07110e]/96 px-4 py-6 text-white backdrop-blur-xl sm:px-6 sm:py-8"
+            role="dialog" aria-modal="true" aria-label="Event gallery"
+          >
+            <div className="mx-auto max-w-7xl">
+              <div className="mb-6 flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-300">Event Gallery</p>
+                  <h2 className="mt-1 font-serif text-3xl sm:text-4xl">{event?.name}</h2>
+                </div>
+                <button type="button" onClick={() => setGalleryOpen(false)}
+                  className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/10 transition hover:bg-white/20"
+                  aria-label="Close gallery"
+                >
+                  <XCircle className="h-5 w-5" />
+                </button>
+              </div>
+              {photosLoading && !photosData ? (
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                  {[...Array(8)].map((_, i) => <div key={i} className="aspect-[4/3] animate-pulse rounded-2xl bg-white/10" />)}
+                </div>
+              ) : (
+                <div className="relative">
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                    {galleryPhotos.map((photo, i) => (
+                      <button key={i + "-" + galleryPage} type="button" onClick={() => setLightboxPhoto(photo)}
+                        className="group relative aspect-[4/3] overflow-hidden rounded-2xl border border-white/10 bg-white/5"
+                      >
+                        <img src={photo} alt={"Gallery photo " + ((galleryPage - 1) * 12 + i + 1)} loading="lazy" decoding="async"
+                          className="h-full w-full object-cover transition duration-700 group-hover:scale-105 group-hover:opacity-80"
+                        />
+                        <span className="absolute inset-0 flex items-center justify-center bg-black/0 transition group-hover:bg-black/20">
+                          <Sparkles className="h-6 w-6 opacity-0 transition group-hover:opacity-100" />
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                  {photosLoading && <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-[#07110e]/55"><div className="h-9 w-9 animate-spin rounded-full border-2 border-white/20 border-t-emerald-300" /></div>}
+                </div>
+              )}
+              {(photosData?.pagination?.totalPages || 0) > 1 && (
+                <div className="mt-8 flex items-center justify-center gap-3">
+                  <button type="button" onClick={() => setGalleryPage(p => Math.max(1, p - 1))} disabled={galleryPage === 1}
+                    className="inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-2.5 text-sm font-bold transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-35"
+                  >
+                    <ChevronLeft className="h-4 w-4" /> Previous
+                  </button>
+                  <span className="px-2 text-sm font-semibold text-white/60">{galleryPage} / {photosData.pagination.totalPages}</span>
+                  <button type="button" onClick={() => setGalleryPage(p => Math.min(photosData.pagination.totalPages, p + 1))} disabled={!photosData?.pagination?.hasMore}
+                    className="inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-2.5 text-sm font-bold transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-35"
+                  >
+                    Next <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* â”€â”€ Photo Lightbox â”€â”€ */}
       <AnimatePresence>
         {lightboxPhoto && (
@@ -2276,3 +2349,4 @@ const EventDetails = ({ event, loading = false }) => {
 };
 
 export default EventDetails;
+
