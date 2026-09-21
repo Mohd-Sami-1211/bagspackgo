@@ -312,6 +312,7 @@ const EventDetails = ({ event, loading = false }) => {
 
   // ── View state: 'details' or 'booking' ──
   const [currentView, setCurrentView] = useState('details');
+  const [posterLoaded, setPosterLoaded] = useState(false);
 
   // ── Tabs for the details view ──
   const [activeTab, setActiveTab] = useState('eventDetails');
@@ -1675,7 +1676,7 @@ const EventDetails = ({ event, loading = false }) => {
 
           {/* Left: Poster with Back Button */}
           <div className="w-full md:w-1/2 lg:w-2/3 flex flex-col gap-4">
-            <div className="rounded-xl overflow-hidden shadow-lg relative bg-neutral-900 group">
+            <div className="rounded-xl overflow-hidden shadow-lg relative bg-neutral-900 group min-h-[256px] md:min-h-[384px] flex items-center justify-center">
               <Button
                 variant="secondary"
                 size="sm"
@@ -1685,10 +1686,16 @@ const EventDetails = ({ event, loading = false }) => {
                 <ArrowLeft size={16} />
                 <span className="hidden sm:inline">Back</span>
               </Button>
+              
+              {!posterLoaded && (
+                <div className="absolute inset-0 bg-neutral-800 animate-pulse z-0" />
+              )}
+              
               <img
                 src={event.image || '/images/EventCover.webp'}
                 alt={event.name}
-                className="relative z-10 w-full max-h-64 md:max-h-96 object-contain"
+                onLoad={() => setPosterLoaded(true)}
+                className={`relative z-10 w-full max-h-64 md:max-h-96 object-contain transition-opacity duration-300 ${posterLoaded ? 'opacity-100' : 'opacity-0'}`}
               />
             </div>
 
@@ -2267,7 +2274,7 @@ const EventDetails = ({ event, loading = false }) => {
                   <h2 className="mt-1 font-serif text-3xl sm:text-4xl">{event?.name}</h2>
                 </div>
                 <button type="button" onClick={() => setGalleryOpen(false)}
-                  className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/10 transition hover:bg-white/20"
+                  className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-black shadow-lg transition hover:bg-gray-200"
                   aria-label="Close gallery"
                 >
                   <XCircle className="h-5 w-5" />
