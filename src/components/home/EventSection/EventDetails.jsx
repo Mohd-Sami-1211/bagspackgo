@@ -347,6 +347,7 @@ const EventDetails = ({ event, loading = false }) => {
   const galleryPhotos = photosData?.data?.photographs || [];
   const galleryThumbnails = photosData?.data?.photographThumbnails || [];
   const galleryTotal = photosData?.pagination?.total || event?.photoCount || 0;
+  const remainingPhotos = Math.max(0, galleryTotal - 5);
   
   // ── Sponsors: fetched separately to avoid heavy base64 data blocking render ──
   const { data: sponsorsData, isLoading: sponsorsLoading } = useEventSponsors(event?.id || event?._id);
@@ -2017,14 +2018,19 @@ const EventDetails = ({ event, loading = false }) => {
                         ))
                       : galleryPhotos.slice(0, 5).map((photo, i) => (
                           <button key={i}
-                            onClick={() => { if (i === 4 && galleryTotal > 5) { setGalleryPage(1); setGalleryOpen(true); } else { setLightboxPhoto(photo); } }}
+                            onClick={() => { if (i === 4 && remainingPhotos > 0) { setGalleryPage(1); setGalleryOpen(true); } else { setLightboxPhoto(photo); } }}
                             className={"group relative overflow-hidden bg-gray-100 text-left cursor-pointer " + (i === 0 ? 'col-span-2 aspect-[16/10] lg:row-span-2 lg:aspect-auto' : 'aspect-[4/3] lg:aspect-auto lg:min-h-40')}
                           >
                             <ProgressiveImage src={photo} thumbnail={galleryThumbnails[i] || null} alt={"Event photo " + (i + 1)} className="w-full h-full" imgClassName="group-hover:scale-105 transition-transform duration-500 object-cover w-full h-full" />
                             <div className="absolute inset-0 z-10 bg-black/0 group-hover:bg-black/15 transition-all duration-300" />
-                            {i === 4 && galleryTotal > 5 && (
-                              <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/40">
-                                <span className="text-white text-lg font-bold">+{galleryTotal - 4} more</span>
+                            {i === 4 && remainingPhotos > 0 && (
+                              <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/40 text-white lg:hidden">
+                                <span className="flex items-center gap-1 text-base font-bold"><Plus size={20} /> View {remainingPhotos} more</span>
+                              </div>
+                            )}
+                            {i === 4 && remainingPhotos > 0 && (
+                              <div className="absolute inset-0 z-20 hidden items-center justify-center bg-black/40 lg:flex">
+                                <span className="text-white text-lg font-bold">+ View {remainingPhotos} more</span>
                               </div>
                             )}
                           </button>
