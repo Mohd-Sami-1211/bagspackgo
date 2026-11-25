@@ -127,6 +127,7 @@ const SavedMainContent = () => {
                   : pkg.coverImage || pkg.poster || pkg.images?.[0];
               const title = pkg.label || pkg.title || pkg.name || 'Untitled Package';
               const price = getPrice(record);
+              const slotsLabel = record.itemType === 'event' ? getEventSlotsLabel(pkg) : null;
               return (
                 <motion.article layout initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.96 }} transition={{ duration: 0.22 }} key={record._id} onClick={(event) => handleOpenConfig(event, record)} className="group cursor-pointer overflow-hidden rounded-[26px] border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-emerald-300 hover:shadow-xl">
                   <div className={`relative h-48 overflow-hidden bg-gradient-to-br ${typeCfg.fallback}`}>
@@ -140,7 +141,9 @@ const SavedMainContent = () => {
                   <div className="p-5">
                     <div className="grid grid-cols-2 gap-3">
                       <div className="rounded-xl bg-slate-50 p-3"><p className="text-[9px] font-black uppercase tracking-wider text-slate-400">{record.itemType === 'event' ? 'Event date' : 'Destination'}</p><p className="mt-1 truncate text-xs font-bold text-slate-800">{record.itemType === 'event' ? (pkg.date ? new Date(pkg.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Date coming soon') : (pkg.destination || pkg.location || 'Location varies')}</p></div>
-                      <div className="rounded-xl bg-slate-50 p-3"><p className="text-[9px] font-black uppercase tracking-wider text-slate-400">{record.itemType === 'event' ? (pkg.showTotalSlots ? 'Capacity' : 'Availability') : 'Duration'}</p><p className="mt-1 text-xs font-bold text-slate-800">{record.itemType === 'event' ? getEventSlotsLabel(pkg) : (pkg.days ? `${pkg.days} days` : 'Flexible')}</p></div>
+                      {record.itemType !== 'event' || slotsLabel ? (
+                        <div className="rounded-xl bg-slate-50 p-3"><p className="text-[9px] font-black uppercase tracking-wider text-slate-400">{record.itemType === 'event' ? 'Availability' : 'Duration'}</p><p className="mt-1 text-xs font-bold text-slate-800">{record.itemType === 'event' ? slotsLabel : (pkg.days ? `${pkg.days} days` : 'Flexible')}</p></div>
+                      ) : null}
                     </div>
                     {record.config?.date && record.itemType !== 'event' && <div className="mt-3 flex items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-800"><Calendar className="h-3.5 w-3.5" /> Planned for {new Date(record.config.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</div>}
                     <div className="mt-5 flex items-end justify-between border-t border-slate-100 pt-4">

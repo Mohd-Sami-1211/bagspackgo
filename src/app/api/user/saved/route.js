@@ -6,6 +6,7 @@ import { Package } from '@/models/package.model';
 import { Event } from '@/models/event.model';
 import { OffBeat } from '@/models/offbeat.model';
 import { GuideDetails } from '@/models/guidedetails.model';
+import { getPublicEventSlots } from '@/lib/eventSlots';
 
 export async function GET(request) {
     try {
@@ -34,7 +35,7 @@ export async function GET(request) {
 
         const [packages, events, offbeats] = await Promise.all([
             packageIds.length ? Package.find({ _id: { $in: packageIds }, category: 'trip' }).select({ title: 1, name: 1, destination: 1, label: 1, days: 1, packageCategory: 1, pricingTiers: 1, coverImage: 1, images: { $slice: 1 } }).lean() : [],
-            eventIds.length ? Event.find({ _id: { $in: eventIds } }).select({ title: 1, eventType: 1, destination: 1, date: 1, duration: 1, pricePerSlot: 1, poster: 1, location: 1, totalSlots: 1, showTotalSlots: 1, bookedSlots: 1, reservedSlots: 1, guide: 1, photographs: { $slice: 1 } }).populate({ path: 'guide', select: 'username' }).lean() : [],
+            eventIds.length ? Event.find({ _id: { $in: eventIds } }).select({ title: 1, eventType: 1, destination: 1, date: 1, duration: 1, pricePerSlot: 1, poster: 1, location: 1, totalSlots: 1, showAvailableSlots: 1, showTotalSlots: 1, bookedSlots: 1, reservedSlots: 1, guide: 1, photographs: { $slice: 1 } }).populate({ path: 'guide', select: 'username' }).lean() : [],
             offbeatIds.length ? OffBeat.find({ _id: { $in: offbeatIds } }).select({ title: 1, destination: 1, shortDescription: 1, region: 1, status: 1, coverPhoto: 1, photographs: { $slice: 1 } }).lean() : [],
         ]);
 
@@ -50,15 +51,14 @@ export async function GET(request) {
             let itemData = record.itemType === 'trip' ? packageById.get(itemId) : record.itemType === 'event' ? eventById.get(itemId) : offbeatById.get(itemId);
             if (!itemData) return null;
             if (record.itemType === 'event') {
+                const { totalSlots, bookedSlots, reservedSlots, showAvailableSlots, showTotalSlots, ...publicItem } = itemData;
                 itemData = {
-                    ...itemData,
+                    ...publicItem,
                     name: itemData.title,
                     coverImage: itemData.poster || itemData.photographs?.[0] || '',
                     price: itemData.pricePerSlot,
                     organizer: companyByGuide.get(itemData.guide?._id?.toString()) || itemData.guide?.username || 'Premium Host',
-                    slotsRemaining: Math.max(0, Number(itemData.totalSlots || 0) - Number(itemData.bookedSlots || 0) - Number(itemData.reservedSlots || 0)),
-                    totalSlots: itemData.totalSlots,
-                    showTotalSlots: itemData.showTotalSlots === true,
+                    ...getPublicEventSlots({ totalSlots, bookedSlots, reservedSlots, showAvailableSlots, showTotalSlots }),
                 };
             } else if (record.itemType === 'offbeat') {
                 itemData = { ...itemData, name: itemData.title, coverImage: itemData.coverPhoto || itemData.photographs?.[0] || '' };
@@ -70,7 +70,7 @@ export async function GET(request) {
             success: true,
             saved: validItems,
             pagination: { page, limit, total, totalPages: Math.max(1, Math.ceil(total / limit)), hasMore: page * limit < total },
-        }, { headers: { 'Cache-Control': 'private, max-age=15, stale-while-revalidate=45' } });
+        }, { headers: { 'Cache-Control': 'private, no-cache' } });
     } catch (error) {
         console.error("Saved items fetch error:", error);
         return NextResponse.json({ success: false, message: "Failed to fetch saved items" }, { status: 500 });

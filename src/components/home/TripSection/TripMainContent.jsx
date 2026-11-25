@@ -20,10 +20,9 @@ import {
   MapPin,
   Route,
   ShieldCheck,
-  Users,
 } from 'lucide-react';
 import TripSearchInput from './TripSearchInput';
-import { getEventSlotsLabel } from '@/lib/eventSlots';
+import LiveEventsSection from '../EventSection/LiveEventsSection';
 
 const fetcher = (url) => fetch(url).then((response) => {
   if (!response.ok) throw new Error('Unable to load');
@@ -78,84 +77,12 @@ function LiveEvents() {
     dedupingInterval: 60_000,
   });
   const events = data?.success ? data.events || [] : [];
-  const [activeSlide, setActiveSlide] = useState(0);
-
-  useEffect(() => {
-    if (events.length < 2) return undefined;
-    const interval = window.setInterval(() => {
-      setActiveSlide((current) => (current + 1) % events.length);
-    }, 5000);
-    return () => window.clearInterval(interval);
-  }, [events.length]);
-
-  useEffect(() => {
-    if (activeSlide >= events.length) setActiveSlide(0);
-  }, [activeSlide, events.length]);
-
-  if (!events.length) return null;
+  if (events.length === 0) return null;
 
   return (
-    <section className="bg-[#f8f6f0] px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-      <div className="mx-auto max-w-7xl">
-        <div className="mb-8 flex items-end justify-between gap-5">
-          <div>
-            <p className="mb-3 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.22em] text-[#9b7440]">
-              <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-600" /> Live events
-            </p>
-            <h2 className="font-serif text-4xl tracking-tight text-[#17372f] sm:text-5xl">Happening around you</h2>
-          </div>
-          <Link href="/user/events" className="hidden items-center gap-2 text-sm font-semibold text-[#17372f] sm:flex">All events <ArrowRight size={16} /></Link>
-        </div>
-
-        <div className="sm:hidden">
-          <AnimatePresence mode="wait">
-            <motion.div key={events[activeSlide].id} initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }} transition={{ duration: 0.4 }}>
-              <EventPoster event={events[activeSlide]} />
-            </motion.div>
-          </AnimatePresence>
-          {events.length > 1 && (
-            <div className="mt-5 flex justify-center gap-2" aria-label="Choose event">
-              {events.map((event, index) => (
-                <button key={event.id} onClick={() => setActiveSlide(index)} className={`h-2 rounded-full transition-all ${index === activeSlide ? 'w-7 bg-[#17372f]' : 'w-2 bg-[#17372f]/25'}`} aria-label={`Show event ${index + 1}`} />
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="hidden gap-4 sm:grid sm:grid-cols-2 lg:grid-cols-4">
-          {events.map((event, index) => (
-            <motion.div
-              key={event.id}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.45, delay: index * 0.06 }}
-            >
-              <EventPoster event={event} />
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function EventPoster({ event }) {
-  return (
-    <article className="group relative min-h-72 overflow-hidden rounded-2xl bg-[#17372f] shadow-[0_12px_35px_rgba(23,55,47,0.12)] transition-all hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(23,55,47,0.2)]">
-      {event.image && <img src={event.image} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-black/5" />
-      <div className="relative flex min-h-72 flex-col justify-end p-5 text-white">
-        <h3 className="line-clamp-2 font-serif text-2xl leading-7">{event.name}</h3>
-        <div className="mt-4 flex items-end justify-between gap-4">
-          <div className="min-w-0 space-y-2 text-xs font-medium text-white/80">
-            <p className="flex items-center gap-2"><MapPin size={15} className="shrink-0" /> <span className="truncate">{event.destination || event.destinationId || 'Location to be announced'}</span></p>
-            <p className="flex items-center gap-2"><Users size={15} className="shrink-0" /> {getEventSlotsLabel(event)}</p>
-          </div>
-          <Link href={`/user/events/eventdetails/${event.id}`} className="inline-flex shrink-0 items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white hover:text-[#17372f]">View <ArrowRight size={15} /></Link>
-        </div>
-      </div>
-    </article>
+    <div className="bg-gray-50 pt-12">
+      <LiveEventsSection events={events} />
+    </div>
   );
 }
 

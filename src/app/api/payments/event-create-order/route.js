@@ -6,6 +6,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { Booking } from '@/models/booking.model';
 import { Event } from '@/models/event.model';
 import { calculateEventBookingQuote, releaseEventBookingHold } from '@/lib/eventBooking';
+import { getEventSlotShortageMessage } from '@/lib/eventSlots';
 
 export async function POST(request) {
     try {
@@ -97,7 +98,7 @@ export async function POST(request) {
             _id: booking.event,
             status: 'published',
             date: { $gte: new Date() },
-        }).select('totalSlots bookedSlots reservedSlots pricePerSlot applicationFormType customFormFields').lean();
+        }).select('totalSlots bookedSlots reservedSlots showAvailableSlots showTotalSlots pricePerSlot applicationFormType customFormFields').lean();
         if (!eventDoc) {
             await releaseEventBookingHold(booking._id, { reason: 'Event is no longer bookable' });
             return NextResponse.json({ success: false, message: 'Event is no longer available for booking' }, { status: 409 });
@@ -119,7 +120,7 @@ export async function POST(request) {
             return NextResponse.json({ 
                 success: false, 
                 soldOut: true,
-                message: available <= 0 ? 'This event is now sold out.' : `Only ${available} slot(s) remaining.`
+                message: getEventSlotShortageMessage(eventDoc, available),
             }, { status: 409 });
         }
 

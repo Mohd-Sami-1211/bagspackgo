@@ -88,10 +88,11 @@ const eventSchema = new mongoose.Schema(
             min: 1,
             default: 20,
         },
-        showTotalSlots: {
+        showAvailableSlots: {
             type: Boolean,
-            default: false,
         },
+        // Read older events whose organizers opted to show a public count.
+        showTotalSlots: Boolean,
         bookedSlots: {
             type: Number,
             default: 0,

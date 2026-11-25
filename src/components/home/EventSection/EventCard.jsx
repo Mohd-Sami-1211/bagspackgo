@@ -2,7 +2,8 @@
 import { motion } from 'framer-motion';
 import { MapPin, Calendar, Star, Ticket, Clock, Users, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
-import { getEventSlotsLabel } from '@/lib/eventSlots';
+import { getEventSlotsLabel, isEventSoldOut } from '@/lib/eventSlots';
+import EventPosterImage from './EventPosterImage';
 
 const MotionLink = motion.create(Link);
 
@@ -26,7 +27,8 @@ const formatTimeAgo = (dateString) => {
 
 const EventCard = ({ event }) => {
   const isPast = event.isPast || false;
-  const isSoldOut = !isPast && (event.slotsLeft <= 0);
+  const isSoldOut = !isPast && isEventSoldOut(event);
+  const slotsLabel = isPast ? 'Ended' : getEventSlotsLabel(event);
 
   const formattedDate = new Date(event.date).toLocaleDateString('en-US', {
     month: 'short',
@@ -51,49 +53,33 @@ const EventCard = ({ event }) => {
       href={`/user/events/eventdetails/${event.id}`}
       className="group flex flex-col bg-white rounded-3xl overflow-hidden border border-neutral-100 hover:border-emerald-200 shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:-translate-y-1 relative"
     >
-      {/* Image Section */}
-      <div className="relative h-48 sm:h-52 w-full overflow-hidden bg-neutral-100">
-        <img
-          src={event.image || '/images/EventCover.webp'}
-          alt={event.name}
-          loading="lazy"
-          draggable={false}
-          className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 ${isPast ? 'grayscale-[40%]' : ''}`}
-          onError={(e) => { e.currentTarget.src = '/images/EventCover.webp'; }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 pointer-events-none" />
+      <div className="h-56 w-full shrink-0 border-b border-neutral-100 bg-[#eef3ef] p-2 sm:h-60">
+        <EventPosterImage event={event} />
+      </div>
 
-        {/* Top Badges */}
-        <div className="absolute top-3 left-3 flex gap-2 z-10">
+      <div className="flex flex-grow flex-col p-5">
+        <div className="mb-3 flex flex-wrap items-center gap-2">
           {isPast ? (
-            <span className="px-3 py-1 text-[10px] font-bold uppercase tracking-widest bg-neutral-800/90 text-white rounded-full backdrop-blur-sm">
+            <span className="rounded-full bg-neutral-100 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-neutral-700">
               Completed
             </span>
           ) : (
-            <span className="px-3 py-1 text-[10px] font-bold uppercase tracking-widest bg-emerald-500/90 text-white rounded-full backdrop-blur-sm shadow-lg">
+            <span className="rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-emerald-800">
               {event.type || 'Event'}
             </span>
           )}
+          {event.rating > 0 && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-700">
+              <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+              {event.rating.toFixed(1)}
+            </span>
+          )}
+          <span suppressHydrationWarning className="ml-auto inline-flex items-center gap-1.5 text-[10px] font-medium text-neutral-600">
+            <Clock className="h-3 w-3" />
+            {publishedAgo}
+          </span>
         </div>
 
-        {/* Published Time (Top Right) */}
-        <div suppressHydrationWarning className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1 bg-black/40 backdrop-blur-md rounded-lg text-[10px] font-medium text-white/90 z-10">
-          <Clock className="w-3 h-3" />
-          {publishedAgo}
-        </div>
-
-        {/* Rating Badge (Bottom Right over image) */}
-        {event.rating > 0 && (
-          <div className="absolute bottom-3 right-3 flex items-center gap-1 px-2.5 py-1 bg-white/95 backdrop-blur-md rounded-full text-xs font-bold text-amber-600 z-10 shadow-lg">
-            <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-            {event.rating?.toFixed(1)}
-          </div>
-        )}
-      </div>
-
-      {/* Content Section */}
-      <div className="flex flex-col p-5 flex-grow">
-        
         {/* Organizer Row with Logo */}
         <div className="flex items-center gap-2 mb-3">
           <div className="w-6 h-6 rounded-full bg-emerald-50 flex items-center justify-center overflow-hidden border border-emerald-100 flex-shrink-0">
@@ -131,17 +117,12 @@ const EventCard = ({ event }) => {
             <Clock className="w-4 h-4 text-purple-500" />
             <span>{event.duration || '1 day'}</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <Ticket className="w-4 h-4 text-amber-500" />
-            {event.showTotalSlots && <span>{getEventSlotsLabel(event)}</span>}
-            {isPast ? (
-              <span>Ended</span>
-            ) : isSoldOut ? (
-              <span className="text-red-500 font-bold">Sold out</span>
-            ) : !event.showTotalSlots && (
-              <span>{getEventSlotsLabel(event)}</span>
-            )}
-          </div>
+          {slotsLabel && (
+            <div className="flex items-center gap-1.5">
+              <Ticket className="w-4 h-4 text-amber-500" />
+              <span className={isSoldOut ? 'text-red-500 font-bold' : undefined}>{slotsLabel}</span>
+            </div>
+          )}
         </div>
 
         {/* Footer: Price + Button */}

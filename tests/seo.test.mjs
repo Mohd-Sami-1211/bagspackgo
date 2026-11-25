@@ -31,6 +31,8 @@ test('live events use accurate availability and free events keep a zero price',(
   assert.equal(schema.offers.price,500);
   assert.equal(schema.offers.availability,'https://schema.org/InStock');
   assert.equal(eventSchema({...event,slotsLeft:0},now).offers.availability,'https://schema.org/SoldOut');
+  assert.equal(eventSchema({...event,slotsLeft:undefined,isSoldOut:false},now).offers.availability,'https://schema.org/InStock');
+  assert.equal(eventSchema({...event,slotsLeft:undefined,isSoldOut:true},now).offers.availability,'https://schema.org/SoldOut');
   assert.equal(eventSchema({...event,price:0},now).offers.price,0);
 });
 test('private, cancelled and finished events do not advertise current ticket offers',()=>{

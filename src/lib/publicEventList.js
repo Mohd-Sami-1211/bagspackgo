@@ -4,6 +4,7 @@ import { Guide } from "@/models/guide.model";
 import { GuideDetails } from "@/models/guidedetails.model";
 
 import { isPublicProvider } from "@/lib/seo";
+import { getPublicEventSlots } from "./eventSlots.js";
 
 const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
@@ -77,7 +78,7 @@ export async function getPublicEventList(searchParams) {
     // 'whatToBring', 'restrictions', 'pickupPoints', 'itinerary' are NOT
     // fetched here — they are only loaded on the detail page.
     const projection =
-        "title date duration pricePerSlot eventType rating bookedSlots reservedSlots totalSlots showTotalSlots " +
+        "title date duration pricePerSlot eventType rating bookedSlots reservedSlots totalSlots showAvailableSlots showTotalSlots " +
         "location destination poster guide destinationLink createdAt status";
 
     const [eventsList, total] = await Promise.all([
@@ -130,10 +131,7 @@ export async function getPublicEventList(searchParams) {
             price: e.pricePerSlot,
             type: e.eventType,
             rating: e.rating,
-            bookings: e.bookedSlots,
-            slotsLeft: e.totalSlots - (e.bookedSlots || 0) - (e.reservedSlots || 0),
-            totalSlots: e.totalSlots,
-            showTotalSlots: e.showTotalSlots === true,
+            ...getPublicEventSlots(e),
             destinationId: e.location,
             destination: e.destination,
             image: /^data:image\//i.test(e.poster?.trim() || '') ? `/api/events/${e._id}/poster` : e.poster || null,

@@ -7,7 +7,9 @@ import {
 } from 'lucide-react';
 import EventCard from 'src/components/home/EventSection/EventCard';
 import { useEventsList } from '@/lib/useTripCache';
-import { getEventSlotsLabel } from '@/lib/eventSlots';
+import { getEventSlotsLabel, isEventSoldOut } from '@/lib/eventSlots';
+import EventPosterImage from './EventPosterImage';
+import LiveEventsSection from './LiveEventsSection';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
@@ -66,7 +68,6 @@ export default function EventMainContent({ initialLiveData, initialRecentData } 
   const liveEvents = liveData?.events || [];
   const recentEvents = recentData?.events || [];
   const carouselEvents = liveEvents.slice(0, 5);
-  const hasLiveEvents = liveEvents.length > 0;
   const gridLiveEvents = liveEvents.slice(0, CARDS_PER_SECTION);
   const gridRecentEvents = recentEvents.slice(0, CARDS_PER_SECTION);
   const hasMoreLive = (liveData?.total || 0) > CARDS_PER_SECTION;
@@ -214,13 +215,9 @@ export default function EventMainContent({ initialLiveData, initialRecentData } 
   return (
     <div className="min-h-screen bg-gray-50 pb-16">
       {/* ────────────────────────────────────────────────────────────────────
-          SECTION 1 — LIVE EVENTS CAROUSEL (Full Background Poster)
+          SECTION 1 — LIVE EVENTS CAROUSEL
           ──────────────────────────────────────────────────────────────────── */}
-      <section className="relative mb-12 w-full bg-[#0f1014] pt-[4.75rem] md:bg-transparent md:pt-0">
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 top-0 z-20 h-36 bg-gradient-to-b from-[#0f1014] via-[#0f1014]/95 to-transparent md:hidden"
-        />
+      <section className="relative mb-12 w-full bg-[#0f1014] pt-[4.75rem] md:pt-0">
         {liveLoading && carouselEvents.length === 0 ? (
           <div className="w-full h-[450px] md:h-[460px] lg:h-[500px] bg-[#0f1014] animate-pulse flex items-center justify-center">
             <div className="w-12 h-12 rounded-full bg-neutral-800" />
@@ -236,7 +233,7 @@ export default function EventMainContent({ initialLiveData, initialRecentData } 
           </div>
         ) : (
           <div
-            className="relative w-full overflow-hidden select-none cursor-grab active:cursor-grabbing group"
+            className="relative w-full overflow-hidden select-none cursor-grab active:cursor-grabbing"
             onMouseDown={handlePointerDown}
             onMouseUp={handlePointerUp}
             onMouseLeave={() => { isDragging.current = false; }}
@@ -244,15 +241,15 @@ export default function EventMainContent({ initialLiveData, initialRecentData } 
             onTouchEnd={handlePointerUp}
           >
             <div className="flex transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)]" style={{ transform: `translateX(-${currentSlide * 100}%)` }}>
-              {carouselEvents.map((event) => (
-                <div key={event.id} className="w-full flex-shrink-0">
-                  <CarouselSlide event={event} />
+              {carouselEvents.map((event, index) => (
+                <div key={event.id} className="w-full min-w-0 flex-shrink-0">
+                  <CarouselSlide event={event} loading={index === 0 ? 'eager' : 'lazy'} />
                 </div>
               ))}
             </div>
 
             {carouselEvents.length > 1 && (
-              <div className="absolute bottom-4 right-4 z-30 flex gap-2 md:bottom-6 md:left-1/2 md:right-auto md:z-20 md:-translate-x-1/2">
+              <div className="flex justify-center gap-2 pb-5">
                 {carouselEvents.map((_, i) => (
                   <button key={i} onClick={(e) => { e.stopPropagation(); setCurrentSlide(i); }} className={`h-1.5 rounded-full transition-all duration-400 ${i === currentSlide ? 'bg-white w-8' : 'bg-white/40 w-2 hover:bg-white/60'}`} aria-label={`Slide ${i + 1}`} />
                 ))}
@@ -267,22 +264,7 @@ export default function EventMainContent({ initialLiveData, initialRecentData } 
           Only show this section when there are live events. With no live
           events, the Stay Tuned carousel state flows directly into recents.
           ──────────────────────────────────────────────────────────────────── */}
-      {hasLiveEvents && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="font-serif text-3xl font-normal tracking-[-0.035em] text-[#17372f] sm:text-4xl">Live Events</h2>
-            {hasMoreLive && (
-              <button onClick={() => openViewAll('all-live')} className="group flex items-center gap-1.5 text-sm font-semibold text-[#1d6b55] transition-colors hover:text-[#124838]">
-                View All <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-              </button>
-            )}
-          </div>
-
-          <motion.div initial="hidden" animate="show" variants={{ hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.07 } } }} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 xl:gap-8">
-            {gridLiveEvents.map((event) => <EventCard key={event.id} event={event} />)}
-          </motion.div>
-        </section>
-      )}
+      <LiveEventsSection events={gridLiveEvents} showViewAll={hasMoreLive} onViewAll={() => openViewAll('all-live')} />
 
       {/* ────────────────────────────────────────────────────────────────────
           SECTION 3 — RECENT EVENTS CARDS GRID
@@ -312,61 +294,46 @@ export default function EventMainContent({ initialLiveData, initialRecentData } 
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   CAROUSEL SLIDE — Hotstar Inspired Layout (Full Poster visibility)
+   CAROUSEL SLIDE
    ═══════════════════════════════════════════════════════════════════════════ */
-function CarouselSlide({ event }) {
+function CarouselSlide({ event, loading }) {
+  const slotsLabel = getEventSlotsLabel(event);
   const formattedDate = new Date(event.date).toLocaleDateString('en-US', {
     month: 'long', day: 'numeric', year: 'numeric', timeZone: 'Asia/Kolkata'
   });
 
   return (
-    <div className="relative w-full h-[450px] md:h-[460px] lg:h-[500px] bg-[#0f1014] overflow-hidden flex items-center group">
-      
-      {/* ── Layer 1: Ambient Blurred Background ── */}
-      {/* This fills the wide screen with the poster's colors without cropping the main focal image */}
-      <img
-        src={event.image || '/images/EventCover.webp'}
-        alt=""
-        className="absolute inset-0 w-full h-full object-cover opacity-20 blur-[40px] scale-110"
-        draggable={false}
-      />
-      
-      {/* ── Layer 2: The Full Uncropped Poster ── */}
-      {/* Using object-contain ensures the entire poster is visible. Aligned to the right on desktop, top on mobile. */}
-      <div className="absolute inset-x-0 top-0 bottom-0 flex justify-end md:top-14">
+    <div className="relative isolate grid h-full w-full items-center gap-5 overflow-hidden pb-6 pt-3 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] md:gap-8 md:pt-16 lg:gap-12">
+      {event.image && (
         <img
-          src={event.image || '/images/EventCover.webp'}
-          alt={event.name}
-          className="w-full md:w-[70%] lg:w-[60%] h-full object-contain md:object-right object-top md:object-center drop-shadow-2xl transition-transform duration-1000 group-hover:scale-105 md:pr-10"
+          src={event.image}
+          alt=""
+          aria-hidden="true"
+          loading={loading}
           draggable={false}
-          onError={(e) => { e.currentTarget.src = '/images/EventCover.webp'; }}
+          className="pointer-events-none absolute inset-0 -z-20 h-full w-full scale-110 object-cover opacity-40 blur-2xl"
         />
+      )}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-t from-[#0f1014] via-[#0f1014]/50 to-transparent md:bg-gradient-to-r md:from-[#0f1014] md:via-[#0f1014]/50 md:to-transparent" />
+      <div className="h-[clamp(15rem,70vw,25rem)] md:h-[26rem]">
+        <EventPosterImage event={event} loading={loading} />
       </div>
 
-      {/* ── Layer 3: Hotstar-style Seamless Gradients ── */}
-      {/* Fades from dark left/bottom into the image on the right/top */}
-      <div className="absolute inset-0 bg-gradient-to-t from-[#0f1014]/80 via-[#0f1014]/38 to-transparent md:bg-gradient-to-r md:from-[#0f1014]/68 md:via-[#0f1014]/22 md:to-transparent" />
-      <div
-        className="absolute inset-y-0 left-0 hidden w-[68%] md:block"
-        style={{ background: 'linear-gradient(90deg, rgba(15,16,20,0.72) 0%, rgba(15,16,20,0.52) 48%, rgba(15,16,20,0.18) 68%, transparent 100%)' }}
-      />
-      <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-[#0f1014]/34 to-transparent md:h-16 md:from-[#0f1014]/24" />
-
-      {/* ── Layer 4: Floating Content ── */}
-      <div className="absolute bottom-8 md:bottom-auto md:top-[66%] md:-translate-y-1/2 left-4 md:left-12 lg:left-20 z-20 max-w-[90%] md:max-w-[50%] lg:max-w-[40%] flex flex-col gap-3 md:gap-3.5 lg:gap-4">
-        
-        {/* Title */}
-        <h2 className="font-serif text-3xl font-normal leading-[0.98] tracking-[-0.045em] text-white drop-shadow-2xl md:text-5xl lg:text-6xl">
+      <div className="flex min-w-0 flex-col gap-3 px-4 sm:px-6 md:order-first md:gap-3.5 md:pl-12 md:pr-0 lg:gap-4 lg:pl-20">
+        <h2 className="break-words font-serif text-3xl font-normal leading-[0.98] tracking-[-0.045em] text-white md:text-5xl lg:text-6xl">
           {event.name}
         </h2>
 
-        {/* Hotstar-style Meta Tags */}
         <div className="flex flex-wrap items-center gap-2 text-xs font-semibold tracking-[0.01em] text-white/80 md:gap-3 md:text-sm">
           <span className="text-emerald-400">{formattedDate}</span>
           <span className="w-1 h-1 rounded-full bg-white/40" />
           <span>{event.duration || '1 day'}</span>
-          <span className="w-1 h-1 rounded-full bg-white/40" />
-          <span className={!event.showTotalSlots && event.slotsLeft <= 0 ? 'text-red-400' : undefined}>{getEventSlotsLabel(event)}</span>
+          {slotsLabel && (
+            <>
+              <span className="w-1 h-1 rounded-full bg-white/40" />
+              <span className={isEventSoldOut(event) ? 'text-red-400' : undefined}>{slotsLabel}</span>
+            </>
+          )}
           <span className="w-1 h-1 rounded-full bg-white/40" />
           <span className="px-2 py-0.5 bg-white/10 rounded-md backdrop-blur-md text-white/90 border border-white/10">
             {event.type || 'Event'}
@@ -382,16 +349,13 @@ function CarouselSlide({ event }) {
           )}
         </div>
 
-        {/* Description / Extra Info */}
         <p className="text-white/70 text-xs md:text-sm lg:text-base leading-relaxed line-clamp-2 md:line-clamp-3 font-medium">
           Located in <strong className="text-white">{event.destination || event.destinationId}</strong>. 
           Organized by <strong className="text-white">{event.guideName || 'Local Organizer'}</strong>. 
           Book your tickets now to secure your spot for this amazing experience!
         </p>
 
-        {/* Action Buttons */}
         <div className="flex items-center gap-4 mt-2">
-          {/* Primary Watch/View Button (Hotstar Play Button style) */}
           <Link
             href={`/user/events/eventdetails/${event.id}`}
             className="flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-semibold tracking-[-0.01em] text-[#17372f] shadow-[0_0_30px_rgba(255,255,255,0.2)] transition-all hover:bg-neutral-200 active:scale-95 lg:px-7 lg:py-3.5 lg:text-sm"
@@ -413,7 +377,7 @@ function SkeletonGrid({ count = 6 }) {
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {Array.from({ length: count }).map((_, i) => (
         <div key={i} className="bg-white rounded-2xl border border-neutral-100 overflow-hidden animate-pulse">
-          <div className="h-48 bg-neutral-200" />
+          <div className="h-56 bg-neutral-200 sm:h-60" />
           <div className="p-5 space-y-3">
             <div className="h-5 bg-neutral-200 rounded w-3/4" />
             <div className="h-4 bg-neutral-100 rounded w-1/2" />

@@ -21,8 +21,7 @@ export async function GET(_request, context) {
             { success: true, event },
             {
                 headers: {
-                    'Cache-Control': 'public, max-age=15, s-maxage=30, stale-while-revalidate=300',
-                    'CDN-Cache-Control': 'public, s-maxage=30, stale-while-revalidate=300',
+                    'Cache-Control': 'no-cache',
                 },
             }
         );

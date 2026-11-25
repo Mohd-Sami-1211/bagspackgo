@@ -1,4 +1,4 @@
-import { unstable_cache } from 'next/cache';
+import { revalidateTag, unstable_cache } from 'next/cache';
 import mongoose from 'mongoose';
 import dbConnect from '@/lib/db';
 import { Event } from '@/models/event.model';
@@ -7,6 +7,7 @@ import { GuideDetails } from '@/models/guidedetails.model';
 import { isPublicProvider } from '@/lib/seo';
 import { providerProfilePath } from '@/lib/providerSlug';
 import { getEventCustomFormFields, getEventParticipantFields } from '@/lib/eventForm';
+import { getPublicEventSlots } from '@/lib/eventSlots';
 
 async function queryPublicEventDetails(id) {
     if (!mongoose.Types.ObjectId.isValid(id)) return null;
@@ -30,6 +31,7 @@ async function queryPublicEventDetails(id) {
                 date: 1,
                 duration: 1,
                 totalSlots: 1,
+                showAvailableSlots: 1,
                 showTotalSlots: 1,
                 bookedSlots: 1,
                 reservedSlots: 1,
@@ -86,11 +88,7 @@ async function queryPublicEventDetails(id) {
         date: event.date?.toISOString?.() || event.date,
         duration: `${event.duration} day${event.duration === 1 ? '' : 's'}`,
         durationDays: event.duration,
-        totalSlots: event.totalSlots,
-        showTotalSlots: event.showTotalSlots === true,
-        bookedSlots: event.bookedSlots || 0,
-        reservedSlots: event.reservedSlots || 0,
-        slotsLeft: Math.max(0, event.totalSlots - (event.bookedSlots || 0) - (event.reservedSlots || 0)),
+        ...getPublicEventSlots(event),
         price: event.pricePerSlot,
         destinationId: event.destination,
         description: event.about,
@@ -130,6 +128,11 @@ async function queryPublicEventDetails(id) {
 
 export const getPublicEventDetails = unstable_cache(
     queryPublicEventDetails,
-    ['public-event-details-v8'],
-    { revalidate: 30 }
+    ['public-event-details-v9'],
+    { revalidate: 30, tags: ['public-event-details'] }
 );
+
+export function revalidatePublicEventSlots() {
+    revalidateTag('public-event-details', { expire: 0 });
+    revalidateTag('public-provider-profile', { expire: 0 });
+}

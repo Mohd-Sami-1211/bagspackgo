@@ -18,7 +18,7 @@ import ProgressiveImage from '@/components/common/ProgressiveImage';
 import { useEventPhotos, useEventSponsors } from '@/lib/useTripCache';
 import { providerProfilePath } from '@/lib/providerSlug';
 import { EVENT_PARTICIPANT_FIELDS, getEventParticipantFields } from '@/lib/eventForm';
-import { getEventSlotsLabel } from '@/lib/eventSlots';
+import { getEventSlotShortageMessage, getEventSlotsLabel, isEventSoldOut, MAX_EVENT_SLOTS_PER_BOOKING, shouldShowAvailableSlots } from '@/lib/eventSlots';
 
 function loadEventPaymentGateway() {
   if (typeof window.Razorpay === 'function') return Promise.resolve(window.Razorpay);
@@ -701,6 +701,13 @@ const EventDetails = ({ event, loading = false }) => {
   // ── Early return: show skeleton while event data is loading ──
   if (loading || !event) return <EventDetailsSkeleton />;
 
+  const soldOut = isEventSoldOut(event);
+  const slotsLabel = getEventSlotsLabel(event);
+  const availableSlots = shouldShowAvailableSlots(event) ? event.slotsLeft : undefined;
+  const maxBookingSlots = Math.min(availableSlots ?? Infinity, MAX_EVENT_SLOTS_PER_BOOKING);
+  const bookingLimitMessage = maxBookingSlots < MAX_EVENT_SLOTS_PER_BOOKING
+    ? getEventSlotShortageMessage(event, maxBookingSlots)
+    : `You can book up to ${MAX_EVENT_SLOTS_PER_BOOKING} slots at a time.`;
   const participantFields = getEventParticipantFields(event.participantFields);
   const customFormResponses = formData.customFormResponses.filter(response =>
     response.slotIndex < bookingSlots && event.customFormFields?.some(field => field.id === response.fieldId)
@@ -730,9 +737,8 @@ const EventDetails = ({ event, loading = false }) => {
   const handleReviewJourney = () => {
     const errors = {};
 
-    const max = event.slotsLeft !== undefined ? event.slotsLeft : 50;
-    if (bookingSlots > max) {
-        setSlotError(`Only ${max} slots available`);
+    if (bookingSlots > maxBookingSlots) {
+        setSlotError(bookingLimitMessage);
         return window.scrollTo({ top: 100, behavior: 'smooth' });
     }
 
@@ -867,8 +873,15 @@ const EventDetails = ({ event, loading = false }) => {
           router.push('/user/event/booking-failed?expired=true&return=/user/events');
           return;
         }
-        if (bookData.soldOut || /sold out|^Only \d+ slot/i.test(bookData.message || '')) {
+        if (bookData.soldOut || /sold out/i.test(bookData.message || '')) {
           router.push(`/user/event/booking-failed?soldOut=true&return=/user/events`);
+          return;
+        }
+        if (bookData.insufficientSlots) {
+          setIsProcessingPayment(false);
+          setSlotError(bookData.message);
+          setBookingStep(1);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
           return;
         }
         throw new Error(bookData.message || 'Booking failed');
@@ -1050,6 +1063,7 @@ const EventDetails = ({ event, loading = false }) => {
                     <div className="flex flex-col items-end gap-2">
                         <div className="flex items-center justify-between bg-gray-50 p-2 rounded-xl border border-gray-100 w-full sm:w-48 shadow-inner">
                             <button
+                                aria-label="Remove a slot"
                                 onClick={() => {
                                     setBookingSlots(s => Math.max(1, s - 1));
                                     setSlotError('');
@@ -1063,10 +1077,10 @@ const EventDetails = ({ event, loading = false }) => {
                                 <span className="text-[10px] text-gray-400 font-bold uppercase mt-1">Slots</span>
                             </div>
                             <button
+                                aria-label="Add a slot"
                                 onClick={() => {
-                                    const max = event.slotsLeft !== undefined ? event.slotsLeft : 50;
-                                    if (bookingSlots >= max) {
-                                      setSlotError(`Only ${max} slots available`);
+                                    if (bookingSlots >= maxBookingSlots) {
+                                      setSlotError(bookingLimitMessage);
                                       return;
                                     }
                                     setBookingSlots(s => s + 1);
@@ -1712,7 +1726,7 @@ const EventDetails = ({ event, loading = false }) => {
             </div>
 
             {/* Book Now Button */}
-            {event.slotsLeft > 0 ? (
+            {!soldOut ? (
               <Button
                 onClick={handleBookNowClick}
                 className="w-full h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold flex items-center justify-center gap-2 text-lg"
@@ -1807,10 +1821,12 @@ const EventDetails = ({ event, loading = false }) => {
                   <MapPin className="text-purple-500 mr-3 flex-shrink-0" size={20} />
                   <div><p className="text-xs text-gray-400 font-medium">Location</p><p className="font-semibold text-sm text-gray-800 capitalize">{event.destinationId}</p></div>
                 </div>
-                <div className="flex items-center">
-                  <Ticket className="text-amber-500 mr-3 flex-shrink-0" size={20} />
-                  <div><p className="text-xs text-gray-400 font-medium">{event.showTotalSlots ? 'Capacity' : 'Availability'}</p><p className="font-semibold text-sm text-gray-800">{getEventSlotsLabel(event)}</p></div>
-                </div>
+                {slotsLabel && (
+                  <div className="flex items-center">
+                    <Ticket className="text-amber-500 mr-3 flex-shrink-0" size={20} />
+                    <div><p className="text-xs text-gray-400 font-medium">Availability</p><p className="font-semibold text-sm text-gray-800">{slotsLabel}</p></div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -2251,9 +2267,9 @@ const EventDetails = ({ event, loading = false }) => {
               {/* Continue to Booking Button */}
               <div className="flex flex-col items-center gap-4 py-6 border-t border-gray-100 mt-6">
                 <p className="text-gray-500 text-center max-w-md text-sm">
-                  {event.slotsLeft > 0 ? "Ready for the adventure? Click below to finalize your booking and secure your slots." : "Unfortunately, all slots for this event have been booked."}
+                  {!soldOut ? "Ready for the adventure? Click below to finalize your booking and secure your slots." : "Unfortunately, all slots for this event have been booked."}
                 </p>
-                {event.slotsLeft > 0 ? (
+                {!soldOut ? (
                   <Button onClick={handleBookNowClick}
                     className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold h-14 px-12 flex items-center justify-center gap-3">
                     <Ticket className="w-5 h-5" />

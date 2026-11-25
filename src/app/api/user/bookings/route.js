@@ -5,6 +5,7 @@ import { Booking } from '@/models/booking.model';
 import { Event } from '@/models/event.model';
 import { GuideDetails } from '@/models/guidedetails.model';
 import { getCurrentUser } from '@/lib/auth';
+import { getAvailableEventSlots, getEventSlotShortageMessage } from '@/lib/eventSlots';
 import {
     calculateEventBookingQuote,
     confirmEventBooking,
@@ -224,7 +225,7 @@ export async function POST(req) {
             _id: event,
             status: 'published',
             date: { $gte: new Date() },
-        }).select('guide totalSlots bookedSlots reservedSlots pricePerSlot pickupPoints includePickup participantFields applicationFormType customFormFields');
+        }).select('guide totalSlots bookedSlots reservedSlots showAvailableSlots showTotalSlots pricePerSlot pickupPoints includePickup participantFields applicationFormType customFormFields');
         if (!eventDoc) {
             return NextResponse.json({ success: false, message: 'This event is no longer available for booking.' }, { status: 404 });
         }
@@ -239,13 +240,15 @@ export async function POST(req) {
 
         const quote = calculateEventBookingQuote(eventDoc, slots, customFormResponses);
         const isFree = quote.totalPayable === 0;
-        const availableSlots = eventDoc.totalSlots - (eventDoc.bookedSlots || 0) - (eventDoc.reservedSlots || 0);
+        const availableSlots = getAvailableEventSlots(eventDoc);
         if (quote.slots > availableSlots) {
             const concurrentBooking = await Booking.findOne(checkout).lean();
             if (concurrentBooking) return await reuseCheckout(concurrentBooking, event);
-            return NextResponse.json({ 
-                success: false, 
-                message: availableSlots <= 0 ? 'This event is sold out.' : `Only ${availableSlots} slot(s) available.`
+            return NextResponse.json({
+                success: false,
+                soldOut: availableSlots === 0,
+                insufficientSlots: availableSlots > 0,
+                message: getEventSlotShortageMessage(eventDoc, availableSlots),
             }, { status: 409 });
         }
 

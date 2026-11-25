@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { compressImage, fetchWithRetry } from '@/lib/imageCompression';
 import { EVENT_PARTICIPANT_FIELDS, getEventParticipantFields } from '@/lib/eventForm';
+import { shouldShowAvailableSlots } from '@/lib/eventSlots';
 
 // ── Sub-components defined at module level to prevent re-creation on every render ──
 
@@ -321,7 +322,7 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
     date: '',
     duration: 1,
     totalSlots: 20,
-    showTotalSlots: false,
+    showAvailableSlots: false,
     pricePerSlot: '',
     destination: '',
     destinationLink: '',
@@ -367,7 +368,7 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
         date: initialData.date ? new Date(initialData.date).toISOString().split('T')[0] : '',
         duration: initialData.duration || 1,
         totalSlots: initialData.totalSlots || 20,
-        showTotalSlots: initialData.showTotalSlots === true,
+        showAvailableSlots: shouldShowAvailableSlots(initialData),
         pricePerSlot: initialData.pricePerSlot ?? '',
         destination: initialData.destination || '',
         destinationLink: initialData.destinationLink || '',
@@ -426,6 +427,7 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
         setFormData(prev => ({
           ...prev,
           ...savedData,
+          showAvailableSlots: shouldShowAvailableSlots(savedData),
           participantFields: getEventParticipantFields(savedData.participantFields),
           customFormFields: savedData.applicationFormType === 'default' ? [] : savedData.customFormFields || [],
         }));
@@ -801,7 +803,7 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
         date: formData.date,
         duration: formData.duration,
         totalSlots: formData.totalSlots,
-        showTotalSlots: formData.showTotalSlots,
+        showAvailableSlots: formData.showAvailableSlots,
         pricePerSlot: formData.pricePerSlot,
         destination: formData.destination,
         destinationLink: formData.destinationLink,
@@ -937,7 +939,7 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
                   setPublishMode('publish');
                   setFormData({
                     title: '', eventType: '', customEventType: '', location: '', customDestination: '', date: '', duration: 1,
-                    totalSlots: 20, showTotalSlots: false, pricePerSlot: '', destination: '', destinationLink: '',
+                    totalSlots: 20, showAvailableSlots: false, pricePerSlot: '', destination: '', destinationLink: '',
                     about: '', highlights: [''], whatsIncluded: [''], whatsExcluded: [''],
                     faqs: [{ question: '', answer: '' }, { question: '', answer: '' }, { question: '', answer: '' }],
                     whatToBring: [''], restrictions: [''],
@@ -1221,12 +1223,12 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
                           <input
                             type="checkbox"
                             className="mt-0.5 w-4 h-4 accent-emerald-600"
-                            checked={formData.showTotalSlots}
-                            onChange={e => setFormData(prev => ({ ...prev, showTotalSlots: e.target.checked }))}
+                            checked={formData.showAvailableSlots}
+                            onChange={e => setFormData(prev => ({ ...prev, showAvailableSlots: e.target.checked }))}
                           />
                           <span>
-                            Show total slots to the public
-                            <span className="block text-xs font-normal text-neutral-500">Leave unchecked to show available slots.</span>
+                            Show available slot count to the public
+                            <span className="block text-xs font-normal text-neutral-500">Leave unchecked to hide the count.</span>
                           </span>
                         </label>
                         <InputField

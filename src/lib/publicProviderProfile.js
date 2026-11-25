@@ -9,6 +9,7 @@ import Review from '@/models/review.model';
 import { toProviderSlug } from '@/lib/providerSlug';
 import { packageHeroFor } from '@/lib/packageHero';
 import { providerIdentityLinks } from '@/lib/providerSeo';
+import { getPublicEventSlots } from '@/lib/eventSlots';
 
 const PROFILE_FIELDS = 'guide companyname profileSlug bio destinationId speciality rating reviews totalTrips totalEvents pausedServices status updatedAt website instagram facebook youtube twitter';
 
@@ -84,7 +85,7 @@ async function queryPublicProviderProfile(identifier) {
     details.pausedServices?.event
       ? Promise.resolve([])
       : Event.find({ guide: providerObjectId, status: 'published', visibility: 'public' })
-          .select('title eventType location destination date duration totalSlots showTotalSlots bookedSlots reservedSlots pricePerSlot rating reviewCount createdAt')
+          .select('title eventType location destination date duration totalSlots showAvailableSlots showTotalSlots bookedSlots reservedSlots pricePerSlot rating reviewCount createdAt')
           .sort({ date: 1 })
           .limit(30)
           .lean(),
@@ -147,11 +148,7 @@ async function queryPublicProviderProfile(identifier) {
       destination: event.destination,
       date: asIso(event.date),
       duration: Number(event.duration || 1),
-      totalSlots: Number(event.totalSlots || 0),
-      showTotalSlots: event.showTotalSlots === true,
-      bookedSlots: Number(event.bookedSlots || 0),
-      reservedSlots: Number(event.reservedSlots || 0),
-      slotsLeft: Math.max(0, Number(event.totalSlots || 0) - Number(event.bookedSlots || 0) - Number(event.reservedSlots || 0)),
+      ...getPublicEventSlots(event),
       pricePerSlot: Number(event.pricePerSlot || 0),
       rating: Number(event.rating || 0),
       reviewCount: Number(event.reviewCount || 0),
@@ -169,6 +166,6 @@ async function queryPublicProviderProfile(identifier) {
 
 export const getPublicProviderProfile = unstable_cache(
   queryPublicProviderProfile,
-  ['public-provider-profile-v7'],
+  ['public-provider-profile-v8'],
   { revalidate: 300, tags: ['public-provider-profile'] }
 );
