@@ -28,6 +28,7 @@ import {
   X
 } from 'lucide-react';
 import { compressImage, fetchWithRetry } from '@/lib/imageCompression';
+import { EVENT_PARTICIPANT_FIELDS, getEventParticipantFields } from '@/lib/eventForm';
 
 // ── Sub-components defined at module level to prevent re-creation on every render ──
 
@@ -309,6 +310,7 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
   const [stepErrors, setStepErrors] = useState({});
   const [publishMode, setPublishMode] = useState('publish');
   const [showRestoreBanner, setShowRestoreBanner] = useState(false);
+  const [hasCheckedForDraft, setHasCheckedForDraft] = useState(false);
   const [photoUploadErrors, setPhotoUploadErrors] = useState([]);
   const [formData, setFormData] = useState({
     title: '',
@@ -319,6 +321,7 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
     date: '',
     duration: 1,
     totalSlots: 20,
+    showTotalSlots: false,
     pricePerSlot: '',
     destination: '',
     destinationLink: '',
@@ -341,7 +344,7 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
     sponsors: [],
     poster: null,
     visibility: 'public',
-    applicationFormType: 'default',
+    participantFields: getEventParticipantFields(),
     customFormFields: []
   });
 
@@ -350,7 +353,7 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
       const isCustomEventType = !eventTypes.includes(initialData.eventType) && initialData.eventType;
       const isCustomDestination = !destinations.includes(initialData.location) && initialData.location;
       
-      let mappedCustomFields = initialData.customFormFields || [];
+      let mappedCustomFields = initialData.applicationFormType === 'customized' ? initialData.customFormFields || [] : [];
       if (mappedCustomFields.length > 0 && mappedCustomFields[0].fields) {
           mappedCustomFields = mappedCustomFields.flatMap(section => section.fields || []);
       }
@@ -364,7 +367,8 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
         date: initialData.date ? new Date(initialData.date).toISOString().split('T')[0] : '',
         duration: initialData.duration || 1,
         totalSlots: initialData.totalSlots || 20,
-        pricePerSlot: initialData.pricePerSlot || '',
+        showTotalSlots: initialData.showTotalSlots === true,
+        pricePerSlot: initialData.pricePerSlot ?? '',
         destination: initialData.destination || '',
         destinationLink: initialData.destinationLink || '',
         about: initialData.about || '',
@@ -382,7 +386,7 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
         sponsors: initialData.sponsors || [],
         poster: initialData.poster || null,
         visibility: initialData.visibility || 'public',
-        applicationFormType: initialData.applicationFormType || 'default',
+        participantFields: getEventParticipantFields(initialData.participantFields),
         customFormFields: mappedCustomFields
       });
     }
@@ -400,25 +404,31 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
         }
       }
     } catch {}
+    setHasCheckedForDraft(true);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Persist draft to localStorage on every change (new events only, excludes photos/poster)
   useEffect(() => {
-    if (isEdit || adminMode) return;
+    if (isEdit || adminMode || !hasCheckedForDraft || showRestoreBanner) return;
     try {
       localStorage.setItem(DRAFT_KEY, JSON.stringify({
         formData: { ...formData, photographs: [], poster: null },
         activeSection,
       }));
     } catch {}
-  }, [formData, activeSection, isEdit, adminMode]);
+  }, [formData, activeSection, isEdit, adminMode, hasCheckedForDraft, showRestoreBanner]);
 
   const restoreDraft = () => {
     try {
       const saved = localStorage.getItem(DRAFT_KEY);
       if (saved) {
         const { formData: savedData, activeSection: savedSection } = JSON.parse(saved);
-        setFormData(prev => ({ ...prev, ...savedData }));
+        setFormData(prev => ({
+          ...prev,
+          ...savedData,
+          participantFields: getEventParticipantFields(savedData.participantFields),
+          customFormFields: savedData.applicationFormType === 'default' ? [] : savedData.customFormFields || [],
+        }));
         setActiveSection(savedSection || 0);
       }
     } catch {}
@@ -519,9 +529,13 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
     }
     // Step 6 (Photographs) — optional, no validation
     if (step === 7) {
-      // Application Form step
-      if (formData.applicationFormType === 'customized' && formData.customFormFields.length === 0) {
-        errors.customFormFields = 'Please add at least one form field';
+      const invalidField = formData.customFormFields.find(field =>
+        field.enabled !== false && (!field.title?.trim() ||
+          (['dropdown', 'multiple_choice', 'checkbox'].includes(field.type) &&
+            !field.options.some(option => option.value?.trim())))
+      );
+      if (invalidField) {
+        errors.customFormFields = 'Enter a title for each included field and an option for each selection field.';
       }
     }
     if (step === 8) {
@@ -765,6 +779,10 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validateStep(7)) {
+      setActiveSection(7);
+      return;
+    }
     if (!validateStep(9)) return;
     setSubmitting(true);
     setApiError('');
@@ -783,6 +801,7 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
         date: formData.date,
         duration: formData.duration,
         totalSlots: formData.totalSlots,
+        showTotalSlots: formData.showTotalSlots,
         pricePerSlot: formData.pricePerSlot,
         destination: formData.destination,
         destinationLink: formData.destinationLink,
@@ -802,7 +821,8 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
         sponsors: formData.sponsors,
         poster: posterData || formData.poster,
         visibility: formData.visibility,
-        applicationFormType: formData.applicationFormType,
+        participantFields: formData.participantFields,
+        applicationFormType: formData.customFormFields.length ? 'customized' : 'default',
         customFormFields: formData.customFormFields,
       });
 
@@ -917,12 +937,12 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
                   setPublishMode('publish');
                   setFormData({
                     title: '', eventType: '', customEventType: '', location: '', customDestination: '', date: '', duration: 1,
-                    totalSlots: 20, pricePerSlot: '', destination: '', destinationLink: '',
+                    totalSlots: 20, showTotalSlots: false, pricePerSlot: '', destination: '', destinationLink: '',
                     about: '', highlights: [''], whatsIncluded: [''], whatsExcluded: [''],
                     faqs: [{ question: '', answer: '' }, { question: '', answer: '' }, { question: '', answer: '' }],
                     whatToBring: [''], restrictions: [''],
                     includePickup: true, pickupPoints: [{ location: '', link: '', time: '' }],
-                    itinerary: ['', '', ''], photographs: [], termsAndConditions: [''], sponsors: [], poster: null, visibility: 'public', applicationFormType: 'default', customFormFields: []
+                    itinerary: ['', '', ''], photographs: [], termsAndConditions: [''], sponsors: [], poster: null, visibility: 'public', participantFields: getEventParticipantFields(), customFormFields: []
                   });
                   setActiveSection(0);
                   setAcceptedTerms(false);
@@ -1197,6 +1217,18 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
                           max="1000"
                           required
                         />
+                        <label className="flex items-start gap-2 text-sm font-semibold text-neutral-700 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            className="mt-0.5 w-4 h-4 accent-emerald-600"
+                            checked={formData.showTotalSlots}
+                            onChange={e => setFormData(prev => ({ ...prev, showTotalSlots: e.target.checked }))}
+                          />
+                          <span>
+                            Show total slots to the public
+                            <span className="block text-xs font-normal text-neutral-500">Leave unchecked to show available slots.</span>
+                          </span>
+                        </label>
                         <InputField
                           label="Price Per Slot (₹)"
                           name="pricePerSlot"
@@ -1560,196 +1592,160 @@ export default function HostEventPage({ isEdit = false, initialData = null, admi
                     />
 
                     <div className="space-y-4 relative z-50">
-                      <SelectField
-                        label="Application Form Type"
-                        name="applicationFormType"
-                        value={formData.applicationFormType}
-                        onChange={handleChange}
-                        options={['default', 'customized']}
-                        required
-                      />
+                      {EVENT_PARTICIPANT_FIELDS.map(({ id, label }) => (
+                        <label key={id} className="flex items-center gap-3 py-2 text-sm font-semibold text-neutral-700 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            className="w-4 h-4 accent-emerald-600"
+                            checked={formData.participantFields.includes(id)}
+                            onChange={e => {
+                              const checked = e.target.checked;
+                              setFormData(prev => ({
+                                ...prev,
+                                participantFields: checked
+                                  ? [...prev.participantFields, id]
+                                  : prev.participantFields.filter(field => field !== id),
+                              }));
+                            }}
+                          />
+                          {label}
+                        </label>
+                      ))}
 
-                      {/* Always-collected fields info box — shown for both form types */}
-                      <div className="p-4 sm:p-5 bg-emerald-50/60 border border-emerald-200 rounded-2xl">
-                        <div className="flex items-start gap-3">
-                          <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                            <CheckCircle className="w-4 h-4 text-emerald-600" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-bold text-emerald-800">Mandatory Fields (Always Collected)</p>
-                            <p className="text-xs text-emerald-600 mt-0.5">The following fields are <strong>always required</strong> from every guest, regardless of form type:</p>
-                            <div className="flex flex-wrap gap-1.5 mt-2">
-                              {['Name', 'Age', 'Gender', 'Mobile', 'Nationality', 'ID Type', 'ID Number', 'ID Proof Upload'].map(f => (
-                                <span key={f} className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded-full border border-emerald-200">
-                                  <CheckCircle className="w-2.5 h-2.5" /> {f}
-                                </span>
-                              ))}
+                      {formData.customFormFields.map((field, fIndex) => {
+                        const allPriorFields = formData.customFormFields.slice(0, fIndex);
+                        return (
+                          <div key={field.id} className="relative py-5 border-b border-neutral-200 overflow-visible transition-all duration-200 group last:border-b-0" style={{ zIndex: formData.customFormFields.length - fIndex }}>
+                            <div className="flex justify-between items-start mb-4">
+                              <label className="flex items-center gap-3 text-sm font-semibold text-neutral-700 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  className="w-4 h-4 accent-emerald-600"
+                                  checked={field.enabled !== false}
+                                  onChange={e => {
+                                    const enabled = e.target.checked;
+                                    setFormData(prev => ({
+                                      ...prev,
+                                      customFormFields: prev.customFormFields.map(item => item.id === field.id ? { ...item, enabled } : item),
+                                    }));
+                                  }}
+                                />
+                                {field.title?.trim() || 'Untitled field'}
+                              </label>
+                              <button type="button" onClick={() => { const s = [...formData.customFormFields]; s.splice(fIndex, 1); setFormData(prev => ({ ...prev, customFormFields: s })); }}
+                                className="text-neutral-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors"><Trash2 className="w-4 h-4" /></button>
                             </div>
-                          </div>
-                        </div>
-                      </div>
 
-                      {formData.applicationFormType === 'default' && (
-                        <div className="p-4 sm:p-5 bg-neutral-50 border border-neutral-200 rounded-2xl">
-                          <p className="text-xs text-neutral-600 font-medium">
-                            With the <strong>default</strong> form, only the mandatory identity fields above will be collected. No additional questions.
-                          </p>
-                        </div>
-                      )}
+                            {field.enabled !== false && (
+                              <div>
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-5">
+                                  <InputField label="Field Title" value={field.title || ''}
+                                    onChange={(e) => { const s = [...formData.customFormFields]; s[fIndex].title = e.target.value; setFormData(prev => ({ ...prev, customFormFields: s })); }}
+                                    placeholder="e.g., Blood Group" required />
 
-                      {formData.applicationFormType === 'customized' && (
-                        <div className="space-y-6 mt-4">
-                          <div className="p-4 bg-blue-50/60 border border-blue-200 rounded-2xl">
-                            <p className="text-xs text-blue-700 font-medium">
-                              <strong>Custom Form Builder</strong> — Add <strong>extra</strong> fields to collect additional information beyond the mandatory identity fields above. You can add options with extra charges for dropdowns/choices, and set conditional logic.
-                            </p>
-                          </div>
+                                  <InputField label="Placeholder (Optional)" value={field.placeholder || ''}
+                                    onChange={(e) => { const s = [...formData.customFormFields]; s[fIndex].placeholder = e.target.value; setFormData(prev => ({ ...prev, customFormFields: s })); }}
+                                    placeholder="e.g., Enter your blood group" />
 
-                          <div className="space-y-4">
-                            {/* Readonly Permanent Fields */}
-                            {['Full Name', 'Age', 'Gender', 'Mobile Number', 'Nationality', 'ID Type', 'ID Number', 'ID Proof Upload'].map((pf, idx) => (
-                              <div key={`perm-${idx}`} className="relative py-4 border-b border-neutral-200 overflow-visible opacity-70 pointer-events-none cursor-not-allowed">
-                                <div className="flex justify-between items-start mb-3">
-                                  <h4 className="font-bold text-neutral-800 text-sm flex items-center gap-2">
-                                    <CheckCircle size={14} className="text-emerald-600" />
-                                    Permanent Field
-                                  </h4>
-                                </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-1">
-                                  <div>
-                                    <label className="block text-[13px] font-bold text-gray-700 uppercase tracking-wide mb-2">Field Title</label>
-                                    <div className="w-full bg-neutral-100 border border-neutral-200 rounded-xl px-4 py-3 text-sm font-semibold text-neutral-600">
-                                      {pf}
-                                    </div>
-                                  </div>
-                                  <div>
-                                    <label className="block text-xs font-bold text-neutral-700 mb-1.5 uppercase tracking-wide">Field Type</label>
-                                    <div className="w-full bg-neutral-100 border border-neutral-200 rounded-xl px-4 py-3 text-sm font-semibold text-neutral-600">
-                                      {pf.includes('Upload') ? 'File Upload' : pf === 'Gender' || pf === 'ID Type' ? 'Dropdown' : pf === 'Age' ? 'Number' : 'Text'}
-                                    </div>
+                                  <div className="relative z-50">
+                                    <SelectField label="Input Type" name={`ft-${fIndex}`} value={field.type || 'text'}
+                                      onChange={(e) => { const s = [...formData.customFormFields]; s[fIndex].type = e.target.value;
+                                        if (['dropdown','multiple_choice','checkbox'].includes(e.target.value) && s[fIndex].options.length === 0) s[fIndex].options = [{ value: '', extraCharge: 0 }];
+                                        setFormData(prev => ({ ...prev, customFormFields: s })); }}
+                                      options={['text', 'number', 'dropdown', 'multiple_choice', 'checkbox', 'photo_upload']} required />
                                   </div>
                                 </div>
-                              </div>
-                            ))}
 
-                            {formData.customFormFields.map((field, fIndex) => {
-                              const allPriorFields = formData.customFormFields.slice(0, fIndex);
-                              return (
-                                <div key={field.id} className="relative py-5 border-b border-neutral-200 overflow-visible transition-all duration-200 group last:border-b-0" style={{ zIndex: formData.customFormFields.length - fIndex }}>
-                                  <div className="flex justify-between items-start mb-4">
-                                    <h4 className="font-bold text-neutral-800 text-sm">Field {fIndex + 1}</h4>
-                                    <button type="button" onClick={() => { const s = [...formData.customFormFields]; s.splice(fIndex, 1); setFormData(prev => ({ ...prev, customFormFields: s })); }}
-                                      className="text-neutral-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors"><Trash2 className="w-4 h-4" /></button>
-                                  </div>
-
-                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-5">
-                                      <InputField label="Field Title" value={field.title || ''}
-                                        onChange={(e) => { const s = [...formData.customFormFields]; s[fIndex].title = e.target.value; setFormData(prev => ({ ...prev, customFormFields: s })); }}
-                                        placeholder="e.g., Blood Group" required />
-                                      
-                                      <InputField label="Placeholder (Optional)" value={field.placeholder || ''}
-                                        onChange={(e) => { const s = [...formData.customFormFields]; s[fIndex].placeholder = e.target.value; setFormData(prev => ({ ...prev, customFormFields: s })); }}
-                                        placeholder="e.g., Enter your blood group" />
-
-                                      <div className="relative z-50">
-                                        <SelectField label="Input Type" name={`ft-${fIndex}`} value={field.type || 'text'}
-                                          onChange={(e) => { const s = [...formData.customFormFields]; s[fIndex].type = e.target.value;
-                                            if (['dropdown','multiple_choice','checkbox'].includes(e.target.value) && s[fIndex].options.length === 0) s[fIndex].options = [{ value: '', extraCharge: 0 }];
-                                            setFormData(prev => ({ ...prev, customFormFields: s })); }}
-                                          options={['text', 'number', 'dropdown', 'multiple_choice', 'checkbox', 'photo_upload']} required />
-                                      </div>
-                                    </div>
-                                  
-                                  {['dropdown', 'multiple_choice', 'checkbox'].includes(field.type) && (
-                                    <div className="space-y-3 mb-5 mt-4">
-                                      <label className="block text-sm font-semibold text-neutral-700">Options</label>
-                                      {field.options.map((opt, oIdx) => (
-                                        <div key={oIdx} className="flex items-center gap-2 sm:gap-3">
-                                          <input type="text" value={opt.value || ''}
-                                            onChange={(e) => { const s = [...formData.customFormFields]; s[fIndex].options[oIdx].value = e.target.value; setFormData(prev => ({ ...prev, customFormFields: s })); }}
-                                            placeholder="Option text" className="flex-1 px-3 py-2 rounded-xl border border-neutral-200 text-sm focus:ring-1 focus:ring-emerald-500 outline-none min-w-0" required />
-                                          <div className="relative flex-shrink-0">
-                                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400 text-xs">{"\u20B9"}</span>
-                                            <input type="number" value={opt.extraCharge || 0}
-                                              onChange={(e) => { const s = [...formData.customFormFields]; s[fIndex].options[oIdx].extraCharge = parseInt(e.target.value) || 0; setFormData(prev => ({ ...prev, customFormFields: s })); }}
-                                              placeholder="0" className="w-24 sm:w-28 pl-6 pr-2 py-2 rounded-xl border border-neutral-200 text-sm focus:ring-1 focus:ring-emerald-500 outline-none" />
-                                          </div>
-                                          {field.options.length > 1 && (
-                                            <button type="button" onClick={() => { const s = [...formData.customFormFields]; s[fIndex].options.splice(oIdx, 1); setFormData(prev => ({ ...prev, customFormFields: s })); }}
-                                              className="p-1.5 text-neutral-400 hover:text-red-500 hover:bg-red-50 rounded-lg flex-shrink-0 transition-colors"><X className="w-4 h-4" /></button>
-                                          )}
+                                {['dropdown', 'multiple_choice', 'checkbox'].includes(field.type) && (
+                                  <div className="space-y-3 mb-5 mt-4">
+                                    <label className="block text-sm font-semibold text-neutral-700">Options</label>
+                                    {field.options.map((opt, oIdx) => (
+                                      <div key={oIdx} className="flex items-center gap-2 sm:gap-3">
+                                        <input type="text" value={opt.value || ''}
+                                          onChange={(e) => { const s = [...formData.customFormFields]; s[fIndex].options[oIdx].value = e.target.value; setFormData(prev => ({ ...prev, customFormFields: s })); }}
+                                          placeholder="Option text" className="flex-1 px-3 py-2 rounded-xl border border-neutral-200 text-sm focus:ring-1 focus:ring-emerald-500 outline-none min-w-0" required />
+                                        <div className="relative flex-shrink-0">
+                                          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400 text-xs">{"\u20B9"}</span>
+                                          <input type="number" value={opt.extraCharge || 0}
+                                            onChange={(e) => { const s = [...formData.customFormFields]; s[fIndex].options[oIdx].extraCharge = parseInt(e.target.value) || 0; setFormData(prev => ({ ...prev, customFormFields: s })); }}
+                                            placeholder="0" className="w-24 sm:w-28 pl-6 pr-2 py-2 rounded-xl border border-neutral-200 text-sm focus:ring-1 focus:ring-emerald-500 outline-none" />
                                         </div>
-                                      ))}
-                                      <button type="button" onClick={() => { const s = [...formData.customFormFields]; s[fIndex].options.push({ value: '', extraCharge: 0 }); setFormData(prev => ({ ...prev, customFormFields: s })); }}
-                                        className="text-emerald-600 hover:text-emerald-700 text-sm font-semibold flex items-center gap-1.5 mt-2"><Plus className="w-4 h-4" /> Add Option</button>
-                                    </div>
-                                  )}
-
-                                  {(() => {
-                                    const depFields = allPriorFields.filter(f => ['dropdown', 'multiple_choice'].includes(f.type));
-                                    const depField = depFields.find(f => f.id === field.dependsOn);
-                                    return depFields.length > 0 && (
-                                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5 pt-5 border-t border-neutral-100 relative z-40">
-                                        <SelectField label="Depends On (Optional)" name={`dep-${fIndex}`}
-                                          value={depField?.title || ''}
-                                          onChange={(e) => { 
-                                            const dep = depFields.find(f => f.title === e.target.value); 
-                                            const s = [...formData.customFormFields];
-                                            s[fIndex].dependsOn = dep ? dep.id : null; 
-                                            if (!dep) s[fIndex].showIfValue = [];
-                                            setFormData(prev => ({ ...prev, customFormFields: s })); 
-                                          }}
-                                          options={['None', ...depFields.map(f => f.title)]} />
-                                        
-                                        {depField && (
-                                          <div className="space-y-2">
-                                            <label className="block text-sm font-semibold text-neutral-700">Show if value is</label>
-                                            <div className="flex flex-col gap-2 bg-neutral-50 p-3 rounded-xl border border-neutral-200 max-h-32 overflow-y-auto">
-                                              {depField.options.map((opt, oIdx) => {
-                                                if (!opt.value) return null;
-                                                const currentVals = Array.isArray(field.showIfValue) ? field.showIfValue : (field.showIfValue ? [field.showIfValue] : []);
-                                                const isChecked = currentVals.includes(opt.value);
-                                                return (
-                                                  <label key={oIdx} className="flex items-center gap-2 cursor-pointer">
-                                                    <input type="checkbox" checked={isChecked} onChange={(e) => {
-                                                      let arr = [...currentVals];
-                                                      if (e.target.checked) arr.push(opt.value);
-                                                      else arr = arr.filter(v => v !== opt.value);
-                                                      const s = [...formData.customFormFields];
-                                                      s[fIndex].showIfValue = arr;
-                                                      setFormData(prev => ({ ...prev, customFormFields: s }));
-                                                    }} className="w-4 h-4 text-emerald-600 rounded border-neutral-300 focus:ring-emerald-500" />
-                                                    <span className="text-sm text-neutral-700">{opt.value}</span>
-                                                  </label>
-                                                );
-                                              })}
-                                            </div>
-                                          </div>
+                                        {field.options.length > 1 && (
+                                          <button type="button" onClick={() => { const s = [...formData.customFormFields]; s[fIndex].options.splice(oIdx, 1); setFormData(prev => ({ ...prev, customFormFields: s })); }}
+                                            className="p-1.5 text-neutral-400 hover:text-red-500 hover:bg-red-50 rounded-lg flex-shrink-0 transition-colors"><X className="w-4 h-4" /></button>
                                         )}
                                       </div>
-                                    );
-                                  })()}
-
-                                  <div className="flex items-center justify-end gap-3 pt-4 border-t border-neutral-100">
-                                    <label htmlFor={`req-${fIndex}`} className="text-sm font-semibold text-neutral-700 cursor-pointer">Required</label>
-                                    <label className="relative inline-flex items-center cursor-pointer">
-                                      <input type="checkbox" id={`req-${fIndex}`} className="sr-only peer" checked={!!field.required}
-                                        onChange={(e) => { const s = [...formData.customFormFields]; s[fIndex].required = e.target.checked; setFormData(prev => ({ ...prev, customFormFields: s })); }} />
-                                      <div className="w-9 h-5 bg-neutral-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
-                                    </label>
+                                    ))}
+                                    <button type="button" onClick={() => { const s = [...formData.customFormFields]; s[fIndex].options.push({ value: '', extraCharge: 0 }); setFormData(prev => ({ ...prev, customFormFields: s })); }}
+                                      className="text-emerald-600 hover:text-emerald-700 text-sm font-semibold flex items-center gap-1.5 mt-2"><Plus className="w-4 h-4" /> Add Option</button>
                                   </div>
+                                )}
+
+                                {(() => {
+                                  const depFields = allPriorFields.filter(f => ['dropdown', 'multiple_choice'].includes(f.type));
+                                  const depField = depFields.find(f => f.id === field.dependsOn);
+                                  return depFields.length > 0 && (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5 pt-5 border-t border-neutral-100 relative z-40">
+                                      <SelectField label="Depends On (Optional)" name={`dep-${fIndex}`}
+                                        value={depField?.title || ''}
+                                        onChange={(e) => {
+                                          const dep = depFields.find(f => f.title === e.target.value);
+                                          const s = [...formData.customFormFields];
+                                          s[fIndex].dependsOn = dep ? dep.id : null;
+                                          if (!dep) s[fIndex].showIfValue = [];
+                                          setFormData(prev => ({ ...prev, customFormFields: s }));
+                                        }}
+                                        options={['None', ...depFields.map(f => f.title)]} />
+
+                                      {depField && (
+                                        <div className="space-y-2">
+                                          <label className="block text-sm font-semibold text-neutral-700">Show if value is</label>
+                                          <div className="flex flex-col gap-2 bg-neutral-50 p-3 rounded-xl border border-neutral-200 max-h-32 overflow-y-auto">
+                                            {depField.options.map((opt, oIdx) => {
+                                              if (!opt.value) return null;
+                                              const currentVals = Array.isArray(field.showIfValue) ? field.showIfValue : (field.showIfValue ? [field.showIfValue] : []);
+                                              const isChecked = currentVals.includes(opt.value);
+                                              return (
+                                                <label key={oIdx} className="flex items-center gap-2 cursor-pointer">
+                                                  <input type="checkbox" checked={isChecked} onChange={(e) => {
+                                                    let arr = [...currentVals];
+                                                    if (e.target.checked) arr.push(opt.value);
+                                                    else arr = arr.filter(v => v !== opt.value);
+                                                    const s = [...formData.customFormFields];
+                                                    s[fIndex].showIfValue = arr;
+                                                    setFormData(prev => ({ ...prev, customFormFields: s }));
+                                                  }} className="w-4 h-4 text-emerald-600 rounded border-neutral-300 focus:ring-emerald-500" />
+                                                  <span className="text-sm text-neutral-700">{opt.value}</span>
+                                                </label>
+                                              );
+                                            })}
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                })()}
+
+                                <div className="flex items-center justify-end gap-3 pt-4 border-t border-neutral-100">
+                                  <label htmlFor={`req-${fIndex}`} className="text-sm font-semibold text-neutral-700 cursor-pointer">Required</label>
+                                  <label className="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id={`req-${fIndex}`} className="sr-only peer" checked={!!field.required}
+                                      onChange={(e) => { const s = [...formData.customFormFields]; s[fIndex].required = e.target.checked; setFormData(prev => ({ ...prev, customFormFields: s })); }} />
+                                    <div className="w-9 h-5 bg-neutral-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                                  </label>
                                 </div>
-                              );
-                            })}
-                            <button type="button" onClick={() => { const s = [...formData.customFormFields];
-                              s.push({ id: Math.random().toString(36).substr(2, 9), title: '', placeholder: '', type: 'text', options: [{ value: '', extraCharge: 0 }], required: false, dependsOn: null, showIfValue: null });
-                              setFormData(prev => ({ ...prev, customFormFields: s })); }}
-                              className="w-full py-4 border-2 border-dashed border-emerald-300 rounded-2xl hover:border-emerald-500 hover:bg-emerald-50 transition-all duration-200 flex items-center justify-center gap-3">
-                              <Plus className="w-5 h-5 text-emerald-600" /><span className="text-emerald-600 font-semibold text-sm">Add New Field</span>
-                            </button>
+                              </div>
+                            )}
                           </div>
-                        </div>
-                      )}
+                        );
+                      })}
+                      <button type="button" onClick={() => { const s = [...formData.customFormFields];
+                        s.push({ id: Math.random().toString(36).slice(2, 11), title: '', placeholder: '', type: 'text', options: [{ value: '', extraCharge: 0 }], required: false, enabled: true, dependsOn: null, showIfValue: null });
+                        setFormData(prev => ({ ...prev, customFormFields: s })); }}
+                        className="w-full py-4 border-2 border-dashed border-emerald-300 rounded-2xl hover:border-emerald-500 hover:bg-emerald-50 transition-all duration-200 flex items-center justify-center gap-3">
+                        <Plus className="w-5 h-5 text-emerald-600" /><span className="text-emerald-600 font-semibold text-sm">Add New Field</span>
+                      </button>
+                      {stepErrors.customFormFields && <p role="alert" className="text-sm text-red-600">{stepErrors.customFormFields}</p>}
                     </div>
                   </div>
                 )}

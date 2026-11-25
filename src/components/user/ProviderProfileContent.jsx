@@ -21,6 +21,7 @@ import {
 import { useProviderProfile } from '@/lib/useTripCache';
 import { packageHeroFor } from '@/lib/packageHero';
 import { providerProfilePath } from '@/lib/providerSlug';
+import { getEventSlotsLabel } from '@/lib/eventSlots';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -166,7 +167,7 @@ function EventCard({ event, state, onNavigate }) {
           <h3 className="line-clamp-2 text-lg font-black leading-snug text-slate-950">{event.title}</h3>
           <div className="mt-3 space-y-2 text-sm text-slate-500">
             <p className="flex items-center gap-2"><MapPin className="h-4 w-4 text-emerald-600" /> {event.location || event.destination}</p>
-            <p className="flex items-center gap-2"><Users className="h-4 w-4 text-emerald-600" /> {event.slotsLeft > 0 ? `${event.slotsLeft} slots available` : 'Fully booked'}</p>
+            <p className="flex items-center gap-2"><Users className="h-4 w-4 text-emerald-600" /> {getEventSlotsLabel(event)}</p>
           </div>
           <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4">
             <p className="text-lg font-black text-slate-950">{event.pricePerSlot > 0 ? `₹${event.pricePerSlot.toLocaleString('en-IN')}` : 'Free'}</p>

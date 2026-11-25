@@ -2,6 +2,7 @@
 import { motion } from 'framer-motion';
 import { MapPin, Calendar, Star, Ticket, Clock, Users, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import { getEventSlotsLabel } from '@/lib/eventSlots';
 
 const MotionLink = motion.create(Link);
 
@@ -132,12 +133,13 @@ const EventCard = ({ event }) => {
           </div>
           <div className="flex items-center gap-1.5">
             <Ticket className="w-4 h-4 text-amber-500" />
+            {event.showTotalSlots && <span>{getEventSlotsLabel(event)}</span>}
             {isPast ? (
               <span>Ended</span>
             ) : isSoldOut ? (
               <span className="text-red-500 font-bold">Sold out</span>
-            ) : (
-              <span>{event.slotsLeft} slots left</span>
+            ) : !event.showTotalSlots && (
+              <span>{getEventSlotsLabel(event)}</span>
             )}
           </div>
         </div>

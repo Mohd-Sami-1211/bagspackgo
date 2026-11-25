@@ -5,6 +5,7 @@ import { Guide } from "@/models/guide.model";
 import { Event } from "@/models/event.model";
 import { sanitizeString } from "@/lib/sanitize";
 import { sanitizeCustomFormFields } from '@/lib/eventBooking';
+import { getEventParticipantFields } from '@/lib/eventForm';
 
 // Allow larger request bodies for image uploads and longer execution time
 export const maxDuration = 60; // seconds
@@ -194,8 +195,8 @@ export async function POST(request) {
         const customFormFields = sanitizeCustomFormFields(body.customFormFields);
         if (applicationFormType === 'customized') {
             const invalidField = customFormFields.find((field) =>
-                !field.title ||
-                (['dropdown', 'multiple_choice', 'checkbox'].includes(field.type) && field.options.length === 0)
+                field.enabled !== false && (!field.title ||
+                (['dropdown', 'multiple_choice', 'checkbox'].includes(field.type) && field.options.length === 0))
             );
             if (customFormFields.length === 0 || invalidField) {
                 return NextResponse.json({
@@ -237,6 +238,7 @@ export async function POST(request) {
             date: eventDate,
             duration,
             totalSlots,
+            showTotalSlots: body.showTotalSlots === true,
             pricePerSlot,
             destination: sanitizeString(body.destination),
             destinationLink: sanitizeString(body.destinationLink || ""),
@@ -264,6 +266,7 @@ export async function POST(request) {
             status: body.status === "draft" ? "draft" : "published",
             visibility: body.visibility === "private" ? "private" : "public",
             applicationFormType,
+            participantFields: getEventParticipantFields(body.participantFields),
             customFormFields: applicationFormType === 'customized' ? customFormFields : [],
         });
 

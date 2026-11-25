@@ -19,8 +19,8 @@ function EventBookingFailedContent() {
   const orderId = searchParams.get("orderId");
   const paymentId = searchParams.get("paymentId");
   const refundId = searchParams.get("refundId");
-  const isRefundableFailure = isSoldOut || isExpired || paymentCaptured || refundInitiated;
   const isPaymentRefund = paymentCaptured || refundInitiated;
+  const bookingUnavailable = isSoldOut || isExpired || isPaymentRefund;
 
   return (
     <div className="min-h-screen bg-gray-50/50 flex items-center justify-center p-4 font-sans">
@@ -31,7 +31,7 @@ function EventBookingFailedContent() {
         className="max-w-md w-full bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
       >
         <div className="p-8 flex flex-col items-center justify-center text-center">
-          {isRefundableFailure ? (
+          {bookingUnavailable ? (
             <>
               <Ticket className="w-16 h-16 text-amber-500 mb-6" />
               <h1 className="text-2xl font-bold tracking-tight mb-2 text-foreground">{isPaymentRefund ? 'Booking Not Completed' : isExpired ? 'Checkout Expired' : 'Event Sold Out'}</h1>
@@ -39,8 +39,8 @@ function EventBookingFailedContent() {
                 {isPaymentRefund
                   ? <>Your payment was received, but the booking could not be completed. This may happen if the 5-minute checkout window expired or the event became unavailable. The refund {refundInitiated ? 'has been initiated' : 'is being processed'} and should reach your original payment method within <strong className="text-gray-800">3 business days</strong>.</>
                   : isExpired
-                    ? <>The checkout window ended before confirmation. Your payment will be <strong className="text-gray-800">automatically refunded in full</strong>.</>
-                    : <>This event was fully booked while your payment was processing. Your payment will be <strong className="text-gray-800">automatically refunded within 3 business days</strong>.</>}
+                    ? 'The checkout window ended before your booking could be confirmed.'
+                    : 'The requested slots are no longer available.'}
               </p>
             </>
           ) : (
@@ -55,12 +55,13 @@ function EventBookingFailedContent() {
         </div>
 
         <div className="px-8 pb-8">
-          {isRefundableFailure ? (
+          {isPaymentRefund && (
             <div className="flex items-start gap-3 bg-amber-50 text-amber-800 p-4 rounded-md border border-amber-100 mb-8 text-sm">
                <AlertTriangle className="w-5 h-5 shrink-0 text-amber-500 mt-0.5" />
                <p className="font-medium">No action is needed from your side. If the refund is not reflected within 3 business days, contact support and share the Razorpay details below.</p>
             </div>
-          ) : (
+          )}
+          {!bookingUnavailable && (
             <div className="flex items-start gap-3 bg-red-50 text-red-800 p-4 rounded-md border border-red-100 mb-8 text-sm">
                <AlertTriangle className="w-5 h-5 shrink-0 text-red-500 mt-0.5" />
                <p className="font-medium">Your session and traveler details have been preserved. You won't need to retype them.</p>
@@ -80,7 +81,7 @@ function EventBookingFailedContent() {
           )}
 
           <div className="space-y-3">
-             {isRefundableFailure ? (
+             {bookingUnavailable ? (
                <>
                  <Button
                    variant="default"

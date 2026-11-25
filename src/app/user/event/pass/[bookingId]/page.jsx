@@ -126,6 +126,7 @@ function EventPassContent() {
     const eventDate = booking.date;
     const duration = booking.duration || '';
     const travelers = booking.participants || [];
+    const isFreeBooking = booking.paymentId === 'free_event' || booking.price === 0;
     const selectedPickup = booking.selectedPickup || null;
     const highlights = booking.highlights || [];
     const filterItems = (items) => (items || []).filter(item => item && item !== 'Not specified' && (typeof item !== 'string' || item.trim() !== ''));
@@ -372,17 +373,17 @@ function EventPassContent() {
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <p className="font-bold text-gray-900 text-lg flex items-center gap-2 mb-1" style={fontStyle}>
-                                            <Ticket className="w-5 h-5 text-emerald-600 shrink-0" /> <span className="truncate">{t.name || "Unnamed"}</span>
+                                            <Ticket className="w-5 h-5 text-emerald-600 shrink-0" /> <span className="truncate">{t.name || `Participant ${idx + 1}`}</span>
                                         </p>
                                         <div className="text-left mt-2 space-y-0.5" style={fontStyle}>
                                             {t.email && <p className="text-[10px] font-medium text-gray-500 truncate">{t.email}</p>}
                                             {t.phone && <p className="text-[10px] font-medium text-gray-500 truncate">{t.phone}</p>}
-                                            <p className="text-[10px] font-medium text-gray-500 uppercase truncate">
-                                                {t.idType || 'ID'}: <span className="text-gray-900 font-semibold">{t.idNumber || 'N/A'}</span>
-                                            </p>
-                                            <p className="text-[10px] font-medium text-gray-500 uppercase truncate">
-                                                {t.gender || "-"} | {t.age || "-"} yrs {t.bloodGroup ? `| ${t.bloodGroup}` : ''}
-                                            </p>
+                                            {(t.idType || t.idNumber) && <p className="text-[10px] font-medium text-gray-500 uppercase truncate">
+                                                {[t.idType, t.idNumber].filter(Boolean).join(' · ')}
+                                            </p>}
+                                            {(t.gender || t.age || t.bloodGroup) && <p className="text-[10px] font-medium text-gray-500 uppercase truncate">
+                                                {[t.gender, t.age && `${t.age} yrs`, t.bloodGroup].filter(Boolean).join(' · ')}
+                                            </p>}
                                             {t.country && <p className="text-[10px] font-medium text-gray-500 uppercase truncate">Country: {t.country}</p>}
                                         </div>
                                     </div>
@@ -494,7 +495,7 @@ function EventPassContent() {
                         <div>
                             <SectionHeader icon={ShieldCheck} title="bagspackgo Policies" />
                             <ul className="list-disc pl-4 space-y-2" style={fontStyle}>
-                                <li className="leading-relaxed">Booking is confirmed subject to payment realization.</li>
+                                {!isFreeBooking && <li className="leading-relaxed">Booking is confirmed subject to payment realization.</li>}
                                 <li className="leading-relaxed font-bold text-red-600">Event bookings are strictly non-refundable under all circumstances, including no-shows or late arrivals.</li>
                                 <li className="leading-relaxed">Each QR code on the pass is valid for a single-use entry only.</li>
                                 <li className="leading-relaxed">All guests must carry a valid government-issued photo ID (Aadhaar, Passport, Driving License, etc.) for check-in and verification.</li>

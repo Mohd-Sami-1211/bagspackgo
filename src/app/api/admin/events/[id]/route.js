@@ -3,6 +3,8 @@ import dbConnect from '@/lib/db';
 import { Event } from '@/models/event.model';
 import { Booking } from '@/models/booking.model';
 import { getCurrentAdmin } from '@/lib/adminAuth';
+import { sanitizeCustomFormFields } from '@/lib/eventBooking';
+import { getEventParticipantFields } from '@/lib/eventForm';
 
 export async function GET(req, context) {
     try {
@@ -29,7 +31,7 @@ export async function GET(req, context) {
 
                     guestsList.push({
                         id: p._id?.toString() || Math.random().toString(),
-                        name: p.name,
+                        name: p.name || `Participant ${pIdx + 1}`,
                         email: p.email || booking.contactDetails?.email,
                         mobile: p.phone || booking.contactDetails?.phone,
                         age: p.age,
@@ -89,16 +91,25 @@ export async function PATCH(req, context) {
         }
 
         const allowedFields = [
-            'title', 'eventType', 'location', 'date', 'duration', 'totalSlots', 
+            'title', 'eventType', 'location', 'date', 'duration', 'totalSlots', 'showTotalSlots',
             'pricePerSlot', 'destination', 'destinationLink', 'about', 'highlights', 
             'whatsIncluded', 'whatsExcluded', 'faqs', 'whatToBring', 'restrictions', 
             'pickupPoints', 'itinerary', 'termsAndConditions', 'poster', 'photographs',
-            'visibility', 'applicationFormType', 'customFormFields', 'sponsors'
+            'visibility', 'applicationFormType', 'sponsors'
         ];
         
         const updateData = {};
         for (const key of allowedFields) {
             if (body[key] !== undefined) updateData[key] = body[key];
+        }
+        if (body.showTotalSlots !== undefined && typeof body.showTotalSlots !== 'boolean') {
+            return NextResponse.json({ success: false, message: 'Choose how to display slots.' }, { status: 400 });
+        }
+        if (Array.isArray(body.participantFields)) {
+            updateData.participantFields = getEventParticipantFields(body.participantFields);
+        }
+        if (Array.isArray(body.customFormFields)) {
+            updateData.customFormFields = sanitizeCustomFormFields(body.customFormFields);
         }
 
         if (body.action === 'publish') {

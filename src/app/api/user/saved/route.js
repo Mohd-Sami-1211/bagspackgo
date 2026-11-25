@@ -34,7 +34,7 @@ export async function GET(request) {
 
         const [packages, events, offbeats] = await Promise.all([
             packageIds.length ? Package.find({ _id: { $in: packageIds }, category: 'trip' }).select({ title: 1, name: 1, destination: 1, label: 1, days: 1, packageCategory: 1, pricingTiers: 1, coverImage: 1, images: { $slice: 1 } }).lean() : [],
-            eventIds.length ? Event.find({ _id: { $in: eventIds } }).select({ title: 1, eventType: 1, destination: 1, date: 1, duration: 1, pricePerSlot: 1, poster: 1, location: 1, totalSlots: 1, bookedSlots: 1, reservedSlots: 1, guide: 1, photographs: { $slice: 1 } }).populate({ path: 'guide', select: 'username' }).lean() : [],
+            eventIds.length ? Event.find({ _id: { $in: eventIds } }).select({ title: 1, eventType: 1, destination: 1, date: 1, duration: 1, pricePerSlot: 1, poster: 1, location: 1, totalSlots: 1, showTotalSlots: 1, bookedSlots: 1, reservedSlots: 1, guide: 1, photographs: { $slice: 1 } }).populate({ path: 'guide', select: 'username' }).lean() : [],
             offbeatIds.length ? OffBeat.find({ _id: { $in: offbeatIds } }).select({ title: 1, destination: 1, shortDescription: 1, region: 1, status: 1, coverPhoto: 1, photographs: { $slice: 1 } }).lean() : [],
         ]);
 
@@ -57,6 +57,8 @@ export async function GET(request) {
                     price: itemData.pricePerSlot,
                     organizer: companyByGuide.get(itemData.guide?._id?.toString()) || itemData.guide?.username || 'Premium Host',
                     slotsRemaining: Math.max(0, Number(itemData.totalSlots || 0) - Number(itemData.bookedSlots || 0) - Number(itemData.reservedSlots || 0)),
+                    totalSlots: itemData.totalSlots,
+                    showTotalSlots: itemData.showTotalSlots === true,
                 };
             } else if (record.itemType === 'offbeat') {
                 itemData = { ...itemData, name: itemData.title, coverImage: itemData.coverPhoto || itemData.photographs?.[0] || '' };

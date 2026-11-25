@@ -84,7 +84,7 @@ async function queryPublicProviderProfile(identifier) {
     details.pausedServices?.event
       ? Promise.resolve([])
       : Event.find({ guide: providerObjectId, status: 'published', visibility: 'public' })
-          .select('title eventType location destination date duration totalSlots bookedSlots reservedSlots pricePerSlot rating reviewCount createdAt')
+          .select('title eventType location destination date duration totalSlots showTotalSlots bookedSlots reservedSlots pricePerSlot rating reviewCount createdAt')
           .sort({ date: 1 })
           .limit(30)
           .lean(),
@@ -148,6 +148,7 @@ async function queryPublicProviderProfile(identifier) {
       date: asIso(event.date),
       duration: Number(event.duration || 1),
       totalSlots: Number(event.totalSlots || 0),
+      showTotalSlots: event.showTotalSlots === true,
       bookedSlots: Number(event.bookedSlots || 0),
       reservedSlots: Number(event.reservedSlots || 0),
       slotsLeft: Math.max(0, Number(event.totalSlots || 0) - Number(event.bookedSlots || 0) - Number(event.reservedSlots || 0)),
@@ -168,6 +169,6 @@ async function queryPublicProviderProfile(identifier) {
 
 export const getPublicProviderProfile = unstable_cache(
   queryPublicProviderProfile,
-  ['public-provider-profile-v6'],
+  ['public-provider-profile-v7'],
   { revalidate: 300, tags: ['public-provider-profile'] }
 );
