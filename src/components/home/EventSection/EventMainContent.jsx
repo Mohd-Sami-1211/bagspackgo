@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import EventCard from 'src/components/home/EventSection/EventCard';
 import { useEventsList } from '@/lib/useTripCache';
+import { getEventSlotsLabel } from '@/lib/eventSlots';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
@@ -365,7 +366,7 @@ function CarouselSlide({ event }) {
           <span className="w-1 h-1 rounded-full bg-white/40" />
           <span>{event.duration || '1 day'}</span>
           <span className="w-1 h-1 rounded-full bg-white/40" />
-          <span>{event.slotsLeft > 0 ? `${event.slotsLeft} Spots Left` : <span className="text-red-400">Sold Out</span>}</span>
+          <span className={!event.showTotalSlots && event.slotsLeft <= 0 ? 'text-red-400' : undefined}>{getEventSlotsLabel(event)}</span>
           <span className="w-1 h-1 rounded-full bg-white/40" />
           <span className="px-2 py-0.5 bg-white/10 rounded-md backdrop-blur-md text-white/90 border border-white/10">
             {event.type || 'Event'}

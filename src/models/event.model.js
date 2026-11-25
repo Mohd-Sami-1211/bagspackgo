@@ -88,6 +88,10 @@ const eventSchema = new mongoose.Schema(
             min: 1,
             default: 20,
         },
+        showTotalSlots: {
+            type: Boolean,
+            default: false,
+        },
         bookedSlots: {
             type: Number,
             default: 0,
@@ -197,7 +201,12 @@ const eventSchema = new mongoose.Schema(
             default: "public",
         },
 
-        // Application form type — default uses built-in form, customized uses provider's custom form
+        // Older events without a selection include every built-in participant field.
+        participantFields: {
+            type: [String],
+            default: undefined,
+        },
+
         applicationFormType: {
             type: String,
             enum: ["default", "customized"],

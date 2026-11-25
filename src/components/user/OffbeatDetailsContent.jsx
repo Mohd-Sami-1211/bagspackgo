@@ -20,6 +20,7 @@ import {
     Maximize2,
     Mountain,
     Play,
+    Plus,
     Share2,
     Sparkles,
     X,
@@ -122,7 +123,7 @@ export default function OffBeatDetailsPage({ id, initialData }) {
     const offbeat = data?.data || null;
     const { data: previewData, isLoading: previewLoading } = useOffbeatMedia(
         data?.success ? id : null,
-        { page: 1, limit: 4 }
+        { page: 1, limit: 5 }
     );
     const { data: galleryData, isLoading: galleryLoading } = useOffbeatMedia(
         galleryOpen ? id : null,
@@ -132,6 +133,7 @@ export default function OffBeatDetailsPage({ id, initialData }) {
 
     const previewMedia = previewData?.data?.media || [];
     const mediaTotal = previewData?.pagination?.total || 0;
+    const remainingMedia = Math.max(0, mediaTotal - previewMedia.length);
 
     useEffect(() => {
         if (!isAuthenticated || !id) return;
@@ -274,7 +276,7 @@ export default function OffBeatDetailsPage({ id, initialData }) {
                                         <button
                                             key={`${item.type}-${index}`}
                                             type="button"
-                                            onClick={() => setSelectedMedia(item)}
+                                            onClick={() => { if (index === 4 && remainingMedia > 0 && window.matchMedia('(max-width: 1023px)').matches) { setGalleryPage(1); setGalleryOpen(true); } else { setSelectedMedia(item); } }}
                                             className={`group relative overflow-hidden bg-[#dfe5df] text-left ${index === 0 ? "col-span-2 aspect-[16/10] lg:row-span-2 lg:aspect-auto" : "aspect-[4/3] lg:aspect-auto lg:min-h-40"}`}
                                         >
                                             {item.type === 'video' ? (
@@ -286,6 +288,11 @@ export default function OffBeatDetailsPage({ id, initialData }) {
                                             <span className="absolute inset-0 flex items-center justify-center bg-black/0 transition group-hover:bg-black/20">
                                                 <Camera className="h-6 w-6 opacity-0 transition group-hover:opacity-100 text-white" />
                                             </span>
+                                            {index === 4 && remainingMedia > 0 && (
+                                                <span className="absolute inset-0 flex items-center justify-center gap-1 bg-black/40 text-base font-bold text-white lg:hidden">
+                                                    <Plus className="h-5 w-5" /> View {remainingMedia} more
+                                                </span>
+                                            )}
                                         </button>
                                     ))}
                                 </div>

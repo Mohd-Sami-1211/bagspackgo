@@ -315,6 +315,47 @@ function ShareModal({ eventId, title, onClose }) {
 // ── MAIN COMPONENT ──
 // ═══════════════════════════════════════════════════
 
+function GuestDocumentPreview({ src, title, onClose }) {
+    const dialogRef = useRef(null);
+    const [imageFailed, setImageFailed] = useState(false);
+
+    useEffect(() => {
+        dialogRef.current.showModal();
+    }, []);
+
+    return (
+        <dialog
+            ref={dialogRef}
+            aria-labelledby="guest-document-title"
+            onClose={onClose}
+            onClick={e => {
+                if (e.target === e.currentTarget) e.currentTarget.close();
+            }}
+            className="m-auto w-[calc(100%_-_2rem)] max-w-4xl max-h-[90dvh] rounded-2xl bg-white text-neutral-900 p-0 shadow-xl backdrop:bg-black/65"
+        >
+            <div className="flex items-center justify-between gap-3 border-b border-neutral-200 px-5 py-3">
+                <h2 id="guest-document-title" className="font-semibold">{title}</h2>
+                <button
+                    type="button"
+                    aria-label="Close document preview"
+                    onClick={() => dialogRef.current.close()}
+                    className="rounded-lg p-2 text-neutral-600 hover:bg-neutral-100"
+                    autoFocus
+                >
+                    <X className="w-5 h-5" />
+                </button>
+            </div>
+            <div className="bg-neutral-100 p-4">
+                {imageFailed ? (
+                    <p role="status" className="p-6 text-center text-sm text-neutral-600">This image could not be loaded.</p>
+                ) : (
+                    <img src={src} alt={title} onError={() => setImageFailed(true)} className="mx-auto max-h-[70dvh] max-w-full object-contain" />
+                )}
+            </div>
+        </dialog>
+    );
+}
+
 export default function EventDetailView({ eventId, adminMode = false, providerId = null }) {
     const router = useRouter();
     const [event, setEvent] = useState(null);
@@ -336,8 +377,10 @@ export default function EventDetailView({ eventId, adminMode = false, providerId
     const [searchQuery, setSearchQuery] = useState('');
     const [locationFilter, setLocationFilter] = useState('All Locations');
     const [expandedGuestId, setExpandedGuestId] = useState(null);
+    const [guestDocument, setGuestDocument] = useState(null);
     const [showSlotEditor, setShowSlotEditor] = useState(false);
     const [draftTotalSlots, setDraftTotalSlots] = useState(event?.totalSlots || 0);
+    const [draftShowTotalSlots, setDraftShowTotalSlots] = useState(false);
 
     const ensureString = (val) => {
         if (!val) return '';
@@ -460,18 +503,22 @@ export default function EventDetailView({ eventId, adminMode = false, providerId
         }
     };
 
-    const handleSaveSlots = async (newTotalSlots) => {
+    const handleSaveSlots = async () => {
         setSaving(true);
         setSaveMsg('');
         try {
+            const changes = {};
+            if (draftTotalSlots !== event.totalSlots) changes.totalSlots = draftTotalSlots;
+            if (draftShowTotalSlots !== (event.showTotalSlots === true)) changes.showTotalSlots = draftShowTotalSlots;
             const url = adminMode ? `/api/admin/events/${eventId}` : `/api/provider/events/${eventId}`;
             const res = await fetch(url, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ totalSlots: Number(newTotalSlots) }),
+                body: JSON.stringify(changes),
             });
             const data = await res.json();
             if (data.success) {
+                setShowSlotEditor(false);
                 setSaveMsg('Slots updated successfully!');
                 fetchEvent();
             } else {
@@ -787,11 +834,12 @@ export default function EventDetailView({ eventId, adminMode = false, providerId
                             <button
                                 onClick={() => {
                                     setDraftTotalSlots(event.totalSlots);
+                                    setDraftShowTotalSlots(event.showTotalSlots === true);
                                     setShowSlotEditor(true);
                                 }}
                                 className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 rounded-xl border border-emerald-100 hover:bg-emerald-100 transition font-bold text-xs"
                             >
-                                <Edit3 className="w-3.5 h-3.5" /> Manage Total Slots
+                                <Edit3 className="w-3.5 h-3.5" /> Manage Slots
                             </button>
                         </div>
                     ) : (
@@ -800,7 +848,7 @@ export default function EventDetailView({ eventId, adminMode = false, providerId
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             className="bg-gradient-to-r from-neutral-50 to-emerald-50/30 rounded-xl p-4 border border-emerald-200 relative"
                         >
-                            <p className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-3">Manage Total Slots</p>
+                            <p className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-3">Manage Slots</p>
                             <div className="flex flex-col gap-4">
                                 <div className="flex items-center gap-4">
                                     <div className="flex items-center bg-white rounded-xl border border-neutral-200 shadow-sm overflow-hidden flex-shrink-0">
@@ -826,6 +874,14 @@ export default function EventDetailView({ eventId, adminMode = false, providerId
                                         <p className="text-[10px] sm:text-xs text-neutral-500">Cannot go below current capacity ({event.totalSlots})</p>
                                     </div>
                                 </div>
+                                <label className="flex items-start gap-2 text-sm font-semibold text-neutral-700 cursor-pointer">
+                                    <input type="checkbox" className="mt-0.5 w-4 h-4 accent-emerald-600" checked={draftShowTotalSlots}
+                                        onChange={e => setDraftShowTotalSlots(e.target.checked)} />
+                                    <span>
+                                        Show total slots to the public
+                                        <span className="block text-xs font-normal text-neutral-500">Leave unchecked to show available slots.</span>
+                                    </span>
+                                </label>
                                 <div className="flex items-center gap-2 justify-end mt-1">
                                     <button
                                         onClick={() => setShowSlotEditor(false)}
@@ -834,11 +890,8 @@ export default function EventDetailView({ eventId, adminMode = false, providerId
                                         Discard
                                     </button>
                                     <button
-                                        onClick={() => {
-                                            handleSaveSlots(draftTotalSlots);
-                                            setShowSlotEditor(false);
-                                        }}
-                                        disabled={draftTotalSlots === event.totalSlots}
+                                        onClick={handleSaveSlots}
+                                        disabled={saving || (draftTotalSlots === event.totalSlots && draftShowTotalSlots === (event.showTotalSlots === true))}
                                         className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         Save Changes
@@ -1164,13 +1217,10 @@ export default function EventDetailView({ eventId, adminMode = false, providerId
                                                                 <span className="text-[10px] font-mono font-medium bg-neutral-100 text-neutral-500 px-1.5 py-0.5 rounded border border-neutral-200">{guest.bookingRef || guest.passCode}</span>
                                                             </div>
                                                             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-neutral-500 text-xs mt-1">
-                                                                <span>{guest.age} yrs</span>
-                                                                <span className="w-1 h-1 rounded-full bg-neutral-300" />
-                                                                <span>{guest.gender}</span>
-                                                                <span className="w-1 h-1 rounded-full bg-neutral-300" />
-                                                                <span>{guest.country || 'N/A'}</span>
-                                                                <span className="w-1 h-1 rounded-full bg-neutral-300" />
-                                                                <span className="font-bold text-neutral-700">{guest.mobile || 'No Mobile'}</span>
+                                                                {[guest.age && `${guest.age} yrs`, guest.gender, guest.country].filter(Boolean).map((detail, index) => (
+                                                                    <span key={index} className="capitalize">{detail}</span>
+                                                                ))}
+                                                                {guest.mobile && <span className="font-bold text-neutral-700">{guest.mobile}</span>}
                                                                 <div className="w-full sm:w-auto sm:ml-auto inline-flex items-center gap-1 font-medium text-[10px] sm:text-xs text-neutral-400 bg-neutral-50 px-1.5 py-0.5 rounded border border-neutral-100">
                                                                     <Clock className="w-3 h-3" />
                                                                     {guest.bookingDate ? (
@@ -1259,7 +1309,7 @@ export default function EventDetailView({ eventId, adminMode = false, providerId
                                                                                 <div className="pt-2 border-t border-neutral-100">
                                                                                     <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">ID Verification</span>
                                                                                     <p className="text-sm font-semibold text-neutral-800 mt-0.5 capitalize">
-                                                                                        {guest.idProofType || 'ID'} <span className="text-neutral-400 font-normal">·</span> <span className="font-mono text-xs text-neutral-600">{guest.idProofNumber || 'N/A'}</span>
+                                                                                        {[guest.idProofType, guest.idProofNumber].filter(Boolean).join(' · ') || 'N/A'}
                                                                                     </p>
                                                                                 </div>
                                                                             </div>
@@ -1277,14 +1327,13 @@ export default function EventDetailView({ eventId, adminMode = false, providerId
                                                                                     <img src={guest.idProofUrl} alt={`ID Proof - ${guest.name}`} className="w-full h-full object-contain" />
                                                                                 </div>
                                                                                 <div className="p-3 border-t border-neutral-100 flex items-center gap-2">
-                                                                                    <a 
-                                                                                        href={guest.idProofUrl} 
-                                                                                        target="_blank" 
-                                                                                        rel="noopener noreferrer" 
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        onClick={() => setGuestDocument({ src: guest.idProofUrl, title: `ID Proof — ${guest.name}` })}
                                                                                         className="flex-1 flex items-center justify-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-3 py-2 rounded-lg transition"
                                                                                     >
                                                                                         <Eye className="w-3.5 h-3.5" /> View Full Size
-                                                                                    </a>
+                                                                                    </button>
                                                                                     <a 
                                                                                         href={guest.idProofUrl?.includes('cloudinary.com') ? guest.idProofUrl.replace('/upload/', '/upload/fl_attachment/') : guest.idProofUrl} 
                                                                                         download={`IDProof_${guest.name || 'Guest'}.png`} 
@@ -1335,14 +1384,23 @@ export default function EventDetailView({ eventId, adminMode = false, providerId
                                                                             {guest.customFormResponses.map((resp, idx) => (
                                                                                 <div key={idx} className="bg-white p-4 rounded-xl border border-neutral-200 shadow-sm flex flex-col justify-center">
                                                                                     <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1">{resp.fieldTitle}</span>
-                                                                                    {typeof resp.value === 'string' && resp.value.startsWith('data:image') ? (
+                                                                                    {typeof resp.value === 'string' && (
+                                                                                        resp.value.startsWith('data:image/') ||
+                                                                                        (resp.fieldType === 'photo_upload' || event.customFormFields?.some(field => field.id === resp.fieldId && field.type === 'photo_upload'))
+                                                                                    ) ? (
                                                                                         <div className="mt-2">
                                                                                             <div className="relative w-full aspect-[4/3] max-w-[160px] bg-neutral-100 rounded-lg overflow-hidden border border-neutral-200">
                                                                                                 <img src={resp.value} alt={resp.fieldTitle} className="w-full h-full object-cover" />
                                                                                             </div>
-                                                                                            <a href={resp.value} download={`CustomForm_${resp.fieldTitle}.jpg`} className="inline-flex items-center gap-1 mt-2 text-xs font-bold text-blue-600 hover:text-blue-700">
-                                                                                                <Download className="w-3 h-3" /> Download
-                                                                                            </a>
+                                                                                            <div className="flex flex-wrap gap-3 mt-2 text-xs font-bold">
+                                                                                                <button type="button" onClick={() => setGuestDocument({ src: resp.value, title: resp.fieldTitle })}
+                                                                                                    className="inline-flex items-center gap-1 text-emerald-700 hover:text-emerald-800">
+                                                                                                    <Eye className="w-3 h-3" /> View Full Size
+                                                                                                </button>
+                                                                                                <a href={resp.value} download={`CustomForm_${resp.fieldTitle}.jpg`} className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700">
+                                                                                                    <Download className="w-3 h-3" /> Download
+                                                                                                </a>
+                                                                                            </div>
                                                                                         </div>
                                                                                     ) : Array.isArray(resp.value) ? (
                                                                                         <div className="mt-1 flex flex-wrap gap-1.5">
@@ -1725,6 +1783,8 @@ export default function EventDetailView({ eventId, adminMode = false, providerId
                     )}
                 </AnimatePresence>
             </div>
+
+            {guestDocument && <GuestDocumentPreview {...guestDocument} onClose={() => setGuestDocument(null)} />}
 
             {/* ── Share Modal ── */}
             <AnimatePresence>

@@ -5,6 +5,7 @@ import { Booking } from '@/models/booking.model';
 import { Event } from '@/models/event.model';
 import { User } from '@/models/user.model';
 import { sendEventBookingConfirmation, sendEventRefundInitiated } from '@/lib/otp-service';
+import { getEventCustomFormFields, getEventParticipantFields } from '@/lib/eventForm';
 
 const MAX_SLOTS_PER_BOOKING = 20;
 const MAX_TEXT_LENGTH = 2000;
@@ -21,6 +22,41 @@ export class EventBookingValidationError extends Error {
 
 const cleanText = (value, maxLength = MAX_TEXT_LENGTH) =>
     typeof value === 'string' ? value.trim().slice(0, maxLength) : '';
+
+export function normalizeEventParticipant(participant, participantFields, index) {
+    const fields = getEventParticipantFields(participantFields);
+    const values = {
+        name: cleanText(participant?.name, 150),
+        age: Number(participant?.age),
+        gender: cleanText(participant?.gender, 50),
+        phone: cleanText(participant?.phone).replace(/\D/g, ''),
+        nationality: cleanText(participant?.nationality || participant?.country, 100),
+        idType: cleanText(participant?.idType, 100),
+        idNumber: cleanText(participant?.idNumber, 150),
+        idProofImage: participant?.idProofImage || participant?.idProofUrl || '',
+    };
+
+    if (fields.some((field) => !values[field]) ||
+        (fields.includes('age') && (!Number.isInteger(values.age) || values.age < 1 || values.age > 120)) ||
+        (fields.includes('phone') && (values.phone.length < 7 || values.phone.length > 15))) {
+        throw new EventBookingValidationError(`Participant ${index + 1} has incomplete or invalid details.`);
+    }
+
+    const proof = values.idProofImage;
+    if (fields.includes('idProofImage') &&
+        (typeof proof !== 'string' || proof.length > 4_000_000 || !/^(data:image\/|https:\/\/)/i.test(proof))) {
+        throw new EventBookingValidationError(`Participant ${index + 1}'s ID proof has an invalid format or is too large.`);
+    }
+
+    const storageKeys = { nationality: 'country', idProofImage: 'idProofUrl' };
+    return {
+        ...Object.fromEntries(fields.map((field) => [storageKeys[field] || field, values[field]])),
+        email: cleanText(participant?.email, 254).toLowerCase(),
+        bloodGroup: cleanText(participant?.bloodGroup, 20),
+        address: cleanText(participant?.address, 500),
+        medicalCondition: cleanText(participant?.medicalCondition, 500),
+    };
+}
 
 const hasValue = (value) => {
     if (Array.isArray(value)) return value.length > 0;
@@ -74,6 +110,7 @@ export function sanitizeCustomFormFields(input) {
             type,
             options,
             required: rawField.required === true,
+            enabled: rawField.enabled !== false,
             dependsOn,
             showIfValue: Array.isArray(rawField.showIfValue)
                 ? rawField.showIfValue.map((value) => cleanText(value, 300)).filter(Boolean)
@@ -119,7 +156,10 @@ export function calculateEventBookingQuote(event, slots, rawResponses = []) {
         throw new EventBookingValidationError(`Choose between 1 and ${MAX_SLOTS_PER_BOOKING} slots.`);
     }
 
-    const fields = sanitizeCustomFormFields(event.customFormFields);
+    const fields = getEventCustomFormFields({
+        applicationFormType: event.applicationFormType,
+        customFormFields: sanitizeCustomFormFields(event.customFormFields),
+    });
     const fieldMap = new Map(fields.map((field) => [field.id, field]));
     const incoming = Array.isArray(rawResponses) ? rawResponses : [];
     const responseMap = new Map();
@@ -176,6 +216,7 @@ export function calculateEventBookingQuote(event, slots, rawResponses = []) {
                 customFormResponses.push({
                     fieldId: field.id,
                     fieldTitle: field.title,
+                    fieldType: field.type,
                     slotIndex,
                     value,
                     extraCharge,
@@ -308,13 +349,19 @@ export async function confirmEventBooking({ bookingId, userId, orderId, paymentI
                 return;
             }
 
+            const committedSlots = [
+                { $ifNull: ['$bookedSlots', 0] },
+                { $ifNull: ['$reservedSlots', 0] },
+            ];
+            if (booking.slotsReserved !== true) committedSlots.push(booking.slots);
+
             const eventFilter = {
                 _id: booking.event,
                 status: 'published',
                 date: { $gte: new Date() },
                 $expr: {
                     $lte: [
-                        { $add: [{ $ifNull: ['$bookedSlots', 0] }, booking.slots] },
+                        { $add: committedSlots },
                         '$totalSlots',
                     ],
                 },

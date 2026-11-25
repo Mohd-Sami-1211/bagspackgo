@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { after, NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 import dbConnect from '@/lib/db';
 import { Booking } from '@/models/booking.model';
@@ -7,9 +7,12 @@ import { GuideDetails } from '@/models/guidedetails.model';
 import { getCurrentUser } from '@/lib/auth';
 import {
     calculateEventBookingQuote,
+    confirmEventBooking,
     EventBookingValidationError,
     EVENT_CHECKOUT_HOLD_MS,
     generateEventPassCode,
+    normalizeEventParticipant,
+    sendEventConfirmationOnce,
 } from '@/lib/eventBooking';
 
 export async function GET(req) {
@@ -149,6 +152,44 @@ export async function GET(req) {
     }
 }
 
+function bookingResponse(booking, body = {}, status = 200) {
+    const bookingId = booking._id.toString();
+    if (booking.status === 'confirmed') {
+        after(() => sendEventConfirmationOnce(bookingId));
+    }
+    return NextResponse.json({
+        success: true,
+        bookingId,
+        status: booking.status,
+        amountPaid: booking.amountPaid,
+        expiresAt: booking.expiresAt,
+        ...body,
+    }, { status });
+}
+
+async function reuseCheckout(booking, eventId) {
+    if (booking.event.toString() === eventId) {
+        if (booking.amountPaid === 0) {
+            if (booking.status === 'confirmed') return bookingResponse(booking, { reused: true });
+
+            // A free checkout started before immediate confirmation can still have a hold.
+            if (booking.status === 'pending') {
+                const outcome = await confirmEventBooking({ bookingId: booking._id, userId: booking.user });
+                if (outcome.kind === 'confirmed') return bookingResponse(outcome.booking, { reused: true });
+                if (outcome.kind === 'expired') {
+                    return NextResponse.json({ success: false, expired: true, message: 'This checkout expired. Please start again.' }, { status: 410 });
+                }
+                if (outcome.kind === 'sold_out') {
+                    return NextResponse.json({ success: false, soldOut: true, message: 'This event is no longer available.' }, { status: 409 });
+                }
+            }
+        } else if (booking.status === 'pending') {
+            return bookingResponse(booking, { reused: true });
+        }
+    }
+    return NextResponse.json({ success: false, message: 'This checkout has already been processed.' }, { status: 409 });
+}
+
 export async function POST(req) {
     try {
         const user = await getCurrentUser(req);
@@ -175,27 +216,15 @@ export async function POST(req) {
             return NextResponse.json({ success: false, message: 'Invalid checkout key.' }, { status: 400 });
         }
 
-        // A repeated request with the same checkout key returns the same pending
-        // booking instead of creating a second payment attempt.
-        const existingBooking = await Booking.findOne({ user: user.userId, checkoutKey }).lean();
-        if (existingBooking) {
-            if (existingBooking.status === 'pending' && existingBooking.event.toString() === event) {
-                return NextResponse.json({
-                    success: true,
-                    bookingId: existingBooking._id.toString(),
-                    amountPaid: existingBooking.amountPaid,
-                    expiresAt: existingBooking.expiresAt,
-                    reused: true,
-                });
-            }
-            return NextResponse.json({ success: false, message: 'This checkout has already been processed.' }, { status: 409 });
-        }
+        const checkout = { user: user.userId, checkoutKey };
+        const existingBooking = await Booking.findOne(checkout).lean();
+        if (existingBooking) return await reuseCheckout(existingBooking, event);
 
         const eventDoc = await Event.findOne({
             _id: event,
             status: 'published',
             date: { $gte: new Date() },
-        }).select('guide totalSlots bookedSlots reservedSlots pricePerSlot pickupPoints includePickup applicationFormType customFormFields');
+        }).select('guide totalSlots bookedSlots reservedSlots pricePerSlot pickupPoints includePickup participantFields applicationFormType customFormFields');
         if (!eventDoc) {
             return NextResponse.json({ success: false, message: 'This event is no longer available for booking.' }, { status: 404 });
         }
@@ -209,8 +238,11 @@ export async function POST(req) {
         }
 
         const quote = calculateEventBookingQuote(eventDoc, slots, customFormResponses);
+        const isFree = quote.totalPayable === 0;
         const availableSlots = eventDoc.totalSlots - (eventDoc.bookedSlots || 0) - (eventDoc.reservedSlots || 0);
         if (quote.slots > availableSlots) {
+            const concurrentBooking = await Booking.findOne(checkout).lean();
+            if (concurrentBooking) return await reuseCheckout(concurrentBooking, event);
             return NextResponse.json({ 
                 success: false, 
                 message: availableSlots <= 0 ? 'This event is sold out.' : `Only ${availableSlots} slot(s) available.`
@@ -227,41 +259,10 @@ export async function POST(req) {
             return NextResponse.json({ success: false, message: 'Enter a valid contact email and phone number.' }, { status: 400 });
         }
 
-        const normalizedParticipants = participants.map((participant, index) => {
-            const name = typeof participant?.name === 'string' ? participant.name.trim().slice(0, 150) : '';
-            const participantPhone = typeof participant?.phone === 'string' ? participant.phone.replace(/\D/g, '') : '';
-            const age = Number(participant?.age);
-            const gender = typeof participant?.gender === 'string' ? participant.gender.trim().slice(0, 50) : '';
-            const country = typeof (participant?.nationality || participant?.country) === 'string'
-                ? (participant.nationality || participant.country).trim().slice(0, 100)
-                : '';
-            const idType = typeof participant?.idType === 'string' ? participant.idType.trim().slice(0, 100) : '';
-            const idNumber = typeof participant?.idNumber === 'string' ? participant.idNumber.trim().slice(0, 150) : '';
-            const idProofUrl = participant?.idProofImage || participant?.idProofUrl || '';
-
-            if (!name || !Number.isInteger(age) || age < 1 || age > 120 || participantPhone.length < 7 || participantPhone.length > 15 || !gender || !country || !idType || !idNumber || !idProofUrl) {
-                throw new EventBookingValidationError(`Participant ${index + 1} has incomplete or invalid details.`);
-            }
-            if (typeof idProofUrl !== 'string' || idProofUrl.length > 4_000_000 || (!idProofUrl.startsWith('data:image/') && !/^https:\/\//i.test(idProofUrl))) {
-                throw new EventBookingValidationError(`Participant ${index + 1}'s ID proof has an invalid format or is too large.`);
-            }
-
-            return {
-                name,
-                email: typeof participant.email === 'string' ? participant.email.trim().toLowerCase().slice(0, 254) : '',
-                phone: participantPhone,
-                age,
-                gender,
-                bloodGroup: typeof participant.bloodGroup === 'string' ? participant.bloodGroup.trim().slice(0, 20) : '',
-                country,
-                address: typeof participant.address === 'string' ? participant.address.trim().slice(0, 500) : '',
-                idType,
-                idNumber,
-                idProofUrl,
-                medicalCondition: typeof participant.medicalCondition === 'string' ? participant.medicalCondition.trim().slice(0, 500) : '',
-                passCode: generateEventPassCode(),
-            };
-        });
+        const normalizedParticipants = participants.map((participant, index) => ({
+            ...normalizeEventParticipant(participant, eventDoc.participantFields, index),
+            passCode: generateEventPassCode(),
+        }));
 
         let normalizedPickup;
         if (eventDoc.includePickup !== false && eventDoc.pickupPoints?.length) {
@@ -276,11 +277,31 @@ export async function POST(req) {
         let newBooking;
         try {
             await session.withTransaction(async () => {
-                const heldEvent = await Event.findOneAndUpdate(
+                const now = new Date();
+                // The unique checkout key resolves replays before claiming capacity.
+                const [createdBooking] = await Booking.create([{
+                    ...checkout,
+                    event,
+                    slots: quote.slots,
+                    slotsReserved: !isFree,
+                    amountPaid: quote.totalPayable,
+                    contactDetails: { email, phone },
+                    participants: normalizedParticipants,
+                    selectedPickup: normalizedPickup,
+                    customFormResponses: quote.customFormResponses,
+                    extraChargesTotal: quote.extraChargesTotal,
+                    expiresAt: isFree ? null : new Date(now.getTime() + EVENT_CHECKOUT_HOLD_MS),
+                    confirmedAt: isFree ? now : null,
+                    status: isFree ? 'confirmed' : 'pending',
+                    paymentId: isFree ? 'free_event' : 'pending',
+                    orderId: isFree ? 'free_event' : 'pending',
+                }], { session });
+
+                const updatedEvent = await Event.findOneAndUpdate(
                     {
                         _id: event,
                         status: 'published',
-                        date: { $gte: new Date() },
+                        date: { $gte: now },
                         $expr: {
                             $lte: [
                                 {
@@ -294,50 +315,33 @@ export async function POST(req) {
                             ],
                         },
                     },
-                    { $inc: { reservedSlots: quote.slots } },
+                    { $inc: isFree ? { bookedSlots: quote.slots } : { reservedSlots: quote.slots } },
                     { new: true, session }
                 );
 
-                if (!heldEvent) {
+                if (!updatedEvent) {
                     throw new EventBookingValidationError('This event has just sold out. Please choose another event or try again.', 409);
                 }
-
-                const [createdBooking] = await Booking.create([{
-                    user: user.userId,
-                    event,
-                    slots: quote.slots,
-                    slotsReserved: true,
-                    amountPaid: quote.totalPayable,
-                    contactDetails: { email, phone },
-                    participants: normalizedParticipants,
-                    selectedPickup: normalizedPickup,
-                    customFormResponses: quote.customFormResponses,
-                    extraChargesTotal: quote.extraChargesTotal,
-                    checkoutKey,
-                    expiresAt: new Date(Date.now() + EVENT_CHECKOUT_HOLD_MS),
-                    status: 'pending',
-                    paymentId: 'pending',
-                    orderId: 'pending'
-                }], { session });
                 newBooking = createdBooking;
             });
+        } catch (error) {
+            if (error?.code === 11000) {
+                const concurrentBooking = await Booking.findOne(checkout).lean();
+                if (concurrentBooking) return await reuseCheckout(concurrentBooking, event);
+            }
+            throw error;
         } finally {
             await session.endSession();
         }
 
-        return NextResponse.json({
-            success: true,
-            bookingId: newBooking._id.toString(),
-            amountPaid: quote.totalPayable,
-            expiresAt: newBooking.expiresAt,
+        return bookingResponse(newBooking, {
             quote: {
                 subtotal: quote.subtotal,
                 extraChargesTotal: quote.extraChargesTotal,
                 totalFees: quote.totalFees,
             },
-        }, { status: 201 });
+        }, 201);
     } catch (error) {
-        console.error('Create event booking error:', error);
         if (error instanceof EventBookingValidationError) {
             return NextResponse.json({ success: false, message: error.message }, { status: error.status });
         }
@@ -347,6 +351,7 @@ export async function POST(req) {
         if (error?.code === 11000) {
             return NextResponse.json({ success: false, message: 'This checkout request is already being processed.' }, { status: 409 });
         }
+        console.error('Create event booking error:', error);
         return NextResponse.json({ success: false, message: error.message || 'Server error' }, { status: 500 });
     }
 }

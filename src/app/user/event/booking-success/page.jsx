@@ -101,6 +101,7 @@ function BookingSuccessContent() {
     const eventDate = booking?.date;
     const duration = booking?.duration || '';
     const travelers = booking?.participants || [];
+    const isFreeBooking = booking.paymentId === 'free_event' || booking.price === 0;
     const selectedPickup = booking?.selectedPickup || null;
     const highlights = booking?.highlights || [];
     const whatsIncluded = booking?.whatsIncluded || [];
@@ -158,7 +159,7 @@ function BookingSuccessContent() {
                             </motion.div>
                             <h1 className="text-3xl font-extrabold tracking-tight mb-2" style={fontStyle}>Booking Confirmed</h1>
                             <p className="text-emerald-100 font-semibold px-4 py-1 bg-emerald-400/20 border border-emerald-300/25 inline-block rounded-full text-xs" style={fontStyle}>
-                                Payment successful & Event Booked
+                                {isFreeBooking ? 'No payment required' : 'Payment successful & Event Booked'}
                             </p>
                         </div>
 
@@ -168,8 +169,12 @@ function BookingSuccessContent() {
                                 <p className="text-[10px] uppercase font-semibold text-gray-400 tracking-wider mb-1 flex items-center gap-1" style={fontStyle}><Hash className="w-3 h-3"/> Booking Ref</p>
                                 <p className="font-mono font-extrabold text-gray-900 text-xl tracking-wider mb-4">{bookingRef}</p>
                                 
-                                <p className="text-[10px] uppercase font-semibold text-gray-400 tracking-wider mb-1 flex items-center gap-1" style={fontStyle}><CreditCard className="w-3 h-3"/> Payment ID</p>
-                                <p className="font-mono font-semibold text-gray-900 text-xs mb-4 truncate max-w-xs">{booking?.paymentId === 'free_event' ? 'No payment required' : (booking?.paymentId || 'VERIFIED')}</p>
+                                {!isFreeBooking && (
+                                    <>
+                                        <p className="text-[10px] uppercase font-semibold text-gray-400 tracking-wider mb-1 flex items-center gap-1" style={fontStyle}><CreditCard className="w-3 h-3"/> Payment ID</p>
+                                        <p className="font-mono font-semibold text-gray-900 text-xs mb-4 truncate max-w-xs">{booking?.paymentId || 'VERIFIED'}</p>
+                                    </>
+                                )}
                                 
                                 <div className="flex flex-wrap gap-2 mt-4">
                                     <button 
@@ -333,15 +338,15 @@ function BookingSuccessContent() {
                                                     </div>
                                                     <div className="flex-1 min-w-0">
                                                         <p className="font-bold text-gray-900 text-base flex items-center gap-2 mb-1" style={fontStyle}>
-                                                            <Ticket className="w-4 h-4 text-emerald-600 shrink-0" /> <span className="truncate">{t.name || "Unnamed"}</span>
+                                                            <Ticket className="w-4 h-4 text-emerald-600 shrink-0" /> <span className="truncate">{t.name || `Participant ${idx + 1}`}</span>
                                                         </p>
                                                         <div className="text-left mt-1 space-y-0.5" style={fontStyle}>
-                                                            <p className="text-[10px] font-medium text-gray-500 uppercase truncate">
-                                                                {t.idType || 'ID'}: <span className="text-gray-900 font-semibold">{t.idNumber || 'N/A'}</span>
-                                                            </p>
-                                                            <p className="text-[10px] font-medium text-gray-500 uppercase truncate">
-                                                                {t.gender || "-"} | {t.age || "-"} yrs {t.bloodGroup ? `| ${t.bloodGroup}` : ''}
-                                                            </p>
+                                                            {(t.idType || t.idNumber) && <p className="text-[10px] font-medium text-gray-500 uppercase truncate">
+                                                                {[t.idType, t.idNumber].filter(Boolean).join(' · ')}
+                                                            </p>}
+                                                            {(t.gender || t.age || t.bloodGroup) && <p className="text-[10px] font-medium text-gray-500 uppercase truncate">
+                                                                {[t.gender, t.age && `${t.age} yrs`, t.bloodGroup].filter(Boolean).join(' · ')}
+                                                            </p>}
                                                             {t.country && <p className="text-[10px] font-medium text-gray-500 uppercase truncate">Country: {t.country}</p>}
                                                         </div>
                                                     </div>
@@ -420,7 +425,7 @@ function BookingSuccessContent() {
                                     <div>
                                         <SectionTitle icon={ShieldCheck} title="bagspackgo Policies" />
                                         <ul className="list-disc pl-4 space-y-1.5 text-sm text-gray-600" style={fontStyle}>
-                                            <li className="leading-relaxed">Booking is confirmed subject to payment realization.</li>
+                                            {!isFreeBooking && <li className="leading-relaxed">Booking is confirmed subject to payment realization.</li>}
                                             <li className="leading-relaxed font-bold text-red-600">Event bookings are strictly non-refundable under all circumstances, including no-shows or late arrivals.</li>
                                             <li className="leading-relaxed">Each QR code on the pass is valid for a single-use entry only.</li>
                                             <li className="leading-relaxed">All guests must carry a valid government-issued photo ID (Aadhaar, Passport, Driving License, etc.) for check-in and verification.</li>

@@ -43,6 +43,7 @@ const bookingSchema = new mongoose.Schema({
     customFormResponses: [{
         fieldId: String,
         fieldTitle: String,
+        fieldType: String,
         sectionTitle: String,
         slotIndex: { type: Number, default: 0 },
         value: mongoose.Schema.Types.Mixed, // string, number, array, or base64 for photo

@@ -6,6 +6,7 @@ import { Guide } from '@/models/guide.model';
 import { GuideDetails } from '@/models/guidedetails.model';
 import { isPublicProvider } from '@/lib/seo';
 import { providerProfilePath } from '@/lib/providerSlug';
+import { getEventCustomFormFields, getEventParticipantFields } from '@/lib/eventForm';
 
 async function queryPublicEventDetails(id) {
     if (!mongoose.Types.ObjectId.isValid(id)) return null;
@@ -29,6 +30,7 @@ async function queryPublicEventDetails(id) {
                 date: 1,
                 duration: 1,
                 totalSlots: 1,
+                showTotalSlots: 1,
                 bookedSlots: 1,
                 reservedSlots: 1,
                 pricePerSlot: 1,
@@ -47,6 +49,7 @@ async function queryPublicEventDetails(id) {
                 termsAndConditions: 1,
                 visibility: 1,
                 applicationFormType: 1,
+                participantFields: 1,
                 customFormFields: 1,
                 rating: 1,
                 reviewCount: 1,
@@ -84,6 +87,7 @@ async function queryPublicEventDetails(id) {
         duration: `${event.duration} day${event.duration === 1 ? '' : 's'}`,
         durationDays: event.duration,
         totalSlots: event.totalSlots,
+        showTotalSlots: event.showTotalSlots === true,
         bookedSlots: event.bookedSlots || 0,
         reservedSlots: event.reservedSlots || 0,
         slotsLeft: Math.max(0, event.totalSlots - (event.bookedSlots || 0) - (event.reservedSlots || 0)),
@@ -118,13 +122,14 @@ async function queryPublicEventDetails(id) {
         destinationLink: event.destinationLink || '',
         visibility: event.visibility || 'public',
         applicationFormType: event.applicationFormType || 'default',
-        customFormFields: event.customFormFields || [],
+        participantFields: getEventParticipantFields(event.participantFields),
+        customFormFields: getEventCustomFormFields(event),
         createdAt: event.createdAt?.toISOString?.() || event.createdAt,
     };
 }
 
 export const getPublicEventDetails = unstable_cache(
     queryPublicEventDetails,
-    ['public-event-details-v7'],
+    ['public-event-details-v8'],
     { revalidate: 30 }
 );

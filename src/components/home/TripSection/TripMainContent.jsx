@@ -23,6 +23,7 @@ import {
   Users,
 } from 'lucide-react';
 import TripSearchInput from './TripSearchInput';
+import { getEventSlotsLabel } from '@/lib/eventSlots';
 
 const fetcher = (url) => fetch(url).then((response) => {
   if (!response.ok) throw new Error('Unable to load');
@@ -149,7 +150,7 @@ function EventPoster({ event }) {
         <div className="mt-4 flex items-end justify-between gap-4">
           <div className="min-w-0 space-y-2 text-xs font-medium text-white/80">
             <p className="flex items-center gap-2"><MapPin size={15} className="shrink-0" /> <span className="truncate">{event.destination || event.destinationId || 'Location to be announced'}</span></p>
-            <p className="flex items-center gap-2"><Users size={15} className="shrink-0" /> {event.slotsLeft > 0 ? `${event.slotsLeft} slots available` : 'Check availability'}</p>
+            <p className="flex items-center gap-2"><Users size={15} className="shrink-0" /> {getEventSlotsLabel(event)}</p>
           </div>
           <Link href={`/user/events/eventdetails/${event.id}`} className="inline-flex shrink-0 items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white hover:text-[#17372f]">View <ArrowRight size={15} /></Link>
         </div>

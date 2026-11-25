@@ -6,6 +6,7 @@ import { Event } from "@/models/event.model";
 import { Booking } from "@/models/booking.model";
 import { sanitizeString } from "@/lib/sanitize";
 import { sanitizeCustomFormFields } from '@/lib/eventBooking';
+import { getEventParticipantFields } from '@/lib/eventForm';
 
 /**
  * GET /api/provider/events/[id]
@@ -110,6 +111,7 @@ export async function GET(request, context) {
                 date: event.date,
                 duration: event.duration,
                 totalSlots: event.totalSlots,
+                showTotalSlots: event.showTotalSlots === true,
                 bookedSlots: event.bookedSlots,
                 reservedSlots: event.reservedSlots || 0,
                 pricePerSlot: event.pricePerSlot,
@@ -132,6 +134,7 @@ export async function GET(request, context) {
                 deleteRequest: event.deleteRequest || null,
                 visibility: event.visibility || 'public',
                 applicationFormType: event.applicationFormType || 'default',
+                participantFields: getEventParticipantFields(event.participantFields),
                 customFormFields: event.customFormFields || [],
                 termsAndConditions: event.termsAndConditions || [],
                 createdAt: event.createdAt,
@@ -195,35 +198,39 @@ export async function PATCH(request, context) {
             body.totalSlots = totalSlots;
         }
 
-        // Only drafts can be fully edited, but we allow updating totalSlots for published events
+        if (body.showTotalSlots !== undefined && typeof body.showTotalSlots !== 'boolean') {
+            return NextResponse.json({ success: false, message: 'Choose how to display slots.' }, { status: 400 });
+        }
+
+        // Published events allow changes to capacity and its public display.
         if (event.status !== "draft") {
             const keys = Object.keys(body).filter(k => k !== 'action');
-            const onlyUpdatingSlots = keys.length === 1 && keys[0] === 'totalSlots';
+            const onlyUpdatingSlots = keys.length > 0 && keys.every(key => ['totalSlots', 'showTotalSlots'].includes(key));
             
             if (!onlyUpdatingSlots) {
                 return NextResponse.json(
                     {
                         success: false,
-                        message: "Only draft events can be fully edited. You can only update slots for published events.",
+                        message: "Only draft events can be fully edited. You can update slot settings for published events.",
                     },
                     { status: 403 }
                 );
             }
 
-            const updatedEvent = await Event.findOneAndUpdate(
-                {
-                    _id: id,
-                    guide: user.userId,
-                    $expr: {
-                        $lte: [
-                            { $add: [{ $ifNull: ['$bookedSlots', 0] }, { $ifNull: ['$reservedSlots', 0] }] },
-                            body.totalSlots,
-                        ],
-                    },
-                },
-                { $set: { totalSlots: body.totalSlots } },
-                { new: true }
-            );
+            const filter = { _id: id, guide: user.userId };
+            const slotSettings = {};
+            if (body.totalSlots !== undefined) {
+                filter.$expr = {
+                    $lte: [
+                        { $add: [{ $ifNull: ['$bookedSlots', 0] }, { $ifNull: ['$reservedSlots', 0] }] },
+                        body.totalSlots,
+                    ],
+                };
+                slotSettings.totalSlots = body.totalSlots;
+            }
+            if (body.showTotalSlots !== undefined) slotSettings.showTotalSlots = body.showTotalSlots;
+
+            const updatedEvent = await Event.findOneAndUpdate(filter, { $set: slotSettings }, { new: true });
             if (!updatedEvent) {
                 return NextResponse.json({
                     success: false,
@@ -240,7 +247,7 @@ export async function PATCH(request, context) {
         // Update allowed fields
         const updatableFields = [
             "title", "eventType", "location", "date", "duration",
-            "totalSlots", "pricePerSlot", "destination", "destinationLink",
+            "totalSlots", "showTotalSlots", "pricePerSlot", "destination", "destinationLink",
             "about", "poster", "visibility", "applicationFormType", "includePickup",
         ];
 
@@ -291,6 +298,9 @@ export async function PATCH(request, context) {
         }
 
         // Normalize custom fields so option prices and response types remain safe.
+        if (Array.isArray(body.participantFields)) {
+            event.participantFields = getEventParticipantFields(body.participantFields);
+        }
         if (Array.isArray(body.customFormFields)) {
             event.customFormFields = sanitizeCustomFormFields(body.customFormFields);
             event.markModified('customFormFields');
@@ -333,8 +343,8 @@ export async function PATCH(request, context) {
         if (body.action === "publish") {
             if (event.applicationFormType === 'customized') {
                 const invalidField = event.customFormFields.find((field) =>
-                    !field.title ||
-                    (['dropdown', 'multiple_choice', 'checkbox'].includes(field.type) && field.options.length === 0)
+                    field.enabled !== false && (!field.title ||
+                    (['dropdown', 'multiple_choice', 'checkbox'].includes(field.type) && field.options.length === 0))
                 );
                 if (event.customFormFields.length === 0 || invalidField) {
                     return NextResponse.json({
