@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { registerHooks } from 'node:module';
 import { getEventCustomFormFields, getEventParticipantFields } from '../src/lib/eventForm.js';
-import { getEventSlotsLabel } from '../src/lib/eventSlots.js';
+import { getEventSlotsLabel, getPublicEventSlots } from '../src/lib/eventSlots.js';
 
 const hooks = registerHooks({
     resolve(specifier, context, nextResolve) {
@@ -59,10 +59,14 @@ test('unchecked fields and their dependents are omitted, while enabled choices s
     assert.deepEqual(quote.customFormResponses.map(response => response.fieldId), ['meal']);
 });
 
-test('public slot labels use capacity or availability without changing sold-out state', () => {
-    const event = { totalSlots: 20, slotsLeft: 6 };
-    assert.equal(getEventSlotsLabel(event), '6 slots available');
-    assert.equal(getEventSlotsLabel({ ...event, showTotalSlots: true }), '20 total slots');
-    assert.equal(getEventSlotsLabel({ ...event, slotsLeft: 0 }), 'Sold out');
-    assert.equal(getEventSlotsLabel({ ...event, slotsLeft: 0, showTotalSlots: true }), '20 total slots');
+test('public slot labels show the remaining count only when enabled and always show Sold out', () => {
+    const event = { totalSlots: 20, bookedSlots: 12, reservedSlots: 2 };
+    const hidden = getPublicEventSlots({ ...event, showAvailableSlots: false, showTotalSlots: true });
+    assert.deepEqual(hidden, { isSoldOut: false, showAvailableSlots: false });
+    assert.equal(getEventSlotsLabel(hidden), null);
+    assert.equal(getEventSlotsLabel(getPublicEventSlots({ ...event, showAvailableSlots: true })), '6 slots available');
+    assert.equal(getEventSlotsLabel(getPublicEventSlots({ ...event, showTotalSlots: true })), '6 slots available');
+    for (const showAvailableSlots of [true, false]) {
+        assert.equal(getEventSlotsLabel(getPublicEventSlots({ ...event, bookedSlots: 18, showAvailableSlots })), 'Sold out');
+    }
 });

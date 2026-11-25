@@ -8,9 +8,7 @@ export async function GET(request) {
         const result = await getPublicEventList(new URL(request.url).searchParams);
         return NextResponse.json(result, {
             headers: {
-                "Cache-Control": "public, max-age=0, must-revalidate",
-                "CDN-Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
-                "Vercel-CDN-Cache-Control": "public, max-age=60, stale-while-revalidate=300",
+                "Cache-Control": "no-cache",
             },
         });
     } catch (error) {

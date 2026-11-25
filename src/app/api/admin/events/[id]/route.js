@@ -5,6 +5,7 @@ import { Booking } from '@/models/booking.model';
 import { getCurrentAdmin } from '@/lib/adminAuth';
 import { sanitizeCustomFormFields } from '@/lib/eventBooking';
 import { getEventParticipantFields } from '@/lib/eventForm';
+import { revalidatePublicEventSlots } from '@/lib/publicEvent';
 
 export async function GET(req, context) {
     try {
@@ -91,7 +92,7 @@ export async function PATCH(req, context) {
         }
 
         const allowedFields = [
-            'title', 'eventType', 'location', 'date', 'duration', 'totalSlots', 'showTotalSlots',
+            'title', 'eventType', 'location', 'date', 'duration', 'totalSlots', 'showAvailableSlots',
             'pricePerSlot', 'destination', 'destinationLink', 'about', 'highlights', 
             'whatsIncluded', 'whatsExcluded', 'faqs', 'whatToBring', 'restrictions', 
             'pickupPoints', 'itinerary', 'termsAndConditions', 'poster', 'photographs',
@@ -102,8 +103,8 @@ export async function PATCH(req, context) {
         for (const key of allowedFields) {
             if (body[key] !== undefined) updateData[key] = body[key];
         }
-        if (body.showTotalSlots !== undefined && typeof body.showTotalSlots !== 'boolean') {
-            return NextResponse.json({ success: false, message: 'Choose how to display slots.' }, { status: 400 });
+        if (body.showAvailableSlots !== undefined && typeof body.showAvailableSlots !== 'boolean') {
+            return NextResponse.json({ success: false, message: 'Choose whether to show the available slot count.' }, { status: 400 });
         }
         if (Array.isArray(body.participantFields)) {
             updateData.participantFields = getEventParticipantFields(body.participantFields);
@@ -131,6 +132,9 @@ export async function PATCH(req, context) {
                 success: false,
                 message: 'Slots changed while updating. Refresh the event and try again.',
             }, { status: 409 });
+        }
+        if (body.showAvailableSlots !== undefined || body.totalSlots !== undefined || body.action === 'publish') {
+            revalidatePublicEventSlots();
         }
         return NextResponse.json({ 
             success: true, 

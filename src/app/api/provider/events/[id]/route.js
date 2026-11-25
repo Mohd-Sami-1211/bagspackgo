@@ -7,6 +7,8 @@ import { Booking } from "@/models/booking.model";
 import { sanitizeString } from "@/lib/sanitize";
 import { sanitizeCustomFormFields } from '@/lib/eventBooking';
 import { getEventParticipantFields } from '@/lib/eventForm';
+import { shouldShowAvailableSlots } from '@/lib/eventSlots';
+import { revalidatePublicEventSlots } from '@/lib/publicEvent';
 
 /**
  * GET /api/provider/events/[id]
@@ -111,7 +113,7 @@ export async function GET(request, context) {
                 date: event.date,
                 duration: event.duration,
                 totalSlots: event.totalSlots,
-                showTotalSlots: event.showTotalSlots === true,
+                showAvailableSlots: shouldShowAvailableSlots(event),
                 bookedSlots: event.bookedSlots,
                 reservedSlots: event.reservedSlots || 0,
                 pricePerSlot: event.pricePerSlot,
@@ -198,14 +200,14 @@ export async function PATCH(request, context) {
             body.totalSlots = totalSlots;
         }
 
-        if (body.showTotalSlots !== undefined && typeof body.showTotalSlots !== 'boolean') {
-            return NextResponse.json({ success: false, message: 'Choose how to display slots.' }, { status: 400 });
+        if (body.showAvailableSlots !== undefined && typeof body.showAvailableSlots !== 'boolean') {
+            return NextResponse.json({ success: false, message: 'Choose whether to show the available slot count.' }, { status: 400 });
         }
 
         // Published events allow changes to capacity and its public display.
         if (event.status !== "draft") {
             const keys = Object.keys(body).filter(k => k !== 'action');
-            const onlyUpdatingSlots = keys.length > 0 && keys.every(key => ['totalSlots', 'showTotalSlots'].includes(key));
+            const onlyUpdatingSlots = keys.length > 0 && keys.every(key => ['totalSlots', 'showAvailableSlots'].includes(key));
             
             if (!onlyUpdatingSlots) {
                 return NextResponse.json(
@@ -228,7 +230,7 @@ export async function PATCH(request, context) {
                 };
                 slotSettings.totalSlots = body.totalSlots;
             }
-            if (body.showTotalSlots !== undefined) slotSettings.showTotalSlots = body.showTotalSlots;
+            if (body.showAvailableSlots !== undefined) slotSettings.showAvailableSlots = body.showAvailableSlots;
 
             const updatedEvent = await Event.findOneAndUpdate(filter, { $set: slotSettings }, { new: true });
             if (!updatedEvent) {
@@ -237,6 +239,7 @@ export async function PATCH(request, context) {
                     message: 'Slots changed while updating. Refresh the event and try again.',
                 }, { status: 409 });
             }
+            revalidatePublicEventSlots();
             return NextResponse.json({
                 success: true,
                 message: 'Event slots updated successfully!',
@@ -247,7 +250,7 @@ export async function PATCH(request, context) {
         // Update allowed fields
         const updatableFields = [
             "title", "eventType", "location", "date", "duration",
-            "totalSlots", "showTotalSlots", "pricePerSlot", "destination", "destinationLink",
+            "totalSlots", "showAvailableSlots", "pricePerSlot", "destination", "destinationLink",
             "about", "poster", "visibility", "applicationFormType", "includePickup",
         ];
 
@@ -357,6 +360,7 @@ export async function PATCH(request, context) {
         }
 
         await event.save();
+        if (body.action === 'publish') revalidatePublicEventSlots();
 
         return NextResponse.json({
             success: true,

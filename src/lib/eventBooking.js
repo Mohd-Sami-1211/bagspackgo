@@ -6,8 +6,8 @@ import { Event } from '@/models/event.model';
 import { User } from '@/models/user.model';
 import { sendEventBookingConfirmation, sendEventRefundInitiated } from '@/lib/otp-service';
 import { getEventCustomFormFields, getEventParticipantFields } from '@/lib/eventForm';
+import { MAX_EVENT_SLOTS_PER_BOOKING } from './eventSlots.js';
 
-const MAX_SLOTS_PER_BOOKING = 20;
 const MAX_TEXT_LENGTH = 2000;
 const MAX_UPLOAD_LENGTH = 3_000_000;
 export const EVENT_CHECKOUT_HOLD_MS = 5 * 60 * 1000;
@@ -152,8 +152,8 @@ function normalizeResponseValue(field, rawValue) {
 
 export function calculateEventBookingQuote(event, slots, rawResponses = []) {
     const slotCount = Number(slots);
-    if (!Number.isInteger(slotCount) || slotCount < 1 || slotCount > MAX_SLOTS_PER_BOOKING) {
-        throw new EventBookingValidationError(`Choose between 1 and ${MAX_SLOTS_PER_BOOKING} slots.`);
+    if (!Number.isInteger(slotCount) || slotCount < 1 || slotCount > MAX_EVENT_SLOTS_PER_BOOKING) {
+        throw new EventBookingValidationError(`Choose between 1 and ${MAX_EVENT_SLOTS_PER_BOOKING} slots.`);
     }
 
     const fields = getEventCustomFormFields({

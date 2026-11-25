@@ -238,7 +238,7 @@ export async function POST(request) {
             date: eventDate,
             duration,
             totalSlots,
-            showTotalSlots: body.showTotalSlots === true,
+            showAvailableSlots: body.showAvailableSlots === true,
             pricePerSlot,
             destination: sanitizeString(body.destination),
             destinationLink: sanitizeString(body.destinationLink || ""),

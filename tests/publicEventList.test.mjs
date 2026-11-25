@@ -107,3 +107,25 @@ test('event feeds reference original images without embedding their bytes in pag
   assert.equal(second.events[0].guideLogo, '/images/logo.png');
   fixture.events = [];
 });
+
+test('public event feeds omit exact capacity and expose available slots only when enabled', async () => {
+  fixture.accounts = [{ _id: 'host', applicationStatus: 'approved' }];
+  fixture.details = [{ guide: 'host', companyname: 'Local company' }];
+  const event = { _id: 'event', guide: 'host', totalSlots: 250, bookedSlots: 25, reservedSlots: 5 };
+  fixture.events = [
+    { ...event, showAvailableSlots: false },
+    { ...event, showAvailableSlots: true },
+    { ...event, bookedSlots: 245, showAvailableSlots: false },
+  ];
+  const { events: [hidden, visible, soldOut] } = await getPublicEventList(new URLSearchParams());
+  assert.equal(Object.hasOwn(hidden, 'slotsLeft'), false);
+  assert.equal(hidden.isSoldOut, false);
+  assert.equal(visible.slotsLeft, 220);
+  assert.equal(soldOut.isSoldOut, true);
+  assert.equal(Object.hasOwn(soldOut, 'slotsLeft'), false);
+  for (const item of [hidden, visible, soldOut]) {
+    for (const field of ['totalSlots', 'bookedSlots', 'reservedSlots', 'bookings']) {
+      assert.equal(Object.hasOwn(item, field), false);
+    }
+  }
+});

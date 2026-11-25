@@ -1,4 +1,6 @@
 // Shared URL, metadata, and structured-data rules.
+import { isEventSoldOut } from './eventSlots.js';
+
 export const SITE_URL = 'https://www.bagspackgo.com';
 export const SITE_NAME = 'Bagspackgo';
 export const SITE_DESCRIPTION = 'Bagspackgo is a Kashmir-based travel platform for comparing local tour packages, discovering offbeat destinations, joining events and getting 24×7 Companion call assistance.';
@@ -75,7 +77,7 @@ export function eventSchema(event, now = new Date()) {
     organizer: { '@type': 'Organization', name: event.guideName, ...(event.guidePath ? { url: absoluteUrl(event.guidePath) } : {}) },
     ...(!ended && !cancelled && !eventRegistrationClosed(event, now) && Number.isFinite(event.price) && event.price >= 0 ? {
       offers: { '@type': 'Offer', url, price: event.price, priceCurrency: 'INR',
-        availability: event.slotsLeft > 0 ? 'https://schema.org/InStock' : 'https://schema.org/SoldOut' },
+        availability: isEventSoldOut(event) ? 'https://schema.org/SoldOut' : 'https://schema.org/InStock' },
     } : {}),
   };
 }

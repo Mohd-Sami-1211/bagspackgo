@@ -13,6 +13,7 @@ import {
     Sparkles, TrendingUp, Camera, FlipHorizontal, Keyboard, Search
 } from 'lucide-react';
 import EventSponsorsTab from './EventSponsorsTab';
+import { shouldShowAvailableSlots } from '@/lib/eventSlots';
 
 const selectStyles = {
     control: (provided, state) => ({
@@ -380,7 +381,7 @@ export default function EventDetailView({ eventId, adminMode = false, providerId
     const [guestDocument, setGuestDocument] = useState(null);
     const [showSlotEditor, setShowSlotEditor] = useState(false);
     const [draftTotalSlots, setDraftTotalSlots] = useState(event?.totalSlots || 0);
-    const [draftShowTotalSlots, setDraftShowTotalSlots] = useState(false);
+    const [draftShowAvailableSlots, setDraftShowAvailableSlots] = useState(false);
 
     const ensureString = (val) => {
         if (!val) return '';
@@ -509,7 +510,7 @@ export default function EventDetailView({ eventId, adminMode = false, providerId
         try {
             const changes = {};
             if (draftTotalSlots !== event.totalSlots) changes.totalSlots = draftTotalSlots;
-            if (draftShowTotalSlots !== (event.showTotalSlots === true)) changes.showTotalSlots = draftShowTotalSlots;
+            if (draftShowAvailableSlots !== shouldShowAvailableSlots(event)) changes.showAvailableSlots = draftShowAvailableSlots;
             const url = adminMode ? `/api/admin/events/${eventId}` : `/api/provider/events/${eventId}`;
             const res = await fetch(url, {
                 method: 'PATCH',
@@ -834,7 +835,7 @@ export default function EventDetailView({ eventId, adminMode = false, providerId
                             <button
                                 onClick={() => {
                                     setDraftTotalSlots(event.totalSlots);
-                                    setDraftShowTotalSlots(event.showTotalSlots === true);
+                                    setDraftShowAvailableSlots(shouldShowAvailableSlots(event));
                                     setShowSlotEditor(true);
                                 }}
                                 className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 rounded-xl border border-emerald-100 hover:bg-emerald-100 transition font-bold text-xs"
@@ -875,11 +876,11 @@ export default function EventDetailView({ eventId, adminMode = false, providerId
                                     </div>
                                 </div>
                                 <label className="flex items-start gap-2 text-sm font-semibold text-neutral-700 cursor-pointer">
-                                    <input type="checkbox" className="mt-0.5 w-4 h-4 accent-emerald-600" checked={draftShowTotalSlots}
-                                        onChange={e => setDraftShowTotalSlots(e.target.checked)} />
+                                    <input type="checkbox" className="mt-0.5 w-4 h-4 accent-emerald-600" checked={draftShowAvailableSlots}
+                                        onChange={e => setDraftShowAvailableSlots(e.target.checked)} />
                                     <span>
-                                        Show total slots to the public
-                                        <span className="block text-xs font-normal text-neutral-500">Leave unchecked to show available slots.</span>
+                                        Show available slot count to the public
+                                        <span className="block text-xs font-normal text-neutral-500">Leave unchecked to hide the count.</span>
                                     </span>
                                 </label>
                                 <div className="flex items-center gap-2 justify-end mt-1">
@@ -891,7 +892,7 @@ export default function EventDetailView({ eventId, adminMode = false, providerId
                                     </button>
                                     <button
                                         onClick={handleSaveSlots}
-                                        disabled={saving || (draftTotalSlots === event.totalSlots && draftShowTotalSlots === (event.showTotalSlots === true))}
+                                        disabled={saving || (draftTotalSlots === event.totalSlots && draftShowAvailableSlots === shouldShowAvailableSlots(event))}
                                         className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         Save Changes

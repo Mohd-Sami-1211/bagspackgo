@@ -4,8 +4,7 @@ import { getPublicProviderProfile } from '@/lib/publicProviderProfile';
 export const revalidate = 300;
 
 const CACHE_HEADERS = {
-  'Cache-Control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=900',
-  'CDN-Cache-Control': 'public, s-maxage=300, stale-while-revalidate=900',
+  'Cache-Control': 'no-cache',
 };
 
 export async function GET(_request, { params }) {

@@ -79,7 +79,7 @@ const hooks = registerHooks({
         if (stubs[specifier]) {
             return { url: `data:text/javascript,${encodeURIComponent(stubs[specifier])}`, shortCircuit: true };
         }
-        if (specifier === '@/lib/eventForm' || specifier === '@/lib/eventBooking') {
+        if (['@/lib/eventForm', '@/lib/eventBooking', '@/lib/eventSlots'].includes(specifier)) {
             const name = specifier.split('/').at(-1);
             return { url: new URL(`../src/lib/${name}.js`, import.meta.url).href, shortCircuit: true };
         }
@@ -146,8 +146,16 @@ test('a group must fit in the remaining capacity before any of its slots are boo
     fixture.reset({ totalSlots: 3, bookedSlots: 1 });
     const tooLarge = await book({ slots: 3, participants: [{}, {}, {}] });
     assert.equal(tooLarge.status, 409);
+    const shortage = await tooLarge.json();
+    assert.equal(shortage.insufficientSlots, true);
+    assert.equal(shortage.soldOut, false);
+    assert.doesNotMatch(shortage.message, /\d/);
     assert.equal(fixture.event.bookedSlots, 1);
     assert.equal(fixture.bookings.size, 0);
+
+    fixture.event.showAvailableSlots = true;
+    const visibleShortage = await book({ slots: 3, participants: [{}, {}, {}] });
+    assert.equal((await visibleShortage.json()).message, 'Only 2 slots are available.');
 
     const fits = await book({ slots: 2, participants: [{}, {}] });
     assert.equal(fits.status, 201);

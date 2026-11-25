@@ -152,6 +152,7 @@ function PackageCard({ pkg, providerId, onNavigate }) {
 
 function EventCard({ event, state, onNavigate }) {
   const isLive = state === 'live';
+  const slotsLabel = isLive ? getEventSlotsLabel(event) : null;
   return (
     <article className={`group overflow-hidden rounded-3xl border bg-white shadow-[0_18px_45px_-38px_rgba(15,23,42,0.5)] transition hover:-translate-y-0.5 ${isLive ? 'border-emerald-300 ring-4 ring-emerald-50' : 'border-slate-200'}`}>
       <Link href={`/user/events/eventdetails/${event._id}`} className="block w-full text-left">
@@ -167,7 +168,7 @@ function EventCard({ event, state, onNavigate }) {
           <h3 className="line-clamp-2 text-lg font-black leading-snug text-slate-950">{event.title}</h3>
           <div className="mt-3 space-y-2 text-sm text-slate-500">
             <p className="flex items-center gap-2"><MapPin className="h-4 w-4 text-emerald-600" /> {event.location || event.destination}</p>
-            <p className="flex items-center gap-2"><Users className="h-4 w-4 text-emerald-600" /> {getEventSlotsLabel(event)}</p>
+            {slotsLabel && <p className="flex items-center gap-2"><Users className="h-4 w-4 text-emerald-600" /> {slotsLabel}</p>}
           </div>
           <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4">
             <p className="text-lg font-black text-slate-950">{event.pricePerSlot > 0 ? `₹${event.pricePerSlot.toLocaleString('en-IN')}` : 'Free'}</p>
